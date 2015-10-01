@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Sep 06, 2015 at 12:29 AM
+-- Generation Time: Oct 01, 2015 at 02:30 PM
 -- Server version: 5.5.44-0+deb8u1
 -- PHP Version: 5.6.9-0+deb8u1
 
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `announcements` (
 --
 
 CREATE TABLE IF NOT EXISTS `badItems` (
-  `item` varchar(20) NOT NULL,
+  `item` varchar(50) NOT NULL,
   `action` varchar(10) NOT NULL DEFAULT 'timeout'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -6390,7 +6390,8 @@ CREATE TABLE IF NOT EXISTS `locations` (
   `protected` tinyint(1) NOT NULL DEFAULT '0',
   `accessLevel` int(11) NOT NULL DEFAULT '99',
   `size` int(11) NOT NULL DEFAULT '20',
-  `mayor` bigint(17) NOT NULL DEFAULT '0'
+  `mayor` bigint(17) NOT NULL DEFAULT '0',
+  `miniGame` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -6542,7 +6543,6 @@ CREATE TABLE IF NOT EXISTS `players` (
   `timeOnServer` int(11) NOT NULL DEFAULT '0',
   `firstSeen` int(11) NOT NULL DEFAULT '0',
   `keystones` int(11) NOT NULL DEFAULT '0',
-  `teleCooldown` int(11) NOT NULL DEFAULT '0',
   `overStackTimeout` tinyint(1) NOT NULL DEFAULT '0',
   `overstack` tinyint(1) NOT NULL DEFAULT '0',
   `shareWaypoint` tinyint(1) NOT NULL DEFAULT '0',
@@ -6589,7 +6589,8 @@ CREATE TABLE IF NOT EXISTS `players` (
   `yPosTimeout` int(11) NOT NULL DEFAULT '0',
   `zPosTimeout` int(11) NOT NULL DEFAULT '0',
   `accessLevel` int(11) NOT NULL DEFAULT '99',
-  `country` varchar(2) NOT NULL
+  `country` varchar(2) DEFAULT NULL,
+  `ping` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -6605,6 +6606,19 @@ CREATE TABLE IF NOT EXISTS `resetZones` (
   `x2` int(11) DEFAULT '0',
   `z2` int(11) DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `restrictedItems`
+--
+
+CREATE TABLE IF NOT EXISTS `restrictedItems` (
+  `item` varchar(50) NOT NULL,
+  `qty` int(11) NOT NULL DEFAULT '65',
+  `accessLevel` int(11) NOT NULL DEFAULT '90',
+  `action` varchar(30) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -6631,6 +6645,7 @@ CREATE TABLE IF NOT EXISTS `searchResults` (
 --
 
 CREATE TABLE IF NOT EXISTS `server` (
+`id` int(11) NOT NULL,
   `rules` varchar(255) DEFAULT 'No rules',
   `shopCountdown` tinyint(4) NOT NULL DEFAULT '0',
   `gimmePeace` tinyint(1) NOT NULL DEFAULT '0',
@@ -6661,11 +6676,16 @@ CREATE TABLE IF NOT EXISTS `server` (
   `baseCooldown` int(11) NOT NULL DEFAULT '2400',
   `protectionMaxDays` int(11) NOT NULL DEFAULT '40',
   `ircBotName` varchar(15) NOT NULL DEFAULT 'Bot',
-  `serverName` varchar(20) NOT NULL DEFAULT 'New Server',
+  `serverName` varchar(50) NOT NULL DEFAULT 'New Server',
   `lastDailyReboot` int(11) NOT NULL DEFAULT '0',
   `allowNumericNames` tinyint(1) NOT NULL DEFAULT '1',
-  `allowGarbageNames` tinyint(1) NOT NULL DEFAULT '1'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `allowGarbageNames` tinyint(1) NOT NULL DEFAULT '1',
+  `allowReboot` tinyint(1) NOT NULL DEFAULT '1',
+  `newPlayerTimer` int(11) NOT NULL DEFAULT '120',
+  `blacklistResponse` varchar(20) NOT NULL DEFAULT 'exile',
+  `gameDay` int(11) NOT NULL DEFAULT '0',
+  `welcome` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -6930,6 +6950,12 @@ ALTER TABLE `searchResults`
  ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `server`
+--
+ALTER TABLE `server`
+ ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `shop`
 --
 ALTER TABLE `shop`
@@ -7039,6 +7065,11 @@ MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 ALTER TABLE `searchResults`
 MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `server`
+--
+ALTER TABLE `server`
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `tracker`
 --
