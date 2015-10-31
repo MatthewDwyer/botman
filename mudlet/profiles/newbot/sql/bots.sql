@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.2.12deb2
+-- version 4.2.12deb2+deb8u1
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Sep 06, 2015 at 12:26 AM
--- Server version: 5.5.44-0+deb8u1
--- PHP Version: 5.6.9-0+deb8u1
+-- Generation Time: Oct 30, 2015 at 05:32 AM
+-- Server version: 10.0.20-MariaDB-0+deb8u1
+-- PHP Version: 5.6.14-0+deb8u1
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -19,8 +19,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `bots`
 --
-CREATE DATABASE IF NOT EXISTS `bots` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci;
-USE `bots`;
 
 -- --------------------------------------------------------
 
@@ -29,7 +27,7 @@ USE `bots`;
 --
 
 CREATE TABLE IF NOT EXISTS `badItems` (
-  `item` varchar(20) NOT NULL,
+  `item` varchar(50) NOT NULL,
   `action` varchar(10) NOT NULL DEFAULT 'timeout'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -39,27 +37,43 @@ CREATE TABLE IF NOT EXISTS `badItems` (
 
 INSERT INTO `badItems` (`item`, `action`) VALUES
 ('apacheArtifactChest', 'timeout'),
+('artcube', 'timeout'),
 ('bedrock', 'ban'),
 ('cashRegister', 'timeout'),
 ('cobblestone', 'timeout'),
 ('concreteReinforced', 'timeout'),
-('lootCrateShamway', 'timeout'),
-('lootCrateShotgunMess', 'timeout'),
-('lootCrateWorkingStif', 'timeout'),
-('metalReinforcedDoorW', 'timeout'),
-('reinforcedCobbleston', 'timeout'),
+('lootCrateShamway', 'exile'),
+('lootCrateShotgunMessiah', 'exile'),
+('lootCrateWorkingStiffs', 'exile'),
+('lootForest', 'timeout'),
+('lootGarage', 'timeout'),
+('lootHouse', 'timeout'),
+('lootMP', 'timeout'),
+('lootStreet', 'timeout'),
+('lootYard', 'timeout'),
+('metalReinforcedDoorWooden', 'timeout'),
+('mountainManStorageChest ', 'timeout'),
+('reinforcedCobblestone', 'timeout'),
 ('reinforcedMetalTrunk', 'timeout'),
-('reinforcedScrapIronW', 'timeout'),
+('reinforcedMetalWoodTrunk', 'timeout'),
+('reinforcedScrapIronWall', 'timeout'),
+('reinforcedTrunkPineTip', 'timeout'),
 ('reinforcedWoodMetal', 'timeout'),
-('smokestorm', 'timeout'),
-('steelWall', 'timeout'),
-('supplyCrateShamway', 'timeout'),
-('supplyCrateShotgunMe', 'timeout'),
-('supplyCrateWorkingSt', 'timeout'),
-('water', 'timeout'),
-('waterMoving', 'timeout'),
-('waterMovingBucket', 'timeout'),
-('waterStaticBucket', 'timeout');
+('sandstorm', 'exile'),
+('secureReinforcedDoorWooden', 'exile'),
+('smokestorm', 'exile'),
+('snowstorm1', 'exile'),
+('steeldoor1_v1', 'timeout'),
+('steeldoor1_v2', 'timeout'),
+('steeldoor1_v3', 'timeout'),
+('steelWall', 'exile'),
+('supplyCrateShamway', 'exile'),
+('supplyCrateShotgunMessiah', 'exile'),
+('supplyCrateWorkingStiffs', 'exile'),
+('water', 'ban'),
+('waterMoving', 'ban'),
+('waterMovingBucket', 'ban'),
+('waterStaticBucket', 'ban');
 
 -- --------------------------------------------------------
 
@@ -521,6 +535,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (736510976, 736511999),
 (736512000, 736513023),
 (736515072, 736516095),
+(736516096, 736517119),
 (736525312, 736526335),
 (736528384, 736529407),
 (736536576, 736537599),
@@ -2285,9 +2300,9 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (1731070976, 1731071999),
 (1731072000, 1731073023),
 (1731073024, 1731074047),
-(1731074048, 1731075071),
-(1731075072, 1731076095);
+(1731074048, 1731075071);
 INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
+(1731075072, 1731076095),
 (1731076096, 1731077119),
 (1731077120, 1731078143),
 (1731078144, 1731079167),
@@ -3139,6 +3154,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (1919877120, 1919885311),
 (1919918080, 1919926271),
 (1919942656, 1920204799),
+(1920024576, 1920040729),
 (1920204800, 1920335871),
 (1920335872, 1920401407),
 (1920401408, 1920434175),
@@ -3215,6 +3231,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (1952102400, 1952104447),
 (1952382976, 1952448511),
 (1953497088, 1953759231),
+(1953669120, 1953672985),
 (1953759232, 1953890303),
 (1954545664, 1958739967),
 (1958739968, 1958805503),
@@ -3387,6 +3404,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (2001457152, 2001461247),
 (2001600512, 2001731583),
 (2001731584, 2001797119),
+(2001858896, 2001858903),
 (2001915904, 2001919999),
 (2001993728, 2002255871),
 (2002255872, 2002518015),
@@ -3524,6 +3542,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (2060005376, 2060009471),
 (2060189696, 2060451839),
 (2061500416, 2062548991),
+(2062483456, 2062548761),
 (2062548992, 2063073279),
 (2063079424, 2063081471),
 (2063085568, 2063089663),
@@ -3675,6 +3694,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (2103443456, 2103574527),
 (2103574528, 2103640063),
 (2103967744, 2104492031),
+(2104098816, 2104164121),
 (2104492032, 2105540607),
 (2108227584, 2108293119),
 (2108358656, 2108424191),
@@ -3785,6 +3805,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (2644246528, 2644312063),
 (2650734592, 2650800127),
 (2682388480, 2682454015),
+(2714389808, 2714389823),
 (2714697728, 2714763263),
 (2724790272, 2724855807),
 (2734686208, 2734751743),
@@ -4361,15 +4382,15 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3396534272, 3396542463),
 (3396542464, 3396550655),
 (3396550656, 3396567039),
-(3396567040, 3396599807),
+(3396567040, 3396599807);
+INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3396599808, 3396607999),
 (3396608000, 3396612095),
 (3396612096, 3396616191),
 (3396616192, 3396624383),
 (3396624384, 3396632575),
 (3396632576, 3396665343),
-(3396665344, 3396681727);
-INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
+(3396665344, 3396681727),
 (3396681728, 3396698111),
 (3396698112, 3396730879),
 (3396730880, 3396739071),
@@ -5633,7 +5654,9 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3662544896, 3662675967),
 (3662675968, 3662938111),
 (3662938112, 3663200255),
+(3663003648, 3663101951),
 (3663200256, 3663724543),
+(3663331328, 3663659007),
 (3663724544, 3663855615),
 (3663855616, 3663888383),
 (3663888384, 3663904767),
@@ -5715,6 +5738,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3700981760, 3701014527),
 (3701080064, 3701211135),
 (3701473280, 3703570431),
+(3701669888, 3701866265),
 (3703570432, 3703701503),
 (3703701504, 3703832575),
 (3703832576, 3704094719),
@@ -5784,8 +5808,10 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3721658368, 3721723903),
 (3721723904, 3721789439),
 (3721789440, 3721920511),
+(3721845568, 3721845516),
 (3721920512, 3722444799),
 (3722444800, 3722969087),
+(3722834372, 3722834195),
 (3722969088, 3723231231),
 (3723231232, 3723362303),
 (3723362304, 3723427839),
@@ -5849,6 +5875,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3738959872, 3739090943),
 (3739090944, 3739222015),
 (3740270592, 3740794879),
+(3740598272, 3740614655),
 (3740794880, 3740860415),
 (3740860416, 3740893183),
 (3740893184, 3740901375),
@@ -5924,7 +5951,8 @@ CREATE TABLE IF NOT EXISTS `players` (
   `timeOnServer` int(11) NOT NULL DEFAULT '0',
   `ip` varchar(15) DEFAULT NULL,
   `donor` tinyint(1) NOT NULL DEFAULT '0',
-  `online` tinyint(1) NOT NULL DEFAULT '0'
+  `online` tinyint(1) NOT NULL DEFAULT '0',
+  `countries` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -5939,9 +5967,9 @@ CREATE TABLE IF NOT EXISTS `servers` (
   `mapSize` int(11) NOT NULL DEFAULT '20000',
   `IP` varchar(15) DEFAULT NULL,
   `lottery` int(11) NOT NULL DEFAULT '0',
-  `botName` varchar(15) NOT NULL DEFAULT '"Botman"',
+  `botName` varchar(20) NOT NULL DEFAULT '"Botman"',
   `maxPlayers` int(11) NOT NULL DEFAULT '24',
-  `serverName` varchar(20) NOT NULL,
+  `serverName` varchar(50) NOT NULL,
   `playersOnline` int(11) NOT NULL DEFAULT '0',
 `id` int(11) NOT NULL,
   `tick` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -5954,7 +5982,7 @@ CREATE TABLE IF NOT EXISTS `servers` (
 --
 
 CREATE TABLE IF NOT EXISTS `shop` (
-  `item` varchar(20) NOT NULL,
+  `item` varchar(50) NOT NULL,
   `category` varchar(20) NOT NULL,
   `price` int(11) NOT NULL DEFAULT '50',
   `stock` int(11) NOT NULL DEFAULT '50',

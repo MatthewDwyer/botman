@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.2.12deb2
+-- version 4.2.12deb2+deb8u1
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Oct 01, 2015 at 02:30 PM
--- Server version: 5.5.44-0+deb8u1
--- PHP Version: 5.6.9-0+deb8u1
+-- Generation Time: Oct 30, 2015 at 05:32 AM
+-- Server version: 10.0.20-MariaDB-0+deb8u1
+-- PHP Version: 5.6.14-0+deb8u1
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -19,8 +19,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `testbot`
 --
-CREATE DATABASE IF NOT EXISTS `testbot` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci;
-USE `testbot`;
 
 -- --------------------------------------------------------
 
@@ -69,29 +67,43 @@ CREATE TABLE IF NOT EXISTS `badItems` (
 
 INSERT INTO `badItems` (`item`, `action`) VALUES
 ('apacheArtifactChest', 'timeout'),
+('artcube', 'timeout'),
+('bedrock', 'ban'),
 ('cashRegister', 'timeout'),
 ('cobblestone', 'timeout'),
 ('concreteReinforced', 'timeout'),
-('copperOre', 'timeout'),
-('ingotCopper', 'timeout'),
-('lootCrateShamway', 'timeout'),
-('lootCrateShotgunMess', 'timeout'),
-('lootCrateWorkingStif', 'timeout'),
-('metalReinforcedDoorW', 'timeout'),
-('reinforcedCobbleston', 'timeout'),
+('lootCrateShamway', 'exile'),
+('lootCrateShotgunMessiah', 'exile'),
+('lootCrateWorkingStiffs', 'exile'),
+('lootForest', 'timeout'),
+('lootGarage', 'timeout'),
+('lootHouse', 'timeout'),
+('lootMP', 'timeout'),
+('lootStreet', 'timeout'),
+('lootYard', 'timeout'),
+('metalReinforcedDoorWooden', 'timeout'),
+('mountainManStorageChest ', 'timeout'),
+('reinforcedCobblestone', 'timeout'),
 ('reinforcedMetalTrunk', 'timeout'),
-('reinforcedScrapIronW', 'timeout'),
+('reinforcedMetalWoodTrunk', 'timeout'),
+('reinforcedScrapIronWall', 'timeout'),
+('reinforcedTrunkPineTip', 'timeout'),
 ('reinforcedWoodMetal', 'timeout'),
-('smokestorm', 'timeout'),
-('steelWall', 'timeout'),
-('supplyCrateShamway', 'timeout'),
-('supplyCrateShotgunMe', 'timeout'),
-('supplyCrateWorkingSt', 'timeout'),
-('The Banhammer', 'timeout'),
-('water', 'timeout'),
-('waterMoving', 'timeout'),
-('waterMovingBucket', 'timeout'),
-('waterStaticBucket', 'timeout');
+('sandstorm', 'exile'),
+('secureReinforcedDoorWooden', 'exile'),
+('smokestorm', 'exile'),
+('snowstorm1', 'exile'),
+('steeldoor1_v1', 'timeout'),
+('steeldoor1_v2', 'timeout'),
+('steeldoor1_v3', 'timeout'),
+('steelWall', 'exile'),
+('supplyCrateShamway', 'exile'),
+('supplyCrateShotgunMessiah', 'exile'),
+('supplyCrateWorkingStiffs', 'exile'),
+('water', 'ban'),
+('waterMoving', 'ban'),
+('waterMovingBucket', 'ban'),
+('waterStaticBucket', 'ban');
 
 -- --------------------------------------------------------
 
@@ -113,11 +125,12 @@ CREATE TABLE IF NOT EXISTS `bans` (
 --
 
 CREATE TABLE IF NOT EXISTS `bookmarks` (
+`id` int(11) NOT NULL,
   `steam` bigint(17) NOT NULL,
-  `xpos` int(11) NOT NULL,
-  `zpos` int(11) NOT NULL,
-  `note` varchar(50) NOT NULL,
-  `shared` varchar(10) NOT NULL DEFAULT 'private'
+  `x` int(11) NOT NULL DEFAULT '0',
+  `y` int(11) NOT NULL DEFAULT '0',
+  `z` int(11) NOT NULL DEFAULT '0',
+  `note` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -130,7 +143,19 @@ CREATE TABLE IF NOT EXISTS `commandQueue` (
 `id` bigint(20) NOT NULL,
   `steam` bigint(17) NOT NULL,
   `command` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MEMORY AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `customMessages`
+--
+
+CREATE TABLE IF NOT EXISTS `customMessages` (
+  `command` varchar(30) NOT NULL,
+  `message` varchar(255) NOT NULL,
+  `accessLevel` int(11) NOT NULL DEFAULT '99'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -393,7 +418,7 @@ CREATE TABLE IF NOT EXISTS `gimmeQueue` (
 `id` int(11) NOT NULL,
   `command` varchar(255) NOT NULL,
   `steam` bigint(17) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MEMORY DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -439,6 +464,7 @@ CREATE TABLE IF NOT EXISTS `inventoryTracker` (
 `inventoryTrackerID` bigint(20) NOT NULL,
   `belt` varchar(500) NOT NULL,
   `pack` varchar(1000) NOT NULL,
+  `equipment` varchar(500) NOT NULL,
   `steam` bigint(17) NOT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `x` int(11) NOT NULL,
@@ -6269,7 +6295,7 @@ CREATE TABLE IF NOT EXISTS `ircQueue` (
 `id` int(11) NOT NULL,
   `name` varchar(20) NOT NULL,
   `command` varchar(255) NOT NULL
-) ENGINE=MEMORY DEFAULT CHARSET=utf8;
+) ENGINE=MEMORY AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -6282,7 +6308,8 @@ CREATE TABLE IF NOT EXISTS `keystones` (
   `x` int(11) NOT NULL,
   `y` int(11) NOT NULL,
   `z` int(11) NOT NULL,
-  `remove` tinyint(1) NOT NULL DEFAULT '0'
+  `remove` tinyint(1) NOT NULL DEFAULT '0',
+  `removed` int(11) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -6391,7 +6418,8 @@ CREATE TABLE IF NOT EXISTS `locations` (
   `accessLevel` int(11) NOT NULL DEFAULT '99',
   `size` int(11) NOT NULL DEFAULT '20',
   `mayor` bigint(17) NOT NULL DEFAULT '0',
-  `miniGame` varchar(10) NOT NULL
+  `miniGame` varchar(10) DEFAULT NULL,
+  `resetZone` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -6421,6 +6449,19 @@ CREATE TABLE IF NOT EXISTS `mail` (
   `status` int(11) NOT NULL DEFAULT '0',
   `flag` varchar(5) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `memRestrictedItems`
+--
+
+CREATE TABLE IF NOT EXISTS `memRestrictedItems` (
+  `item` varchar(50) NOT NULL,
+  `qty` int(11) NOT NULL DEFAULT '65',
+  `accessLevel` int(11) NOT NULL DEFAULT '90',
+  `action` varchar(30) NOT NULL
+) ENGINE=MEMORY DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -6466,7 +6507,7 @@ CREATE TABLE IF NOT EXISTS `messageQueue` (
   `sender` bigint(17) NOT NULL DEFAULT '0',
   `recipient` bigint(20) NOT NULL DEFAULT '0',
   `message` varchar(1000) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MEMORY DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -6500,7 +6541,7 @@ CREATE TABLE IF NOT EXISTS `playerQueue` (
   `arena` tinyint(1) NOT NULL DEFAULT '0',
   `boss` tinyint(1) NOT NULL DEFAULT '0',
   `steam` bigint(17) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MEMORY DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -6543,6 +6584,7 @@ CREATE TABLE IF NOT EXISTS `players` (
   `timeOnServer` int(11) NOT NULL DEFAULT '0',
   `firstSeen` int(11) NOT NULL DEFAULT '0',
   `keystones` int(11) NOT NULL DEFAULT '0',
+  `teleCooldown` int(11) NOT NULL DEFAULT '0',
   `overStackTimeout` tinyint(1) NOT NULL DEFAULT '0',
   `overstack` tinyint(1) NOT NULL DEFAULT '0',
   `shareWaypoint` tinyint(1) NOT NULL DEFAULT '0',
@@ -6596,6 +6638,20 @@ CREATE TABLE IF NOT EXISTS `players` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `proxies`
+--
+
+CREATE TABLE IF NOT EXISTS `proxies` (
+`id` int(11) NOT NULL,
+  `file` varchar(255) NOT NULL,
+  `scanString` varchar(100) NOT NULL,
+  `action` varchar(20) NOT NULL DEFAULT 'nothing',
+  `hits` int(11) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `resetZones`
 --
 
@@ -6619,6 +6675,18 @@ CREATE TABLE IF NOT EXISTS `restrictedItems` (
   `accessLevel` int(11) NOT NULL DEFAULT '90',
   `action` varchar(30) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `restrictedItems`
+--
+
+INSERT INTO `restrictedItems` (`item`, `qty`, `accessLevel`, `action`) VALUES
+('44MagBullet', 490, 90, 'timeout'),
+('762mmBullet', 490, 90, 'timeout'),
+('9mmBullet', 490, 90, 'timeout'),
+('mineAirFilter', 10, 90, 'timeout'),
+('pressurePlateMine', 0, 90, 'timeout'),
+('sticks', 2000, 90, 'timeout');
 
 -- --------------------------------------------------------
 
@@ -6645,7 +6713,6 @@ CREATE TABLE IF NOT EXISTS `searchResults` (
 --
 
 CREATE TABLE IF NOT EXISTS `server` (
-`id` int(11) NOT NULL,
   `rules` varchar(255) DEFAULT 'No rules',
   `shopCountdown` tinyint(4) NOT NULL DEFAULT '0',
   `gimmePeace` tinyint(1) NOT NULL DEFAULT '0',
@@ -6669,7 +6736,6 @@ CREATE TABLE IF NOT EXISTS `server` (
   `ircMain` varchar(15) NOT NULL DEFAULT '#new',
   `chatColour` varchar(6) NOT NULL DEFAULT 'D4FFD4',
   `maxPlayers` int(11) NOT NULL DEFAULT '24',
-  `dailyRebootHour` int(11) NOT NULL DEFAULT '0',
   `maxServerUptime` int(11) NOT NULL DEFAULT '12',
   `windowPlayers` varchar(15) NOT NULL DEFAULT 'Players',
   `baseSize` int(11) NOT NULL DEFAULT '32',
@@ -6680,12 +6746,29 @@ CREATE TABLE IF NOT EXISTS `server` (
   `lastDailyReboot` int(11) NOT NULL DEFAULT '0',
   `allowNumericNames` tinyint(1) NOT NULL DEFAULT '1',
   `allowGarbageNames` tinyint(1) NOT NULL DEFAULT '1',
+`id` int(11) NOT NULL,
   `allowReboot` tinyint(1) NOT NULL DEFAULT '1',
   `newPlayerTimer` int(11) NOT NULL DEFAULT '120',
   `blacklistResponse` varchar(20) NOT NULL DEFAULT 'exile',
   `gameDay` int(11) NOT NULL DEFAULT '0',
-  `welcome` varchar(255) DEFAULT NULL
+  `welcome` varchar(255) DEFAULT NULL,
+  `allowVoting` tinyint(1) NOT NULL DEFAULT '0',
+  `allowPlayerVoteTopics` tinyint(1) NOT NULL DEFAULT '0',
+  `shopOpenHour` int(11) NOT NULL DEFAULT '0',
+  `shopCloseHour` int(11) NOT NULL DEFAULT '0',
+  `shopLocation` varchar(20) DEFAULT NULL,
+  `website` varchar(100) DEFAULT NULL,
+  `ircServer` varchar(100) DEFAULT NULL,
+  `pingKick` int(11) NOT NULL DEFAULT '-1',
+  `longPlayUpgradeTime` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `server`
+--
+
+INSERT INTO `server` (`rules`, `shopCountdown`, `gimmePeace`, `date`, `windowDebug`, `ServerPort`, `windowAlerts`, `allowGimme`, `mapSize`, `ircAlerts`, `ircWatch`, `prisonSize`, `MOTD`, `IP`, `lottery`, `allowShop`, `windowGMSG`, `botName`, `allowWaypoints`, `windowLists`, `ircMain`, `chatColour`, `maxPlayers`, `maxServerUptime`, `windowPlayers`, `baseSize`, `baseCooldown`, `protectionMaxDays`, `ircBotName`, `serverName`, `lastDailyReboot`, `allowNumericNames`, `allowGarbageNames`, `id`, `allowReboot`, `newPlayerTimer`, `blacklistResponse`, `gameDay`, `welcome`, `allowVoting`, `allowPlayerVoteTopics`, `shopOpenHour`, `shopCloseHour`, `shopLocation`, `website`, `ircServer`, `pingKick`, `longPlayUpgradeTime`) VALUES
+('No rules yet', 0, 0, '2015-10-30', 'Debug', 26900, 'Alerts', 0, 20000, '#7days_alerts', '#7days_watch', 30, 'We have a new server bot!', '127.0.0.1', 0, 0, 'GMSG', 'Bot', 0, 'Lists', '#7days', 'D4FFD4', 24, 12, 'Players', 32, 2400, 40, 'Bot', 'New Server', 0, 1, 1, 1, 0, 120, 'ban', 168, NULL, 0, 0, 0, 0, NULL, NULL, NULL, -1, 0);
 
 -- --------------------------------------------------------
 
@@ -6694,7 +6777,7 @@ CREATE TABLE IF NOT EXISTS `server` (
 --
 
 CREATE TABLE IF NOT EXISTS `shop` (
-  `item` varchar(20) NOT NULL,
+  `item` varchar(50) NOT NULL,
   `category` varchar(20) NOT NULL,
   `price` int(11) NOT NULL DEFAULT '50',
   `stock` int(11) NOT NULL DEFAULT '50',
@@ -6703,6 +6786,31 @@ CREATE TABLE IF NOT EXISTS `shop` (
   `variation` int(11) NOT NULL DEFAULT '0',
   `special` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `shop`
+--
+
+INSERT INTO `shop` (`item`, `category`, `price`, `stock`, `idx`, `maxStock`, `variation`, `special`) VALUES
+('10mmBullet', 'ammo', 6, 999, 1, 999, 0, 0),
+('44MagBullet', 'ammo', 8, 999, 2, 999, 0, 0),
+('762mmBullet', 'ammo', 10, 999, 3, 999, 0, 0),
+('9mmBullet', 'ammo', 4, 999, 4, 999, 0, 0),
+('antibiotics', 'medic', 200, 25, 1, 25, 0, 0),
+('bearStew', 'food', 500, 25, 1, 25, 0, 0),
+('beer', 'food', 100, 100, 2, 100, 0, 0),
+('blueberrySeed', 'garden', 100, 10, 1, 10, 0, 0),
+('canHam', 'food', 25, 100, 3, 100, 0, 0),
+('cornSeed', 'garden', 50, 10, 2, 10, 0, 0),
+('cottonSeed', 'garden', 100, 10, 3, 10, 0, 0),
+('emptyJar', 'food', 25, 100, 4, 100, 0, 0),
+('firstAidKit', 'medic', 50, 20, 2, 20, 0, 0),
+('goldenrodSeed', 'garden', 100, 10, 4, 10, 0, 0),
+('mapleSeed', 'garden', 50, 50, 5, 50, 0, 0),
+('miningHelmet', 'tools', 300, 10, 1, 10, 0, 0),
+('P2Ptoken', 'special', 100, 999, 2, 999, 0, 0),
+('pineSeed', 'garden', 50, 50, 6, 50, 0, 0),
+('potatoSeed', 'garden', 100, 10, 7, 10, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -6715,6 +6823,18 @@ CREATE TABLE IF NOT EXISTS `shopCategories` (
   `idx` int(11) NOT NULL,
   `code` varchar(3) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `shopCategories`
+--
+
+INSERT INTO `shopCategories` (`category`, `idx`, `code`) VALUES
+('ammo', 5, 'a'),
+('food', 5, 'f'),
+('garden', 8, 'g'),
+('medic', 3, 'm'),
+('special', 3, 's'),
+('tools', 2, 't');
 
 -- --------------------------------------------------------
 
@@ -6752,7 +6872,7 @@ CREATE TABLE IF NOT EXISTS `tracker` (
   `z` int(11) NOT NULL,
   `session` int(11) DEFAULT '0',
   `flag` varchar(10) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -6815,13 +6935,19 @@ ALTER TABLE `bans`
 -- Indexes for table `bookmarks`
 --
 ALTER TABLE `bookmarks`
- ADD PRIMARY KEY (`steam`,`xpos`,`zpos`);
+ ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `commandQueue`
 --
 ALTER TABLE `commandQueue`
  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `customMessages`
+--
+ALTER TABLE `customMessages`
+ ADD PRIMARY KEY (`command`);
 
 --
 -- Indexes for table `events`
@@ -6902,6 +7028,12 @@ ALTER TABLE `mail`
  ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `memRestrictedItems`
+--
+ALTER TABLE `memRestrictedItems`
+ ADD PRIMARY KEY (`item`);
+
+--
 -- Indexes for table `memShop`
 --
 ALTER TABLE `memShop`
@@ -6938,10 +7070,22 @@ ALTER TABLE `players`
  ADD PRIMARY KEY (`steam`), ADD UNIQUE KEY `steam` (`steam`);
 
 --
+-- Indexes for table `proxies`
+--
+ALTER TABLE `proxies`
+ ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `resetZones`
 --
 ALTER TABLE `resetZones`
  ADD PRIMARY KEY (`region`), ADD UNIQUE KEY `region` (`region`);
+
+--
+-- Indexes for table `restrictedItems`
+--
+ALTER TABLE `restrictedItems`
+ ADD PRIMARY KEY (`item`);
 
 --
 -- Indexes for table `searchResults`
@@ -7006,10 +7150,15 @@ MODIFY `alertID` bigint(20) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `announcements`
 MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
+-- AUTO_INCREMENT for table `bookmarks`
+--
+ALTER TABLE `bookmarks`
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+--
 -- AUTO_INCREMENT for table `commandQueue`
 --
 ALTER TABLE `commandQueue`
-MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=15;
 --
 -- AUTO_INCREMENT for table `events`
 --
@@ -7039,7 +7188,7 @@ MODIFY `inventoryTrackerID` bigint(20) NOT NULL AUTO_INCREMENT;
 -- AUTO_INCREMENT for table `ircQueue`
 --
 ALTER TABLE `ircQueue`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=14;
 --
 -- AUTO_INCREMENT for table `mail`
 --
@@ -7061,6 +7210,11 @@ MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `playerQueue`
 MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
+-- AUTO_INCREMENT for table `proxies`
+--
+ALTER TABLE `proxies`
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+--
 -- AUTO_INCREMENT for table `searchResults`
 --
 ALTER TABLE `searchResults`
@@ -7069,12 +7223,12 @@ MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 -- AUTO_INCREMENT for table `server`
 --
 ALTER TABLE `server`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=2;
 --
 -- AUTO_INCREMENT for table `tracker`
 --
 ALTER TABLE `tracker`
-MODIFY `trackerID` bigint(20) NOT NULL AUTO_INCREMENT;
+MODIFY `trackerID` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=15;
 --
 -- AUTO_INCREMENT for table `visits`
 --
