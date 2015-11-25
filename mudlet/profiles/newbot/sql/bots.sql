@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Oct 30, 2015 at 05:32 AM
+-- Generation Time: Nov 25, 2015 at 12:44 PM
 -- Server version: 10.0.20-MariaDB-0+deb8u1
 -- PHP Version: 5.6.14-0+deb8u1
 
@@ -87,7 +87,14 @@ CREATE TABLE IF NOT EXISTS `bans` (
   `bannedTo` varchar(22) NOT NULL,
   `permanent` tinyint(1) NOT NULL DEFAULT '0',
   `server` varchar(20) NOT NULL,
-  `status` varchar(10) NOT NULL DEFAULT 'review'
+  `playTime` int(11) NOT NULL DEFAULT '0',
+  `score` int(11) NOT NULL DEFAULT '0',
+  `playerKills` int(11) NOT NULL DEFAULT '0',
+  `zombies` int(11) NOT NULL DEFAULT '0',
+  `country` varchar(2) DEFAULT NULL,
+  `belt` varchar(500) DEFAULT NULL,
+  `pack` varchar(600) DEFAULT NULL,
+  `equipment` varchar(500) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -1486,6 +1493,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (1029160960, 1029177343),
 (1031798784, 1031929855),
 (1031929856, 1032060927),
+(1031950244, 1031950247),
 (1032060928, 1032126463),
 (1032126464, 1032159231),
 (1032159232, 1032191999),
@@ -2299,9 +2307,9 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (1731067904, 1731068927),
 (1731070976, 1731071999),
 (1731072000, 1731073023),
-(1731073024, 1731074047),
-(1731074048, 1731075071);
+(1731073024, 1731074047);
 INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
+(1731074048, 1731075071),
 (1731075072, 1731076095),
 (1731076096, 1731077119),
 (1731077120, 1731078143),
@@ -4381,9 +4389,9 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3396501504, 3396534271),
 (3396534272, 3396542463),
 (3396542464, 3396550655),
-(3396550656, 3396567039),
-(3396567040, 3396599807);
+(3396550656, 3396567039);
 INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
+(3396567040, 3396599807),
 (3396599808, 3396607999),
 (3396608000, 3396612095),
 (3396612096, 3396616191),
@@ -5952,7 +5960,9 @@ CREATE TABLE IF NOT EXISTS `players` (
   `ip` varchar(15) DEFAULT NULL,
   `donor` tinyint(1) NOT NULL DEFAULT '0',
   `online` tinyint(1) NOT NULL DEFAULT '0',
-  `countries` varchar(50) NOT NULL
+  `countries` varchar(50) NOT NULL,
+  `donorLevel` int(11) NOT NULL DEFAULT '0',
+  `donorExpiry` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -5962,13 +5972,9 @@ CREATE TABLE IF NOT EXISTS `players` (
 --
 
 CREATE TABLE IF NOT EXISTS `servers` (
-  `rules` varchar(255) DEFAULT NULL,
   `ServerPort` int(11) NOT NULL DEFAULT '0',
-  `mapSize` int(11) NOT NULL DEFAULT '20000',
   `IP` varchar(15) DEFAULT NULL,
-  `lottery` int(11) NOT NULL DEFAULT '0',
   `botName` varchar(20) NOT NULL DEFAULT '"Botman"',
-  `maxPlayers` int(11) NOT NULL DEFAULT '24',
   `serverName` varchar(50) NOT NULL,
   `playersOnline` int(11) NOT NULL DEFAULT '0',
 `id` int(11) NOT NULL,

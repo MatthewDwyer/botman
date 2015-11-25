@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Oct 30, 2015 at 05:32 AM
+-- Generation Time: Nov 25, 2015 at 12:46 PM
 -- Server version: 10.0.20-MariaDB-0+deb8u1
 -- PHP Version: 5.6.14-0+deb8u1
 
@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS `commandQueue` (
 `id` bigint(20) NOT NULL,
   `steam` bigint(17) NOT NULL,
   `command` varchar(100) NOT NULL
-) ENGINE=MEMORY AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
+) ENGINE=MEMORY AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -432,7 +432,7 @@ CREATE TABLE IF NOT EXISTS `hotspots` (
   `x` int(11) NOT NULL,
   `y` int(11) NOT NULL,
   `z` int(11) NOT NULL,
-  `size` int(11) NOT NULL DEFAULT '3',
+  `size` int(11) NOT NULL DEFAULT '2',
   `owner` bigint(17) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -6295,7 +6295,7 @@ CREATE TABLE IF NOT EXISTS `ircQueue` (
 `id` int(11) NOT NULL,
   `name` varchar(20) NOT NULL,
   `command` varchar(255) NOT NULL
-) ENGINE=MEMORY AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
+) ENGINE=MEMORY AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -6311,85 +6311,6 @@ CREATE TABLE IF NOT EXISTS `keystones` (
   `remove` tinyint(1) NOT NULL DEFAULT '0',
   `removed` int(11) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `languages`
---
-
-CREATE TABLE IF NOT EXISTS `languages` (
-  `code` varchar(2) NOT NULL,
-  `language` varchar(15) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
---
--- Dumping data for table `languages`
---
-
-INSERT INTO `languages` (`code`, `language`) VALUES
-('af', 'Afrikaans'),
-('ar', 'Arabic'),
-('az', 'Azerbaijani'),
-('be', 'Belarusian'),
-('bg', 'Bulgarian'),
-('bn', 'Bengali'),
-('ca', 'Catalan'),
-('cs', 'Czech'),
-('cy', 'Welsh'),
-('da', 'Danish'),
-('de', 'German'),
-('el', 'Greek'),
-('en', 'English'),
-('eo', 'Esperanto'),
-('es', 'Spanish'),
-('et', 'Estonian'),
-('eu', 'Basque'),
-('fa', 'Persian'),
-('fi', 'Finnish'),
-('fr', 'French'),
-('ga', 'Irish'),
-('gl', 'Galician'),
-('gu', 'Gujarati'),
-('hi', 'Hindi'),
-('hr', 'Croatian'),
-('ht', 'Haitian Creole'),
-('hu', 'Hungarian'),
-('id', 'Indonesian'),
-('is', 'Icelandic'),
-('it', 'Italian'),
-('iw', 'Hebrew'),
-('ja', 'Japanese'),
-('ka', 'Georgian'),
-('kn', 'Kannada'),
-('ko', 'Korean'),
-('la', 'Latin'),
-('lt', 'Lithuanian'),
-('lv', 'Latvian'),
-('mk', 'Macedonian'),
-('ms', 'Malay'),
-('mt', 'Maltese'),
-('nl', 'Dutch'),
-('no', 'Norwegian'),
-('pl', 'Polish'),
-('pt', 'Portuguese'),
-('ro', 'Romanian'),
-('ru', 'Russian'),
-('sk', 'Slovak'),
-('sl', 'Slovenian'),
-('sq', 'Albanian'),
-('sr', 'Serbian'),
-('sv', 'Swedish'),
-('sw', 'Swahili'),
-('ta', 'Tamil'),
-('te', 'Telugu'),
-('th', 'Thai'),
-('tl', 'Filipino'),
-('tr', 'Turkish'),
-('uk', 'Ukrainian'),
-('ur', 'Urdu'),
-('yi', 'Yiddish'),
-('zh', 'Chinese Simp.');
 
 -- --------------------------------------------------------
 
@@ -6419,7 +6340,8 @@ CREATE TABLE IF NOT EXISTS `locations` (
   `size` int(11) NOT NULL DEFAULT '20',
   `mayor` bigint(17) NOT NULL DEFAULT '0',
   `miniGame` varchar(10) DEFAULT NULL,
-  `resetZone` tinyint(1) NOT NULL DEFAULT '0'
+  `resetZone` tinyint(1) NOT NULL DEFAULT '0',
+  `other` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -6438,6 +6360,17 @@ CREATE TABLE IF NOT EXISTS `locationSpawns` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `lottery`
+--
+
+CREATE TABLE `lottery` (
+  `steam` varchar(17) NOT NULL,
+  `ticket` int(11) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `mail`
 --
 
@@ -6449,6 +6382,28 @@ CREATE TABLE IF NOT EXISTS `mail` (
   `status` int(11) NOT NULL DEFAULT '0',
   `flag` varchar(5) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `memIgnoredItems`
+--
+
+CREATE TABLE `memIgnoredItems` (
+  `item` varchar(50) NOT NULL,
+  `qty` int(11) NOT NULL DEFAULT '65'
+) ENGINE=MEMORY DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `memLottery`
+--
+
+CREATE TABLE `memLottery` (
+  `steam` varchar(17) NOT NULL,
+  `ticket` int(11) NOT NULL DEFAULT '0'
+) ENGINE=MEMORY DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -6584,7 +6539,6 @@ CREATE TABLE IF NOT EXISTS `players` (
   `timeOnServer` int(11) NOT NULL DEFAULT '0',
   `firstSeen` int(11) NOT NULL DEFAULT '0',
   `keystones` int(11) NOT NULL DEFAULT '0',
-  `teleCooldown` int(11) NOT NULL DEFAULT '0',
   `overStackTimeout` tinyint(1) NOT NULL DEFAULT '0',
   `overstack` tinyint(1) NOT NULL DEFAULT '0',
   `shareWaypoint` tinyint(1) NOT NULL DEFAULT '0',
@@ -6632,8 +6586,45 @@ CREATE TABLE IF NOT EXISTS `players` (
   `zPosTimeout` int(11) NOT NULL DEFAULT '0',
   `accessLevel` int(11) NOT NULL DEFAULT '99',
   `country` varchar(2) DEFAULT NULL,
-  `ping` int(11) NOT NULL DEFAULT '0'
+  `ping` int(11) NOT NULL DEFAULT '0',
+  `donorLevel` int(11) NOT NULL DEFAULT '1',
+  `donorExpiry` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `polls`
+--
+
+CREATE TABLE `polls` (
+`id` int(11) NOT NULL,
+  `author` bigint(17) NOT NULL DEFAULT '0',
+  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `expires` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `topic` varchar(150) NOT NULL,
+  `responseYN` tinyint(1) NOT NULL DEFAULT '1',
+  `option1` varchar(100) NOT NULL,
+  `option2` varchar(100) NOT NULL,
+  `option3` varchar(100) NOT NULL,
+  `option4` varchar(100) NOT NULL,
+  `option5` varchar(100) NOT NULL,
+  `option6` varchar(100) NOT NULL,
+  `accessLevel` int(11) NOT NULL DEFAULT '90'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pollVotes`
+--
+
+CREATE TABLE `pollVotes` (
+  `pollID` int(11) NOT NULL,
+  `steam` bigint(17) NOT NULL,
+  `vote` int(11) NOT NULL DEFAULT '0',
+  `weight` float NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -6761,6 +6752,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `ircServer` varchar(100) DEFAULT NULL,
   `pingKick` int(11) NOT NULL DEFAULT '-1',
   `longPlayUpgradeTime` int(11) NOT NULL DEFAULT '0'
+  `gameType` varchar(3) NOT NULL DEFAULT 'pve'
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 
 --
@@ -6872,7 +6864,7 @@ CREATE TABLE IF NOT EXISTS `tracker` (
   `z` int(11) NOT NULL,
   `session` int(11) DEFAULT '0',
   `flag` varchar(10) DEFAULT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -7010,22 +7002,34 @@ ALTER TABLE `keystones`
  ADD PRIMARY KEY (`steam`,`x`,`y`,`z`), ADD KEY `steam` (`steam`), ADD KEY `steam_2` (`steam`);
 
 --
--- Indexes for table `languages`
---
-ALTER TABLE `languages`
- ADD PRIMARY KEY (`code`);
-
---
 -- Indexes for table `locations`
 --
 ALTER TABLE `locations`
  ADD PRIMARY KEY (`name`), ADD UNIQUE KEY `name` (`name`);
 
 --
+-- Indexes for table `lottery`
+--
+ALTER TABLE `lottery`
+ ADD PRIMARY KEY (`steam`,`ticket`);
+
+--
 -- Indexes for table `mail`
 --
 ALTER TABLE `mail`
  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `memIgnoredItems`
+--
+ALTER TABLE `memIgnoredItems`
+ ADD PRIMARY KEY (`item`);
+
+--
+-- Indexes for table `memLottery`
+--
+ALTER TABLE `memLottery`
+ ADD PRIMARY KEY (`steam`,`ticket`);
 
 --
 -- Indexes for table `memRestrictedItems`
@@ -7068,6 +7072,18 @@ ALTER TABLE `playerQueue`
 --
 ALTER TABLE `players`
  ADD PRIMARY KEY (`steam`), ADD UNIQUE KEY `steam` (`steam`);
+
+--
+-- Indexes for table `polls`
+--
+ALTER TABLE `polls`
+ ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `pollVotes`
+--
+ALTER TABLE `pollVotes`
+ ADD PRIMARY KEY (`pollID`,`steam`);
 
 --
 -- Indexes for table `proxies`
@@ -7158,7 +7174,7 @@ MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 -- AUTO_INCREMENT for table `commandQueue`
 --
 ALTER TABLE `commandQueue`
-MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=15;
+MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `events`
 --
@@ -7188,7 +7204,7 @@ MODIFY `inventoryTrackerID` bigint(20) NOT NULL AUTO_INCREMENT;
 -- AUTO_INCREMENT for table `ircQueue`
 --
 ALTER TABLE `ircQueue`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=14;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `mail`
 --
@@ -7210,6 +7226,11 @@ MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `playerQueue`
 MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
+-- AUTO_INCREMENT for table `polls`
+--
+ALTER TABLE `polls`
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+--
 -- AUTO_INCREMENT for table `proxies`
 --
 ALTER TABLE `proxies`
@@ -7223,12 +7244,12 @@ MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 -- AUTO_INCREMENT for table `server`
 --
 ALTER TABLE `server`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=2;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `tracker`
 --
 ALTER TABLE `tracker`
-MODIFY `trackerID` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=15;
+MODIFY `trackerID` bigint(20) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `visits`
 --
