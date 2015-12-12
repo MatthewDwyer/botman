@@ -6341,7 +6341,8 @@ CREATE TABLE IF NOT EXISTS `locations` (
   `mayor` bigint(17) NOT NULL DEFAULT '0',
   `miniGame` varchar(10) DEFAULT NULL,
   `resetZone` tinyint(1) NOT NULL DEFAULT '0',
-  `other` varchar(10) DEFAULT NULL
+  `other` varchar(10) DEFAULT NULL,
+  `killZombies` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -6487,6 +6488,19 @@ CREATE TABLE IF NOT EXISTS `performance` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `playerNotes`
+--
+
+CREATE TABLE `playerNotes` (
+`id` int(11) NOT NULL,
+  `steam` varchar(17) NOT NULL,
+  `createdBy` varchar(17) NOT NULL,
+  `note` varchar(400) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `playerQueue`
 --
 
@@ -6588,7 +6602,8 @@ CREATE TABLE IF NOT EXISTS `players` (
   `country` varchar(2) DEFAULT NULL,
   `ping` int(11) NOT NULL DEFAULT '0',
   `donorLevel` int(11) NOT NULL DEFAULT '1',
-  `donorExpiry` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `donorExpiry` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `autoFriend` varchar(2) NOT NULL COMMENT 'NA/AF/AD'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -6752,7 +6767,9 @@ CREATE TABLE IF NOT EXISTS `server` (
   `ircServer` varchar(100) DEFAULT NULL,
   `pingKick` int(11) NOT NULL DEFAULT '-1',
   `longPlayUpgradeTime` int(11) NOT NULL DEFAULT '0'
-  `gameType` varchar(3) NOT NULL DEFAULT 'pve'
+  `gameType` varchar(3) NOT NULL DEFAULT 'pve',
+  `hideCommands` tinyint(1) NOT NULL DEFAULT '1',
+  `botTick` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 
 --
@@ -7060,6 +7077,10 @@ ALTER TABLE `messageQueue`
 --
 ALTER TABLE `performance`
  ADD PRIMARY KEY (`serverDate`), ADD KEY `serverDate` (`serverDate`);
+-- Indexes for table `playerNotes`
+--
+ALTER TABLE `playerNotes`
+ ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `playerQueue`
@@ -7220,6 +7241,11 @@ MODIFY `trackerID` bigint(20) NOT NULL AUTO_INCREMENT;
 --
 ALTER TABLE `messageQueue`
 MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `playerNotes`
+--
+ALTER TABLE `playerNotes`
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `playerQueue`
 --
