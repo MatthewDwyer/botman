@@ -93,6 +93,7 @@
 lastAction = &quot;Login&quot;
 botOffline = 2
 botDisabled = false
+dbConnected = false
 
 -- EDIT ME!
 botsDBPassword = &quot;&quot;
@@ -104,6 +105,48 @@ if string.find(line, &quot;Password incorrect&quot;) then
 	send(&quot;insert telnet password here&quot;)
 end
 
+-- enable triggers and timers.  No ability to enable scripts in code yet.
+enableTrigger(&quot;End list players&quot;)
+enableTrigger(&quot;PVP Police&quot;)
+enableTrigger(&quot;MatchAll&quot;)
+enableTrigger(&quot;InventorySlot&quot;)
+enableTrigger(&quot;Player connected&quot;)
+enableTrigger(&quot;playerinfo&quot;)
+enableTrigger(&quot;Player disconnected&quot;)
+enableTrigger(&quot;Inventory&quot;)
+enableTrigger(&quot;lkp&quot;)
+enableTrigger(&quot;Zombie scouts&quot;)
+enableTrigger(&quot;InventoryOwner&quot;)
+enableTrigger(&quot;AirDrop alert&quot;)
+enableTrigger(&quot;Spam&quot;)
+enableTrigger(&quot;Game Time&quot;)
+enableTrigger(&quot;GameTickCount&quot;)
+enableTrigger(&quot;Logon Successful&quot;)
+enableTrigger(&quot;Collect Ban&quot;)
+enableTrigger(&quot;Unban player&quot;)
+enableTrigger(&quot;Overstack&quot;)
+enableTrigger(&quot;Open Reserved Slot&quot;)
+enableTrigger(&quot;mem&quot;)
+enableTrigger(&quot;lp&quot;)
+enableTrigger(&quot;Tele&quot;)
+enableTrigger(&quot;llp&quot;)
+enableTrigger(&quot;GMSG&quot;)
+enableTrigger(&quot;log chat&quot;)
+
+enableTimer(&quot;EveryHalfMinute&quot;)
+enableTimer(&quot;OneMinuteTimer&quot;)
+enableTimer(&quot;listPlayers&quot;)
+enableTimer(&quot;OneHourTimer&quot;)
+enableTimer(&quot;Reconnect&quot;)
+enableTimer(&quot;GimmeReset&quot;)
+enableTimer(&quot;TimedCommands&quot;)
+enableTimer(&quot;ThirtyMinuteTimer&quot;)
+enableTimer(&quot;PlayerQueuedCommands&quot;)
+enableTimer(&quot;GimmeQueuedCommands&quot;)
+enableTimer(&quot;ircQueue&quot;)
+enableTimer(&quot;Every45Seconds&quot;)
+enableTimer(&quot;TrackPlayer&quot;)
+enableTimer(&quot;messageQueue&quot;)
 </script>
             <triggerType>0</triggerType>
             <conditonLineDelta>0</conditonLineDelta>
@@ -137,7 +180,6 @@ if botDisabled then
 	return
 end
 
-
 showPlayers = false
 playersOnline = tonumber(string.match(line, &quot;%d+&quot;))
 deleteLine()
@@ -145,6 +187,9 @@ deleteLine()
 if (playersOnline == 0) then
 	-- we could schedule something to happen when no players are online
 end
+
+-- reset relogCount as we have established that the server is talking to us
+relogCount = 0
 
 
 
@@ -474,6 +519,18 @@ end
 
 number = tonumber(string.match(line, &quot; (%d+)&quot;))
 
+if (string.find(line, &quot;ServerMaxPlayerCount set to&quot;)) then
+	server.ServerMaxPlayerCount = number
+end
+
+if (string.find(line, &quot;MaxSpawnedZombies set to&quot;)) then
+	server.MaxSpawnedZombies = number
+end
+
+if (string.find(line, &quot;MaxSpawnedAnimals set to&quot;)) then
+	server.MaxSpawnedAnimals = number
+end
+
 if (string.find(line, &quot;LootRespawnDays =&quot;)) then
 	server.LootRespawnDays = number
 end
@@ -798,6 +855,19 @@ if botDisabled then
 	return
 end
 
+function playerDenied()
+	local steam
+
+	steam = string.trim(string.sub(line, string.find(line, &quot;INF Player&quot;) + 12, string.find(line, &quot;denied&quot;) - 3))
+	steam = LookupPlayer(steam)
+
+	if steam ~= nil then
+		if (accessLevel(steam) &lt; 2) then
+			reserveSlot(steam)
+		end
+	end
+end
+
 function playerConnected()
 	local entityid
 	local player
@@ -918,6 +988,13 @@ function playerConnected()
 		return
 	end
 
+	-- kick player if only 1 slot left and it is reserved for someone else
+	
+	if tonumber(playersOnline) == tonumber(server.ServerMaxPlayerCount) - 1 and tonumber(table.maxn(reservedSlots)) &gt; 0 and not reservedSlots[steam] then
+		kick(steam, &quot;Sorry the last slot is temporarily reserved. Please try again in a minute.&quot;)
+		return
+	end	
+
 	if	not server.allowNumericNames and notserver.allowGarbageNames and not players[steam].whitelisted then
 		temp = countAlphaNumeric(player)
 
@@ -928,10 +1005,10 @@ function playerConnected()
 	end
 
 	-- timeout the player if they are relogging too many times in quick succession
-	if tonumber(players[steam].relogCount) &gt; 4 and players[steam].newPlayer then
-		timeoutPlayer(steam, &quot;relogging many times in a short space of time.&quot;, false)
-		players[steam].relogCount = 0
-	end
+--	if tonumber(players[steam].relogCount) &gt; 4 and players[steam].newPlayer then
+--		timeoutPlayer(steam, &quot;relogging many times in a short space of time.&quot;, false)
+--		players[steam].relogCount = 0
+--	end
 
 	-- delete read mail that isn't flagged as saved (status = 2).
 	conn:execute(&quot;DELETE FROM mail WHERE id = &quot; .. steam .. &quot; and status = 1&quot;)
@@ -943,6 +1020,9 @@ function playerConnected()
 	cecho(server.windowDebug, &quot;Finished Player Connected\n&quot;)
 end
 
+if string.find(line, &quot;denied: Too many players on the server!&quot;) then
+	playerDenied()
+end
 
 if string.find(line, &quot;Player connected&quot;) then
 	playerConnected()
@@ -959,8 +1039,10 @@ end</script>
             <colorTriggerBgColor>#000000</colorTriggerBgColor>
             <regexCodeList>
                 <string>Player connected</string>
+                <string>denied: Too many players on the server!</string>
             </regexCodeList>
             <regexCodePropertyList>
+                <integer>0</integer>
                 <integer>0</integer>
             </regexCodePropertyList>
         </Trigger>
@@ -995,6 +1077,7 @@ function playerInfo()
 	local resetZone = false
 	local ping, dist, IP, hotspot, currentLocation
 	local skipTPtest = false
+	local badData = false
 
 	debug = 0
 	debugSteam = 0
@@ -1008,8 +1091,6 @@ function playerInfo()
 	--	debugSteam = LookupPlayer(debugSteam)
 	end
 
-	r = rand(5)
-
 	name_table = string.split(line, &quot;, &quot;)
 
 	if string.find(name_table[3], &quot;pos&quot;) then 
@@ -1020,59 +1101,56 @@ function playerInfo()
 		name = string.trim(string.sub(line, string.find(line, &quot;,&quot;) + 2, string.find(line, &quot;, pos=&quot;) - 1))
 	end
 
-	lastLP =  name
-
 	-- stop processing this player if we don't have 17 parts to the line after splitting on comma
 	-- it is probably a read error
-	if (table.maxn(name_table) &lt; 17) then
-		faultyPlayerinfoID = 1
+	if (table.maxn(name_table) &lt; 18) then
+		faultyPlayerinfoID = 0
 		return
 	end
 
 	temp = string.split(name_table[1], &quot;=&quot;)
 	id = temp[2]
 
-
 	num = tonumber(string.sub(name_table[3], 6))
-	if (num == nil) then cecho(server.windowDebug, &quot;Bad number found: &quot; .. line .. &quot;\n&quot;) return end
+	if (num == nil) then badData = true end
 	posX = num
 
 	num = tonumber(name_table[4])
-	if (num == nil) then cecho(server.windowDebug, &quot;Bad number found: &quot; .. line .. &quot;\n&quot;) return end
+	if (num == nil) then badData = true end
 	posY = num
 
 	temp = string.split(name_table[5], &quot;)&quot;)
 	num = tonumber(temp[1])
-	if (num == nil) then cecho(server.windowDebug, &quot;Bad number found: &quot; .. line .. &quot;\n&quot;) return end
+	if (num == nil) then badData = true end
 	posZ = num
 
 	temp = string.split(name_table[11], &quot;=&quot;)
 	num = tonumber(temp[2])
-	if (num == nil) then cecho(server.windowDebug, &quot;Bad number found: &quot; .. line .. &quot;\n&quot;) return end
+	if (num == nil) then badData = true end
 	deaths = num
 
 	temp = string.split(name_table[12], &quot;=&quot;)
 	num = tonumber(temp[2])
-	if (num == nil) then cecho(server.windowDebug, &quot;Bad number found: &quot; .. line .. &quot;\n&quot;) return end
+	if (num == nil) then badData = true end
 	zombies = num
 
 	temp = string.split(name_table[13], &quot;=&quot;)
 	num = tonumber(temp[2])
-	if (num == nil) then cecho(server.windowDebug, &quot;Bad number found: &quot; .. line .. &quot;\n&quot;) return end
+	if (num == nil) then badData = true end
 	kills = num
 
 	temp = string.split(name_table[14], &quot;=&quot;)
 	num = tonumber(temp[2])
-	if (num == nil) then cecho(server.windowDebug, &quot;Bad number found: &quot; .. line .. &quot;\n&quot;) return end
+	if (num == nil) then badData = true end
 	score = num
 
 	temp = string.split(name_table[15], &quot;=&quot;)
 	num = tonumber(temp[2])
-	if (num == nil) then cecho(server.windowDebug, &quot;Bad number found: &quot; .. line .. &quot;\n&quot;) return end
+	if (num == nil) then badData = true end
 	level = num
 
 	temp = string.split(name_table[16], &quot;=&quot;)
-	if (num == nil) then cecho(server.windowDebug, &quot;Bad number found: &quot; .. line .. &quot;\n&quot;) return end
+	if (num == nil) then badData = true end
 	steam = temp[2]
 
 	faultyPlayerinfoID = steam
@@ -1082,6 +1160,11 @@ function playerInfo()
 
 	temp = string.split(name_table[18], &quot;=&quot;)
 	ping = temp[2]
+
+	if badData then
+		cecho(server.windowDebug, &quot;Bad lp line: &quot; .. line .. &quot;\n&quot;)
+		return
+	end
 
 	rawPosition = posX .. posY .. posZ
 
@@ -1212,6 +1295,8 @@ function playerInfo()
 		dbug(&quot;debug playerinfo 10&quot;) 
 	end	
 
+	atHome(steam)
+
 	if (players[steam].location ~= &quot;&quot;) then
 		-- spawn the player at location
 		if (locations[players[steam].location]) then
@@ -1269,15 +1354,15 @@ function playerInfo()
 	end
 
 	-- test for hackers teleporting
-	if tonumber(igplayers[steam].xPos ~= 0) and tonumber(igplayers[steam].zPos ~= 0) then
+	if tonumber(intY) &gt; -5000 and tonumber(intX) ~= 0 and tonumber(intZ) ~= 0 and tonumber(igplayers[steam].xPos) ~= 0 and tonumber(igplayers[steam].zPos) ~= 0 and tonumber(os.time() - igplayers[steam].lastLP) &lt; 4 then
 		dist = 0
 
 		if igplayers[steam].deadX == nil then
 			dist = distancexz(posX, posZ, igplayers[steam].xPos, igplayers[steam].zPos)
 		end
 
-		if (dist &gt;= 1000) then
-			if igplayers[steam].tp &lt; 1 then
+		if (dist &gt;= 200) then
+			if tonumber(igplayers[steam].tp) &lt; 1 then
 				if players[steam].newPlayer == true then
 					new = &quot; [FF8C40]NEW player &quot;
 				else
@@ -1285,27 +1370,21 @@ function playerInfo()
 				end
 
 				if accessLevel(steam) &gt; 2 then
-	--				irc_QueueMsg(server.ircMain, serverTime .. &quot; Player &quot; .. id .. &quot; name: &quot; .. name .. &quot; detected teleporting to &quot; .. intX .. &quot; &quot; .. intY .. &quot; &quot; .. intZ .. &quot; distance &quot; .. dist)
-	--				irc_QueueMsg(server.ircAlerts, serverTime .. &quot; Player &quot; .. id .. &quot; name: &quot; .. name .. &quot; detected teleporting to &quot; .. intX .. &quot; &quot; .. intY .. &quot; &quot; .. intZ .. &quot; distance &quot; .. dist)
+					irc_QueueMsg(server.ircMain, serverTime .. &quot; Player &quot; .. id .. &quot; name: &quot; .. name .. &quot; detected teleporting to &quot; .. intX .. &quot; &quot; .. intY .. &quot; &quot; .. intZ .. &quot; distance &quot; .. dist)
+					irc_QueueMsg(server.ircAlerts, serverTime .. &quot; Player &quot; .. id .. &quot; name: &quot; .. name .. &quot; detected teleporting to &quot; .. intX .. &quot; &quot; .. intY .. &quot; &quot; .. intZ .. &quot; distance &quot; .. dist)
 
-					if igplayers[steam].hackerScore == nil then igplayers[steam].hackerScore = 0 end
-					igplayers[steam].hackerScore = igplayers[steam].hackerScore + 1
+					igplayers[steam].hackerScore = tonumber(igplayers[steam].hackerScore) + 1
 
-					if (players[steam].newPlayer == true) then
-						if igplayers[steam].hackerScore &gt; 1 then
-	--						message(&quot;say [&quot; .. server.chatColour .. &quot;]Detaining &quot; .. players[steam].name .. &quot;. Detected anomalous teleporting.  Please wait for an admin to release you.[-]&quot;)
-	--						message(&quot;say /timeout &quot; .. players[steam].name)
-						end
-					else
-						if igplayers[steam].hackerScore &gt; 3 then
-	--						message(&quot;say [&quot; .. server.chatColour .. &quot;]Detaining &quot; .. players[steam].name .. &quot;. Detected anomalous teleporting.  Please wait for an admin to release you.[-]&quot;)
-	--						message(&quot;say /timeout &quot; .. players[steam].name)
-						end
+					if tonumber(igplayers[steam].hackerScore) &gt; 3 then
+						igplayers[steam].hackerScore = 0
+						igplayers[steam].tp = 0
+						message(&quot;say [&quot; .. server.chatColour .. &quot;]Detaining &quot; .. players[steam].name .. &quot;. Detected suspicious teleport activity.[-]&quot;)
+						message(&quot;say /timeout &quot; .. players[steam].name)
 					end
 
 					for k, v in pairs(igplayers) do
 						if (accessLevel(k) &lt; 3) then
-	--						message(&quot;pm &quot; .. k .. new .. id .. &quot; name: &quot; .. name .. &quot; detected teleporting.[-]&quot;)
+							message(&quot;pm &quot; .. k .. new .. id .. &quot; name: &quot; .. name .. &quot; detected teleporting.[-]&quot;)
 						end
 					end
 				end
@@ -1314,6 +1393,8 @@ function playerInfo()
 			igplayers[steam].tp = 0
 		end
 	end
+
+	igplayers[steam].lastLP = os.time()
 
 	if (steam == debugSteam) then 
 		dbug(&quot;debug playerinfo 11&quot;) 
@@ -1459,6 +1540,10 @@ function playerInfo()
 			conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. steam .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]To reset the bot type /reset bot.[-]&quot;) .. &quot;')&quot;)
 			conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. steam .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]To dismiss this alert type /no reset.[-]&quot;) .. &quot;')&quot;)
 		end
+
+		if (not players[steam].santa) and specialDay == &quot;christmas&quot; then
+			conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. steam .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]HO HO HO! Merry Christmas!  Type /santa to open your Christmas stocking![-]&quot;) .. &quot;')&quot;)
+		end
 	end
 
 
@@ -1491,16 +1576,16 @@ function playerInfo()
 	end
 
 	if tonumber(players[steam].donorExpiry) &lt; os.time() and players[steam].donor == true then
-		players[steam].donor = false
-		players[steam].donorLevel = 0
-		conn:execute(&quot;UPDATE players SET donor = 0, donorLevel = 0 WHERE steam = &quot; .. steam)
+--		players[steam].donor = false
+--		players[steam].donorLevel = 0
+--		conn:execute(&quot;UPDATE players SET donor = 0, donorLevel = 0 WHERE steam = &quot; .. steam)
 
-		message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Your donor status has expired :(  Contact an admin if you need help accessing your second base. Your 2nd base's protection will be disabled one week from when your donor status expired.[-]&quot;)
+--		message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Your donor status has expired :(  Contact an admin if you need help accessing your second base. Your 2nd base's protection will be disabled one week from when your donor status expired.[-]&quot;)
 
 		if os.time() - tonumber(players[steam].donorExpiry) &gt; (60 * 60 * 24 * 7) then
-			players[steam].protect2 = fase
-			conn:execute(&quot;UPDATE players SET protect2 = 0 WHERE steam = &quot; .. steam)
-			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]ALERT! Your second base is no longer bot protected![-]&quot;)
+--			players[steam].protect2 = fase
+--			conn:execute(&quot;UPDATE players SET protect2 = 0 WHERE steam = &quot; .. steam)
+--			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]ALERT! Your second base is no longer bot protected![-]&quot;)
 		end
 	end
 
@@ -1547,6 +1632,8 @@ function playerInfo()
 			dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, igplayers[igplayers[steam].following].xPos, igplayers[igplayers[steam].following].zPos)	
 			if dist &gt; followDistance and igplayers[igplayers[steam].following].yPos &gt; 0 then
 				-- teleport close to the player
+				igplayers[steam].tp = 1
+				igplayers[steam].hackerScore = 0
 				send(&quot;tele &quot; .. steam .. &quot; &quot; .. math.floor(igplayers[igplayers[steam].following].xPos) .. &quot; &quot; .. math.ceil(igplayers[igplayers[steam].following].yPos - 15) .. &quot; &quot; .. math.floor(igplayers[igplayers[steam].following].zPos))
 			end
 		end
@@ -1762,8 +1849,10 @@ function playerInfo()
 
 	-- timeout
 	if (players[steam].timeout == true or players[steam].botTimeout == true) then
-		if (intY &lt; -50000) or (intY &gt; -5000) then
-			send(&quot;tele &quot; .. steam .. &quot; &quot; .. intX .. &quot; &quot; .. -5000 .. &quot; &quot; .. intZ)
+		if (intY &lt; 20000) then
+			igplayers[steam].tp = 1
+			igplayers[steam].hackerScore = 0
+			send(&quot;tele &quot; .. steam .. &quot; &quot; .. intX .. &quot; &quot; .. 50000 .. &quot; &quot; .. intZ)
 		end	
 
 		faultyPlayerinfo = false
@@ -1781,6 +1870,8 @@ function playerInfo()
 	if outsideMap and players[steam].donor == false and (accessLevel(steam) &gt; 3) then
 		if not inLocation(intX, intZ) then
 			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]This map is restricted to &quot; .. (server.mapSize / 1000) .. &quot; km from the center.[-]&quot;)
+			igplayers[steam].tp = 1
+			igplayers[steam].hackerScore = 0
 			send (&quot;tele &quot; .. steam .. &quot; &quot; .. igplayers[steam].xPosLastOK .. &quot; &quot; .. igplayers[steam].yPosLastOK .. &quot; &quot; .. igplayers[steam].zPosLastOK)	
 			faultyPlayerinfo = false
 			return
@@ -1790,6 +1881,8 @@ function playerInfo()
 	if outsideMapDonor and players[steam].donor == true and (accessLevel(steam) &gt; 3 or server.ignoreAdmins == false) then
 		if not inLocation(intX, intZ) then
 			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]This map is restricted to &quot; .. ((server.mapSize + 5000) / 1000) .. &quot; km from the center.[-]&quot;)
+			igplayers[steam].tp = 1
+			igplayers[steam].hackerScore = 0
 			send (&quot;tele &quot; .. steam .. &quot; &quot; .. igplayers[steam].xPosLastOK .. &quot; &quot; .. igplayers[steam].yPosLastOK .. &quot; &quot; .. igplayers[steam].zPosLastOK)	
 			faultyPlayerinfo = false
 			return
@@ -2091,17 +2184,19 @@ end
 
 
 if string.find(line, &quot;, health=&quot;) then
-	if (faultyPlayerinfo == true) then
+	if faultyPlayerinfo == true and tonumber(faultyPlayerinfoID) &gt; -1 then
 		cecho(server.windowDebug, &quot;!! Fault detected in playerinfo trigger\n&quot;)
 		cecho(server.windowDebug, faultyPlayerinfoLine .. &quot;\n&quot;)
 
 		cecho(server.windowAlerts, &quot;!! Fault detected in playerinfo trigger\n&quot;)
 		cecho(server.windowAlerts, faultyPlayerinfoLine .. &quot;\n&quot;)
 
-		fixMissingPlayer(faultyPlayerinfoID)
+		if tonumber(	faultyPlayerinfoID) &gt; 0 then
+			fixMissingPlayer(faultyPlayerinfoID)
 
-		if igplayers[faultyPlayerinfoID] then
-			fixMissingIGPlayer(faultyPlayerinfoID)	
+			if igplayers[faultyPlayerinfoID] then
+				fixMissingIGPlayer(faultyPlayerinfoID)	
+			end
 		end
 	end
 
@@ -2153,6 +2248,7 @@ function playerDisconnected()
 	fixMissingPlayer(steam)
 
 	-- update players table with x y z
+	players[steam].lastAtHome = nil
 	players[steam].protectPaused = nil
 	players[steam].protect2Paused = nil
 	players[steam].xPos = igplayers[steam].xPos
@@ -2176,7 +2272,7 @@ function playerDisconnected()
 		end
 	else
 		players[steam].relogCount = tonumber(players[steam].relogCount) - 1
-		if tonumber(players[steam].relogCount) &lt; 0 then players[steam].relogCount = 0 dbug(&quot;relog reset 2&quot;) end
+		if tonumber(players[steam].relogCount) &lt; 0 then players[steam].relogCount = 0 end
 	end
 
 	players[steam].lastLogout = os.time()
@@ -2354,22 +2450,28 @@ if botDisabled then
 	return
 end
 
-local test, dist, x, z, direction
+local test, dist, xStart, zStart, xEnd, zEnd, direction
 
 if string.find(line, &quot;towards&quot;) then
-	test = string.sub(line, string.find(line, &quot;towards&quot;) + 7)
-
+	-- get the origin coords
+	test = string.sub(line, string.find(line, &quot;scouts&quot;) + 11, string.find(line, &quot;heading&quot;) - 4)
 	split = string.split(test, &quot;,&quot;)
-	x = string.match(split[1], &quot;-?%d+&quot;)
-	z = string.match(split[3], &quot;-?%d+&quot;)
+	xStart = string.match(split[1], &quot;-?%d+&quot;)
+	zStart = string.match(split[3], &quot;-?%d+&quot;)
+
+	-- get the destination coords
+	test = string.sub(line, string.find(line, &quot;towards&quot;) + 7)
+	split = string.split(test, &quot;,&quot;)
+	xEnd = string.match(split[1], &quot;-?%d+&quot;)
+	zEnd = string.match(split[3], &quot;-?%d+&quot;)
 
 	if (string.find(line, &quot;heading towards&quot;)) then
 		for k, v in pairs(igplayers) do
-			direction = getCompass(v.xPos, v.zPos, x, z)
+			direction = getCompass(v.xPos, v.zPos, xStart, zStart)
+			dist = distance(v.xPos, v.zPos, xEnd, zEnd)
 
-			dist = distance(v.xPos, v.zPos, x, z)
 			if (dist &lt; 50) then
-				message(&quot;pm &quot; .. k .. &quot; &quot; ..  &quot; [&quot; .. server.chatColour .. &quot;]Scouts have been detected heading your way from the &quot; .. direction .. &quot;.[-]&quot;)
+				message(&quot;pm &quot; .. k .. &quot; &quot; ..  &quot; [&quot; .. server.chatColour .. &quot;]Screamers have been detected heading your way from the &quot; .. direction .. &quot;.[-]&quot;)
 			end
 		end
 	end
@@ -2701,10 +2803,20 @@ if botDisabled then
 	return
 end
 
+-- relogCount is used to detect excessive relogging which is indicative of a server crash.
+if relogCount == nil then relogCount = 0 end
+
 if string.find(line, &quot;Logon successful.&quot;) then
 	botOffline = 2
-	irc_QueueMsg(server.ircMain, &quot;Successfully logged in and monitoring server traffic.&quot;)
-end</script>
+	relogCount = relogCount + 1
+
+	if relogCount &gt; 6 then
+		irc_QueueMsg(server.ircMain, &quot;Server has crashed.  Please manually restart it.&quot;)
+	else
+		irc_QueueMsg(server.ircMain, &quot;Successfully logged in and monitoring server traffic.&quot;)
+	end
+end
+</script>
             <triggerType>0</triggerType>
             <conditonLineDelta>0</conditonLineDelta>
             <mStayOpen>0</mStayOpen>
@@ -2931,21 +3043,22 @@ if botDisabled then
 	return
 end
 
-local time, fps, heap, chunks, cgo, ply, zom, ent, items
+local time, fps, heap, heapMax, chunks, cgo, ply, zom, ent, items
 
 if (string.find(line, &quot;Heap:&quot;)) then
 	time = tonumber(string.sub(line, string.find(line, &quot;Time:&quot;) + 6, string.find(line, &quot;FPS:&quot;) - 3))
 	fps = tonumber(string.sub(line, string.find(line, &quot;FPS:&quot;) + 5, string.find(line, &quot;Heap:&quot;) - 2))
 	heap = tonumber(string.sub(line, string.find(line, &quot;Heap:&quot;) + 6, string.find(line, &quot;Max:&quot;) - 4))
+	heapMax = tonumber(string.sub(line, string.find(line, &quot;Max:&quot;) + 5, string.find(line, &quot;Chunks:&quot;) - 4))
 	chunks = tonumber(string.sub(line, string.find(line, &quot;Chunks:&quot;) + 8, string.find(line, &quot;CGO:&quot;) - 2))
 	cgo = tonumber(string.sub(line, string.find(line, &quot;CGO:&quot;) + 5, string.find(line, &quot;Ply:&quot;) - 2))
 	ply = tonumber(string.sub(line, string.find(line, &quot;Ply:&quot;) + 5, string.find(line, &quot;Zom:&quot;) - 2))
 	zom = tonumber(string.sub(line, string.find(line, &quot;Zom:&quot;) + 5, string.find(line, &quot;Ent:&quot;) - 2))
 	ent = string.sub(line, string.find(line, &quot;Ent:&quot;) + 5, string.find(line, &quot;Items:&quot;) - 2)
-	items = tonumber(string.sub(line, string.find(line, &quot;Items:&quot;) + 7))
+	items = tonumber(string.sub(line, string.find(line, &quot;Items:&quot;) + 7, string.find(line, &quot;CO:&quot;) - 2))
 
 	server.fps = fps
-	conn:execute(&quot;INSERT INTO performance (serverdate, gametime, fps, heap, chunks, cgo, players, zombies, entities, items) VALUES ('&quot; .. serverTime .. &quot;',&quot; .. time .. &quot;,&quot; .. fps .. &quot;,&quot; .. heap .. &quot;,&quot; .. chunks .. &quot;,&quot; .. cgo .. &quot;,&quot; .. ply .. &quot;,&quot; .. zom .. &quot;,'&quot; .. ent .. &quot;',&quot; .. items .. &quot;)&quot;)
+	conn:execute(&quot;INSERT INTO performance (serverdate, gametime, fps, heap, heapMax, chunks, cgo, players, zombies, entities, items) VALUES ('&quot; .. serverTime .. &quot;',&quot; .. time .. &quot;,&quot; .. fps .. &quot;,&quot; .. heap .. &quot;,&quot; .. heapMax .. &quot;,&quot; .. chunks .. &quot;,&quot; .. cgo .. &quot;,&quot; .. ply .. &quot;,&quot; .. zom .. &quot;,'&quot; .. ent .. &quot;',&quot; .. items .. &quot;)&quot;)
 end</script>
             <triggerType>0</triggerType>
             <conditonLineDelta>0</conditonLineDelta>
@@ -2981,6 +3094,10 @@ end
 
 if string.find(string.sub(line, 1, 19), os.date(&quot;%Y&quot;)) then
 	serverTime = string.sub(line, 1, 19)
+	specialDay = &quot;&quot;
+
+	if (string.find(serverTime, &quot;02-14&quot;, 5, 10)) then specialDay = &quot;valentine&quot; end
+	if (string.find(serverTime, &quot;12-25&quot;, 5, 10)) then specialDay = &quot;christmas&quot; end
 end</script>
             <triggerType>0</triggerType>
             <conditonLineDelta>0</conditonLineDelta>
@@ -3136,6 +3253,9 @@ if debug then dbug(line) end
 gmsgvars = {}
 
 if (faultyGMSG == nil) then faultyGMSG = false end
+if (faultyGMSG2 == nil) then faultyGMSG2 = false end
+if faultyGMSG2 then fixMissingStuff() end
+faultyGMSG2 = true
 
 if (faultyGMSG == true) then
 	cecho(server.windowDebug, &quot;!! Fault detected in GMSG\n&quot;)
@@ -3575,6 +3695,7 @@ end
 
 
 faultyGMSG = false
+faultyGMSG2 = false
 
 if debug then dbug(&quot;gmsg end&quot;) end</script>
             <triggerType>0</triggerType>
@@ -3595,64 +3716,6 @@ if debug then dbug(&quot;gmsg end&quot;) end</script>
             <regexCodePropertyList>
                 <integer>0</integer>
                 <integer>0</integer>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Player Login</name>
-            <script>--[[
-    Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
-	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
-    URL       http://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
---]]
-
-if botDisabled then
-	return
-end
-
-local name, id
-
-name = string.sub(line, string.find(line, &quot;Login:&quot;) + 7, string.find(line, &quot;/Alpha&quot;) - 1)
-
-display(&quot;player connecting: &quot; .. name)
-
-id = LookupPlayer(name)
-
---[[
-if server.ServerMaxPlayerCountOld ~= nil then
-	if tonumber(playersOnline) &gt;= tonumber(server.ServerMaxPlayerCountOld) and tonumber(server.ServerMaxPlayerCountOld) &gt; 0 and accessLevel(id) &gt; 0 then
-		send(&quot;kick &quot; .. id .. &quot; Server is full. The last slot is reserved.&quot;)
-		return
-	end
-end
---]]
-
---[[
-if accessLevel(id) == 0 and tonumber(playersOnline) &gt;= tonumber(server.ServerMaxPlayerCount) then
-	server.ServerMaxPlayerCountOld = server.ServerMaxPlayerCount
-	send(&quot;sg ServerMaxPlayerCount &quot; .. server.ServerMaxPlayerCount + 1)
-	dbug(&quot;sg ServerMaxPlayerCount &quot; .. server.ServerMaxPlayerCount + 1)
-else
-	server.ServerMaxPlayerCountOld = nil
-end
---]]</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>INF PlayerLogin</string>
-            </regexCodeList>
-            <regexCodePropertyList>
                 <integer>0</integer>
             </regexCodePropertyList>
         </Trigger>
@@ -3721,11 +3784,16 @@ end</script>
     along with this program.  If not, see http://www.gnu.org/licenses
 --]]
 
+cecho (server.windowDebug, &quot;30 second timer\n&quot;)
+
+if dbConnected ~= true then
+	openDB()
+	dbConnected = isDBConnected()
+end
+
 if botDisabled then
 	return
 end
-
-cecho (server.windowDebug, &quot;30 second timer\n&quot;)
 
 if (AnnounceBot == true) then
 	message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. server.botName .. &quot; is online. Command me. :3[-]&quot;)
@@ -3789,7 +3857,12 @@ end
         </Timer>
         <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
             <name>OneMinuteTimer</name>
-            <script>if botDisabled then
+            <script>-- run a quick test to prove or disprove that we are still connected to the database.
+-- there is a rare instance where we lose the connection for unknown reasons.
+dbConnected = isDBConnected()
+
+
+if botDisabled then
 	return
 end
 
@@ -3802,9 +3875,9 @@ end
 
 if server.coppi then
 	for k, v in pairs(igplayers) do
-		if players[k].autoFriend ~= &quot;NA&quot; then
-			send(&quot;lpf &quot; .. k)
-		end
+--		if players[k].autoFriend ~= &quot;NA&quot; then
+--			send(&quot;lpf &quot; .. k)
+--		end
 	end
 end
 
@@ -3838,28 +3911,8 @@ function listPlayers()
 
 	send(&quot;lp&quot;)
 
---[[
-	if (faultyPlayerinfo == true) then
-		cecho(server.windowDebug, &quot;!! Fault detected in playerinfo trigger\n&quot;)
-		cecho(server.windowDebug, faultyPlayerinfoLine .. &quot;\n&quot;)
-		cecho(server.windowAlerts, &quot;!! Fault detected in playerinfo trigger\n&quot;)
-		cecho(server.windowAlerts, faultyPlayerinfoLine .. &quot;\n&quot;)
-		fixMissingPlayer(faultyPlayerinfoID)
-		if igplayers[faultyPlayerinfoID] then
-			fixMissingIGPlayer(faultyPlayerinfoID)	
-		end
-		faultyPlayerinfo = false
-	end
---]]
-
-	-- delay reboot up to 1.5 days if server busy
-	if (tonumber(playersOnline) &gt; 6) and (server.scheduledRestartTimestamp - os.time() &gt; 0) and (math.floor(server.uptime / 3600) &lt; 36) then
-		return
-	end
-
 	if (server.scheduledRestart == true and scheduledRestartPaused == false) and server.allowReboot == true then
 		if (server.scheduledRestartTimestamp - os.time() &lt; 0) then
-			server.scheduledRestart = false
 			startReboot()
 		else
 			if (server.scheduledRestartTimestamp - os.time() &gt; 11) and (server.scheduledRestartTimestamp - os.time() &lt; 61) then
@@ -4150,7 +4203,7 @@ while row1 do
 end</script>
             <command></command>
             <packageName></packageName>
-            <time>00:00:00.300</time>
+            <time>00:00:00.400</time>
         </Timer>
         <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
             <name>Every45Seconds</name>
@@ -4618,6 +4671,107 @@ showPlayers = true
     along with this program.  If not, see http://www.gnu.org/licenses
 --]]
 
+function atHome(steam)
+	local dist, size, greet, home, time
+
+	greet = false
+	home = false
+
+	if players[steam].lastAtHome == nil then
+		players[steam].lastAtHome = os.time()
+	end
+
+	-- base 1
+	if math.abs(players[steam].homeX) &gt; 0 and math.abs(players[steam].homeZ) &gt; 0 then
+		dist = distancexz(math.floor(players[steam].xPos), math.floor(players[steam].zPos), players[steam].homeX, players[steam].homeZ)
+		size = tonumber(players[steam].protectSize)
+
+		if (dist &lt;= size) then
+			home = true
+
+			if not players[steam].atHome then
+				greet = true
+			end
+		end
+	end
+
+	-- base 2
+	if math.abs(players[steam].home2X) &gt; 0 and math.abs(players[steam].home2Z) &gt; 0 then
+		dist = distancexz(math.floor(players[steam].xPos), math.floor(players[steam].zPos), players[steam].home2X, players[steam].home2Z)
+		size = tonumber(players[steam].protect2Size)
+
+		if (dist &lt;= size) then
+			home = true
+
+			if not players[steam].atHome then
+				greet = true
+			end
+		end
+	end
+
+	if greet then
+		time = os.time() - players[steam].lastAtHome
+
+		if time &gt; 300 and time &lt;= 900 then
+			r = rand(5)
+			if r == 1 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Welcome home &quot; .. players[steam].name .. &quot;[-]&quot;) end
+			if r == 2 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Back so soon &quot; .. players[steam].name .. &quot;?[-]&quot;) end
+			if r == 3 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]You're back![-]&quot;) end
+			if r == 4 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Home sweet home :)[-]&quot;) end
+			if r == 5 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Home again[-]&quot;) end
+		end
+
+		if time &gt; 900 and time &lt;= 1800 then
+			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]You're back &quot; .. players[steam].name .. &quot;! Welcome home :)[-]&quot;)
+		end
+
+		if time &gt; 1800 and time &lt;= 3600 then
+			r = rand(5)
+			if r == 1 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Home at last &quot; .. players[steam].name .. &quot;![-]&quot;) end
+			if r == 2 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Home again, home again. Ziggity zig.[-]&quot;) end
+			if r == 3 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Look what the cat dragged in.  Hello &quot; .. players[steam].name .. &quot;[-]&quot;) end
+			if r == 4 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Home at last &quot; .. players[steam].name .. &quot;![-]&quot;) end
+			if r == 5 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]You're back! So nice of you to drop by.[-]&quot;) end
+		end
+
+		if time &gt; 3600 then
+			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]So you decided to come home &quot; .. players[steam].name .. &quot;?[-]&quot;)
+			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Dinner's on the floor.[-]&quot;)
+			r = rand(5)
+			if r == 1 then send(&quot;give &quot; .. steam .. &quot; canDogfood 1&quot;) end
+			if r == 2 then send(&quot;give &quot; .. steam .. &quot; canCatfood 1&quot;) end
+			if r == 3 then send(&quot;give &quot; .. steam .. &quot; femur 1&quot;) end
+			if r == 4 then send(&quot;give &quot; .. steam .. &quot; vegetableStew 1&quot;) end
+			if r == 5 then send(&quot;give &quot; .. steam .. &quot; meatStew 1&quot;) end
+		end
+	end
+
+	if home then
+		players[steam].atHome = true
+		players[steam].lastAtHome = os.time()
+	else
+		players[steam].atHome = false
+	end
+end
+
+
+function reserveSlot(steam)
+	dbug(&quot;Reserving slot for &quot; .. steam)
+	send(&quot;sg ServerMaxPlayerCount &quot; .. server.ServerMaxPlayerCount + 1)
+	reservedSlots[steam] = steam
+	tempTimer( 60, [[removeReservedSlot(&quot;]] .. steam .. [[&quot;)]] )
+end
+
+
+function removeReservedSlot(steam)
+	if reservedSlots[steam] then
+		dbug(&quot;Removing reserved slot for &quot; .. steam)
+		reservedSlots[steam] = nil
+		send(&quot;sg ServerMaxPlayerCount &quot; .. server.ServerMaxPlayerCount - 1)
+	end
+end
+
+
 function calcTimestamp(str)
 	-- takes input like 1 week, 1 month, 1 year and outputs a timestamp that much in the future
 	local number, period
@@ -4710,8 +4864,92 @@ function strDateToTimestamp(strdate)
 end
 
 
+function getEquipment(equipment, item)
+	-- search the most recent inventory recording for an item and if found return how much there is and best quality if applicable
+	local tbl, test, i, found, quantity, quality
+
+	found = false
+	quality = 0
+	quantity = 0
+	tbl = string.split(equipment, &quot;|&quot;)
+
+	for i=1, table.maxn(tbl) - 1, 1 do
+		test = string.split(tbl[i], &quot;,&quot;)
+
+		if test[2] == item then
+			found = true
+
+			if tonumber(test[3]) &gt; tonumber(quality) then
+				quality = tonumber(test[3])
+			end
+		end
+	end
+
+	if found then
+		return true, quality
+	else
+		return false, 0
+	end
+end
+
+
+function getInventory(inventory, item)
+	-- search the most recent inventory recording for an item and if found return how much there is and best quality if applicable
+	local tbl, test, i, found, quantity, quality
+
+	found = false
+	quality = 0
+	quantity = 0
+	tbl = string.split(inventory, &quot;|&quot;)
+
+	for i=1, table.maxn(tbl) - 1, 1 do
+		test = string.split(tbl[i], &quot;,&quot;)
+		if test[3] == item then
+			found = true
+			quantity = quantity + tonumber(test[2])
+
+			if tonumber(test[4]) &gt; tonumber(quality) then
+				quality = tonumber(test[4])
+			end
+		end
+	end
+
+	if found then
+		return true, quantity, quality
+	else
+		return false, 0 , 0
+	end
+end
+
+
 function inInventory(steam, item, quantity, slot)
 	-- search the most recent inventory recording for an item
+	local tbl, test, i
+
+	cursor,errorString = conn:execute(&quot;SELECT * FROM inventoryTracker WHERE steam = &quot; .. steam ..&quot;  ORDER BY inventoryTrackerID DESC Limit 0, 1&quot;)
+	row = cursor:fetch({}, &quot;a&quot;)
+
+	tbl = string.split(row.belt .. row.pack .. row.equipment, &quot;|&quot;)
+
+	for i=1, table.maxn(tbl) - 1, 1 do
+		test = string.split(tbl[i], &quot;,&quot;)
+		if slot ~= nil then
+			if tonumber(test[2]) &gt;= tonumber(quantity) and test[3] == item and tonumber(test[1]) == slot then
+				return true
+			end
+		else
+			if tonumber(test[2]) &gt;= tonumber(quantity) and test[3] == item then
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
+
+function inBelt(steam, item, quantity, slot)
+	-- search the most recent inventory recording for an item in the belt
 	local tbl, test, i
 
 	cursor,errorString = conn:execute(&quot;SELECT * FROM inventoryTracker WHERE steam = &quot; .. steam ..&quot;  ORDER BY inventoryTrackerID DESC Limit 0, 1&quot;)
@@ -4920,6 +5158,7 @@ function timeoutPlayer(steam, reason, bot)
 	-- if the player is not already in timeout, send them there.
 	if players[steam].timeout == false and players[steam].botTimeout == false then
 		players[steam].timeout = true
+		if accessLevel(steam) &gt; 2 then players[steam].silentBob = true end
 		if bot then players[steam].botTimeout = true end -- the bot initiated this timeout
 		-- record their position for return
 		players[steam].xPosTimeout = math.floor(players[steam].xPos)
@@ -4930,7 +5169,7 @@ function timeoutPlayer(steam, reason, bot)
 		conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. math.floor(players[steam].xPos) .. &quot;,&quot; .. math.ceil(players[steam].yPos) .. &quot;,&quot; .. math.floor(players[steam].zPos) .. &quot;,'&quot; .. serverTime .. &quot;','timeout','Player &quot; .. steam .. &quot; &quot; .. escape(players[steam].name) .. &quot; has has been sent to timeout for &quot; .. escape(reason) .. &quot;',&quot; .. steam .. &quot;)&quot;)
 		
 		-- then teleport the player to timeout
-		send(&quot;tele &quot; .. steam .. &quot; &quot; .. players[steam].xPosTimeout .. &quot; -5000 &quot; .. players[steam].zPosTimeout)
+		send(&quot;tele &quot; .. steam .. &quot; &quot; .. players[steam].xPosTimeout .. &quot; 50000 &quot; .. players[steam].zPosTimeout)
 
 		message(&quot;say [&quot; .. server.chatColour .. &quot;]Sending player &quot; .. players[steam].name .. &quot; to timeout for &quot; .. reason .. &quot;[-]&quot;)
 		irc_QueueMsg(server.ircMain, &quot;[TIMEOUT] Player &quot; .. steam .. &quot; &quot; .. players[steam].name .. &quot; has been sent to timeout for &quot; .. reason)
@@ -5001,7 +5240,6 @@ end
 
 function startReboot()
 	send(&quot;sa&quot;)
---	message(&quot;say [&quot; .. server.chatColour .. &quot;]RESTARTING..[-]&quot;)
 	rebootTimerID = tempTimer( 5, [[finishReboot()]] )
 end
 
@@ -5147,7 +5385,7 @@ function randomPVPTP(playerid, location, forced)
 		end
 	end
 
-	if (locations[location].pvp ~= nil) then
+	if (locations[location].pvp) then
 		if (accessLevel(playerid) &gt; 2) then
 			players[playerid].baseCooldown = (os.time() + 1200) -- 2400 = 40 minutes
 			conn:execute(&quot;UPDATE players SET baseCooldown = &quot; .. os.time() + 1200 .. &quot; WHERE steam = &quot; .. playerid)
@@ -5449,10 +5687,39 @@ function initNewIGPlayer(steam, player, entityid)
 	igplayers[steam].zPosLastAlert = 0
 	igplayers[steam].ping = 0
 	igplayers[steam].highPingCount = 0
+	igplayers[steam].hackerScore = 0
 	igplayers[steam].tp = 0
 	igplayers[steam].afk = os.time() + 180
 	igplayers[steam].checkNewPlayer = true
+	igplayers[steam].lastLP = os.time()
 	return true
+end
+
+function fixMissingStuff()
+	lfs.mkdir(homedir .. &quot;/daily&quot;)
+	lfs.mkdir(homedir .. &quot;/dns&quot;)
+	lfs.mkdir(homedir .. &quot;/proxies&quot;)
+	lfs.mkdir(homedir .. &quot;/temp&quot;)
+	lfs.mkdir(homedir .. &quot;/scripts&quot;)
+
+	if not isFile(homedir .. &quot;/scripts/gmsg_custom.lua&quot;) then
+		file = io.open(homedir .. &quot;/scripts/gmsg_custom.lua&quot;, &quot;a&quot;)
+		file:write(&quot;function gmsg_custom()\n&quot;)
+		file:write(&quot;	calledFunction = \&quot;gmsg_custom\&quot;\n&quot;)
+		file:write(&quot;	\-\- ###################  do not allow remote commands beyond this point ################\n&quot;)
+		file:write(&quot;	if (gmsgvars.playerid == nil) then\n&quot;)
+		file:write(&quot;		faultyGMSG = false\n&quot;)
+		file:write(&quot;		return false\n&quot;)
+		file:write(&quot;	end\n&quot;)
+		file:write(&quot;	\-\- ####################################################################################\n&quot;)
+		file:write(&quot;	if (gmsgvars.words[1] == \&quot;test\&quot; and gmsgvars.words[2] == \&quot;command\&quot;) then\n&quot;)
+		file:write(&quot;		message(\&quot;pm \&quot; .. gmsgvars.playerid .. \&quot; [\&quot; .. server.chatColour .. \&quot;]This is a sample command in gmsg_custom.lua in the scripts folder.[-]\&quot;)\n&quot;)
+		file:write(&quot;		faultyGMSG = false\n&quot;)
+		file:write(&quot;		return true\n&quot;)
+		file:write(&quot;	end\n&quot;)
+		file:write(&quot;end\n&quot;)
+		file:close()
+	end
 end</script>
             <eventHandlerList/>
         </Script>
@@ -5642,45 +5909,55 @@ function irc_ListBases(steam)
 end
 
 
-function irc_PlayersNearPlayer(offline)
+function irc_PlayersNearPlayer(name, name1, range, xPos, zPos, offline)
 	local alone, dist, number, flag
 
 	alone = true
 
-	if (irc_params[4] == nil) then 
-		number = 200
-	else
-		number = tonumber(irc_params[4])
-	end
-
-	if offline == nil then
-		irc_QueueMsg(irc_params[1], &quot;Players within &quot; .. number .. &quot; meters of &quot; .. irc_params[3] .. &quot; are:&quot;) 	
+	if offline == false then
+		if name1 ~= &quot;&quot; then
+			irc_QueueMsg(name, &quot;Players within &quot; .. range .. &quot; meters of &quot; .. players[name1].name .. &quot; are:&quot;) 	
+		else
+			irc_QueueMsg(name, &quot;Players within &quot; .. range .. &quot; meters of x &quot; .. xPos .. &quot; z &quot; .. zPos .. &quot; are:&quot;) 	
+		end
 
 		for k, v in pairs(igplayers) do
-			if k ~= irc_params[2] then
-				dist = distance(players[irc_params[2]].xPos, players[irc_params[2]].zPos, v.xPos, v.zPos)
+			if k ~= name1 then
+				if name1 ~= &quot;&quot; then
+					dist = distance(players[name1].xPos, players[name1].zPos, v.xPos, v.zPos)
+				else
+					dist = distance(xPos, zPos, v.xPos, v.zPos)
+				end
 
-				if dist &lt; number then
-					irc_QueueMsg(irc_params[1], v.name .. &quot; distance: &quot; .. string.format(&quot;%-4.2d&quot;, dist) .. &quot; meters&quot;)
+				if dist &lt;= range then
+					irc_QueueMsg(name, v.name .. &quot; distance: &quot; .. string.format(&quot;%-4.2d&quot;, dist) .. &quot; meters&quot;)
 					alone = false
 				end
 			end
 		end
 	else
-		irc_QueueMsg(irc_params[1], &quot;Players within &quot; .. number .. &quot; meters of &quot; .. irc_params[3] .. &quot; including offline are:&quot;) 	
+		if name1 ~= &quot;&quot; then
+			irc_QueueMsg(name, &quot;Players within &quot; .. range .. &quot; meters of &quot; .. players[name1].name .. &quot; including offline are:&quot;) 	
+		else
+			irc_QueueMsg(name, &quot;Players within &quot; .. range .. &quot; meters of x &quot; .. xPos .. &quot; z &quot; .. zPos .. &quot; including offline are:&quot;) 	
+		end
 
 		for k, v in pairs(players) do
-			if k ~= irc_params[2] then
-				dist = distance(players[irc_params[2]].xPos, players[irc_params[2]].zPos, v.xPos, v.zPos)
+			if k ~= name1 then
+				if name1 ~= &quot;&quot; then
+					dist = distance(players[name1].xPos, players[name1].zPos, v.xPos, v.zPos)
+				else
+					dist = distance(xPos, zPos, v.xPos, v.zPos)
+				end
 
-				if dist &lt; number then
+				if dist &lt;= range then
 					if igplayers[k] then 
 						flag = &quot; PLAYING&quot;
 					else
-						flag = &quot; AWAY&quot;
+						flag = &quot; OFFLINE&quot;
 					end
 
-					irc_QueueMsg(irc_params[1], v.name .. &quot; distance: &quot; .. string.format(&quot;%-4.2d&quot;, dist) .. &quot; meters&quot; .. flag)
+					irc_QueueMsg(name, v.name .. &quot; distance: &quot; .. string.format(&quot;%-4.2d&quot;, dist) .. &quot; meters&quot; .. flag)
 					alone = false
 				end
 			end
@@ -5688,63 +5965,97 @@ function irc_PlayersNearPlayer(offline)
 	end
 
 	if (alone == true) then
-		irc_QueueMsg(irc_params[1], &quot;There is nobody within &quot; .. number .. &quot; meters of &quot; .. irc_params[3])
+		if name1 ~= &quot;&quot; then
+			irc_QueueMsg(name, &quot;There is nobody within &quot; .. range .. &quot; meters of &quot; .. players[name1].name)
+		else
+			irc_QueueMsg(name, &quot;There is nobody within &quot; .. range .. &quot; meters of x &quot; .. xPos .. &quot; z &quot; .. zPos)
+		end
 	end
 
-	irc_QueueMsg(irc_params[1], &quot;&quot;)
+	irc_QueueMsg(name, &quot;&quot;)
 end
 
 
-function irc_BasesNearPlayer()
-	local alone, dist, number, protected
+function irc_BasesNearPlayer(name, name1, range, xPos, zPos)
+	local alone, dist, protected
 
 	alone = true
 
-	if (irc_params[4] == nil) then 
-		number = 200
-	else
-		number = tonumber(irc_params[4])
-	end
-
-	irc_QueueMsg(irc_params[1], &quot;Bases within &quot; .. number .. &quot; meters of &quot; .. irc_params[3] .. &quot; are:&quot;) 	
+	irc_QueueMsg(name, &quot;Bases within &quot; .. range .. &quot; meters of &quot; .. players[name1].name .. &quot; are:&quot;) 	
 
 	for k, v in pairs(players) do
-		if (v.homeX) and (v.homeX ~= 0 and v.homeZ ~= 0) then
-			dist = distance(players[irc_params[2]].xPos, players[irc_params[2]].zPos, v.homeX, v.homeZ)
+		if (v.homeX ~= 0 and v.homeZ ~= 0) then
+			if name1 ~= &quot;&quot; then
+				dist = distance(players[name1].xPos, players[name1].zPos, v.homeX, v.homeZ)
+			else
+				dist = distance(xPos, zPos, v.homeX, v.homeZ)			
+			end
 
-			if dist &lt; number then
+			if dist &lt;= range then
 				if players[k].protect == true then
 					protected = &quot; bot protected&quot;
 				else
 					protected = &quot; unprotected&quot;
 				end
 
-				irc_QueueMsg(irc_params[1], v.name .. &quot; distance: &quot; .. string.format(&quot;%-.2d&quot;, dist) .. &quot; meters&quot; .. protected)
+				irc_QueueMsg(name, v.name .. &quot; distance: &quot; .. string.format(&quot;%-.2d&quot;, dist) .. &quot; meters&quot; .. protected)
 				alone = false
 			end
 		end
 		
-		if (v.home2X) and (v.home2X ~= 0 and v.home2Z ~= 0) then
-			dist = distance(players[irc_params[2]].xPos, players[irc_params[2]].zPos, v.home2X, v.home2Z)
+		if (v.home2X ~= 0 and v.home2Z ~= 0) then
+			if name1 ~= &quot;&quot; then		
+				dist = distance(players[name1].xPos, players[name1].zPos, v.home2X, v.home2Z)
+			else
+				dist = distance(xPos, zPos, v.home2X, v.home2Z)			
+			end
 
-			if dist &lt; number then
+			if dist &lt;= range then
 				if players[k].protect2 == true then
 					protected = &quot; bot protected&quot;
 				else
 					protected = &quot; unprotected&quot;
 				end
 
-				irc_QueueMsg(irc_params[1], v.name .. &quot; distance: &quot; .. string.format(&quot;%-.2d&quot;, dist) .. &quot; meters&quot; .. protected)
+				irc_QueueMsg(name, v.name .. &quot; (base 2) distance: &quot; .. string.format(&quot;%-.2d&quot;, dist) .. &quot; meters&quot; .. protected)
 				alone = false
 			end
 		end		
 	end
 
 	if (alone == true) then
-		irc_QueueMsg(irc_params[1], &quot;There are none within &quot; .. number .. &quot; meters of &quot; .. irc_params[3])
+		irc_QueueMsg(name, &quot;There are none within &quot; .. range .. &quot; meters of &quot; .. players[name1].name)
 	end
 
-	irc_QueueMsg(irc_params[1], &quot;&quot;)
+	irc_QueueMsg(name, &quot;&quot;)
+end
+
+
+function irc_LocationsNearPlayer(name, name1, range, xPos, zPos)
+	local alone, dist
+
+	alone = true
+
+	irc_QueueMsg(name, &quot;Locations within &quot; .. range .. &quot; meters of &quot; .. players[name1].name .. &quot; are:&quot;) 	
+
+	for k, v in pairs(locations) do
+		if name1 ~= &quot;&quot; then
+			dist = distance(players[name1].xPos, players[name1].zPos, v.x, v.z)
+		else
+			dist = distance(xPos, zPos, v.x, v.z)			
+		end
+
+		if dist &lt;= range then
+			irc_QueueMsg(name, v.name .. &quot; distance: &quot; .. string.format(&quot;%-.2d&quot;, dist) .. &quot; meters&quot;)
+			alone = false
+		end
+	end
+
+	if (alone == true) then
+		irc_QueueMsg(name, &quot;There are none within &quot; .. range .. &quot; meters of &quot; .. players[name1].name)
+	end
+
+	irc_QueueMsg(name, &quot;&quot;)
 end
 
 
@@ -5807,10 +6118,18 @@ function irc_PlayerShortInfo()
 		irc_QueueMsg(irc_params[1], &quot;Not exiled&quot;)
 	end
 
-	if players[irc_params[2]].inLocation ~= &quot;&quot; and players[irc_params[2]].inLocation ~= nil then
-		irc_QueueMsg(irc_params[1], &quot;In location &quot; .. players[irc_params[2]].alertLocation)
+	if players[irc_params[2]].inLocation ~= &quot;&quot; then
+		irc_QueueMsg(irc_params[1], &quot;In location &quot; .. players[irc_params[2]].inLocation)
 	else
 		irc_QueueMsg(irc_params[1], &quot;Not in a named location&quot;)
+	end
+
+	irc_QueueMsg(irc_params[1], &quot;Current position &quot; .. math.floor(players[irc_params[2]].xPos) .. &quot; &quot; .. math.ceil(players[irc_params[2]].yPos) .. &quot; &quot; .. math.floor(players[irc_params[2]].zPos))
+
+	if players[irc_params[2]].donor then
+		irc_QueueMsg(irc_params[1], &quot;Is a donor&quot;)
+	else
+		irc_QueueMsg(irc_params[1], &quot;Not a donor&quot;)
 	end
 
 	cursor,errorString = conn:execute(&quot;SELECT * FROM bans WHERE steam =  &quot; .. irc_params[2])
@@ -6362,9 +6681,9 @@ end
 function PicknMix(mode)
 	local r
 
-	r = rand(25)
-	if (r == 12) then r = PicknMix() end
-	if (r == 24) then r = PicknMix() end
+	r = rand(30)
+	if (r == 19) then r = PicknMix() end
+	if (r &gt; 20 and r &lt; 25) then r = PicknMix() end
 	return r
 end
 
@@ -6495,21 +6814,26 @@ function gimme(pid)
 
 --display(pid)
 
-local cmd
+local cmd, debug
 local pname = players[pid].name
 local specialDay = &quot;&quot;
 local maxGimmies
 local dist
+local r, rows, row, prize, category
 
-for k, v in pairs(locations) do
-	dist = math.abs(distancexz(igplayers[pid].xPos, igplayers[pid].xPos, locations[k].x, locations[k].z))
+debug = false
 
-	if dist &lt; 50 then
-		message(&quot;pm &quot; .. pid .. &quot; [&quot; .. server.chatColour .. &quot;]Gimme cannot be played within 50 meters of a location teleport.[-]&quot;)
+if debug then dbug(&quot;debug gimme&quot;) end
+
+if locations[players[pid].inLocation] then
+	if not locations[players[pid].inLocation].pvp then
+		message(&quot;pm &quot; .. pid .. &quot; [&quot; .. server.chatColour .. &quot;]Gimme cannot be played within a location unless it is pvp enabled.[-]&quot;)
 		faultyGimme = false
 		return
 	end
 end
+
+if debug then dbug(&quot;debug gimme 1&quot;) end
 
 --if (string.find(serverTime, &quot;02-14&quot;, 5, 10)) then specialDay = &quot;valentine&quot; end
 
@@ -6522,14 +6846,6 @@ faultyGimme = true
 
 local steamid = pid
 local playerid = igplayers[pid].id
-
--- abort if in the library
---if (distancexyz (igplayers[steamid].xPos, igplayers[steamid].yPos, igplayers[steamid].zPos, locations[&quot;library&quot;].x, locations[&quot;library&quot;].y, locations[&quot;library&quot;].z ) &lt; 50) then
---	message(&quot;pm &quot; .. pid .. &quot; [&quot; .. server.chatColour .. &quot;]Are you nuts!? Do not play gimme in here!&quot;)
---	faultyGimme = false
---	return
---end
-
 local zombies = tonumber(igplayers[pid].zombies)
 
 --		maxGimmies = 11
@@ -6541,6 +6857,11 @@ local zombies = tonumber(igplayers[pid].zombies)
 	else
 		maxGimmies = 11
 	end
+
+	if players[steamid].gimmeCount == nil then
+		players[steamid].gimmeCount = 0
+	end
+
 	if (players[steamid].gimmeCount &lt; tonumber(maxGimmies)) then
 		players[steamid].gimmeCount = players[steamid].gimmeCount + 1
 	else
@@ -6549,127 +6870,84 @@ local zombies = tonumber(igplayers[pid].zombies)
 		return
 	end
 
-
---	if zombies &gt; 3999 then
---		r = math.random(1, 45)
---	else
-		r = math.random(1, 44)
---	end
-
--- debug testing
---if (tonumber(playerid) == 750) then r = 36 end
---display(&quot;playerid = &quot; .. playerid)
-
+	r = math.random(1, 60)
 	faultyGimmeNumber = r
 
-if r == 36 then r = 37 end
-
-
---cecho(&quot;Debug&quot;, &quot;gimme random = &quot; .. r .. &quot; player = &quot; .. pname .. &quot;\n&quot;)
-
-	carChance = rand(20)
-	if (carChance == 11) then 
-		winACar = true 
-	else
-		winACar = false 
-	end
-
-	crateChance = rand(10)
-	if (crateChance == 5) then 
-		winACrate = true 
-	else
-		winACrate = false 
-	end
+if debug then dbug(&quot;debug gimme 2&quot;) end
+if debug then dbug(&quot;gimme random  &quot; .. r .. &quot; player = &quot; .. pname) end
 
 --[[
-  1 - zombie04
-  2 - zombieferal
-  3 - zombie05
-  4 - zombie06
-  5 - zombie07
-  6 - zombie01
-  7 - zombiecrawler
-  8 - snowzombie01
-  9 - snowzombie02
-  10 - snowzombie03
-  11 - spiderzombie
-  12 - burntzombie
-  13 - zombiegal01
-  14 - zombiegal02
-  15 - zombiegal03
-  16 - zombiegal04
-  17 - zombie02
+  1 - zombie01
+  2 - zombie04
+  3 - zombieferal
+  4 - zombieBoe
+  5 - zombieJoe
+  6 - zombieMoe
+  7 - zombieArlene
+  8 - zombieScreamer
+  9 - zombieDarlene
+  10 - zombieMarlene
+  11 - zombieYo
+  12 - zombieSteve
+  13 - zombieSteveCrawler
+  14 - snowzombie
+  15 - spiderzombie
+  16 - burntzombie
+  17 - zombieNurse
   18 - fatzombiecop
-  19 - fatzombie
-  20 - hornet
-  21 - zombiedog
-  22 - car_Blue
-  23 - car_Orange
-  24 - car_Red
-  25 - car_White
-  26 - animalStag
-  27 - animalRabbit
-  28 - animalPig
-  29 - supplyPlane
-  30 - sc_MeleeWeapons
-  31 - sc_General
-  32 - zombieUMAfemale
-  33 - zombieUMAmale
+  19 - hornet
+  20 - zombiedog
+  21 - car_Blue
+  22 - car_Orange
+  23 - car_Red
+  24 - car_White
+  25 - animalStag
+  26 - animalBear
+  27 - zombieBear
+  28 - animalRabbit
+  29 - animalChicken
+  30 - animalPig
+  33 - zombieUMAfemale
+  34 - zombieUMAmale
+  35 - zombieMaleHazmat
+  36 - zombieFemaleHazmat
+  37 - minibike
 --]]
 
-
-	if (r == 12) then r = 13 end
-	if (r == 32) then r = 14 end
-	if (r == 33) then r = 15 end
-
---	if (r == 5) then r = 6 end
---	if (r == 11) then r = 10 end
-
 	-- get name of entity
-	if (r == 1) then entity = &quot;zombie04&quot; end
-	if (r == 2) then entity = &quot;zombieferal&quot; end
-	if (r == 3) then entity = &quot;zombie05&quot; end
-	if (r == 4) then entity = &quot;zombie06&quot; end 
-	if (r == 5) then entity = &quot;zombie07&quot; end	 
-	if (r == 6) then entity = &quot;zombieBoe&quot; end
-	if (r == 7) then entity = &quot;zombieJoe&quot; end	 
-	if (r == 8) then entity = &quot;zombieMoe&quot; end	 
-	if (r == 9) then entity = &quot;zombieYo&quot; end	 
-	if (r == 10) then entity = &quot;zombieSteve&quot; end	 
-	if (r == 11) then entity = &quot;zombieSteveCrawler&quot; end	 
---	if (r == 12) then entity = &quot;burntzombie&quot; end	 
-	if (r == 13) then entity = &quot;zombiegacrawler&quot; end	 
-	if (r == 14) then entity = &quot;snowzombie01&quot; end	 
-	if (r == 15) then entity = &quot;snowzombie02&quot; end	 
-	if (r == 16) then entity = &quot;snowzombie03&quot; end	 
-	if (r == 17) then entity = &quot;spiderzombie&quot; end	 
-	if (r == 18) then entity = &quot;burntzombie&quot; end	 
-	if (r == 19) then entity = &quot;zombiegal01&quot; end	 
-	if (r == 20) then entity = &quot;zombiegal02&quot; end	 
-	if (r == 21) then entity = &quot;zombiegal03&quot; end	 
-	if (r == 22) then entity = &quot;zombiegal04&quot; end	 
-	if (r == 23) then entity = &quot;zombie02&quot; end	 
-	if (r == 24) then entity = &quot;fatzombiecop&quot; end	 
-	if (r == 25) then entity = &quot;fatzombie&quot; end	 
-	if (r == 26) then entity = &quot;zombiegal01&quot; end	 
-	if (r == 27) then entity = &quot;zombiedog&quot; end	 
-	if (r == 28) then entity = &quot;nothing at all!  NaDa!&quot; end	 
-	if (r == 29) then entity = &quot;nothing at all!  NaDa!&quot; end	 
-	if (r == 30) then entity = &quot;nothing at all!  NaDa!&quot; end	 
-	if (r == 31) then entity = &quot;nothing at all!  NaDa!&quot; end	 
-	if (r == 32) then entity = &quot;startled stag!&quot; end	 
-	if (r == 33) then entity = &quot;grumpy bear&quot; end	 
-	if (r == 34) then entity = &quot;terrified bunny!&quot; end	 
-	if (r == 35) then entity = &quot;tasty pig!&quot; end	 
-	if (r == 36) then entity = &quot;SUPPLIES! par avon&quot; end	 
-	if (r == 37) then entity = &quot;General&quot; end	 
-	if (r == 38) then entity = &quot;zombieUMAfemale&quot; end	 
-	if (r == 39) then entity = &quot;zombieUMAmale&quot; end	 
-	if (r == 45) then entity = &quot;BUNNIES!&quot; end	 
+	if (r == 1) then entity = &quot;zombie01&quot; end
+	if (r == 2) then entity = &quot;zombie04&quot; end
+	if (r == 3) then entity = &quot;zombieferal&quot; end
+	if (r == 4) then entity = &quot;zombieBoe&quot; end 
+	if (r == 5) then entity = &quot;zombieJoe&quot; end	 
+	if (r == 6) then entity = &quot;zombieMoe&quot; end
+	if (r == 7) then entity = &quot;zombieArlene&quot; end	 
+	if (r == 8) then entity = &quot;zombieScreamer&quot; end	 
+	if (r == 9) then entity = &quot;zombieDarlene&quot; end	 
+	if (r == 10) then entity = &quot;zombieMarlene&quot; end	 
+	if (r == 11) then entity = &quot;zombieYo&quot; end	 
+	if (r == 12) then entity = &quot;zombieSteve&quot; end	 
+	if (r == 13) then entity = &quot;zombieSteveCrawler&quot; end	 
+	if (r == 14) then entity = &quot;snowzombie&quot; end	 
+	if (r == 15) then entity = &quot;spiderzombie&quot; end	 
+	if (r == 16) then entity = &quot;burntzombie&quot; end	 
+	if (r == 17) then entity = &quot;zombieNurse&quot; end	 
+	if (r == 18) then entity = &quot;fatzombiecop&quot; end	 
+	if (r == 19) then r = 31 end
+	if (r == 20) then entity = &quot;zombiedog&quot; end	 
+	if (r == 21) then r = 31 end
+	if (r == 22) then r = 31 end
+	if (r == 23) then r = 31 end
+	if (r == 24) then r = 31 end
+	if (r == 25) then entity = &quot;startled stag&quot; end	 
+	if (r == 26) then entity = &quot;bear&quot; end	 
+	if (r == 27) then entity = &quot;undead bear&quot; end	 
+	if (r == 28) then entity = &quot;rabbit&quot; end	 
+	if (r == 29) then entity = &quot;dumb chicken&quot; end	 
 
 	spawnCount = 1
 
-	if (r &lt; 28) then
+	if (r &lt; 30) then
 		-- nasty zombies
 		descriptor = rand(6)	
 		chanceOfMultiples = rand(50)
@@ -6699,6 +6977,8 @@ if r == 36 then r = 37 end
 if entity == &quot;zombieferal&quot; then
 	spawnCount = rand(3)
 end
+
+if debug then dbug(&quot;debug gimme 3&quot;) end
 
 --cecho(&quot;Debug&quot;, &quot;spawnCount = &quot; .. spawnCount .. &quot;\n&quot;)
 
@@ -6807,59 +7087,26 @@ end
 				end			
 			end	
 		end
-	else
-		-- spawning a crate or car etc
-
-		if (r == 22) then
---			description =  &quot;a shiny &quot;
-		end	
-		
-		if (r == 23) then
---			description =  &quot;a scratched &quot;
-		end		
-		
-		if (r == 24) then
---			description =  &quot;a &quot;
-		end	
-
-		if (r == 25) then
---			description =  &quot;a &quot;
-		end		
-		
-		if (r == 26) then
---			description =  &quot;a &quot;
-		end			
-		
-		if (r == 27) then
---			description =  &quot;a &quot;
-		end				
-		
-		if (r == 28) then
---			description =  &quot;a &quot;
-		end				
-		
-		if (r == 29) then
---			description =  &quot;&quot;
-		end			
-		
-		if (r == 30) then
---			description =  &quot;a crate labelled &quot;
-		end		
-		
-		if (r == 31) then
---			description =  &quot;a crate labelled &quot;
-		end			
 	end
 
-	if (r == 29) then 
-		r = rand(204)
+if debug then dbug(&quot;debug gimme 4&quot;) end
 
-		qty = rand(gimmePrizes[r].limit)
+	if (r == 30) then 
+		cursor,errorString = conn:execute(&quot;select * from gimmePrizes&quot;)
+		rows = tonumber(cursor:numrows())
+		r = rand(rows)
+
+		cursor,errorString = conn:execute(&quot;select * from gimmePrizes limit &quot; .. r - 1 .. &quot;,1&quot;)
+		row = cursor:fetch({}, &quot;a&quot;)
+
+		qty = rand(tonumber(row.prizeLimit))
+		category = row.category
+		prize = row.name
 		
 		description = &quot;&quot;
 		if (qty == 1) then description = &quot;a &quot; end
 		
-		if (gimmePrizes[r].category == &quot;weapon&quot;) then
+		if (category == &quot;weapon&quot;) then
 			descr = rand(12)
 		
 			if (descr==1) then description = description .. &quot;shiny new &quot; end
@@ -6876,7 +7123,7 @@ end
 			if (descr==12) then description = description .. &quot;rusty &quot; end															
 		end			
 		
-		if (gimmePrizes[r].category == &quot;book&quot;) then
+		if (category == &quot;book&quot;) then
 			descr = rand(12)
 		
 			if (descr==1) then description = description .. &quot;rare &quot; end
@@ -6893,7 +7140,7 @@ end
 			if (descr==12) then description = description .. &quot;ratty &quot; end															
 		end			
 		
-		if (gimmePrizes[r].category == &quot;misc&quot;) then
+		if (category == &quot;misc&quot;) then
 			descr = rand(12)
 		
 			if (descr==1) then description = description .. &quot;common &quot; end
@@ -6910,7 +7157,7 @@ end
 			if (descr==12) then description = description .. &quot;uninteresting &quot; end															
 		end				
 		
-		if (gimmePrizes[r].category == &quot;health&quot;) then
+		if (category == &quot;health&quot;) then
 			descr = rand(10)
 		
 			if (descr==1) then description = description .. &quot;dodgy &quot; end
@@ -6925,7 +7172,7 @@ end
 			if (descr==10) then description = description .. &quot;spare &quot; end												
 		end			
 		
-		if (gimmePrizes[r].category == &quot;food&quot;) then
+		if (category == &quot;food&quot;) then
 			descr = rand(12)
 		
 			if (descr==1) then description = description .. &quot;delicious &quot; end
@@ -6942,7 +7189,7 @@ end
 			if (descr==12) then description = description .. &quot;funky &quot; end															
 		end	
 		
-		if (gimmePrizes[r].category == &quot;tools&quot;) then
+		if (category == &quot;tools&quot;) then
 			descr = rand(10)
 		
 			if (descr==1) then description = description .. &quot;handy &quot; end
@@ -6957,7 +7204,7 @@ end
 			if (descr==10) then description = description .. &quot;designer &quot; end												
 		end		
 		
-		if (gimmePrizes[r].category == &quot;clothes&quot;) then
+		if (category == &quot;clothes&quot;) then
 			descr = rand(10)
 		
 			if (descr==1) then description = description .. &quot;shitty &quot; end
@@ -6970,11 +7217,9 @@ end
 			if (descr==8) then description = description .. &quot;fabulous &quot; end									
 			if (descr==9) then description = description .. &quot;natty &quot; end												
 			if (descr==10) then description = description .. &quot;stylish &quot; end												
-
-			if (gimmePrizes[r].name == &quot;santaHat&quot;) then description = description .. &quot;very festive &quot; end
 		end
 		
-		description = description .. gimmePrizes[r].name
+		description = description .. prize
 		
 		if (qty &gt; 1) then
 			description = qty .. &quot; &quot; .. description .. &quot;s&quot;
@@ -6986,33 +7231,24 @@ end
 			message(&quot;pm &quot; .. steamid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; won &quot; .. description .. &quot;[-]&quot;)
 		end	
 		
-		send(&quot;give &quot; .. steamid .. &quot; &quot; .. gimmePrizes[r].name .. &quot; &quot; .. qty)
+		send(&quot;give &quot; .. steamid .. &quot; &quot; .. prize .. &quot; &quot; .. qty)
+
+		faultyGimme = false
+		return 
+	end
+
+	if (r == 31) then
+		if (not server.gimmePeace) then
+			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; almost won a prize![-]&quot;)
+		else
+			message(&quot;pm &quot; .. steamid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; almost won a prize![-]&quot;)
+		end
 
 		faultyGimme = false
 		return 
 	end
 
 	if (r == 32) then
---		if (zombies &lt; 99) then
-			if (not server.gimmePeace) then
-				message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; almost won a prize![-]&quot;)
-			else
-				message(&quot;pm &quot; .. steamid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; almost won a prize![-]&quot;)
-			end
---		else 
---			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; has won a trip to Real Life! You have 20 seconds to pack your stuff!  Bon Voyage!&quot;)
---			cmd = &quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; Here comes your prize!&quot;
---			tempTimer( 15, [[message(&quot;]] .. cmd .. [[&quot;)]] )
-
---			cmd = &quot;kick &quot; .. pname .. &quot; You won a trip to Real Life!  See you back soon =D&quot;
---			tempTimer( 20, [[send(&quot;]] .. cmd .. [[&quot;)]] )
---		end
-
-		faultyGimme = false
-		return 
-	end
-
-	if (r == 45) then
 		spawnCount = rand(7,2)
 		if (not server.gimmePeace) then
 			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; won &quot; .. spawnCount .. &quot; BUNNIES![-]&quot;)
@@ -7021,7 +7257,7 @@ end
 		end
 
 		for i = 1, spawnCount do
-			cmd = &quot;se &quot; .. playerid .. &quot; 27&quot;
+			cmd = &quot;se &quot; .. playerid .. &quot; 28&quot;
 			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('&quot; .. cmd .. &quot;', &quot; .. steamid .. &quot;)&quot;)
 		end
 
@@ -7029,7 +7265,7 @@ end
 		return
 	end
 
-	if (r == 34) then
+	if (r == 33) then
 		r = rand(100)
 		if (r &lt; 70) then
 			if (not server.gimmePeace) then
@@ -7055,8 +7291,8 @@ end
 			if (r == 1) then litter = &quot;canEmpty&quot; end
 			if (r == 2) then litter = &quot;candyTin&quot; end
 			if (r == 3) then litter = &quot;paper&quot; end
-			if (r == 4) then litter = &quot;scrapIron&quot; end
-			if (r == 5) then litter = &quot;brownGrassDiagonal&quot; end
+			if (r == 4) then litter = &quot;cloth&quot; end
+			if (r == 5) then litter = &quot;yuccaFibers&quot; end
 			if (r == 6) then litter = &quot;dirt&quot; end
 			if (r == 6) then litter = &quot;bulletCasing&quot; end
 			if (r == 7) then litter = &quot;emptyJar&quot; end
@@ -7069,7 +7305,7 @@ end
 		return
 	end
 
-	if (r == 35) then
+	if (r == 34) then
 		item = rand(12)
 		if (item == 1) then prize = &quot;canBeef&quot; end
 		if (item == 2) then prize = &quot;canChili&quot; end
@@ -7095,38 +7331,12 @@ end
 	end
 
 
-	if (r == 36) then
-		message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; won a free skydiving trip.  Happy flight &quot; .. pname .. &quot;![-]&quot;)
-
-		-- first record their current x y z
-		players[steamid].xPosOld = math.floor(igplayers[steamid].xPos)
-		players[steamid].yPosOld = math.ceil(igplayers[steamid].yPos) + 1
-		players[steamid].zPosOld = math.floor(igplayers[steamid].zPos)
-	
-		-- then teleport the player to timeout
-		send (&quot;tele &quot; .. steamid .. &quot; &quot; .. locations[&quot;timeout&quot;].x .. &quot; 600 &quot; .. locations[&quot;timeout&quot;].z)
-
-		descr = rand(5)
-		if (descr == 1) then cmd = &quot;say [&quot; .. server.chatColour .. &quot;]OH NO! &quot; .. pname .. &quot; forgot the parachute![-]&quot; end
-		if (descr == 2) then cmd = &quot;say [&quot; .. server.chatColour .. &quot;]OH NO! This isn't the right drop zone![-]&quot; end
-		if (descr == 3) then cmd = &quot;say [&quot; .. server.chatColour .. &quot;]God knows why &quot; .. pname .. &quot; wanted to jump there.  That area's full of zombies![-]&quot; end
-		if (descr == 4) then cmd = &quot;say [&quot; .. server.chatColour .. &quot;]Don't forget to pull the cord![-]&quot; end
-		if (descr == 5) then cmd = &quot;say [&quot; .. server.chatColour .. &quot;]OMG The pilot's infected! He's gone berzerk.. We're going down!  AAAAAAAAAH![-]&quot; end
-		tempTimer( 5, [[message(&quot;]] .. cmd .. [[&quot;)]] )
-		cmd = &quot;say /return &quot; .. pname
-		tempTimer( 30, [[message(&quot;]] .. cmd .. [[&quot;)]] )
-
-		faultyGimme = false
-		return
-	end
-
-
-	if (r == 37) and auto == false then
+	if (r == 35) then
 		descr = rand(8)
 
-		if (descr == 1) then cmd = &quot;Blue smoke!&quot; end
-		if (descr == 2) then cmd = &quot;Orange flames!&quot; end
-		if (descr == 3) then cmd = &quot;Black smoke!&quot; end
+		if (descr == 1) then cmd = &quot;Nothing!&quot; end
+		if (descr == 2) then cmd = &quot;Nothing!&quot; end
+		if (descr == 3) then cmd = &quot;Nothing!&quot; end
 
 		if (descr == 4) then 
 			cmd = &quot;*BZZT*  Oh no!  It's eaten another gimmie![-]&quot; 
@@ -7153,9 +7363,7 @@ end
 			tempTimer( 1, [[message(&quot;]].. cmd .. [[&quot;)]] )
 
 			for i = 1, r do
-				z = rand(17)
-				if z == 5 then z = 4 end
-				if z == 11 then z = 10 end
+				z = PicknMix()
 				cmd = &quot;se &quot; .. playerid .. &quot; &quot; .. z
 				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('&quot; .. cmd .. &quot;', &quot; .. steamid .. &quot;)&quot;)
 			end
@@ -7178,14 +7386,14 @@ end
 	end
 
 
-	if (r == 38) then
+	if (r == 36) then
 		if (not server.gimmePeace) then
 			message(&quot;say [&quot; .. server.chatColour .. &quot;]HAPPY BIRTHDAY &quot; .. pname .. &quot;!  We got you a puppy![-]&quot;)
 		else
 			message(&quot;pm &quot; .. steamid .. &quot; [&quot; .. server.chatColour .. &quot;]HAPPY BIRTHDAY &quot; .. pname .. &quot;! We got you a puppy![-]&quot;)
 		end
 
-		cmd = &quot;se &quot; .. playerid .. &quot; 21&quot;
+		cmd = &quot;se &quot; .. playerid .. &quot; 20&quot;
 		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('&quot; .. cmd .. &quot;', &quot; .. steamid .. &quot;)&quot;)
 
 		faultyGimme = false
@@ -7193,14 +7401,14 @@ end
 	end
 
 
-	if (r == 39) then
+	if (r == 37) then
 		if (not server.gimmePeace) then
 			message(&quot;say [&quot; .. server.chatColour .. &quot;]You won a HUGE STEAK!!! &quot; .. pname .. &quot;!  But this guy ate it :(  Deal with him![-]&quot;)
 		else
 			message(&quot;pm &quot; .. steamid .. &quot; [&quot; .. server.chatColour .. &quot;]You won a HUGE STEAK!!! &quot; .. pname .. &quot;!  But this guy ate it :(  Deal with him![-]&quot;)
 		end
 
-		cmd = &quot;se &quot; .. playerid .. &quot; 19&quot;
+		cmd = &quot;se &quot; .. playerid .. &quot; 4&quot;
 		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('&quot; .. cmd .. &quot;', &quot; .. steamid .. &quot;)&quot;)
 
 		faultyGimme = false
@@ -7208,7 +7416,7 @@ end
 	end
 
 
-	if (r == 40) then
+	if (r == 38) then
 		if (not server.gimmePeace) then
 			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; won invisiblity!  Press Alt-F4 to claim your prize!!![-]&quot;)
 		else
@@ -7220,7 +7428,7 @@ end
 	end
 
 
-	if (r == 41) then
+	if (r == 39) then
 		spawnCount = rand(15,5)
 		if (not server.gimmePeace) then
 			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; ate a bad potato and is shitting potatoes everywhere![-]&quot;)
@@ -7237,7 +7445,7 @@ end
 		return
 	end
 
-	if (r == 42) then
+	if (r == 40) then
 		if (not server.gimmePeace) then
 			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; voted first place WINNER! Here's your trophy.[-]&quot;)
 		else
@@ -7252,7 +7460,7 @@ end
 	end
 
 
-	if (r == 43) then
+	if (r == 41) then
 		if (not server.gimmePeace) then
 			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; won a care package via air drop.  Gee I hope the pilot knows where the drop zone is![-]&quot;)
 		else
@@ -7266,7 +7474,7 @@ end
 	end
 
 
-	if (r == 44) then
+	if (r == 42) then
 		players[steamid].baseCooldown = 0
 		conn:execute(&quot;UPDATE players SET baseCooldown = 0 WHERE steam = &quot; .. steamid)
 
@@ -7281,20 +7489,11 @@ end
 	end	
 
 
-	if (r == 45) then
-		message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; won stealthy Ninja Zombies!  Only they know when they will strike![-]&quot;)
-		NinjaZombies(playerid)
-
-		faultyGimme = false
-		return
-	end	
-
-
-	if (r &gt; 29) then
+	if (r &gt; 42) and (r &lt; 50) then
 		if (not server.gimmePeace) then
-			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; did not win a prize.[-]&quot;)
+			message(&quot;say [&quot; .. server.chatColour .. &quot;]You lose!  Try again &quot; .. pname .. &quot;[-]&quot;)
 		else
-			message(&quot;pm &quot; .. steamid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; did not win a prize.[-]&quot;)
+			message(&quot;pm &quot; .. steamid .. &quot; [&quot; .. server.chatColour .. &quot;]You lose!  Try again &quot; .. pname .. &quot;[-]&quot;)
 		end
 
 		faultyGimme = false
@@ -7302,11 +7501,11 @@ end
 	end
 
 
-	if (r &gt; 21) and (r &lt; 26) then
+	if (r &gt; 49) then
 		if (not server.gimmePeace) then
-			message(&quot;say [&quot; .. server.chatColour .. &quot;]You lose!  Try again &quot; .. pname .. &quot;[-]&quot;)
+			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; did not win a prize.[-]&quot;)
 		else
-			message(&quot;pm &quot; .. steamid .. &quot; [&quot; .. server.chatColour .. &quot;]You lose!  Try again &quot; .. pname .. &quot;[-]&quot;)
+			message(&quot;pm &quot; .. steamid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. pname .. &quot; did not win a prize.[-]&quot;)
 		end
 
 		faultyGimme = false
@@ -7358,6 +7557,12 @@ end
 		end
 	end
 
+	if r &gt; 30 then
+		-- abort if r &gt; 30 so we don't spawn the broken zeds
+		faultyGimme = false
+		return
+	end
+
 	if (spawnCount == 1) then
 		cmd = &quot;se &quot; .. playerid .. &quot; &quot; .. r
 		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('&quot; .. cmd .. &quot;', &quot; .. steamid .. &quot;)&quot;)
@@ -7392,6 +7597,8 @@ end
 			end
 		end
 	end
+
+if debug then dbug(&quot;debug gimme end&quot;) end
 
 	faultyGimme = false
 	return
@@ -7453,7 +7660,7 @@ end
 		if players[ircid].ircAuthenticated == true then
 			-- keep login session alive
 			if accessLevel(ircid) &lt; 4 then
-				players[ircid].ircSessionExpiry = os.time() + 600
+				players[ircid].ircSessionExpiry = os.time() + 3600
 			else
 				players[ircid].ircSessionExpiry = os.time() + 10800
 			end
@@ -7575,6 +7782,70 @@ end
 	end
 
 
+	if (words[1] == &quot;location&quot;) then
+		-- display details about the location
+
+		locationName = words[2]
+		locationName = string.trim(locationName)
+		loc = LookupLocation(locationName)
+
+		if (loc == nil) then 
+			irc_QueueMsg(name, &quot;That location does not exist.&quot;)
+			return
+		else	
+			cursor,errorString = conn:execute(&quot;SELECT * FROM locations WHERE name = '&quot; .. locationName ..&quot;'&quot;)
+			row = cursor:fetch({}, &quot;a&quot;)
+
+			irc_QueueMsg(name, &quot;Location: &quot; .. row.name)
+			irc_QueueMsg(name, &quot;Active: &quot; .. dbYN(row.active))
+			irc_QueueMsg(name, &quot;Reset Zone: &quot; .. dbYN(row.resetZone))
+			irc_QueueMsg(name, &quot;Safe Zone: &quot; .. dbYN(row.killZombies))
+			irc_QueueMsg(name, &quot;Public: &quot; .. dbYN(row.public))
+			irc_QueueMsg(name, &quot;Allow Bases: &quot; .. dbYN(row.allowBase))
+
+			if row.miniGame ~= nil then
+				irc_QueueMsg(name, &quot;Mini Game: &quot; .. row.miniGame)
+			end
+
+			irc_QueueMsg(name, &quot;Village: &quot; .. dbYN(row.village))
+
+			temp = LookupPlayer(row.mayor)
+			if row.owner ~= &quot;0&quot; then 
+				temp = LookupPlayer(row.mayor)
+			else
+				temp = &quot;&quot;
+			end
+
+			irc_QueueMsg(name, &quot;Mayor: &quot; .. temp)
+			irc_QueueMsg(name, &quot;Protected: &quot; .. dbYN(row.protected))
+			irc_QueueMsg(name, &quot;PVP: &quot; .. dbYN(row.pvp))
+			irc_QueueMsg(name, &quot;Access Level: &quot; .. row.accessLevel)
+
+			temp = LookupPlayer(row.owner)
+			if row.owner ~= &quot;0&quot; then 
+				temp = LookupPlayer(row.owner)
+			else
+				temp = &quot;&quot;
+			end
+
+			irc_QueueMsg(name, &quot;Owner: &quot; .. temp)
+			irc_QueueMsg(name, &quot;Coords: &quot; .. row.x .. &quot; &quot; .. row.y .. &quot; &quot; .. row.z)
+			irc_QueueMsg(name, &quot;Size: &quot; .. row.size * 2)
+			irc_QueueMsg(name, &quot;Players in &quot; .. loc)
+	
+			for k,v in pairs(igplayers) do
+				if players[k].inLocation == loc then
+					irc_QueueMsg(name, v.name)
+				end
+			end
+
+			irc_QueueMsg(name, &quot;&quot;)
+		end
+
+		return
+	end
+
+
 	if words[1] == &quot;new&quot; and words[2] == &quot;players&quot; then
 		pid = LookupOfflinePlayer(name, &quot;all&quot;)
 
@@ -7591,7 +7862,7 @@ end
 
 		while row do
 			if accessLevel(pid) &gt; 3 then
-				irc_QueueMsg(name, v.name) 
+				irc_QueueMsg(name, v.name)
 			else
 				msg = &quot;steam: &quot; .. row.steam .. &quot; id: &quot; .. string.format(&quot;%8d&quot;, players[row.steam].id) .. &quot; name: &quot; .. players[row.steam].name .. &quot; at [ &quot; .. players[row.steam].xPos .. &quot; &quot; .. players[row.steam].yPos .. &quot; &quot; .. players[row.steam].zPos .. &quot; ] &quot; .. players[row.steam].country
 				msg = msg .. &quot; PVP &quot; .. players[row.steam].playerKills
@@ -7746,7 +8017,7 @@ end
 		row = cursor:fetch({}, &quot;a&quot;)
 
 		if row then
-			irc_QueueMsg(channel, &quot;Server FPS: &quot; .. server.fps .. &quot; Players: &quot; .. row.players .. &quot; Zombies: &quot; .. row.zombies .. &quot; Entities: &quot; .. row.entities)
+			irc_QueueMsg(channel, &quot;Server FPS: &quot; .. server.fps .. &quot; Players: &quot; .. row.players .. &quot; Zombies: &quot; .. row.zombies .. &quot; Entities: &quot; .. row.entities .. &quot; Heap: &quot; .. row.heap .. &quot; HeapMax: &quot; .. row.heapMax)
 		end
 
 		return
@@ -8308,7 +8579,7 @@ end
 		if debug then dbug(&quot;debug ircmessage 14&quot;) end
 
 -- ************************************************************************************************8
-		if (words[1] == &quot;con&quot;) and accessLevel(ircid) == 0 then
+		if (words[1] == &quot;con&quot;) and accessLevel(ircid) &lt; 3 then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
 			if players[ircid].ircAuthenticated == false then
 				requireLogin(name)
@@ -8939,37 +9210,67 @@ end
 		end
 
 
-		if (words[1] == &quot;near&quot;) and words[2] ~= nil then	
+		if (words[1] == &quot;near&quot;) then	
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end	
 			if players[ircid].ircAuthenticated == false then
 				requireLogin(name)
 				return
 			end
+
+			if words[2] == nil then
+				irc_QueueMsg(name, &quot;Lists players, bases and locations near a player or coordinate.&quot;)
+				irc_QueueMsg(name, &quot;Usage: near player &lt;name&gt;&quot;)
+				irc_QueueMsg(name, &quot;optional: range &lt;number&gt;&quot;)
+				irc_QueueMsg(name, &quot;optional: Instead of player use xpos &lt;number&gt; zpos &lt;number&gt;&quot;)
+
+			end
 			
-			name1 = words[2]
-			number = nil
+			name1 = nil
+			range = 200
+			xPos = 0
+			zPos = 0
+			offline = false
 			
-			for i=3,wordCount,1 do
+			for i=2,wordCount,1 do
+				if words[i] == &quot;player&quot; then
+					name1 = words[i+1]
+				end	
+
 				if words[i] == &quot;range&quot; then
-					number = tonumber(words[i+1])
-				end						
+					range = tonumber(words[i+1])
+				end	
+
+				if words[i] == &quot;xpos&quot; then
+					xPos = tonumber(words[i+1])
+				end	
+
+				if words[i] == &quot;zpos&quot; then
+					zPos = tonumber(words[i+1])
+				end	
+
+				if words[i] == &quot;offline&quot; then
+					offline = true
+				end	
 			end			
 	
-			name1 = string.trim(name1)
-			pid = LookupPlayer(name1)
+			if name1 ~= nil then
+				name1 = string.trim(name1)
+				name1 = LookupPlayer(name1)
 
-			if (pid ~= nil) then
-				table.insert(irc_params, pid)
-				table.insert(irc_params, players[pid].name)
-				if number ~= nil then
-					table.insert(irc_params, number)
+				if name1 == nil then
+					irc_QueueMsg(name, &quot;No player found matching &quot; .. name1)
+					return
 				end
+			end
 
-				irc_PlayersNearPlayer()
-				irc_BasesNearPlayer()
-			else	
-				table.insert(irc_params, &quot;No player found matching &quot; .. name1)
-				irc_message()
+			if name1 == nil then
+				irc_PlayersNearPlayer(name, &quot;&quot;, range, xPos, zPos, offline)
+				irc_BasesNearPlayer(name, &quot;&quot;, range, xPos, zPos)
+				irc_LocationsNearPlayer(name, &quot;&quot;, range, xPos, zPos)
+			else
+				irc_PlayersNearPlayer(name, name1, range, xPos, zPos, offline)
+				irc_BasesNearPlayer(name, name1, range, xPos, zPos)
+				irc_LocationsNearPlayer(name, name1, range, xPos, zPos)
 			end
 
 			return
@@ -9221,6 +9522,7 @@ end
 					irc_message()
 
 					conn:execute(&quot;UPDATE players SET permanentBan = 1 WHERE steam = &quot; .. pid)
+					players[pid].permanentBan = true
 				else
 					table.insert(irc_params, &quot;No player found matching &quot; .. name1)
 					irc_message()
@@ -9248,6 +9550,7 @@ end
 
 				conn:execute(&quot;UPDATE players SET permanentBan = 0 WHERE steam = &quot; .. pid)
 				send(&quot;ban remove &quot; .. pid)
+				players[pid].permanentBan = false
 
 				table.insert(irc_params, &quot;Ban lifted for player &quot; .. name1)
 				irc_message()
@@ -9754,10 +10057,12 @@ end
 			players[ircid].ircAuthenticated = true
 			players[ircid].ircAlias = name
 
+			-- fix a weird bug where the wrong player can have the irc alias for this player and they can't get it back
+			conn:execute(&quot;UPDATE players SET ircAlias = '' WHERE ircAlias = '&quot; .. escape(name) .. &quot;'&quot;)
 			conn:execute(&quot;UPDATE players SET ircAlias = '&quot; .. escape(name) .. &quot;' WHERE steam = &quot; .. ircid)
 
 			if accessLevel(ircid) &lt; 4 then
-				players[ircid].ircSessionExpiry = os.time() + 600
+				players[ircid].ircSessionExpiry = os.time() + 3600
 			else
 				players[ircid].ircSessionExpiry = os.time() + 10800
 			end
@@ -9778,19 +10083,16 @@ end
 	if debug then dbug(&quot;debug ircmessage 5&quot;) end
 
 
-	-- replace the words below with your secret phrase or uncomment the return to disable it.
-	-- this code allows you to easily regain control of the bot through IRC if you forget your password or the bot disables it.
-	-- if you are an admin, this will log you in but you'll still need to set a pass later.
-	-- non-admins just get a silly message.
-	
-	if (words[1] == &quot;all&quot; and words[2] == &quot;your&quot;) and words[3] == &quot;base&quot; then
+	if (words[1] == &quot;bow&quot; and words[2] == &quot;before&quot;) and words[3] == &quot;me&quot; then
 		if true then
 --			return
 		end
 
+
 		ircid = LookupPlayer(name)
+
 		if accessLevel(ircid) &lt; 3 then
-			players[ircid].ircSessionExpiry = os.time() + 600
+			players[ircid].ircSessionExpiry = os.time() + 3600
 			players[ircid].ircAuthenticated = true
 			players[ircid].ircAlias = name
 			table.insert(irc_params, &quot;You have logged in &quot; .. name)
@@ -9986,6 +10288,8 @@ end
 
 
 function help(command)
+	local list
+
 	if (command == &quot;me&quot;) then
 		r = rand(6)
 		if (r==1) then message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Sorry you're beyond help I'm afraid.[-]&quot;) end
@@ -10057,10 +10361,18 @@ function help(command)
 
 
 	if command == &quot;shop&quot; then
+		list = &quot;&quot;
+		for k, v in pairs(shopCategories) do
+			if k ~= &quot;misc&quot; then
+				list = list .. k .. &quot;,  &quot;
+			end
+		end
+		list = string.sub(list, 1, string.len(list) - 3)
+
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]The game currency is the zenny. Each zombie killed earns you 5 zennies.[-]&quot;)
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/cash (see what you have in the bank)[-]&quot;)
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]To browse type /shop followed by a category. Categories are..[-]&quot;)
-		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]ammo, armour, books, build, decor, food, forge, general, medic, tools, weapons[-]&quot;)
+		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. list .. &quot;[-]&quot;)
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]For a general search type /shop &lt;item&gt; eg. /shop shirt[-]&quot;)
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/buy &lt;item number&gt; &lt;quantity&gt;  Buy all the things![-]&quot;)
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/pay &lt;player&gt; &lt;amount&gt;  You can't put a price on love so send money instead.[-]&quot;)
@@ -10381,15 +10693,15 @@ function help(command)
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/uptime[-]&quot;)
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/who[-]&quot;)
 
-		cursor,errorString = conn:execute(&quot;select * from customMessages where command = '&quot; .. escape(gmsgvars.words[1]) .. &quot;'&quot;)
-		rows = cursor:numrows()
+		cursor,errorString = conn:execute(&quot;select * from customMessages order by command&quot;)
+		row = cursor:fetch({}, &quot;a&quot;)
 
-		if rows &gt; 0 then
-			row = cursor:fetch({}, &quot;a&quot;)
-
-			if (accessLevel(gmsgvars.playerid) &gt;= tonumber(row.accessLevel)) then
+		while row do
+			if (accessLevel(gmsgvars.playerid) &lt;= tonumber(row.accessLevel)) then
 				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/&quot; .. row.command .. &quot;[-]&quot;)
 			end
+
+			row = cursor:fetch(row, &quot;a&quot;)
 		end
 
 		return
@@ -10507,15 +10819,15 @@ if debug then display (&quot;check inventory 3\n&quot;) end
 					table2 = string.split(table1[i], &quot;,&quot;)
 
 					-- count the number of full stacks
-					if tonumber(table2[1]) == 500 and (server.gameType ~= &quot;cre&quot;) then
-						count500 = count500 + 1
+--					if tonumber(table2[1]) == 500 and (server.gameType ~= &quot;cre&quot;) then
+--						count500 = count500 + 1
 						
-						if timeoutReason == nil then
-							timeoutReason = &quot;excessive inventory for a new player &quot; .. table2[2] .. &quot;(&quot; .. table2[1] .. &quot;)&quot;
-						else
-							timeoutReason = timeoutReason .. &quot;, &quot; .. table2[2] .. &quot;(&quot; .. table2[1] .. &quot;)&quot;
-						end
-					end
+--						if timeoutReason == nil then
+--							timeoutReason = &quot;excessive inventory for a new player &quot; .. table2[2] .. &quot;(&quot; .. table2[1] .. &quot;)&quot;
+--						else
+--							timeoutReason = timeoutReason .. &quot;, &quot; .. table2[2] .. &quot;(&quot; .. table2[1] .. &quot;)&quot;
+--						end
+--					end
 
 					if (badItems[table2[2]]) then
 						igplayers[k].illegalInventory = true
@@ -10537,30 +10849,30 @@ if debug then display (&quot;check inventory 3\n&quot;) end
 					end
 
 					-- stack monitoring
-					if (stackLimits[table2[2]] ~= nil) and (accessLevel(k) &gt; 2 or server.ignoreAdmins == false) and (server.gameType ~= &quot;cre&quot;) then
-						if tonumber(table2[1]) &gt; tonumber(stackLimits[table2[2]].limit) * 3 then
-							if (players[k].overstackScore &lt; 0) then
-								players[k].overstackScore = 0
-							end
+--					if (stackLimits[table2[2]] ~= nil) and (accessLevel(k) &gt; 2 or server.ignoreAdmins == false) and (server.gameType ~= &quot;cre&quot;) then
+--						if tonumber(table2[1]) &gt; tonumber(stackLimits[table2[2]].limit) * 3 then
+--							if (players[k].overstackScore &lt; 0) then
+--								players[k].overstackScore = 0
+--							end
 
-							players[k].overstack = true
-							players[k].overstackItems = players[k].overstackItems .. &quot; &quot; .. table2[2] .. &quot; (&quot; .. table2[1] .. &quot;)&quot;
+--							players[k].overstack = true
+--							players[k].overstackItems = players[k].overstackItems .. &quot; &quot; .. table2[2] .. &quot; (&quot; .. table2[1] .. &quot;)&quot;
 
-							if newPlayer then
-								players[k].overstackScore = players[k].overstackScore + 4
-							else
-								players[k].overstackScore = players[k].overstackScore + 2
-							end
-						end
+--							if newPlayer then
+--								players[k].overstackScore = players[k].overstackScore + 4
+--							else
+--								players[k].overstackScore = players[k].overstackScore + 2
+--							end
+--						end
 
 						-- instant ban for overstacking any of these if a new player
-						if tonumber(table2[1]) &gt; tonumber(stackLimits[table2[2]].limit) and newPlayer == true then
-							if (table2[2] == &quot;tnt&quot; or table2[2] == &quot;keystone&quot; or table2[2] == &quot;mineAirFilter&quot; or table2[2] == &quot;mineHubcap&quot; or table2[2] == &quot;44MagBullet&quot; or table2[2] == &quot;762mmBullet&quot;) then
-								ban = true
-								banReason = &quot;Banned for overstacking &quot; .. table2[2] .. &quot;(&quot; .. table2[1] .. &quot;).  Take that shit somewhere else.&quot;
-							end
-						end
-					end					
+--						if tonumber(table2[1]) &gt; tonumber(stackLimits[table2[2]].limit) and newPlayer == true then
+--							if (table2[2] == &quot;tnt&quot; or table2[2] == &quot;keystone&quot; or table2[2] == &quot;mineAirFilter&quot; or table2[2] == &quot;mineHubcap&quot; or table2[2] == &quot;44MagBullet&quot; or table2[2] == &quot;762mmBullet&quot;) then
+--								ban = true
+--								banReason = &quot;Banned for overstacking &quot; .. table2[2] .. &quot;(&quot; .. table2[1] .. &quot;).  Take that shit somewhere else.&quot;
+--							end
+--						end
+--					end					
 				end
 			end 
 
@@ -10571,7 +10883,7 @@ if debug then display (&quot;check inventory 4\n&quot;) end
 
 					cursor,errorString = conn:execute(&quot;SELECT * FROM memRestrictedItems where item = '&quot; .. escape(b.item) .. &quot;' and accessLevel &lt; &quot; .. players[k].accessLevel)				
 					rows = cursor:numrows()
-
+--[[
 					if tonumber(rows) &gt; 0 then
 						row = cursor:fetch({}, &quot;a&quot;)
 
@@ -10616,6 +10928,7 @@ if debug then display (&quot;check inventory 4\n&quot;) end
 
 						end
 					end				
+--]]
 				end 
 			end
 
@@ -10750,34 +11063,34 @@ if debug then display (&quot;check inventory 10\n&quot;) end
 		end
 
 		if (players[k].overstack == true) and (accessLevel(k) &gt; 2 or server.ignoreAdmins == false) then
-			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]You are overstacking items in your inventory - &quot; .. players[k].overstackItems .. &quot;[-]&quot;)
-			irc_QueueMsg(server.ircWatch, igplayers[k].name .. &quot; is overstacking &quot; .. players[k].overstackItems)
+--			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]You are overstacking items in your inventory - &quot; .. players[k].overstackItems .. &quot;[-]&quot;)
+--			irc_QueueMsg(server.ircWatch, igplayers[k].name .. &quot; is overstacking &quot; .. players[k].overstackItems)
 		end
 
 		if (players[k].overstackScore == 10) and (players[k].botTimeout == false) then
-			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]If you do not break up your overstacked items into their proper stack sizes, you will be automatically sent to timeout in 3 minutes.  Deal with it now to avoid potential loss of inventory.[-]&quot;)
+--			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]If you do not break up your overstacked items into their proper stack sizes, you will be automatically sent to timeout in 3 minutes.  Deal with it now to avoid potential loss of inventory.[-]&quot;)
 		end
 
 		if (players[k].overstackScore == 10) and (players[k].botTimeout == true) then
-			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]If you do not break up your overstacked items into their proper stack sizes, you will be automatically sent a long way away and your teleport privileges will be removed.[-]&quot;)
+--			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]If you do not break up your overstacked items into their proper stack sizes, you will be automatically sent a long way away and your teleport privileges will be removed.[-]&quot;)
 		end
 
 		if tonumber(players[k].overstackScore) &gt; 20 and (players[k].botTimeout == false) then
-			players[k].botTimeout = true
-			players[k].overstackScore = 0
+--			players[k].botTimeout = true
+--			players[k].overstackScore = 0
 
-			irc_params = {}
-			table.insert(irc_params, server.ircMain)
-			table.insert(irc_params, k)
-			table.insert(irc_params, players[k].name)
-			tempTimer( 2, [[irc_Request_Inventory()]] )	
+--			irc_params = {}
+--			table.insert(irc_params, server.ircMain)
+--			table.insert(irc_params, k)
+--			table.insert(irc_params, players[k].name)
+--			tempTimer( 2, [[irc_Request_Inventory()]] )	
 
-			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. igplayers[k].name .. &quot; is in timeout for ignoring overstack warnings.[-]&quot;)
-			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]You are still overstacking items. Please review your inventory and break up any excessively overstacked items. Sorry if this means losing stuff but you've had 10 minutes to fix it.[-]&quot;)
-			irc_QueueMsg(server.ircWatch, &quot;[TIMEOUT] &quot; .. igplayers[k].name .. &quot; is in timeout for overstacking the following &quot; .. players[k].overstackItems)
-			irc_QueueMsg(server.ircAlerts, &quot;[TIMEOUT] &quot; .. igplayers[k].name .. &quot; is in timeout for overstacking the following &quot; .. players[k].overstackItems)
+--			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. igplayers[k].name .. &quot; is in timeout for ignoring overstack warnings.[-]&quot;)
+--			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]You are still overstacking items. Please review your inventory and break up any excessively overstacked items. Sorry if this means losing stuff but you've had 10 minutes to fix it.[-]&quot;)
+--			irc_QueueMsg(server.ircWatch, &quot;[TIMEOUT] &quot; .. igplayers[k].name .. &quot; is in timeout for overstacking the following &quot; .. players[k].overstackItems)
+--			irc_QueueMsg(server.ircAlerts, &quot;[TIMEOUT] &quot; .. igplayers[k].name .. &quot; is in timeout for overstacking the following &quot; .. players[k].overstackItems)
 
-			conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. math.floor(v.xPos) .. &quot;,&quot; .. math.ceil(v.yPos) .. &quot;,&quot; .. math.floor(v.zPos) .. &quot;,'&quot; .. serverTime .. &quot;','timeout','Player &quot; .. escape(igplayers[k].name) .. &quot; is in timeout for overstacking the following &quot; .. escape(players[k].overstackItems) .. &quot;',&quot; .. k .. &quot;)&quot;)
+--			conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. math.floor(v.xPos) .. &quot;,&quot; .. math.ceil(v.yPos) .. &quot;,&quot; .. math.floor(v.zPos) .. &quot;,'&quot; .. serverTime .. &quot;','timeout','Player &quot; .. escape(igplayers[k].name) .. &quot; is in timeout for overstacking the following &quot; .. escape(players[k].overstackItems) .. &quot;',&quot; .. k .. &quot;)&quot;)
 		end
 
 		if (ban == true) then
@@ -10797,7 +11110,7 @@ if debug then display (&quot;check inventory 10\n&quot;) end
 			message(&quot;say [&quot; .. server.chatColour .. &quot;]Sending player &quot; .. igplayers[k].name .. &quot; to &quot; .. moveTo .. &quot; for &quot; .. moveReason .. &quot;.[-]&quot;)
 			teleport(&quot;tele &quot; .. k .. &quot; &quot; .. locations[moveTo].x .. &quot; &quot; .. locations[moveTo].y + 1 .. &quot; &quot; .. locations[moveTo].z)
 			players[k].exiled = 1
-			players[k].silentBob = true
+			if accessLevel(k) &gt; 2 then players[k].silentBob = true end
 			players[k].canTeleport = false
 			irc_QueueMsg(server.ircMain, &quot;Moving player &quot; .. k .. &quot; &quot; .. igplayers[k].name .. &quot; to &quot; .. moveTo .. &quot; for &quot; .. moveReason .. &quot;.&quot;)
 			irc_QueueMsg(server.ircAlerts, &quot;Moving player &quot; .. k .. &quot; &quot; .. igplayers[k].name .. &quot; to &quot; .. moveTo .. &quot; for &quot; .. moveReason .. &quot;.&quot;)
@@ -10814,6 +11127,7 @@ if debug then display (&quot;check inventory 11\n&quot;) end
 					players[k].exiled = 1
 					players[k].timeout = true
 					players[k].botTimeout = true
+					if accessLevel(k) &gt; 2 then players[k].silentBob = true end
 					message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. igplayers[k].name .. &quot; is in timeout for uncraftable items &quot; .. badItemsFound .. &quot;.[-]&quot;)
 					message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]You have items in your inventory that are not permitted.[-]&quot;)
 					message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]You must remove all such items if you wish to return to the game.[-]&quot;)
@@ -10837,6 +11151,7 @@ if debug then display (&quot;check inventory 11\n&quot;) end
 		if players[k].botTimeout == true and v.illegalInventory == false and players[k].overstack == false then
 			players[k].botTimeout = false
 			players[k].timeout = false
+			players[k].silentBob = false
 			players[k].overstackScore = 0
 			message(&quot;say [&quot; .. server.chatColour .. &quot;]Releasing &quot; .. igplayers[k].name .. &quot; from timeout.[-]&quot;)
 			message(&quot;say /return &quot; .. igplayers[k].name)
@@ -10997,7 +11312,7 @@ end</script>
 
 
 function OneMinuteTimer()
-	local words, word, rday, rhour, rmin
+	local words, word, rday, rhour, rmin, k,v
 	local diff, days, hours, restartTime, zombiePlayers
 
 	zombiePlayers = {}
@@ -11055,6 +11370,7 @@ function OneMinuteTimer()
 			invTemp[k] = nil
 
 			-- update players table with x y z
+			players[k].lastAtHome = nil
 			players[k].protectPaused = nil
 			players[k].name = v.name
 			players[k].xPos = v.xPos
@@ -11075,7 +11391,7 @@ function OneMinuteTimer()
 				players[k].relogCount = tonumber(players[k].relogCount) + 1
 			else
 				players[k].relogCount = tonumber(players[k].relogCount) - 1
-				if tonumber(players[k].relogCount) &lt; 0 then players[k].relogCount = 0 dbug(&quot;relog reset 4&quot;) end
+				if tonumber(players[k].relogCount) &lt; 0 then players[k].relogCount = 0 end
 			end
 
 			if accessLevel(k) &lt; 3 then
@@ -12571,6 +12887,14 @@ function fixMissingIGPlayer(steam)
 	if igplayers[steam].notifyTP == nil then
 		igplayers[steam].notifyTP = false
 	end
+
+	if igplayers[steam].hackerScore == nil then
+		igplayers[steam].hackerScore = 0
+	end
+
+	if igplayers[steam].lastLP == nil then
+		igplayers[steam].lastLP = os.time()
+	end
 end</script>
             <eventHandlerList/>
         </Script>
@@ -12591,11 +12915,70 @@ end</script>
 
 mysql = require &quot;luasql.mysql&quot;
 
+--[[
+function rand(high, low, real)
+	-- generate a random number using MySQL
+	if low == nil then low = 1 end
+	if real == nil then
+		return math.random(low, high)
+	else
+		return math.random(low, high) + math.random()
+	end
+end
+--]]
+
+function dumpTable(table)
+	local cursor, errorString, row, fields, values, k, v, file
+
+	cursor,errorString = conn:execute(&quot;SELECT * FROM &quot; .. table)
+	row = cursor:fetch({}, &quot;a&quot;)
+
+	file = io.open(homedir .. &quot;/&quot; .. table .. &quot;_&quot; .. os.date(&quot;%Y%m%d_%H%M%S&quot;) .. &quot;.csv&quot;, &quot;a&quot;)
+
+	if row then
+		fields = &quot;&quot;
+
+		for k,v in pairs(row) do
+			if fields ~= &quot;&quot; then fields = fields .. &quot;,&quot; end
+			fields = fields .. k
+		end
+
+		file:write(fields .. &quot;\n&quot;)
+	end
+
+	while row do
+		values = &quot;&quot;
+
+		for k,v in pairs(row) do
+			if values ~= &quot;&quot; then values = values .. &quot;,&quot; end
+			values = values .. v
+		end
+
+		file:write(values .. &quot;\n&quot;)
+		row = cursor:fetch(row, &quot;a&quot;)	
+	end
+
+	file:close()
+end
+
+
+function isDBConnected()
+--dbug(&quot;is db connected&quot;)
+
+	cursor,errorString = conn:execute(&quot;select RAND() as rnum&quot;)
+	row = cursor:fetch({}, &quot;a&quot;)
+
+	if not row then
+		return false
+	else
+		return true
+	end
+end
+
 
 function rand(high, low, real)
 	-- generate a random number using MySQL
 	if low == nil then low = 1 end
-
 	if real == nil then
 		cursor,errorString = conn:execute(&quot;select floor(RAND()*(&quot; .. high .. &quot;-&quot; .. low .. &quot;)+&quot; .. low .. &quot;) as rnum&quot;)
 	else
@@ -12689,6 +13072,8 @@ end
 
 
 function initDB()
+	alterTables()
+
 	conn:execute(&quot;DELETE FROM ircQueue&quot;)
 	conn:execute(&quot;DELETE FROM memTracker&quot;)
 	conn:execute(&quot;DELETE FROM messageQueue&quot;)
@@ -12702,6 +13087,8 @@ function closeDB()
 	conn:close()
 	connBots:close()
 	env:close()
+
+	dbConnected = false
 end
 
 
@@ -12713,8 +13100,8 @@ function openDB()
 -- EDIT ME!
 	connBots = env:connect(&quot;bots&quot;, &quot;bots&quot;, botsDBPassword)
 
-	alterTables()
-	initDB()
+	conn:execute(&quot;INSERT INTO memRestrictedItems (select * from restrictedItems)&quot;)
+	conn:execute(&quot;INSERT INTO memLottery (select * from lottery)&quot;)
 end
 
 
@@ -12749,6 +13136,7 @@ function importBadItems()
 	cursor2:close()
 end
 
+
 function alterTables()
 	conn:execute(&quot;ALTER TABLE `hotspots` CHANGE `size` `size` INT(11) NOT NULL DEFAULT '2'&quot;)
 	conn:execute(&quot;ALTER TABLE `hotspots` ADD `idx` INT NOT NULL DEFAULT '0'&quot;)
@@ -12763,6 +13151,8 @@ function alterTables()
 	conn:execute(&quot;ALTER TABLE `locations` ADD `killZombies` BOOLEAN NOT NULL DEFAULT FALSE&quot;)
 	conn:execute(&quot;ALTER TABLE `players` ADD `autoFriend` VARCHAR(2) NOT NULL COMMENT 'NA/AF/AD'&quot;)
 	conn:execute(&quot;ALTER TABLE `server` ADD `botTick` INT NOT NULL DEFAULT '0'&quot;)
+	conn:execute(&quot;ALTER TABLE `players` ADD `ircOtherNames` VARCHAR(50) NULL&quot;)
+	conn:execute(&quot;ALTER TABLE `performance` ADD `heapMax` FLOAT NOT NULL AFTER `heap`&quot;)
 end
 
 
@@ -13010,6 +13400,7 @@ if debug then dbug(&quot;debug base 2&quot;) end
 			conn:execute(&quot;UPDATE players SET homeX = &quot; .. gmsgvars.intX .. &quot;, homeY = &quot; .. gmsgvars.intY .. &quot;, homeZ = &quot; .. gmsgvars.intZ .. &quot;, exitX = &quot; .. gmsgvars.intX .. &quot;, exitY = &quot; .. gmsgvars.intY .. &quot;, exitZ = &quot; .. gmsgvars.intZ .. &quot;, protect = 0 WHERE steam = &quot; .. gmsgvars.playerid)
 			conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. gmsgvars.intX .. &quot;,&quot; .. gmsgvars.intY .. &quot;,&quot; .. gmsgvars.intZ .. &quot;,'&quot; .. serverTime .. &quot;','setbase','Player &quot; .. escape(players[gmsgvars.playerid].name) .. &quot; set a base',&quot; .. gmsgvars.playerid .. &quot;)&quot;)
 			removeInvalidHotspots(gmsgvars.playerid)
+			irc_QueueMsg(server.ircWatch, players[gmsgvars.playerid].name .. &quot; has setbase at &quot; .. gmsgvars.intX .. &quot; &quot; .. gmsgvars.intY .. &quot; &quot; .. gmsgvars.intZ)
 		else
 			if accessLevel(gmsgvars.playerid) &lt; 11 then
 				players[gmsgvars.playerid].home2X = gmsgvars.intX
@@ -13023,6 +13414,7 @@ if debug then dbug(&quot;debug base 2&quot;) end
 
 				conn:execute(&quot;UPDATE players SET home2X = &quot; .. gmsgvars.intX .. &quot;, home2Y = &quot; .. gmsgvars.intY .. &quot;, home2Z = &quot; .. gmsgvars.intZ .. &quot;, exit2X = &quot; .. gmsgvars.intX .. &quot;, exit2Y = &quot; .. gmsgvars.intY .. &quot;, exit2Z = &quot; .. gmsgvars.intZ .. &quot;, protect2 = 0 WHERE steam = &quot; .. gmsgvars.playerid)
 				removeInvalidHotspots(gmsgvars.playerid)
+				irc_QueueMsg(server.ircWatch, players[gmsgvars.playerid].name .. &quot; has setbase 2 at &quot; .. gmsgvars.intX .. &quot; &quot; .. gmsgvars.intY .. &quot; &quot; .. gmsgvars.intZ)
 			else
 				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Only donors and admins can have 2 bases. Consider donating. =D[-]&quot;)
 				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Please let us know if you are still seeing this message after donating.[-]&quot;)
@@ -13321,8 +13713,8 @@ if debug then dbug(&quot;debug base 4h&quot;) end
 if debug then dbug(&quot;debug base 4i&quot;) end
 
 		if wait then
-			if players[gmsgvars.playerid].donor == true then
-				players[gmsgvars.playerid].baseCooldown = (os.time() + math.floor(server.baseCooldown / 2))
+			if players[gmsgvars.playerid].donor then
+				players[gmsgvars.playerid].baseCooldown = (os.time() + math.floor(tonumber(server.baseCooldown) / 2))
 			else
 				players[gmsgvars.playerid].baseCooldown = (os.time() + server.baseCooldown)
 			end
@@ -13344,6 +13736,8 @@ if debug then dbug(&quot;debug base 4k&quot;) end
 			prepareTeleport(gmsgvars.playerid, cmd)
 			teleport(cmd)
 		else
+			igplayers[gmsgvars.playerid].tp = 1
+			igplayers[gmsgvars.playerid].hackerScore = 0
 			send(cmd)
 		end
 
@@ -13536,6 +13930,8 @@ if debug then display (&quot;debug base 12\n&quot;) end
 			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. players[id].name .. &quot;'s base has been set at where you are standing.[-]&quot;)
 
 			conn:execute(&quot;UPDATE players SET protectSize = &quot; .. server.baseSize .. &quot;, homeX = &quot; .. gmsgvars.intX .. &quot;, homeY = &quot; .. gmsgvars.intY .. &quot;, homeZ = &quot; .. gmsgvars.intZ .. &quot; WHERE steam = &quot; .. id)
+			conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. gmsgvars.intX .. &quot;,&quot; .. gmsgvars.intY .. &quot;,&quot; .. gmsgvars.intZ .. &quot;,'&quot; .. serverTime .. &quot;','setbase','Player &quot; .. escape(players[id].name) .. &quot; set a base',&quot; .. id .. &quot;)&quot;)
+			irc_QueueMsg(server.ircWatch, players[id].name .. &quot; has setbase at &quot; .. gmsgvars.intX .. &quot; &quot; .. gmsgvars.intY .. &quot; &quot; .. gmsgvars.intZ)
 		end
 
 		faultyGMSG = false
@@ -13734,6 +14130,16 @@ if debug then dbug(&quot;debug admin&quot;) end
 	end
 
 
+	if (gmsgvars.words[1] == &quot;reload&quot; or gmsgvars.words[1] == &quot;refresh&quot; or gmsgvars.words[1] == &quot;update&quot;) and gmsgvars.words[2] == &quot;admins&quot; then
+		-- run admin list
+		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Reading admin list[-]&quot;)
+		send(&quot;admin list&quot;)
+
+		faultyGMSG = false
+		return true
+	end
+
+
 	if (gmsgvars.words[1] == &quot;reload&quot; or gmsgvars.words[1] == &quot;refresh&quot; or gmsgvars.words[1] == &quot;update&quot;) and gmsgvars.words[2] == &quot;bot&quot; then
 		-- run admin list, gg, ban list and lkp
 
@@ -13830,6 +14236,10 @@ if debug then dbug(&quot;admin 1&quot;) end
 			return true
 		end
 
+		if accessLevel(tmp.id) &gt; 2	then
+			players[tmp.id].silentBob = true
+		end
+
 		-- first record their current x y z
 		players[tmp.id].timeout = true
 		players[tmp.id].xPosTimeout = math.floor(players[tmp.id].xPos)
@@ -13839,11 +14249,11 @@ if debug then dbug(&quot;admin 1&quot;) end
 		conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. players[tmp.id].xPosTimeout .. &quot;,&quot; .. players[tmp.id].yPosTimeout .. &quot;,&quot; .. players[tmp.id].zPosTimeout .. &quot;,'&quot; .. serverTime .. &quot;','timeout','Player &quot; .. escape(players[tmp.id].name) .. &quot; SteamID: &quot; .. tmp.id .. &quot; sent to timeout by &quot; .. escape(players[gmsgvars.playerid].name) .. &quot;',&quot; .. tmp.id .. &quot;)&quot;)
 		
 		-- then teleport the player to timeout
-		send(&quot;tele &quot; .. tmp.id .. &quot; &quot; .. players[tmp.id].xPosTimeout .. &quot; -5000 &quot; .. players[tmp.id].zPosTimeout)
+		send(&quot;tele &quot; .. tmp.id .. &quot; &quot; .. players[tmp.id].xPosTimeout .. &quot; 50000 &quot; .. players[tmp.id].zPosTimeout)
 
 		message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. igplayers[tmp.id].name .. &quot; has been sent to timeout.[-]&quot;)
 
-		conn:execute(&quot;UPDATE players SET timeout = 1, xPosTimeout = &quot; .. players[tmp.id].xPosTimeout .. &quot;, yPosTimeout = &quot; .. players[tmp.id].yPosTimeout .. &quot;, zPosTimeout = &quot; .. players[tmp.id].zPosTimeout .. &quot; WHERE steam = &quot; .. tmp.id)		
+		conn:execute(&quot;UPDATE players SET timeout = 1, silentBob = 1, xPosTimeout = &quot; .. players[tmp.id].xPosTimeout .. &quot;, yPosTimeout = &quot; .. players[tmp.id].yPosTimeout .. &quot;, zPosTimeout = &quot; .. players[tmp.id].zPosTimeout .. &quot; WHERE steam = &quot; .. tmp.id)		
 
 		faultyGMSG = false
 		return true
@@ -13909,6 +14319,7 @@ if debug then dbug(&quot;admin 2&quot;) end
 				players[tmp.id].timeout = false
 				players[tmp.id].botTimeout = false
 				players[tmp.id].freeze = false 
+				players[tmp.id].silentBob = false 
 
 				igplayers[tmp.id].skipExcessInventory = true
 
@@ -13921,7 +14332,7 @@ if debug then dbug(&quot;admin 2&quot;) end
 					players[tmp.id].yPosTimeout = 0
 					players[tmp.id].zPosTimeout = 0
 
-					conn:execute(&quot;UPDATE players SET timeout = 0, botTimeout = 0, xPosTimeout = 0, yPosTimeout = 0, zPosTimeout = 0 WHERE steam = &quot; .. tmp.id)
+					conn:execute(&quot;UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0, xPosTimeout = 0, yPosTimeout = 0, zPosTimeout = 0 WHERE steam = &quot; .. tmp.id)
 
 					message(&quot;say [&quot; .. server.chatColour .. &quot;]Returning &quot; .. players[tmp.id].name .. &quot;[-]&quot;)
 
@@ -13942,7 +14353,7 @@ if debug then dbug(&quot;admin 2&quot;) end
 					message(&quot;say [&quot; .. server.chatColour .. &quot;]Returning &quot; .. players[tmp.id].name .. &quot;[-]&quot;)
 				end
 
-				conn:execute(&quot;UPDATE players SET timeout = 0, botTimeout = 0, xPosTimeout = 0, yPosTimeout = 0, zPosTimeout = 0 WHERE steam = &quot; .. tmp.id)
+				conn:execute(&quot;UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0, xPosTimeout = 0, yPosTimeout = 0, zPosTimeout = 0 WHERE steam = &quot; .. tmp.id)
 
 				faultyGMSG = false
 				return true
@@ -13986,10 +14397,11 @@ if debug then dbug(&quot;admin 2&quot;) end
 				players[tmp.id].timeout = false
 				players[tmp.id].botTimeout = false
 				players[tmp.id].location = &quot;return player&quot;
+				players[tmp.id].silentBob = false
 
 				message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. players[tmp.id].name .. &quot; will be returned when they next join the server.[-]&quot;)
 
-				conn:execute(&quot;UPDATE players SET timeout = 0, botTimeout = 0 WHERE steam = &quot; .. tmp.id)
+				conn:execute(&quot;UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0 WHERE steam = &quot; .. tmp.id)
 
 				faultyGMSG = false
 				return true
@@ -14033,8 +14445,9 @@ if debug then dbug(&quot;admin 3&quot;) end
 			players[prisonerid].timeout = false
 			players[prisonerid].botTimeout = false
 			players[prisonerid].freeze = false
+			players[prisonerid].silentBob = false 
 
-			conn:execute(&quot;UPDATE players SET timeout = 0, botTimeout = 0 WHERE steam = &quot; .. prisonerid)
+			conn:execute(&quot;UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0 WHERE steam = &quot; .. prisonerid)
 
 			faultyGMSG = false
 			return true
@@ -14073,11 +14486,12 @@ if debug then dbug(&quot;admin 3&quot;) end
 				players[prisonerid].yPosOld = players[prisonerid].prisonyPosOld
 				players[prisonerid].zPosOld = players[prisonerid].prisonzPosOld
 
-				conn:execute(&quot;UPDATE players SET prisoner = 0, location = 'return player', xPosOld = &quot; .. players[prisonerid].prisonxPosOld .. &quot;, yPosOld = &quot; .. players[prisonerid].prisonyPosOld .. &quot;, zPosOld = &quot; .. players[prisonerid].prisonzPosOld .. &quot; WHERE steam = &quot; .. prisonerid)
+				conn:execute(&quot;UPDATE players SET prisoner = 0, silentBob = 0, location = 'return player', xPosOld = &quot; .. players[prisonerid].prisonxPosOld .. &quot;, yPosOld = &quot; .. players[prisonerid].prisonyPosOld .. &quot;, zPosOld = &quot; .. players[prisonerid].prisonzPosOld .. &quot; WHERE steam = &quot; .. prisonerid)
 			end
 		end
 
 		players[prisonerid].prisoner = false
+		players[prisonerid].silentBob = false 
 		
 		faultyGMSG = false
 		return true
@@ -14118,6 +14532,7 @@ if debug then dbug(&quot;admin 5&quot;) end
 	-- ##################################################################
 
 if debug then dbug(&quot;admin 6&quot;) end
+
 
 
 	if (gmsgvars.words[1] == &quot;hordeme&quot;) then
@@ -14535,6 +14950,7 @@ if debug then dbug(&quot;admin 16&quot;) end
 		server.allowShop = true	
 
 		conn:execute(&quot;UPDATE server SET allowShop = 1&quot;)
+		loadShopCategories()
 
 		faultyGMSG = false
 		return true
@@ -14552,6 +14968,7 @@ if debug then dbug(&quot;admin 16&quot;) end
 
 		message(&quot;say [&quot; .. server.chatColour .. &quot;]Hurrah!  NEW stock![-]&quot;)
 		resetShop(true)
+		loadShopCategories()
 
 		faultyGMSG = false
 		return true
@@ -14977,7 +15394,11 @@ if debug then dbug(&quot;admin 22&quot;) end
 			igplayers[prisonerid].yPosLastOK = locations[&quot;prison&quot;].y
 			igplayers[prisonerid].zPosLastOK = locations[&quot;prison&quot;].z
 
-			conn:execute(&quot;UPDATE players SET prisoner = 1, prisonxPosOld = &quot; .. players[prisonerid].prisonxPosOld .. &quot;, prisonyPosOld = &quot; .. players[prisonerid].prisonyPosOld .. &quot;, prisonzPosOld = &quot; .. players[prisonerid].prisonzPosOld .. &quot; WHERE steam = &quot; .. prisonerid)
+			if accessLevel(prisonerid) &gt; 2	then
+				players[prisonerid].silentBob = true
+			end
+
+			conn:execute(&quot;UPDATE players SET prisoner = 1, silentBob = 1, prisonxPosOld = &quot; .. players[prisonerid].prisonxPosOld .. &quot;, prisonyPosOld = &quot; .. players[prisonerid].prisonyPosOld .. &quot;, prisonzPosOld = &quot; .. players[prisonerid].prisonzPosOld .. &quot; WHERE steam = &quot; .. prisonerid)
 
 			message(&quot;pm &quot; .. prisonerid .. &quot; [&quot; .. server.chatColour .. &quot;]You have been sentenced to prison.  There is no escape until you are released by an admin.[-]&quot;)
 				
@@ -16090,23 +16511,327 @@ if debug then dbug(&quot;admin 48&quot;) end
 			return true
 		end
 
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; ironBoots 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; auger 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; chainsaw 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; nailgun 1', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; gascan 100', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; bearStew 100', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; keystone 10', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; firstAidKit 10', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; antibiotics 20', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; miningHelmet 1', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; ironChestArmor 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; ironLegArmor 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; ironGloves 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; shotgunShell 300', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
-		conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; pumpShotgun 2 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		tmp = {}
+		tmp.inventory = igplayers[gmsgvars.playerid].pack .. igplayers[gmsgvars.playerid].belt
+		tmp.equipment = igplayers[gmsgvars.playerid].equipment
 
-		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. serve.chatColour .. &quot;]We deliver :)[-]&quot;)
+
+		if not string.find(tmp.inventory .. tmp.equipment, &quot;ironBoots&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; ironBoots 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quality = getEquipment(tmp.equipment, &quot;ironBoots&quot;)
+
+			if not tmp.found then
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;ironBoots&quot;)
+			end
+
+			if tmp.found and tonumber(tmp.quality) &lt; 300 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; ironBoots 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;auger&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; auger 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;auger&quot;)
+
+			if tmp.found and tonumber(tmp.quality) &lt; 300 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; auger 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;chainsaw&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; chainsaw 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;chainsaw&quot;)
+
+			if tmp.found and tonumber(tmp.quality) &lt; 300 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; chainsaw 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;nailgun&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; nailgun 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;nailgun&quot;)
+
+			if tmp.found and tonumber(tmp.quality) &lt; 300 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; nailgun 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory .. tmp.equipment, &quot;miningHelmet&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; miningHelmet 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quality = getEquipment(tmp.equipment, &quot;miningHelmet&quot;)
+
+			if not tmp.found then
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;miningHelmet&quot;)
+			end
+
+			if tmp.found and tmp.quality &lt; 300 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; miningHelmet 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory .. tmp.equipment, &quot;ironChestArmor&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; ironChestArmor 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quality = getEquipment(tmp.equipment, &quot;ironChestArmor&quot;)
+
+			if not tmp.found then
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;ironChestArmor&quot;)
+			end
+
+			if tmp.found and tmp.quality &lt; 300 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; ironChestArmor 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory .. tmp.equipment, &quot;ironLegArmor&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; ironLegArmor 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quality = getEquipment(tmp.equipment, &quot;ironLegArmor&quot;)
+
+			if not tmp.found then
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;ironLegArmor&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory .. tmp.equipment, &quot;ironGloves&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; ironGloves 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quality = getEquipment(tmp.equipment, &quot;ironGloves&quot;)
+
+			if not tmp.found then
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;ironGloves&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory .. tmp.equipment, &quot;leatherDuster&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; leatherDuster 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quality = getEquipment(tmp.equipment, &quot;leatherDuster&quot;)
+
+			if not tmp.found then
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;leatherDuster&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;keystone&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; keystone 10', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;keystone&quot;)
+
+			if tonumber(tmp.quantity) &lt; 10 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; keystone &quot; .. 10 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;redTea&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; redTea 10', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;redTea&quot;)
+
+			if tonumber(tmp.quantity) &lt; 10 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; redTea &quot; .. 10 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;gasCan&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; gasCan 400', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;gasCan&quot;)
+
+			if tonumber(tmp.quantity) &lt; 400 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; gasCan &quot; .. 400 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;meatStew&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; meatStew 20', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;meatStew&quot;)
+
+			if tonumber(tmp.quantity) &lt; 20 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; meatStew &quot; .. 20 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;firstAidKit&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; firstAidKit 10', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;firstAidKit&quot;)
+
+			if tonumber(tmp.quantity) &lt; 10 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; firstAidKit &quot; .. 10 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;antibiotics&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; antibiotics 10', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;antibiotics&quot;)
+
+			if tonumber(tmp.quantity) &lt; 10 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; antibiotics &quot; .. 10 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;shotgunShell&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; shotgunShell 500', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;shotgunShell&quot;)
+
+			if tonumber(tmp.quantity) &lt; 500 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; shotgunShell &quot; .. 500 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;pumpShotgun&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; pumpShotgun 1', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;pumpShotgun&quot;)
+
+			if tonumber(tmp.quality) &lt; 300 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; pumpShotgun 1', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;grainAlcohol&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; grainAlcohol 10', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;grainAlcohol&quot;)
+
+			if tonumber(tmp.quantity) &lt; 10 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; grainAlcohol &quot; .. 10 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;foodHoney&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; foodHoney 10', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;foodHoney&quot;)
+
+			if tonumber(tmp.quantity) &lt; 10 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; foodHoney &quot; .. 10 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]We deliver :)[-]&quot;)
+		faultyGMSG = false
+		return true
+	end
+
+	if (gmsgvars.words[1] == &quot;supplies&quot;) then	
+		if (accessLevel(gmsgvars.playerid) &gt; 1) then
+			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command is restricted[-]&quot;)
+			faultyGMSG = false
+			return true
+		end
+
+		tmp = {}
+		tmp.inventory = igplayers[gmsgvars.playerid].pack .. igplayers[gmsgvars.playerid].belt
+		tmp.equipment = igplayers[gmsgvars.playerid].equipment
+
+		if not string.find(tmp.inventory, &quot;redTea&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; redTea 10', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;redTea&quot;)
+
+			if tonumber(tmp.quantity) &lt; 10 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; redTea &quot; .. 10 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;gasCan&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; gasCan 800', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;gasCan&quot;)
+
+			if tonumber(tmp.quantity) &lt; 800 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; gasCan &quot; .. 800 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;meatStew&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; meatStew 20', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;meatStew&quot;)
+
+			if tonumber(tmp.quantity) &lt; 20 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; meatStew &quot; .. 20 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;firstAidKit&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; firstAidKit 10', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;firstAidKit&quot;)
+
+			if tonumber(tmp.quantity) &lt; 10 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; firstAidKit &quot; .. 10 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;antibiotics&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; antibiotics 10', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;antibiotics&quot;)
+
+			if tonumber(tmp.quantity) &lt; 10 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; antibiotics &quot; .. 10 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+
+		if not string.find(tmp.inventory, &quot;shotgunShell&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; shotgunShell 500', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;shotgunShell&quot;)
+
+			if tonumber(tmp.quantity) &lt; 500 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; shotgunShell &quot; .. 500 - tonumber(tmp.quantity) .. &quot;', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+		if not string.find(tmp.inventory .. tmp.equipment, &quot;miningHelmet&quot;) then
+			conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; miningHelmet 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+		else
+			tmp.found, tmp.quality = getEquipment(tmp.equipment, &quot;miningHelmet&quot;)
+
+			if not tmp.found then
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, &quot;miningHelmet&quot;)
+			end
+
+			if tmp.found and tmp.quality &lt; 300 then
+				conn:execute(&quot;INSERT into gimmeQueue (command, steam) VALUES ('give &quot; .. gmsgvars.playerid .. &quot; miningHelmet 1 600', &quot; .. gmsgvars.playerid .. &quot;)&quot;)
+			end
+		end
+
+		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]SUPPLIES![-]&quot;)
 		faultyGMSG = false
 		return true
 	end
@@ -16474,17 +17199,55 @@ function gmsg_fun()
 	-- ####################################################################################
 
 
-	if (gmsgvars.words[1] == &quot;santa&quot; and gmsgvars.words[2] == nil) then
+	if (gmsgvars.words[1] == &quot;santa&quot; and specialDay == &quot;christmas&quot; and gmsgvars.words[2] == nil) then
 		if (not players[gmsgvars.playerid].santa) then
-			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]HO HO HO  Merry Christmas!  Press e now, don't let the Grinch steal Christmas.&quot;)
-			send (&quot;give &quot; .. gmsgvars.playerid .. &quot; santaHat 1&quot;)
-			send (&quot;give &quot; .. gmsgvars.playerid .. &quot; shades 1&quot;)	
-			send (&quot;give &quot; .. gmsgvars.playerid .. &quot; beer 1&quot;)
+			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]HO HO HO  Merry Christmas!  Press e now, don't let the Grinch steal Christmas.[-]&quot;)
+			send (&quot;give &quot; .. gmsgvars.playerid .. &quot; shades 1&quot;)
+			send (&quot;give &quot; .. gmsgvars.playerid .. &quot; turd 1&quot;)	
+			send (&quot;give &quot; .. gmsgvars.playerid .. &quot; beer 2&quot;)
 			send (&quot;give &quot; .. gmsgvars.playerid .. &quot; coalOre 1&quot;)
 			send (&quot;give &quot; .. gmsgvars.playerid .. &quot; pipeBomb 1&quot;)
+			send (&quot;give &quot; .. gmsgvars.playerid .. &quot; splint 1&quot;)
+
+			r = rand(2)
+			if r == 1 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; firstAidBandage 1&quot;) end
+			if r == 2 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; firstAidKit 1&quot;) end
+
+			r = rand(2)
+			if r == 1 then players[gmsgvars.playerid].tokens = tonumber(players[gmsgvars.playerid].tokens) + 1 end
+			if r == 2 then players[gmsgvars.playerid].zennies = tonumber(players[gmsgvars.playerid].zennies) + 200 end
+
+			r = rand(26)
+			if r == 1 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canBeef 1&quot;) end
+			if r == 2 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canBoiledWater 1&quot;) end
+			if r == 3 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canCatfood 1&quot;) end
+			if r == 4 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canChicken 1&quot;) end
+			if r == 5 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canChili 1&quot;) end
+			if r == 6 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; candle 1&quot;) end 
+			if r == 7 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; candleStick 1&quot;) end
+			if r == 8 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; candleTable 1&quot;) end
+			if r == 9 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; candleWall 1&quot;) end
+			if r == 10 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canDogfood 1&quot;) end
+			if r == 11 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; candyTin 1&quot;) end
+			if r == 12 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canEmpty 1&quot;) end
+			if r == 13 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canHam 1&quot;) end
+			if r == 14 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canLamb 1&quot;) end
+			if r == 15 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canMiso 1&quot;) end
+			if r == 16 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canMurkyWater 1&quot;) end
+			if r == 17 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canPasta 1&quot;) end
+			if r == 18 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canPears 1&quot;) end
+			if r == 19 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canPeas 1&quot;) end
+			if r == 20 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canSalmon 1&quot;) end
+			if r == 21 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canSoup 1&quot;) end
+			if r == 22 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canStock 1&quot;) end
+			if r == 23 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; canTuna 1&quot;) end
+			if r == 24 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; gasCan 1&quot;) end
+			if r == 25 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; gasCanSchematic 1&quot;) end
+			if r == 26 then send (&quot;give &quot; .. gmsgvars.playerid .. &quot; mineCandyTin 1&quot;) end
+
 			players[gmsgvars.playerid].santa = &quot;hohoho&quot;
 		else
-			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You have already received your stocking stuffer&quot;)
+			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]HO HO You have already received your stocking stuffer Ho.[-]&quot;)
 		end
 
 		faultyGMSG = false
@@ -16520,11 +17283,19 @@ function gmsg_fun()
 
 
 	if string.find(gmsgvars.words[1], &quot;quit&quot;) and gmsgvars.words[2] ==  nil then
-		send(&quot;kick &quot; .. gmsgvars.playerid .. &quot; RAAAAGE! xD&quot;)
-		r = rand(3)
+		if string.find(gmsgvars.words[1], &quot;rage&quot;) and gmsgvars.words[2] ==  nil then
+			send(&quot;kick &quot; .. gmsgvars.playerid .. &quot; RAAAAGE! xD&quot;)
+		else
+			r = rand(3)
+			if r == 1 then send(&quot;kick &quot; .. gmsgvars.playerid .. &quot; High Five! xD&quot;) end
+			if r == 2 then send(&quot;kick &quot; .. gmsgvars.playerid .. &quot; O.o  The Quit is strong in this one.&quot;) end
+			if r == 3 then send(&quot;kick &quot; .. gmsgvars.playerid .. &quot; Nice quit    *removes glasses*    YEEEEEEEEAH!&quot;) end
+		end
+
+		r = rand(4)
 
 		if r == 1 then
-			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. players[gmsgvars.playerid].name .. &quot; has left the building[-]&quot;)
+			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. players[gmsgvars.playerid].name .. &quot; has left the building.[-]&quot;)
 		end
 
 		if r == 2 then
@@ -16533,6 +17304,10 @@ function gmsg_fun()
 
 		if r == 3 then
 			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. players[gmsgvars.playerid].name .. &quot; &quot; .. gmsgvars.words[1] .. &quot;![-]&quot;)
+		end
+
+		if r == 4 then
+			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. players[gmsgvars.playerid].name .. &quot; quit like a BOSS![-]&quot;)
 		end
 
 		faultyGMSG = false
@@ -16573,8 +17348,6 @@ function gmsg_fun()
 
 		if (gimmeHell == 0) then
 			gimmeHell = 1
-
---			send(&quot;sg MaxSpawnedZombies 50&quot;)
 
 			setupArenaPlayers(gmsgvars.playerid)
 			tempTimer( 5, [[ announceGimmeHell(&quot;1&quot;) ]] )
@@ -17160,17 +17933,16 @@ if debug then dbug(&quot;debug info 2&quot;) end
 	end
 	-- ####################################################################################
 
-	if gmsgvars.words[1] == &quot;whats&quot; and gmsgvars.words[2] == &quot;new&quot; then
-		conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. gmsgvars.playerid .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]This bot is being trialled here. Let us know if something doesn't work.[-]&quot;) .. &quot;')&quot;)
-		conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. gmsgvars.playerid .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]Many boring changes such as a new database (EXCITING!)[-]&quot;) .. &quot;')&quot;)
-		conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. gmsgvars.playerid .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]Teleporting has been altered yet again![-]&quot;) .. &quot;')&quot;)
-		conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. gmsgvars.playerid .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]More boring changes designed to make the bot more stable and better at its many jobs.[-]&quot;) .. &quot;')&quot;)
-		conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. gmsgvars.playerid .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]The bot will be released with all the codez on September 6th![-]&quot;) .. &quot;')&quot;)
-		conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. gmsgvars.playerid .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]Also the bot's website will be announced.[-]&quot;) .. &quot;')&quot;)
-
-		faultyGMSG = false
-		return true
-	end
+--	if gmsgvars.words[1] == &quot;whats&quot; and gmsgvars.words[2] == &quot;new&quot; then
+--		conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. gmsgvars.playerid .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]This bot is being trialled here. Let us know if something doesn't work.[-]&quot;) .. &quot;')&quot;)
+--		conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. gmsgvars.playerid .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]Many boring changes such as a new database (EXCITING!)[-]&quot;) .. &quot;')&quot;)
+--		conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. gmsgvars.playerid .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]Teleporting has been altered yet again![-]&quot;) .. &quot;')&quot;)
+--		conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. gmsgvars.playerid .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]More boring changes designed to make the bot more stable and better at its many jobs.[-]&quot;) .. &quot;')&quot;)
+--		conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. gmsgvars.playerid .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]The bot will be released with all the codez on September 6th![-]&quot;) .. &quot;')&quot;)
+--		conn:execute(&quot;INSERT INTO messageQueue (sender, recipient, message) VALUES (0,&quot; .. gmsgvars.playerid .. &quot;,'&quot; .. escape(&quot;[&quot; .. server.chatColour .. &quot;]Also the bot's website will be announced.[-]&quot;) .. &quot;')&quot;)
+--		faultyGMSG = false
+--		return true
+--	end
 
 if debug then dbug(&quot;debug info 3&quot;) end
 
@@ -17289,7 +18061,7 @@ if debug then dbug(&quot;debug info 7&quot;) end
 		row = cursor:fetch({}, &quot;a&quot;)
 
 		if row then
-			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Server FPS: &quot; .. server.fps .. &quot; Players: &quot; .. row.players .. &quot; Zombies: &quot; .. row.zombies .. &quot; Entities: &quot; .. row.entities .. &quot;[-]&quot;)
+			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Server FPS: &quot; .. server.fps .. &quot; Players: &quot; .. row.players .. &quot; Zombies: &quot; .. row.zombies .. &quot; Entities: &quot; .. row.entities .. &quot; Heap: &quot; .. row.heap .. &quot; HeapMax: &quot; .. row.heapMax .. &quot;[-]&quot;)
 		end
 
 		faultyGMSG = false
@@ -18699,11 +19471,15 @@ if debug then dbug(&quot;debug locations 25&quot;) end
 		if (locations[loc].village == true) then
  			if villagers[gmsgvars.playerid .. loc] then
 				if (players[gmsgvars.playerid].baseCooldown - os.time() &gt; 0) and (accessLevel(gmsgvars.playerid) &gt; 2 or server.ignoreAdmins == false) then --  and server.ignoreAdmins == false
-					message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You have to wait &quot; .. os.date(&quot;%M minutes %S seconds&quot;,players[gmsgvars.playerid].baseCooldown - os.time()) .. &quot; before you can use /base again.[-]&quot;)
+					message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You have to wait &quot; .. os.date(&quot;%M minutes %S seconds&quot;,players[gmsgvars.playerid].baseCooldown - os.time()) .. &quot; before you can use /&quot; .. loc .. &quot; again.[-]&quot;)
 					faultyGMSG = false
 					return true
 				else
-					players[gmsgvars.playerid].baseCooldown = (os.time() + 2400) -- 2400 = 40 minutes
+					if players[gmsgvars.playerid].donor then
+						players[gmsgvars.playerid].baseCooldown = (os.time() + math.floor(tonumber(server.baseCooldown) / 2))
+					else
+						players[gmsgvars.playerid].baseCooldown = (os.time() + server.baseCooldown)
+					end
 
 					players[gmsgvars.playerid].xPosOld = 0
 					players[gmsgvars.playerid].yPosOld = 0
@@ -18769,10 +19545,12 @@ if debug then dbug(&quot;debug locations 25&quot;) end
 		cursor,errorString = conn:execute(&quot;select * from locationSpawns where location='&quot; .. escape(loc) .. &quot;'&quot;)
 		if cursor:numrows() &gt; 0 then
 			randomPVPTP(gmsgvars.playerid, loc)
+			if server.coppi and gmsgvars.accessLevel &gt; 2 then message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. gmsgvars.playername .. &quot; has moved to &quot; .. loc .. &quot;[-]&quot;) end
 		else
 			cmd = &quot;tele &quot; .. gmsgvars.playerid .. &quot; &quot; .. row.x .. &quot; &quot; .. row.y .. &quot; &quot; .. row.z
 			prepareTeleport(gmsgvars.playerid, cmd)
 			teleport(cmd)
+			if server.coppi and gmsgvars.accessLevel &gt; 2 then message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. gmsgvars.playername .. &quot; has moved to &quot; .. loc .. &quot;[-]&quot;) end
 		end
 
 		faultyGMSG = false
@@ -18930,6 +19708,7 @@ max zombies
 max animals
 max players
 set server pvp/pve/creative/contest
+set max uptime
 --]]
 
 function gmsg_server()
@@ -18960,6 +19739,12 @@ if debug then dbug(&quot;debug server 0&quot;) end
 			faultyGMSG = false
 			return true
 		end
+	end
+
+	-- don't proceed if there is no leading slash
+	if (string.sub(gmsgvars.command, 1, 1) ~= &quot;/&quot;) then
+		faultyGMSG = false
+		return false
 	end
 
 if debug then dbug(&quot;debug server 1&quot;) end
@@ -19230,8 +20015,8 @@ if debug then dbug(&quot;debug server 10&quot;) end
 
 		if gmsgvars.number ~= nil then
 			server.baseCooldown = gmsgvars.number
-			message(&quot;say [&quot; .. server.chatColour .. &quot;]Players must wait &quot; .. gmsgvars.number .. &quot; minutes after using /base before it becomes available again.[-]&quot;)
-			message(&quot;say [&quot; .. server.chatColour .. &quot;]Donors must wait &quot; .. math.floor(gmsgvars.number / 2) .. &quot; minutes.[-]&quot;)
+			message(&quot;say [&quot; .. server.chatColour .. &quot;]Players must wait &quot; .. math.floor(tonumber(gmsgvars.number) / 60) .. &quot; minutes after using /base before it becomes available again.[-]&quot;)
+			message(&quot;say [&quot; .. server.chatColour .. &quot;]Donors must wait &quot; .. math.floor((tonumber(gmsgvars.number) / 60) / 2) .. &quot; minutes.[-]&quot;)
 
 			conn:execute(&quot;UPDATE server SET baseCooldown = &quot; .. gmsgvars.number)
 		end
@@ -19577,6 +20362,14 @@ if debug then dbug(&quot;debug server 23&quot;) end
 
 	if (gmsgvars.words[1] == &quot;disallow&quot; and gmsgvars.words[2] == &quot;bad&quot; and gmsgvars.words[3] == &quot;names&quot;) then
 		if (gmsgvars.playername ~= &quot;Server&quot;) then 
+			if (accessLevel(gmsgvars.playerid) &gt; 1) then
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command is restricted[-]&quot;)
+				faultyGMSG = false
+				return true
+			end
+		end
+
+		if (gmsgvars.playername ~= &quot;Server&quot;) then 
 			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]The bot will kick players with names that have no letters.[-]&quot;)
 		else
 			irc_QueueMsg(server.ircMain, &quot;The bot will kick players with names that have no letters.&quot;)
@@ -19609,12 +20402,144 @@ if debug then dbug(&quot;debug server 24&quot;) end
 
 if debug then dbug(&quot;debug server 25&quot;) end
 
+	if gmsgvars.words[1] == &quot;max&quot; and (gmsgvars.words[2] == &quot;zeds&quot; or gmsgvars.words[2] == &quot;zombies&quot;) and gmsgvars.words[3] ~= nil then
+		if (gmsgvars.playername ~= &quot;Server&quot;) then 
+			if (accessLevel(gmsgvars.playerid) &gt; 0) then
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command is restricted[-]&quot;)
+				faultyGMSG = false
+				return true
+			end
+		end
+
+		if gmsgvars.number ~= nil then
+			gmsgvars.number = math.abs(math.floor(gmsgvars.number))
+
+			if gmsgvars.number &gt; 150 then
+				if (gmsgvars.playername ~= &quot;Server&quot;) then 
+					message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. gmsgvars.number .. &quot; is too high. Set a lower limit.[-]&quot;)
+				else
+					irc_QueueMsg(server.ircMain, gmsgvars.number .. &quot; is too high. Set a lower limit.&quot;)
+				end
+
+				faultyGMSG = false
+				return true
+			end
+
+			send(&quot;sg MaxSpawnedZombies &quot; .. gmsgvars.number)
+
+			if (gmsgvars.playername ~= &quot;Server&quot;) then 
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Max spawned zombies is now &quot; .. gmsgvars.number .. &quot;[-]&quot;)
+			else
+				irc_QueueMsg(server.ircMain, &quot;Max spawned zombies is now &quot; .. gmsgvars.number)
+			end
+		end
+
+		faultyGMSG = false
+		return true
+	end
+
+if debug then dbug(&quot;debug server 26&quot;) end
+
+	if gmsgvars.words[1] == &quot;max&quot; and gmsgvars.words[2] == &quot;players&quot; and gmsgvars.words[3] ~= nil then
+		if (gmsgvars.playername ~= &quot;Server&quot;) then 
+			if (accessLevel(gmsgvars.playerid) &gt; 0) then
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command is restricted[-]&quot;)
+				faultyGMSG = false
+				return true
+			end
+		end
+
+		if gmsgvars.number ~= nil then
+			gmsgvars.number = math.abs(math.floor(gmsgvars.number))
+
+			send(&quot;sg ServerMaxPlayerCount &quot; .. gmsgvars.number)
+
+			if (gmsgvars.playername ~= &quot;Server&quot;) then 
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Max players is now &quot; .. gmsgvars.number .. &quot;[-]&quot;)
+			else
+				irc_QueueMsg(server.ircMain, &quot;Max players is now &quot; .. gmsgvars.number)
+			end
+
+		end
+
+		faultyGMSG = false
+		return true
+	end
+
+if debug then dbug(&quot;debug server 27&quot;) end
+
+	if gmsgvars.words[1] == &quot;max&quot; and gmsgvars.words[2] == &quot;animals&quot; and gmsgvars.words[3] ~= nil then
+		if (gmsgvars.playername ~= &quot;Server&quot;) then 
+			if (accessLevel(gmsgvars.playerid) &gt; 0) then
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command is restricted[-]&quot;)
+				faultyGMSG = false
+				return true
+			end
+		end
+
+		if gmsgvars.number ~= nil then
+			gmsgvars.number = math.abs(math.floor(gmsgvars.number))
+
+			if gmsgvars.number &gt; 150 then
+				if (gmsgvars.playername ~= &quot;Server&quot;) then 
+					message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. gmsgvars.number .. &quot; is too high. Set a lower limit.[-]&quot;)
+				else
+					irc_QueueMsg(server.ircMain, gmsgvars.number .. &quot; is too high. Set a lower limit.&quot;)
+				end
+
+				faultyGMSG = false
+				return true
+			end
+
+			send(&quot;sg MaxSpawnedAnimals &quot; .. gmsgvars.number)
+
+			if (gmsgvars.playername ~= &quot;Server&quot;) then 
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Max spawned animals is now &quot; .. gmsgvars.number .. &quot;[-]&quot;)
+			else
+				irc_QueueMsg(server.ircMain, &quot;Max spawned animals is now &quot; .. gmsgvars.number)
+			end
+		end
+
+		faultyGMSG = false
+		return true
+	end
+
+if debug then dbug(&quot;debug server 28&quot;) end
+
+	if gmsgvars.words[1] == &quot;set&quot; and gmsgvars.words[2] == &quot;max&quot; and gmsgvars.words[3] == &quot;uptime&quot; then
+		if (gmsgvars.playername ~= &quot;Server&quot;) then 
+			if (accessLevel(gmsgvars.playerid) &gt; 0) then
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command is restricted[-]&quot;)
+				faultyGMSG = false
+				return true
+			end
+		end
+
+		if gmsgvars.number ~= nil then
+			gmsgvars.number = math.abs(math.floor(gmsgvars.number))
+
+			server.maxServerUptime = gmsgvars.number
+			conn:execute(&quot;UPDATE server SET maxServerUptime = &quot; .. gmsgvars.number)
+
+			if (gmsgvars.playername ~= &quot;Server&quot;) then 
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]The bot will reboot the server when the server has been running &quot; .. gmsgvars.number .. &quot; hours.[-]&quot;)
+			else
+				irc_QueueMsg(server.ircMain, &quot;The bot will reboot the server when the server has been running &quot; .. gmsgvars.number .. &quot; hours.&quot;)
+			end
+		end
+
+		faultyGMSG = false
+		return true
+	end
+
 	-- ###################  do not allow remote commands beyond this point ################
 	if (gmsgvars.playerid == nil) then
 		faultyGMSG = false
 		return false
 	end
 	-- ####################################################################################
+
+if debug then dbug(&quot;debug server 29&quot;) end
 
 	if (gmsgvars.words[1] == &quot;reset&quot;) and (gmsgvars.words[2] == &quot;server&quot;) then 
 		if accessLevel(gmsgvars.playerid) &gt; 0 then
@@ -19630,7 +20555,7 @@ if debug then dbug(&quot;debug server 25&quot;) end
 		return true
 	end
 
-if debug then dbug(&quot;debug server 26&quot;) end
+if debug then dbug(&quot;debug server 30&quot;) end
 
 	if (gmsgvars.words[1] == &quot;reset&quot;) and (gmsgvars.words[2] == &quot;bot&quot;) then 
 		if accessLevel(gmsgvars.playerid) &gt; 0 then
@@ -19646,7 +20571,7 @@ if debug then dbug(&quot;debug server 26&quot;) end
 		return true
 	end
 
-if debug then dbug(&quot;debug server 27&quot;) end
+if debug then dbug(&quot;debug server 31&quot;) end
 
 	if (gmsgvars.words[1] == &quot;no&quot;) and (gmsgvars.words[2] == &quot;reset&quot;) then 
 		if accessLevel(gmsgvars.playerid) &gt; 0 then
@@ -19657,78 +20582,6 @@ if debug then dbug(&quot;debug server 27&quot;) end
 
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Oh ok then.[-]&quot;)
 		server.warnBotReset = false
-
-		faultyGMSG = false
-		return true
-	end
-
-if debug then dbug(&quot;debug server 28&quot;) end
-
-	if gmsgvars.words[1] == &quot;max&quot; and (gmsgvars.words[2] == &quot;zeds&quot; or gmsgvars.words[2] == &quot;zombies&quot;) and gmsgvars.words[3] ~= nil then
-		if (accessLevel(gmsgvars.playerid) &gt; 0) then
-			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command is restricted[-]&quot;)
-			faultyGMSG = false
-			return true
-		end
-
-		if gmsgvars.number ~= nil then
-			gmsgvars.number = math.abs(math.floor(gmsgvars.number))
-
-			if gmsgvars.number &gt; 150 then
-				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. gmsgvars.number .. &quot; is too high. Set a lower limit.[-]&quot;)
-				faultyGMSG = false
-				return true
-			end
-
-			send(&quot;sg MaxSpawnedZombies &quot; .. gmsgvars.number)
-			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Max spawned zombies is now &quot; .. gmsgvars.number .. &quot;[-]&quot;)
-		end
-
-		faultyGMSG = false
-		return true
-	end
-
-if debug then dbug(&quot;debug server 29&quot;) end
-
-	if gmsgvars.words[1] == &quot;max&quot; and gmsgvars.words[2] == &quot;players&quot; and gmsgvars.words[3] ~= nil then
-		if (accessLevel(gmsgvars.playerid) &gt; 0) then
-			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command is restricted[-]&quot;)
-			faultyGMSG = false
-			return true
-		end
-
-		if gmsgvars.number ~= nil then
-			gmsgvars.number = math.abs(math.floor(gmsgvars.number))
-
-			send(&quot;sg ServerMaxPlayerCount &quot; .. gmsgvars.number)
-			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Max players is now &quot; .. gmsgvars.number .. &quot;[-]&quot;)
-		end
-
-		faultyGMSG = false
-		return true
-	end
-
-if debug then dbug(&quot;debug server 30&quot;) end
-
-	if gmsgvars.words[1] == &quot;max&quot; and gmsgvars.words[2] == &quot;animals&quot; and gmsgvars.words[3] ~= nil then
-		if (accessLevel(gmsgvars.playerid) &gt; 0) then
-			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command is restricted[-]&quot;)
-			faultyGMSG = false
-			return true
-		end
-
-		if gmsgvars.number ~= nil then
-			gmsgvars.number = math.abs(math.floor(gmsgvars.number))
-
-			if gmsgvars.number &gt; 150 then
-				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. gmsgvars.number .. &quot; is too high. Set a lower limit.[-]&quot;)
-				faultyGMSG = false
-				return true
-			end
-
-			send(&quot;sg MaxSpawnedAnimals &quot; .. gmsgvars.number)
-			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Max spawned animals is now &quot; .. gmsgvars.number .. &quot;[-]&quot;)
-		end
 
 		faultyGMSG = false
 		return true
@@ -20273,17 +21126,17 @@ if debug then display (&quot;debug teleports 11\n&quot;) end
 
 	if gmsgvars.words[1] == &quot;pack&quot; and gmsgvars.words[2] == nil then 
 		if players[gmsgvars.playerid].deathX ~= 0 then
-			if players[gmsgvars.playerid].lastCommand ~= gmsgvars.command then
-				if tonumber(players[gmsgvars.playerid].cash) &lt; 50 then
-					if tonumber(igplayers[steam].sessionPlaytime) + tonumber(players[steam].timeOnServer) &gt; 3600 then
-						message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command costs 50 zennies.  Start saving and don't die.[-]&quot;)
-						faultyGMSG = false
-						return true
-					end
-				end
-			end
+--			if players[gmsgvars.playerid].lastCommand ~= gmsgvars.command then
+--				if tonumber(players[gmsgvars.playerid].cash) &lt; 50 then
+--					if tonumber(igplayers[steam].sessionPlaytime) + tonumber(players[steam].timeOnServer) &gt; 3600 then
+--						message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command costs 50 zennies.  Start saving and don't die.[-]&quot;)
+--						faultyGMSG = false
+--						return true
+--					end
+--				end
+--			end
 
-			cursor,errorString = conn:execute(&quot;SELECT x, y, z FROM tracker WHERE steam = &quot; .. gmsgvars.playerid .. &quot; and ((abs(x - &quot; .. players[gmsgvars.playerid].deathX .. &quot;) &gt; 5 and abs(x - &quot; .. players[gmsgvars.playerid].deathX .. &quot;) &lt; 50) and (abs(z - &quot; .. players[gmsgvars.playerid].deathZ .. &quot;) &gt; 5 and abs(z - &quot; .. players[gmsgvars.playerid].deathZ .. &quot;) &lt; 50))  ORDER BY trackerid DESC Limit 0, 1&quot;)
+			cursor,errorString = conn:execute(&quot;SELECT x, y, z FROM tracker WHERE steam = &quot; .. gmsgvars.playerid .. &quot; and ((abs(x - &quot; .. players[gmsgvars.playerid].deathX .. &quot;) &gt; 0 and abs(x - &quot; .. players[gmsgvars.playerid].deathX .. &quot;) &lt; 50) and (abs(z - &quot; .. players[gmsgvars.playerid].deathZ .. &quot;) &gt; 5 and abs(z - &quot; .. players[gmsgvars.playerid].deathZ .. &quot;) &lt; 50))  ORDER BY trackerid DESC Limit 0, 1&quot;)
 			if cursor:numrows() &gt; 0 then
 				row = cursor:fetch({}, &quot;a&quot;)	
 				cmd = (&quot;tele &quot; .. gmsgvars.playerid .. &quot; &quot; .. row.x .. &quot; &quot; .. row.y .. &quot; &quot; .. row.z)
@@ -20295,17 +21148,17 @@ if debug then display (&quot;debug teleports 11\n&quot;) end
 				teleport(cmd, true)
 
 				if (accessLevel(gmsgvars.playerid) &gt; 2) and players[gmsgvars.playerid].lastCommand ~= gmsgvars.command then
-					if tonumber(igplayers[steam].sessionPlaytime) + tonumber(players[steam].timeOnServer) &gt; 3600 then
-						message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]50 zennies have been deducted from your cash.  You now have &quot; .. tonumber(players[gmsgvars.playerid].cash) - 100 .. &quot; zennies.[-]&quot;)
-						players[gmsgvars.playerid].cash = tonumber(players[gmsgvars.playerid].cash) - 50
-					end
+--					if tonumber(igplayers[steam].sessionPlaytime) + tonumber(players[steam].timeOnServer) &gt; 3600 then
+--						message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]50 zennies have been deducted from your cash.  You now have &quot; .. tonumber(players[gmsgvars.playerid].cash) - 100 .. &quot; zennies.[-]&quot;)
+--						players[gmsgvars.playerid].cash = tonumber(players[gmsgvars.playerid].cash) - 50
+--					end
 				end
 			else
-				if tonumber(igplayers[steam].sessionPlaytime) + tonumber(players[steam].timeOnServer) &gt; 3600 then
-					message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Sorry I am unable to find a spot close to your pack to send you there.  No charge.[-]&quot;)
-				else
+--				if tonumber(igplayers[steam].sessionPlaytime) + tonumber(players[steam].timeOnServer) &gt; 3600 then
+--					message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Sorry I am unable to find a spot close to your pack to send you there.  No charge.[-]&quot;)
+--				else
 					message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Sorry I am unable to find a spot close to your pack to send you there.[-]&quot;)
-				end
+--				end
 			end
 
 		end
@@ -21577,7 +22430,7 @@ if debug then display (&quot;debug tracker 7\n&quot;) end
 
 if debug then display (&quot;debug tracker 8\n&quot;) end
 
-	if (gmsgvars.words[1] == &quot;stop&quot; and gmsgvars.words[2] == nil) then
+	if (gmsgvars.words[1] == &quot;stop&quot; or gmsgvars.words[1] == &quot;sotp&quot; and gmsgvars.words[2] == nil) then
 		if (accessLevel(gmsgvars.playerid) &gt; 2) then
 			faultyGMSG = false
 			return true
@@ -21743,7 +22596,7 @@ if debug then dbug(&quot;debug mail&quot;) end
 
 	-- ####################################################################################
 	-- don't proceed if there is no leading slash or pm
-	if (string.sub(gmsgvars.command, 1, 1) ~= &quot;/&quot;) and (not string.find(gmsgvars.oldLine, &quot; command 'pm&quot;)) then
+	if (string.sub(gmsgvars.command, 1, 1) ~= &quot;/&quot;) and not (string.find(gmsgvars.oldLine, &quot; command 'pm&quot;) or string.find(gmsgvars.oldLine, &quot; command '@&quot;)) then
 		faultyGMSG = false
 		return false
 	end
@@ -21851,7 +22704,7 @@ if debug then dbug(&quot;debug mail 5&quot;) end
 
 	-- ####################################################################################
 	-- don't proceed if not using the console
-	if not string.find(gmsgvars.oldLine, &quot; command 'pm&quot;) then
+	if not string.find(gmsgvars.oldLine, &quot; command 'pm&quot;) and not server.coppi then
 		faultyGMSG = false
 		return false
 	end
@@ -22608,10 +23461,23 @@ function loadVillagers()
 end
 
 
-function loadTables()
-	conn:execute(&quot;INSERT INTO memRestrictedItems (select * from restrictedItems)&quot;)
-	conn:execute(&quot;INSERT INTO memLottery (select * from lottery)&quot;)
+function loadCustomMessages()
+	-- load customMessages
+	getTableFields(&quot;customMessages&quot;)
 
+   customMessages = {}
+	cursor,errorString = conn:execute(&quot;select * from customMessages&quot;)
+	row = cursor:fetch({}, &quot;a&quot;)
+	while row do
+		customMessages[row.command] = {}
+		customMessages[row.command].message = row.message
+		customMessages[row.command].accessLevel = row.accessLevel
+		row = cursor:fetch(row, &quot;a&quot;)	
+	end
+end
+
+
+function loadTables()
 	dbug(&quot;loading players&quot;)
 	loadPlayers()
 	dbug(&quot;loaded players&quot;)
@@ -22642,6 +23508,9 @@ function loadTables()
 
 	loadShopCategories()
 	dbug(&quot;loaded shop categories&quot;)
+
+	loadCustomMessages()
+	dbug(&quot;loaded custom messages&quot;)
 end</script>
             <eventHandlerList/>
         </Script>
@@ -23128,7 +23997,7 @@ function baseProtection(steam, posX, posY, posZ)
 	local k, v, testMode
 
 	testMode = false
-	players[steam].atHome = false
+--	players[steam].atHome = false
 
 	-- check for and record any non-friend who gets within protectSize meters of a players /setbase coord
 	for k, v in pairs(players) do
@@ -23137,9 +24006,16 @@ function baseProtection(steam, posX, posY, posZ)
 			dist = distancexz(posX, posZ, v.homeX, v.homeZ)
 			size = tonumber(v.protectSize)
 
+--[[
 			if (v.steam == steam) and (dist &lt; size + 16) then
-				v.atHome = true
+				if not v.atHome then
+					v.atHome = true
+					message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Welcome home &quot; .. v.name .. &quot;[-]&quot;)
+				else
+					v.atHome = false
+				end
 			end
+--]]
 
 			if (v.steam == steam and v.protectPaused) then
 				if (dist &gt; 100) then
@@ -23247,9 +24123,16 @@ function baseProtection(steam, posX, posY, posZ)
 			dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, v.home2X, v.home2Z)
 			size = tonumber(v.protect2Size)
 
+--[[
 			if (v.steam == steam) and (dist &lt; size + 16) then
-				v.atHome = true
+				if not v.atHome then
+					v.atHome = true
+					message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Welcome home &quot; .. v.name .. &quot;[-]&quot;)
+				else
+					v.atHome = false
+				end
 			end
+--]]
 
 			if (v.steam == steam and v.protect2Paused) then
 				if (dist &gt; 100) then
@@ -23441,8 +24324,7 @@ function playerBanned(steam)
 
 	cursor,errorString = conn:execute(&quot;SELECT * FROM bans WHERE steam = &quot; .. steam .. &quot; AND NOT expired&quot;)
 	row = cursor:fetch({}, &quot;a&quot;)
-end
-</script>
+end</script>
             <eventHandlerList/>
         </Script>
         <Script isActive="yes" isFolder="no">
@@ -23459,6 +24341,15 @@ end
 
 
 function ResetBot()
+	dbug(&quot;Archiving data&quot;)
+	saveLuaTables(os.date(&quot;%Y%m%d_%H%M%S&quot;))
+
+	-- save some additional tables in from mysql
+	dumpTable(&quot;events&quot;)
+	dumpTable(&quot;announcements&quot;)
+	dumpTable(&quot;locationSpawns&quot;)
+	dumpTable(&quot;alerts&quot;)
+
 	dbug(&quot;Running ResetBot&quot;)
 
 	for k,v in pairs(players) do
@@ -23493,7 +24384,6 @@ function ResetBot()
 		v.rescued = false
 		v.watchPlayer = false
 		v.lastBaseRaid = 0
-		v.playtime = 0
 		v.zombies = 0
 		v.cash = 0
 		v.overstack = false
@@ -23502,7 +24392,6 @@ function ResetBot()
 		v.overstackTimeout = false
 		v.gimmeCount = 0
 		v.stepCount = 0
-		v.timeOnServer = 0
 		v.raiding = false
 		v.playerKills = 0
 		v.score = 0
@@ -23537,7 +24426,7 @@ function ResetBot()
 
 	server.lottery = 0
 	server.mapSize = 20000
-	server.prisonSize = 30
+	server.prisonSize = 300
 	server.warnBotReset = false
 
 	dbug(&quot;Emptying tables&quot;)
@@ -23549,8 +24438,6 @@ function ResetBot()
 	conn:execute(&quot;DELETE FROM events&quot;)
 	conn:execute(&quot;DELETE FROM gimmeQueue&quot;)
 	conn:execute(&quot;DELETE FROM hotspots&quot;)
-	conn:execute(&quot;DELETE FROM inventoryChanges&quot;)
-	conn:execute(&quot;DELETE FROM inventoryTracker&quot;)
 	conn:execute(&quot;DELETE FROM ircQueue&quot;)
 	conn:execute(&quot;DELETE FROM keystones&quot;)
 	conn:execute(&quot;DELETE FROM locations&quot;)
@@ -23568,17 +24455,18 @@ function ResetBot()
 	conn:execute(&quot;DELETE FROM searchResults&quot;)
 	conn:execute(&quot;DELETE FROM villagers&quot;)
 	conn:execute(&quot;DELETE FROM visits&quot;)
+	conn:execute(&quot;DELETE FROM inventoryChanges&quot;)
+	conn:execute(&quot;DELETE FROM inventoryTracker&quot;)
 
 	dbug(&quot;Reading server, players, bans and admin data&quot;)
 
-	tempTimer( 4, [[send(&quot;lkp&quot;)]] )
-	tempTimer( 8, [[send(&quot;pm IPCHECK&quot;)]] )
-	tempTimer( 10, [[send(&quot;admin list&quot;)]] )
-	tempTimer( 12, [[send(&quot;gg&quot;)]] )
-	tempTimer( 14, [[send(&quot;ban list&quot;)]] )
+	send(&quot;lkp&quot;)
+	tempTimer( 10, [[send(&quot;pm IPCHECK&quot;)]] )
+	tempTimer( 12, [[send(&quot;admin list&quot;)]] )
+	tempTimer( 14, [[send(&quot;gg&quot;)]] )
+	tempTimer( 16, [[send(&quot;ban list&quot;)]] )
 
 	dbug(&quot;Finished resetting bot&quot;)
-	
 	return true
 end
 
@@ -23642,8 +24530,13 @@ function ResetServer()
 		server.lottery = 0
 	end
 
+	conn:execute(&quot;DELETE FROM players&quot;)
+
 	ResetBot()
 	initServer()
+
+	botStarted = nil
+	login()
 end</script>
             <eventHandlerList/>
         </Script>
@@ -23980,6 +24873,12 @@ end</script>
 
 
 function checkData()
+	if server.botName == nil then
+		loadServer()
+		botStarted = nil
+		login()
+	end
+
 	if tablelength(shopCategories) == 0 then
 		loadShopCategories()		
 	end
@@ -24018,12 +24917,23 @@ function login()
 		botStarted = os.time()
 
 		openDB()
+		initDB()
+
+		dbConnected = isDBConnected()
 
 		initError = true
 		serverTime = &quot;&quot;
 		feralWarning = false
 		scheduledReboot = false
 		homedir = getMudletHomeDir()
+
+		lfs.mkdir(homedir .. &quot;/daily&quot;)
+		lfs.mkdir(homedir .. &quot;/dns&quot;)
+		lfs.mkdir(homedir .. &quot;/proxies&quot;)
+		lfs.mkdir(homedir .. &quot;/temp&quot;)
+		lfs.mkdir(homedir .. &quot;/scripts&quot;)
+
+		fixMissingStuff()
 
 		loadServer()
 
@@ -24064,10 +24974,6 @@ function login()
 		  invTemp = {}
 		end
 
-		if type(gimmePrizes) ~= &quot;table&quot; then
-		  gimmePrizes = {}
-		end
-
 		if type(hotspots) ~= &quot;table&quot; then
 		  hotspots = {}
 		end
@@ -24096,17 +25002,15 @@ function login()
 			stackLimits = {}
 		end
 
-		if type(customCommands) ~= &quot;table&quot; then
-		  customCommands = {}
+		if type(customMessages) ~= &quot;table&quot; then
+		  customMessages = {}
+		end
+
+		if type(reservedSlots) ~= &quot;table&quot; then
+			reservedSlots = {}
 		end
 
 		if debug then dbug(&quot;debug login 2\n&quot;) end
-
-		lfs.mkdir(homedir .. &quot;/daily&quot;)
-		lfs.mkdir(homedir .. &quot;/dns&quot;)
-		lfs.mkdir(homedir .. &quot;/proxies&quot;)
-		lfs.mkdir(homedir .. &quot;/temp&quot;)
-		lfs.mkdir(homedir .. &quot;/scripts&quot;)
 
 		-- add your steam id here so you can debug using your name
 		yourname = &quot;12345678901234567&quot;
@@ -24117,6 +25021,7 @@ function login()
 
 		AnnounceBot = true
 		faultyGimme = false
+		faultyGimmeNumber = 0
 		faultyGMSG = false
 		gimmeHell = 0
 		server.scheduledRestartPaused  = false
@@ -24214,18 +25119,7 @@ function teleport(cmd, forced)
 	igplayers[id].tp = 1
 	igplayers[id].hackerScore = 0
 
-	if coords[3] ~= nil then
-		if distancexz(igplayers[id].xPos, igplayers[id].zPos, coords[1], coords[3]) &gt; 200 then
-			send(&quot;tele &quot; .. id .. &quot; &quot; .. coords[1] .. &quot; -500 &quot; .. coords[3])
-			tempTimer( 8, [[send(&quot;]] .. cmd .. [[&quot;)]] )
-
-			message(&quot;pm &quot; .. id .. &quot; [&quot; .. server.chatColour .. &quot;]Teleporting now.  Please wait.[-]&quot;)
-		else
-			send(cmd)
-		end
-	else
-		send(cmd)
-	end
+	send(cmd)
 
 	return true
 end
@@ -24244,6 +25138,8 @@ function fallCatcher(steam, x, y, z)
 			igplayers[steam].lastCatchTimestamp = os.time() + 50
 		
 			if igplayers[steam].lastTP ~= nil then
+				igplayers[steam].tp = 1
+				igplayers[steam].hackerScore = 0
 				send(igplayers[steam].lastTP)
 				return
 			end
@@ -24259,6 +25155,8 @@ function fallCatcher(steam, x, y, z)
 					cmd = (&quot;tele &quot; .. steam .. &quot; &quot; .. row.x .. &quot; &quot; .. row.y + 1 .. &quot; &quot; .. row.z)
 					
 					if cmd ~= &quot;&quot; then
+						igplayers[steam].tp = 1
+						igplayers[steam].hackerScore = 0
 						send(cmd)
 						return
 					else
@@ -24278,19 +25176,26 @@ end</script>
         <Script isActive="yes" isFolder="no">
             <name>Lua Tables</name>
             <packageName></packageName>
-            <script>function saveLuaTables()
+            <script>function saveLuaTables(date)
+	if date ~= nil then
+		date = date .. &quot;_&quot;
+	else
+		date = &quot;&quot;
+	end
+
 	dbug(&quot;saving Lua tables&quot;)
-	table.save(homedir .. &quot;/players.lua&quot;, players)
-	table.save(homedir .. &quot;/teleports.lua&quot;, teleports)
-	table.save(homedir .. &quot;/friends.lua&quot;, friends)
-	table.save(homedir .. &quot;/locations.lua&quot;, locations)
-	table.save(homedir .. &quot;/server.lua&quot;, server)
-	table.save(homedir .. &quot;/gimmePrizes.lua&quot;, gimmePrizes)
-	table.save(homedir .. &quot;/badItems.lua&quot;, badItems)
-	table.save(homedir .. &quot;/hotspots.lua&quot;, hotspots)
-	table.save(homedir .. &quot;/resetRegions.lua&quot;, resetRegions)
-	table.save(homedir .. &quot;/shopCategories.lua&quot;, shopCategories)
-	table.save(homedir .. &quot;/villagers.lua&quot;, villagers)
+	table.save(homedir .. &quot;/&quot; .. date .. &quot;players.lua&quot;, players)
+	table.save(homedir .. &quot;/&quot; .. date .. &quot;teleports.lua&quot;, teleports)
+	table.save(homedir .. &quot;/&quot; .. date .. &quot;friends.lua&quot;, friends)
+	table.save(homedir .. &quot;/&quot; .. date .. &quot;locations.lua&quot;, locations)
+	table.save(homedir .. &quot;/&quot; .. date .. &quot;server.lua&quot;, server)
+	table.save(homedir .. &quot;/&quot; .. date .. &quot;badItems.lua&quot;, badItems)
+	table.save(homedir .. &quot;/&quot; .. date .. &quot;hotspots.lua&quot;, hotspots)
+	table.save(homedir .. &quot;/&quot; .. date .. &quot;resetRegions.lua&quot;, resetRegions)
+	table.save(homedir .. &quot;/&quot; .. date .. &quot;shopCategories.lua&quot;, shopCategories)
+	table.save(homedir .. &quot;/&quot; .. date .. &quot;villagers.lua&quot;, villagers)
+	table.save(homedir .. &quot;/&quot; .. date .. &quot;restrictedItems.lua&quot;, restrictedItems)
+	table.save(homedir .. &quot;/&quot; .. date .. &quot;customMessages.lua&quot;, customMessages)
 	dbug(&quot;finished saving Lua tables&quot;)
 end
 
@@ -24700,7 +25605,7 @@ end
 
 
 --[[
-private message commands
+private message messages
 =============
 These are stored in the table customMessages.  Currently they are limited to simple private text responses.
 add command
@@ -24757,7 +25662,7 @@ function gmsg_pms()
 			cmd = string.sub(cmd, 2)
 		end
 	
-		customCommands[cmd] = {}
+		customMessages[cmd] = {}
 		conn:execute(&quot;INSERT INTO customMessages (command, message, accessLevel) Values ('&quot; .. escape(cmd) .. &quot;','&quot; .. escape(msg) .. &quot;',&quot; .. access .. &quot;) ON DUPLICATE KEY UPDATE accessLevel = &quot; .. access.. &quot;, message = '&quot; .. escape(msg) .. &quot;'&quot;)
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You added the command: /&quot; .. cmd  .. &quot;[-]&quot;)
 
@@ -24777,7 +25682,7 @@ function gmsg_pms()
 
 		if cmd ~= nil then
 			conn:execute(&quot;DELETE FROM customMessages WHERE command = '&quot; .. escape(cmd) .. &quot;'&quot;)
-			customCommand[cmd] = nil
+			customMessages[cmd] = nil
 			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You removed the command /&quot; .. cmd .. &quot;[-]&quot;)
 		else
 			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Command required.[-]&quot;)
@@ -24813,7 +25718,6 @@ function gmsg_pms()
 		return true
 	end
 
-
 	-- ###################  do not allow remote commands beyond this point ################
 	if (gmsgvars.playerid == nil) then
 		faultyGMSG = false
@@ -24821,15 +25725,11 @@ function gmsg_pms()
 	end
 	-- ####################################################################################
 
-
-	if customCommands[cmd] then
-
+	if customMessages[cmd] then
 		cursor,errorString = conn:execute(&quot;select * from customMessages where command = '&quot; .. escape(cmd) .. &quot;'&quot;)
-		rows = cursor:numrows()
+		row = cursor:fetch({}, &quot;a&quot;)
 
-		if rows &gt; 0 then
-			row = cursor:fetch({}, &quot;a&quot;)
-
+		if row then
 			if (accessLevel(gmsgvars.playerid) &lt;= tonumber(row.accessLevel)) then
 				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. row.message .. &quot;[-]&quot;)
 				faultyGMSG = false
@@ -24917,7 +25817,7 @@ function initServer()
 	server.allowShop = false
 	server.allowWaypoints = false
 	server.maxPlayers = 24
-	server.maxServerUptime = 12
+	server.maxServerUptime = 4
 	server.baseSize = 32
 	server.baseCooldown = 2400
 	server.protectionMaxDays = 31
@@ -24929,9 +25829,6 @@ function initServer()
 
 	conn:execute(&quot;DELETE FROM server&quot;)
 	cursor,errorString = conn:execute(&quot;INSERT INTO server (botName, windowGMSG, windowAlerts, windowDebug, windowLists, windowPlayers) values ('Bot', 'GMSG', 'Alerts', 'Debug', 'Lists', 'Players')&quot;)
-
-	botStarted = nil
-	login()
 end</script>
             <eventHandlerList/>
         </Script>

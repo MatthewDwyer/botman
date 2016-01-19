@@ -3,8 +3,8 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Nov 25, 2015 at 12:46 PM
--- Server version: 10.0.20-MariaDB-0+deb8u1
+-- Generation Time: Jan 19, 2016 at 11:54 PM
+-- Server version: 10.0.22-MariaDB-0+deb8u1
 -- PHP Version: 5.6.14-0+deb8u1
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -72,9 +72,9 @@ INSERT INTO `badItems` (`item`, `action`) VALUES
 ('cashRegister', 'timeout'),
 ('cobblestone', 'timeout'),
 ('concreteReinforced', 'timeout'),
-('lootCrateShamway', 'exile'),
-('lootCrateShotgunMessiah', 'exile'),
-('lootCrateWorkingStiffs', 'exile'),
+('lootCrateShamway', 'timeout'),
+('lootCrateShotgunMessiah', 'timeout'),
+('lootCrateWorkingStiffs', 'timeout'),
 ('lootForest', 'timeout'),
 ('lootGarage', 'timeout'),
 ('lootHouse', 'timeout'),
@@ -89,114 +89,21 @@ INSERT INTO `badItems` (`item`, `action`) VALUES
 ('reinforcedScrapIronWall', 'timeout'),
 ('reinforcedTrunkPineTip', 'timeout'),
 ('reinforcedWoodMetal', 'timeout'),
-('sandstorm', 'exile'),
-('secureReinforcedDoorWooden', 'exile'),
-('smokestorm', 'exile'),
-('snowstorm1', 'exile'),
+('sandstorm', 'timeout'),
+('secureReinforcedDoorWooden', 'timeout'),
+('smokestorm', 'timeout'),
+('snowstorm1', 'timeout'),
 ('steeldoor1_v1', 'timeout'),
 ('steeldoor1_v2', 'timeout'),
 ('steeldoor1_v3', 'timeout'),
-('steelWall', 'exile'),
-('supplyCrateShamway', 'exile'),
-('supplyCrateShotgunMessiah', 'exile'),
-('supplyCrateWorkingStiffs', 'exile'),
-('water', 'ban'),
-('waterMoving', 'ban'),
-('waterMovingBucket', 'ban'),
-('waterStaticBucket', 'ban');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `bans`
---
-
-CREATE TABLE IF NOT EXISTS `bans` (
-  `BannedTo` varchar(22) NOT NULL,
-  `Steam` bigint(17) NOT NULL,
-  `Reason` varchar(255) DEFAULT NULL,
-  `expiryDate` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `bookmarks`
---
-
-CREATE TABLE IF NOT EXISTS `bookmarks` (
-`id` int(11) NOT NULL,
-  `steam` bigint(17) NOT NULL,
-  `x` int(11) NOT NULL DEFAULT '0',
-  `y` int(11) NOT NULL DEFAULT '0',
-  `z` int(11) NOT NULL DEFAULT '0',
-  `note` varchar(50) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `commandQueue`
---
-
-CREATE TABLE IF NOT EXISTS `commandQueue` (
-`id` bigint(20) NOT NULL,
-  `steam` bigint(17) NOT NULL,
-  `command` varchar(100) NOT NULL
-) ENGINE=MEMORY AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `customMessages`
---
-
-CREATE TABLE IF NOT EXISTS `customMessages` (
-  `command` varchar(30) NOT NULL,
-  `message` varchar(255) NOT NULL,
-  `accessLevel` int(11) NOT NULL DEFAULT '99'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `events`
---
-
-CREATE TABLE IF NOT EXISTS `events` (
-`id` bigint(20) NOT NULL,
-  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `x` int(11) NOT NULL,
-  `y` int(11) NOT NULL,
-  `z` int(11) NOT NULL,
-  `serverTime` varchar(19) NOT NULL,
-  `type` varchar(15) NOT NULL,
-  `event` varchar(255) NOT NULL,
-  `steam` varchar(17) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `friends`
---
-
-CREATE TABLE IF NOT EXISTS `friends` (
-  `steam` bigint(17) NOT NULL,
-  `friend` bigint(17) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `gimmePrizes`
---
-
-CREATE TABLE IF NOT EXISTS `gimmePrizes` (
-  `name` varchar(20) NOT NULL,
-  `category` varchar(15) NOT NULL,
-  `prizeLimit` int(11) NOT NULL DEFAULT '1'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+('steelWall', 'timeout'),
+('supplyCrateShamway', 'timeout'),
+('supplyCrateShotgunMessiah', 'timeout'),
+('supplyCrateWorkingStiffs', 'timeout'),
+('water', 'timeout'),
+('waterMoving', 'timeout'),
+('waterMovingBucket', 'timeout'),
+('waterStaticBucket', 'timeout');
 
 --
 -- Dumping data for table `gimmePrizes`
@@ -286,7 +193,6 @@ INSERT INTO `gimmePrizes` (`name`, `category`, `prizeLimit`) VALUES
 ('foodYuccaFruit', 'food', 10),
 ('foodYuccaJuice', 'food', 5),
 ('footballHelmet', 'clothes', 1),
-('forgeAheadBook', 'book', 1),
 ('fountain', 'misc', 1),
 ('gasCan', 'misc', 5),
 ('goldenRodTea', 'food', 15),
@@ -295,8 +201,6 @@ INSERT INTO `gimmePrizes` (`name`, `category`, `prizeLimit`) VALUES
 ('hammer', 'tool', 1),
 ('hive', 'misc', 1),
 ('hoe', 'tool', 1),
-('homeMaintenanceBook', 'book', 1),
-('homeMaintenanceBookV', 'book', 1),
 ('huntingKnife', 'weapon', 1),
 ('ice', 'misc', 1),
 ('ironBoots', 'clothes', 1),
@@ -305,7 +209,6 @@ INSERT INTO `gimmePrizes` (`name`, `category`, `prizeLimit`) VALUES
 ('ironHelmet', 'clothes', 1),
 ('ironLegArmor', 'clothes', 1),
 ('kevlarHelmet', 'clothes', 1),
-('keystone', 'misc', 3),
 ('LCDScreen', 'misc', 2),
 ('leatherBoots', 'clothes', 1),
 ('leatherGloves', 'clothes', 1),
@@ -314,7 +217,7 @@ INSERT INTO `gimmePrizes` (`name`, `category`, `prizeLimit`) VALUES
 ('leatherPants', 'clothes', 1),
 ('macDyverBook', 'book', 1),
 ('mailbox', 'misc', 1),
-('meatCookedStick', 'food', 5),
+('meatStew', 'food', 3),
 ('medicineCabinet', 'misc', 1),
 ('miningHelmet', 'clothes', 1),
 ('moldyBread', 'food', 3),
@@ -339,21 +242,10 @@ INSERT INTO `gimmePrizes` (`name`, `category`, `prizeLimit`) VALUES
 ('plaidShirtGreen', 'clothes', 1),
 ('plaidShirtRed', 'clothes', 1),
 ('plantFiberPants', 'clothes', 1),
-('pork', 'food', 3),
-('porkBoiled', 'food', 3),
-('porkCharred', 'food', 3),
-('porkGrilled', 'food', 3),
 ('potato', 'food', 20),
 ('PumpShotgun', 'weapon', 1),
-('rabbit', 'food', 3),
-('rabbitBoiled', 'food', 3),
-('rabbitCharred', 'food', 3),
-('rabbitGrilled', 'food', 3),
-('rabbitOnAStick', 'food', 3),
-('rabbitStew', 'food', 3),
 ('radiator', 'misc', 1),
 ('redDenimPants', 'clothes', 1),
-('reloadingWeeklyBook', 'book', 1),
 ('rottingFlesh', 'food', 10),
 ('rug01', 'misc', 1),
 ('sandbags', 'misc', 5),
@@ -395,13 +287,7 @@ INSERT INTO `gimmePrizes` (`name`, `category`, `prizeLimit`) VALUES
 ('trophy', 'misc', 3),
 ('trophy2', 'misc', 3),
 ('trophy3', 'misc', 3),
-('urbanCombatBook', 'book', 1),
 ('vegetableStew', 'food', 4),
-('venison', 'food', 3),
-('venisonBoiled', 'food', 3),
-('venisonCharred', 'food', 3),
-('venisonGrilled', 'food', 3),
-('venisonStew', 'food', 3),
 ('vitamins', 'food', 5),
 ('wallOven', 'misc', 1),
 ('weaponRepairKit', 'tool', 5),
@@ -6476,6 +6362,7 @@ CREATE TABLE IF NOT EXISTS `performance` (
   `gameTime` float NOT NULL,
   `fps` float NOT NULL,
   `heap` float NOT NULL,
+  `heapMax` float NOT NULL,
   `chunks` int(11) NOT NULL,
   `cgo` int(11) NOT NULL,
   `players` int(11) NOT NULL,
@@ -6603,7 +6490,8 @@ CREATE TABLE IF NOT EXISTS `players` (
   `ping` int(11) NOT NULL DEFAULT '0',
   `donorLevel` int(11) NOT NULL DEFAULT '1',
   `donorExpiry` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `autoFriend` varchar(2) NOT NULL COMMENT 'NA/AF/AD'
+  `autoFriend` varchar(2) NOT NULL COMMENT 'NA/AF/AD',
+  `ircOtherNames` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -6766,7 +6654,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `website` varchar(100) DEFAULT NULL,
   `ircServer` varchar(100) DEFAULT NULL,
   `pingKick` int(11) NOT NULL DEFAULT '-1',
-  `longPlayUpgradeTime` int(11) NOT NULL DEFAULT '0'
+  `longPlayUpgradeTime` int(11) NOT NULL DEFAULT '0',
   `gameType` varchar(3) NOT NULL DEFAULT 'pve',
   `hideCommands` tinyint(1) NOT NULL DEFAULT '1',
   `botTick` int(11) NOT NULL DEFAULT '0'
@@ -6806,7 +6694,6 @@ INSERT INTO `shop` (`item`, `category`, `price`, `stock`, `idx`, `maxStock`, `va
 ('762mmBullet', 'ammo', 10, 999, 3, 999, 0, 0),
 ('9mmBullet', 'ammo', 4, 999, 4, 999, 0, 0),
 ('antibiotics', 'medic', 200, 25, 1, 25, 0, 0),
-('bearStew', 'food', 500, 25, 1, 25, 0, 0),
 ('beer', 'food', 100, 100, 2, 100, 0, 0),
 ('blueberrySeed', 'garden', 100, 10, 1, 10, 0, 0),
 ('canHam', 'food', 25, 100, 3, 100, 0, 0),
@@ -6816,6 +6703,7 @@ INSERT INTO `shop` (`item`, `category`, `price`, `stock`, `idx`, `maxStock`, `va
 ('firstAidKit', 'medic', 50, 20, 2, 20, 0, 0),
 ('goldenrodSeed', 'garden', 100, 10, 4, 10, 0, 0),
 ('mapleSeed', 'garden', 50, 50, 5, 50, 0, 0),
+('meatStew', 'food', 30, 25, 1, 25, 0, 0),
 ('miningHelmet', 'tools', 300, 10, 1, 10, 0, 0),
 ('P2Ptoken', 'special', 100, 999, 2, 999, 0, 0),
 ('pineSeed', 'garden', 50, 50, 6, 50, 0, 0),
@@ -6842,6 +6730,7 @@ INSERT INTO `shopCategories` (`category`, `idx`, `code`) VALUES
 ('food', 5, 'f'),
 ('garden', 8, 'g'),
 ('medic', 3, 'm'),
+('misc', 1, 'mis'),
 ('special', 3, 's'),
 ('tools', 2, 't');
 
