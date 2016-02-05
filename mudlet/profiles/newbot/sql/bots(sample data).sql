@@ -3,8 +3,8 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Nov 25, 2015 at 12:44 PM
--- Server version: 10.0.20-MariaDB-0+deb8u1
+-- Generation Time: Feb 05, 2016 at 09:59 PM
+-- Server version: 10.0.22-MariaDB-0+deb8u1
 -- PHP Version: 5.6.14-0+deb8u1
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -19,17 +19,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `bots`
 --
-
--- --------------------------------------------------------
-
---
--- Table structure for table `badItems`
---
-
-CREATE TABLE IF NOT EXISTS `badItems` (
-  `item` varchar(50) NOT NULL,
-  `action` varchar(10) NOT NULL DEFAULT 'timeout'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `badItems`
@@ -74,39 +63,6 @@ INSERT INTO `badItems` (`item`, `action`) VALUES
 ('waterMoving', 'ban'),
 ('waterMovingBucket', 'ban'),
 ('waterStaticBucket', 'ban');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `bans`
---
-
-CREATE TABLE IF NOT EXISTS `bans` (
-  `steam` varchar(17) NOT NULL,
-  `reason` varchar(255) DEFAULT NULL,
-  `bannedTo` varchar(22) NOT NULL,
-  `permanent` tinyint(1) NOT NULL DEFAULT '0',
-  `server` varchar(20) NOT NULL,
-  `playTime` int(11) NOT NULL DEFAULT '0',
-  `score` int(11) NOT NULL DEFAULT '0',
-  `playerKills` int(11) NOT NULL DEFAULT '0',
-  `zombies` int(11) NOT NULL DEFAULT '0',
-  `country` varchar(2) DEFAULT NULL,
-  `belt` varchar(500) DEFAULT NULL,
-  `pack` varchar(600) DEFAULT NULL,
-  `equipment` varchar(500) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `IPBlacklist`
---
-
-CREATE TABLE IF NOT EXISTS `IPBlacklist` (
-  `StartIP` bigint(15) NOT NULL,
-  `EndIP` bigint(15) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `IPBlacklist`
@@ -155,6 +111,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (17448960, 17465343),
 (17563648, 17825791),
 (18350080, 18874367),
+(19169280, 19202047),
 (19726336, 19791871),
 (19922944, 20054015),
 (20054016, 20119551),
@@ -258,6 +215,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (660602880, 661127167),
 (661127168, 661389311),
 (661389312, 661454847),
+(661454848, 661487615),
 (662700032, 666894335),
 (704643072, 704644095),
 (704645120, 704647167),
@@ -1363,6 +1321,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (974651392, 974782463),
 (975044608, 975175679),
 (975175680, 975699967),
+(975634432, 975699967),
 (975699968, 975831039),
 (975831040, 975896575),
 (975896576, 975962111),
@@ -1444,6 +1403,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (1007681536, 1008205823),
 (1008205824, 1008467967),
 (1008467968, 1008599039),
+(1008516096, 1008516351),
 (1008599040, 1008664575),
 (1008664576, 1008730111),
 (1010237440, 1010302975),
@@ -2303,12 +2263,12 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (1731057664, 1731058687),
 (1731058688, 1731059711),
 (1731059712, 1731060735),
-(1731065856, 1731066879),
+(1731065856, 1731066879);
+INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (1731067904, 1731068927),
 (1731070976, 1731071999),
 (1731072000, 1731073023),
-(1731073024, 1731074047);
-INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
+(1731073024, 1731074047),
 (1731074048, 1731075071),
 (1731075072, 1731076095),
 (1731076096, 1731077119),
@@ -2982,6 +2942,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (1744818176, 1744819199),
 (1744819200, 1744820223),
 (1744823296, 1744824319),
+(1754532864, 1754533375),
 (1778384896, 1778385151),
 (1778385408, 1778385919),
 (1778385920, 1778386943),
@@ -3412,6 +3373,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (2001457152, 2001461247),
 (2001600512, 2001731583),
 (2001731584, 2001797119),
+(2001858277, 2001858277),
 (2001858896, 2001858903),
 (2001915904, 2001919999),
 (2001993728, 2002255871),
@@ -3533,6 +3495,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (2050162688, 2050228223),
 (2051014656, 2053111807),
 (2053111808, 2053242879),
+(2053176768, 2053176831),
 (2053505024, 2053509119),
 (2053521408, 2053525503),
 (2053525504, 2053529599),
@@ -3813,6 +3776,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (2644246528, 2644312063),
 (2650734592, 2650800127),
 (2682388480, 2682454015),
+(2714381920, 2714381951),
 (2714389808, 2714389823),
 (2714697728, 2714763263),
 (2724790272, 2724855807),
@@ -4381,7 +4345,8 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3396419584, 3396435967),
 (3396435968, 3396452351),
 (3396452352, 3396460543),
-(3396460544, 3396464639),
+(3396460544, 3396464639);
+INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3396464640, 3396468735),
 (3396468736, 3396476927),
 (3396476928, 3396485119),
@@ -4389,8 +4354,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3396501504, 3396534271),
 (3396534272, 3396542463),
 (3396542464, 3396550655),
-(3396550656, 3396567039);
-INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
+(3396550656, 3396567039),
 (3396567040, 3396599807),
 (3396599808, 3396607999),
 (3396608000, 3396612095),
@@ -5674,6 +5638,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3664009216, 3664011263),
 (3664011264, 3664019455),
 (3664019456, 3664052223),
+(3664216064, 3664248601),
 (3664248832, 3664281599),
 (3664281600, 3664289791),
 (3664289792, 3664297983),
@@ -5854,6 +5819,7 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3732832256, 3732865023),
 (3732930560, 3733192703),
 (3733192704, 3733454847),
+(3733346348, 3733346351),
 (3733454848, 3733979135),
 (3735027712, 3735158783),
 (3735158784, 3735224319),
@@ -5921,161 +5887,19 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`) VALUES
 (3757965312, 3758030847),
 (3758030848, 3758063615),
 (3758091264, 3758092287),
+(3758092288, 3758093081),
 (3758095360, 3758095871);
 
--- --------------------------------------------------------
-
 --
--- Table structure for table `messageQueue`
+-- Dumping data for table `proxies`
 --
 
-CREATE TABLE IF NOT EXISTS `messageQueue` (
-`id` bigint(20) NOT NULL,
-  `sender` bigint(17) NOT NULL DEFAULT '0',
-  `recipient` bigint(20) NOT NULL DEFAULT '0',
-  `message` varchar(1000) NOT NULL,
-  `fromServer` int(11) NOT NULL,
-  `toServer` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+INSERT INTO `proxies` (`scanString`, `action`, `hits`) VALUES
+('BANK OF AMERICA ', 'ban', 0),
+('KRYPT TECHNOLOGIES ', 'ban', 0),
+('WIRELESS-ALARM.COM ', 'ban', 0),
+('YPSOLUTIONS ', 'ban', 0);
 
--- --------------------------------------------------------
-
---
--- Table structure for table `players`
---
-
-CREATE TABLE IF NOT EXISTS `players` (
-  `server` varchar(20) NOT NULL,
-  `steam` bigint(17) NOT NULL DEFAULT '0',
-  `name` varchar(25) NOT NULL,
-  `playerid` int(11) NOT NULL,
-  `level` int(11) NOT NULL DEFAULT '1',
-  `cash` int(11) NOT NULL DEFAULT '0',
-  `pvpBounty` int(11) NOT NULL DEFAULT '0',
-  `zombies` int(11) NOT NULL DEFAULT '0',
-  `score` int(11) NOT NULL DEFAULT '0',
-  `playerKills` int(11) NOT NULL DEFAULT '0',
-  `deaths` int(11) NOT NULL DEFAULT '0',
-  `timeOnServer` int(11) NOT NULL DEFAULT '0',
-  `ip` varchar(15) DEFAULT NULL,
-  `donor` tinyint(1) NOT NULL DEFAULT '0',
-  `online` tinyint(1) NOT NULL DEFAULT '0',
-  `countries` varchar(50) NOT NULL,
-  `donorLevel` int(11) NOT NULL DEFAULT '0',
-  `donorExpiry` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `servers`
---
-
-CREATE TABLE IF NOT EXISTS `servers` (
-  `ServerPort` int(11) NOT NULL DEFAULT '0',
-  `IP` varchar(15) DEFAULT NULL,
-  `botName` varchar(20) NOT NULL DEFAULT '"Botman"',
-  `serverName` varchar(50) NOT NULL,
-  `playersOnline` int(11) NOT NULL DEFAULT '0',
-`id` int(11) NOT NULL,
-  `tick` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `shop`
---
-
-CREATE TABLE IF NOT EXISTS `shop` (
-  `item` varchar(50) NOT NULL,
-  `category` varchar(20) NOT NULL,
-  `price` int(11) NOT NULL DEFAULT '50',
-  `stock` int(11) NOT NULL DEFAULT '50',
-  `idx` int(11) NOT NULL DEFAULT '0',
-  `maxStock` int(11) NOT NULL DEFAULT '50',
-  `variation` int(11) NOT NULL DEFAULT '0',
-  `special` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `shopCategories`
---
-
-CREATE TABLE IF NOT EXISTS `shopCategories` (
-  `category` varchar(20) NOT NULL,
-  `idx` int(11) NOT NULL,
-  `code` varchar(3) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `badItems`
---
-ALTER TABLE `badItems`
- ADD PRIMARY KEY (`item`);
-
---
--- Indexes for table `bans`
---
-ALTER TABLE `bans`
- ADD PRIMARY KEY (`steam`,`server`);
-
---
--- Indexes for table `IPBlacklist`
---
-ALTER TABLE `IPBlacklist`
- ADD PRIMARY KEY (`StartIP`);
-
---
--- Indexes for table `messageQueue`
---
-ALTER TABLE `messageQueue`
- ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `players`
---
-ALTER TABLE `players`
- ADD PRIMARY KEY (`server`,`steam`), ADD UNIQUE KEY `steam` (`steam`);
-
---
--- Indexes for table `servers`
---
-ALTER TABLE `servers`
- ADD PRIMARY KEY (`id`), ADD UNIQUE KEY `serverName` (`serverName`);
-
---
--- Indexes for table `shop`
---
-ALTER TABLE `shop`
- ADD PRIMARY KEY (`item`);
-
---
--- Indexes for table `shopCategories`
---
-ALTER TABLE `shopCategories`
- ADD PRIMARY KEY (`category`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `messageQueue`
---
-ALTER TABLE `messageQueue`
-MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
---
--- AUTO_INCREMENT for table `servers`
---
-ALTER TABLE `servers`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

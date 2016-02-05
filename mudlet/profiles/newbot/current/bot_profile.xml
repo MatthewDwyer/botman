@@ -326,7 +326,7 @@ function pvpPolice()
 
 		-- arena pvp zone
 		if locations[&quot;arena&quot;] ~= nil then
-			if distance (igplayers[killerid].xPos, igplayers[killerid].zPos, locations[&quot;arena&quot;].x, locations[&quot;arena&quot;].z ) &lt; 31 then
+			if distancexz(igplayers[killerid].xPos, igplayers[killerid].zPos, locations[&quot;arena&quot;].x, locations[&quot;arena&quot;].z ) &lt; 31 then
 				return
 			end
 		end
@@ -435,7 +435,7 @@ end
 
 local pname, pid, number, died, coords, words, temp
 local dy, mth, yr, hr, min, sec, pm, reason, timestamp, banDate
-local fields, values, x, z, id, loc, reset
+local fields, values, x, z, id, loc, reset, steam
 
 -- set counter to help detect the bot going offline
 botOffline = 2
@@ -492,7 +492,8 @@ end
 if died then
 	id = LookupPlayer(pname, &quot;all&quot;)
 	if (id ~= nil) then
-		igplayers[id].tp = 1
+		players[id].tp = 1
+		players[id].hackerScore = 0
 		igplayers[id].deadX = math.floor(igplayers[id].xPos)
 		igplayers[id].deadY = math.ceil(igplayers[id].yPos)
 		igplayers[id].deadZ = math.floor(igplayers[id].zPos)
@@ -597,49 +598,54 @@ end
 
 conn:execute(&quot;UPDATE server SET serverName = '&quot; .. escape(server.ServerName) .. &quot;', ServerPort = &quot; .. server.ServerPort)
 
+if getAdminList ~= nil then
+	if string.sub(line, 1, 4) ~= &quot;    &quot; then
+		getAdminList = nil
+	end
+end
+
+if getAdminList ~= nil then
+	temp = string.split(line, &quot;:&quot;)
+	temp[1] = string.trim(temp[1])
+	temp[2] = string.trim(string.sub(temp[2], 1, 18))
+
+	number = tonumber(temp[1])
+	pid = temp[2]
+
+	if players[pid] then
+		if number == 0 then
+			owners[pid] = {}
+		end
+
+		if number == 1 then
+			admins[pid] = {}
+		end
+
+		if number == 2 then
+			mods[pid] = {}
+		end
+
+		players[pid].accessLevel = tonumber(number)
+		players[pid].newPlayer = false
+		players[pid].silentBob = false
+		players[pid].walkies = false
+		players[pid].timeout = false
+		players[pid].botTimeout = false
+		players[pid].prisoner = false
+		players[pid].exiled = 2
+		players[pid].canTeleport = true
+		players[pid].enableTP = true
+		players[pid].botHelp = true
+		conn:execute(&quot;UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = &quot; .. number .. &quot; WHERE steam = &quot; .. pid)		
+	end
+end
+
 -- update owners, admins and mods
 if (line == &quot;  Level: SteamID (Player name if online)&quot;) then
 	owners = {}
 	admins = {}
 	mods = {}
 	getAdminList = true
-end
-
-if (getAdminList ~= nil) and (string.sub(line, 1, 4) == os.date(&quot;%Y&quot;)) then
-	getAdminList = nil
-else
-	if (string.sub(line, 1, 6) == &quot;      &quot;) and (string.sub(line, 8, 8) == &quot;:&quot;) then
-		pid = string.sub(line, 10, 26)
-		number = string.sub(line, 7, 7)
-
-		if players[pid] then
-			if number == &quot;0&quot; then
-				owners[pid] = {}
-			end
-
-			if number == &quot;1&quot; then
-				admins[pid] = {}
-			end
-
-			if number == &quot;2&quot; then
-				mods[pid] = {}
-			end
-
-			players[pid].accessLevel = tonumber(number)
-			players[pid].newPlayer = false
-			players[pid].silentBob = false
-			players[pid].walkies = false
-			players[pid].timeout = false
-			players[pid].botTimeout = false
-			players[pid].prisoner = false
-			players[pid].exiled = 2
-			players[pid].canTeleport = true
-			players[pid].enableTP = true
-			players[pid].botHelp = true
-
-			conn:execute(&quot;UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = &quot; .. number .. &quot; WHERE steam = &quot; .. pid)		
-		end
-	end
 end
 
 
@@ -685,7 +691,12 @@ end
 if collectBans ~= nil then
 	if (string.find(line, &quot; AM &quot;)) or (string.find(line, &quot; PM &quot;)) and not string.find(line, &quot;banned until&quot;) then
 		temp = string.split(line, &quot;-&quot;)
-		conn:execute(&quot;INSERT INTO bans (BannedTo, steam, reason) VALUES ('&quot; .. string.trim(temp[1]) .. &quot;',&quot; .. string.trim(temp[2]) .. &quot;,'&quot; .. string.trim(temp[3]) .. &quot;')&quot;)
+		steam = string.trim(temp[2])
+
+		conn:execute(&quot;INSERT INTO bans (BannedTo, steam, reason) VALUES ('&quot; .. string.trim(temp[1]) .. &quot;',&quot; .. steam .. &quot;,'&quot; .. string.trim(temp[3]) .. &quot;')&quot;)
+
+		-- also insert the steam owner (will only work if the steam id is different)
+		conn:execute(&quot;INSERT INTO bans (BannedTo, steam, reason) VALUES ('&quot; .. string.trim(temp[1]) .. &quot;',&quot; .. players[steam].steamOwner .. &quot;,'&quot; .. string.trim(temp[3]) .. &quot;')&quot;)
 	end
 end
 
@@ -728,10 +739,11 @@ if echoConsoleTo ~= nil then
 
 	if (echoConsole ~= nil) and (string.sub(line, 1, 4) == os.date(&quot;%Y&quot;)) then
 		echoConsole = nil
-		echoConsoleTo = nil
+		echoConsoleTo = l
 	end
 
 	if echoConsole == true then
+		line = line:gsub(&quot;,&quot;, &quot;&quot;) -- strip out commas
 		irc_QueueMsg(echoConsoleTo, line)
 	end
 end
@@ -773,7 +785,7 @@ end
 
 -- detect Coppi's modded Alloc's Mod
 if not server.coppi then
-	if string.find(line, &quot;Usage: listplayerfriends&quot;) then
+	if string.find(line, &quot;Usage: teleportplayerhome&quot;) then
 		server.coppi = true
 
 		if server.hideCommands then
@@ -871,15 +883,11 @@ end
 function playerConnected()
 	local entityid
 	local player
-	local steam
+	local steam, steamOwner
 	local IP
 	local temp_table
 	local temp
 	local timestamp = os.time()
-
-	if (string.find(line, &quot;PlayerID=''&quot;)) then
-		return
-	end
 
 	temp_table = string.split(line, &quot;,&quot;)
 	timeConnected = string.sub(line, 1, 19)
@@ -889,35 +897,34 @@ function playerConnected()
 		player = string.trim(string.sub(temp_table[3], string.find(temp_table[3], &quot;name=&quot;) + 5, string.find(temp_table[3], &quot;,&quot;)))
 		steam = string.sub(temp_table[4], string.find(temp_table[4], &quot;steamid=&quot;) + 8, string.find(temp_table[4], &quot;,&quot;))
 		entityid = string.sub(temp_table[2], string.find(temp_table[2], &quot;entityid=&quot;) + 9, string.find(temp_table[2], &quot;,&quot;))
-		IP = string.sub(temp_table[5], string.find(temp_table[5], &quot;ip=&quot;) + 3)
-	else
+		if string.find(line, &quot;steamOwner&quot;) then
+			steamOwner = string.sub(temp_table[5], string.find(temp_table[5], &quot;steamOwner=&quot;) + 11)
+			IP = string.sub(temp_table[6], string.find(temp_table[6], &quot;ip=&quot;) + 3)
+		else
+			steamOwner = steam
+			IP = string.sub(temp_table[5], string.find(temp_table[5], &quot;ip=&quot;) + 3)
+		end
+	end
+
+
+	if string.find(line, &quot;OwnerID=&quot;) and not string.find(line, &quot;OwnerID=''&quot;) then
 		steam = string.sub(line, string.find(line, &quot;OwnerID=&quot;) + 9, string.find(line, &quot;PlayerName=&quot;) - 4)
 		player = string.trim(string.sub(line, string.find(line, &quot;PlayerName=&quot;) + 12, string.len(line) - 1))
 		entityid = string.sub(line, string.find(line, &quot;EntityID=&quot;) + 9, string.find(line, &quot;PlayerID=&quot;) - 3)
 	end
 
 	-- log the player connection in events table
-	conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'&quot; .. serverTime .. &quot;','player joined','Player joined &quot; .. escape(player) .. &quot; &quot; .. steam .. &quot; &quot; .. entityid .. &quot; &quot; .. IP .. &quot;',&quot; .. steam .. &quot;)&quot;)
-
-	-- restore the correct max player count if we need to
-	--if server.ServerMaxPlayerCountOld ~= nil then
-	--dbug(&quot;ServerMaxPlayerCountOLD &quot; .. server.ServerMaxPlayerCountOld)
-
-	--	if tonumber(server.ServerMaxPlayerCount) &gt; tonumber(server.ServerMaxPlayerCountOld) and accessLevel(entityid) == 0 then
-	--		send(&quot;sg ServerMaxPlayerCount &quot; .. server.ServerMaxPlayerCountOld)
-	--		server.ServerMaxPlayerCountOld = nil
-	--	end
-	--end
+	conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'&quot; .. serverTime .. &quot;','player joined','Player joined &quot; .. escape(player) .. &quot; &quot; .. steam .. &quot; Owner &quot; .. steamOwner .. &quot; &quot; .. entityid .. &quot; &quot; .. IP .. &quot;',&quot; .. steamOwner .. &quot;)&quot;)
 
 	lastPlayerConnected = player
 	lastSteamConnected = steam
 
 	-- add to players table
 	if (not players[steam]) then
-		initNewPlayer(steam, player, entityid)
-		fixMissingPlayer(steam)
+		initNewPlayer(steam, player, entityid, steamOwner)
+		fixMissingPlayer(steam, steamOwner)
 
-		irc_QueueMsg(server.ircMain, &quot;###  New player joined &quot; .. player .. &quot; steam: &quot; .. steam.. &quot; id: &quot; .. entityid .. &quot; ###&quot;)
+		irc_QueueMsg(server.ircMain, &quot;###  New player joined &quot; .. player .. &quot; steam: &quot; .. steam.. &quot; owner: &quot; .. steamOwner .. &quot; id: &quot; .. entityid .. &quot; ###&quot;)
 		irc_QueueMsg(server.ircAlerts, &quot;New player joined&quot;)
 		irc_QueueMsg(server.ircAlerts, line:gsub(&quot;%,&quot;, &quot;&quot;))
 
@@ -927,8 +934,8 @@ function playerConnected()
 			end
 		end
 
-		conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'&quot; .. serverTime .. &quot;','new player','New player joined &quot; .. escape(player) .. &quot; steam: &quot; .. steam.. &quot; id: &quot; .. entityid .. &quot;',&quot; .. steam .. &quot;)&quot;)
-		conn:execute(&quot;INSERT INTO players (steam, id, name, protectSize, protect2Size, firstSeen) VALUES (&quot; .. steam .. &quot;,&quot; .. entityid .. &quot;,'&quot; .. escape(player) .. &quot;',&quot; .. server.baseSize .. &quot;,&quot; .. server.baseSize .. &quot;,&quot; .. os.time() .. &quot;)&quot;)		
+		conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'&quot; .. serverTime .. &quot;','new player','New player joined &quot; .. escape(player) .. &quot; steam: &quot; .. steam .. &quot; owner: &quot; .. steamOwner .. &quot; id: &quot; .. entityid .. &quot;',&quot; .. steam .. &quot;)&quot;)
+		conn:execute(&quot;INSERT INTO players (steam, steamOwner, id, name, protectSize, protect2Size, firstSeen) VALUES (&quot; .. steam .. &quot;,&quot; .. steamOwner .. &quot;,&quot; .. entityid .. &quot;,'&quot; .. escape(player) .. &quot;',&quot; .. server.baseSize .. &quot;,&quot; .. server.baseSize .. &quot;,&quot; .. os.time() .. &quot;)&quot;)		
 	else
 		cmd = &quot;llp &quot; .. steam
 		tempTimer( 5, [[send(&quot;]] .. cmd .. [[&quot;)]] )
@@ -938,16 +945,10 @@ function playerConnected()
 		players[steam].IP = IP
 	end
 
-	--if (accessLevel(steam) == 0) then
-	--	display(&quot;closing reserved slot\n&quot;)
-	--	send(&quot;sg ServerMaxPlayerCount &quot; .. server.ServerMaxPlayerCount - 1)
-	--	server.ServerMaxPlayerCount = server.ServerMaxPlayerCount - 1
-	--end
-
 	-- add to in-game players table
 	if (not igplayers[steam]) then
-		initNewIGPlayer(steam, player, entityid)
-		fixMissingIGPlayer(steam)
+		initNewIGPlayer(steam, player, entityid, steamOwner)
+		fixMissingIGPlayer(steam, steamOwner)
 	end
 
 	if players[steam].country == &quot;&quot; then
@@ -982,7 +983,7 @@ function playerConnected()
 	conn:execute(&quot;UPDATE players SET aliases = '&quot; .. players[steam].names .. &quot;', sessionCount = &quot; .. players[steam].sessionCount .. &quot; WHERE steam = &quot; .. steam)
 
 	-- kick player if currently banned or permabanned
-	cursor,errorString = conn:execute(&quot;SELECT * FROM bans WHERE Steam = &quot; .. steam .. &quot; and expiryDate &gt; '&quot; .. os.date(&quot;%Y-%m-%d %H:%M:%S&quot;) .. &quot;'&quot;)
+	cursor,errorString = conn:execute(&quot;SELECT * FROM bans WHERE Steam = &quot; .. steam .. &quot; or Steam = &quot; .. steamOwner .. &quot; and expiryDate &gt; '&quot; .. os.date(&quot;%Y-%m-%d %H:%M:%S&quot;) .. &quot;'&quot;)
 	if cursor:numrows() &gt; 0 then
 		send(&quot;kick &quot; .. steam)
 		return
@@ -1038,8 +1039,8 @@ end</script>
             <colorTriggerFgColor>#000000</colorTriggerFgColor>
             <colorTriggerBgColor>#000000</colorTriggerBgColor>
             <regexCodeList>
-                <string>Player connected</string>
-                <string>denied: Too many players on the server!</string>
+                <string>INF Player connected</string>
+                <string>denied: Too many players on the server</string>
             </regexCodeList>
             <regexCodePropertyList>
                 <integer>0</integer>
@@ -1063,6 +1064,11 @@ if botDisabled then
 end
 
 function playerInfo()
+	-- EDIT THIS FUNCTION WITH CARE.  This function is central to player management.  Some lines need to be run before others.
+	-- Lua will stop execution wherever it strikes a fault (usually trying to use a non-existing variable)
+	-- enable debugging to see roughly where the bot gets to.  It should reach 'end playerinfo'.
+	-- Good luck :)
+
 	faultyPlayerinfo = true
 	faultyPlayerinfoID = 0
 	faultyPlayerinfoLine = line
@@ -1079,7 +1085,7 @@ function playerInfo()
 	local skipTPtest = false
 	local badData = false
 
-	debug = 0
+	-- Set debugSteam to the steam id or player name that you want to monitor.  The player must be on the server.
 	debugSteam = 0
 	--debugSteam = &quot;76561198068123756&quot;
 
@@ -1087,8 +1093,10 @@ function playerInfo()
 		dbug(&quot;debug playerinfo&quot;) 
 	end	
 
-	if debugSteam ~= 0 then
-	--	debugSteam = LookupPlayer(debugSteam)
+	-- sanity check debugSteam
+	if tonumber(debugSteam) == nil then
+		debugSteam = LookupPlayer(debugSteam)
+		if debugSteam == nil then debugSteam = 0 end
 	end
 
 	name_table = string.split(line, &quot;, &quot;)
@@ -1101,7 +1109,7 @@ function playerInfo()
 		name = string.trim(string.sub(line, string.find(line, &quot;,&quot;) + 2, string.find(line, &quot;, pos=&quot;) - 1))
 	end
 
-	-- stop processing this player if we don't have 17 parts to the line after splitting on comma
+	-- stop processing this player if we don't have 18 parts to the line after splitting on comma
 	-- it is probably a read error
 	if (table.maxn(name_table) &lt; 18) then
 		faultyPlayerinfoID = 0
@@ -1220,6 +1228,17 @@ function playerInfo()
 		return
 	end
 
+	-- add to in-game players table
+	if (igplayers[steam] == nil) then
+		igplayers[steam] = {}
+		igplayers[steam].id = id
+		igplayers[steam].name = name
+		igplayers[steam].steam = steam
+		igplayers[steam].steamOwner = steam
+
+		fixMissingIGPlayer(steam)
+	end
+
 	-- add to players table
 	if (players[steam] == nil) then
 		players[steam] = {}
@@ -1248,16 +1267,6 @@ function playerInfo()
 		CheckBlacklist(steam, IP)
 	end
 
-	-- add to in-game players table
-	if (igplayers[steam] == nil) then
-		igplayers[steam] = {}
-		igplayers[steam].id = id
-		igplayers[steam].name = name
-		igplayers[steam].steam = steam
-
-		fixMissingIGPlayer(steam)
-	end
-
 	if (steam == debugSteam) then 
 		dbug(&quot;debug playerinfo 4&quot;) 
 	end	
@@ -1275,27 +1284,36 @@ function playerInfo()
 		CheckBlacklist(steam, IP)
 	end
 
+	-- ping kick
+	if players[steam].whitelisted == false and players[steam].newPlayer then
+		if tonumber(ping) &lt; tonumber(server.pingKick) and tonumber(server.pingKick) &gt; 0 then
+			igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) - 1
+			if tonumber(igplayers[steam].highPingCount) &lt; 0 then igplayers[steam].highPingCount = 0 end
+		end 
+
+		if tonumber(ping) &gt; tonumber(server.pingKick) and tonumber(server.pingKick) &gt; 0 then
+			igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) + 1
+
+			if tonumber(igplayers[steam].highPingCount) &gt; 5 then
+				irc_QueueMsg(server.ircMain, &quot;Kicked &quot; .. name .. &quot; steam: &quot; .. steam.. &quot; for high ping &quot; .. ping)
+				kick(steam, &quot;High ping. Contact an admin and ask to be whitelisted.&quot;)
+				return
+			end
+		end
+	end
+
 	if (steam == debugSteam) then 
 		dbug(&quot;debug playerinfo 9&quot;) 
 	end	
 
 	if tonumber(intY) &gt; 0 and tonumber(intY) &lt; 500 then
 		igplayers[steam].lastTP = nil
-
-		if igplayers[steam].notifyTP == true then
-			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]The teleporter has recharged.[-]&quot;)
-			igplayers[steam].notifyTP = false
-			forgetLastTP(steam)
-		end
-	else
-		igplayers[steam].notifyTP = true
+		forgetLastTP(steam)
 	end
 
 	if (steam == debugSteam) then 
 		dbug(&quot;debug playerinfo 10&quot;) 
 	end	
-
-	atHome(steam)
 
 	if (players[steam].location ~= &quot;&quot;) then
 		-- spawn the player at location
@@ -1331,28 +1349,6 @@ function playerInfo()
 		end
 	end
 
-	currentLocation = inLocation(intX, intZ)
-
-	if currentLocation ~= false then
-		resetZone = locations[currentLocation].resetZone
-	end
-
-	if igplayers[steam].alertLocation ~= currentLocation and currentLocation ~= false then -- 
-		message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Welcome to &quot; .. currentLocation .. &quot;[-]&quot;)
-	end
-
-	if currentLocation == false then --  or igplayers[steam].alertLocation ~= currentLocation
-		if igplayers[steam].alertLocation ~= &quot;&quot; then
-			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]You have left &quot; .. igplayers[steam].alertLocation .. &quot;[-]&quot;)
-		end
-
-		igplayers[steam].alertLocation = &quot;&quot;
-		players[steam].inLocation = &quot;&quot;
-	else
-		igplayers[steam].alertLocation = currentLocation
-		players[steam].inLocation = currentLocation
-	end
-
 	-- test for hackers teleporting
 	if tonumber(intY) &gt; -5000 and tonumber(intX) ~= 0 and tonumber(intZ) ~= 0 and tonumber(igplayers[steam].xPos) ~= 0 and tonumber(igplayers[steam].zPos) ~= 0 and tonumber(os.time() - igplayers[steam].lastLP) &lt; 4 then
 		dist = 0
@@ -1361,8 +1357,8 @@ function playerInfo()
 			dist = distancexz(posX, posZ, igplayers[steam].xPos, igplayers[steam].zPos)
 		end
 
-		if (dist &gt;= 200) then
-			if tonumber(igplayers[steam].tp) &lt; 1 then
+		if (dist &gt;= 300) then
+			if tonumber(players[steam].tp) &lt; 1 then
 				if players[steam].newPlayer == true then
 					new = &quot; [FF8C40]NEW player &quot;
 				else
@@ -1373,24 +1369,27 @@ function playerInfo()
 					irc_QueueMsg(server.ircMain, serverTime .. &quot; Player &quot; .. id .. &quot; name: &quot; .. name .. &quot; detected teleporting to &quot; .. intX .. &quot; &quot; .. intY .. &quot; &quot; .. intZ .. &quot; distance &quot; .. dist)
 					irc_QueueMsg(server.ircAlerts, serverTime .. &quot; Player &quot; .. id .. &quot; name: &quot; .. name .. &quot; detected teleporting to &quot; .. intX .. &quot; &quot; .. intY .. &quot; &quot; .. intZ .. &quot; distance &quot; .. dist)
 
-					igplayers[steam].hackerScore = tonumber(igplayers[steam].hackerScore) + 1
+					players[steam].hackerScore = tonumber(players[steam].hackerScore) + 1
 
-					if tonumber(igplayers[steam].hackerScore) &gt; 3 then
-						igplayers[steam].hackerScore = 0
-						igplayers[steam].tp = 0
-						message(&quot;say [&quot; .. server.chatColour .. &quot;]Detaining &quot; .. players[steam].name .. &quot;. Detected suspicious teleport activity.[-]&quot;)
-						message(&quot;say /timeout &quot; .. players[steam].name)
+					if tonumber(players[steam].hackerScore) &gt; 1 then
+						players[steam].hackerScore = 0
+						players[steam].tp = 0
+						message(&quot;say [&quot; .. server.chatColour .. &quot;]Temp-banning &quot; .. players[steam].name .. &quot; 1 day for unexplained teleporting. An admin will investigate the circumstances.[-]&quot;)
+						banPlayer(steam, &quot;1 day&quot;, &quot;We detected unusual teleporting from you and are investigating the circumstances.&quot;)
 					end
 
 					for k, v in pairs(igplayers) do
 						if (accessLevel(k) &lt; 3) then
-							message(&quot;pm &quot; .. k .. new .. id .. &quot; name: &quot; .. name .. &quot; detected teleporting.[-]&quot;)
+							message(&quot;pm &quot; .. k .. new .. id .. &quot; name: &quot; .. name .. &quot; detected teleporting (possible hacker). The detection is real but the bot could be wrong.  Watch the player.[-]&quot;)
 						end
 					end
 				end
 			end
 
-			igplayers[steam].tp = 0
+			players[steam].tp = 0
+
+			-- just in case this is an admin we don't know about, run admin list
+			send(&quot;admin list&quot;)
 		end
 	end
 
@@ -1401,6 +1400,7 @@ function playerInfo()
 	end	
 
 	players[steam].name = name
+	players[steam].steamOwner = igplayers[steam].steamOwner
 	igplayers[steam].name = name
 	igplayers[steam].steam = steam
 	igplayers[steam].xPos = posX
@@ -1433,6 +1433,30 @@ function playerInfo()
 		igplayers[steam].zPosLastOK = intZ
 	end
 
+	atHome(steam)
+
+	currentLocation = inLocation(intX, intZ)
+
+	if currentLocation ~= false then
+		resetZone = locations[currentLocation].resetZone
+	end
+
+	if igplayers[steam].alertLocation ~= currentLocation and currentLocation ~= false then -- 
+		message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Welcome to &quot; .. currentLocation .. &quot;[-]&quot;)
+	end
+
+	if currentLocation == false then --  or igplayers[steam].alertLocation ~= currentLocation
+		if igplayers[steam].alertLocation ~= &quot;&quot; then
+			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]You have left &quot; .. igplayers[steam].alertLocation .. &quot;[-]&quot;)
+		end
+
+		igplayers[steam].alertLocation = &quot;&quot;
+		players[steam].inLocation = &quot;&quot;
+	else
+		igplayers[steam].alertLocation = currentLocation
+		players[steam].inLocation = currentLocation
+	end
+
 	if igplayers[steam].checkNewPlayer == true then
 		igplayers[steam].checkNewPlayer = false
 
@@ -1451,8 +1475,83 @@ function playerInfo()
 			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]+&quot; .. math.abs(igplayers[steam].zombies - players[steam].zombies) * 4 .. &quot; Zennies. $&quot; .. players[steam].cash .. &quot; in the bank[-]&quot;)
 		end
 
+		if igplayers[steam].doge then
+			r = rand(70)
+			if r == 1 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]MUCH KILL[-]&quot;)	end
+			if r == 2 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]GREAT PAIN[-]&quot;)	end
+			if r == 3 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]WOW[-]&quot;)	end
+			if r == 4 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]VERY DEATH[-]&quot;)	end
+			if r == 5 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]AMAZING[-]&quot;)	end
+			if r == 6 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]CALL 911[-]&quot;)	end
+			if r == 7 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]BIG HIT[-]&quot;)	end
+			if r == 8 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]EXTREME GORE[-]&quot;)	end
+			if r == 9 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]EXTREME POWER SHOT[-]&quot;)	end
+			if r == 10 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]EPIC BLOOD LOSS[-]&quot;)	end
+			if r == 11 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]OMG[-]&quot;)	end
+			if r == 12 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]OVERKILL[-]&quot;)	end
+			if r == 13 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]EXTREME OVERKILL[-]&quot;)	end
+			if r == 14 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]VERY OP[-]&quot;)	end
+			if r == 15 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]DISMEMBERMENT[-]&quot;)	end
+			if r == 16 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]HEAD SHOT[-]&quot;)	end
+			if r == 17 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]PSYCHO[-]&quot;)	end
+			if r == 18 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]HAX[-]&quot;)	end
+			if r == 19 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]GAME OVER[-]&quot;)	end
+			if r == 20 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]OWNED[-]&quot;)	end
+			if r == 21 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]DUDE[-]&quot;)	end
+			if r == 22 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]SICK[-]&quot;)	end
+			if r == 23 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]INCREDIBLE[-]&quot;)	end
+			if r == 24 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]BODY PARTS[-]&quot;)	end
+			if r == 25 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]WTF[-]&quot;)	end
+			if r == 26 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]EPIC[-]&quot;)	end
+			if r == 27 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]AIMBOT[-]&quot;)	end
+			if r == 28 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]EXPLOSIVE[-]&quot;)	end
+			if r == 29 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]IMPOSSIBLE[-]&quot;)	end
+			if r == 30 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]MASSIVE HURT[-]&quot;)	end
+			if r == 31 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]C-C-C-COMBO BREAKER[-]&quot;)	end
+			if r == 32 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]ULTRA KILL[-]&quot;)	end
+			if r == 33 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]SUPPRESSED[-]&quot;)	end
+			if r == 34 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]IMPRESSIVE[-]&quot;)	end
+			if r == 35 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]ONE UP[-]&quot;)	end
+			if r == 36 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]MEGA KILL[-]&quot;)	end
+			if r == 37 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]SUPER KILL[-]&quot;)	end
+			if r == 38 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]SKILL SHOT[-]&quot;)	end
+			if r == 39 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]VERY AMAZING[-]&quot;)	end
+			if r == 40 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]EPIC OWNAGE[-]&quot;)	end
+			if r == 41 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]OMG WTF HAX[-]&quot;)	end
+			if r == 42 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]HOW[-]&quot;)	end
+			if r == 43 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]IMPOSSIBLE[-]&quot;)	end
+			if r == 44 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]CRAZY KILL[-]&quot;)	end
+			if r == 45 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]LEGENDARY KILL[-]&quot;)	end
+			if r == 46 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]GUTSY[-]&quot;)	end
+			if r == 47 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]SMOOTH[-]&quot;)	end
+			if r == 48 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]PRO[-]&quot;)	end
+			if r == 49 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]NUKED[-]&quot;)	end
+			if r == 50 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]STOLEN KILL[-]&quot;)	end
+			if r == 51 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]LEEEEEEEEEEEEEROY JENKINS!!!!!![-]&quot;)	end
+			if r == 52 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]THANKS OBAMA[-]&quot;)	end
+			if r == 53 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]WE GOT A BADDASS OVER HERE[-]&quot;)	end
+			if r == 54 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]WTF BBQ[-]&quot;)	end
+			if r == 55 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]JUST A FLESH WOUND[-]&quot;)	end
+			if r == 56 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]WALK IT OFF[-]&quot;)	end
+			if r == 57 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]THAT'S GOTTA HURT[-]&quot;)	end
+			if r == 58 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]OOPS[-]&quot;)	end
+			if r == 59 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]DAMN[-]&quot;)	end
+			if r == 60 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]THUD[-]&quot;)	end
+			if r == 61 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]FLUKE[-]&quot;)	end
+			if r == 62 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]SORRY![-]&quot;)	end
+			if r == 63 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]CHEAP[-]&quot;)	end
+			if r == 64 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]BEGINNERS LUCK[-]&quot;)	end
+			if r == 65 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]I'LL BE BACK[-]&quot;)	end
+			if r == 66 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]HASTA LA VISTA BABY[-]&quot;)	end
+			if r == 67 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]NOT THE KNEE![-]&quot;)	end
+			if r == 68 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]KILLED DEAD[-]&quot;)	end
+			if r == 69 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]LUCKY SHOT[-]&quot;)	end
+			if r == 70 then message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]HE'S DEAD JIM[-]&quot;)	end
+		end
+
+
 		-- update the lottery prize pool
-		server.lottery = server.lottery + (math.abs(igplayers[steam].zombies - players[steam].zombies) * 1)
+		server.lottery = server.lottery + (math.abs(igplayers[steam].zombies - players[steam].zombies) * 2)
 	end
 
 	-- update player record of zombies
@@ -1632,8 +1731,8 @@ function playerInfo()
 			dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, igplayers[igplayers[steam].following].xPos, igplayers[igplayers[steam].following].zPos)	
 			if dist &gt; followDistance and igplayers[igplayers[steam].following].yPos &gt; 0 then
 				-- teleport close to the player
-				igplayers[steam].tp = 1
-				igplayers[steam].hackerScore = 0
+				players[steam].tp = 1
+				players[steam].hackerScore = 0
 				send(&quot;tele &quot; .. steam .. &quot; &quot; .. math.floor(igplayers[igplayers[steam].following].xPos) .. &quot; &quot; .. math.ceil(igplayers[igplayers[steam].following].yPos - 15) .. &quot; &quot; .. math.floor(igplayers[igplayers[steam].following].zPos))
 			end
 		end
@@ -1641,7 +1740,7 @@ function playerInfo()
 
 
 	if (igplayers[steam].alertLocationExit ~= nil) then
-		dist = distance(igplayers[steam].xPos, igplayers[steam].zPos, locations[igplayers[steam].alertLocationExit].x, locations[igplayers[steam].alertLocationExit].z)
+		dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, locations[igplayers[steam].alertLocationExit].x, locations[igplayers[steam].alertLocationExit].z)
 		size = tonumber(locations[igplayers[steam].alertLocationExit].size)
 
 		if (dist &gt; tonumber(locations[igplayers[steam].alertLocationExit].size) + 100) then
@@ -1670,7 +1769,7 @@ function playerInfo()
 
 
 	if (igplayers[steam].alertVillageExit ~= nil) then
-		dist = distance(igplayers[steam].xPos, igplayers[steam].zPos, locations[igplayers[steam].alertVillageExit].x, locations[igplayers[steam].alertVillageExit].z)
+		dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, locations[igplayers[steam].alertVillageExit].x, locations[igplayers[steam].alertVillageExit].z)
 		size = tonumber(locations[igplayers[steam].alertVillageExit].size)
 
 		if (dist &gt; tonumber(locations[igplayers[steam].alertVillageExit].size) + 100) then
@@ -1702,10 +1801,10 @@ function playerInfo()
 
 	if (igplayers[steam].alertBaseExit == true) then
 		if igplayers[steam].alertBase == 1 then
-			dist = distance(igplayers[steam].xPos, igplayers[steam].zPos, players[igplayers[steam].alertBaseID].homeX, players[igplayers[steam].alertBaseID].homeZ)
+			dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, players[igplayers[steam].alertBaseID].homeX, players[igplayers[steam].alertBaseID].homeZ)
 			size = tonumber(players[igplayers[steam].alertBaseID].protectSize)
 		else
-			dist = distance(igplayers[steam].xPos, igplayers[steam].zPos, players[igplayers[steam].alertBaseID].home2X, players[igplayers[steam].alertBaseID].home2Z)
+			dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, players[igplayers[steam].alertBaseID].home2X, players[igplayers[steam].alertBaseID].home2Z)
 			size = tonumber(players[igplayers[steam].alertBaseID].protect2Size)
 		end
 
@@ -1736,7 +1835,7 @@ function playerInfo()
 				for k, v in pairs(players) do
 					if (v.homeX ~= 0) and k ~= igplayers[steam].alertBaseID then
 							if (v.homeX ~= 0 and v.homeZ ~= 0) then
-							dist = distance(players[igplayers[steam].alertBaseID].homeX, players[igplayers[steam].alertBaseID].homeZ, v.homeX, v.homeZ)
+							dist = distancexz(players[igplayers[steam].alertBaseID].homeX, players[igplayers[steam].alertBaseID].homeZ, v.homeX, v.homeZ)
 
 							if (tonumber(dist) &lt; tonumber(players[igplayers[steam].alertBaseID].protectSize)) then
 								if friends[k] == nil or not string.find(friends[k].friends, igplayers[steam].alertBaseID) then
@@ -1748,7 +1847,7 @@ function playerInfo()
 
 					if (v.home2X ~= 0) and k ~= igplayers[steam].alertBaseID then
 						if (v.home2X ~= 0 and v.home2Z ~= 0) then
-							dist = distance(players[igplayers[steam].alertBaseID].homeX, players[igplayers[steam].alertBaseID].homeZ, v.home2X, v.home2Z)
+							dist = distancexz(players[igplayers[steam].alertBaseID].homeX, players[igplayers[steam].alertBaseID].homeZ, v.home2X, v.home2Z)
 
 							if (dist &lt; players[igplayers[steam].alertBaseID].protectSize + 10) then
 								if not string.find(friends[k].friends, igplayers[steam].alertBaseID) then
@@ -1790,7 +1889,7 @@ function playerInfo()
 				for k, v in pairs(players) do
 					if (v.homeX ~= 0) and k ~= igplayers[steam].alertBaseID then
 							if (v.homeX ~= 0 and v.homeZ ~= 0) then
-							dist = distance(players[igplayers[steam].alertBaseID].home2X, players[igplayers[steam].alertBaseID].home2Z, v.homeX, v.homeZ)
+							dist = distancexz(players[igplayers[steam].alertBaseID].home2X, players[igplayers[steam].alertBaseID].home2Z, v.homeX, v.homeZ)
 
 							if (tonumber(dist) &lt; tonumber(players[igplayers[steam].alertBaseID].protect2Size)) then
 								if friends[k] == nil or not string.find(friends[k].friends, igplayers[steam].alertBaseID) then
@@ -1802,7 +1901,7 @@ function playerInfo()
 
 					if (v.home2X ~= 0) and k ~= igplayers[steam].alertBaseID then
 						if (v.home2X ~= 0 and v.home2Z ~= 0) then
-							dist = distance(players[igplayers[steam].alertBaseID].home2X, players[igplayers[steam].alertBaseID].home2Z, v.home2X, v.home2Z)
+							dist = distancexz(players[igplayers[steam].alertBaseID].home2X, players[igplayers[steam].alertBaseID].home2Z, v.home2X, v.home2Z)
 
 							if (dist &lt; players[igplayers[steam].alertBaseID].protect2Size + 10) then
 								if not string.find(friends[k].friends, igplayers[steam].alertBaseID) then
@@ -1850,8 +1949,8 @@ function playerInfo()
 	-- timeout
 	if (players[steam].timeout == true or players[steam].botTimeout == true) then
 		if (intY &lt; 20000) then
-			igplayers[steam].tp = 1
-			igplayers[steam].hackerScore = 0
+			players[steam].tp = 1
+			players[steam].hackerScore = 0
 			send(&quot;tele &quot; .. steam .. &quot; &quot; .. intX .. &quot; &quot; .. 50000 .. &quot; &quot; .. intZ)
 		end	
 
@@ -1870,8 +1969,8 @@ function playerInfo()
 	if outsideMap and players[steam].donor == false and (accessLevel(steam) &gt; 3) then
 		if not inLocation(intX, intZ) then
 			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]This map is restricted to &quot; .. (server.mapSize / 1000) .. &quot; km from the center.[-]&quot;)
-			igplayers[steam].tp = 1
-			igplayers[steam].hackerScore = 0
+			players[steam].tp = 1
+			players[steam].hackerScore = 0
 			send (&quot;tele &quot; .. steam .. &quot; &quot; .. igplayers[steam].xPosLastOK .. &quot; &quot; .. igplayers[steam].yPosLastOK .. &quot; &quot; .. igplayers[steam].zPosLastOK)	
 			faultyPlayerinfo = false
 			return
@@ -1881,8 +1980,8 @@ function playerInfo()
 	if outsideMapDonor and players[steam].donor == true and (accessLevel(steam) &gt; 3 or server.ignoreAdmins == false) then
 		if not inLocation(intX, intZ) then
 			message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]This map is restricted to &quot; .. ((server.mapSize + 5000) / 1000) .. &quot; km from the center.[-]&quot;)
-			igplayers[steam].tp = 1
-			igplayers[steam].hackerScore = 0
+			players[steam].tp = 1
+			players[steam].hackerScore = 0
 			send (&quot;tele &quot; .. steam .. &quot; &quot; .. igplayers[steam].xPosLastOK .. &quot; &quot; .. igplayers[steam].yPosLastOK .. &quot; &quot; .. igplayers[steam].zPosLastOK)	
 			faultyPlayerinfo = false
 			return
@@ -1912,7 +2011,7 @@ function playerInfo()
 
 	-- left prison zone warning 
 	if (locations[&quot;prison&quot;]) then
-		if (distance ( intX, intZ, locations[&quot;prison&quot;].x, locations[&quot;prison&quot;].z ) &gt; tonumber(server.prisonSize)) then
+		if (distancexz( intX, intZ, locations[&quot;prison&quot;].x, locations[&quot;prison&quot;].z ) &gt; tonumber(server.prisonSize)) then
 			if (players[steam].alertPrison == false) then
 				if (not players[steam].prisoner) then
 					message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]You have left the prison.[-]&quot;)
@@ -1943,7 +2042,7 @@ function playerInfo()
 		end
 
 		-- entered prison zone warning 
-		if (distance ( intX, intZ, locations[&quot;prison&quot;].x, locations[&quot;prison&quot;].z ) &lt; tonumber(server.prisonSize)) then
+		if (distancexz( intX, intZ, locations[&quot;prison&quot;].x, locations[&quot;prison&quot;].z ) &lt; tonumber(server.prisonSize)) then
 			if (players[steam].alertPrison == true) then
 				if (not players[steam].prisoner) then
 					message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]You have entered the prison.  Continue at your own risk.[-]&quot;)
@@ -1959,6 +2058,8 @@ function playerInfo()
 
 	-- freeze!
 	if (players[steam].freeze == true) then
+		players[steam].tp = 1
+		players[steam].hackerScore = 0
 		send(&quot;tele &quot; .. steam .. &quot; &quot; .. igplayers[steam].xPosLastOK .. &quot; &quot; .. igplayers[steam].yPosLastOK .. &quot; &quot; .. igplayers[steam].zPosLastOK)	
 		faultyPlayerinfo = false
 		return
@@ -2057,7 +2158,7 @@ function playerInfo()
 	end	
 
 	if (igplayers[steam].deadX ~= nil) then
-		dist = math.abs(distance(igplayers[steam].deadX, igplayers[steam].deadZ, posX, posZ))
+		dist = math.abs(distancexz(igplayers[steam].deadX, igplayers[steam].deadZ, posX, posZ))
 		if (dist &gt; 2) then
 			igplayers[steam].deadX = nil
 			igplayers[steam].deadY = nil
@@ -2160,26 +2261,8 @@ function playerInfo()
 	faultyPlayerinfo = false
 
 	if (steam == debugSteam) then 
-		dbug(&quot;debug point Z&quot;) 
+		dbug(&quot;end playerinfo&quot;) 
 	end	
-
-	-- ping kick
-	if players[steam].whitelisted == false and players[steam].newPlayer then
-		if tonumber(ping) &lt; tonumber(server.pingKick) and tonumber(server.pingKick) &gt; 0 then
-			igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) - 1
-			if tonumber(igplayers[steam].highPingCount) &lt; 0 then igplayers[steam].highPingCount = 0 end
-		end 
-
-		if tonumber(ping) &gt; tonumber(server.pingKick) and tonumber(server.pingKick) &gt; 0 then
-			igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) + 1
-
-			if tonumber(igplayers[steam].highPingCount) &gt; 5 then
-				irc_QueueMsg(server.ircMain, &quot;Kicked &quot; .. name .. &quot; steam: &quot; .. steam.. &quot; for high ping &quot; .. ping)
-				kick(steam, &quot;High ping. Contact an admin and ask to be whitelisted.&quot;)
-				return
-			end
-		end
-	end
 end
 
 
@@ -2468,7 +2551,7 @@ if string.find(line, &quot;towards&quot;) then
 	if (string.find(line, &quot;heading towards&quot;)) then
 		for k, v in pairs(igplayers) do
 			direction = getCompass(v.xPos, v.zPos, xStart, zStart)
-			dist = distance(v.xPos, v.zPos, xEnd, zEnd)
+			dist = distancexz(v.xPos, v.zPos, xEnd, zEnd)
 
 			if (dist &lt; 50) then
 				message(&quot;pm &quot; .. k .. &quot; &quot; ..  &quot; [&quot; .. server.chatColour .. &quot;]Screamers have been detected heading your way from the &quot; .. direction .. &quot;.[-]&quot;)
@@ -2559,7 +2642,7 @@ deleteLine()
                 <integer>0</integer>
             </regexCodePropertyList>
         </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="yes" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
             <name>AirDrop alert</name>
             <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
@@ -2584,7 +2667,7 @@ test = string.sub(test, 1, string.len(test) - 2)
 coord = string.split(test, &quot;,&quot;)
 
 for k, v in pairs(igplayers) do
-	dist = distance(v.xPos, v.zPos, coord[1], coord[3])
+	dist = distancexz(v.xPos, v.zPos, coord[1], coord[3])
 	if (tonumber(dist) &lt; 500) then
 		direction = getCompass(v.xPos, v.zPos, coord[1], coord[3])
 		message(&quot;pm &quot; .. k .. &quot; &quot; ..  &quot; [&quot; .. server.chatColour .. &quot;]Supplies have been dropped &quot; .. math.floor(dist) .. &quot; meters to the &quot; .. direction ..&quot;![-]&quot;)
@@ -2912,12 +2995,14 @@ if botDisabled then
 	return
 end
 
-local words
+local temp, steam
 
-words = {}
-for word in line:gmatch(&quot;%S+&quot;) do table.insert(words, word) end
+temp = string.split(line, &quot; &quot;)
+steam = string.sub(temp[8], 1, string.len(temp[8]) - 1)
 
-conn:execute(&quot;DELETE FROM bans WHERE steam = &quot; .. words[1])</script>
+-- also remove the steam owner from the bans table
+conn:execute(&quot;DELETE FROM bans WHERE steam = &quot; .. steam .. &quot; or steam = &quot; .. players[steam].steamOwner)
+</script>
             <triggerType>0</triggerType>
             <conditonLineDelta>0</conditonLineDelta>
             <mStayOpen>0</mStayOpen>
@@ -2929,7 +3014,7 @@ conn:execute(&quot;DELETE FROM bans WHERE steam = &quot; .. words[1])</script>
             <colorTriggerFgColor>#000000</colorTriggerFgColor>
             <colorTriggerBgColor>#000000</colorTriggerBgColor>
             <regexCodeList>
-                <string>removed from ban list</string>
+                <string>Executing command 'ban remove</string>
             </regexCodeList>
             <regexCodePropertyList>
                 <integer>0</integer>
@@ -3046,16 +3131,16 @@ end
 local time, fps, heap, heapMax, chunks, cgo, ply, zom, ent, items
 
 if (string.find(line, &quot;Heap:&quot;)) then
-	time = tonumber(string.sub(line, string.find(line, &quot;Time:&quot;) + 6, string.find(line, &quot;FPS:&quot;) - 3))
+	time = string.sub(line, string.find(line, &quot;Time:&quot;) + 6, string.find(line, &quot;FPS:&quot;) - 3)
 	fps = tonumber(string.sub(line, string.find(line, &quot;FPS:&quot;) + 5, string.find(line, &quot;Heap:&quot;) - 2))
-	heap = tonumber(string.sub(line, string.find(line, &quot;Heap:&quot;) + 6, string.find(line, &quot;Max:&quot;) - 4))
-	heapMax = tonumber(string.sub(line, string.find(line, &quot;Max:&quot;) + 5, string.find(line, &quot;Chunks:&quot;) - 4))
-	chunks = tonumber(string.sub(line, string.find(line, &quot;Chunks:&quot;) + 8, string.find(line, &quot;CGO:&quot;) - 2))
-	cgo = tonumber(string.sub(line, string.find(line, &quot;CGO:&quot;) + 5, string.find(line, &quot;Ply:&quot;) - 2))
-	ply = tonumber(string.sub(line, string.find(line, &quot;Ply:&quot;) + 5, string.find(line, &quot;Zom:&quot;) - 2))
-	zom = tonumber(string.sub(line, string.find(line, &quot;Zom:&quot;) + 5, string.find(line, &quot;Ent:&quot;) - 2))
+	heap = string.sub(line, string.find(line, &quot;Heap:&quot;) + 6, string.find(line, &quot;Max:&quot;) - 4)
+	heapMax = string.sub(line, string.find(line, &quot;Max:&quot;) + 5, string.find(line, &quot;Chunks:&quot;) - 4)
+	chunks = string.sub(line, string.find(line, &quot;Chunks:&quot;) + 8, string.find(line, &quot;CGO:&quot;) - 2)
+	cgo = string.sub(line, string.find(line, &quot;CGO:&quot;) + 5, string.find(line, &quot;Ply:&quot;) - 2)
+	ply = string.sub(line, string.find(line, &quot;Ply:&quot;) + 5, string.find(line, &quot;Zom:&quot;) - 2)
+	zom = string.sub(line, string.find(line, &quot;Zom:&quot;) + 5, string.find(line, &quot;Ent:&quot;) - 2)
 	ent = string.sub(line, string.find(line, &quot;Ent:&quot;) + 5, string.find(line, &quot;Items:&quot;) - 2)
-	items = tonumber(string.sub(line, string.find(line, &quot;Items:&quot;) + 7, string.find(line, &quot;CO:&quot;) - 2))
+	items = string.sub(line, string.find(line, &quot;Items:&quot;) + 7, string.find(line, &quot;CO:&quot;) - 2)
 
 	server.fps = fps
 	conn:execute(&quot;INSERT INTO performance (serverdate, gametime, fps, heap, heapMax, chunks, cgo, players, zombies, entities, items) VALUES ('&quot; .. serverTime .. &quot;',&quot; .. time .. &quot;,&quot; .. fps .. &quot;,&quot; .. heap .. &quot;,&quot; .. heapMax .. &quot;,&quot; .. chunks .. &quot;,&quot; .. cgo .. &quot;,&quot; .. ply .. &quot;,&quot; .. zom .. &quot;,'&quot; .. ent .. &quot;',&quot; .. items .. &quot;)&quot;)
@@ -3139,7 +3224,8 @@ if string.find(line, &quot;from &quot;) then
 
 	i = table.maxn(cmd)
 	id = LookupPlayer(cmd[2])
-	igplayers[id].tp = 1
+	players[id].tp = 1
+	players[id].hackerScore = 0
 end
 
 
@@ -3148,7 +3234,8 @@ if string.find(line, server.botsIP) then
 	cmd = string.split(cmd, &quot; &quot;)
 
 	id = cmd[2]
-	igplayers[id].tp = 1
+	players[id].tp = 1
+	players[id].hackerScore = 0
 end
 
 </script>
@@ -3182,30 +3269,68 @@ end
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-
-
 if botDisabled then
 	return
 end
 
-if not string.find(line, server.botsIP) then
-	return
+
+function llp()
+	local pos, temp, x, y, z
+
+	if string.find(line, &quot;Executing command 'llp&quot;) then
+		pos = string.find(line, &quot;llp&quot;) + 4
+		llpid = string.sub(line, pos, pos + 16)
+		players[llpid].keystones = 0
+		return
+	end
+
+	-- depreciated in latest Allocs. Here for backwards compatibility
+	if string.find(line, &quot;keystones (protected:&quot;) then
+		pos = string.find(line, &quot; owns&quot;) - 3
+		llpid = string.sub(line, pos - 16, pos)
+		players[llpid].keystones = string.sub(line, string.find(line, &quot;owns &quot;) + 5, string.find(line, &quot; keyst&quot;) - 1)
+		conn:execute(&quot;UPDATE players SET keystones = &quot; .. players[llpid].keystones .. &quot; WHERE steam = &quot; .. llpid)
+	end
+
+	-- New format of output
+	if string.find(line, &quot;LandProtectionOf:&quot;) then
+		--LandProtectionOf: id=76561197983251951,  location=-99, 128, 192
+		temp = string.split(line, &quot;,&quot;)		
+
+		pos = string.find(temp[1], &quot;=&quot;) + 1
+		llpid = string.sub(temp[1], pos)
+
+		x = string.sub(temp[2], string.find(temp[2], &quot;=&quot;) + 1)
+		y = temp[3]
+		z = temp[4]
+
+		if players[llpid].removedClaims == nil then
+			players[llpid].removedClaims = 0
+		end
+
+		conn:execute(&quot;UPDATE keystones SET remove = 1 WHERE steam = &quot; .. llpid .. &quot; AND x = &quot; .. x .. &quot; AND y = &quot; .. y .. &quot; AND z = &quot; .. z .. &quot; AND remove &gt; 1&quot;)
+		conn:execute(&quot;UPDATE keystones SET removed = 0 WHERE steam = &quot; .. llpid .. &quot; AND x = &quot; .. x .. &quot; AND y = &quot; .. y .. &quot; AND z = &quot; .. z)
+
+		if accessLevel(llpid) &gt; 3 then
+			region = getRegion(x, z)
+			loc, reset = inLocation(x, z)
+
+			if (resetRegions[region]) or reset or players[llpid].removeClaims == true then
+				conn:execute(&quot;INSERT INTO keystones (steam, x, y, z, remove) VALUES (&quot; .. llpid .. &quot;,&quot; .. x .. &quot;,&quot; .. y .. &quot;,&quot; .. z .. &quot;,1) ON DUPLICATE KEY UPDATE remove = 1&quot;)
+			else
+				conn:execute(&quot;INSERT INTO keystones (steam, x, y, z) VALUES (&quot; .. llpid .. &quot;,&quot; .. x .. &quot;,&quot; .. y .. &quot;,&quot; .. z .. &quot;)&quot;)
+			end		
+		else
+			conn:execute(&quot;INSERT INTO keystones (steam, x, y, z) VALUES (&quot; .. llpid .. &quot;,&quot; .. x .. &quot;,&quot; .. y .. &quot;,&quot; .. z .. &quot;)&quot;)
+		end
+
+
+	end
 end
 
-local pos
-
-if string.find(line, &quot;Executing command 'llp&quot;) then
-	pos = string.find(line, &quot;llp&quot;) + 4
-	llpid = string.sub(line, pos, pos + 16)
-	players[llpid].keystones = 0
-	return
-else
-	pos = string.find(line, &quot; owns&quot;) - 3
-	llpid = string.sub(line, pos - 16, pos)
-	players[llpid].keystones = string.sub(line, string.find(line, &quot;owns &quot;) + 5, string.find(line, &quot; keyst&quot;) - 1)
+if string.find(line, &quot;LandProtectionOf:&quot;) or string.find(line, &quot;Executing command 'llp&quot;) or string.find(line, &quot;keystones (protected:&quot;) then
+	llp()
 end
-
-conn:execute(&quot;UPDATE players SET keystones = &quot; .. players[llpid].keystones .. &quot; WHERE steam = &quot; .. llpid)
 
 </script>
             <triggerType>0</triggerType>
@@ -3219,10 +3344,12 @@ conn:execute(&quot;UPDATE players SET keystones = &quot; .. players[llpid].keyst
             <colorTriggerFgColor>#000000</colorTriggerFgColor>
             <colorTriggerBgColor>#000000</colorTriggerBgColor>
             <regexCodeList>
-                <string>keystones (protected:</string>
+                <string>LandProtectionOf:</string>
                 <string>Executing command 'llp</string>
+                <string>keystones (protected:</string>
             </regexCodeList>
             <regexCodePropertyList>
+                <integer>0</integer>
                 <integer>0</integer>
                 <integer>0</integer>
             </regexCodePropertyList>
@@ -3634,7 +3761,7 @@ if (string.sub(gmsgvars.command, 1, 1) == &quot;/&quot;) and not result then  --
 			return
 		end
 
-		if (players[id].waypointX ~= 0 and players[id].waypointY ~= 0 and players[id].waypointZ ~= 0) and (players[id].shareWaypoint == true or accessLevel(gmsgvars.playerid) &lt; 3) then
+		if (tonumber(players[id].waypointX) ~= 0 and tonumber(players[id].waypointY) ~= 0 and tonumber(players[id].waypointZ) ~= 0) and (players[id].shareWaypoint == true or accessLevel(gmsgvars.playerid) &lt; 3) then
 			-- first record the current x y z
 			players[gmsgvars.playerid].xPosOld = gmsgvars.intX
 			players[gmsgvars.playerid].yPosOld = gmsgvars.intY
@@ -3988,7 +4115,10 @@ end
 	return
 end
 
-gimmeReset()</script>
+gimmeReset()
+
+-- while we're here refresh the ban list
+send(&quot;ban list&quot;)</script>
             <command></command>
             <packageName></packageName>
             <time>02:00:00.000</time>
@@ -4098,7 +4228,7 @@ if row then
 		return
 	end
 
-	if (distance (igplayers[row.steam].xPos, igplayers[row.steam].zPos, locations[&quot;arena&quot;].x, locations[&quot;arena&quot;].z ) &gt; locations[&quot;arena&quot;].size + 1 or igplayers[row.steam].deadX ~= nil) then
+	if (distancexz(igplayers[row.steam].xPos, igplayers[row.steam].zPos, locations[&quot;arena&quot;].x, locations[&quot;arena&quot;].z ) &gt; locations[&quot;arena&quot;].size + 1 or igplayers[row.steam].deadX ~= nil) then
 		-- destroy the command without sending it
 		cecho(server.windowDebug, &quot;destroying player queued command &quot; .. row.command .. &quot;\n&quot;)
 		conn:execute(&quot;delete from playerQueue where id = &quot; .. row.id)
@@ -4550,6 +4680,9 @@ showPlayers = true
 
 --echo(&quot;shop categories table\n&quot;)
 --display( shopCategories )
+
+--echo(&quot;proxies table\n&quot;)
+--display( proxies )
 
 --display(customCommands)</script>
                 <css></css>
@@ -5137,8 +5270,6 @@ function banPlayer(steam, duration, reason)
 	end
 
 	if players[steam] then
-		-- also send them to timeout so they can't do anything if they manage to return
-		players[steam].timeout = true
 		conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. math.floor(players[steam].xPos) .. &quot;,&quot; .. math.ceil(players[steam].yPos) .. &quot;,&quot; .. math.floor(players[steam].zPos) .. &quot;,'&quot; .. serverTime .. &quot;','ban','Player &quot; .. steam .. &quot; &quot; .. escape(players[steam].name) .. &quot; has has been banned for &quot; .. duration .. &quot; for &quot; .. escape(reason) .. &quot;',&quot; .. steam .. &quot;)&quot;)
 		irc_QueueMsg(server.ircMain, &quot;[BANNED] Player &quot; .. steam .. &quot; &quot; .. players[steam].name .. &quot; has been banned for &quot; .. duration .. &quot; &quot; .. reason)
 		irc_QueueMsg(server.ircAlerts, &quot;[BANNED] Player &quot; .. steam .. &quot; &quot; .. players[steam].name .. &quot; has been banned for &quot; .. duration .. &quot; &quot; .. reason)
@@ -5151,6 +5282,8 @@ function banPlayer(steam, duration, reason)
 
 	send(&quot;ban add &quot; .. steam .. &quot; &quot; .. duration .. &quot; \&quot;&quot; .. reason .. &quot;\&quot;&quot;)
 	send(&quot;llp &quot; .. steam)
+	-- update the ban list (may cause a bot lag spike when there are a lot of bans)
+	send(&quot;ban list&quot;)
 end
 
 
@@ -5169,6 +5302,9 @@ function timeoutPlayer(steam, reason, bot)
 		conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. math.floor(players[steam].xPos) .. &quot;,&quot; .. math.ceil(players[steam].yPos) .. &quot;,&quot; .. math.floor(players[steam].zPos) .. &quot;,'&quot; .. serverTime .. &quot;','timeout','Player &quot; .. steam .. &quot; &quot; .. escape(players[steam].name) .. &quot; has has been sent to timeout for &quot; .. escape(reason) .. &quot;',&quot; .. steam .. &quot;)&quot;)
 		
 		-- then teleport the player to timeout
+		players[steam].tp = 1
+		players[steam].hackerScore = 0
+
 		send(&quot;tele &quot; .. steam .. &quot; &quot; .. players[steam].xPosTimeout .. &quot; 50000 &quot; .. players[steam].zPosTimeout)
 
 		message(&quot;say [&quot; .. server.chatColour .. &quot;]Sending player &quot; .. players[steam].name .. &quot; to timeout for &quot; .. reason .. &quot;[-]&quot;)
@@ -5354,46 +5490,6 @@ function Translate(playerid, command, lang, override)
 end
 
 
-function randomPVPTP(playerid, location, forced)
-	local r, rows, row, rowCount
-
-	cursor,errorString = conn:execute(&quot;select * from locationSpawns where location='&quot; .. location .. &quot;'&quot;)
-	rows = tonumber(cursor:numrows())
-
-	if rows == 0 then
-		cmd = &quot;tele &quot; .. playerid .. &quot; &quot; .. locations[location].x .. &quot; &quot; .. locations[location].y .. &quot; &quot; .. locations[location].z
-		prepareTeleport(playerid, cmd)
-		teleport(cmd, true)
-		return
-	end
-
-	rowCount = 1
-	r = rand(rows)
-
-	cursor,errorString = conn:execute(&quot;select * from locationSpawns where location='&quot; .. location .. &quot;' limit &quot; .. r - 1 .. &quot;,1&quot;)
-	row = cursor:fetch({}, &quot;a&quot;)
-	cmd = &quot;tele &quot; .. playerid .. &quot; &quot; .. row.x .. &quot; &quot; .. row.y .. &quot; &quot; .. row.z
-	prepareTeleport(playerid, cmd)
-
-	if location == &quot;lobby&quot; then
-		teleport(cmd, true)
-	else
-		if forced ~= nil then
-			teleport(cmd, true)
-		else
-			teleport(cmd)
-		end
-	end
-
-	if (locations[location].pvp) then
-		if (accessLevel(playerid) &gt; 2) then
-			players[playerid].baseCooldown = (os.time() + 1200) -- 2400 = 40 minutes
-			conn:execute(&quot;UPDATE players SET baseCooldown = &quot; .. os.time() + 1200 .. &quot; WHERE steam = &quot; .. playerid)
-		end
-	end
-end
-
-
 function CheckClaimsRemoved()
 	for k,v in pairs(igplayers) do
 		if players[k].alertRemovedClaims == true then
@@ -5441,7 +5537,7 @@ function CheckBlacklist(steam, ip)
 			if server.blacklistResponse == 'ban' then
 				irc_QueueMsg(server.ircMain, &quot;Chinese player &quot; .. players[steam].name .. &quot; banned.&quot;)
 				irc_QueueMsg(server.ircAlerts, &quot;Chinese player &quot; .. players[steam].name .. &quot; banned.&quot;)
-				send(&quot;ban add &quot; .. steam .. &quot; 10 years blacklisted&quot;)
+				banPlayer(steam, &quot;10 years&quot;, &quot;blacklisted&quot;)
 			end
 
 			connBots:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (&quot; .. math.floor(players[steam].xPos) .. &quot;,&quot; .. math.ceil(players[steam].yPos) .. &quot;,&quot; .. math.floor(players[steam].zPos) .. &quot;,'&quot; .. serverTime .. &quot;','info','Chinese player joined. Name: &quot; .. escape(player) .. &quot; SteamID: &quot; .. steam .. &quot; IP: &quot; .. ip  .. &quot;',&quot; .. steam .. &quot;)&quot;)
@@ -5471,15 +5567,44 @@ function readDNS(steam)
 	country = &quot;&quot;
 	
 	for ln in file:lines() do
+		ln = string.upper(ln)
+
 		if string.find(ln, &quot;%s(%d+)%.(%d+)%.(%d+)%.(%d+)%s&quot;) then
 			a,b = string.find(ln, &quot;%s(%d+)%.(%d+)%.(%d+)%.(%d+)%s&quot;)
 			iprange = string.sub(ln, a, a+b)
 		end
 
-		if string.find(ln, &quot;ountry:&quot;) then
+		if not players[steam].whitelisted then
+			for k,v in pairs(proxies) do
+				if string.find(ln, string.upper(v.scanString)) then
+					v.hits = tonumber(v.hits) + 1
+					conn:execute(&quot;UPDATE proxies SET hits = &quot; .. v.hits .. &quot; WHERE scanString = '&quot; .. escape(k) .. &quot;'&quot;)
+
+					if v.action == &quot;ban&quot; then
+						irc_QueueMsg(server.ircMain, &quot;Player &quot; .. players[steam].name .. &quot; banned. Detected proxy &quot; .. v.scanString)
+						irc_QueueMsg(server.ircAlerts, &quot;Player &quot; .. players[steam].name .. &quot; banned. Detected proxy &quot; .. v.scanString)
+						banPlayer(steam, &quot;10 years&quot;, &quot;blacklisted&quot;)
+						proxy = true
+					else
+						if players[steam].exiled == 0 then
+							players[steam].exiled = 1
+							irc_QueueMsg(server.ircMain, &quot;Player &quot; .. players[steam].name .. &quot; exiled. Detected proxy &quot; .. v.scanString)
+							irc_QueueMsg(server.ircAlerts, &quot;Player &quot; .. players[steam].name .. &quot; exiled. Detected proxy &quot; .. v.scanString)
+							exiled = true
+							proxy = true
+						end
+					end
+				end
+			end
+		end
+
+		if proxy then break end
+
+		if string.find(ln, &quot;OUNTRY:&quot;) then
+			-- only report country change if CN or HK are involved. For once, don't blame Canada.
 			a,b = string.find(ln, &quot;%s(%w+)&quot;)
-			country = string.upper(string.sub(ln, a + 1))
-			if players[steam].country ~= &quot;&quot; and players[steam].country ~= country then
+			country = string.sub(ln, a + 1)
+			if players[steam].country ~= &quot;&quot; and players[steam].country ~= country and (players[steam].country == &quot;CN&quot; or players[steam].country == &quot;HK&quot; or country == &quot;CN&quot; or country == &quot;HK&quot;) and players[steam].whitelisted == false then
 				irc_QueueMsg(server.ircAlerts, &quot;Possible proxy detected! Country changed! &quot; .. steam .. &quot; &quot; .. players[steam].name .. &quot; &quot; .. players[steam].IP .. &quot; old country &quot; .. players[steam].country .. &quot; new &quot; .. country)
 				conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (0,0,0'&quot; .. serverTime .. &quot;','proxy','Suspected proxy used by &quot; .. escape(players[steam].name) .. &quot; &quot; .. players[steam].IP .. &quot; old country &quot; .. players[steam].country .. &quot; new &quot; .. country .. &quot;,&quot; .. steam .. &quot;)&quot;)	
 				proxy = true
@@ -5488,7 +5613,8 @@ function readDNS(steam)
 			end
 		end
 
-		if string.upper(country) == &quot;CN&quot; and players[steam].whitelisted == false then
+		-- We consider HongKong to be China since Chinese players connect from there too.
+		if (country == &quot;CN&quot; or country == &quot;HK&quot;) and players[steam].whitelisted == false then
 			-- China detected. Add ip range to IPBlacklist table
 			split = string.split(iprange, &quot;-&quot;)
 
@@ -5512,7 +5638,7 @@ function readDNS(steam)
 			if server.blacklistResponse == 'ban' then
 				irc_QueueMsg(server.ircMain, &quot;Chinese player &quot; .. players[steam].name .. &quot; banned.&quot;)
 				irc_QueueMsg(server.ircAlerts, &quot;Chinese player &quot; .. players[steam].name .. &quot; banned.&quot;)
-				send (&quot;ban add &quot; .. steam .. &quot; 10 years blacklisted&quot;)
+				banPlayer(steam, &quot;10 years&quot;, &quot;blacklisted&quot;)
 			end
 
 			irc_QueueMsg(server.ircMain, &quot;Added new Chinese IP range &quot; .. iprange .. &quot; to blacklist&quot;)			
@@ -5529,49 +5655,20 @@ function readDNS(steam)
 				end
 			end		
 
-			conn:execute(&quot;UPDATE players SET country = 'CN', exiled = 1, ircTranslate = 1 WHERE steam = &quot; .. steam)
+			conn:execute(&quot;UPDATE players SET country = '&quot; .. escape(country) .. &quot;', exiled = 1, ircTranslate = 1 WHERE steam = &quot; .. steam)
 			conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (&quot; .. math.floor(players[steam].xPos) .. &quot;,&quot; .. math.ceil(players[steam].yPos) .. &quot;,&quot; .. math.floor(players[steam].zPos) .. &quot;,'&quot; .. serverTime .. &quot;','info','Chinese player joined. Name: &quot; .. escape(player) .. &quot; SteamID: &quot; .. steam .. &quot; IP: &quot; .. players[steam].IP  .. &quot;',&quot; .. steam .. &quot;)&quot;)	
 			file:close()
 
-			if proxy then
-				os.rename(homedir .. &quot;/dns/&quot; .. steam .. &quot;_old.txt&quot;, homedir .. &quot;/proxies/&quot; .. steam .. &quot;.txt&quot;)
-				os.rename(homedir .. &quot;/dns/&quot; .. steam .. &quot;.txt&quot;, homedir .. &quot;/proxies/&quot; .. steam .. &quot;_&quot; .. country .. &quot;.txt&quot;)
-			else
-				os.rename(homedir .. &quot;/dns/&quot; .. steam .. &quot;.txt&quot;, homedir .. &quot;/dns/&quot; .. steam .. &quot;_old.txt&quot;)
-			end
-
+			-- got country so stop processing the dns record
 			break
 		end
 	end
 
-	if string.upper(country) == &quot;HK&quot; and players[steam].whitelisted == false then
-		conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. math.floor(players[steam].xPos) .. &quot;,&quot; .. math.ceil(players[steam].yPos) .. &quot;,&quot; .. math.floor(players[steam].zPos) .. &quot;,'&quot; .. serverTime .. &quot;','info','Hong Kong player joined. Name: &quot; .. escape(player) .. &quot; SteamID: &quot; .. steam .. &quot; IP: &quot; .. players[steam].IP  .. &quot;',&quot; .. steam .. &quot;)&quot;)	
-
-		if server.blacklistResponse == 'ban' then
-			irc_QueueMsg(server.ircMain, &quot;Chinese player &quot; .. players[steam].name .. &quot; banned.&quot;)
-			irc_QueueMsg(server.ircAlerts, &quot;Chinese player &quot; .. players[steam].name .. &quot; banned.&quot;)
-			send (&quot;ban add &quot; .. steam .. &quot; 10 years blacklisted&quot;)
-		else
-			players[steam].ircTranslate = true
-
-			if players[steam].exiled == 0 then
-				players[steam].exiled = 1
-				conn:execute(&quot;UPDATE players SET country = 'HK', exiled = 1, ircTranslate = 1 WHERE steam = &quot; .. steam)
-
-				irc_QueueMsg(server.ircMain, &quot;Chinese player &quot; .. players[steam].name .. &quot; exiled.&quot;)
-				irc_QueueMsg(server.ircAlerts, &quot;Chinese player &quot; .. players[steam].name .. &quot; exiled.&quot;)
-				exiled = true
-
-				-- alert ingame admins
-				for k, v in pairs(igplayers) do
-					if (accessLevel(k) &lt; 3) then
-						if exiled then
-							message(&quot;pm &quot; .. k .. &quot; Hong Kong player detected and exiled id &quot; .. players[steam].id .. &quot; name &quot; .. players[steam].name .. &quot;[-]&quot;)
-						end
-					end
-				end		
-			end		
-		end
+	if proxy then
+		os.rename(homedir .. &quot;/dns/&quot; .. steam .. &quot;_old.txt&quot;, homedir .. &quot;/proxies/&quot; .. steam .. &quot;_&quot; .. country .. &quot;.txt&quot;)
+		os.rename(homedir .. &quot;/dns/&quot; .. steam .. &quot;.txt&quot;, homedir .. &quot;/proxies/&quot; .. steam .. &quot;_&quot; .. country .. &quot;.txt&quot;)
+	else
+		os.rename(homedir .. &quot;/dns/&quot; .. steam .. &quot;.txt&quot;, homedir .. &quot;/dns/&quot; .. steam .. &quot;_old.txt&quot;)
 	end
 
 	conn:execute(&quot;UPDATE players SET country = '&quot; .. country .. &quot;' WHERE steam = &quot; .. steam)
@@ -5584,14 +5681,15 @@ function readDNS(steam)
 end
 
 
-function initNewPlayer(steam, player, entityid)
-	conn:execute(&quot;INSERT INTO players (steam, id, name) VALUES (&quot; .. steam .. &quot;,&quot; .. entityid .. &quot;,'&quot; .. escape(player) .. &quot;')&quot;)
+function initNewPlayer(steam, player, entityid, steamOwner)
+	conn:execute(&quot;INSERT INTO players (steam, id, name, steamOwner) VALUES (&quot; .. steam .. &quot;,&quot; .. entityid .. &quot;,'&quot; .. escape(player) .. &quot;',&quot; .. steamOwner .. &quot;)&quot;)
 
 	players[steam] = {}
 	players[steam].id = entityid
 	players[steam].name = player
 	players[steam].names = player .. &quot;,&quot;
 	players[steam].steam = steam
+	players[steam].steamOwner = steamOwner
 	players[steam].xPos = 0
 	players[steam].yPos = 0
 	players[steam].zPos = 0
@@ -5651,15 +5749,18 @@ function initNewPlayer(steam, player, entityid)
 	players[steam].atHome = false
 	players[steam].location = &quot;lobby&quot;
 	players[steam].autoFriend = &quot;&quot;
+	players[steam].hackerScore = 0
+	players[steam].tp = 0
 	return true
 end
 
 
-function initNewIGPlayer(steam, player, entityid)
+function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam] = {}
 	igplayers[steam].id = entityid
 	igplayers[steam].name = player
 	igplayers[steam].steam = steam
+	igplayers[steam].steamOwner = steamOwner
 	igplayers[steam].greet = true
 	igplayers[steam].connected = true
 	igplayers[steam].greetdelay = 4
@@ -5687,8 +5788,6 @@ function initNewIGPlayer(steam, player, entityid)
 	igplayers[steam].zPosLastAlert = 0
 	igplayers[steam].ping = 0
 	igplayers[steam].highPingCount = 0
-	igplayers[steam].hackerScore = 0
-	igplayers[steam].tp = 0
 	igplayers[steam].afk = os.time() + 180
 	igplayers[steam].checkNewPlayer = true
 	igplayers[steam].lastLP = os.time()
@@ -5924,9 +6023,9 @@ function irc_PlayersNearPlayer(name, name1, range, xPos, zPos, offline)
 		for k, v in pairs(igplayers) do
 			if k ~= name1 then
 				if name1 ~= &quot;&quot; then
-					dist = distance(players[name1].xPos, players[name1].zPos, v.xPos, v.zPos)
+					dist = distancexz(players[name1].xPos, players[name1].zPos, v.xPos, v.zPos)
 				else
-					dist = distance(xPos, zPos, v.xPos, v.zPos)
+					dist = distancexz(xPos, zPos, v.xPos, v.zPos)
 				end
 
 				if dist &lt;= range then
@@ -5945,9 +6044,9 @@ function irc_PlayersNearPlayer(name, name1, range, xPos, zPos, offline)
 		for k, v in pairs(players) do
 			if k ~= name1 then
 				if name1 ~= &quot;&quot; then
-					dist = distance(players[name1].xPos, players[name1].zPos, v.xPos, v.zPos)
+					dist = distancexz(players[name1].xPos, players[name1].zPos, v.xPos, v.zPos)
 				else
-					dist = distance(xPos, zPos, v.xPos, v.zPos)
+					dist = distancexz(xPos, zPos, v.xPos, v.zPos)
 				end
 
 				if dist &lt;= range then
@@ -5986,9 +6085,9 @@ function irc_BasesNearPlayer(name, name1, range, xPos, zPos)
 	for k, v in pairs(players) do
 		if (v.homeX ~= 0 and v.homeZ ~= 0) then
 			if name1 ~= &quot;&quot; then
-				dist = distance(players[name1].xPos, players[name1].zPos, v.homeX, v.homeZ)
+				dist = distancexz(players[name1].xPos, players[name1].zPos, v.homeX, v.homeZ)
 			else
-				dist = distance(xPos, zPos, v.homeX, v.homeZ)			
+				dist = distancexz(xPos, zPos, v.homeX, v.homeZ)			
 			end
 
 			if dist &lt;= range then
@@ -6005,9 +6104,9 @@ function irc_BasesNearPlayer(name, name1, range, xPos, zPos)
 		
 		if (v.home2X ~= 0 and v.home2Z ~= 0) then
 			if name1 ~= &quot;&quot; then		
-				dist = distance(players[name1].xPos, players[name1].zPos, v.home2X, v.home2Z)
+				dist = distancexz(players[name1].xPos, players[name1].zPos, v.home2X, v.home2Z)
 			else
-				dist = distance(xPos, zPos, v.home2X, v.home2Z)			
+				dist = distancexz(xPos, zPos, v.home2X, v.home2Z)			
 			end
 
 			if dist &lt;= range then
@@ -6040,9 +6139,9 @@ function irc_LocationsNearPlayer(name, name1, range, xPos, zPos)
 
 	for k, v in pairs(locations) do
 		if name1 ~= &quot;&quot; then
-			dist = distance(players[name1].xPos, players[name1].zPos, v.x, v.z)
+			dist = distancexz(players[name1].xPos, players[name1].zPos, v.x, v.z)
 		else
-			dist = distance(xPos, zPos, v.x, v.z)			
+			dist = distancexz(xPos, zPos, v.x, v.z)			
 		end
 
 		if dist &lt;= range then
@@ -7617,6 +7716,69 @@ end</script>
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+--[[
+IRC commands
+============
+
+no login required:
+------------------
+bow before me
+login
+hi bot
+staff
+owners
+admins
+mods
+date, time or day
+uptime
+location &lt;name&gt;
+new players
+server stats/status
+who
+help shop
+help topics/server/donors/csi/watchlist/announcements/commands/motd
+help bad items
+help custom commands
+reset zones
+locations
+villages
+fps
+shop categories
+shop &lt;category&gt;
+shop &lt;item&gt;
+nuke/clear irc
+server
+rules
+
+login required:
+---------------
+check dns
+say
+say&lt;language code eg fr&gt;
+server ip/address
+view alerts
+show inventory
+announcements
+add announcement
+delete announcement
+who visited
+pay &lt;player&gt; &lt;amount&gt;
+claims &lt;player or blank&gt;
+cmd &lt;normal ingame command if supported&gt;
+pm &lt;player&gt; &lt;message&gt;
+con help/se/ban list/gg/si/llp
+villagers
+base cooldown timer
+set rules
+motd/set motd/clear motd
+list tables
+show table
+reset bot
+stop translating
+
+
+--]]
+
 
 local ircid, pid, login, name1, name2, words, wordsOld, words2, wordCount, result, msgLower, number, counter, xpos, zpos, debug, tmp
 
@@ -7652,9 +7814,9 @@ IRCMessage = function (event, name, channel, msg)
 	irc_params = {}
 	ircid = LookupOfflinePlayer(name, &quot;all&quot;)
 
-if ircid ~= nil and debug then
-	dbug(&quot;ircid &quot; .. ircid)
-end
+	if ircid ~= nil and debug then
+		dbug(&quot;ircid &quot; .. ircid)
+	end
 
 	if ircid ~= nil then
 		if players[ircid].ircAuthenticated == true then
@@ -7675,41 +7837,17 @@ end
 
 	number = tonumber(string.match(msg, &quot; (-?\%d+)&quot;))
 
-		if words[1] == &quot;check&quot; and words[2] == &quot;dns&quot; then
-			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
-
-			if players[ircid].ircAuthenticated == false then
-				requireLogin(name)
-				return
-			end
-
-			pid = &quot;&quot;
-			number = &quot;&quot;
-
-			for i=3,wordCount,1 do
-				if words2[i] == &quot;dns&quot; then
-					name1 = words2[i+1]
-					pid = LookupPlayer(name1)
-				end					
-
-				if words2[i] == &quot;ip&quot; then
-					number = words2[i+1]
-				end	
-			end
-
-
-			if pid ~= &quot;&quot; and number ~= &quot;&quot; then
-				irc_QueueMsg(irc_params[1], &quot;Checking DNS record for &quot; .. pid .. &quot; IP &quot; .. number)
-				CheckBlacklist(pid, number)
-			end
-
-			irc_QueueMsg(irc_params[1], &quot;&quot;)											
-			return
-		end	
-
 	if (words[1] == &quot;hi&quot; or words[1] == &quot;hello&quot;) and (string.lower(words[2]) == string.lower(server.botName) or string.lower(words[2]) == string.lower(server.ircBotName) or words[2] == &quot;bot&quot; or words[2] == &quot;server&quot;) then
 		table.insert(irc_params, &quot; Hi there &quot; .. name .. &quot;!  How can I help you today?&quot;)
 		irc_QueueMsg(name, irc_params[2])
+		return
+	end
+
+
+	if (words[1] == &quot;staff&quot; and words[2] == nil) then
+		irc_List_Owners(name)
+		irc_List_Admins(name)
+		irc_List_Mods(name)
 		return
 	end
 
@@ -8136,6 +8274,38 @@ end
 
 	if (ircid ~= nil) and (accessLevel(ircid) &lt; 3) then
 -- ########### Staff only in this section ###########
+
+		if words[1] == &quot;check&quot; and words[2] == &quot;dns&quot; then
+			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
+
+			if players[ircid].ircAuthenticated == false then
+				requireLogin(name)
+				return
+			end
+
+			pid = &quot;&quot;
+			number = &quot;&quot;
+
+			for i=2,wordCount,1 do
+				if words2[i] == &quot;dns&quot; then
+					name1 = words2[i+1]
+					pid = LookupPlayer(name1)
+				end					
+
+				if words2[i] == &quot;ip&quot; then
+					number = words2[i+1]
+				end	
+			end
+
+
+			if pid ~= &quot;&quot; and number ~= &quot;&quot; then
+				irc_QueueMsg(irc_params[1], &quot;Checking DNS record for &quot; .. pid .. &quot; IP &quot; .. number)
+				CheckBlacklist(pid, number)
+			end
+
+			irc_QueueMsg(irc_params[1], &quot;&quot;)											
+			return
+		end	
 
 		if debug then dbug(&quot;debug ircmessage 4&quot;) end
 	
@@ -8571,8 +8741,15 @@ end
 			end
 
 			pid = LookupPlayer(words[2])
-			msg = string.sub(msg, string.find(msg, words2[2]) + string.len(words2[2]) + 1)
-			message(&quot;pm &quot; .. pid .. &quot; &quot; .. name .. &quot;-irc: [i]&quot; .. msg .. &quot;[-]&quot;)
+
+			if pid ~= nil then
+				msg = string.sub(msg, string.find(msg, words2[2]) + string.len(words2[2]) + 1)
+				message(&quot;pm &quot; .. pid .. &quot; &quot; .. name .. &quot;-irc: [i]&quot; .. msg .. &quot;[-]&quot;)
+				irc_QueueMsg(name, &quot;pm sent to &quot; .. players[pid].name .. &quot; you said &quot; .. msg)
+			else
+				irc_QueueMsg(name, &quot;No player called &quot; .. words[2] .. &quot; found.&quot;)
+			end
+
 			return
 		end
 
@@ -8609,7 +8786,7 @@ end
 
 			return
 		end
--- ************************************************************************************************8
+-- ************************************************************************************************
 
 		if debug then dbug(&quot;debug ircmessage 15&quot;) end
 
@@ -8624,6 +8801,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 16&quot;) end
 
 		if (words[1] == &quot;base&quot;) and (words[2] == &quot;cooldown&quot; or words[2] == &quot;timer&quot;) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8648,6 +8826,7 @@ end
 			end
 		end
 
+		if debug then dbug(&quot;debug ircmessage 17&quot;) end
 
 		if (words[1] == &quot;set&quot; and words[2] == &quot;rules&quot;) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8666,6 +8845,7 @@ end
 			end
 		end
 
+		if debug then dbug(&quot;debug ircmessage 18&quot;) end
 
 		if (words[1] == &quot;motd&quot;) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8694,6 +8874,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 19&quot;) end
 
 		if (words[1] == &quot;set&quot; and words[2] == &quot;motd&quot;) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8712,6 +8893,7 @@ end
 			end
 		end
 
+		if debug then dbug(&quot;debug ircmessage 20&quot;) end
 
 		if (words[1] == &quot;list&quot;) and (words[2] == &quot;tables&quot;) and (words[3] == nil) and (accessLevel(ircid) == 0) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8724,6 +8906,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 21&quot;) end
 
 		if (words[1] == &quot;show&quot;) and (words[2] == &quot;table&quot;) and (words[3] ~= nil) and (accessLevel(ircid) == 0) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8738,6 +8921,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 22&quot;) end
 
 		if (words[1] == &quot;reset&quot;) and (words[2] == &quot;bot&quot;) and (accessLevel(ircid) == 0) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8751,20 +8935,23 @@ end
 			
 			if resetbotCount == nil then resetbotCount = 0 end
 			
-			if tonumber(resetbotCount) &lt; 5 then
+			if tonumber(resetbotCount) &lt; 2 then
 				resetbotCount = tonumber(resetbotCount) + 1
-				table.insert(irc_params, &quot;ALERT! Only do this after a server wipe!  To reset the bot spam the reset bot command 5 more times.&quot;)
+				table.insert(irc_params, &quot;ALERT! Only do this after a server wipe!  To reset the bot repeat the reset bot command again.&quot;)
 			end
 
 			ResetBot()
 			
-			resetbotCount = nil
+			resetbotCount = 0
 
 			table.insert(irc_params, &quot;The bot has been reset.  All bases, inventories etc are forgotten, but not the players.&quot;)
 			irc_message()
 			return
+		else
+			resetbotCount = 0
 		end
 
+		if debug then dbug(&quot;debug ircmessage 23&quot;) end
 
 		if words[1] == &quot;stop&quot; and words[2] == &quot;translating&quot; and words[3] ~= nil then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8795,6 +8982,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 24&quot;) end
 
 		if words[1] == &quot;translate&quot; and words[2] ~= nil then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8824,6 +9012,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 25&quot;) end
 
 		if words[1] == &quot;stealth&quot; and words[2] == &quot;translate&quot; and words[3] ~= nil then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8853,6 +9042,7 @@ end
 			return
 		end
 		
+		if debug then dbug(&quot;debug ircmessage 26&quot;) end
 		
 		if (words[1] == &quot;open&quot; and words[2] == &quot;shop&quot;) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8870,6 +9060,7 @@ end
 			return
 		end			
 		
+		if debug then dbug(&quot;debug ircmessage 27&quot;) end
 		
 		if (words[1] == &quot;close&quot; and words[2] == &quot;shop&quot;) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8887,6 +9078,7 @@ end
 			return
 		end					
 
+		if debug then dbug(&quot;debug ircmessage 28&quot;) end
 
 		if (words[1] == &quot;shop&quot; and words[2] == &quot;variation&quot; and words[3] ~= nil) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8904,6 +9096,7 @@ end
 			return
 		end	
 
+		if debug then dbug(&quot;debug ircmessage 29&quot;) end
 
 		if (words[1] == &quot;shop&quot; and words[2] == &quot;special&quot; and words[3] ~= nil) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8926,6 +9119,7 @@ end
 			return
 		end	
 
+		if debug then dbug(&quot;debug ircmessage 30&quot;) end
 
 		if (words[1] == &quot;shop&quot; and words[2] == &quot;price&quot; and words[3] ~= nil) then
 			if players[ircid].ircAuthenticated == false then
@@ -8947,6 +9141,7 @@ end
 			return
 		end	
 
+		if debug then dbug(&quot;debug ircmessage 31&quot;) end
 
 		if (words[1] == &quot;shop&quot; and words[2] == &quot;max&quot; and words[3] ~= nil) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8969,6 +9164,7 @@ end
 			return
 		end	
 
+		if debug then dbug(&quot;debug ircmessage 32&quot;) end
 
 		if (words[1] == &quot;shop&quot; and words[2] == &quot;restock&quot; and words[3] ~= nil) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -8996,6 +9192,7 @@ end
 			return
 		end
 		
+		if debug then dbug(&quot;debug ircmessage 33&quot;) end
 		
 		if (words[1] == &quot;shop&quot; and words[2] == &quot;add&quot; and words[3] == &quot;category&quot;) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9023,7 +9220,8 @@ end
 			irc_QueueMsg(irc_params[1], &quot;You added or updated the category &quot; .. words[4] .. &quot;.&quot;)
 			return
 		end	
-		
+
+		if debug then dbug(&quot;debug ircmessage 34&quot;) end
 		
 		if (words[1] == &quot;shop&quot; and words[2] == &quot;remove&quot; and words[3] == &quot;category&quot;) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9045,6 +9243,7 @@ end
 			return
 		end			
 		
+		if debug then dbug(&quot;debug ircmessage 35&quot;) end
 		
 		if (words[1] == &quot;shop&quot; and words[2] == &quot;change&quot; and words[3] == &quot;category&quot;) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9082,6 +9281,7 @@ end
 			return
 		end		
 
+		if debug then dbug(&quot;debug ircmessage 36&quot;) end
 
 		if (words[1] == &quot;inv&quot;) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9102,6 +9302,7 @@ end
 			return
 		end
 		
+		if debug then dbug(&quot;debug ircmessage 37&quot;) end
 
 		if (words[1] == &quot;list&quot; and words[2] == &quot;villagers&quot; and words[3] ~= nil) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9126,6 +9327,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 38&quot;) end
 
 		if words[1] == &quot;list&quot; and (words[2] == &quot;bases&quot; or words[3] == &quot;bases&quot;) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9156,6 +9358,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 39&quot;) end
 
 		if (words[1] == &quot;add&quot; and words[2] == &quot;bad&quot; and words[3] == &quot;item&quot; and words[4] ~= nil and accessLevel(ircid) == 0) then
 			if players[ircid].ircAuthenticated == false then
@@ -9182,6 +9385,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 40&quot;) end
 
 		if (words[1] == &quot;remove&quot; and words[2] == &quot;bad&quot; and words[3] == &quot;item&quot; and words[4] ~= nil and accessLevel(ircid) == 0) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9209,6 +9413,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 41&quot;) end
 
 		if (words[1] == &quot;near&quot;) then	
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end	
@@ -9276,6 +9481,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 42&quot;) end
 
 		if (words[1] == &quot;bases&quot; or words[1] == &quot;homes&quot;) and words[2] == &quot;near&quot; and words[3] ~= nil then	
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end	
@@ -9310,6 +9516,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 43&quot;) end
 
 		if (words[1] == &quot;info&quot; and words[2] ~= nil) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9335,6 +9542,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 44&quot;) end
 
 		if (words[1] == &quot;add&quot; and words[2] == &quot;donor&quot; and words[3] ~= nil and owners[ircid]) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9362,6 +9570,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 45&quot;) end
 
 		if (words[1] == &quot;remove&quot; and words[2] == &quot;donor&quot; and words[3] ~= nil and owners[ircid]) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9389,6 +9598,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 46&quot;) end
 
 		if (words[1] == &quot;add&quot; and words[2] == &quot;owner&quot; and words[3] ~= nil and owners[ircid]) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9416,6 +9626,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 47&quot;) end
 
 		if (words[1] == &quot;remove&quot; and words[2] == &quot;owner&quot; and words[3] ~= nil and owners[ircid]) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9443,6 +9654,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 48&quot;) end
 
 		if (words[1] == &quot;add&quot; and words[2] == &quot;admin&quot; and words[3] ~= nil and owners[ircid]) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9470,6 +9682,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 49&quot;) end
 
 		if (words[1] == &quot;remove&quot; and words[2] == &quot;admin&quot; and words[3] ~= nil and accessLevel(ircid) == 0) then
 			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
@@ -9498,6 +9711,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 50&quot;) end
 
 		if (words[1] == &quot;permaban&quot;) then
 			if players[ircid].ircAuthenticated == false then
@@ -9531,6 +9745,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 51&quot;) end
 
 		if (words[1] == &quot;remove&quot; and words[2] == &quot;permaban&quot;) then
 			if players[ircid].ircAuthenticated == false then
@@ -9561,6 +9776,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 52&quot;) end
 
 		if (words[1] == &quot;add&quot; and words[2] == &quot;player&quot;) then
 			if players[ircid].ircAuthenticated == false then
@@ -9598,6 +9814,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 53&quot;) end
 
 		if (words[1] == &quot;player&quot; and string.find(msgLower, &quot;unfriend&quot;)) then
 			if players[ircid].ircAuthenticated == false then
@@ -9630,6 +9847,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 54&quot;) end
 
 		if (words[1] == &quot;player&quot; and string.find(msgLower, &quot;friend&quot;)) then
 			if players[ircid].ircAuthenticated == false then
@@ -9662,6 +9880,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 55&quot;) end
 
 		if (words[1] == &quot;friends&quot;) then
 			if players[ircid].ircAuthenticated == false then
@@ -9683,6 +9902,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 56&quot;) end
 
 		if (words[1] == &quot;players&quot; and words[2] == nil) and accessLevel(ircid) == 0 then
 			if players[ircid].ircAuthenticated == false then
@@ -9694,6 +9914,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 57&quot;) end
 
 		if (words[1] == &quot;player&quot;) then
 			if players[ircid].ircAuthenticated == false then
@@ -9712,6 +9933,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 58&quot;) end
 
 		if (words[1] == &quot;igplayer&quot;) then
 			if players[ircid].ircAuthenticated == false then
@@ -9730,6 +9952,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 59&quot;) end
 
 		if (words[1] == &quot;watch&quot;) then
 			if players[ircid].ircAuthenticated == false then
@@ -9754,6 +9977,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 60&quot;) end
 
 		if (words[1] == &quot;stop&quot; and words[2] == &quot;watching&quot;) then
 			if players[ircid].ircAuthenticated == false then
@@ -9781,6 +10005,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 61&quot;) end
 
 		if (words[1] == &quot;donors&quot; and words[2] == nil) then
 			if players[ircid].ircAuthenticated == false then
@@ -9792,6 +10017,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 62&quot;) end
 
 		if (words[1] == &quot;teleports&quot; and words[2] == nil) then
 			if players[ircid].ircAuthenticated == false then
@@ -9803,6 +10029,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 63&quot;) end
 
 		if (words[1] == &quot;list&quot; and words[2] == &quot;bad&quot; and words[3] == &quot;items&quot;) then
 			if players[ircid].ircAuthenticated == false then
@@ -9814,6 +10041,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 64&quot;) end
 
 		if (words[1] == &quot;prisoners&quot; and words[2] == nil) then
 			if players[ircid].ircAuthenticated == false then
@@ -9825,6 +10053,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 65&quot;) end
 
 		if (words[1] == &quot;li&quot; and words[2] ~= nil) then
 			if players[ircid].ircAuthenticated == false then
@@ -9836,6 +10065,7 @@ end
 			send(&quot;li &quot; .. words[2])
 		end
 
+		if debug then dbug(&quot;debug ircmessage 66&quot;) end
 
 		if (words[1] == &quot;status&quot;) then
 			if players[ircid].ircAuthenticated == false then
@@ -9857,6 +10087,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 67&quot;) end
 		
 		if (words[1] == &quot;shop&quot; and words[2] == &quot;add&quot; and words[3] == &quot;item&quot; and words[4] ~= nil) then
 			if players[ircid].ircAuthenticated == false then
@@ -9897,6 +10128,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 68&quot;) end
 		
 		if (words[1] == &quot;shop&quot; and words[2] == &quot;remove&quot; and words[3] == &quot;item&quot;) then
 			if players[ircid].ircAuthenticated == false then
@@ -9917,6 +10149,7 @@ end
 			return
 		end	
 
+		if debug then dbug(&quot;debug ircmessage 69&quot;) end
 
 		if (words[1] == &quot;add&quot; and words[2] == &quot;command&quot; and accessLevel(ircid) &lt; 3) then
 			if players[ircid].ircAuthenticated == false then
@@ -9949,6 +10182,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 70&quot;) end
 
 		if (words[1] == &quot;remove&quot; and words[2] == &quot;command&quot; and accessLevel(ircid) &lt; 3) then
 			if players[ircid].ircAuthenticated == false then
@@ -9966,6 +10200,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 71&quot;) end
 
 		if (words[1] == &quot;blacklist&quot; and words[2] == &quot;add&quot; and accessLevel(ircid) &lt; 3) then
 			if players[ircid].ircAuthenticated == false then
@@ -9976,12 +10211,14 @@ end
 			pid = LookupPlayer(words[3])
 
 			if pid ~= nil then
-				send(&quot;ban add &quot; .. pid .. &quot; 10 years blacklisted&quot;)
+
+				banPlayer(pid, &quot;10 years&quot;, &quot;blacklisted&quot;)				
 				irc_QueueMsg(name, &quot;Player &quot; .. pid  .. &quot; &quot; .. players[pid].name .. &quot; has been blacklisted 10 years.&quot;)
 				return
 			end
 		end
 
+		if debug then dbug(&quot;debug ircmessage 72&quot;) end
 
 		if (words[1] == &quot;blacklist&quot; or words[1] == &quot;ban&quot; and words[2] == &quot;remove&quot; and accessLevel(ircid) &lt; 3) then
 			if players[ircid].ircAuthenticated == false then
@@ -9996,6 +10233,8 @@ end
 				return
 			end
 		end
+
+		if debug then dbug(&quot;debug ircmessage 73&quot;) end
 
 		if words[1] == &quot;list&quot; and (words[2] == &quot;event&quot;) then
 			for i=4,wordCount,1 do 					
@@ -10023,6 +10262,7 @@ end
 			return
 		end
 
+		if debug then dbug(&quot;debug ircmessage 74&quot;) end
 
 		if words[1] == &quot;search&quot; and words[2] == &quot;player&quot; then
 			irc_QueueMsg(name, &quot;Players matching &quot; .. words[3])
@@ -10037,57 +10277,175 @@ end
 			irc_QueueMsg(name, &quot;&quot;)
 		end
 
-	end
+		if debug then dbug(&quot;debug ircmessage 75&quot;) end
 
-
-	if (words[1] == &quot;login&quot;) then
-		ircid = LookupIRCPass(string.sub(msg, string.find(msgLower, &quot;ogin&quot;) + 5))
-
-		if (ircid ~= nil) then
-			if string.find(channel, &quot;#&quot;) then
-				table.insert(irc_params, &quot;You accidentally revealed your password in a public channel.  You password has been automatically wiped and you won't be able to login until Smeg sets a new password for you.&quot;)
-				irc_message()
-				players[ircid].ircAuthenticated = false
-				players[ircid].ircPass = nil
-
-				conn:execute(&quot;UPDATE players SET ircPass = '' WHERE steam = &quot; .. ircid)
+		if (words[1] == &quot;add&quot; and words[2] == &quot;proxy&quot;) then
+			if players[ircid].ircAuthenticated == false then
+				requireLogin(name)
 				return
 			end
 
-			players[ircid].ircAuthenticated = true
-			players[ircid].ircAlias = name
-
-			-- fix a weird bug where the wrong player can have the irc alias for this player and they can't get it back
-			conn:execute(&quot;UPDATE players SET ircAlias = '' WHERE ircAlias = '&quot; .. escape(name) .. &quot;'&quot;)
-			conn:execute(&quot;UPDATE players SET ircAlias = '&quot; .. escape(name) .. &quot;' WHERE steam = &quot; .. ircid)
-
-			if accessLevel(ircid) &lt; 4 then
-				players[ircid].ircSessionExpiry = os.time() + 3600
-			else
-				players[ircid].ircSessionExpiry = os.time() + 10800
+			if words[3] == nil then
+				irc_QueueMsg(name, &quot;The bot does a dns lookup on every player that joins. You can ban or exile players found using a known proxy.&quot;)
+				irc_QueueMsg(name, &quot;Staff and whitelisted players are ignored.&quot;)
+				irc_QueueMsg(name, &quot;Command example: add proxy YPSOLUTIONS action ban.  Action is optional and can be ban or exile.  Ban is the default.&quot;)
+				irc_QueueMsg(name, &quot;To remove a proxy type remove proxy YPSOLUTIONS.  To list proxies type list proxies.&quot;)
+				return
 			end
 
-			table.insert(irc_params, &quot;You have logged in &quot; .. name)
-			irc_message()
+			proxy = nil
+			if string.find(msg, &quot; action&quot;) then
+				proxy = string.sub(msg, string.find(msg, &quot;proxy&quot;) + 6, string.find(msg, &quot;action&quot;) - 1)
+			else
+				proxy = string.sub(msg, string.find(msg, &quot;proxy&quot;) + 6)
+			end
+
+			if proxy == nil then
+				irc_QueueMsg(name, &quot;The proxy is required.&quot;)
+				irc_QueueMsg(name, &quot;Command example: add proxy YPSOLUTIONS action ban.  Action is optional and can be ban or exile.  Ban is the default.&quot;)
+				return
+			end
+
+			proxy = string.upper(proxy)
+			action = &quot;ban&quot;
+
+			for i=4,wordCount,1 do 					
+				if words[i] == &quot;action&quot; then
+					action = words[i+1]
+				end					
+			end
+
+			if action ~= &quot;ban&quot; and action ~= &quot;exile&quot; then
+				irc_QueueMsg(name, &quot;Invalid optional action given.&quot;)
+				irc_QueueMsg(name, &quot;Command example: add proxy YPSOLUTIONS action ban.  Action is optional and can be ban or exile.  Ban is the default.&quot;)
+				return
+			end
+
+			-- add the proxy to table proxies
+			conn:execute(&quot;INSERT INTO proxies (scanString, action, hits) VALUES ('&quot; .. escape(proxy) .. &quot;','&quot; .. escape(action) .. &quot;',0)&quot;)
+
+			-- and add it to the Lua table proxies
+			proxies[proxy] = {}
+			proxies[proxy].scanString = proxy
+			proxies[proxy].action = action
+			proxies[proxy].hits = 0
+
+			if action == &quot;ban&quot; then
+				action = &quot;banned.&quot;
+			else
+				action = &quot;exiled.&quot;
+			end
+
+			irc_QueueMsg(name, &quot;Proxy &quot; .. proxy  .. &quot; has been added. New players using it will be &quot; .. action)
 			return
 		end
 
-		if (players[ircid].ircPass == nil) then
-			table.insert(irc_params, &quot;You don't currently have a password.  Ask us to set one for you.&quot;)
-			irc_message()
+		if debug then dbug(&quot;debug ircmessage 76&quot;) end
+
+		if (words[1] == &quot;remove&quot; and words[2] == &quot;proxy&quot;) then
+			if players[ircid].ircAuthenticated == false then
+				requireLogin(name)
+				return
+			end
+
+			proxy = string.sub(msg, string.find(msg, &quot;proxy&quot;) + 6)
+			proxy = string.upper(proxy)
+
+			if proxy == nil then
+				irc_QueueMsg(name, &quot;The proxy is required.&quot;)
+				irc_QueueMsg(name, &quot;Command example: remove proxy YPSOLUTIONS.&quot;)
+				return
+			end
+
+			-- remve the proxy from the proxies table
+			conn:execute(&quot;DELETE FROM proxies WHERE scanString = '&quot; .. escape(proxy) .. &quot;'&quot;)
+
+			-- and remove it from the Lua table proxies
+			proxies[proxy] = nil
+			irc_QueueMsg(name, &quot;You have removed the proxy &quot; .. proxy)
+			return
+		end
+
+		if debug then dbug(&quot;debug ircmessage 77&quot;) end
+
+		if words[1] == &quot;list&quot; and words[2] == &quot;proxies&quot; then
+			if debug then dbug(&quot;debug ircmessage &quot; .. msg) end
+			if players[ircid].ircAuthenticated == false then
+				requireLogin(name)
+				return
+			end
+
+			cursor,errorString = conn:execute(&quot;SELECT * FROM proxies&quot;)
+			if cursor:numrows() == 0 then
+				irc_QueueMsg(irc_params[1], &quot;There are no proxies on record.&quot;)
+			else
+				irc_QueueMsg(irc_params[1], &quot;I am scanning for these proxies:&quot;)
+				row = cursor:fetch({}, &quot;a&quot;)
+				while row do
+					msg = &quot;proxy: &quot; .. row.scanString .. &quot; action: &quot; .. row.action .. &quot; hits: &quot; .. row.hits
+					irc_QueueMsg(name, msg)
+					row = cursor:fetch(row, &quot;a&quot;)	
+				end
+			end
+
+			irc_QueueMsg(name, &quot;&quot;)
+			return
+		end
+
+	end
+
+	if debug then dbug(&quot;debug ircmessage 78&quot;) end
+
+	if (words[1] == &quot;login&quot;) then
+		if words[2] ~= nil then
+			ircid = LookupIRCPass(string.sub(msg, string.find(msgLower, &quot;ogin&quot;) + 5))
+
+			if (ircid ~= nil) then
+				if string.find(channel, &quot;#&quot;) then
+					table.insert(irc_params, &quot;You accidentally revealed your password in a public channel.  You password has been automatically wiped and you won't be able to login until Smeg sets a new password for you.&quot;)
+					irc_message()
+					players[ircid].ircAuthenticated = false
+					players[ircid].ircPass = nil
+
+					conn:execute(&quot;UPDATE players SET ircPass = '' WHERE steam = &quot; .. ircid)
+					return
+				end
+
+				players[ircid].ircAuthenticated = true
+				players[ircid].ircAlias = name
+
+				-- fix a weird bug where the wrong player can have the irc alias for this player and they can't get it back
+				conn:execute(&quot;UPDATE players SET ircAlias = '' WHERE ircAlias = '&quot; .. escape(name) .. &quot;'&quot;)
+				conn:execute(&quot;UPDATE players SET ircAlias = '&quot; .. escape(name) .. &quot;' WHERE steam = &quot; .. ircid)
+
+				if accessLevel(ircid) &lt; 4 then
+					players[ircid].ircSessionExpiry = os.time() + 3600
+				else
+					players[ircid].ircSessionExpiry = os.time() + 10800
+				end
+
+				table.insert(irc_params, &quot;You have logged in &quot; .. name)
+				irc_message()
+				return
+			end
+
+			if (players[ircid].ircPass == nil) then
+				table.insert(irc_params, &quot;You don't currently have a password.  Ask us to set one for you.&quot;)
+				irc_message()
+			end
+		else
+			irc_QueueMsg(name, &quot;You didn't give me the password.  Type login &lt;password&gt; eg. login 1234&quot;)
 		end
 
 		return
 	end
 
-	if debug then dbug(&quot;debug ircmessage 5&quot;) end
-
+	if debug then dbug(&quot;debug ircmessage 79&quot;) end
 
 	if (words[1] == &quot;bow&quot; and words[2] == &quot;before&quot;) and words[3] == &quot;me&quot; then
 		if true then
 --			return
 		end
-
 
 		ircid = LookupPlayer(name)
 
@@ -10124,6 +10482,43 @@ end
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
+
+
+function nextReboot()
+	local timeRemaining, diff, days, hours, minutes, seconds
+
+	if not server.allowReboot then
+		message(&quot;say [&quot; .. server.chatColour .. &quot;]Server reboots are not managed by the bot at the moment.[-]&quot;)
+		return
+	end
+
+	if gameTick &lt; 0 then
+		message(&quot;say [&quot; .. server.chatColour .. &quot;]The server needs a reboot now to fix a fault.[-]&quot;)
+	else
+		timeRemaining = (tonumber(server.maxServerUptime) * 3600) - gameTick
+
+		diff = timeRemaining
+		days = math.floor(diff / 86400)
+
+		if (days &gt; 0) then
+			diff = diff - (days * 86400)
+		end
+
+		hours = math.floor(diff / 3600)
+
+		if (hours &gt; 0) then
+			diff = diff - (hours * 3600)
+		end
+
+		minutes = math.floor(diff / 60)
+
+		if (minutes &gt; 0) then
+			seconds = diff - (minutes * 60)
+		end
+
+		message(&quot;say [&quot; .. server.chatColour .. &quot;]The next reboot is in &quot; .. days .. &quot; days &quot; .. string.format(&quot;%02d&quot;, hours) .. &quot;:&quot; .. string.format(&quot;%02d&quot;, minutes) ..&quot;:&quot; .. string.format(&quot;%02d&quot;, seconds) .. &quot;[-]&quot;)
+	end
+end
 
 
 function baseStatus(command, playerid)
@@ -10241,7 +10636,7 @@ function gmsg_who(playerid, number)
 
 	for k, v in pairs(igplayers) do
 		if (k ~= playerid) then
-			dist = distance(intX, intZ, v.xPos, v.zPos)
+			dist = distancexz(intX, intZ, v.xPos, v.zPos)
 
 			if dist &lt; tonumber(number) then
 				if (v.steam ~= playerid) then
@@ -10483,13 +10878,17 @@ function help(command)
 	if (command == &quot;hotspots&quot;) then
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Hotspots are pm's that are triggered by proximity to a hotspot. They are 3 dimensional spheres and can be stacked vertically.[-]&quot;)
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/hotspots &lt;optional number&gt; Lists all hotspots within 20 meters of you or type a number for a different distance[-]&quot;)
-		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/hotspot delete  Deletes the nearest hotspot to you.[-]&quot;)
+		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/delete hotspot &lt;optional number&gt;. Deletes the nearest or numbered hotspot.[-]&quot;)
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/hotspot &lt;private message&gt;  Adds hotspot where you are with a default radius of 3 meters[-]&quot;)
+		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/move hotspot &lt;numbr&gt;. The numbered hotspot will move to you.[-]&quot;)
 
 		if (accessLevel(gmsgvars.playerid) &lt; 3) then 
-			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/hotspot &lt;number&gt;   Change the radius of the nearest hotspot.  If multiple hotspots cover an area, only the first hotspot tested will trigger.[-]&quot;) 
+			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/resize hotspot &lt;number&gt; size 5. Change the radius of the numbered hotspot to 5 metres.[-]&quot;) 
+			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/delete hotspots &lt;optional player&gt;. Deletes all of a players hotspots or your own if no player given.[-]&quot;)
 		else
-			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/hotspot &lt;1 to 5&gt;   Change the radius of the nearest hotspot.  If multiple hotspots cover an area, only the first hotspot tested will trigger.[-]&quot;) 
+			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/resize hotspot &lt;number&gt; size 5 (max 10). Change the radius of the numbered hotspot to 5 metres.[-]&quot;) 
+			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]/delete hotspots. Deletes all of your hotspots.[-]&quot;)
+			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]If you move your base, any hotspots that are outside of your base are deleted. An admin may remove hotspots deemed to be offensive.[-]&quot;)
 		end
 
 		return
@@ -10751,7 +11150,7 @@ end</script>
 
 function CheckInventory()
 	local temp, newPlayer, ban, timeout, move, newItems, table1, table2, items, reason, moveTo, moveReason, banReason, timeoutReason
-	local d1, delta, inventoryChanged, keystoneChange, changes, flags, debug, badItemsFound, badItemAction, count500
+	local d1, delta, inventoryChanged, changes, flags, debug, badItemsFound, badItemAction, count500
 
 	debug = false
 
@@ -10793,7 +11192,6 @@ if debug then display (&quot;check inventory 2\n&quot;) end
 		changes = {}
 		newItems = &quot;&quot;
 		delta = 0
-		keystoneChange = 0
 		inventoryChanged = false
 		flags = &quot;&quot;
 
@@ -10818,17 +11216,6 @@ if debug then display (&quot;check inventory 3\n&quot;) end
 				if table1[i] ~= &quot;&quot; then
 					table2 = string.split(table1[i], &quot;,&quot;)
 
-					-- count the number of full stacks
---					if tonumber(table2[1]) == 500 and (server.gameType ~= &quot;cre&quot;) then
---						count500 = count500 + 1
-						
---						if timeoutReason == nil then
---							timeoutReason = &quot;excessive inventory for a new player &quot; .. table2[2] .. &quot;(&quot; .. table2[1] .. &quot;)&quot;
---						else
---							timeoutReason = timeoutReason .. &quot;, &quot; .. table2[2] .. &quot;(&quot; .. table2[1] .. &quot;)&quot;
---						end
---					end
-
 					if (badItems[table2[2]]) then
 						igplayers[k].illegalInventory = true
 
@@ -10849,30 +11236,25 @@ if debug then display (&quot;check inventory 3\n&quot;) end
 					end
 
 					-- stack monitoring
---					if (stackLimits[table2[2]] ~= nil) and (accessLevel(k) &gt; 2 or server.ignoreAdmins == false) and (server.gameType ~= &quot;cre&quot;) then
---						if tonumber(table2[1]) &gt; tonumber(stackLimits[table2[2]].limit) * 3 then
---							if (players[k].overstackScore &lt; 0) then
---								players[k].overstackScore = 0
---							end
+					if (stackLimits[table2[2]] ~= nil) and (accessLevel(k) &gt; 2 or server.ignoreAdmins == false) and (server.gameType ~= &quot;cre&quot;) then
+						if tonumber(table2[1]) &gt; tonumber(stackLimits[table2[2]].limit) * 2 and tonumber(table2[1]) &gt; 1000 then
+							if (players[k].overstackScore &lt; 0) then
+								players[k].overstackScore = 0
+							end
 
---							players[k].overstack = true
---							players[k].overstackItems = players[k].overstackItems .. &quot; &quot; .. table2[2] .. &quot; (&quot; .. table2[1] .. &quot;)&quot;
-
---							if newPlayer then
---								players[k].overstackScore = players[k].overstackScore + 4
---							else
---								players[k].overstackScore = players[k].overstackScore + 2
---							end
---						end
+							players[k].overstack = true
+							players[k].overstackItems = players[k].overstackItems .. &quot; &quot; .. table2[2] .. &quot; (&quot; .. table2[1] .. &quot;)&quot;
+							players[k].overstackScore = players[k].overstackScore + 1
+						end
 
 						-- instant ban for overstacking any of these if a new player
---						if tonumber(table2[1]) &gt; tonumber(stackLimits[table2[2]].limit) and newPlayer == true then
---							if (table2[2] == &quot;tnt&quot; or table2[2] == &quot;keystone&quot; or table2[2] == &quot;mineAirFilter&quot; or table2[2] == &quot;mineHubcap&quot; or table2[2] == &quot;44MagBullet&quot; or table2[2] == &quot;762mmBullet&quot;) then
---								ban = true
---								banReason = &quot;Banned for overstacking &quot; .. table2[2] .. &quot;(&quot; .. table2[1] .. &quot;).  Take that shit somewhere else.&quot;
---							end
---						end
---					end					
+						if tonumber(table2[1]) &gt; tonumber(stackLimits[table2[2]].limit) and newPlayer == true then
+							if (table2[2] == &quot;tnt&quot; or table2[2] == &quot;keystone&quot; or table2[2] == &quot;mineAirFilter&quot; or table2[2] == &quot;mineHubcap&quot;) then
+								ban = true
+								banReason = &quot;Banned for overstacking &quot; .. table2[2] .. &quot;(&quot; .. table2[1] .. &quot;).&quot;
+							end
+						end
+					end					
 				end
 			end 
 
@@ -10883,7 +11265,7 @@ if debug then display (&quot;check inventory 4\n&quot;) end
 
 					cursor,errorString = conn:execute(&quot;SELECT * FROM memRestrictedItems where item = '&quot; .. escape(b.item) .. &quot;' and accessLevel &lt; &quot; .. players[k].accessLevel)				
 					rows = cursor:numrows()
---[[
+
 					if tonumber(rows) &gt; 0 then
 						row = cursor:fetch({}, &quot;a&quot;)
 
@@ -10928,7 +11310,6 @@ if debug then display (&quot;check inventory 4\n&quot;) end
 
 						end
 					end				
---]]
 				end 
 			end
 
@@ -11032,11 +11413,11 @@ if debug then display (&quot;check inventory 9\n&quot;) end
 			if (items[&quot;keystone&quot;] and players[k].newPlayer == true and tonumber(items[&quot;keystone&quot;].quantity) &gt; 4 and accessLevel(k) &gt; 2) and (server.gameType ~= &quot;cre&quot;) then
 				banPlayer(k, &quot;1 week&quot;, &quot;Too many keystones (&quot; .. items[&quot;keystone&quot;].quantity .. &quot;)&quot;)
 				message(&quot;say [&quot; .. server.chatColour .. &quot;]Banning new player &quot; .. igplayers[k].name .. &quot; 1 week for too many keystones (&quot; .. items[&quot;keystone&quot;].quantity .. &quot;) in inventory.  Cheating suspected.[-]&quot;)
-				irc_QueueMsg(server.ircMain, &quot;[BANNED] New player &quot; .. k .. &quot; &quot; .. igplayers[k].name .. &quot; has &quot; .. items[&quot;keystone&quot;].quantity .. &quot;(d&quot; .. keystoneChange .. &quot;) keystones and has been banned for 1 week&quot;)
-				irc_QueueMsg(server.ircAlerts, &quot;[BANNED] New player &quot; .. k .. &quot; &quot; .. igplayers[k].name .. &quot; has &quot; .. items[&quot;keystone&quot;].quantity .. &quot;(d&quot; .. keystoneChange .. &quot;) keystones and has been banned for 1 week&quot;)
+				irc_QueueMsg(server.ircMain, &quot;[BANNED] New player &quot; .. k .. &quot; &quot; .. igplayers[k].name .. &quot; has &quot; .. items[&quot;keystone&quot;].quantity .. &quot; keystones and has been banned for 1 week&quot;)
+				irc_QueueMsg(server.ircAlerts, &quot;[BANNED] New player &quot; .. k .. &quot; &quot; .. igplayers[k].name .. &quot; has &quot; .. items[&quot;keystone&quot;].quantity .. &quot; keystones and has been banned for 1 week&quot;)
 				players[k].watchPlayer = true
 
-				conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. math.floor(v.xPos) .. &quot;,&quot; .. math.ceil(v.yPos) .. &quot;,&quot; .. math.floor(v.zPos) .. &quot;,'&quot; .. serverTime .. &quot;','ban','[BANNED] New player &quot; .. k .. &quot; &quot; .. escape(igplayers[k].name) .. &quot; has &quot; .. items[&quot;keystone&quot;].quantity .. &quot;(d&quot; .. keystoneChange .. &quot;) keystones and has been banned for 1 week',&quot; .. k .. &quot;)&quot;)
+				conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. math.floor(v.xPos) .. &quot;,&quot; .. math.ceil(v.yPos) .. &quot;,&quot; .. math.floor(v.zPos) .. &quot;,'&quot; .. serverTime .. &quot;','ban','[BANNED] New player &quot; .. k .. &quot; &quot; .. escape(igplayers[k].name) .. &quot; has &quot; .. items[&quot;keystone&quot;].quantity .. &quot; keystones and has been banned for 1 week',&quot; .. k .. &quot;)&quot;)
 			end
 
 		end
@@ -11048,53 +11429,31 @@ if debug then display (&quot;check inventory 10\n&quot;) end
 		changes = nil
 		
 		if (players[k].overstack == false) then
-			if tonumber(players[k].overstackScore) &gt; 0 then
-				players[k].overstackScore = players[k].overstackScore - 1
-			end
-
-			if 	players[k].overstackTimeout == true then
-				players[k].overstackScore = players[k].overstackScore - 1
-			end
-
-			if tonumber(players[k].overstackScore) &lt; -200 then
-				players[k].overstackTimeout = false
-				players[k].overstackScore = 0
-			end
+			players[k].overstackScore = 0
 		end
 
 		if (players[k].overstack == true) and (accessLevel(k) &gt; 2 or server.ignoreAdmins == false) then
---			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]You are overstacking items in your inventory - &quot; .. players[k].overstackItems .. &quot;[-]&quot;)
---			irc_QueueMsg(server.ircWatch, igplayers[k].name .. &quot; is overstacking &quot; .. players[k].overstackItems)
+			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]You are overstacking items in your inventory - &quot; .. players[k].overstackItems .. &quot;[-]&quot;)
+			irc_QueueMsg(server.ircWatch, igplayers[k].name .. &quot; is overstacking &quot; .. players[k].overstackItems)
 		end
 
-		if (players[k].overstackScore == 10) and (players[k].botTimeout == false) then
---			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]If you do not break up your overstacked items into their proper stack sizes, you will be automatically sent to timeout in 3 minutes.  Deal with it now to avoid potential loss of inventory.[-]&quot;)
+		if (tonumber(players[k].overstackScore) == 2) and (players[k].botTimeout == false) then
+			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]If you do not stop overstacking, you will be sent to timeout.  Fix your inventory now.[-]&quot;)
 		end
 
-		if (players[k].overstackScore == 10) and (players[k].botTimeout == true) then
---			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]If you do not break up your overstacked items into their proper stack sizes, you will be automatically sent a long way away and your teleport privileges will be removed.[-]&quot;)
-		end
+		if tonumber(players[k].overstackScore) &gt; 4 and (players[k].botTimeout == false) then
+			players[k].botTimeout = true
 
-		if tonumber(players[k].overstackScore) &gt; 20 and (players[k].botTimeout == false) then
---			players[k].botTimeout = true
---			players[k].overstackScore = 0
+			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. igplayers[k].name .. &quot; is in timeout for ignoring overstack warnings.[-]&quot;)
+			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]You are still overstacking items. You will stay in timeout until you are not overstacking.[-]&quot;)
+			irc_QueueMsg(server.ircWatch, &quot;[TIMEOUT] &quot; .. k .. &quot; &quot; .. igplayers[k].name .. &quot; is in timeout for overstacking the following &quot; .. players[k].overstackItems)
+			irc_QueueMsg(server.ircAlerts, &quot;[TIMEOUT] &quot; .. k .. &quot; &quot; .. igplayers[k].name .. &quot; is in timeout for overstacking the following &quot; .. players[k].overstackItems)
 
---			irc_params = {}
---			table.insert(irc_params, server.ircMain)
---			table.insert(irc_params, k)
---			table.insert(irc_params, players[k].name)
---			tempTimer( 2, [[irc_Request_Inventory()]] )	
-
---			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. igplayers[k].name .. &quot; is in timeout for ignoring overstack warnings.[-]&quot;)
---			message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;]You are still overstacking items. Please review your inventory and break up any excessively overstacked items. Sorry if this means losing stuff but you've had 10 minutes to fix it.[-]&quot;)
---			irc_QueueMsg(server.ircWatch, &quot;[TIMEOUT] &quot; .. igplayers[k].name .. &quot; is in timeout for overstacking the following &quot; .. players[k].overstackItems)
---			irc_QueueMsg(server.ircAlerts, &quot;[TIMEOUT] &quot; .. igplayers[k].name .. &quot; is in timeout for overstacking the following &quot; .. players[k].overstackItems)
-
---			conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. math.floor(v.xPos) .. &quot;,&quot; .. math.ceil(v.yPos) .. &quot;,&quot; .. math.floor(v.zPos) .. &quot;,'&quot; .. serverTime .. &quot;','timeout','Player &quot; .. escape(igplayers[k].name) .. &quot; is in timeout for overstacking the following &quot; .. escape(players[k].overstackItems) .. &quot;',&quot; .. k .. &quot;)&quot;)
+			conn:execute(&quot;INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (&quot; .. math.floor(v.xPos) .. &quot;,&quot; .. math.ceil(v.yPos) .. &quot;,&quot; .. math.floor(v.zPos) .. &quot;,'&quot; .. serverTime .. &quot;','timeout','Player &quot; .. escape(igplayers[k].name) .. &quot; is in timeout for overstacking the following &quot; .. escape(players[k].overstackItems) .. &quot;',&quot; .. k .. &quot;)&quot;)
 		end
 
 		if (ban == true) then
-			message(&quot;say [&quot; .. server.chatColour .. &quot;]Banning new player &quot; .. igplayers[k].name .. &quot; 1 year for suspected shenannigans.[-]&quot;)
+			message(&quot;say [&quot; .. server.chatColour .. &quot;]Banning new player &quot; .. igplayers[k].name .. &quot; 1 year for suspected inventory cheating.[-]&quot;)
 			banPlayer(k, &quot;1 year&quot;, banReason)
 			irc_QueueMsg(server.ircMain, &quot;[BANNED] New player &quot; .. k .. &quot; &quot; .. igplayers[k].name .. &quot; has has been banned for &quot; .. banReason .. &quot;.&quot;)
 			irc_QueueMsg(server.ircAlerts, &quot;[BANNED] New player &quot; .. k .. &quot; &quot; .. igplayers[k].name .. &quot; has has been banned for 1 year for &quot; .. banReason .. &quot;.&quot;)
@@ -11124,7 +11483,6 @@ if debug then display (&quot;check inventory 11\n&quot;) end
 				igplayers[k].illegalInventory = true
 
 				if (players[k].timeout == false) and (accessLevel(k) &gt; 2 or server.ignoreAdmins == false) then
-					players[k].exiled = 1
 					players[k].timeout = true
 					players[k].botTimeout = true
 					if accessLevel(k) &gt; 2 then players[k].silentBob = true end
@@ -11137,16 +11495,7 @@ if debug then display (&quot;check inventory 11\n&quot;) end
 					break
 				end
 			end
-
-			if players[k].newPlayer and count500 &gt; 4  then
-				igplayers[k].illegalInventory = true
-
-				if players[k].timeout == false then
-					timeoutPlayer(k, timeoutReason, true)
-				end
-			end
 		end
-
 
 		if players[k].botTimeout == true and v.illegalInventory == false and players[k].overstack == false then
 			players[k].botTimeout = false
@@ -11234,6 +11583,7 @@ function readInventorySlot()
 
 		if tonumber(slot) == 7 and tonumber(quantity) &gt; 0 and item == &quot;yuccaFibers&quot; then
 			-- run the who command
+			message(&quot;pm &quot; .. invCheckID .. &quot; [&quot; .. server.chatColour .. &quot;]Remove grass from last slot of belt stop the spam.[-]&quot;)
 			gmsg_who(invCheckID)
 		end
 	end
@@ -11340,15 +11690,7 @@ function OneMinuteTimer()
 		end
 	end
 
---	if (server.ServerMaxPlayerCount &gt; 24) or (server.ServerMaxPlayerCount == 23) then
---		server.ServerMaxPlayerCount = 24
---		send(&quot;sg ServerMaxPlayerCount 24&quot;)
---		tempTimer( 1, [[send(&quot;gg&quot;)]] )
---	end
-
 	if (idleKickTimer == nil) then 	idleKickTimer = 0 end
-
---	if (raidsFile == nil) then raidsFile = os.date(&quot;%Y%m%d&quot;) .. &quot;_raids.lua&quot; end
 
 	for k, v in pairs(igplayers) do
 --		if (v.afk - os.time() &lt; 421) and (playersOnline &gt;= server.ServerMaxPlayerCount) and (accessLevel(steam) &gt; 2) then
@@ -11676,10 +12018,10 @@ function doShop(command, playerid, words)
 
 		while row do
 			if tonumber(row.stock) == -1 then
-				message(&quot;pm &quot; .. playerid .. &quot; [&quot; .. server.chatColour .. &quot;]code:  &quot; .. row.code .. &quot;    item:  &quot; .. row..item .. &quot; price:  &quot; .. row.price .. &quot; UNLIMITED STOCK![-]&quot;)
+				message(&quot;pm &quot; .. playerid .. &quot; [&quot; .. server.chatColour .. &quot;]code:  &quot; .. row.code .. &quot;    item:  &quot; .. row.item .. &quot; price:  &quot; .. row.price .. &quot; UNLIMITED STOCK![-]&quot;)
 			else
 				if row.stock == 0 then
-					message(&quot;pm &quot; .. playerid .. &quot; [&quot; .. server.chatColour .. &quot;]code:  &quot; .. row.code .. &quot;    item:  &quot; .. row..item .. &quot; price: &quot; .. row.price .. &quot;[-]  [FF0000]SOLD OUT[-]&quot;)
+					message(&quot;pm &quot; .. playerid .. &quot; [&quot; .. server.chatColour .. &quot;]code:  &quot; .. row.code .. &quot;    item:  &quot; .. row.item .. &quot; price: &quot; .. row.price .. &quot;[-]  [FF0000]SOLD OUT[-]&quot;)
 				else
 					message(&quot;pm &quot; .. playerid .. &quot; [&quot; .. server.chatColour .. &quot;]code:  &quot; .. row.code .. &quot;    item:  &quot; .. row.item .. &quot; price: &quot; .. row.price.. &quot;  (&quot; .. row.stock .. &quot; left)[-]&quot;)
 				end
@@ -12343,14 +12685,6 @@ function distancexz(x1, z1, x2, z2)
 end
 
 
-function distance( x1, y1, x2, y2 )
-	-- calc the distance between 2 xy coords
-   local dx = x1 - x2
-   local dy = y1 - y2
-   return math.sqrt( dx * dx + dy * dy )
-end
-
-
 function say(message)
 	-- just a catcher for old code
 	send(message)
@@ -12451,6 +12785,11 @@ end
 
 function fixMissingPlayer(steam)
 	-- if any fields are missing from the players player record, add them with default values
+
+	if (players[steam].steamOwner == nil) then
+		players[steam].steamOwner = steam
+	end
+
 	if (players[steam].canTeleport == nil) then
 		players[steam].canTeleport = true
 	end
@@ -12753,17 +13092,26 @@ function fixMissingPlayer(steam)
 	if players[steam].autoFriend == nil then
 		players[steam].autoFriend = &quot;&quot;
 	end
+
+	if players[steam].hackerScore == nil then
+		players[steam].hackerScore = 0
+	end
+
+	if players[steam].tp == nil then
+		players[steam].tp = 0
+	end
 end
 
 
 function fixMissingIGPlayer(steam)
 	-- if any fields are missing from the players in-game player record, add them with default values
-	if igplayers[steam].playGimme == nil then
-		igplayers[steam].playGimme = false
+
+	if (igplayers[steam].steamOwner == nil) then
+		igplayers[steam].steamOwner = steam
 	end
 
-	if (igplayers[steam].tp == nil) then
-		igplayers[steam].tp = 0
+	if igplayers[steam].playGimme == nil then
+		igplayers[steam].playGimme = false
 	end
 
 	if igplayers[steam].alertRemovedClaims == nil then
@@ -12888,12 +13236,16 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].notifyTP = false
 	end
 
-	if igplayers[steam].hackerScore == nil then
-		igplayers[steam].hackerScore = 0
-	end
-
 	if igplayers[steam].lastLP == nil then
 		igplayers[steam].lastLP = os.time()
+	end
+
+	if igplayers[steam].doge == nil then
+		igplayers[steam].doge = false
+	end
+
+	if igplayers[steam].highPingCount == nil then
+		igplayers[steam].highPingCount = 0
 	end
 end</script>
             <eventHandlerList/>
@@ -13153,6 +13505,8 @@ function alterTables()
 	conn:execute(&quot;ALTER TABLE `server` ADD `botTick` INT NOT NULL DEFAULT '0'&quot;)
 	conn:execute(&quot;ALTER TABLE `players` ADD `ircOtherNames` VARCHAR(50) NULL&quot;)
 	conn:execute(&quot;ALTER TABLE `performance` ADD `heapMax` FLOAT NOT NULL AFTER `heap`&quot;)
+	conn:execute(&quot;ALTER TABLE `proxies` DROP `id`&quot;)
+	conn:execute(&quot;ALTER TABLE `players` ADD `steamOwner` BIGINT(17) NOT NULL&quot;)
 end
 
 
@@ -13352,7 +13706,7 @@ if debug then dbug(&quot;debug base 2&quot;) end
 
 		for k, v in pairs(locations) do
 			if v.village == nil then
-				dist = distance(igplayers[gmsgvars.playerid].xPos, igplayers[gmsgvars.playerid].zPos, locations[k].x, locations[k].z)
+				dist = distancexz(igplayers[gmsgvars.playerid].xPos, igplayers[gmsgvars.playerid].zPos, locations[k].x, locations[k].z)
 
 				if locations[k].size ~= nil then
 					psize = locations[k].size
@@ -13452,17 +13806,24 @@ if debug then dbug(&quot;debug base 3&quot;) end
 			id = LookupPlayer(pname)
 		end
 
+		if players[gmsgvars.playerid].inLocation ~= &quot;&quot; then
+			if locations[players[gmsgvars.playerid].inLocation].pvp then
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Base protection is not allowed where PVP rules are in effect.[-]&quot;)
+				faultyGMSG = false
+				return true
+			end
+		end
+
 		if not validPosition(gmsgvars.playerid, true) then
 			faultyGMSG = false
 			return true
 		end
 
 		if gmsgvars.words[1] == &quot;protect&quot; then
-			dist = distance(igplayers[gmsgvars.playerid].xPos, igplayers[gmsgvars.playerid].zPos, players[id].homeX, players[id].homeZ)
+			dist = distancexz(igplayers[gmsgvars.playerid].xPos, igplayers[gmsgvars.playerid].zPos, players[id].homeX, players[id].homeZ)
 		else
-			dist = distance(igplayers[gmsgvars.playerid].xPos, igplayers[gmsgvars.playerid].zPos, players[id].home2X, players[id].home2Z)
+			dist = distancexz(igplayers[gmsgvars.playerid].xPos, igplayers[gmsgvars.playerid].zPos, players[id].home2X, players[id].home2Z)
 		end
-
 
 		if (gmsgvars.words[1] == &quot;protect&quot;) then
 			if (tonumber(dist) &lt;  tonumber(players[id].protectSize) + 1) then
@@ -13736,8 +14097,8 @@ if debug then dbug(&quot;debug base 4k&quot;) end
 			prepareTeleport(gmsgvars.playerid, cmd)
 			teleport(cmd)
 		else
-			igplayers[gmsgvars.playerid].tp = 1
-			igplayers[gmsgvars.playerid].hackerScore = 0
+			players[gmsgvars.playerid].tp = 1
+			players[gmsgvars.playerid].hackerScore = 0
 			send(cmd)
 		end
 
@@ -14180,7 +14541,7 @@ if debug then dbug(&quot;debug admin&quot;) end
 		message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. players[gmsgvars.playerid].name .. &quot; has been given admin powers[-]&quot;)
 		send(&quot;admin add &quot; .. gmsgvars.playerid .. &quot; 0&quot;)
 
-		tempTimer( 2, [[send(&quot;admin list&quot;)]] )
+		send(&quot;admin list&quot;)
 
 		faultyGMSG = false
 		return true
@@ -14426,14 +14787,8 @@ if debug then dbug(&quot;admin 3&quot;) end
 			return true
 		end
 
-		if (gmsgvars.playername ~= &quot;Server&quot;) then 
-			if (accessLevel(gmsgvars.playerid) &gt; 2) and players[gmsgvars.playerid].pvpVictim == 0 then
-				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command is for admins and the PVP victim only[-]&quot;)
-				faultyGMSG = false
-				return true
-			end
-			
-			if (accessLevel(gmsgvars.playerid) &gt; 2) and (tonumber(players[gmsgvars.playerid].pvpVictim) &gt; 0) and (prisonerid ~= players[gmsgvars.playerid].pvpVictim) then
+		if (gmsgvars.playername ~= &quot;Server&quot;) then 	
+			if (accessLevel(gmsgvars.playerid) &gt; 2) and (players[prisonerid].pvpVictim ~= gmsgvars.playerid) then
 				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. prisoner .. &quot; is not in prison for your death and cannot be released by you.[-]&quot;)	
 				faultyGMSG = false	
 				return true
@@ -14500,7 +14855,7 @@ if debug then dbug(&quot;admin 3&quot;) end
 if debug then dbug(&quot;admin 4&quot;) end
 
 	if gmsgvars.words[1] == &quot;give&quot; and (string.find(gmsgvars.words[2], &quot;claim&quot;) or string.find(gmsgvars.words[2], &quot;key&quot;) or string.find(gmsgvars.words[2], &quot;lcb&quot;)) then
-		if players[gmsgvars.playerid].removedClaims &gt; 5 then
+		if players[gmsgvars.playerid].removedClaims &gt; 20 then
 			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]I am holding a lot of claims. Due to bugs with the count I can't release them to you.  Please talk to an admin to get them back so we can verify the count.[-]&quot;)
 
 			faultyGMSG = false
@@ -15865,6 +16220,43 @@ if debug then dbug(&quot;admin 32&quot;) end
 
 if debug then dbug(&quot;admin 33&quot;) end
 
+	if (gmsgvars.words[1] == &quot;burn&quot; and gmsgvars.words[2] ~= nil) then
+		if (gmsgvars.playername ~= &quot;Server&quot;) then 
+			if (accessLevel(gmsgvars.playerid) &gt; 2) then
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command is restricted[-]&quot;)		
+				faultyGMSG = false
+				return true
+			end
+		end
+
+		if (gmsgvars.words[2] ~= nil) then
+			pname = gmsgvars.words[2]
+			pid = LookupPlayer(pname)
+
+			if pid == nil then
+				if (gmsgvars.playername ~= &quot;Server&quot;) then
+					message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]No in-game players found with that name.[-]&quot;)
+				else
+					irc_QueueMsg(server.ircMain, &quot;No in-game players found called &quot; .. pname)
+				end
+
+				faultyGMSG = false
+				return true
+			end
+		end
+
+		send(&quot;buffplayer &quot; .. pid .. &quot; burning&quot;)
+
+		if (gmsgvars.playername ~= &quot;Server&quot;) then
+			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You set &quot; .. players[pid].name .. &quot; on fire![-]&quot;)
+		else
+			irc_QueueMsg(server.ircMain, &quot;You set &quot; .. players[pid].name .. &quot; on fire!&quot;)
+		end
+
+		faultyGMSG = false
+		return true
+	end
+
 	-- ###################  do not allow remote commands beyond this point ################
 	if (gmsgvars.playerid == nil) then
 		faultyGMSG = false
@@ -16134,10 +16526,8 @@ if debug then dbug(&quot;admin 36&quot;) end
 			-- remove the steamid from the admins table
 			owners[players[id].steam] = nil
 			admins[players[id].steam] = nil
-
-			if tonumber(players[id].accessLevel) == 1 then
-				players[id].accessLevel = 90
-			end
+			mods[players[id].steam] = nil
+			players[id].accessLevel = 90
 
 			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. players[id].name .. &quot;'s admin powers have been revoked[-]&quot;)
 			send(&quot;admin remove &quot; .. id)
@@ -16203,7 +16593,7 @@ if debug then dbug(&quot;admin 38&quot;) end
 
 		for k, v in pairs(players) do
 			if igplayers[k] == nil and v.xPos ~= nil then	
-				dist = distance(igplayers[gmsgvars.playerid].xPos, igplayers[gmsgvars.playerid].zPos, v.xPos, v.zPos)
+				dist = distancexz(igplayers[gmsgvars.playerid].xPos, igplayers[gmsgvars.playerid].zPos, v.xPos, v.zPos)
 				dist = math.abs(dist)
 
 				if tonumber(dist) &lt;= tonumber(gmsgvars.number) then
@@ -16969,6 +17359,16 @@ santa
 gimme
 ragequit
 gimmehell
+--TODO add commands that annoy the dupers or anyone else who you've caught cheating
+burn &lt;player&gt; burns the player once
+trail &lt;player&gt; &lt;optional item&gt; every time their position changes spawn a shit or another item if specified
+shits &lt;player&gt; give them the shits
+mini horde &lt;player&gt; &lt;offset&gt; &lt;list of zeds&gt; dist &lt;distance&gt; dir &lt;direction&gt; (dist and dir are optional)
+bees &lt;player&gt; &lt;number&gt;
+stun &lt;player&gt;
+coffee &lt;player&gt; (applies the coffee buff)
+booze &lt;player&gt;
+
 --]]
 
 function gmsg_fun()
@@ -17367,6 +17767,24 @@ function gmsg_fun()
 		end	
 	end
 
+
+	if gmsgvars.words[1] == &quot;doge&quot; and (gmsgvars.words[2] == &quot;on&quot; or gmsgvars.words[2] == &quot;mode&quot;) then
+		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You have activated doge mode.[-]&quot;)
+		igplayers[gmsgvars.playerid].doge = true
+
+		faultyGMSG = false
+		return true
+	end
+
+
+	if (gmsgvars.words[1] == &quot;doge&quot; and gmsgvars.words[2] == &quot;off&quot;) then
+		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You have de-activated doge mode.[-]&quot;)
+		igplayers[gmsgvars.playerid].doge = false
+
+		faultyGMSG = false
+		return true
+	end
+
 end
 </script>
             <eventHandlerList/>
@@ -17462,7 +17880,7 @@ if debug then dbug(&quot;debug hotspots&quot;) end
 
 	if (gmsgvars.words[1] == &quot;man&quot; and gmsgvars.words[2] == &quot;hotspots&quot;) then
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Hotspots are private messages triggered by proximity.[-]&quot;)
-		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You can set their size from 1 to 20 metres (default 2).[-]&quot;)
+		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You can set their size from 1 to 10 metres (default 2).[-]&quot;)
 		message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]For command help type /help hotspots[-]&quot;)
 
 		faultyGMSG = false
@@ -17861,6 +18279,7 @@ help
 commands
 new players
 fps
+when/next reboot
 --]]
 
 function gmsg_info()
@@ -17868,8 +18287,8 @@ function gmsg_info()
 
 	local xdir, zdir, dist, x, z, diff, days, hours, minutes, result, tokens, time	, werds, word, cmd
 
-local debug
-debug = false
+	local debug
+	debug = false
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(gmsgvars.command, 1, 1) ~= &quot;/&quot;) then
@@ -18314,7 +18733,7 @@ if debug then dbug(&quot;debug info 16&quot;) end
 
 		if (pvpZone(gmsgvars.intX, gmsgvars.intZ) == false) or (server.gameType ~= &quot;pvp&quot;) then
 			for k, v in pairs(igplayers) do
-				dist = distance(gmsgvars.intX, gmsgvars.intZ, v.xPos, v.zPos)
+				dist = distancexz(gmsgvars.intX, gmsgvars.intZ, v.xPos, v.zPos)
 
 				if dist &lt;= tonumber(gmsgvars.number) then
 					if (v.steam ~= gmsgvars.playerid) then
@@ -18481,6 +18900,15 @@ if debug then dbug(&quot;debug info 18&quot;) end
 		else	
 			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Player name required or no match found.[-]&quot;)	
 		end
+
+		faultyGMSG = false
+		return true
+	end
+
+if debug then dbug(&quot;debug info 19&quot;) end
+
+	if (gmsgvars.words[1] == &quot;when&quot; or gmsgvars.words[1] == &quot;next&quot;) and gmsgvars.words[2] == &quot;reboot&quot; then		
+		nextReboot()
 
 		faultyGMSG = false
 		return true
@@ -19709,6 +20137,7 @@ max animals
 max players
 set server pvp/pve/creative/contest
 set max uptime
+set new player timer
 --]]
 
 function gmsg_server()
@@ -19918,8 +20347,29 @@ if debug then dbug(&quot;debug server 7&quot;) end
 			end
 		end
 
-		if (server.scheduledRestart == true) then
-			message(&quot;say [&quot; .. server.chatColour .. &quot;]A reboot is already scheduled.  Cancel it first.[-]&quot;)		
+		if (gmsgvars.words[2] ~= &quot;now&quot;) then
+			if (server.scheduledRestart == true) then
+				message(&quot;say [&quot; .. server.chatColour .. &quot;]A reboot is already scheduled.  Cancel it first.[-]&quot;)		
+				faultyGMSG = false
+				return true
+			end
+		else
+			scheduledReboot = false
+			server.scheduledIdleRestart = false
+			server.scheduledRestart = false
+			server.scheduledRestartTimestamp = os.time()
+			scheduledRestartPaused = nil
+			scheduledRestartForced = nil
+
+			if (rebootTimerID ~= nil) then killTimer(rebootTimerID) end
+			if (rebootTimerDelayID ~= nil) then killTimer(rebootTimerDelayID) end
+
+			rebootTimerID = nil
+			rebootTimerDelayID = nil
+
+			send(&quot;sa&quot;)
+			finishReboot()
+
 			faultyGMSG = false
 			return true
 		end
@@ -20532,6 +20982,34 @@ if debug then dbug(&quot;debug server 28&quot;) end
 		return true
 	end
 
+if debug then dbug(&quot;debug server 29&quot;) end
+
+	if gmsgvars.words[1] == &quot;set&quot; and gmsgvars.words[2] == &quot;new&quot; and gmsgvars.words[3] == &quot;player&quot; and gmsgvars.words[4] == &quot;timer&quot; then
+		if (gmsgvars.playername ~= &quot;Server&quot;) then 
+			if (accessLevel(gmsgvars.playerid) &gt; 0) then
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]This command is restricted[-]&quot;)
+				faultyGMSG = false
+				return true
+			end
+		end
+
+		if gmsgvars.number ~= nil then
+			gmsgvars.number = math.abs(math.floor(gmsgvars.number))
+
+			server.newPlayerTimer = gmsgvars.number
+			conn:execute(&quot;UPDATE server SET newPlayerTimer = &quot; .. gmsgvars.number)
+
+			if (gmsgvars.playername ~= &quot;Server&quot;) then 
+				message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]New players stop being new after &quot; .. gmsgvars.number .. &quot; minutes total play time.[-]&quot;)
+			else
+				irc_QueueMsg(server.ircMain, &quot;New players stop being new after &quot; .. gmsgvars.number .. &quot; minutes total play time.&quot;)
+			end
+		end
+
+		faultyGMSG = false
+		return true
+	end
+
 	-- ###################  do not allow remote commands beyond this point ################
 	if (gmsgvars.playerid == nil) then
 		faultyGMSG = false
@@ -20539,7 +21017,7 @@ if debug then dbug(&quot;debug server 28&quot;) end
 	end
 	-- ####################################################################################
 
-if debug then dbug(&quot;debug server 29&quot;) end
+if debug then dbug(&quot;debug server 30&quot;) end
 
 	if (gmsgvars.words[1] == &quot;reset&quot;) and (gmsgvars.words[2] == &quot;server&quot;) then 
 		if accessLevel(gmsgvars.playerid) &gt; 0 then
@@ -20555,7 +21033,7 @@ if debug then dbug(&quot;debug server 29&quot;) end
 		return true
 	end
 
-if debug then dbug(&quot;debug server 30&quot;) end
+if debug then dbug(&quot;debug server 31&quot;) end
 
 	if (gmsgvars.words[1] == &quot;reset&quot;) and (gmsgvars.words[2] == &quot;bot&quot;) then 
 		if accessLevel(gmsgvars.playerid) &gt; 0 then
@@ -20571,7 +21049,7 @@ if debug then dbug(&quot;debug server 30&quot;) end
 		return true
 	end
 
-if debug then dbug(&quot;debug server 31&quot;) end
+if debug then dbug(&quot;debug server 32&quot;) end
 
 	if (gmsgvars.words[1] == &quot;no&quot;) and (gmsgvars.words[2] == &quot;reset&quot;) then 
 		if accessLevel(gmsgvars.playerid) &gt; 0 then
@@ -21735,7 +22213,7 @@ if debug then display (&quot;debug villages 8\n&quot;) end
 			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You need to tell me the name of the village you are protecting.[-]&quot;)	
 		end
 
-		dist = distance(igplayers[gmsgvars.playerid].xPos, igplayers[gmsgvars.playerid].zPos, locations[pname].x, locations[pname].z)
+		dist = distancexz(igplayers[gmsgvars.playerid].xPos, igplayers[gmsgvars.playerid].zPos, locations[pname].x, locations[pname].z)
 
 		if (dist &lt;  tonumber(locations[pname].size) + 1) then
 			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You are too close to the village, but just walk away and I will set it when you are far enough.[-]&quot;)
@@ -21887,6 +22365,12 @@ if debug then display (&quot;debug waypoints 5\n&quot;) end
 			faultyGMSG = false
 			return true		
 		end
+
+		if tonumber(players[gmsgvars.playerid].waypointX) == 0 and tonumber(players[gmsgvars.playerid].waypointY) == 0 and tonumber(players[gmsgvars.playerid].waypointZ) == 0 then
+			message(&quot;pm &quot; .. gmsgvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]You do not have a waypoint set.[-]&quot;)
+			faultyGMSG = false
+			return true		
+		end
 		
 		-- store the current coords
 		players[gmsgvars.playerid].xPosOld = gmsgvars.intX
@@ -21963,8 +22447,11 @@ end
 --[[
 unslashed commands
 =============
-
-
+pay player
+build reset
+when feral
+wait
+when/next reboot
 --]]
 
 function gmsg_unslashed()
@@ -22258,6 +22745,15 @@ if debug then dbug(&quot;debug unslashed 6&quot;) end
 		if (r == 2) then message(&quot;say [&quot; .. server.chatColour .. &quot;]Just ragequit! :)[-]&quot;) end
 		if (r == 3) then message(&quot;say [&quot; .. server.chatColour .. &quot;]This is not the server you are looking for.  Move along.  Move along.[-]&quot;) end
 		if (r == 4) then message(&quot;say [&quot; .. server.chatColour .. &quot;]Let me guess, did someone steal your sweet roll?[-]&quot;) end
+		faultyGMSG = false
+		return true
+	end
+
+if debug then dbug(&quot;debug unslashed 7&quot;) end
+
+	if (string.find(gmsgvars.command, &quot;when&quot;) or string.find(gmsgvars.command, &quot;next&quot;)) and string.find(gmsgvars.command, &quot;reboot&quot;) then
+		nextReboot()
+
 		faultyGMSG = false
 		return true
 	end
@@ -23477,6 +23973,23 @@ function loadCustomMessages()
 end
 
 
+function loadProxies()
+	-- load proxies
+	getTableFields(&quot;proxies&quot;)
+
+   proxies = {}
+	cursor,errorString = conn:execute(&quot;select * from proxies&quot;)
+	row = cursor:fetch({}, &quot;a&quot;)
+	while row do
+		proxies[row.scanString] = {}
+		proxies[row.scanString].scanString = row.scanString
+		proxies[row.scanString].action = row.action
+		proxies[row.scanString].hits = row.hits
+		row = cursor:fetch(row, &quot;a&quot;)	
+	end
+end
+
+
 function loadTables()
 	dbug(&quot;loading players&quot;)
 	loadPlayers()
@@ -23511,6 +24024,9 @@ function loadTables()
 
 	loadCustomMessages()
 	dbug(&quot;loaded custom messages&quot;)
+
+	loadProxies()
+	dbug(&quot;loaded proxies&quot;)
 end</script>
             <eventHandlerList/>
         </Script>
@@ -23534,6 +24050,9 @@ function updatePlayer(steam)
 	fields = {}
 	values = {}
 --dbug(&quot;update player &quot; .. steam)
+	table.insert(fields, &quot;steamOwner&quot;)
+	table.insert(values, players[steam].steamOwner)
+
 	table.insert(fields, &quot;xpos&quot;)
 	table.insert(values, players[steam].xPos)
 
@@ -23997,7 +24516,6 @@ function baseProtection(steam, posX, posY, posZ)
 	local k, v, testMode
 
 	testMode = false
---	players[steam].atHome = false
 
 	-- check for and record any non-friend who gets within protectSize meters of a players /setbase coord
 	for k, v in pairs(players) do
@@ -24006,16 +24524,6 @@ function baseProtection(steam, posX, posY, posZ)
 			dist = distancexz(posX, posZ, v.homeX, v.homeZ)
 			size = tonumber(v.protectSize)
 
---[[
-			if (v.steam == steam) and (dist &lt; size + 16) then
-				if not v.atHome then
-					v.atHome = true
-					message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Welcome home &quot; .. v.name .. &quot;[-]&quot;)
-				else
-					v.atHome = false
-				end
-			end
---]]
 
 			if (v.steam == steam and v.protectPaused) then
 				if (dist &gt; 100) then
@@ -24097,7 +24605,7 @@ function baseProtection(steam, posX, posY, posZ)
 								end
 
 
-								if distance(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.homeX, v.homeZ) &gt; v.protectSize then
+								if distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.homeX, v.homeZ) &gt; v.protectSize then
 									message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]You are too close to a protected player base. The base owner needs to add you to their friends list by typing /friend &quot; .. igplayers[steam].name .. &quot;[-]&quot;)
 									cmd = &quot;tele &quot; .. steam .. &quot; &quot; .. igplayers[steam].xPosLastOK .. &quot; &quot; .. igplayers[steam].yPosLastOK + 1 .. &quot; &quot; .. igplayers[steam].zPosLastOK
 									prepareTeleport(steam, cmd)
@@ -24122,17 +24630,6 @@ function baseProtection(steam, posX, posY, posZ)
 		if (math.abs(tonumber(v.home2X)) &gt; 100 or math.abs(tonumber(v.home2Z)) &gt; 100) then
 			dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, v.home2X, v.home2Z)
 			size = tonumber(v.protect2Size)
-
---[[
-			if (v.steam == steam) and (dist &lt; size + 16) then
-				if not v.atHome then
-					v.atHome = true
-					message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]Welcome home &quot; .. v.name .. &quot;[-]&quot;)
-				else
-					v.atHome = false
-				end
-			end
---]]
 
 			if (v.steam == steam and v.protect2Paused) then
 				if (dist &gt; 100) then
@@ -25010,6 +25507,10 @@ function login()
 			reservedSlots = {}
 		end
 
+		if type(proxies) ~= &quot;table&quot; then
+			proxies = {}
+		end
+
 		if debug then dbug(&quot;debug login 2\n&quot;) end
 
 		-- add your steam id here so you can debug using your name
@@ -25048,7 +25549,7 @@ function login()
 		tempTimer( 10, [[send(&quot;pm IPCHECK&quot;)]] )
 		dbug(&quot;ipcheck&quot;)
 
-		tempTimer( 11, [[send(&quot;lpf&quot;)]] )
+		tempTimer( 11, [[send(&quot;teleh&quot;)]] )
 		dbug(&quot;coppi test&quot;)
 
 		tempTimer( 12, [[send(&quot;gg&quot;)]] )
@@ -25083,7 +25584,7 @@ login()</script>
 
 function forgetLastTP(steam)
 	if igplayers[steam] then
-		igplayers[steam].lastCatchTimestamp = os.time() + 50
+		igplayers[steam].lastCatchTimestamp = os.time() + 10
 		igplayers[steam].lastTP = nil
 	end
 end
@@ -25091,7 +25592,7 @@ end
 
 function prepareTeleport(steam, cmd)
 	if igplayers[steam] then
-		igplayers[steam].lastCatchTimestamp = os.time() + 50
+		igplayers[steam].lastCatchTimestamp = os.time() + 10
 		igplayers[steam].lastTP = cmd
 	end
 end
@@ -25116,10 +25617,13 @@ function teleport(cmd, forced)
 	-- if an admin is following a player (using the /near command) and they teleport away, stop following the player
 	if igplayers[id].following ~= nil then igplayers[id].following = nil end
 
-	igplayers[id].tp = 1
-	igplayers[id].hackerScore = 0
+	players[id].tp = 1
+	players[id].hackerScore = 0
 
 	send(cmd)
+
+	players[id].tp = 1
+	players[id].hackerScore = 0
 
 	return true
 end
@@ -25135,11 +25639,11 @@ function fallCatcher(steam, x, y, z)
 	-- world fall catcher
 	if igplayers[steam].lastCatchTimestamp - os.time() &lt; 0 then
 		if (tonumber(y) &lt; 0 and players[steam].timeout == false and players[steam].botTimeout == false and igplayers[steam].sessionPlaytime &gt; 5)  then
-			igplayers[steam].lastCatchTimestamp = os.time() + 50
+			igplayers[steam].lastCatchTimestamp = os.time() + 10
 		
 			if igplayers[steam].lastTP ~= nil then
-				igplayers[steam].tp = 1
-				igplayers[steam].hackerScore = 0
+				players[steam].tp = 1
+				players[steam].hackerScore = 0
 				send(igplayers[steam].lastTP)
 				return
 			end
@@ -25155,9 +25659,11 @@ function fallCatcher(steam, x, y, z)
 					cmd = (&quot;tele &quot; .. steam .. &quot; &quot; .. row.x .. &quot; &quot; .. row.y + 1 .. &quot; &quot; .. row.z)
 					
 					if cmd ~= &quot;&quot; then
-						igplayers[steam].tp = 1
-						igplayers[steam].hackerScore = 0
+						players[steam].tp = 1
+						players[steam].hackerScore = 0
 						send(cmd)
+						players[id].tp = 1
+						players[id].hackerScore = 0
 						return
 					else
 						message(&quot;pm &quot; .. steam .. &quot; [&quot; .. server.chatColour .. &quot;]You have fallen through the ground. Relog to rescue yourself.[-]&quot;)
@@ -25168,6 +25674,46 @@ function fallCatcher(steam, x, y, z)
 			end
 
 			return
+		end
+	end
+end
+
+
+function randomPVPTP(playerid, location, forced)
+	local r, rows, row, rowCount
+
+	cursor,errorString = conn:execute(&quot;select * from locationSpawns where location='&quot; .. location .. &quot;'&quot;)
+	rows = tonumber(cursor:numrows())
+
+	if rows == 0 then
+		cmd = &quot;tele &quot; .. playerid .. &quot; &quot; .. locations[location].x .. &quot; &quot; .. locations[location].y .. &quot; &quot; .. locations[location].z
+		prepareTeleport(playerid, cmd)
+		teleport(cmd, true)
+		return
+	end
+
+	rowCount = 1
+	r = rand(rows)
+
+	cursor,errorString = conn:execute(&quot;select * from locationSpawns where location='&quot; .. location .. &quot;' limit &quot; .. r - 1 .. &quot;,1&quot;)
+	row = cursor:fetch({}, &quot;a&quot;)
+	cmd = &quot;tele &quot; .. playerid .. &quot; &quot; .. row.x .. &quot; &quot; .. row.y .. &quot; &quot; .. row.z
+	prepareTeleport(playerid, cmd)
+
+	if location == &quot;lobby&quot; then
+		teleport(cmd, true)
+	else
+		if forced ~= nil then
+			teleport(cmd, true)
+		else
+			teleport(cmd)
+		end
+	end
+
+	if (locations[location].pvp) then
+		if (accessLevel(playerid) &gt; 2) then
+			players[playerid].baseCooldown = (os.time() + 1200) -- 2400 = 40 minutes
+			conn:execute(&quot;UPDATE players SET baseCooldown = &quot; .. os.time() + 1200 .. &quot; WHERE steam = &quot; .. playerid)
 		end
 	end
 end</script>
@@ -25817,7 +26363,7 @@ function initServer()
 	server.allowShop = false
 	server.allowWaypoints = false
 	server.maxPlayers = 24
-	server.maxServerUptime = 4
+	server.maxServerUptime = 6
 	server.baseSize = 32
 	server.baseCooldown = 2400
 	server.protectionMaxDays = 31

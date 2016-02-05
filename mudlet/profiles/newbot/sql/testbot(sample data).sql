@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Jan 20, 2016 at 12:32 AM
+-- Generation Time: Feb 05, 2016 at 10:22 PM
 -- Server version: 10.0.22-MariaDB-0+deb8u1
 -- PHP Version: 5.6.14-0+deb8u1
 
@@ -19,8 +19,17 @@ SET time_zone = "+00:00";
 --
 -- Database: `testbot`
 --
-CREATE DATABASE IF NOT EXISTS `testbot` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci;
-USE `testbot`;
+
+--
+-- Dumping data for table `announcements`
+--
+
+INSERT INTO `announcements` (`id`, `message`, `startDate`, `endDate`) VALUES
+(1, ' Tell the bot where your base is with /setbase. Enable teleporting to it with /enabletp and teleport with /base. Protect your base from raiders with /protect then simply walk out of your base and the bot will do the rest.', '0000-00-00', '2020-01-01'),
+(2, ' Tell the bot who your friends are with /friend. Read /help friends. The bot will think they are raiding you otherwise.', '0000-00-00', '2020-01-01'),
+(3, ' Donors get 2 base teleports and base protections, can be mayor of a village, explore 5km beyond the edge of the map and more cool stuff! =D', '0000-00-00', '2020-01-01'),
+(4, ' We have a bot that you can command. Type /commands for the quick list or /help for more info.', '0000-00-00', '2020-01-01'),
+(7, ' You can now place hotspots all over your base. They are private messages that you create which are triggered like mines. /help hotspots for info.', '0000-00-00', '2020-01-01');
 
 --
 -- Dumping data for table `badItems`
@@ -256,42 +265,89 @@ INSERT INTO `gimmePrizes` (`name`, `category`, `prizeLimit`) VALUES
 ('wrench', 'tool', 1);
 
 --
+-- Dumping data for table `proxies`
+--
+
+INSERT INTO `proxies` (`scanString`, `action`, `hits`) VALUES
+('BANK OF AMERICA ', 'ban', 0),
+('KRYPT TECHNOLOGIES ', 'ban', 0),
+('WIRELESS-ALARM.COM ', 'ban', 0),
+('YPSOLUTIONS ', 'ban', 0);
+
+--
+-- Dumping data for table `restrictedItems`
+--
+
+INSERT INTO `restrictedItems` (`item`, `qty`, `accessLevel`, `action`) VALUES
+('tnt', 5, 0, 'timeout');
+
+--
 -- Dumping data for table `shop`
 --
 
 INSERT INTO `shop` (`item`, `category`, `price`, `stock`, `idx`, `maxStock`, `variation`, `special`) VALUES
-('10mmBullet', 'ammo', 6, 999, 1, 999, 0, 0),
-('44MagBullet', 'ammo', 8, 999, 2, 999, 0, 0),
-('762mmBullet', 'ammo', 10, 999, 3, 999, 0, 0),
-('9mmBullet', 'ammo', 4, 999, 4, 999, 0, 0),
-('antibiotics', 'medic', 200, 25, 1, 25, 0, 0),
-('beer', 'food', 100, 100, 2, 100, 0, 0),
-('blueberrySeed', 'garden', 100, 10, 1, 10, 0, 0),
-('canHam', 'food', 25, 100, 3, 100, 0, 0),
-('cornSeed', 'garden', 50, 10, 2, 10, 0, 0),
-('cottonSeed', 'garden', 100, 10, 3, 10, 0, 0),
-('emptyJar', 'food', 25, 100, 4, 100, 0, 0),
-('firstAidKit', 'medic', 50, 20, 2, 20, 0, 0),
-('goldenrodSeed', 'garden', 100, 10, 4, 10, 0, 0),
-('mapleSeed', 'garden', 50, 50, 5, 50, 0, 0),
-('meatStew', 'food', 30, 25, 1, 25, 0, 0),
-('miningHelmet', 'tools', 300, 10, 1, 10, 0, 0),
-('P2Ptoken', 'special', 100, 999, 2, 999, 0, 0),
-('pineSeed', 'garden', 50, 50, 6, 50, 0, 0),
-('potatoSeed', 'garden', 100, 10, 7, 10, 0, 0);
+('10mmBullet', 'ammo', 24, 250, 1, 250, 0, 0),
+('762mmBullet', 'ammo', 32, 250, 2, 250, 0, 0),
+('9mmBullet', 'ammo', 16, 500, 3, 500, 0, 0),
+('ammunitionNationBook', 'books', 800, 5, 1, 5, 0, 0),
+('animalHide', 'resources', 80, 50, 1, 50, 0, 0),
+('antibiotics', 'medic', 400, 20, 1, 20, 0, 0),
+('augerBlade', 'auger', 1000, 5, 1, 5, 0, 0),
+('augerParts', 'auger', 1000, 5, 2, 5, 0, 0),
+('augerSchematic', 'books', 400, 0, 2, 0, 0, 0),
+('bottledWater', 'food', 40, 9, 1, 10, 0, 0),
+('canBeef', 'food', 50, 10, 2, 10, 0, 0),
+('carBattery', 'misc', 500, 2, 1, 2, 0, 0),
+('crossbow', 'weapons', 200, 25, 1, 25, 0, 0),
+('crossbowBolt', 'ammo', 2, 500, 4, 500, 0, 0),
+('fireaxe', 'tools', 300, 10, 1, 10, 0, 0),
+('FirstAidBandage', 'medic', 50, 20, 2, 20, 0, 0),
+('firstAidKit', 'medic', 100, 5, 3, 5, 0, 0),
+('gasCan', 'resources', 400, 50, 2, 50, 0, 0),
+('goldenRodTea', 'food', 80, 10, 3, 10, 0, 0),
+('grainAlcohol', 'resources', 40, 50, 3, 50, 0, 0),
+('huntingKnifeBook', 'books', 200, 5, 3, 5, 0, 0),
+('leatherTanning', 'books', 800, 5, 4, 5, 0, 0),
+('macDyverBook', 'books', 800, 10, 5, 10, 0, 0),
+('meatStew', 'food', 140, 50, 5, 50, 0, 0),
+('minibikeChassis', 'bike', 2000, 2, 1, 2, 0, 0),
+('minibikeHandlebars', 'bike', 1000, 2, 2, 2, 0, 0),
+('minibikeSeat', 'bike', 1000, 2, 3, 2, 0, 0),
+('minibikeWheels', 'bike', 2000, 2, 4, 2, 0, 0),
+('mp5', 'weapons', 1000, 5, 2, 5, 0, 0),
+('nailgun', 'tools', 2500, 4, 2, 4, 0, 0),
+('oil', 'resources', 40, 50, 4, 50, 0, 0),
+('P2Ptoken', 'special', 100, 1, 1, 1, 0, 0),
+('padlock', 'special', 200, 5, 2, 5, 0, 0),
+('pickaxeIron', 'tools', 400, 5, 3, 5, 0, 0),
+('pistol', 'weapons', 400, 10, 3, 10, 0, 0),
+('pistolBook', 'books', 800, 5, 6, 5, 0, 0),
+('potassiumNitratePowder', 'resources', 200, 50, 5, 50, 0, 0),
+('repairKit', 'misc', 200, 50, 2, 50, 0, 0),
+('scrapCable', 'bike', 100, 50, 5, 50, 0, 0),
+('scrapIron', 'resources', 8, 500, 6, 500, 0, 0),
+('setInConcrete', 'books', 1200, 5, 7, 5, 0, 0),
+('shotgunShell', 'ammo', 16, 250, 5, 250, 0, 0),
+('shovel', 'tools', 300, 10, 4, 10, 0, 0),
+('smallEngine', 'misc', 2500, 2, 3, 2, 0, 0),
+('woodPlank', 'resources', 4, 500, 7, 500, 0, 0);
 
 --
 -- Dumping data for table `shopCategories`
 --
 
 INSERT INTO `shopCategories` (`category`, `idx`, `code`) VALUES
-('ammo', 5, 'a'),
-('food', 5, 'f'),
-('garden', 8, 'g'),
-('medic', 3, 'm'),
+('ammo', 1, 'am'),
+('auger', 1, 'au'),
+('bike', 1, 'mbp'),
+('books', 1, 'bk'),
+('food', 1, 'f'),
+('medic', 1, 'm'),
 ('misc', 1, 'mis'),
-('special', 3, 's'),
-('tools', 2, 't');
+('resources', 1, 'res'),
+('special', 1, 'sp'),
+('tools', 1, 'tls'),
+('weapons', 1, 'wp');
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

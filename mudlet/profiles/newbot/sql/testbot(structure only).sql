@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS `commandQueue` (
 `id` bigint(20) NOT NULL,
   `steam` bigint(17) NOT NULL,
   `command` varchar(100) NOT NULL
-) ENGINE=MEMORY AUTO_INCREMENT=487 DEFAULT CHARSET=utf8;
+) ENGINE=MEMORY DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS `events` (
   `type` varchar(15) NOT NULL,
   `event` varchar(255) NOT NULL,
   `steam` varchar(17) NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=23134 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -214,7 +214,7 @@ CREATE TABLE IF NOT EXISTS `inventoryChanges` (
   `y` int(11) NOT NULL,
   `z` int(11) NOT NULL,
   `session` int(11) NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=4310191 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -234,7 +234,7 @@ CREATE TABLE IF NOT EXISTS `inventoryTracker` (
   `y` int(11) NOT NULL,
   `z` int(11) NOT NULL,
   `session` int(11) NOT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=2080771 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -259,7 +259,7 @@ CREATE TABLE IF NOT EXISTS `ircQueue` (
 `id` int(11) NOT NULL,
   `name` varchar(20) NOT NULL,
   `command` varchar(255) NOT NULL
-) ENGINE=MEMORY AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=MEMORY DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -584,7 +584,8 @@ CREATE TABLE IF NOT EXISTS `players` (
   `donorLevel` int(11) NOT NULL DEFAULT '1',
   `donorExpiry` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `autoFriend` varchar(2) NOT NULL COMMENT 'NA/AF/AD',
-  `ircOtherNames` varchar(50) DEFAULT NULL
+  `ircOtherNames` varchar(50) DEFAULT NULL,
+  `steamOwner` bigint(17) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -632,8 +633,6 @@ CREATE TABLE IF NOT EXISTS `pollVotes` (
 
 DROP TABLE IF EXISTS `proxies`;
 CREATE TABLE IF NOT EXISTS `proxies` (
-`id` int(11) NOT NULL,
-  `file` varchar(255) NOT NULL,
   `scanString` varchar(100) NOT NULL,
   `action` varchar(20) NOT NULL DEFAULT 'nothing',
   `hits` int(11) NOT NULL DEFAULT '0'
@@ -746,7 +745,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `gameType` varchar(3) NOT NULL DEFAULT 'pve',
   `hideCommands` tinyint(1) NOT NULL DEFAULT '1',
   `botTick` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -817,7 +816,7 @@ CREATE TABLE IF NOT EXISTS `tracker` (
   `z` int(11) NOT NULL,
   `session` int(11) DEFAULT '0',
   `flag` varchar(10) DEFAULT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=13341085 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -1050,7 +1049,7 @@ ALTER TABLE `pollVotes`
 -- Indexes for table `proxies`
 --
 ALTER TABLE `proxies`
- ADD PRIMARY KEY (`id`);
+ ADD PRIMARY KEY (`scanString`);
 
 --
 -- Indexes for table `resetZones`
@@ -1135,12 +1134,12 @@ MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 -- AUTO_INCREMENT for table `commandQueue`
 --
 ALTER TABLE `commandQueue`
-MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=487;
+MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `events`
 --
 ALTER TABLE `events`
-MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=23134;
+MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `gimmeQueue`
 --
@@ -1155,17 +1154,17 @@ MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 -- AUTO_INCREMENT for table `inventoryChanges`
 --
 ALTER TABLE `inventoryChanges`
-MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=4310191;
+MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `inventoryTracker`
 --
 ALTER TABLE `inventoryTracker`
-MODIFY `inventoryTrackerID` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=2080771;
+MODIFY `inventoryTrackerID` bigint(20) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `ircQueue`
 --
 ALTER TABLE `ircQueue`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=3;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `mail`
 --
@@ -1197,11 +1196,6 @@ MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `polls`
 MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
--- AUTO_INCREMENT for table `proxies`
---
-ALTER TABLE `proxies`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
---
 -- AUTO_INCREMENT for table `searchResults`
 --
 ALTER TABLE `searchResults`
@@ -1210,12 +1204,12 @@ MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 -- AUTO_INCREMENT for table `server`
 --
 ALTER TABLE `server`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=4;
+MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `tracker`
 --
 ALTER TABLE `tracker`
-MODIFY `trackerID` bigint(20) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=13341085;
+MODIFY `trackerID` bigint(20) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `visits`
 --
