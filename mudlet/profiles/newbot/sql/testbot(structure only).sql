@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Jan 20, 2016 at 12:29 AM
+-- Generation Time: Apr 05, 2016 at 07:32 PM
 -- Server version: 10.0.22-MariaDB-0+deb8u1
 -- PHP Version: 5.6.14-0+deb8u1
 
@@ -276,6 +276,16 @@ CREATE TABLE IF NOT EXISTS `keystones` (
   `remove` tinyint(1) NOT NULL DEFAULT '0',
   `removed` int(11) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `list`
+--
+DROP TABLE IF EXISTS `list`;
+CREATE TABLE IF NOT EXISTS `list` (
+  `thing` varchar(255) NOT NULL
+) ENGINE=MEMORY DEFAULT CHARSET=latin1 COMMENT='For sorting a list';
 
 -- --------------------------------------------------------
 
@@ -585,7 +595,11 @@ CREATE TABLE IF NOT EXISTS `players` (
   `donorExpiry` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `autoFriend` varchar(2) NOT NULL COMMENT 'NA/AF/AD',
   `ircOtherNames` varchar(50) DEFAULT NULL,
-  `steamOwner` bigint(17) NOT NULL
+  `steamOwner` bigint(17) NOT NULL,
+  `bedX` int(11) NOT NULL DEFAULT '0',
+  `bedY` int(11) NOT NULL DEFAULT '0',
+  `bedZ` int(11) NOT NULL DEFAULT '0',
+  `showLocationMessages` tinyint(1) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -744,8 +758,26 @@ CREATE TABLE IF NOT EXISTS `server` (
   `longPlayUpgradeTime` int(11) NOT NULL DEFAULT '0',
   `gameType` varchar(3) NOT NULL DEFAULT 'pve',
   `hideCommands` tinyint(1) NOT NULL DEFAULT '1',
-  `botTick` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `botTick` int(11) NOT NULL DEFAULT '0',
+  `serverGroup` varchar(20) DEFAULT NULL,
+  `botID` int(11) NOT NULL DEFAULT '0',
+  `allowOverstacking` tinyint(1) NOT NULL DEFAULT '0',
+  `announceTeleports` tinyint(1) NOT NULL,
+  `blockCountries` varchar(60) NOT NULL DEFAULT 'CN',
+  `northeastZone` varchar(5) DEFAULT NULL,
+  `northwestZone` varchar(5) DEFAULT NULL,
+  `southeastZone` varchar(5) DEFAULT NULL,
+  `southwestZone` varchar(5) DEFAULT NULL,
+  `allowPhysics` tinyint(1) NOT NULL DEFAULT '1',
+  `playersCanFly` tinyint(1) NOT NULL DEFAULT '0',
+  `accessLevelOverride` int(11) NOT NULL DEFAULT '99',
+  `disableBaseProtection` tinyint(1) NOT NULL DEFAULT '0',
+  `packCooldown` int(11) NOT NULL DEFAULT '0',
+  `moneyName` varchar(10) NOT NULL DEFAULT 'Zenny',
+  `allowBank` tinyint(1) NOT NULL DEFAULT '1',
+  `overstackThreshold` int(11) NOT NULL DEFAULT '1000',
+  `enableRegionPM` tinyint(1) NOT NULL DEFAULT '1'
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -954,6 +986,12 @@ ALTER TABLE `ircQueue`
 --
 ALTER TABLE `keystones`
  ADD PRIMARY KEY (`steam`,`x`,`y`,`z`), ADD KEY `steam` (`steam`), ADD KEY `steam_2` (`steam`);
+
+--
+-- Indexes for table `list`
+--
+ALTER TABLE `list`
+ ADD UNIQUE KEY `thing` (`thing`);
 
 --
 -- Indexes for table `locations`
