@@ -99,6 +99,8 @@ if string.find(line, &quot;Password incorrect&quot;) then
 	send(&quot;insert telnet password here&quot;)
 end
 
+botDisabled = false
+
 -- enable triggers and timers.  No ability to enable scripts in code yet.
 enableTrigger(&quot;End list players&quot;)
 enableTrigger(&quot;PVP Police&quot;)
@@ -520,18 +522,17 @@ end
 
 -- look for general stuff
 died = false
-if (string.find(line, &quot;INF Chat&quot;) and string.find(line, &quot;eliminated&quot;)) then
+if (string.find(line, &quot;INF GMSG&quot;) and string.find(line, &quot;eliminated&quot;)) then
 	nameStart = string.find(line, &quot;eliminated &quot;) + 12
 	pname = string.trim(string.sub(line, nameStart))
 	died = true
 end
 
-if (string.find(line, &quot;INF Chat&quot;) and string.find(line, &quot; died&quot;)) then
-	pname = string.sub(line, string.find(line, &quot;Chat&quot;) + 6, string.len(line) - 5)
+if (string.find(line, &quot;INF GMSG: Player&quot;) and string.find(line, &quot; died&quot;)) then
+	pname = string.sub(line, string.find(line, &quot;GMSG&quot;) + 14, string.len(line) - 6)
 	pname = string.trim(pname)
 	died = true
 end
-
 
 if died then
 	pid = LookupPlayer(pname)
@@ -2579,9 +2580,7 @@ if not string.find(line, server.botsIP) then
 	return
 end
 
-serverTime = string.sub(line, 1, 19)
 invCheckID = string.sub(line, string.find(line, &quot;si &quot;) + 3, string.find(line, &quot;by &quot;) - 2)
-
 deleteLine()</script>
             <triggerType>0</triggerType>
             <conditonLineDelta>0</conditonLineDelta>
@@ -4608,6 +4607,18 @@ showPlayers = true
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see http://www.gnu.org/licenses
 --]]
+
+function unpimpName(name)
+	name = string.trim(name)
+
+	-- strip the bloody useless quotes off the name if they are present
+	if string.sub(name, 1, 1) == &quot;'&quot; then
+		name = string.sub(name, 2, string.len(name) - 1)
+	end
+
+	return name
+end
+
 
 function inWhitelist(steam)
 	-- is the player in the whitelist?
@@ -10852,7 +10863,7 @@ end
 function gmsg(line, ircid)
 	local result, x, z, id, pname, msg, debug, noWaypoint, temp, chatStringStart
 
-	debug = true
+	debug = false
 
 	noWaypoint = false
 	chatStringStart = &quot;&quot;
@@ -10860,7 +10871,7 @@ function gmsg(line, ircid)
 	chatvars.timestamp = os.time()
 
 	if debug then 
-		dbug(line) 
+		dbug(&quot;gmsg &quot; .. line) 
 
 		if ircid ~= nil then
 			dbug(&quot;ircid &quot; .. ircid)
@@ -10879,7 +10890,7 @@ function gmsg(line, ircid)
 	if chatStringStart == &quot;&quot; then
 		chatvars.command = line
 		chatvars.playername = &quot;Server&quot;
-		chatvars.ircid = 0
+		chatvars.ircid = ircid
 		line = &quot;Server: &quot; .. line
 	end
 
@@ -10900,7 +10911,9 @@ function gmsg(line, ircid)
 	faultyLine = line
 	faultyChat = true
 
-	serverTime = string.sub(line, 1, 19)
+	if string.find(string.sub(line, 1, 19), os.date(&quot;%Y&quot;)) then
+		serverTime = string.sub(line, 1, 19)
+	end
 
 	if debug then dbug(&quot;gmsg 2&quot;) end
 
@@ -10946,17 +10959,13 @@ function gmsg(line, ircid)
 		end
 
 		if chatStringStart == &quot;Chat:&quot; then
-dbug(&quot;chat&quot;)
 			chatvars.playername = string.trim(chatvars.chatline[4])
-dbug(&quot;chatvars.playername ::&quot; .. chatvars.playername .. &quot;::&quot;)
 			chatvars.command = string.trim(string.sub(chatvars.gmsg, string.find(chatvars.gmsg, chatvars.chatline[4], nil, true) + string.len(chatvars.chatline[4]) + 2))
 		end
 
 		if chatStringStart == &quot;GMSG:&quot; then
 			chatvars.playername = string.trim(chatvars.chatline[4])
-dbug(&quot;chatvars.playername :=&quot; .. chatvars.playername .. &quot;-:&quot;)
 			chatvars.command = string.trim(string.sub(chatvars.gmsg, string.find(chatvars.gmsg, chatvars.chatline[4], nil, true) + string.len(chatvars.chatline[4]) + 2))
-dbug(&quot;chatvars.command :=&quot; .. chatvars.command .. &quot;=:&quot;)
 		end
 
 		if (string.find(chatvars.gmsg, chatStringStart .. &quot; Server:&quot;)) then
@@ -10969,20 +10978,15 @@ dbug(&quot;chatvars.command :=&quot; .. chatvars.command .. &quot;=:&quot;)
 		end
 
 		if chatvars.playername ~= &quot;Server&quot; then
-			-- strip the bloody useless quotes off the name if they are present
-			if string.sub(chatvars.playername, 1, 1) == &quot;'&quot; then
-				chatvars.playername = string.sub(chatvars.playername, 2, string.len(chatvars.playername) - 1)
-			end
-
-dbug(&quot;chatvars.playername ::&quot; .. chatvars.playername .. &quot;::&quot;)
+			chatvars.playername = unpimpName(chatvars.playername)
 			chatvars.playerid = LookupPlayer(chatvars.playername, &quot;all&quot;)
 		end
 	end
 
 	if debug then dbug(&quot;gmsg 3&quot;) end
 
-	-- don't process any chat coming from irc
-	if (string.find(chatvars.gmsg, &quot;-irc:&quot;, nil, true)) then
+	-- don't process any chat coming from irc or death messages
+	if string.find(chatvars.gmsg, &quot;-irc:&quot;, nil, true) or (chatvars.playername == &quot;Server&quot; and string.find(chatvars.gmsg, &quot;died&quot;)) then
 		faultyChat = false
 		return
 	end
@@ -10998,14 +11002,10 @@ dbug(&quot;chatvars.playername ::&quot; .. chatvars.playername .. &quot;::&quot;
 	end
 
 	-- ignore game messages
-dbug(&quot;3a&quot;)
-dbug(&quot;chatvars.playername &quot; .. chatvars.playername)
-dbug(&quot;chatvars.playerid &quot; .. chatvars.playerid)
 	if (chatvars.playername ~= &quot;Server&quot;) and chatvars.playerid == nil then
 		faultyChat = false
 		return
 	end
-dbug(&quot;3b&quot;)
 
 	if debug then dbug(&quot;gmsg 4&quot;) end
 
@@ -16065,11 +16065,9 @@ if debug then dbug(&quot;admin 6&quot;) end
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) &gt; 0) then
-				irc_QueueMsg(players[chatvars.ircid].ircAlias, &quot;This command is restricted.&quot;)
-				faultyChat = false
-				return true
-			end
+			irc_QueueMsg(players[chatvars.ircid].ircAlias, &quot;This command is not available from IRC. Use it ingame.&quot;)
+			faultyChat = false
+			return true
 		end
 
 		message(&quot;say [&quot; .. server.chatColour .. &quot;]HORDE!!![-]&quot;)
@@ -16107,7 +16105,12 @@ if debug then dbug(&quot;admin 6&quot;) end
 			-- this players claims wil not be removed unless in a reset zone and not staff
 			players[id].removeClaims = false
 			conn:execute(&quot;UPDATE keystones SET remove = 0 WHERE steam = &quot; .. id)
-			message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Player &quot; .. players[id].name .. &quot;'s claims will not be removed unless found in reset zones (if not staff).[-]&quot;)		
+
+			if (chatvars.playername ~= &quot;Server&quot;) then
+				message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Player &quot; .. players[id].name .. &quot;'s claims will not be removed unless found in reset zones (if not staff).[-]&quot;)		
+			else
+				irc_QueueMsg(players[chatvars.ircid].ircAlias, players[id].name .. &quot;'s claims will not be removed unless found in reset zones (if not staff)&quot;)
+			end
 
 			conn:execute(&quot;UPDATE players SET removeClaims = 0 WHERE steam = &quot; .. id)
 		end
@@ -16139,7 +16142,13 @@ if debug then dbug(&quot;admin 6&quot;) end
 		if id ~= nil then
 			-- flag the player's claims for removal
 			players[id].removeClaims = true
-			message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]I will remove all of player &quot; .. players[id].name .. &quot;'s claims when their chunks are loaded.[-]&quot;)		
+
+			if (chatvars.playername ~= &quot;Server&quot;) then
+				message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]I will remove all of player &quot; .. players[id].name .. &quot;'s claims when their chunks are loaded.[-]&quot;)		
+			else
+				irc_QueueMsg(players[chatvars.ircid].ircAlias, &quot;I will remove all of player &quot; .. players[id].name .. &quot;'s claims when their chunks are loaded.&quot;)
+			end
+
 			send(&quot;llp &quot; .. id)
 
 			conn:execute(&quot;UPDATE players SET removeClaims = 1 WHERE steam = &quot; .. id)
@@ -16174,7 +16183,12 @@ if debug then dbug(&quot;admin 6&quot;) end
 			players[id].exiled = 1
 			players[id].silentBob = true
 			players[id].canTeleport = false
-			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. players[id].name .. &quot; has been exiled! D:[-]&quot;)
+
+			if (chatvars.playername ~= &quot;Server&quot;) then
+				message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. players[id].name .. &quot; has been exiled.[-]&quot;)		
+			else
+				irc_QueueMsg(players[chatvars.ircid].ircAlias, players[id].name .. &quot; has been exiled.&quot;)
+			end
 
 			conn:execute(&quot;UPDATE players SET exiled = 1, silentBob = 1, canTeleport = 0 WHERE steam = &quot; .. id)
 		end
@@ -16256,9 +16270,16 @@ if debug then dbug(&quot;admin 7&quot;) end
 		end
 
 		if (chatvars.words[3] == nil) then
-			message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Add donors with optional level and expiry. Defaults level 1 and 10 years.[-]&quot;)
-			message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]eg. /add donor bob level 5 expires 1 week (or month or year)[-]&quot;)
-			message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Expires automatically. 2nd protected base becomes unprotected 1 week later.[-]&quot;)
+			if (chatvars.playername ~= &quot;Server&quot;) then
+				message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Add donors with optional level and expiry. Defaults level 1 and 10 years.[-]&quot;)
+				message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]eg. /add donor bob level 5 expires 1 week (or month or year)[-]&quot;)
+				message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Expires automatically. 2nd protected base becomes unprotected 1 week later.[-]&quot;)
+			else
+				irc_QueueMsg(players[chatvars.ircid].ircAlias, &quot;Add donors with optional level and expiry. Defaults level 1 and 10 years.&quot;)
+				irc_QueueMsg(players[chatvars.ircid].ircAlias, &quot;eg. /add donor bob level 5 expires 1 week (or month or year)&quot;)
+				irc_QueueMsg(players[chatvars.ircid].ircAlias, &quot;Expires automatically. 2nd protected base becomes unprotected 1 week later.&quot;)
+			end
+
 			faultyChat = false
 			return true
 		end
@@ -16274,7 +16295,12 @@ if debug then dbug(&quot;admin 7&quot;) end
 				tmp.expiry = calcTimestamp(tmp.expiry)
 
 				if tonumber(tmp.expiry) &lt;= os.time() then
-					message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Invalid expiry entered. Expected &lt;number&gt; &lt;week or month or year&gt; eg. 1 month.[-]&quot;)		
+					if (chatvars.playername ~= &quot;Server&quot;) then
+						message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Invalid expiry entered. Expected &lt;number&gt; &lt;week or month or year&gt; eg. 1 month.[-]&quot;)		
+					else
+						irc_QueueMsg(players[chatvars.ircid].ircAlias, &quot;Invalid expiry entered. Expected &lt;number&gt; &lt;week or month or year&gt; eg. 1 month.&quot;)
+					end
+
 					faultyChat = false
 					return true
 				end
@@ -16284,13 +16310,23 @@ if debug then dbug(&quot;admin 7&quot;) end
 				tmp.level = math.abs(ToInt(chatvars.words[i+1]))
 
 				if tmp.level &gt; 7 then
-					message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Level must be a number from 0 to 7.[-]&quot;)		
+					if (chatvars.playername ~= &quot;Server&quot;) then
+						message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Level must be a number from 0 to 7.[-]&quot;)		
+					else
+						irc_QueueMsg(players[chatvars.ircid].ircAlias, &quot;Level must be a number from 0 to 7.&quot;)
+					end
+
 					faultyChat = false
 					return true
 				end
 				
 				if tmp.level == nil then
-					message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Level must be a number from 0 to 7.[-]&quot;)		
+					if (chatvars.playername ~= &quot;Server&quot;) then
+						message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]Level must be a number from 0 to 7.[-]&quot;)		
+					else
+						irc_QueueMsg(players[chatvars.ircid].ircAlias, &quot;Level must be a number from 0 to 7.&quot;)
+					end
+
 					faultyChat = false
 					return true
 				end
@@ -16344,6 +16380,12 @@ if debug then dbug(&quot;admin 8&quot;) end
 			message(&quot;say [&quot; .. server.chatColour .. &quot;]&quot; .. players[id].name .. &quot; no longer has donor status :([-]&quot;)
 
 			conn:execute(&quot;UPDATE players SET donor = 0, donorLevel = 0, donorExpiry = &quot; .. os.time() - 1 .. &quot; WHERE steam = &quot; .. id)
+		else
+			if (chatvars.playername ~= &quot;Server&quot;) then
+				message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]No player found with that name.[-]&quot;)		
+			else
+				irc_QueueMsg(players[chatvars.ircid].ircAlias, &quot;No player found with that name.&quot;)
+			end
 		end
 
 		faultyChat = false
@@ -16374,7 +16416,14 @@ if debug then dbug(&quot;admin 10&quot;) end
 				else
 					send(&quot;give &quot; .. k .. &quot; &quot; .. chatvars.words[2] .. &quot; 1&quot;)
 				end
-				message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;][i]FREE STUFF!  Press E to pick up some &quot; .. chatvars.words[2] .. &quot; now.[/i]&quot;)
+
+				message(&quot;pm &quot; .. k .. &quot; [&quot; .. server.chatColour .. &quot;][i]FREE STUFF!  Press e to pick up some &quot; .. chatvars.words[2] .. &quot; now. =D[/i]&quot;)
+
+				if (chatvars.playername ~= &quot;Server&quot;) then
+					message(&quot;pm &quot; .. chatvars.playerid .. &quot; [&quot; .. server.chatColour .. &quot;]&quot; .. chatvars.words[2] .. &quot; has been dropped at &quot; .. players[k].name .. &quot;'s feet.[-]&quot;)		
+				else
+					irc_QueueMsg(players[chatvars.ircid].ircAlias, chatvars.words[2] .. &quot; has been dropped at &quot; .. players[k].name .. &quot;'s feet.&quot;)
+				end
 			end
 		end
 	end
