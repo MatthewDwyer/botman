@@ -147,7 +147,23 @@ CREATE TABLE `players` (
   `country` varchar(2) DEFAULT NULL,
   `playtime` int(11) DEFAULT '0',
   `ping` int(11) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`server`,`steam`)
+  `botID` int(11) DEFAULT '0',
+  `homeX` int(11) DEFAULT '0',
+  `homeY` int(11) DEFAULT '0',
+  `homeZ` int(11) DEFAULT '0',
+  `home2X` int(11) DEFAULT '0',
+  `home2Y` int(11) DEFAULT '0',
+  `home2Z` int(11) DEFAULT '0',
+  `exitX` int(11) DEFAULT '0',
+  `exitY` int(11) DEFAULT '0',
+  `exitZ` int(11) DEFAULT '0',
+  `exit2X` int(11) DEFAULT '0',
+  `exit2Y` int(11) DEFAULT '0',
+  `exit2Z` int(11) DEFAULT '0',
+  `protect` tinyint(1) DEFAULT '0',
+  `protect2` tinyint(1) DEFAULT '0',
+  `protectSize` int(11) DEFAULT '32',
+  `protect2Size` int(11) DEFAULT '32'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --

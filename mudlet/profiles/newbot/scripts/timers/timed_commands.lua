@@ -1,0 +1,36 @@
+--[[
+    Botman - A collection of scripts for managing 7 Days to Die servers
+    Copyright (C) 2015  Matthew Dwyer
+	           This copyright applies to the Lua source code in this Mudlet profile.
+    Email     mdwyer@snap.net.nz
+    URL       http://botman.nz
+    Source    https://bitbucket.org/mhdwyer/botman
+--]]
+
+function timedCommandsTimer()
+	if botDisabled then
+		return
+	end
+
+	cursor,errorString = conn:execute("select * from commandQueue order by id limit 0,1")
+	row = cursor:fetch({}, "a")
+
+	if row then
+		cecho(server.windowDebug, "running timed command (" .. row.id .. ") " .. row.command .. "\n")
+
+		if (row.command ~= "DoneInventory") then
+
+			if igplayers[row.steam] == nil then
+				conn:execute("delete from commandQueue where steam = " .. row.steam)
+				return
+			end
+
+			send(row.command)	
+			conn:execute("delete from commandQueue where id = " .. row.id)
+		else
+			conn:execute("delete from commandQueue where id = " .. row.id)
+			CheckInventory()
+			tempTimer( 2, [[CheckClaimsRemoved()]] )
+		end
+	end
+end

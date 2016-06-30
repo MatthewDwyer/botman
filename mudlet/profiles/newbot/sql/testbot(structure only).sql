@@ -69,6 +69,19 @@ CREATE TABLE IF NOT EXISTS `badItems` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `badWords`
+--
+
+DROP TABLE IF EXISTS `badWords`;
+CREATE TABLE IF NOT EXISTS `badWords` (
+  `badWord` varchar(15) NOT NULL,
+  `cost` int(11) NOT NULL DEFAULT '10',
+  `counter` int(11) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `bans`
 --
 
@@ -599,7 +612,13 @@ CREATE TABLE IF NOT EXISTS `players` (
   `bedX` int(11) NOT NULL DEFAULT '0',
   `bedY` int(11) NOT NULL DEFAULT '0',
   `bedZ` int(11) NOT NULL DEFAULT '0',
-  `showLocationMessages` tinyint(1) NOT NULL DEFAULT '1'
+  `showLocationMessages` tinyint(1) NOT NULL DEFAULT '1',
+  `mute` tinyint(4) NOT NULL DEFAULT '0',
+  `xPosOld2` int(11) NOT NULL DEFAULT '0',
+  `yPosOld2` int(11) NOT NULL DEFAULT '0',
+  `zPosOld2` int(11) NOT NULL DEFAULT '0',
+  `ISP` varchar(25) DEFAULT NULL,
+  `ignorePlayer` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -776,8 +795,18 @@ CREATE TABLE IF NOT EXISTS `server` (
   `moneyName` varchar(10) NOT NULL DEFAULT 'Zenny',
   `allowBank` tinyint(1) NOT NULL DEFAULT '1',
   `overstackThreshold` int(11) NOT NULL DEFAULT '1000',
-  `enableRegionPM` tinyint(1) NOT NULL DEFAULT '1'
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+  `enableRegionPM` tinyint(1) NOT NULL DEFAULT '1',
+  `allowRapidRelogging` tinyint(4) NOT NULL DEFAULT '1',
+  `allowLottery` tinyint(4) NOT NULL DEFAULT '1',
+  `lotteryMultiplier` int(11) NOT NULL DEFAULT '4',
+  `zombieKillReward` int(11) NOT NULL DEFAULT '3',
+  `ircTracker` varchar(15) NOT NULL DEFAULT '#new_tracker',
+  `allowTeleporting` tinyint(1) NOT NULL DEFAULT '1',
+  `hardcore` tinyint(1) NOT NULL DEFAULT '0',
+  `swearJar` tinyint(1) NOT NULL DEFAULT '0',
+  `swearCash` int(11) NOT NULL DEFAULT '0',
+  `idleKick` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -881,6 +910,17 @@ CREATE TABLE IF NOT EXISTS `visits` (
   `session` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `whitelist`
+--
+
+DROP TABLE IF EXISTS `whitelist`;
+CREATE TABLE IF NOT EXISTS `whitelist` (
+  `steam` varchar(17) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 --
 -- Indexes for dumped tables
 --
@@ -902,6 +942,12 @@ ALTER TABLE `announcements`
 --
 ALTER TABLE `badItems`
  ADD PRIMARY KEY (`item`);
+
+--
+-- Indexes for table `badWords`
+--
+ALTER TABLE `badWords`
+ ADD UNIQUE KEY `badWord` (`badWord`);
 
 --
 -- Indexes for table `bans`
@@ -1148,6 +1194,12 @@ ALTER TABLE `villagers`
 --
 ALTER TABLE `visits`
  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `whitelist`
+--
+ALTER TABLE `whitelist`
+ ADD PRIMARY KEY (`steam`);
 
 --
 -- AUTO_INCREMENT for dumped tables
