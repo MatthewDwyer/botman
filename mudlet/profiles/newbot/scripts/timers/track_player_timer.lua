@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -8,11 +8,11 @@
 --]]
 
 function trackPlayerTimer()
-	if botDisabled then
+	if botman.botDisabled or botman.botOffline or server.lagged then
 		return
 	end
 
-	local lastSession, rows
+	local lastSession, row, rows, k, v, cursor, errorString
 
 	for k, v in pairs(igplayers) do	
 		lastSession = false
@@ -45,7 +45,7 @@ function trackPlayerTimer()
 							if lastSession then
 								message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. You have reached the players current position.[-]")
 							else
-								message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. Type /next track or /last track to continue from the next session.[-]")
+								message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. Type " .. server.commandPrefix .. "next track or " .. server.commandPrefix .. "last track to continue from the next session.[-]")
 							end
 						end
 
@@ -58,7 +58,7 @@ function trackPlayerTimer()
 								if lastSession then
 									message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. You have reached the players current position.[-]")
 								else
-									message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. Type /next track or /last track to continue from the next session.[-]")
+									message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. Type " .. server.commandPrefix .. "next track or " .. server.commandPrefix .. "last track to continue from the next session.[-]")
 								end
 							end
 
@@ -75,11 +75,11 @@ function trackPlayerTimer()
 						if lastSession then
 							message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. You have reached the players current position.[-]")
 						else
-							message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. Type /next track or /last track to continue from the next session.[-]")
+							message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. Type " .. server.commandPrefix .. "next track or " .. server.commandPrefix .. "last track to continue from the next session.[-]")
 						end
 					end
 				end
 			end
 		end
-	end
+	end	
 end

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -8,7 +8,7 @@
 --]]
 
 function airDropAlert(line)
-	if botDisabled then
+	if botman.botDisabled then
 		return
 	end
 
@@ -20,7 +20,7 @@ function airDropAlert(line)
 
 	for k, v in pairs(igplayers) do
 		dist = distancexz(v.xPos, v.zPos, coord[1], coord[3])
-		if (tonumber(dist) < 500) then
+		if (tonumber(dist) < 800) then
 			direction = getCompass(v.xPos, v.zPos, coord[1], coord[3])
 			message("pm " .. k .. " " ..  " [" .. server.chatColour .. "]Supplies have been dropped " .. math.floor(dist) .. " meters to the " .. direction .."![-]")
 		end

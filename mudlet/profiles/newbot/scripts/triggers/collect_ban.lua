@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -8,7 +8,7 @@
 --]]
 
 function collectBan(line)
-	if botDisabled then
+	if botman.botDisabled then
 		return
 	end
 
@@ -41,7 +41,7 @@ function collectBan(line)
 		conn:execute("INSERT INTO bans (BannedTo, steam, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. expiryDate .. "'")
 	end
 
-	if db2Connected then
+	if botman.db2Connected then
 		-- update the ban on bots db to fill in the missing bannedTo field since we didn't calculate it earlier
 		connBots:execute("UPDATE bans set bannedTo = '" .. bannedTo .. "' WHERE bannedTo = 'MISSING' AND botID = '" .. server.botID .. "'")
 	end

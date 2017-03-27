@@ -1,35 +1,36 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2016  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug
+debug = false
+
 function gmsg_teleports()
 	calledFunction = "gmsg_teleports"
 
-	local debug
 	local shortHelp = false
 	local skipHelp = false
 
-	debug = false
-
-if debug then dbug("teleports 0") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	-- don't proceed if there is no leading slash
-	if (string.sub(chatvars.command, 1, 1) ~= "/") then
-		faultyChat = false
+	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
+		botman.faultyChat = false
 		return false
 	end
-	
+
 	if chatvars.showHelp then
-		if chatvars.words[3] then		
-			if chatvars.words[3] ~= "teleports" then
+		if chatvars.words[3] then
+			if not string.find(chatvars.words[3], "tele") then
 				skipHelp = true
 			end
 		end
+
 		if chatvars.words[1] == "help" then
 			skipHelp = false
 		end
@@ -40,35 +41,56 @@ if debug then dbug("teleports 0") end
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_QueueMsg(players[chatvars.ircid].ircAlias, "")	
-		irc_QueueMsg(players[chatvars.ircid].ircAlias, "Teleport Commands:")	
-		irc_QueueMsg(players[chatvars.ircid].ircAlias, "==================")
-		irc_QueueMsg(players[chatvars.ircid].ircAlias, "")	
+		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, "Teleport Commands:")
+		irc_chat(players[chatvars.ircid].ircAlias, "==================")
+		irc_chat(players[chatvars.ircid].ircAlias, "")
 	end
 
-if debug then dbug("teleports 1") end
+	if chatvars.showHelpSections then
+		irc_chat(players[chatvars.ircid].ircAlias, "teleports")
+	end
 
-	if (chatvars.words[1] == "killtp") then
-		if (chatvars.playername ~= "Server") then 
-			if (accessLevel(chatvars.playerid) > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-				faultyChat = false
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "dele"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> delete")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Delete a teleport.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "delete")) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
 				return true
 			end
 		end
 
 		tpname = ""
-		tpname = string.sub(chatvars.command, string.find(chatvars.command, "killtp ") + 7)
+		tpname = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1]) + string.len(chatvars.words[1]) + 1, string.find(chatvars.command, "delete") - 1)
 		tpname = string.trim(tpname)
 
-		if (tpname == "") then 
-			if (chatvars.playername ~= "Server") then 
+		if (tpname == "") then
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A name is required for the teleport[-]")
 			else
-				irc_QueueMsg(players[chatvars.ircid].ircAlias, "A name is required for the teleport")
+				irc_chat(players[chatvars.ircid].ircAlias, "A name is required for the teleport")
 			end
 
-			faultyChat = false
+			botman.faultyChat = false
 			return true
 		else
 			tp = ""
@@ -78,40 +100,57 @@ if debug then dbug("teleports 1") end
 		end
 
 		conn:execute("DELETE FROM teleports WHERE name = '" .. escape(tp) .. "'")
-		
-		if (chatvars.playername ~= "Server") then 
+
+		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have deleted a teleport called " .. tpname .. "[-]")
 		else
-			irc_QueueMsg(players[chatvars.ircid].ircAlias, "You have deleted a teleport called " .. tpname)
-		end		
-		
-		faultyChat = false
+			irc_chat(players[chatvars.ircid].ircAlias, "You have deleted a teleport called " .. tpname)
+		end
+
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 2") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "privatetp") then
-		if (chatvars.playername ~= "Server") then 
-			if (accessLevel(chatvars.playerid) > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-				faultyChat = false
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "priv"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <teleport name> private")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Make the teleport private.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "private")) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
 				return true
 			end
 		end
 
 		tpname = ""
-		tpname = string.sub(chatvars.command, string.find(chatvars.command, "privatetp ") + 10)
+		tpname = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1]) + string.len(chatvars.words[1]) + 1, string.find(chatvars.command, "private") - 1)
 		tpname = string.trim(tpname)
 
-		if (tpname == "") then 
-			if (chatvars.playername ~= "Server") then 
+		if (tpname == "") then
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A name is required for the teleport[-]")
 			else
-				irc_QueueMsg(players[chatvars.ircid].ircAlias, "A name is required for the teleport")
+				irc_chat(players[chatvars.ircid].ircAlias, "A name is required for the teleport")
 			end
-			
-			faultyChat = false
+
+			botman.faultyChat = false
 			return true
 		else
 			tp = ""
@@ -119,42 +158,59 @@ if debug then dbug("teleports 2") end
 
 			teleports[tp].public = false
 		end
-	
+
 		conn:execute("UPDATE teleports SET public = 0 WHERE name = '" .. escape(tp) .. "'")
-		
-		if (chatvars.playername ~= "Server") then 
+
+		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You changed a teleport called " .. tpname .. " to private[-]")
 		else
-			irc_QueueMsg(players[chatvars.ircid].ircAlias, "You changed a teleport called " .. tpname .. " to private")
-		end				
+			irc_chat(players[chatvars.ircid].ircAlias, "You changed a teleport called " .. tpname .. " to private")
+		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 3") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "publictp") then
-		if (chatvars.playername ~= "Server") then 
-			if (accessLevel(chatvars.playerid) > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-				faultyChat = false
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "public"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> public")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Make a teleport public so anyone can use it.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "public")) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
 				return true
 			end
 		end
 
 		tpname = ""
-		tpname = string.sub(chatvars.command, string.find(chatvars.command, "publictp ") + 9)
+		tpname = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1]) + string.len(chatvars.words[1]) + 1, string.find(chatvars.command, "public") - 1)
 		tpname = string.trim(tpname)
 
-		if (tpname == "") then 
-			if (chatvars.playername ~= "Server") then 
+		if (tpname == "") then
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A name is required for the teleport[-]")
 			else
-				irc_QueueMsg(players[chatvars.ircid].ircAlias, "A name is required for the teleport")
-			end		
-		
-			faultyChat = false
+				irc_chat(players[chatvars.ircid].ircAlias, "A name is required for the teleport")
+			end
+
+			botman.faultyChat = false
 			return true
 		else
 			tp = ""
@@ -162,42 +218,59 @@ if debug then dbug("teleports 3") end
 
 			teleports[tp].public = true
 		end
-		
+
 		conn:execute("UPDATE teleports SET public = 1 WHERE name = '" .. escape(tp) .. "'")
-		
-		if (chatvars.playername ~= "Server") then 
+
+		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You changed a teleport called " .. tpname .. " to public[-]")
 		else
-			irc_QueueMsg(players[chatvars.ircid].ircAlias, "You changed a teleport called " .. tpname .. " to public")
-		end				
+			irc_chat(players[chatvars.ircid].ircAlias, "You changed a teleport called " .. tpname .. " to public")
+		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 4") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "activatetp") then
-		if (chatvars.playername ~= "Server") then 
-			if (accessLevel(chatvars.playerid) > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-				faultyChat = false
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "able"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> enable")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Enable a teleport that was disabled.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "enable")) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
 				return true
 			end
 		end
 
 		tpname = ""
-		tpname = string.sub(chatvars.command, string.find(chatvars.command, "activatetp ") + 11)
+		tpname = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1]) + string.len(chatvars.words[1]) + 1, string.find(chatvars.command, "enable") - 1)
 		tpname = string.trim(tpname)
 
-		if (tpname == "") then 
-			if (chatvars.playername ~= "Server") then 
+		if (tpname == "") then
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A name is required for the teleport[-]")
 			else
-				irc_QueueMsg(players[chatvars.ircid].ircAlias, "A name is required for the teleport")
+				irc_chat(players[chatvars.ircid].ircAlias, "A name is required for the teleport")
 			end
 
-			faultyChat = false
+			botman.faultyChat = false
 			return true
 		else
 			tp = ""
@@ -205,42 +278,59 @@ if debug then dbug("teleports 4") end
 
 			teleports[tp].active = true
 		end
-		
+
 		conn:execute("UPDATE teleports SET active = 1 WHERE name = '" .. escape(tp) .. "'")
-		
-		if (chatvars.playername ~= "Server") then 
+
+		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You enabled a teleport called " .. tpname .. "[-]")
 		else
-			irc_QueueMsg(players[chatvars.ircid].ircAlias, "You enabled a teleport called " .. tpname)
+			irc_chat(players[chatvars.ircid].ircAlias, "You enabled a teleport called " .. tpname)
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 5") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "deactivatetp") then
-		if (chatvars.playername ~= "Server") then 
-			if (not admins[chatvars.playerid]) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is for admins only[-]")
-				faultyChat = false
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "able"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> disable")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Disable a teleport to stop it triggering.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "disable")) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
 				return true
 			end
 		end
 
 		tpname = ""
-		tpname = string.sub(chatvars.command, string.find(chatvars.command, "deactivatetp ") + 13)
+		tpname = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1]) + string.len(chatvars.words[1]) + 1, string.find(chatvars.command, "disable") - 1)
 		tpname = string.trim(tpname)
 
-		if (tpname == "") then 
-			if (chatvars.playername ~= "Server") then 
+		if (tpname == "") then
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A name is required for the teleport[-]")
 			else
-				irc_QueueMsg(players[chatvars.ircid].ircAlias, "A name is required for the teleport")
+				irc_chat(players[chatvars.ircid].ircAlias, "A name is required for the teleport")
 			end
 
-			faultyChat = false
+			botman.faultyChat = false
 			return true
 		else
 			tp = ""
@@ -248,132 +338,200 @@ if debug then dbug("teleports 5") end
 
 			teleports[tp].active = false
 		end
-		
+
 		conn:execute("UPDATE teleports SET active = 0 WHERE name = '" .. escape(tp) .. "'")
-		
-		if (chatvars.playername ~= "Server") then 
+
+		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You disabled a teleport called " .. tpname .. "[-]")
 		else
-			irc_QueueMsg(players[chatvars.ircid].ircAlias, "You disabled a teleport called " .. tpname)
-		end		
+			irc_chat(players[chatvars.ircid].ircAlias, "You disabled a teleport called " .. tpname)
+		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 6") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "onetp") then
-		if (chatvars.playername ~= "Server") then 
-			if (accessLevel(chatvars.playerid) > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-				faultyChat = false
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "way"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> one way")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Make a teleport work in one direction only. Teleports are a pair of coordinates and the second coordinate placed is the destination.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "one way")) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
 				return true
 			end
 		end
 
-		tpname = string.trim(chatvars.words[2])
-
-		tp = ""
+		tpname = ""
+		tpname = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1]) + string.len(chatvars.words[1]) + 1, string.find(chatvars.command, "one way") - 1)
+		tpname = string.trim(tpname)
 		tp = LookupTeleportByName(tpname)
 
 		if (tp ~= "") then
 			teleports[tp].oneway = true
-			conn:execute("UPDATE teleports SET oneway = 1 WHERE name = '" .. escape(tp) .. "'")			
+			conn:execute("UPDATE teleports SET oneway = 1 WHERE name = '" .. escape(tp) .. "'")
 
-			if (chatvars.playername ~= "Server") then 
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. teleports[tp].name .. " is a one way teleport.[-]")
 			else
-				irc_QueueMsg(players[chatvars.ircid].ircAlias, teleports[tp].name .. " is a one way teleport.")
+				irc_chat(players[chatvars.ircid].ircAlias, teleports[tp].name .. " is a one way teleport.")
 			end
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 7") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "twotp") then
-		if (chatvars.playername ~= "Server") then 
-			if (accessLevel(chatvars.playerid) > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-				faultyChat = false
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "way"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> two way")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Make a teleport work in both directions. After a short delay the player is teleported back if they don't move away.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "two way")) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
 				return true
 			end
 		end
 
-		tpname = string.trim(chatvars.words[2])
-
-		tp = ""
+		tpname = ""
+		tpname = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1]) + string.len(chatvars.words[1]) + 1, string.find(chatvars.command, "two way") - 1)
+		tpname = string.trim(tpname)
 		tp = LookupTeleportByName(tpname)
 
 		if (tp ~= "") then
 			teleports[tp].oneway = false
-			conn:execute("UPDATE teleports SET oneway = 0 WHERE name = '" .. escape(tp) .. "'")			
-			
-			if (chatvars.playername ~= "Server") then 
+			conn:execute("UPDATE teleports SET oneway = 0 WHERE name = '" .. escape(tp) .. "'")
+
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. teleports[tp].name .. " is a two way teleport.[-]")
 			else
-				irc_QueueMsg(players[chatvars.ircid].ircAlias, teleports[tp].name .. " is a two way teleport.")
+				irc_chat(players[chatvars.ircid].ircAlias, teleports[tp].name .. " is a two way teleport.")
 			end
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 8") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "owntp") then
-		if (chatvars.playername ~= "Server") then 
-			if (accessLevel(chatvars.playerid) > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-				faultyChat = false
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "own"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> owner <player>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Assign ownership of a teleport to a player.  Only they and their friends can use it (and staff)")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "owner")) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
 				return true
 			end
 		end
-		
-		id = LookupPlayer(chatvars.words[3]) 
-		if (players[id]) then
-			pname = players[id].name
+
+		tpname = ""
+		tpowner = ""
+
+		tpname = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1]) + string.len(chatvars.words[1]) + 1, string.find(chatvars.command, "owner") - 1)
+		tpname = string.trim(tpname)
+
+		tpowner = string.sub(chatvars.command, string.find(chatvars.command, "owner") + 6)
+		tpowner = string.trim(tpowner)
+
+		if tpname ~= "" and tpowner ~= "" then
+			id = LookupPlayer(tpowner)
+			if (players[id]) then
+				tp = ""
+				tp = LookupTeleportByName(tpname)
+
+				if (tp ~= "") then
+					teleports[tp].owner = id
+					conn:execute("UPDATE teleports SET owner = " .. id .. " WHERE name = '" .. escape(tp) .. "'")
+					message("say [" .. server.chatColour .. "]" .. players[id].name .. " is the proud new owner of a teleport called " .. teleports[tp].name .. "[-]")
+				end
+			end
 		end
 
-		tp = ""
-		tp = LookupTeleportByName(chatvars.words[2])
-
-		if (tp ~= "") then
-			teleports[tp].owner = id
-			conn:execute("UPDATE teleports SET owner = " .. id .. " WHERE name = '" .. escape(tp) .. "'")			
-			message("say [" .. server.chatColour .. "]" .. players[id].name .. " is the proud new owner of a teleport called " .. teleports[tp].name .. "[-]")
-		end
-
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 9") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	-- ###################  do not allow remote commands beyond this point ################
-	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "enabletp <player>")
 
-	if (chatvars.words[1] == "enabletp") and (chatvars.playerid ~= 0) then
-		id = chatvars.playerid	
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Allows a player to use teleport commands.  Only staff can specify a player, otherwise it defaults to whoever issued the command.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "enabletp") then
+		id = chatvars.playerid
 		pname = igplayers[chatvars.playerid].name
-		
-		if (admins[chatvars.playerid] and chatvars.words[2] ~= nil) then
+
+		if chatvars.accessLevel < 3 and chatvars.words[2] ~= nil then
 			id = LookupPlayer(string.sub(chatvars.command, string.find(chatvars.command, "enabletp") + 9))
 			if (id == nil) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No matching player found.[-]")
-				faultyChat = false
-				return true		
+				botman.faultyChat = false
+				return true
 			else
 				players[id].walkies = false
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " can now use teleports[-]")
 
 				conn:execute("UPDATE players SET walkies = 0 WHERE steam = " .. id)
 
-				faultyChat = false
+				botman.faultyChat = false
 				return true
 			end
 		end
@@ -382,136 +540,263 @@ if debug then dbug("teleports 9") end
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]you can use teleports and admins can teleport you[-]")
 		conn:execute("UPDATE players SET walkies = 0 WHERE steam = " .. id)
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 10") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "disabletp") and (chatvars.playerid ~= 0) then
-		id = chatvars.playerid	
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "disabletp <player>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Prevent a player using teleport commands. They can type " .. server.commandPrefix .. "enabletp any time. Only staff can specify a player, otherwise it defaults to whoever issued the command.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "disabletp") then
+		id = chatvars.playerid
 		pname = igplayers[chatvars.playerid].name
 
-		players[id].walkies = true
+		if chatvars.accessLevel < 3 and chatvars.words[2] ~= nil then
+			id = LookupPlayer(string.sub(chatvars.command, string.find(chatvars.command, "disabletp") + 10))
+			if (id == nil) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No matching player found.[-]")
+				botman.faultyChat = false
+				return true
+			else
+				players[id].walkies = true
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " can't use teleports[-]")
 
+				conn:execute("UPDATE players SET walkies = 1 WHERE steam = " .. id)
+
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		players[id].walkies = true
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]you cannot use teleports and admins can't teleport you (some exceptions)[-]")
 		conn:execute("UPDATE players SET walkies = 1 WHERE steam = " .. id)
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 11") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set teleport cost <number>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Set a price for all private teleporting (excludes public locations).  Players must have sufficient " .. server.moneyPlural .. " to teleport.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if chatvars.words[1] == "set" and string.find(chatvars.words[2], "tele") and chatvars.words[3] == "cost" then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 1) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 1) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		if chatvars.number then
+			server.teleportCost = chatvars.number
+			conn:execute("UPDATE server SET teleportCost = " .. chatvars.number)
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Private teleporting now costs " .. chatvars.number .. " " .. server.moneyPlural .. " per use.[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "Private teleporting now costs " .. chatvars.number .. " " .. server.moneyPlural .. " per use.")
+			end
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	-- ###################  do not allow remote commands beyond this point ################
+	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
+
+	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
+		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, "Teleport In-Game Only:")
+		irc_chat(players[chatvars.ircid].ircAlias, "========================")
+		irc_chat(players[chatvars.ircid].ircAlias, "")
+	end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "fetch") or string.find(chatvars.command, "player"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fetch <player>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Move a player to your current location.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
 
 	if (chatvars.words[1] == "fetch") and (chatvars.playerid ~= 0) then
 		if (chatvars.words[1] == "fetch") then
 			pname = string.sub(chatvars.command, string.find(chatvars.command, "fetch ") + 6)
 		end
-		
-		if (accessLevel(chatvars.playerid) > 2) and players[chatvars.playerid].tokens <= 0 then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A P2P Token is required. Purchase one from the shop in soyspecials.[-]")
-			faultyChat = false
-			return true					
+
+		if (chatvars.accessLevel > 2) and players[chatvars.playerid].cash < server.teleportCost then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You need " .. server.teleportCost .. " " .. server.moneyPlural .. " to fetch a friend to your location.[-]")
+			botman.faultyChat = false
+			return true
 		end
 
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
-		
+
 		if id == nil then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
-			faultyChat = false
-			return true		
+			botman.faultyChat = false
+			return true
 		end
 
 		if not igplayers[id] then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " is not playing right now.[-]")
-			faultyChat = false
-			return true		
+			botman.faultyChat = false
+			return true
 		end
 
 		if (accessLevel(id) < 3) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Staff cannot be fetched.[-]")
-			faultyChat = false
+			botman.faultyChat = false
 			return true
 		end
-		
-		if (accessLevel(chatvars.playerid) > 2) then
+
+		if (chatvars.accessLevel > 2) then
 			-- reject if not a friend
-			if (not isFriend(id,  chatvars.playerid)) and (accessLevel(chatvars.playerid) > 2) and (id ~= chatvars.playerid) then
+			if (not isFriend(id,  chatvars.playerid)) and (chatvars.accessLevel > 2) and (id ~= chatvars.playerid) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only friends of " .. players[id].name .. " and staff can do this.")
 
-				faultyChat = false
+				botman.faultyChat = false
 				result = true
 				return
 			end
 		end
 
-		if players[id].xPosOld == nil then
+		if players[id].yPosOld == 0 then
 			-- first record their current x y z
 			savePosition(id)
 		end
-		
+
 		-- then teleport the player to you
 		cmd = "tele " .. id .. " " .. chatvars.intX + 1 .. " " .. chatvars.intY .. " " .. chatvars.intZ
-
-		if players[id].watchPlayer then
-			irc_QueueMsg(server.ircTracker, gameDate .. " " .. chatvars.playerid .. " " .. chatvars.playername .. " command " .. chatvars.command  )
-		end
-
 		prepareTeleport(chatvars.playerid, cmd)
 		teleport(cmd, true)
 
-		if (accessLevel(chatvars.playerid) > 2) then
-			players[chatvars.playerid].tokens = players[chatvars.playerid].tokens - 1		
+		if (chatvars.accessLevel > 2) then
+			players[chatvars.playerid].cash = players[chatvars.playerid].cash - server.teleportCost
 		end
-		
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is being teleported to your location now.")			
-		message("pm " .. id .. " [" .. server.chatColour .. "]You are being teleported to " .. players[chatvars.playerid].name .. "'s location.")					
-		
-		faultyChat = false
+
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is being teleported to your location now.")
+		message("pm " .. id .. " [" .. server.chatColour .. "]You are being teleported to " .. players[chatvars.playerid].name .. "'s location.")
+
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 12") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "pack" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then 
-		if players[chatvars.playerid].deathX ~= 0 then
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "pack"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "pack")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Teleport close to where you last died.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "pack" or chatvars.words[1] == "revive") and chatvars.words[2] == nil and (chatvars.playerid ~= 0) then
+		if tonumber(players[chatvars.playerid].deathX) ~= 0 then
 			if players[chatvars.playerid].packCooldown > os.time() then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can /pack in " .. os.date("%M minutes %S seconds", players[chatvars.playerid].packCooldown - os.time()) .. " seconds.[-]")
-				faultyChat = false
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can " .. server.commandPrefix .. "pack in " .. os.date("%M minutes %S seconds", players[chatvars.playerid].packCooldown - os.time()) .. " seconds.[-]")
+				botman.faultyChat = false
 				return true
 			end
+			
+			if tonumber(server.packCost) > 0 and (tonumber(players[chatvars.playerid].cash) < tonumber(server.packCost)) and (chatvars.accessLevel > 3) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You do not have enough " .. server.moneyPlural .. " to teleport to your pack.  You need " .. server.packCost .. " " .. server.moneyPlural .. ".[-]")
+				botman.faultyChat = false
+				return true
+			end			
 
 			cursor,errorString = conn:execute("SELECT x, y, z FROM tracker WHERE steam = " .. chatvars.playerid .. " and ((abs(x - " .. players[chatvars.playerid].deathX .. ") > 0 and abs(x - " .. players[chatvars.playerid].deathX .. ") < 50) and (abs(z - " .. players[chatvars.playerid].deathZ .. ") > 5 and abs(z - " .. players[chatvars.playerid].deathZ .. ") < 50))  ORDER BY trackerid DESC Limit 0, 1")
 			if cursor:numrows() > 0 then
-				row = cursor:fetch({}, "a")	
+				row = cursor:fetch({}, "a")
 				cmd = ("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z)
+				players[chatvars.playerid].deathX = 0
+				players[chatvars.playerid].deathY = 0
+				players[chatvars.playerid].deathZ = 0
 
 				-- first record their current x y z
 				savePosition(chatvars.playerid)
 
 				prepareTeleport(chatvars.playerid, cmd)
 				teleport(cmd, true)
+				
+				if tonumber(server.packCost) > 0 and (chatvars.accessLevel > 3) then				
+					players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.packCost
+					conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid)				
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. server.packCost .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")
+				end
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry I am unable to find a spot close to your pack to send you there.[-]")
+				players[chatvars.playerid].deathX = 0
+				players[chatvars.playerid].deathY = 0
+				players[chatvars.playerid].deathZ = 0
 			end
-
+		else
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have not died since you last revived.[-]")
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 13") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "stuck" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then 
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "stuck") or string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "stuck")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Teleport 2 metres up.  If " .. server.commandPrefix .. "stuck is repeated the bot will try to teleport you nearby.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "stuck" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
 		if (tonumber(chatvars.intY) > 0 and tonumber(chatvars.intY) < 256) and (players[chatvars.playerid].lastCommand ~= chatvars.command)  then
 			-- bump the players position up 1 meter y + 1
 			send("tele " .. chatvars.playerid .. " " .. math.floor(igplayers[chatvars.playerid].xPos) .. " " .. math.ceil(igplayers[chatvars.playerid].yPos) + 1 .. " " .. math.floor(igplayers[chatvars.playerid].zPos))
 		else
 			cursor,errorString = conn:execute("SELECT x, y, z FROM tracker WHERE steam = " .. chatvars.playerid .. " AND ((abs(x - " .. chatvars.intX .. ") > 2 and abs(x - " .. chatvars.intX .. ") < 30) and (abs(z - " .. chatvars.intZ .. ") > 2 and abs(z - " .. chatvars.intZ .. ") < 30))  ORDER BY trackerid DESC Limit 0, 1")
 			if cursor:numrows() > 0 then
-				row = cursor:fetch({}, "a")	
+				row = cursor:fetch({}, "a")
 				send("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y + 1 .. " " .. row.z)
 			else
 				-- bump the players position up 1 meter y + 1
@@ -519,22 +804,39 @@ if debug then dbug("teleports 13") end
 			end
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 14") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if ((chatvars.words[1] == "return") and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then 
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "return") or string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "return")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Teleport back to where you came from before your last teleport command.  Locations support a 2nd return if you teleport within the location more than once without leaving it.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if ((chatvars.words[1] == "return") and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
+		if not server.allowReturns and chatvars.accessLevel > 2 then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The return command is disabled on this server.[-]")
+			botman.faultyChat = false
+			return true
+		end
+
 		-- return to previously recorded x y z
 		if tonumber(players[chatvars.playerid].yPosOld) ~= 0 or tonumber(players[chatvars.playerid].yPosOld2) ~= 0 then
 			if tonumber(players[chatvars.playerid].yPosOld2) ~= 0 then
 				-- the player has teleported within the same location so they are returning to somewhere in that location
 				cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPosOld2 .. " " .. players[chatvars.playerid].yPosOld2 .. " " .. players[chatvars.playerid].zPosOld2
 
-				if players[chatvars.playerid].watchPlayer then
-					irc_QueueMsg(server.ircTracker, gameDate .. " " .. chatvars.playerid .. " " .. chatvars.playername .. " command " .. chatvars.command  )
-				end
+				-- if players[chatvars.playerid].watchPlayer then
+					-- irc_chat(server.ircTracker, server.gameDate .. " " .. chatvars.playerid .. " " .. chatvars.playername .. " command " .. chatvars.command  )
+				-- end
 
 				prepareTeleport(chatvars.playerid, cmd)
 				teleport(cmd)
@@ -547,14 +849,14 @@ if debug then dbug("teleports 14") end
 					conn:execute("UPDATE players SET xPosOld2 = 0, yPosOld2 = 0, zPosOld2 = 0 WHERE steam = " .. chatvars.playerid)
 				end
 
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have another /return available.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have another " .. server.commandPrefix .. "return available.[-]")
 			else
 				-- the player has teleported from outside their current location so they are returning to there.
 				cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPosOld .. " " .. players[chatvars.playerid].yPosOld .. " " .. players[chatvars.playerid].zPosOld
 
-				if players[chatvars.playerid].watchPlayer then
-					irc_QueueMsg(server.ircTracker, gameDate .. " " .. chatvars.playerid .. " " .. chatvars.playername .. " command " .. chatvars.command  )
-				end
+				-- if players[chatvars.playerid].watchPlayer then
+					-- irc_chat(server.ircTracker, server.gameDate .. " " .. chatvars.playerid .. " " .. chatvars.playername .. " command " .. chatvars.command  )
+				-- end
 
 				prepareTeleport(chatvars.playerid, cmd)
 				teleport(cmd)
@@ -572,16 +874,27 @@ if debug then dbug("teleports 14") end
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have used all your returns.[-]")
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 15") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "teleports")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "List the teleports.  Players can only see public teleports.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
 
 	if (chatvars.words[1] == "teleports" and chatvars.words[3] == nil) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			faultyChat = false
+		if (chatvars.accessLevel > 2) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			botman.faultyChat = false
 			return true
 		end
 
@@ -608,49 +921,16 @@ if debug then dbug("teleports 15") end
 			end
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 16") end
-
-	if (chatvars.words[1] == "tp") and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			faultyChat = false
-			return true
-		end
-
-		teleName = ""
-		teleName = string.sub(chatvars.command, string.find(chatvars.command, "tp ") + 3)
-		teleName = string.trim(teleName)
-
-		if (teleName == "") then 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A name is required for the /tp command[-]")
-			faultyChat = false
-			return true
-		else
-			tp = ""
-			tp = LookupTeleportByName(teleName)
-
-			-- first record their current x y z
-			savePosition(chatvars.playerid)
-
-			cmd = "tele " .. chatvars.playerid .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
-			prepareTeleport(chatvars.playerid, cmd)
-			teleport(cmd, true)
-		end
-
-		faultyChat = false
-		return true
-	end
-
-if debug then dbug("teleports 17") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "opentp") and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			faultyChat = false
+		if (chatvars.accessLevel > 2) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			botman.faultyChat = false
 			return true
 		end
 
@@ -658,11 +938,11 @@ if debug then dbug("teleports 17") end
 		teleName = string.sub(chatvars.command, string.find(chatvars.command, "opentp ") + 7)
 		teleName = string.trim(teleName)
 
-		if (teleName == "") then 
+		if (teleName == "") then
 			message("pm " .. chatvars.playername .. " [" .. server.chatColour .. "]A name is required for the teleport[-]")
-			faultyChat = false
+			botman.faultyChat = false
 			return true
-		else	
+		else
 			tp = ""
 			tp = LookupTeleportByName(teleName)
 			action = "moved"
@@ -686,32 +966,32 @@ if debug then dbug("teleports 17") end
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have " .. action .. " a teleport called " .. teleName .. "[-]")
 		conn:execute("INSERT INTO teleports (name, owner, x, y, z) VALUES ('" .. teleName .. "'," .. chatvars.playerid .. "," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ") ON DUPLICATE KEY UPDATE x = " .. chatvars.intX .. ", y = " .. chatvars.intY .. ", z = " ..chatvars.intZ)
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("teleports 18") end
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "closetp") and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			faultyChat = false
-			return true								
+		if (chatvars.accessLevel > 2) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			botman.faultyChat = false
+			return true
 		end
 
 		teleName = ""
 		teleName = string.sub(chatvars.command, string.find(chatvars.command, "closetp ") + 8)
 		teleName = string.trim(teleName)
 
-		if (teleName == "") then 
+		if (teleName == "") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A name is required for the teleport[-]")
-			faultyChat = false
+			botman.faultyChat = false
 			return true
 		else
 			tp = ""
 			tp = LookupTeleportByName(teleName)
 
-			if (teleports[tp].owner == igplayers[chatvars.playerid].steam) and (teleports[tp].name == teleName) then
+			if (teleports[tp].name == teleName) then
 				teleports[tp].dx = chatvars.intX
 				teleports[tp].dy = chatvars.intY
 				teleports[tp].dz = chatvars.intZ
@@ -721,9 +1001,276 @@ if debug then dbug("teleports 18") end
 		end
 
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have activated a teleport called " .. teleName .. "[-]")
-		conn:execute("UPDATE teleports SET dx = " .. teleports[tp].dx .. ", dy = " .. teleports[tp].dy .. ", dz = " .. teleports[tp].dz .. " WHERE name = '" .. escape(tp) .. "'")
+		conn:execute("UPDATE teleports SET dx = " .. chatvars.intX .. ", dy = " .. chatvars.intY .. ", dz = " .. chatvars.intZ .. " WHERE name = '" .. escape(tp) .. "'")
 
-		faultyChat = false
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "start"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> start")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Create a teleport starting at your location or move an existing teleport's start to you.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "start")) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		teleName = ""
+		teleName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1]) + string.len(chatvars.words[1]) + 1, string.find(chatvars.command, " start"))
+		teleName = string.trim(teleName)
+
+		if (teleName == "") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A name is required for the teleport[-]")
+			botman.faultyChat = false
+			return true
+		else
+			tp = ""
+			tp = LookupTeleportByName(teleName)
+		end
+
+		if (tp == nil) then
+			teleports[teleName] = {}
+			teleports[teleName].public = false
+			teleports[teleName].active = false
+			teleports[teleName].friends = false
+			teleports[teleName].name = teleName
+			teleports[teleName].owner = igplayers[chatvars.playerid].steam
+			teleports[teleName].oneway = false
+			teleports[teleName].x = chatvars.intX
+			teleports[teleName].y = chatvars.intY
+			teleports[teleName].z = chatvars.intZ
+
+			conn:execute("INSERT INTO teleports (name, owner, x, y, z) VALUES ('" .. teleName .. "'," .. chatvars.playerid .. "," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ")")
+		else
+			conn:execute("UPDATE teleports SET x = " .. chatvars.intX .. ", y = " .. chatvars.intY .. ", z = " .. chatvars.intZ .. " WHERE name = '" .. escape(tp) .. "'")
+			teleports[teleName].x = chatvars.intX
+			teleports[teleName].y = chatvars.intY
+			teleports[teleName].z = chatvars.intZ
+		end
+
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport " .. teleName .. " starts here[-]")
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "end"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> end")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Complete a teleport ending at your location or move an existing teleport's end to you.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "end")) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		teleName = ""
+		teleName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1]) + string.len(chatvars.words[1]) + 1, string.find(chatvars.command, " end"))
+		teleName = string.trim(teleName)
+
+		if (teleName == "") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A name is required for the teleport[-]")
+			botman.faultyChat = false
+			return true
+		else
+			tp = ""
+			tp = LookupTeleportByName(teleName)
+		end
+
+		if (tp == nil) then
+			teleports[teleName] = {}
+			teleports[teleName].public = false
+			teleports[teleName].active = false
+			teleports[teleName].friends = false
+			teleports[teleName].name = teleName
+			teleports[teleName].owner = igplayers[chatvars.playerid].steam
+			teleports[teleName].oneway = false
+			teleports[teleName].dx = chatvars.intX
+			teleports[teleName].dy = chatvars.intY
+			teleports[teleName].dz = chatvars.intZ
+
+			conn:execute("INSERT INTO teleports (name, owner, dx, dy, dz) VALUES ('" .. teleName .. "'," .. chatvars.playerid .. "," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ")")
+		else
+			conn:execute("UPDATE teleports SET dx = " .. chatvars.intX .. ", dy = " .. chatvars.intY .. ", dz = " .. chatvars.intZ .. " WHERE name = '" .. escape(tp) .. "'")
+			teleports[teleName].dx = chatvars.intX
+			teleports[teleName].dy = chatvars.intY
+			teleports[teleName].dz = chatvars.intZ
+		end
+
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport " .. teleName .. " ends here[-]")
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <player name>")
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <X coord> <Y coord> <Z coord>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "tp" or chatvars.words[1] == "tele") and (chatvars.playerid ~= 0) then
+		if (chatvars.accessLevel > 2) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			botman.faultyChat = false
+			return true
+		end
+
+		if chatvars.words[2] == "back" then
+			-- first record their current x y z
+			savePosition(chatvars.playerid)
+
+			if chatvars.number == nil then
+				chatvars.number = 10
+			end
+
+			cursor,errorString = conn:execute("select * from tracker where steam = " .. chatvars.playerid ..  " order by trackerID desc limit " .. chatvars.number .. ",1")
+			row = cursor:fetch({}, "a")
+
+			if row then
+				cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
+				prepareTeleport(chatvars.playerid, cmd)
+				teleport(cmd, true)
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		if (chatvars.words[2] == "north" or chatvars.words[2] == "south" or chatvars.words[2] == "east" or chatvars.words[2] == "west") then
+			-- first record their current x y z
+			savePosition(chatvars.playerid)
+
+			if chatvars.number == nil then
+				chatvars.number = 50
+			end
+
+			if chatvars.words[2] == "north" then
+				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[chatvars.playerid].xPos) .. " " .. math.ceil(players[chatvars.playerid].yPos) .. " " .. math.floor(players[chatvars.playerid].zPos) + chatvars.number
+			end
+
+			if chatvars.words[2] == "south" then
+				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[chatvars.playerid].xPos) .. " " .. math.ceil(players[chatvars.playerid].yPos) .. " " .. math.floor(players[chatvars.playerid].zPos) - chatvars.number
+			end
+
+			if chatvars.words[2] == "west" then
+				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[chatvars.playerid].xPos) - chatvars.number .. " " .. math.ceil(players[chatvars.playerid].yPos) .. " " .. math.floor(players[chatvars.playerid].zPos)
+			end
+
+			if chatvars.words[2] == "east" then
+				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[chatvars.playerid].xPos) + chatvars.number .. " " .. math.ceil(players[chatvars.playerid].yPos) .. " " .. math.floor(players[chatvars.playerid].zPos)
+			end
+
+			prepareTeleport(chatvars.playerid, cmd)
+			teleport(cmd, true)
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if chatvars.words[4] ~= nil then
+			-- first record their current x y z
+			savePosition(chatvars.playerid)
+
+			cmd = "tele " .. chatvars.playerid .. " " .. math.floor(chatvars.words[2]) .. " " .. math.ceil(chatvars.words[3]) .. " " .. math.floor(chatvars.words[4])
+			prepareTeleport(chatvars.playerid, cmd)
+			teleport(cmd, true)
+
+			botman.faultyChat = false
+			return true
+		end
+
+		teleName = ""
+
+		if chatvars.words[1] == "tp" then
+			teleName = string.sub(chatvars.command, string.find(chatvars.command, "tp ") + 3)
+		else
+			teleName = string.sub(chatvars.command, string.find(chatvars.command, "tele ") + 5)
+		end
+
+		teleName = string.trim(teleName)
+
+		if (teleName == "") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A name is required for the " .. server.commandPrefix .. "tp command[-]")
+			botman.faultyChat = false
+			return true
+		else
+			tp = ""
+			tp = LookupTeleportByName(teleName)
+
+			if tp ~= nil then
+				-- first record their current x y z
+				savePosition(chatvars.playerid)
+
+				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
+				prepareTeleport(chatvars.playerid, cmd)
+				teleport(cmd, true)
+
+				botman.faultyChat = false
+				return true
+			end
+
+			tp = LookupPlayer(teleName)
+
+			if tp ~= nil then
+				-- first record their current x y z
+				savePosition(chatvars.playerid)
+
+				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[tp].xPos) .. " " .. math.ceil(players[tp].yPos) .. " " .. math.floor(players[tp].zPos)
+				prepareTeleport(chatvars.playerid, cmd)
+				teleport(cmd, true)
+
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		botman.faultyChat = false
 		return true
 	end
 

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -8,60 +8,66 @@
 --]]
 
 function thirtySecondTimer()
-	cecho(server.windowDebug, "30 second timer\n")
+	local k, v, cmd
 
-	if dbConnected ~= true then
+	windowMessage(server.windowDebug, "30 second timer\n")
+		
+	if botman.dbConnected ~= true then
 		openDB()
-		dbConnected = isDBConnected()
+		botman.dbConnected = isDBConnected()
 	end
 
 	-- are we still connected to botsDB?
-	db2Connected = isDBBotsConnected()
+	botman.db2Connected = isDBBotsConnected()
 
-	if botDisabled then
+	if botman.botDisabled or botman.botOffline then
 		return
 	end
 
-	if (AnnounceBot == true) then
+	if (botman.announceBot == true) then
+		fixMissingServer() -- test for missing values	
+	
 		message("say [" .. server.chatColour .. "]" .. server.botName .. " is online. Command me. :3[-]")
-		AnnounceBot = false
+		botman.announceBot = false
 	end
 
 	math.randomseed( os.time() )
 
-	if (initError == true) then
+	if (botman.initError == true) then
 		message("say [" .. server.chatColour .. "]" .. server.botName .. " encountered a problem starting up.  Attempting automatic fix..[-]")
 		gatherServerData()
-		initError = false
-		AnnounceBot = true
+		botman.initError = false
+		botman.announceBot = true
+	end
+	
+	if tonumber(server.rebootHour) == tonumber(botman.serverHour) and tonumber(server.rebootMinute) == tonumber(botman.serverMinute) and botman.scheduledRestart == false and server.allowReboot then
+		message("say [" .. server.chatColour .. "]The server will reboot in 15 minutes.[-]")
+		botman.scheduledRestartPaused = false
+		botman.scheduledRestart = true
+		botman.scheduledRestartTimestamp = os.time() + 900			
 	end
 
-	send("gt")
+	if not server.lagged then
+		send("gt")
+		newDay()	
 
-	newDay()
+		-- scan player inventories
+		for k, v in pairs(igplayers) do
+			-- if tonumber(players[k].hackerScore) > 0 then
+				-- players[k].hackerScore = tonumber(players[k].hackerScore) - 5
+			-- end
+		
+			if (igplayers[k].killTimer == nil) then igplayers[k].killTimer = 9 end
 
-	-- scan player inventories
-	for k, v in pairs(igplayers) do
-		if (igplayers[k].killTimer == nil) then igplayers[k].killTimer = 9 end
-
-		if tonumber(igplayers[k].killTimer) < 2 then
-			cmd = "si " .. k
-			conn:execute("INSERT into commandQueue (command, steam) VALUES ('" .. cmd .. "'," .. k .. ")")					
+			if tonumber(igplayers[k].killTimer) < 2 then
+				cmd = "si " .. k
+				conn:execute("INSERT into commandQueue (command, steam) VALUES ('" .. cmd .. "'," .. k .. ")")					
+			end		
 		end
 
-		-- kick player if currently banned or permabanned
-	--	if players[k].permanentBan == true then
-	--		send("kick " .. k)
-	--	end
-
-	--	cursor,errorString = conn:execute("SELECT * FROM bans WHERE steam = " .. k .. " and expirydate > " .. os.date("%Y-%m-%d %H:%M:%S"))
-	--	if cursor:numrows() > 0 then
-	--		send("kick " .. k)
-	--	end
+		cmd = "DoneInventory"
+		conn:execute("INSERT into commandQueue (command) VALUES ('" .. cmd .. "')")					
 	end
-
-	cmd = "DoneInventory"
-	conn:execute("INSERT into commandQueue (command) VALUES ('" .. cmd .. "')")					
 
 	-- logout anyone on irc who hasn't typed anything and their session has expired
 	for k,v in pairs(players) do
@@ -77,9 +83,5 @@ function thirtySecondTimer()
 	end
 
 	-- update the shared database (bots) server table (mainly for players online and a timestamp so others can see we're still online
-	updateBotsServerTable()
-
-	if tonumber(playersOnline) > 0 and tonumber(playersOnline) < 10 then
-		if scanZombies then send("le") end
-	end
+	updateBotsServerTable()	
 end

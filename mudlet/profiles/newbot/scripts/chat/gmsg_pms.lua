@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -23,18 +23,18 @@ function gmsg_pms()
 	local access, msg, cmd
 
 	-- don't proceed if there is no leading slash
-	if (string.sub(chatvars.command, 1, 1) ~= "/") then
-		faultyChat = false
+	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
+		botman.faultyChat = false
 		return false
 	end
 
 	cmd = string.sub(chatvars.command, 2)
 
 	if (chatvars.words[1] == "add" and chatvars.words[2] == "command") then
-		if (chatvars.playername ~= "Server") then 
-			if (accessLevel(chatvars.playerid) > 2) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted.[-]")
-				faultyChat = false
+				botman.faultyChat = false
 				return true
 			end
 		end
@@ -52,53 +52,53 @@ function gmsg_pms()
 				cmd = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, "command") + 8, string.find(chatvars.oldLine, "message") - 2)
 			end
 		else
-			if (chatvars.playername ~= "Server") then 
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message required.[-]")
 			else
-				irc_QueueMsg(server.ircMain, "Message required.")
+				irc_chat(server.ircMain, "Message required.")
 			end
 
-			faultyChat = false
+			botman.faultyChat = false
 			return true
 		end
 
 		if cmd == nil then
-			if (chatvars.playername ~= "Server") then 
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Command required.[-]")
 			else
-				irc_QueueMsg(server.ircMain, "Command required.")
+				irc_chat(server.ircMain, "Command required.")
 			end
 
-			faultyChat = false
+			botman.faultyChat = false
 			return true
 		end
 
 		-- strip leading /
-		if (string.sub(cmd, 1, 1) == "/") then
+		if (string.sub(cmd, 1, 1) == server.commandPrefix and server.commandPrefix ~= "") then
 			cmd = string.sub(cmd, 2)
 		end
-	
+
 		conn:execute("INSERT INTO customMessages (command, message, accessLevel) Values ('" .. escape(cmd) .. "','" .. escape(msg) .. "'," .. access .. ") ON DUPLICATE KEY UPDATE accessLevel = " .. access.. ", message = '" .. escape(msg) .. "'")
 
-		if (chatvars.playername ~= "Server") then 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You added the command: /" .. cmd .. ".[-]")
+		if (chatvars.playername ~= "Server") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You added the command: " .. server.commandPrefix .. cmd .. ".[-]")
 		else
-			irc_QueueMsg(server.ircMain, "You added the command: /" .. cmd)
+			irc_chat(server.ircMain, "You added the command: " .. server.commandPrefix .. cmd)
 		end
 
 		-- reload from the database
 		loadCustomMessages()
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
 
 	if (chatvars.words[1] == "remove" and chatvars.words[2] == "command") then
-		if (chatvars.playername ~= "Server") then 
-			if (accessLevel(chatvars.playerid) > 2) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted.[-]")
-				faultyChat = false
+				botman.faultyChat = false
 				return true
 			end
 		end
@@ -109,29 +109,29 @@ function gmsg_pms()
 			conn:execute("DELETE FROM customMessages WHERE command = '" .. escape(cmd) .. "'")
 			customMessages[cmd] = nil
 
-			if (chatvars.playername ~= "Server") then 
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You removed the command /" .. cmd .. ".[-]")
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You removed the command " .. server.commandPrefix .. cmd .. ".[-]")
 			else
-				irc_QueueMsg(server.ircMain, "You removed the command: /" .. cmd)
+				irc_chat(server.ircMain, "You removed the command: " .. server.commandPrefix .. cmd)
 			end
 		else
-			if (chatvars.playername ~= "Server") then 
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Command required.[-]")
 			else
-				irc_QueueMsg(server.ircMain, "Command required.")
+				irc_chat(server.ircMain, "Command required.")
 			end
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
 
 	if (chatvars.words[1] == "custom" and chatvars.words[2] == "commands") then
-		if (chatvars.playername ~= "Server") then 
-			if (accessLevel(chatvars.playerid) > 2) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted.[-]")
-				faultyChat = false
+				botman.faultyChat = false
 				return true
 			end
 		end
@@ -140,36 +140,36 @@ function gmsg_pms()
 		row = cursor:fetch({}, "a")
 
 		if not row then
-			if (chatvars.playername ~= "Server") then 
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There are no custom commands.[-]")
 			else
-				irc_QueueMsg(server.ircMain, "There are no custom commands.")
+				irc_chat(server.ircMain, "There are no custom commands.")
 			end
 		else
-			if (chatvars.playername ~= "Server") then 
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Custom commands:[-]")
 			else
-				irc_QueueMsg(server.ircMain, "Custom commands:")
+				irc_chat(server.ircMain, "Custom commands:")
 			end
 		end
 
 		while row do
-			if (chatvars.playername ~= "Server") then 
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]/" .. row.command .. "[-]")
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. row.command .. "[-]")
 			else
-				irc_QueueMsg(server.ircMain, "/" .. row.command)
+				irc_chat(server.ircMain, server.commandPrefix .. row.command)
 			end
 
-			row = cursor:fetch(row, "a")	
+			row = cursor:fetch(row, "a")
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
 	-- ###################  do not allow remote commands beyond this point ################
 	if (chatvars.playerid == 0) then
-		faultyChat = false
+		botman.faultyChat = false
 		return false
 	end
 	-- ####################################################################################
@@ -179,13 +179,13 @@ function gmsg_pms()
 		row = cursor:fetch({}, "a")
 
 		if row then
-			if (accessLevel(chatvars.playerid) <= tonumber(row.accessLevel)) then
+			if (chatvars.accessLevel <= tonumber(row.accessLevel)) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")
-				faultyChat = false
+				botman.faultyChat = false
 				return true
 			end
 
-			faultyChat = false
+			botman.faultyChat = false
 			return true
 		end
 	end

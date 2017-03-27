@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -8,7 +8,7 @@
 --]]
 
 function listKnownPlayers(line)
-	if botDisabled then
+	if botman.botDisabled then
 		return
 	end
 
@@ -27,25 +27,28 @@ function listKnownPlayers(line)
 	local seenTimestamp = os.time({year = runyear, month = runmonth, day = runday, hour = runhour, min = runminute, sec = runseconds})
 
 	if (not players[steam] and (playtime ~= "0")) then
-		cecho(server.windowDebug, "add player " .. name .. "\n")
 		players[steam] = {}
-		players[steam].id = id
+		
+		if id ~= "-1" then
+			players[steam].id = id
+		end
+			
 		players[steam].name = name
 		players[steam].steam = steam
 		players[steam].playtime = playtime
 		players[steam].seen = seen
 
 		conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steam .. "," .. id .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "'")
-	else
-		if (playtime ~= "0") then
-			cecho(server.windowDebug, "update player " .. name .. "\n")
+	else	
+		if id ~= "-1" then
 			players[steam].id = id
-			players[steam].name = name
-			players[steam].playtime = playtime
-			players[steam].seen = seen
+		end			
 
-			conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steam .. "," .. id .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "'")
-		end
+		players[steam].name = name
+		players[steam].playtime = playtime
+		players[steam].seen = seen
+
+		conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steam .. "," .. id .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "', name = '" .. escape(name) .. "', id = " .. id)
 	end
 
 	-- add missing fields and give them default values

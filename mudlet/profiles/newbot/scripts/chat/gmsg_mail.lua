@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -22,35 +22,64 @@ function gmsg_mail()
 
 	debug = false
 
-if debug then dbug("debug mail") end
+	if (debug) then dbug("debug mail line " .. debugger.getinfo(1).currentline) end
 
 	-- ###################  do not allow remote commands beyond this point ################
 	if (chatvars.playerid == 0) then
-		faultyChat = false
+		botman.faultyChat = false
 		return false
 	end
 	-- ####################################################################################
 
 	if (chatvars.words[1] == "pm" and chatvars.words[2] ~= nil) then
-		msg = string.sub(chatvars.command, 4, string.len(chatvars.command))		
+		if string.find(chatvars.words[2], "admin") then
+			msg = string.sub(chatvars.commandOld, string.find(chatvars.commandOld, chatvars.wordsOld[2]) + string.len(chatvars.wordsOld[2]), string.len(chatvars.commandOld))		
+			msg = "PM from " .. chatvars.playername .. ", " .. msg
+			alertAdmins(msg, "chat")	
 
-		irc_QueueMsg(server.ircMain, gameDate .. " " .. chatvars.playername .. " said " .. msg)
+			if chatvars.accessLevel > 2 then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Thank you. An admin may respond to your PM.[-]")
+			end
+
+			botman.faultyChat = false
+			return true		
+		end
+		
+		if string.find(chatvars.words[2], "tag") then
+			msg = string.sub(chatvars.commandOld, string.find(chatvars.commandOld, chatvars.wordsOld[3]) + string.len(chatvars.wordsOld[3]), string.len(chatvars.commandOld))		
+			msg = "PM from " .. chatvars.playername .. ", " .. msg
+			
+			for k,v in pairs(igplayers) do
+				if string.find(v.name, chatvars.wordsOld[3]) then
+					message("pm " .. k .. " [" .. server.chatColour .. "]" .. msg .. "[-]")		
+				end
+			end
+
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message sent to all " .. chatvars.wordsOld[3] .. " players that are ingame right now.[-]")
+
+			botman.faultyChat = false
+			return true		
+		end		
+	
+		msg = string.sub(chatvars.commandOld, 4, string.len(chatvars.commandOld))		
+
+		irc_chat(server.ircMain, server.gameDate .. " " .. chatvars.playername .. " said " .. msg)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your hidden message has been sent to IRC.[-]")
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
 
 	-- ####################################################################################
 	-- don't proceed if there is no leading slash or pm
-	if (string.sub(chatvars.command, 1, 1) ~= "/") and not (string.find(chatvars.oldLine, " command 'pm") or string.find(chatvars.oldLine, " command '@")) then
-		faultyChat = false
+	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") and not (string.find(chatvars.oldLine, " command 'pm") or string.find(chatvars.oldLine, " command '@")) then
+		botman.faultyChat = false
 		return false
 	end
 	-- ####################################################################################
 
-if debug then dbug("debug mail 1") end
+	if (debug) then dbug("debug mail line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "read" and chatvars.words[2] == "mail") then
 		counter = 1
@@ -65,23 +94,24 @@ if debug then dbug("debug mail 1") end
 		while row do
 			if chatvars.number ~= nil then
 				if tonumber(chatvars.number) == counter then
-					conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (" .. row.sender .. "," .. row.recipient .. ",'" .. escape(row.message) .. "')")
-					conn:execute("UPDATE mail set status = 1 WHERE id = " .. row.id)
+					conn:execute("UPDATE mail set status = 1 WHERE id = " .. row.id)				
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message #" .. counter .. "[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")					
 				end
 			else
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (" .. row.sender .. "," .. row.recipient .. ",'" .. escape(row.message) .. "')")
-				conn:execute("UPDATE mail set status = 1 WHERE id = " .. row.id)
+				conn:execute("UPDATE mail set status = 1 WHERE id = " .. row.id)			
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")									
 			end
 
 			counter = counter + 1
 			row = cursor:fetch(row, "a")	
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("debug mail 2") end
+	if (debug) then dbug("debug mail line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "list" and chatvars.words[2] == "mail") then
 		counter = 1
@@ -93,17 +123,21 @@ if debug then dbug("debug mail 2") end
 			if row.status == "1" then status = " [READ]" end
 			if row.status == "2" then status = " [SAVED]" end
 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "](" .. counter .. ")  Message from " .. players[row.sender].name .. status .. " " .. string.sub(row.message, 1, 12) .. "..[-]")
+			if tonumber(row.sender) == 0 then		
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "](" .. counter .. ")  Message from server" .. status .. " " .. string.sub(row.message, 1, 100) .. "..[-]")			
+			else		
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "](" .. counter .. ")  Message from " .. players[row.sender].name .. status .. " " .. string.sub(row.message, 1, 100) .. "..[-]")
+			end
 
 			counter = counter + 1
 			row = cursor:fetch(row, "a")	
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("debug mail 3") end
+	if (debug) then dbug("debug mail line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "save" and chatvars.words[2] == "mail" and chatvars.number ~= nil) then
 		counter = 1
@@ -115,16 +149,16 @@ if debug then dbug("debug mail 3") end
 				conn:execute("UPDATE mail SET status = 2 WHERE id = " .. row.id)
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message (" .. counter .. ") saved.[-]")
 
-				faultyChat = false
+				botman.faultyChat = false
 				return true
 			end
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("debug mail 4") end
+	if (debug) then dbug("debug mail line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "delete" and chatvars.words[2] == "mail" and chatvars.number ~= nil) then
 		counter = 1
@@ -136,7 +170,7 @@ if debug then dbug("debug mail 4") end
 				conn:execute("DELETE FROM mail WHERE id = " .. row.id)
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message (" .. counter .. ") deleted.[-]")
 
-				faultyChat = false
+				botman.faultyChat = false
 				return true
 			end
 
@@ -144,29 +178,30 @@ if debug then dbug("debug mail 4") end
 			row = cursor:fetch(row, "a")	
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("debug mail 5") end
+	if (debug) then dbug("debug mail line " .. debugger.getinfo(1).currentline) end
 
 	-- ####################################################################################
-	-- don't proceed if not using the console
-	if not string.find(chatvars.oldLine, " command 'pm") and not server.coppi then
-		faultyChat = false
+	-- don't proceed if commands not hidden
+	if not server.hideCommands then
+		botman.faultyChat = false
 		return false
 	end
 	-- ####################################################################################
 
-if debug then dbug("debug mail 6") end
+	if (debug) then dbug("debug mail line " .. debugger.getinfo(1).currentline) end
 
-	if (string.find(chatvars.words[1], "@") and chatvars.words[2] ~= nil) then
-		pname = string.sub(chatvars.words[1], 2, string.len(chatvars.words[1]))
+	if (string.find(chatvars.words[1], "@", nil, true) and chatvars.words[2] ~= nil) then
+		pname = string.sub(chatvars.words[1], string.find(chatvars.words[1], "@", nil, true) + 1, string.len(chatvars.words[1]))
 		pname = string.trim(pname)
 
 		id = LookupPlayer(pname)
 		n = string.len(chatvars.wordsOld[1]) + 1
 		msg = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, chatvars.wordsOld[1], nil, true) + n), string.len(chatvars.oldLine)
+		msg = stripQuotes(msg)
 
 if debug then dbug("debug mail msg" .. msg) end
 
@@ -183,12 +218,12 @@ if debug then dbug("debug mail msg" .. msg) end
 
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Thank you. An admin will receive your message soon.[-]")
 
-			faultyChat = false
+			botman.faultyChat = false
 			return true
 		end
 
 		if id ~= nil then
-			if isFriend(id, chatvars.playerid) or accessLevel(chatvars.playerid) < 3 then
+			if isFriend(id, chatvars.playerid) or chatvars.accessLevel < 3 then
 				if igplayers[id] then
 					message("pm " .. id .. " [" .. server.chatColour .. "]Message from " .. players[chatvars.playerid].name .. ": " .. msg .. "[-]")
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has received your message.[-]")
@@ -203,7 +238,7 @@ if debug then dbug("debug mail msg" .. msg) end
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I do not know a player called " .. pname .. "[-]")
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 

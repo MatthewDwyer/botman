@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -8,16 +8,16 @@
 --]]
 
 function loginSuccessful(line)
-	if botDisabled then
-		return
-	end
-
 	-- relogCount is used to detect excessive relogging which is indicative of a server crash.
 	if relogCount == nil then relogCount = 0 end
 
 	if string.find(line, "Logon successful.") then
-		botOffline = 2
+		botman.botOfflineCount = 2
 		relogCount = relogCount + 1
+		
+		botman.botOffline = false		
+		botman.botConnectedTimestamp = os.time() -- used to measure how long the bot has been offline so we can slow down how often it
+		-- tries to reconnect.  Mudlet creates high cpu load if it is offline for too long.  Hopefully checking less frequently will reduce that.
 
 		if not serverDataLoaded then
 			-- The bot hasn't yet managed to get data from gg and other server info commands so run gg etc now.
@@ -25,24 +25,9 @@ function loginSuccessful(line)
 		end
 
 		if relogCount > 6 then
-			irc_QueueMsg(server.ircMain, "Server has crashed.  Please manually restart it.")
+			irc_chat(server.ircMain, "Server has crashed.  Please manually restart it.")
 		else
-			irc_QueueMsg(server.ircMain, "Successfully logged in and monitoring server traffic.")
-		end
-
-		if not server.allowPhysics then
-		
-			if server.coppi then
-				send("py")
-			end
-			
-			if server.ubex then	
-				send("ubex_opt blah physics false")
-			end
-		end
-
-		if server.tempMaxPlayers ~= nil then
-			send("sg ServerMaxPlayerCount " .. server.tempMaxPlayers)
+			irc_chat(server.ircMain, "Successfully logged in and monitoring server traffic.")
 		end
 	end
 end

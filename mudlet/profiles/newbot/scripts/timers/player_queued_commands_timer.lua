@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -8,7 +8,9 @@
 --]]
 
 function playerQueuedCommands()
-	if botDisabled then
+	local cursor, errorString, row, k, v, a, b
+
+	if botman.botDisabled or botman.botOffline or server.lagged then
 		return
 	end
 
@@ -23,7 +25,6 @@ function playerQueuedCommands()
 						message("pm " .. players[b.id].id .. " [" .. server.chatColour .. "]Here comes the BOSS!")
 					end
 
-					cecho(server.windowDebug, "running player queued command " .. row.command .. "\n")
 					send(row.command)	
 					conn:execute("delete from playerQueue where id = " .. row.id)
 					return
@@ -35,7 +36,6 @@ function playerQueuedCommands()
 
 		if tonumber(row.steam) > 0 and (not igplayers[row.steam]) then
 			-- destroy the command without sending it
-			cecho(server.windowDebug, "destroying player queued command " .. row.command .. "\n")
 			conn:execute("delete from playerQueue where id = " .. row.id)
 			return
 		end
@@ -57,15 +57,13 @@ function playerQueuedCommands()
 
 		if (distancexz(igplayers[row.steam].xPos, igplayers[row.steam].zPos, locations["arena"].x, locations["arena"].z ) > locations["arena"].size + 1 or igplayers[row.steam].deadX ~= nil) then
 			-- destroy the command without sending it
-			cecho(server.windowDebug, "destroying player queued command " .. row.command .. "\n")
 			conn:execute("delete from playerQueue where id = " .. row.id)
 			return
 		else
 			if (tonumber(row.steam) > 0) then
 				if (igplayers[row.steam].deadX == nil) then
-					cecho(server.windowDebug, "running player queued command " .. row.command .. "\n")
 
-					if string.sub(row.command, 1, 2) == "se" then
+					if string.sub(row.command, 1, 2) == "se" then			
 						send(row.command)	
 					else
 						 message(row.command)	
@@ -75,9 +73,7 @@ function playerQueuedCommands()
 					return
 				end
 			else
-				cecho(server.windowDebug, "running player queued command " .. row.command .. "\n")
-
-				if string.sub(row.command, 1, 2) == "se" then
+				if string.sub(row.command, 1, 2) == "se" then				
 					send(row.command)	
 				else
 					 message(row.command)	

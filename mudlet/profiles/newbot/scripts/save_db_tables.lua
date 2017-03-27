@@ -1,316 +1,75 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
+			  http://botman.nz/latest_bot.zip
 --]]
 
+local sql
 
-function updatePlayer(steam)
-	fixMissingPlayer(steam)
+function updateTable(table, key, condition)
+	local k,v,value,temp, tbl
 
 	-- update the db
-	fields = {}
-	values = {}
---dbug("update player " .. steam)
+	sql = {}
+	tbl = table .. "Fields"
 
-	if players[steam].steamOwner ~= nil then
-		table.insert(fields, "steamOwner")
-		table.insert(values, players[steam].steamOwner)
-	end
+	for k,v in pairs(_G[tbl]) do
+		if _G[table][key][v.field] then
+			value = _G[table][key][v.field]
 
-	if players[steam].xPos ~= nil then
-		table.insert(fields, "xpos")
-		table.insert(values, players[steam].xPos)
-	end
-
-	if players[steam].yPos ~= nil then
-		table.insert(fields, "ypos")
-		table.insert(values, players[steam].yPos)
-	end
-
-	if players[steam].zPos ~= nil then
-		table.insert(fields, "zpos")
-		table.insert(values, players[steam].zPos)
-	end
-
-	if players[steam].homeX ~= nil then
-		table.insert(fields, "homex")
-		table.insert(values, players[steam].homeX)
-	end
-
-	if players[steam].homeY ~= nil then
-		table.insert(fields, "homey")
-		table.insert(values, players[steam].homeY)
-	end
-
-	if players[steam].homeZ ~= nil then
-		table.insert(fields, "homez")
-		table.insert(values, players[steam].homeZ)
-	end
-
-	if players[steam].home2X ~= nil then
-		table.insert(fields, "home2x")
-		table.insert(values, players[steam].home2X)
-	end
-
-	if players[steam].home2Y ~= nil then
-		table.insert(fields, "home2y")
-		table.insert(values, players[steam].home2Y)
-	end
-	
-	if players[steam].home2Z ~= nil then
-		table.insert(fields, "home2z")
-		table.insert(values, players[steam].home2Z)
-	end
-
-	if players[steam].exitX ~= nil then
-		table.insert(fields, "exitx")
-		table.insert(values, players[steam].exitX)
-	end
-
-	if players[steam].exitY ~= nil then
-		table.insert(fields, "exity")
-		table.insert(values, players[steam].exitY)
-	end
-
-	if players[steam].exitZ ~= nil then
-		table.insert(fields, "exitz")
-		table.insert(values, players[steam].exitZ)
-	end
-
-	if players[steam].exit2X ~= nil then
-		table.insert(fields, "exit2x")
-		table.insert(values, players[steam].exit2X)
-	end
-
-	if players[steam].exit2Y ~= nil then
-		table.insert(fields, "exit2y")
-		table.insert(values, players[steam].exit2Y)
-	end
-
-	if players[steam].exit2Z ~= nil then
-		table.insert(fields, "exit2z")
-		table.insert(values, players[steam].exit2Z)
-	end
-
-	if players[steam].xPosOld ~= nil then
-		table.insert(fields, "xposold")
-		table.insert(values, players[steam].xPosOld)
-	end
-
-	if players[steam].yPosOld ~= nil then
-		table.insert(fields, "yposold")
-		table.insert(values, players[steam].yPosOld)
-	end
-
-	if players[steam].zPosOld ~= nil then
-		table.insert(fields, "zposold")
-		table.insert(values, players[steam].zPosOld)
-	end
-
-	if players[steam].timeOnServer ~= nil then
-		table.insert(fields, "timeonserver")
-		table.insert(values, players[steam].timeOnServer)
-	end
-
-	if players[steam].seen ~= nil then
-		table.insert(fields, "seen")
-		table.insert(values, players[steam].seen)
-	end
-
-	if players[steam].playerKills ~= nil then
-		table.insert(fields, "playerkills")
-		table.insert(values, players[steam].playerKills)
-	end
-
-	if players[steam].deaths ~= nil then
-		table.insert(fields, "deaths")
-		table.insert(values, players[steam].deaths)
-	end
-
-	if players[steam].zombies ~= nil then
-		table.insert(fields, "zombies")
-		table.insert(values, players[steam].zombies)
-	end
-
-	if players[steam].level ~= nil then
-		table.insert(fields, "level")
-		table.insert(values, players[steam].level)
-	end
-
-	if players[steam].ping ~= nil then
-		table.insert(fields, "ping")
-		table.insert(values, players[steam].ping)
-	end
-
-	if players[steam].score ~= nil then
-		table.insert(fields, "score")
-		table.insert(values, players[steam].score)
-	end
-
-	if players[steam].tokens ~= nil then
-		table.insert(fields, "tokens")
-		table.insert(values, players[steam].tokens)
-	end
-
-	if players[steam].baseCooldown ~= nil then
-		table.insert(fields, "basecooldown")
-		table.insert(values, players[steam].baseCooldown)
-	end
-
-	if players[steam].cash ~= nil then
-		table.insert(fields, "cash")
-		table.insert(values, players[steam].cash)
-	end
-
-	if players[steam].sessionCount ~= nil then
-		table.insert(fields, "sessionCount")
-		table.insert(values, players[steam].sessionCount)
-	end
-
-	if players[steam].waypointX ~= nil then
-		table.insert(fields, "waypointx")
-		table.insert(values, players[steam].waypointX)
-	end
-
-	if players[steam].waypointY ~= nil then
-		table.insert(fields, "waypointy")
-		table.insert(values, players[steam].waypointY)
-	end
-
-	if players[steam].waypointZ ~= nil then
-		table.insert(fields, "waypointz")
-		table.insert(values, players[steam].waypointZ)
-	end
-
-	table.insert(fields, "accesslevel")
-	table.insert(values, accessLevel(steam))
-
-	if players[steam].protectSize ~= nil then
-		table.insert(fields, "protectsize")
-		table.insert(values, players[steam].protectSize)
-	end
-
-	if players[steam].protect2Size ~= nil then
-		table.insert(fields, "protect2size")
-		table.insert(values, players[steam].protect2Size)
-	end
-
-	if players[steam].keystones ~= nil then
-		table.insert(fields, "keystones")
-		table.insert(values, players[steam].keystones)
-	end
-
-	if players[steam].donor ~= nil then
-		table.insert(fields, "donor")
-		table.insert(values, players[steam].donor)
-	end
-
-	if players[steam].walkies ~= nil then
-		table.insert(fields, "walkies")
-		table.insert(values, players[steam].walkies)
-	end
-
-	if players[steam].protect ~= nil then
-		table.insert(fields, "protect")
-		table.insert(values, players[steam].protect)
-	end
-
-	if players[steam].protect2 ~= nil then
-		table.insert(fields, "protect2")
-		table.insert(values, players[steam].protect2)
-	end
-
-	if players[steam].timeout ~= nil then
-		table.insert(fields, "timeout")
-		table.insert(values, players[steam].timeout)
-	end
-
-	if players[steam].botTimeout ~= nil then
-		table.insert(fields, "bottimeout")
-		table.insert(values, players[steam].botTimeout)
-	end	
-
-	if players[steam].newPlayer ~= nil then
-		table.insert(fields, "newplayer")
-		table.insert(values, players[steam].newPlayer)
-	end
-
-	if players[steam].prisoner ~= nil then
-		table.insert(fields, "prisoner")
-		table.insert(values, players[steam].prisoner)
-	end
-
-	if players[steam].shareWaypoint ~= nil then
-		table.insert(fields, "sharewaypoint")
-		table.insert(values, players[steam].shareWaypoint)
-	end
-
-	if players[steam].canTeleport ~= nil then
-		table.insert(fields, "canteleport")
-		table.insert(values, players[steam].canTeleport)
-	end
-
-	if players[steam].country ~= nil then
-		table.insert(fields, "country")
-		table.insert(values, players[steam].country)
-	end
-
-	if players[steam].donorLevel ~= nil then
-		table.insert(fields, "donorlevel")
-		table.insert(values, players[steam].donorLevel)
-	end
-
-	if players[steam].donorExpiry ~= nil then
-		table.insert(fields, "donorexpiry")
-		table.insert(values, players[steam].donorExpiry)
-	end
-
-	if players[steam].autoFriend ~= nil then
-		table.insert(fields, "autofriend")
-		table.insert(values, players[steam].autoFriend)
-	end
-
-	if players[steam].IP ~= nil then
-		table.insert(fields, "ip")
-		table.insert(values, players[steam].IP)
-	end
-
-	if players[steam].bedX ~= nil then
-		table.insert(fields, "bedx")
-		table.insert(values, players[steam].bedX)
-	end
-
-	if players[steam].bedY ~= nil then
-		table.insert(fields, "bedy")
-		table.insert(values, players[steam].bedY)
-	end
-
-	if players[steam].bedZ ~= nil then
-		table.insert(fields, "bedz")
-		table.insert(values, players[steam].bedZ)
-	end
-
-	if players[steam].silentBob ~= nil then
-		table.insert(fields, "silentbob")
-		table.insert(values, players[steam].silentBob)
-	end
-	
-	if players[steam].ISP ~= nil then
-		table.insert(fields, "isp")
-		table.insert(values, players[steam].ISP)
-	end
-	
-	if players[steam].ignorePlayer ~= nil then
-		table.insert(fields, "ignoreplayer")
-		table.insert(values, players[steam].ignorePlayer)
+			sql[v.field] = {}
+			sql[v.field].field = v.field
+			sql[v.field].value = value
+		end
 	end
 
 --debugdb = true
-	savePlayer(steam, fields, values)
+	saveTable(table, condition)
+debugdb = false
+end
+
+
+function updatePlayer(steam)
+	local k,v,value,temp
+	
+	if tonumber(steam) == nil or (string.len(steam) < 17) then
+		dbug("skipping player " .. v.name .. " for invalid steam id")
+	
+		-- don't process if steam is invalid
+		return
+	end
+
+	fixMissingPlayer(steam)
+
+	-- update the db
+	sql = {}
+--dbug("update player " .. steam)
+
+	for k,v in pairs(playerFields) do
+		if players[steam][v.field] then
+			value = players[steam][v.field]
+
+			sql[v.field] = {}
+			sql[v.field].field = v.field
+
+			if v.type == "var" then
+				sql[v.field].value = stripCommas(value)
+			else
+				sql[v.field].value = value
+			end
+
+			if v.type == "tim" then
+				sql[v.field].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", value) .. "'"
+			end
+		end
+	end
+
+--debugdb = true
+	savePlayer(steam)
 debugdb = false
 end
 
@@ -324,25 +83,28 @@ function getServerFields()
 	cursor,errorString = conn:execute("SHOW FIELDS FROM server")
 	row = cursor:fetch({}, "a")
 	while row do
-		field = string.lower(row.Field)
-
+		field = row.Field
 		serverFields[field] = {}
+		serverFields[field].field = field
 		serverFields[field].type = string.sub(row.Type, 1,3)
-		row = cursor:fetch(row, "a")	
+		serverFields[field].key = "nil"
+		serverFields[field].default = "nil"
+
+		if row.Key then
+			serverFields[field].key = string.sub(row.Key, 1,3)
+		end
+
+		if row.Default then
+			serverFields[field].default = row.Default
+		end
+
+		row = cursor:fetch(row, "a")
 	end
 end
 
---[[
-	-- typical use
-	fields = {}
-	values = {}
-	table.insert(fields, "LootRespawnDays")
-	table.insert(values, number)
-	saveServer(fields, values)
---]]
 
 function saveServer(fields, values)
-	local i, sql
+	local i, sqlString, max
 
 	if debugdb then
 		dbug("saving to server table")
@@ -352,11 +114,10 @@ function saveServer(fields, values)
 		getServerFields()
 	end
 
-	sql = "UPDATE server SET"
+	sqlString = "UPDATE server SET"
 
-	for i=1,table.maxn(fields),1 do
-		fields[i] = string.lower(fields[i])
-
+	max = table.maxn(fields)
+	for i=1,max,1 do
 		if serverFields[fields[i]].type == "var" then
 			values[i] = "'" .. escape(values[i]) .. "'"
 		end
@@ -366,17 +127,21 @@ function saveServer(fields, values)
 			if values[i] == false then values[i] = 0 end
 		end
 
-		sql = sql .. " " .. fields[i] .. "=" .. values[i] .. ","
+		if serverFields[fields[i]].type == "tim" then
+			values[i] = "'" .. os.date("%Y-%m-%d %H:%M:%S", values[i]) .. "'"
+		end
+
+		sqlString = sqlString .. " " .. fields[i] .. "=" .. values[i] .. ","
 	end
 
-	sql = string.sub(sql, 1, string.len(sql) - 1)
+	sqlString = string.sub(sqlString, 1, string.len(sqlString) - 1)
 
 	if debugdb then
-		dbug("save server " .. sql)
+		dbug("save server " .. sqlString)
 	end
 
-	status, errorString = conn:execute(sql)
-	
+	status, errorString = conn:execute(sqlString)
+
 	print(status,errorString )
 
 	if status == 0 then
@@ -405,100 +170,102 @@ function getPlayerFields()
 	cursor,errorString = conn:execute("SHOW FIELDS FROM players")
 	row = cursor:fetch({}, "a")
 	while row do
-		field = string.lower(row.Field)
+		field = row.Field
 
 		playerFields[field] = {}
+		playerFields[field].field = field
 		playerFields[field].type = string.sub(row.Type, 1,3)
-		row = cursor:fetch(row, "a")	
+		playerFields[field].key = "nil"
+		playerFields[field].default = "nil"
+
+		if row.Key then
+			playerFields[field].key = string.sub(row.Key, 1,3)
+		end
+
+		if row.Default then
+			playerFields[field].default = row.Default
+		end
+
+		row = cursor:fetch(row, "a")
 	end
 end
 
 
-function savePlayer(steam, fields, values, action)
---[[
-	-- typical use
-	fields = {}
-	values = {}
-	table.insert(fields, "LootRespawnDays")
-	table.insert(values, number)
-	savePlayer("1234", fields, values)
---]]
+function savePlayer(steam, action)
+	local k, v, i, sqlString, sqlValues, status, errorString, max
 
 	if debugdb then
-		dbug("saving player " .. steam)
-		display(fields)
-		display(values)
+		dbug("saving player " .. steam .. " " .. players[steam].name)
 	end
-
-	local i, sql, sqlValues, status, errorString
 
 	if playerFields == nil then
 		getPlayerFields()
 	end
 
 	if action == nil then
-		sql = "UPDATE players SET"
+		sqlString = "update players set"
 
-		for i=1,table.maxn(fields),1 do
-			fields[i] = string.lower(fields[i])
+		for k,v in pairs(playerFields) do
+			if sql[k] then
+				if v.type == "var" then
+					sql[k].value = "'" .. escape(sql[k].value) .. "'"
+				end
 
-			if playerFields[fields[i]].type == "var" then
-				values[i] = "'" .. escape(values[i]) .. "'"
+				if v.type == "tin" then
+					if sql[k].value == true then sql[k].value = 1 end
+					if sql[k].value == false then sql[k].value = 0 end
+				end
+
+				if v.type == "tim" then
+					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"				
+--					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"					
+				end
+
+				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. "=" .. sql[k].value .. ","
 			end
-
-			if playerFields[fields[i]].type == "tin" then
-				if values[i] == true then values[i] = 1 end
-				if values[i] == false then values[i] = 0 end
-			end
-
-			if playerFields[fields[i]].type == "tim" then
-				values[i] = "'" .. os.date("%Y-%m-%d %H:%M:%S", values[i]) .. "'"
-			end
-
-			sql = sql .. " " .. fields[i] .. "=" .. values[i] .. ","
 		end
 
-		sql = string.sub(sql, 1, string.len(sql) - 1)
-		sql = sql .. " WHERE steam = '" .. steam .. "'"
+		sqlString = string.sub(sqlString, 1, string.len(sqlString) - 1)
+		sqlString = sqlString .. " where steam = '" .. steam .. "'"
 	else
-		sql = "INSERT INTO players ("
-		sqlValues = " VALUES ("
+		sqlString = "insert into players ("
+		sqlValues = " values ("
 
-		for i=1,table.maxn(fields),1 do
-			fields[i] = string.lower(fields[i])
+		for k,v in pairs(playerFields) do
+			if sql[k] then
+				if v.type == "var" then
+					sql[k].value = "'" .. escape(sql[k].value) .. "'"
+				end
 
-			if playerFields[fields[i]].type == "var" then
-				values[i] = "'" .. escape(values[i]) .. "'"
+				if v.type == "tin" then
+					if sql[k].value == true then sql[k].value = 1 end
+					if sql[k].value == false then sql[k].value = 0 end
+				end
+
+				if v.type == "tim" then
+					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"
+				end
+
+				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. ","
+				sqlValues = sqlValues .. sql[k].value .. ","
 			end
-
-			if playerFields[fields[i]].type == "tin" then
-				if values[i] == true then values[i] = 1 end
-				if values[i] == false then values[i] = 0 end
-			end
-			if playerFields[fields[i]].type == "tim" then
-				values[i] = "'" .. os.date("%Y-%m-%d %H:%M:%S", values[i]) .. "'"
-			end
-
-			sql = sql .. " " .. fields[i] .. ","
-			sqlValues = sqlValues .. values[i] .. ","
 		end
 
-		sql = string.sub(sql, 1, string.len(sql) - 1) .. ")"
+		sqlString = string.sub(sqlString, 1, string.len(sqlString) - 1) .. ")"
 		sqlValues = string.sub(sqlValues, 1, string.len(sqlValues) - 1) .. ")"
-		sql = sql .. sqlValues
+		sqlString = sqlString .. sqlValues
 	end
 
 	if debugdb then
-		dbug("save player sql " .. sql)
+		dbug("save player sqlString " .. sqlString)
 	end
 
-	status, errorString = conn:execute(sql)
-	
-	print(status,errorString )
+	status, errorString = conn:execute(sqlString)
 
 	if status == 0 then
 		if debugdb then
 			dbug("save player failed")
+			dbug(status .. " " .. errorString )
 		end
 
 		getPlayerFields()
@@ -506,7 +273,7 @@ function savePlayer(steam, fields, values, action)
 	else
 		if debugdb then
 			dbug("save player success")
-			dbug("save player sql " .. sql)
+			dbug("save player sqlString " .. sqlString)
 		end
 
 		return true -- record inserted/updated
@@ -515,89 +282,94 @@ end
 
 
 function getTableFields(table)
-	--function inspect the table and store field names and types
-	if type(tableFields) ~= "table" then
-		tableFields = {}
-	end
+	local field, tbl
 
-	tableFields[table] = {}
-	tableFields[table].fields = {}
-	tableFields[table].types = {}
+	--function inspect the table and store field names, types and default values
+	tbl = table .. "Fields"
+
+	_G[tbl] = {}
 
 	cursor,errorString = conn:execute("SHOW FIELDS FROM " .. table)
 	row = cursor:fetch({}, "a")
+	
 	while row do
-		tableFields[table].fields[#tableFields[table].fields+1] = {string.lower(row.Field)}
-		tableFields[table].types[#tableFields[table].types+1] = {string.lower(string.sub(row.Type, 1,3))}
-		row = cursor:fetch(row, "a")	
+		field = row.Field
+
+		_G[tbl][field] = {}
+		_G[tbl][field].field = field
+		_G[tbl][field].type = string.sub(row.Type, 1,3)
+		_G[tbl][field].key = "nil"
+		_G[tbl][field].default = "nil"
+
+		if row.Key then
+			_G[tbl][field].key = string.sub(row.Key, 1,3)
+		end
+
+		if row.Default then
+			_G[tbl][field].default = row.Default
+		end
+
+		row = cursor:fetch(row, "a")
 	end
 end
 
 
-function saveTable(table, fields, values, condition)
--- This function does updates only, no inserts
-	local i, sql
+function saveTable(table, condition)
+--This function does updates only, no inserts
+	-- local i, sqlString, max
 
---[[
-	-- typical use
-	fields = {}
-	values = {}
-	table.insert(fields, "LootRespawnDays")
-	table.insert(values, number)
-	saveTable("server", fields, values, "test = true")
---]]
+	-- if debugdb then
+		-- dbug("saving to table " .. table)
+	-- end
 
-	if debugdb then
-		dbug("saving to table " .. table)
-	end
+	-- if tableFields[table] == nil then
+		-- getTableFields(table)
+	-- end
 
-	if tableFields[table] == nil then
-		getTableFields(table)
-	end
+	-- sqlString = "UPDATE " .. table .. " SET"
 
-	sql = "UPDATE " .. table .. " SET"
+	-- max = table.maxn(fields)
+	-- for i=1,max,1 do
+		-- fields[i] = string.lower(fields[i])
 
-	for i=1,table.maxn(fields),1 do
-		fields[i] = string.lower(fields[i])
+		-- if tableFields[table].fields[i].type == "var" then
+			-- values[i] = "'" .. escape(values[i]) .. "'"
+		-- end
 
-		if tableFields[table].fields[i].type == "var" then
-			values[i] = "'" .. escape(values[i]) .. "'"
-		end
+		-- if tableFields[fields[i]].type == "tin" then
+			-- if values[i] == true then values[i] = 1 end
+			-- if values[i] == false then values[i] = 0 end
+		-- end
 
-		if tableFields[fields[i]].type == "tin" then
-			if values[i] == true then values[i] = 1 end
-			if values[i] == false then values[i] = 0 end
-		end
+		-- if 	sqlString == "UPDATE " .. table .. " SET" then
+			-- sqlString = sqlString .. " " .. fields[i] .. "=" .. values[i]
+		-- else
+			-- sqlString = sqlString .. ", " .. fields[i] .. "=" .. values[i]
+		-- end
+	-- end
 
-		if 	sql == "UPDATE " .. table .. " SET" then
-			sql = sql .. " " .. fields[i] .. "=" .. values[i]
-		else
-			sql = sql .. ", " .. fields[i] .. "=" .. values[i]
-		end
-	end
+	-- if condition ~= nil then
+		-- sqlString = sqlString .. " where " .. condition
+	-- end
 
-	if condition ~= nil then
-		sql = sql .. " where " .. condition
-	end
+	-- if debugdb then
+		-- dbug("save " .. table .. " " .. sqlString)
+	-- end
 
-	if debugdb then
-		dbug("save " .. table .. " " .. sql)
-	end
+	-- status, errorString = conn:execute(sqlString)
 
-	status, errorString = conn:execute(sql)
+	-- if status == 0 then
+		-- if debugdb then
+			-- dbug("save " .. table .. " failed")
+		-- end
 
-	if status == 0 then
-		if debugdb then
-			dbug("save " .. table .. " failed")
-		end
+		-- getTableFields(table)
+		-- return false -- update failed
+	-- else
+		-- if debugdb then
+			-- dbug("save " .. table .. " success")
+		-- end
 
-		getTableFields(table)
-		return false -- update failed
-	else
-		if debugdb then
-			dbug("save " .. table .. " success")
-		end
-
-		return true -- update success
-	end
+		-- return true -- update success
+	-- end
 end

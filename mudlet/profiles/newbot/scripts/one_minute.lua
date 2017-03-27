@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -20,7 +20,7 @@ function savePlayerData(steam)
 	players[steam].xPos = igplayers[steam].xPos
 	players[steam].yPos = igplayers[steam].yPos
 	players[steam].zPos = igplayers[steam].zPos
-	players[steam].seen = serverTime
+	players[steam].seen = botman.serverTime
 	players[steam].playerKills = igplayers[steam].playerKills
 	players[steam].deaths = igplayers[steam].deaths
 	players[steam].zombies = igplayers[steam].zombies
@@ -34,16 +34,16 @@ function savePlayerData(steam)
 end
 
 
-function OneMinuteTimer()
+function everyMinute()
 	local words, word, rday, rhour, rmin, k,v, debug
 	local diff, days, hours, restartTime, zombiePlayers
 
-	cecho (server.windowDebug, "60 second timer\n")
+	windowMessage(server.windowDebug, "60 second timer\n")
 
 	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
 	debug = false
 
-	if debug then dbug("debug one minute timer") end
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	zombiePlayers = {}
 	diff = gameTick
@@ -55,31 +55,30 @@ function OneMinuteTimer()
 
 	hours = math.floor(diff / 3600)
 
-	if debug then dbug("debug one minute timer 1") end
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	-- save some server fields
-	conn:execute("UPDATE server SET lottery = " .. server.lottery .. ", date = '" .. server.date .. "'")
+	conn:execute("UPDATE server SET lottery = " .. server.lottery .. ", date = '" .. server.date .. "', ircBotName = '" .. server.ircBotName .. "'")
 
-	if debug then dbug("debug one minute timer 2") end
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	if not server.delayReboot then
-		if (scheduledReboot == true or server.scheduledRestart == true) and scheduledRestartPaused == false and tonumber(playersOnline) > 0 and server.allowReboot == true then
-			restartTime = server.scheduledRestartTimestamp - os.time()
+		--if (scheduledReboot == true or botman.scheduledRestart == true) and botman.scheduledRestartPaused == false and tonumber(botman.playersOnline) > 0 and server.allowReboot == true then	
+		if (botman.scheduledRestart == true) and botman.scheduledRestartPaused == false and tonumber(botman.playersOnline) > 0 and server.allowReboot == true then
+			restartTime = botman.scheduledRestartTimestamp - os.time()
 
 			if (restartTime > 60 and restartTime < 601) or (restartTime > 1139 and restartTime < 1201) or (restartTime > 1799 and restartTime < 1861) then
-				message("say [" .. server.chatColour .. "]Rebooting in " .. os.date("%M minutes %S seconds",server.scheduledRestartTimestamp - os.time()) .. ".[-]")
+				message("say [" .. server.chatColour .. "]Rebooting in " .. os.date("%M minutes %S seconds",botman.scheduledRestartTimestamp - os.time()) .. ".[-]")
 			end
 		end
 	end
 
-	if debug then dbug("debug one minute timer 3") end
-
-	if (idleKickTimer == nil) then 	idleKickTimer = 0 end
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	for k, v in pairs(igplayers) do
---		if (v.afk - os.time() < 421) and (playersOnline >= server.ServerMaxPlayerCount) and (accessLevel(steam) > 2) then
---			message("pm " .. v.steam .. " [" .. server.chatColour .. "]You appear to be away from your keyboard.  You will be kicked in " .. os.date("%M minutes %S seconds",v.afk - os.time()) .. " for being afk.  If you simply move you will not be kicked.[-]")
---		end
+		if tonumber(v.afk - os.time()) < 300 and tonumber(v.afk - os.time()) > 60 and (botman.playersOnline >= server.ServerMaxPlayerCount) and (accessLevel(steam) > 2) and server.idleKick then
+			message("pm " .. v.steam .. " [" .. server.warnColour .. "]You appear to be away from your keyboard.  You will be kicked in " .. os.date("%M minutes %S seconds",v.afk - os.time()) .. " for being afk.  If you move, talk or do things you will not be kicked.[-]")
+		end
 
 		if debug then
 			dbug("steam " .. k .. " name " .. v.name)
@@ -100,13 +99,13 @@ function OneMinuteTimer()
 
 			if (v.timeOnServer) then players[k].timeOnServer = players[k].timeOnServer + v.sessionPlaytime end
 
-			if debug then dbug("debug one minute timer 3l") end
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 			if (os.time() - players[k].lastLogout) > 300 then
 				players[k].relogCount = 0
 			end
 
-			if debug then dbug("debug one minute timer 3e") end
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 			if (os.time() - players[k].lastLogout) < 60 then
 				players[k].relogCount = tonumber(players[k].relogCount) + 1
@@ -133,23 +132,23 @@ function OneMinuteTimer()
 			-- flag this ingame player record for deletion
 			zombiePlayers[k] = {}
 
-			if db2Connected then
+			if botman.db2Connected then
 				-- update player in bots db
-				connBots:execute("UPDATE players SET ip = '" .. players[k].IP .. "', name = '" .. escape(players[k].name) .. "', online = 0 WHERE steam = " .. k .. " AND botID = " .. server.botID)
+				connBots:execute("UPDATE players SET ip = '" .. players[k].IP .. "', name = '" .. escape(stripCommas(players[k].name)) .. "', online = 0 WHERE steam = " .. k .. " AND botID = " .. server.botID)
 			end
 
-			if debug then dbug("debug one minute timer 3z") end
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 		end
 	end
 
-	if debug then dbug("debug one minute timer 4") end
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	for k, v in pairs(zombiePlayers) do
 		dbug("Removing zombie player " .. players[k].name .. "\n")
 		igplayers[k] = nil
 	end
 
-	if debug then dbug("debug one minute timer 5") end
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	-- check players table for problems and remove
 	for k, v in pairs(players) do
@@ -158,10 +157,27 @@ function OneMinuteTimer()
 		end
 	end
 
-	if debug then dbug("debug one minute timer 6") end
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
-	if (playersOnline == 0 and gameTick < 0) and (scheduledReboot ~= true) and server.allowReboot == true then
-		rebootTimerID = tempTimer( 60, [[startReboot()]] )
+	if tonumber(botman.playersOnline) == 0 and botman.scheduledRestart and server.allowReboot then	
+		irc_chat(server.ircMain, "A reboot is scheduled and nobody is on so the server is rebooting now.")	
+		botman.scheduledRestart = false
+		botman.scheduledRestartTimestamp = os.time()
+		botman.scheduledRestartPaused = false
+		botman.scheduledRestartForced = false
+
+		if (botman.rebootTimerID ~= nil) then killTimer(botman.rebootTimerID) end
+		if (rebootTimerDelayID ~= nil) then killTimer(rebootTimerDelayID) end
+
+		botman.rebootTimerID = nil
+		rebootTimerDelayID = nil
+
+		send("sa")
+		finishReboot()	
+	end
+
+	if (botman.playersOnline == 0 and gameTick < 0) and (scheduledReboot ~= true) and server.allowReboot == true then
+		botman.rebootTimerID = tempTimer( 60, [[startReboot()]] )
 		scheduledReboot = true
 	end
 

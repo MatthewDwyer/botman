@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -19,7 +19,9 @@ end
 function prepareTeleport(steam, cmd)
 	if igplayers[steam] then
 		igplayers[steam].lastCatchTimestamp = os.time() + 10
-		igplayers[steam].lastTP = cmd
+		igplayers[steam].lastTP = cmd		
+		players[steam].tp = 1
+		players[steam].hackerTPScore = 0		
 	end
 end
 
@@ -31,6 +33,7 @@ function teleport(cmd, forced)
 
 	-- disable some stuff because we are teleporting
 	igplayers[id].location = nil
+	igplayers[id].lastTP = cmd
 
 	coords = string.sub(cmd, 24)
 	coords = string.split(coords, " ")
@@ -44,12 +47,12 @@ function teleport(cmd, forced)
 	if igplayers[id].following ~= nil then igplayers[id].following = nil end
 
 	players[id].tp = 1
-	players[id].hackerScore = 0
-
+	players[id].hackerTPScore = 0
+	
 	send(cmd)
 
 	players[id].tp = 1
-	players[id].hackerScore = 0
+	players[id].hackerTPScore = 0
 
 	return true
 end
@@ -58,7 +61,8 @@ end
 function fallCatcher(steam, x, y, z)
 	local coords, temp, dist
 
-	if players[steam].timeout == true or players[steam].botTimeout == true or igplayers[steam].following ~= nil then
+	if players[steam].timeout == true or players[steam].botTimeout == true or igplayers[steam].following ~= nil or accessLevel(steam) < 2 then
+		-- don't catch players in timeout or admins (except mods)
 		return
 	end
 
@@ -69,7 +73,7 @@ function fallCatcher(steam, x, y, z)
 		
 			if igplayers[steam].lastTP ~= nil then
 				players[steam].tp = 1
-				players[steam].hackerScore = 0
+				players[steam].hackerTPScore = 0
 				send(igplayers[steam].lastTP)
 				return
 			end
@@ -86,10 +90,10 @@ function fallCatcher(steam, x, y, z)
 					
 					if cmd ~= "" then
 						players[steam].tp = 1
-						players[steam].hackerScore = 0
+						players[steam].hackerTPScore = 0
 						send(cmd)
 						players[id].tp = 1
-						players[id].hackerScore = 0
+						players[id].hackerTPScore = 0
 						return
 					else
 						message("pm " .. steam .. " [" .. server.chatColour .. "]You have fallen through the ground. Relog to rescue yourself.[-]")
@@ -105,7 +109,7 @@ function fallCatcher(steam, x, y, z)
 end
 
 
-function randomPVPTP(playerid, location, forced)
+function randomTP(playerid, location, forced)
 	local r, rows, row, rowCount
 
 	cursor,errorString = conn:execute("select * from locationSpawns where location='" .. location .. "'")

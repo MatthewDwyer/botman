@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -8,7 +8,9 @@
 --]]
 
 function timedCommandsTimer()
-	if botDisabled then
+	local cursor, errorString, row
+
+	if botman.botDisabled or botman.botOffline or server.lagged then
 		return
 	end
 
@@ -16,7 +18,7 @@ function timedCommandsTimer()
 	row = cursor:fetch({}, "a")
 
 	if row then
-		cecho(server.windowDebug, "running timed command (" .. row.id .. ") " .. row.command .. "\n")
+		windowMessage(server.windowDebug, "running timed command (" .. row.id .. ") " .. row.command .. "\n")
 
 		if (row.command ~= "DoneInventory") then
 

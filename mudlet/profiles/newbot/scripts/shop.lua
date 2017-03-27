@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -8,11 +8,13 @@
 --]]
 
 
-local id, page, count, shopState
+local id, page, count, shopState, debug
+
+debug = false
 
 function fixShop()
 	-- automatically fix missing categories and check each category and shop item for bad data
-	local cursor, errorString, cursor2, errorString2, row, k, v
+	local cursor, cursor2, errorString, row, k, v
 	
 	-- refresh the categories from the database
 	loadShopCategories()
@@ -22,7 +24,7 @@ function fixShop()
 
 	while row do
 		if row.category == "" or shopCategories[row.category] == nil then
-			cursor2,errorString2 = conn:execute("UPDATE shop SET category = 'misc' WHERE item = '" .. escape(row.item) .. "'")		
+			cursor2,errorString = conn:execute("UPDATE shop SET category = 'misc' WHERE item = '" .. escape(row.item) .. "'")		
 		end
 
 		row = cursor:fetch(row, "a")	
@@ -37,17 +39,17 @@ end
 
 function payPlayer()
 	if (string.find(chatvars.command, "yes")) then
-		if (players[chatvars.playerid].cash >= igplayers[chatvars.playerid].botQuestionValue) or accessLevel(chatvars.playerid) == 0 then
+		if (players[chatvars.playerid].cash >= igplayers[chatvars.playerid].botQuestionValue) or chatvars.accessLevel == 0 then
 			players[igplayers[chatvars.playerid].botQuestionID].cash = players[igplayers[chatvars.playerid].botQuestionID].cash + igplayers[chatvars.playerid].botQuestionValue
 
-			if accessLevel(chatvars.playerid) > 0 then
+			if chatvars.accessLevel > 0 then
 				players[chatvars.playerid].cash = players[chatvars.playerid].cash - igplayers[chatvars.playerid].botQuestionValue
 			end
 
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. igplayers[chatvars.playerid].botQuestionValue .. " has been paid to " .. players[igplayers[chatvars.playerid].botQuestionID].name .. "[-]")
 
 			if (igplayers[igplayers[chatvars.playerid].botQuestionID]) then
-				message("pm " .. igplayers[chatvars.playerid].botQuestionID .. " [" .. server.chatColour .. "]Payday! " .. players[chatvars.playerid].name .. " has paid you " .. igplayers[chatvars.playerid].botQuestionValue .. " zennies![-]")
+				message("pm " .. igplayers[chatvars.playerid].botQuestionID .. " [" .. server.chatColour .. "]Payday! " .. players[chatvars.playerid].name .. " has paid you " .. igplayers[chatvars.playerid].botQuestionValue .. " " .. server.moneyPlural .. "![-]")
 			end
 		else
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I regret to inform you that you do not have sufficient funds to pay " .. players[igplayers[chatvars.playerid].botQuestionID].name .. "[-]")
@@ -139,29 +141,41 @@ function reindexShop(category)
 end
 
 
-function drawLottery()
+function drawLottery(steam)
 	local winners, winnersCount, prizeDraw, x, rows, thing
 
-	if server.lottery == 0 then
+	if tonumber(server.lottery) == 0 then
 		return
 	end
 
 	winners = {}
 	winnersCount = 0
-
-	for x=1,100,1 do
-		prizeDraw = rand(100)
-
+	
+	if steam ~= nil then
+		-- test lottery
+		prizeDraw = 500
+		
+		conn:execute("INSERT INTO memLottery (steam, ticket) VALUES (" .. steam .. ",500)")
+		conn:execute("INSERT INTO lottery (steam, ticket) VALUES (" .. steam .. ",500)")		
+		winnersCount = 1
+		
 		cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE ticket = " .. prizeDraw)
-		rows = cursor:numrows()
+		rows = cursor:numrows()		
+	else
+		for x=1,100,1 do
+			prizeDraw = rand(100)
 
-		if rows > 0 then
-			winnersCount = rows
-			break
+			cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE ticket = " .. prizeDraw)
+			rows = cursor:numrows()
+
+			if rows > 0 then
+				winnersCount = rows
+				break
+			end
 		end
 	end
 
-	message("say [" .. server.chatColour .. "]It's time for the daily lottery draw for " .. server.lottery .. " zennies![-]")
+	message("say [" .. server.chatColour .. "]It's time for the daily lottery draw for " .. server.lottery .. " " .. server.moneyPlural .. "![-]")
 
 	if winnersCount > 0 then
 		prizeDraw = math.floor(server.lottery / winnersCount)
@@ -169,13 +183,14 @@ function drawLottery()
 		row = cursor:fetch({}, "a")
 		while row do
 			players[row.steam].cash = players[row.steam].cash + prizeDraw
-			message("say [" .. server.chatColour .. "]" .. players[row.steam].name .. " won " .. prizeDraw .. " zennies![-]")
+			conn:execute("UPDATE players SET cash = " .. players[row.steam].cash .. " WHERE steam = " .. row.steam)			
+			message("say [" .. server.chatColour .. "]" .. players[row.steam].name .. " won " .. prizeDraw .. " " .. server.moneyPlural .. "![-]")
 
 			if not igplayers[row.steam] then
 				if winnersCount > 1 then
-					conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. row.steam .. ", 'Congratulations!  You won " .. prizeDraw .. " zennies in the daily lottery along with " .. winnersCount - 1 .. " others. :)')")
+					conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. row.steam .. ", 'Congratulations!  You won " .. prizeDraw .. " " .. server.moneyPlural .. " in the daily lottery along with " .. winnersCount - 1 .. " others. :)')")
 				else
-					conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. row.steam .. ", 'Congratulations!  You won " .. prizeDraw .. " zennies in the daily lottery! =D')")
+					conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. row.steam .. ", 'Congratulations!  You won " .. prizeDraw .. " " .. server.moneyPlural .. " in the daily lottery! =D')")
 				end
 			end
 
@@ -184,19 +199,22 @@ function drawLottery()
 
 		message("say [" .. server.chatColour .. "]$$$ Congratulation$ $$$   xD[-]")
 
-		conn:execute("DELETE FROM memLottery")
-		conn:execute("DELETE FROM lottery")
-		server.lottery = 0
-
-		conn:execute("UPDATE server SET lottery = 0")
+		if steam == nil then
+			conn:execute("DELETE FROM memLottery")
+			conn:execute("DELETE FROM lottery")
+			server.lottery = 0
+			conn:execute("UPDATE server SET lottery = 0")
+		else
+			conn:execute("DELETE FROM memLottery where steam = '" .. steam .. "'")
+			conn:execute("DELETE FROM lottery where steam = '" .. steam .. "'")	
+		end
 	else
 		r = rand(7)
 		if (r == 1) then message("say [" .. server.chatColour .. "]Nobody wins again![-]") end
 		if (r == 2) then
 			thing = PicknMix()
-			thing = getEntity(thing)
-			if thing == "" then thing = "A Bunny Rabbit" end 
-			message("say [" .. server.chatColour .. "]Tonight's winner is.. " .. thing .. "! Who gave that a ticket? O.o[-]") 
+			thing = PicknMix()
+			message("say [" .. server.chatColour .. "]Tonight's winner is.. " .. gimmeZimbies[thing].zombie .. "! Who gave that a ticket? O.o[-]") 
 		end
 
 		if (r == 3) then 
@@ -241,7 +259,7 @@ function resetShop(forced)
 
 	server.shopCountdown = server.shopCountdown - 1
 
-	if (server.shopCountdown < 0) or forced ~= nil then
+	if tonumber(server.shopCountdown) < 0 or forced ~= nil then
 		conn:execute("UPDATE shop SET stock = maxStock")
 		server.shopCountdown = 1
 	end
@@ -250,6 +268,16 @@ end
 
 function doShop(command, playerid, words)
 	local k, v, i, number, cmd, list
+	
+if (debug) then 
+dbug("debug shop line " .. debugger.getinfo(1).currentline) 
+dbug(command)
+dbug(playerid)
+end		
+
+	-- check for missing money :O
+	if server.moneyName == nil then server.moneyName = "Zenny" end
+	if server.moneyPlural == nil then server.moneyPlural = "Zennies" end	
 
 	list = ""
 	for k, v in pairs(shopCategories) do
@@ -258,19 +286,25 @@ function doShop(command, playerid, words)
 		end
 	end
 	list = string.sub(list, 1, string.len(list) - 3)
+	
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 	shopState = "[OPEN]"
 
 	if server.shopOpenHour ~= server.shopCloseHour then
-		if (tonumber(gameHour) < tonumber(server.shopOpenHour) or tonumber(gameHour) > tonumber(server.shopCloseHour)) then
+		if (tonumber(server.gameHour) < tonumber(server.shopOpenHour) or tonumber(server.gameHour) > tonumber(server.shopCloseHour)) then
 			shopState = "[CLOSED]"
 		end
 	end
+	
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 	number = tonumber(string.match(command, " (-?\%d+)"))
+	
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 	if words[1] == "shop" and words[2] == nil then
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have " .. players[playerid].cash .. " zennies in the bank. Shop is " .. shopState .. "[-]")
+		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have " .. players[playerid].cash .. " " .. server.moneyPlural .. " in the bank. Shop is " .. shopState .. "[-]")
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]Shop categories are " .. list .. ".[-]")
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]Type shop food (to browse our fine collection of food).[-]")
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]Stock arrives every 3 days from other zones.[-]")
@@ -279,6 +313,7 @@ function doShop(command, playerid, words)
 		return false
 	end
 
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 	if (words[1] == "shop" and words[2] == "admin") and (accessLevel(playerid) < 3) then
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop price <code or item name> <whole number without $>[-]")
@@ -289,6 +324,7 @@ function doShop(command, playerid, words)
 		return false
 	end
 	
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 	
 	if (shopCategories[words[2]]) then
 		LookupShop(words[2],all)
@@ -315,6 +351,7 @@ function doShop(command, playerid, words)
 		return false
 	end	
 
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 	if (words[2] == "list") then
 		list = ""
@@ -328,6 +365,8 @@ function doShop(command, playerid, words)
 
 		return false
 	end
+	
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 	if (words[2] == "variation" and words[3] ~= nil) then
 		if (accessLevel(playerid) > 2) then
@@ -343,6 +382,7 @@ function doShop(command, playerid, words)
 		return false
 	end
 
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 	if (words[2] == "special" and words[3] ~= nil) then
 		if (accessLevel(playerid) > 2) then
@@ -359,6 +399,7 @@ function doShop(command, playerid, words)
 		return false
 	end
 
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 	if (words[2] == "price" and words[3] ~= nil) then
 		if (accessLevel(playerid) > 2) then
@@ -374,7 +415,8 @@ function doShop(command, playerid, words)
 		conn:execute("UPDATE shop SET price = " .. number .. " WHERE item = '" .. escape(shopItem) .. "'")
 		return false
 	end
-
+	
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 	if (words[2] == "restock" and words[3] ~= nil) then
 		if (accessLevel(playerid) > 2) then
@@ -393,82 +435,35 @@ function doShop(command, playerid, words)
 
 		return false
 	end
-
-
-	if (words[1] == "buy" and words[2] == "ticket") or words[1] == "gamble" then
-		if number == nil then number = 1 end
-
-		if accessLevel(playerid) < 1 then
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]Sorry " .. players[playerid].name .. " server owners may not enter the lottery.[-]")
-			return false
-		end
-
-		if players[playerid].cash < (25 * number) then
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]Sorry " .. players[playerid].name .. " but you don't have enough zennies.[-]")
-			return false
-		end
-
-
-		for i=1,number,1 do		
-			found = false
-			tries = 0
-			gotTicket = false
-
-			while not gotTicket do
-				r = rand(100)
-
-				cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE steam = " .. playerid .. " AND ticket = " .. r)
-				rows = cursor:numrows()
-
-				if rows > 0 then
-					found = true
-					break
-				end
-
-				if not found then
-					conn:execute("INSERT INTO memLottery (steam, ticket) VALUES (" .. playerid .. "," .. r .. ")")
-					conn:execute("INSERT INTO lottery (steam, ticket) VALUES (" .. playerid .. "," .. r .. ")")
-
-					players[playerid].cash = players[playerid].cash - 25
-					break
-				end
-
-				tries = tries + 1
-				if (tries > 100) then
-					break
-				end
-			end
-		end
-
-		conn:execute("UPDATE players SET cash = " .. players[playerid].cash .. " WHERE steam = " .. playerid)
-		cursor,errorString = conn:execute("SELECT count(ticket) as tickets FROM lottery WHERE steam = " .. playerid)
-		row = cursor:fetch(row, "a")	
-
-		if tonumber(row.tickets) > 0 then
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]Good Luck!  You have " .. row.tickets .. " tickets in the next draw![-]")
-		end
-
-		return false
-	end
-
+	
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 	if (words[1] == "buy" and words[2] ~= nil) then
 		if server.shopOpenHour ~= server.shopCloseHour then
-			if (tonumber(gameHour) < tonumber(server.shopOpenHour) or tonumber(gameHour) > tonumber(server.shopCloseHour)) and (accessLevel(playerid) > 2) then
+			if (tonumber(server.gameHour) < tonumber(server.shopOpenHour) or tonumber(server.gameHour) > tonumber(server.shopCloseHour)) and (accessLevel(playerid) > 2) then
 				message("pm " .. playerid .. " [" .. server.chatColour .. "]The shop is closed! Go play with zombies or something![-]")
 				return false
 			end
 		end
+		
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 		if server.shopLocation ~= nil then
-			dist = distancexz(igplayers[playerid].xPos, igplayers[playerid].zPos, locations[server.shopLocation].x, locations[server.shopLocation].z)
+			if not locations[server.shopLocation] then
+				server.shopLocation = nil
+				conn:execute("UPDATE server SET shopLocation = null")			
+			else
+				dist = distancexz(igplayers[playerid].xPos, igplayers[playerid].zPos, locations[server.shopLocation].x, locations[server.shopLocation].z)
 
-			if (dist > 20) and (accessLevel(playerid) > 2) then
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]The shop is only available in the " .. server.shopLocation .. " location.[-]")
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]Type /" .. server.shopLocation .. " to go there now and /return when finished.[-]")
-				return false
+				if (dist > 20) and (accessLevel(playerid) > 2) then
+					message("pm " .. playerid .. " [" .. server.chatColour .. "]The shop is only available in the " .. server.shopLocation .. " location.[-]")
+					message("pm " .. playerid .. " [" .. server.chatColour .. "]Type " .. server.commandPrefix .. server.shopLocation .. " to go there now and " .. server.commandPrefix .. "return when finished.[-]")
+					return false
+				end			
 			end
 		end
+		
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 		LookupShop(words[2], true) 
 
@@ -500,28 +495,13 @@ function doShop(command, playerid, words)
 
 			return false
 		end
-
-		if shopItem == "voodooForDummies" then
-			number = 1
-		end
+		
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
 		if (tonumber(players[playerid].cash) > (tonumber(shopPrice) * number)) and ((number <= tonumber(shopStock) or (tonumber(shopStock) == -1))) then
 			players[playerid].cash = tonumber(players[playerid].cash) - (tonumber(shopPrice) * number)
 
-			if shopItem == "P2Ptoken" then
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. players[playerid].cash .. " zennies remaining.[-]")
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]Use a token to teleport to a friend by typing their name with a slash eg. /bob.[-]")
-
-				if players[playerid].tokens == nil then
-					players[playerid].tokens = 0
-				end
-
-				players[playerid].tokens = players[playerid].tokens + 1
-				conn:execute("UPDATE players SET tokens = " .. players[playerid].tokens .. " WHERE steam = " .. playerid)
-				return false
-			end
-
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. players[playerid].cash .. " zennies remaining.[-]")
+			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. players[playerid].cash .. " " .. server.moneyPlural .. " remaining.[-]")
 			send("give " .. playerid .. " " .. shopItem .. " " .. number)
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]Press e now to pick up your purchase.[-]")
 
@@ -533,32 +513,14 @@ function doShop(command, playerid, words)
 			if (number > tonumber(shopStock)) and (tonumber(shopStock) > 0)  then
 				message("pm " .. playerid .. " [" .. server.chatColour .. "]I do not have that many " .. shopItem .. " in stock.[-]")
 			else
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]I am sorry but you have insufficient zennies.[-]")
+				message("pm " .. playerid .. " [" .. server.chatColour .. "]I am sorry but you have insufficient " .. server.moneyPlural .. ".[-]")
 			end
 		end
 
 		return false
 	end
-
-
-	if (words[1] == "cash" or words[1] == "zennies" or words[1] == "bank" or words[1] == "wallet") then
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have " .. players[playerid].cash .. " zennies in the bank. The shop is " .. shopState .. "[-]")
-		return false
-	end
-
-
-	if (words[1] == "pay" and words[2] ~= nil) then
-		id = LookupPlayer(words[2])
-		if (id ~= nil) then
-			igplayers[playerid].botQuestion = "pay player"
-			igplayers[playerid].botQuestionID = id
-			igplayers[playerid].botQuestionValue = math.abs(number)
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]You want to pay " .. math.abs(number) .. " zennies to " .. players[id].name .. "? Type /yes to complete the transaction or start over.[-]")
-		end
-
-		return false
-	end
-
+	
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end				
 
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
 		cursor,errorString = conn:execute("SELECT * FROM shop")
@@ -570,6 +532,7 @@ function doShop(command, playerid, words)
 		end
 	end
 
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end				
 
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
 		LookupShop(words[2], true)
@@ -593,4 +556,6 @@ function doShop(command, playerid, words)
 	
 		return false
 	end
+	
+if debug then dbug("debug shop end") end
 end

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -17,17 +17,18 @@ function gmsg_tracker()
 	debug = false
 
 	-- don't proceed if there is no leading slash
-	if (string.sub(chatvars.command, 1, 1) ~= "/") then
-		faultyChat = false
+	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
+		botman.faultyChat = false
 		return false
 	end
-	
+
 	if chatvars.showHelp then
-		if chatvars.words[3] then		
-			if chatvars.words[3] ~= "tracker" then
+		if chatvars.words[3] then
+			if not string.find(chatvars.words[3], "track") then
 				skipHelp = true
 			end
 		end
+
 		if chatvars.words[1] == "help" then
 			skipHelp = false
 		end
@@ -38,10 +39,14 @@ function gmsg_tracker()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_QueueMsg(players[chatvars.ircid].ircAlias, "")	
-		irc_QueueMsg(players[chatvars.ircid].ircAlias, "Tracker Commands:")	
-		irc_QueueMsg(players[chatvars.ircid].ircAlias, "=================")
-		irc_QueueMsg(players[chatvars.ircid].ircAlias, "")	
+		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, "Tracker Commands:")
+		irc_chat(players[chatvars.ircid].ircAlias, "=================")
+		irc_chat(players[chatvars.ircid].ircAlias, "")
+	end
+
+	if chatvars.showHelpSections then
+		irc_chat(players[chatvars.ircid].ircAlias, "tracker")
 	end
 
 
@@ -50,189 +55,43 @@ function gmsg_tracker()
 
 	-- ###################  Staff only beyond this point ################
 	-- Don't proceed if this is a player.  Server and staff only here.
-	if (chatvars.playername ~= "Server") then 
-		if (accessLevel(chatvars.playerid) > 2) then
-			faultyChat = false
+	if (chatvars.playername ~= "Server") then
+		if (chatvars.accessLevel > 2) then
+			botman.faultyChat = false
 			return false
 		end
 	end
 	-- ##################################################################
 
-if debug then dbug("debug tracker 1") end
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "skip" and chatvars.number ~= nil) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			faultyChat = false
-			return true
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "track"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "track <player> session <number> (session is optional and defaults to the latest)")
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "next (track the next session)")
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "last (track the previous session)")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Track the movements of a player.  If a session is given, you will track their movements from that session.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
 		end
-
-		igplayers[chatvars.playerid].trackerSkip = chatvars.number
-
-		faultyChat = false
-		return true
 	end
-
-if debug then dbug("debug tracker 2") end
-
-	if (chatvars.words[1] == "speed" and chatvars.number ~= nil) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			faultyChat = false
-			return true
-		end
-
-		igplayers[chatvars.playerid].trackerSpeed = chatvars.number
-
-		faultyChat = false
-		return true
-	end
-
-if debug then dbug("debug tracker 3") end
-
-	if (chatvars.words[1] == "forward" or chatvars.words[1] == "advance" and chatvars.number ~= nil) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			faultyChat = false
-			return true
-		end
-
-		igplayers[chatvars.playerid].trackerCount = igplayers[chatvars.playerid].trackerCount + chatvars.number
-		igplayers[chatvars.playerid].trackerStopped = false
-		igplayers[chatvars.playerid].trackerStop = true
-
-		faultyChat = false
-		return true
-	end
-
-if debug then dbug("debug tracker 4") end
-
-	if (chatvars.words[1] == "back" and chatvars.number ~= nil) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			faultyChat = false
-			return true
-		end
-
-		igplayers[chatvars.playerid].trackerCount = igplayers[chatvars.playerid].trackerCount - chatvars.number
-		igplayers[chatvars.playerid].trackerStopped = false
-		igplayers[chatvars.playerid].trackerStop = true
-
-		faultyChat = false
-		return true
-	end
-
-if debug then dbug("debug tracker 5") end
-
-	if (chatvars.words[1] == "goto" and chatvars.words[2] == "start") and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			faultyChat = false
-			return true
-		end
-
-		igplayers[chatvars.playerid].trackerReversed = false
-		igplayers[chatvars.playerid].trackerCount = 0
-
-		faultyChat = false
-		return true
-	end
-
-if debug then dbug("debug tracker 6") end
-
-	if (chatvars.words[1] == "goto" and chatvars.words[2] == "end") and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			faultyChat = false
-			return true
-		end
-
-		igplayers[chatvars.playerid].trackerReversed = true
-		igplayers[chatvars.playerid].trackerCount = 1000000000
-
-		faultyChat = false
-		return true
-	end
-
-if debug then dbug("debug tracker 7") end
-
-	if (chatvars.words[1] == "go" and chatvars.words[2] == "back") and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			faultyChat = false
-			return true
-		end
-
-		if 	igplayers[chatvars.playerid].trackerReversed == true then
-			igplayers[chatvars.playerid].trackerReversed = false
-		else
-			igplayers[chatvars.playerid].trackerReversed = true
-		end
-
-		igplayers[chatvars.playerid].trackerStopped = false
-
-		faultyChat = false
-		return true
-	end
-
-if debug then dbug("debug tracker 8") end
-
-	if (chatvars.words[1] == "stop" or chatvars.words[1] == "sotp" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			faultyChat = false
-			return true
-		end
-
-		r = rand(100)
-		if r == 99 then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HAMMER TIME![-]")
-		end
-
-		igplayers[chatvars.playerid].trackerStopped = true
-		igplayers[chatvars.playerid].following = nil
-		igplayers[chatvars.playerid].location = nil
-		faultyChat = false
-		return true
-	end
-
-if debug then dbug("debug tracker 9") end
-
-	if (chatvars.words[1] == "go" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			faultyChat = false
-			return true
-		end
-
-		igplayers[chatvars.playerid].trackerStopped = false
-		faultyChat = false
-		return true
-	end
-
-if debug then dbug("debug tracker 10") end
-
-	if (chatvars.words[1] == "stop" and chatvars.words[2] == "tracking") and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			faultyChat = false
-			return true
-		end
-
-		igplayers[chatvars.playerid].trackerStopped = true
-		conn:execute("DELETE FROM memTracker WHERE admin = " .. chatvars.playerid)
-		igplayers[chatvars.playerid].trackerCount = nil
-
-		faultyChat = false
-		return true
-	end
-
-if debug then dbug("debug tracker 11") end
 
 	if ((chatvars.words[1] == "track") or (chatvars.words[1] == "next") or (chatvars.words[1] == "last")) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			faultyChat = false
+		if (chatvars.accessLevel > 2) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			botman.faultyChat = false
 			return true
 		end
 
+		tmp = {}
 		conn:execute("DELETE FROM memTracker WHERE admin = " .. chatvars.playerid)
-
 		igplayers[chatvars.playerid].trackerStopped = false
 		igplayers[chatvars.playerid].trackerReversed = false
 
 		if igplayers[chatvars.playerid].trackerSpeed == nil then
-			igplayers[chatvars.playerid].trackerSpeed = 3
+			igplayers[chatvars.playerid].trackerSpeed = 4
 		end
 
 		if igplayers[chatvars.playerid].trackerSkip == nil then
@@ -244,30 +103,7 @@ if debug then dbug("debug tracker 11") end
 			igplayers[chatvars.playerid].trackerCount = 0
 			igplayers[chatvars.playerid].trackerSteam = 0
 			igplayers[chatvars.playerid].trackerSession = 0
-			id = nil
-		
-			if string.find(chatvars.command, "session") then
-				pname = string.sub(chatvars.command, string.find(chatvars.command, "track") + 6, string.find(chatvars.command, "session") - 1)
-				pname = string.trim(pname)
-				id = LookupPlayer(pname)
-				igplayers[chatvars.playerid].trackerSession = string.sub(chatvars.command, string.find(chatvars.command, "session") + 8)
-
-				if id ~= nil then
-					igplayers[chatvars.playerid].trackerSteam = id
-				end
-			else
-				pname = string.sub(chatvars.command, string.find(chatvars.command, "track ") + 6)
-				pname = string.trim(pname)
-				id = LookupPlayer(pname)
-
-				if id ~= nil then
-					igplayers[chatvars.playerid].trackerSession = players[id].sessionCount
-					igplayers[chatvars.playerid].trackerSteam = id
-				end
-			end
 		else
-			id = igplayers[chatvars.playerid].trackerSteam
-
 			if (chatvars.words[1] == "next") then
 				igplayers[chatvars.playerid].trackerSession = igplayers[chatvars.playerid].trackerSession + 1
 				igplayers[chatvars.playerid].trackerCount = 0
@@ -279,24 +115,297 @@ if debug then dbug("debug tracker 11") end
 				igplayers[chatvars.playerid].trackerCount = 1000000000
 				igplayers[chatvars.playerid].trackerReversed = true
 			end
+			
+			tmp.id = igplayers[chatvars.playerid].trackerSteam			
+			tmp.session = igplayers[chatvars.playerid].trackerSession			
 		end
 
-		if id ~= nil then
-			conn:execute("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. id .. " and session = " .. igplayers[chatvars.playerid].trackerSession .. ")")					
+		for i=1,chatvars.wordCount,1 do
+			if chatvars.words[i] == "track" then
+				tmp.name = chatvars.words[i+1]
+				tmp.id = LookupPlayer(tmp.name)	
+
+				if tmp.id ~= nil then
+					tmp.session = players[tmp.id].sessionCount
+					igplayers[chatvars.playerid].trackerSession = players[tmp.id].sessionCount
+					igplayers[chatvars.playerid].trackerSteam = tmp.id
+				end				
+			end			
+		
+			if chatvars.words[i] == "session" then
+				tmp.session = chatvars.words[i+1]
+				igplayers[chatvars.playerid].trackerSession = tmp.session
+			end		
+		
+			if chatvars.words[i] == "here" then
+				tmp.x = chatvars.intX
+				tmp.z = chatvars.intZ
+				tmp.dist = 200
+			end
+
+			if chatvars.words[i] == "range" or chatvars.words[i] == "dist" or chatvars.words[i] == "distance" then
+				tmp.x = chatvars.intX
+				tmp.z = chatvars.intZ
+				tmp.dist = chatvars.words[i+1]
+			end
+		end
+
+		if tmp.id ~= nil then
+			if tmp.dist ~= nil then
+				dbugi("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. tmp.id .. " and session = " ..tmp.session .. " and abs(x - " .. tmp.x .. ") <= " .. tmp.dist .. " AND abs(z - " .. tmp.z .. ") <= " .. tmp.dist .. ")")
+				conn:execute("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. tmp.id .. " and session = " .. tmp.session .. " and abs(x - " .. tmp.x .. ") <= " .. tmp.dist .. " AND abs(z - " .. tmp.z .. ") <= " .. tmp.dist .. ")")
+			else
+				conn:execute("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. tmp.id .. " and session = " .. tmp.session .. ")")
+			end
 		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player called " .. pname .. " found.[-]")
+			if tmp.name == nil then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player name, game id, or steam id required.[-]")			
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player or steam id matched " .. tmp.name .. "[-]")
+			end
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("debug tracker 12") end
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "track"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "skip <number>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Skip <number> of steps.  Instead of tracking each recorded step, you will skip <number> steps for faster but less precise tracking.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "skip" and chatvars.number ~= nil) and (chatvars.playerid ~= 0) then
+		if (chatvars.accessLevel > 2) then
+			botman.faultyChat = false
+			return true
+		end
+
+		igplayers[chatvars.playerid].trackerSkip = chatvars.number
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "track"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "speed <number>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "The default pause between each tracked step is 3 seconds. Change it to any number of seconds from 1 to whatever.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "speed" and chatvars.number ~= nil) and (chatvars.playerid ~= 0) then
+		if (chatvars.accessLevel > 2) then
+			botman.faultyChat = false
+			return true
+		end
+
+		igplayers[chatvars.playerid].trackerSpeed = chatvars.number
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "track"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "jump <number>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Jump forward <number> steps or backwards if given a negative number.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "jump" and chatvars.number ~= nil) and (chatvars.playerid ~= 0) then
+		if (chatvars.accessLevel > 2) then
+			botman.faultyChat = false
+			return true
+		end
+
+		igplayers[chatvars.playerid].trackerCount = igplayers[chatvars.playerid].trackerCount + chatvars.number
+		igplayers[chatvars.playerid].trackerStopped = false
+		igplayers[chatvars.playerid].trackerStop = true
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "track"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "goto start")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Move to the start of the current track.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "goto" and chatvars.words[2] == "start") and (chatvars.playerid ~= 0) then
+		if (chatvars.accessLevel > 2) then
+			botman.faultyChat = false
+			return true
+		end
+
+		igplayers[chatvars.playerid].trackerReversed = false
+		igplayers[chatvars.playerid].trackerCount = 0
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "track"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "goto end")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Move to the end of the current track.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "goto" and chatvars.words[2] == "end") and (chatvars.playerid ~= 0) then
+		if (chatvars.accessLevel > 2) then
+			botman.faultyChat = false
+			return true
+		end
+
+		igplayers[chatvars.playerid].trackerReversed = true
+		igplayers[chatvars.playerid].trackerCount = 1000000000
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
+
+	if (chatvars.words[1] == "go" and chatvars.words[2] == "back") and (chatvars.playerid ~= 0) then
+		if (chatvars.accessLevel > 2) then
+			botman.faultyChat = false
+			return true
+		end
+
+		if 	igplayers[chatvars.playerid].trackerReversed == true then
+			igplayers[chatvars.playerid].trackerReversed = false
+		else
+			igplayers[chatvars.playerid].trackerReversed = true
+		end
+
+		igplayers[chatvars.playerid].trackerStopped = false
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "track"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "stop")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Stop tracking.  Resume it with " .. server.commandPrefix .. "go")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "stop" or chatvars.words[1] == "sotp" or chatvars.words[1] == "s" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
+		if (chatvars.accessLevel > 2) then
+			botman.faultyChat = false
+			return true
+		end
+
+		r = rand(50)
+		if r == 49 then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HAMMER TIME![-]")
+		end
+
+		igplayers[chatvars.playerid].trackerStopped = true
+		igplayers[chatvars.playerid].following = nil
+		igplayers[chatvars.playerid].location = nil
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "track"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "go")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Resume tracking.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "go" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
+		if (chatvars.accessLevel > 2) then
+			botman.faultyChat = false
+			return true
+		end
+
+		igplayers[chatvars.playerid].trackerStopped = false
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "track"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "stop tracking")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Stops tracking and clears the tracking data from memory.  This happens when you exit the server anyway so you don't have to do this.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "stop" and chatvars.words[2] == "tracking") and (chatvars.playerid ~= 0) then
+		if (chatvars.accessLevel > 2) then
+			botman.faultyChat = false
+			return true
+		end
+
+		igplayers[chatvars.playerid].trackerStopped = true
+		conn:execute("DELETE FROM memTracker WHERE admin = " .. chatvars.playerid)
+		igplayers[chatvars.playerid].trackerCount = nil
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
 
 	if ((chatvars.words[1] == "check") and (chatvars.words[2] == "bases")) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			faultyChat = false
+		if (chatvars.accessLevel > 2) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			botman.faultyChat = false
 			return true
 		end
 
@@ -314,21 +423,21 @@ if debug then dbug("debug tracker 12") end
 				conn:execute("INSERT into memTracker (admin, steam, x, y, z, flag) VALUES (" .. chatvars.playerid .. "," .. row.steam .. "," .. row.home2X .. "," .. row.home2Y .. "," .. row.home2Z .. ",'base2')")
 			end
 
-			row = cursor:fetch(row, "a")	
+			row = cursor:fetch(row, "a")
 		end
 
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bases are loaded into the tracker. Use /nb to move forward, /pb to move back and /killbase to remove the current base.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bases are loaded into the tracker. Use " .. server.commandPrefix .. "nb to move forward, " .. server.commandPrefix .. "pb to move back and " .. server.commandPrefix .. "killbase to remove the current base.[-]")
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("debug tracker 13") end
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "nb" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			faultyChat = false
+		if (chatvars.accessLevel > 2) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			botman.faultyChat = false
 			return true
 		end
 
@@ -351,16 +460,16 @@ if debug then dbug("debug tracker 13") end
 			end
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("debug tracker 14") end
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "pb" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			faultyChat = false
+		if (chatvars.accessLevel > 2) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			botman.faultyChat = false
 			return true
 		end
 
@@ -385,16 +494,16 @@ if debug then dbug("debug tracker 14") end
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have reached the first base.[-]")
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("debug tracker 15") end
+	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "killbase" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			faultyChat = false
+		if (chatvars.accessLevel > 2) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			botman.faultyChat = false
 			return true
 		end
 
@@ -420,7 +529,7 @@ if debug then dbug("debug tracker 15") end
 			end
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 

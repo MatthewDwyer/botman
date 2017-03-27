@@ -1,3 +1,43 @@
+function table.val_to_str ( v )
+  if "string" == type( v ) then
+    v = string.gsub( v, "\n", "\\n" )
+    if string.match( string.gsub(v,"[^'\"]",""), '^"+$' ) then
+      return "'" .. v .. "'"
+    end
+    return '"' .. string.gsub(v,'"', '\\"' ) .. '"'
+  else
+    return "table" == type( v ) and table.tostring( v ) or
+      tostring( v )
+  end
+end
+
+function table.key_to_str ( k )
+  if "string" == type( k ) and string.match( k, "^[_%a][_%a%d]*$" ) then
+    return k
+  else
+    return "[" .. table.val_to_str( k ) .. "]"
+  end
+end
+
+function dumpTable( tbl )
+  local result, done = {}, {}
+  for k, v in ipairs( tbl ) do
+    table.insert( result, table.val_to_str( v ) )
+    done[ k ] = true
+  end
+  for k, v in pairs( tbl ) do
+    if not done[ k ] then
+      table.insert( result,
+        table.key_to_str( k ) .. "=" .. table.val_to_str( v ) )
+    end
+  end
+  
+  file = io.open(homedir .. "/" .. "table_dump.txt", "a")
+  file:write("{" .. table.concat( result, "," ) .. "}" .. "\n")
+  file:close()
+end
+
+
 function saveLuaTables(date)
 	if date ~= nil then
 		date = date .. "_"
@@ -6,18 +46,34 @@ function saveLuaTables(date)
 	end
 
 	dbug("saving Lua tables")
-	table.save(homedir .. "/" .. date .. "players.lua", players)
-	table.save(homedir .. "/" .. date .. "teleports.lua", teleports)
-	table.save(homedir .. "/" .. date .. "friends.lua", friends)
-	table.save(homedir .. "/" .. date .. "locations.lua", locations)
-	table.save(homedir .. "/" .. date .. "server.lua", server)
 	table.save(homedir .. "/" .. date .. "badItems.lua", badItems)
-	table.save(homedir .. "/" .. date .. "hotspots.lua", hotspots)
-	table.save(homedir .. "/" .. date .. "resetRegions.lua", resetRegions)
-	table.save(homedir .. "/" .. date .. "shopCategories.lua", shopCategories)
-	table.save(homedir .. "/" .. date .. "villagers.lua", villagers)
-	table.save(homedir .. "/" .. date .. "restrictedItems.lua", restrictedItems)
 	table.save(homedir .. "/" .. date .. "customMessages.lua", customMessages)
+	table.save(homedir .. "/" .. date .. "friends.lua", friends)
+	table.save(homedir .. "/" .. date .. "hotspots.lua", hotspots)
+	table.save(homedir .. "/" .. date .. "locations.lua", locations)
+	table.save(homedir .. "/" .. date .. "players.lua", players)
+	table.save(homedir .. "/" .. date .. "resetRegions.lua", resetRegions)
+	table.save(homedir .. "/" .. date .. "restrictedItems.lua", restrictedItems)
+	table.save(homedir .. "/" .. date .. "server.lua", server)
+	table.save(homedir .. "/" .. date .. "shopCategories.lua", shopCategories)
+	table.save(homedir .. "/" .. date .. "teleports.lua", teleports)
+	table.save(homedir .. "/" .. date .. "villagers.lua", villagers)
+	table.save(homedir .. "/" .. date .. "waypoints.lua", waypoints)	
+	
+	table.save(homedir .. "/data_backup/badItems.lua", badItems)
+	table.save(homedir .. "/data_backup/customMessages.lua", customMessages)
+	table.save(homedir .. "/data_backup/friends.lua", friends)
+	table.save(homedir .. "/data_backup/hotspots.lua", hotspots)
+	table.save(homedir .. "/data_backup/locations.lua", locations)
+	table.save(homedir .. "/data_backup/players.lua", players)
+	table.save(homedir .. "/data_backup/resetRegions.lua", resetRegions)
+	table.save(homedir .. "/data_backup/restrictedItems.lua", restrictedItems)
+	table.save(homedir .. "/data_backup/server.lua", server)
+	table.save(homedir .. "/data_backup/shopCategories.lua", shopCategories)
+	table.save(homedir .. "/data_backup/teleports.lua", teleports)
+	table.save(homedir .. "/data_backup/villagers.lua", villagers)
+	table.save(homedir .. "/data_backup/waypoints.lua", waypoints)
+	
 	dbug("finished saving Lua tables")
 end
 
@@ -140,7 +196,7 @@ end
 
 
 function importFriends()
-	local friendlist, i
+	local friendlist, i, max
 
 	dbug("Importing Friends")
 	message("say [" .. server.chatColour .. "]Importing friends[-]")
@@ -148,7 +204,8 @@ function importFriends()
 	for k,v in pairs(friends) do
 		friendlist = string.split(v.friends, ",")
 
-		for i=1,table.maxn(friendlist),1 do
+		max = table.maxn(friendlist)
+		for i=1,max,1 do
 			if friendlist[i] ~= "" then
 				conn:execute("INSERT INTO friends (steam, friend) VALUES (" .. k .. "," .. friendlist[i] .. ")")
 			end
@@ -211,40 +268,53 @@ function importBaditems()
 end
 
 
+function importWaypoints()
+	dbug("Importing Waypoints")
+	message("say [" .. server.chatColour .. "]Importing waypoints[-]")
+
+	for k,v in pairs(waypoints) do
+		conn:execute("INSERT INTO waypoints (steam, name, x, y, z, linked, shared) VALUES (" .. v.steam .. ",'" .. escape(v.name) .. "'," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. dbBool(v.linked) .. "," .. dbBool(v.shared) .. ")")
+	end
+
+	dbug("Waypoints Imported")
+end
+
+
+
 function importLuaData()
 	dbug("Importing Lua Tables")
-	message("say [" .. server.chatColour .. "]Importing data from Lua tables..[-]")
+	message("say [" .. server.chatColour .. "]Restoring bot data from backup..[-]")
 
 dbug("import 1")
 	dbug("Loading server")
-	table.load(homedir .. "/server.lua", server)
+	table.load(homedir .. "/data_backup/server.lua", server)
 dbug("import 2")
 	dbug("Loading players")
-	table.load(homedir .. "/players.lua", players)
+	table.load(homedir .. "/data_backup/players.lua", players)
 dbug("import 3")
 	dbug("Loading teleports")
-	table.load(homedir .. "/teleports.lua", teleports)
+	table.load(homedir .. "/data_backup/teleports.lua", teleports)
 dbug("import 4")
 	dbug("Loading friends")
-	table.load(homedir .. "/friends.lua", friends)
+	table.load(homedir .. "/data_backup/friends.lua", friends)
 dbug("import 5")
 	dbug("Loading locations")
-	table.load(homedir .. "/locations.lua", locations)
+	table.load(homedir .. "/data_backup/locations.lua", locations)
 dbug("import 6")
 	dbug("Loading hotspots")
-	table.load(homedir .. "/hotspots.lua", hotspots)
+	table.load(homedir .. "/data_backup/hotspots.lua", hotspots)
 dbug("import 7")
 	dbug("Loading villagers")
-	table.load(homedir .. "/villagers.lua", villagers)
+	table.load(homedir .. "/data_backup/villagers.lua", villagers)
 dbug("import 9")
 	dbug("Loading shop categories")
-	table.load(homedir .. "/shopCategories.lua", shopCategories)
+	table.load(homedir .. "/data_backup/shopCategories.lua", shopCategories)
 dbug("import 11")
 	dbug("Loading reset zones")
-	table.load(homedir .. "/resetRegions.lua", resetRegions)
+	table.load(homedir .. "/data_backup/resetRegions.lua", resetRegions)
 dbug("import 12")
 	dbug("Loading bad items")
-	table.load(homedir .. "/badItems.lua", badItems)
+	table.load(homedir .. "/data_backup/badItems.lua", badItems)
 dbug("import 13")
 	conn:execute("DELETE FROM badItems")
 	conn:execute("DELETE FROM friends")
@@ -275,7 +345,6 @@ dbug("import 14")
 dbug("import 15")
 	importShopCategories()
 
-
 	dbug("Import of Lua tables Complete")
-	message("say [" .. server.chatColour .. "]Import complete.[-]")
+	message("say [" .. server.chatColour .. "]Bot restore complete.[-]")
 end

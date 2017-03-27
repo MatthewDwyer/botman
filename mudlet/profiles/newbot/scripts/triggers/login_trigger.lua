@@ -1,9 +1,9 @@
 function loginTrigger(line)
 	lastAction = "Login"
-	botOffline = 2
+	botman.botOfflineCount = 2
 
 	-- EDIT ME!
 	send(telnetPassword)
 
-	botDisabled = false
+	botman.botDisabled = false
 end

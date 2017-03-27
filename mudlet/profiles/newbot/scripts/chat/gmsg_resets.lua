@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -17,17 +17,18 @@ function gmsg_resets()
 	debug = false
 
 	-- don't proceed if there is no leading slash
-	if (string.sub(chatvars.command, 1, 1) ~= "/") then
-		faultyChat = false
+	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
+		botman.faultyChat = false
 		return false
 	end
-	
+
 	if chatvars.showHelp then
-		if chatvars.words[3] then		
+		if chatvars.words[3] then
 			if chatvars.words[3] ~= "resets" then
 				skipHelp = true
 			end
 		end
+
 		if chatvars.words[1] == "help" then
 			skipHelp = false
 		end
@@ -38,21 +39,25 @@ function gmsg_resets()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_QueueMsg(players[chatvars.ircid].ircAlias, "")	
-		irc_QueueMsg(players[chatvars.ircid].ircAlias, "Reset Commands:")	
-		irc_QueueMsg(players[chatvars.ircid].ircAlias, "===============")
-		irc_QueueMsg(players[chatvars.ircid].ircAlias, "")	
+		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, "Reset Commands:")
+		irc_chat(players[chatvars.ircid].ircAlias, "===============")
+		irc_chat(players[chatvars.ircid].ircAlias, "")
+	end
+
+	if chatvars.showHelpSections then
+		irc_chat(players[chatvars.ircid].ircAlias, "resets")
 	end
 
 	-- ###################  do not allow remote commands beyond this point ################
 	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
 
-if debug then dbug("debug resets 1") end
+	if (debug) then dbug("debug resets line " .. debugger.getinfo(1).currentline) end
 
 	if ((chatvars.words[1] == "add" or chatvars.words[1] == "remove" or chatvars.words[1] == "delete") and chatvars.words[2] == "reset" and (chatvars.words[3] == "region" or chatvars.words[3] == "zone")) and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 3) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			faultyChat = false
+		if (chatvars.accessLevel > 3) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			botman.faultyChat = false
 			return true
 		end
 
@@ -66,20 +71,20 @@ if debug then dbug("debug resets 1") end
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Region " .. region .. " is now a reset zone.[-]")
 		else
 			resetRegions[region] = nil
-			conn:execute("DELETE FROM resetZones WHERE region = '" .. region .. "')")
+			conn:execute("DELETE FROM resetZones WHERE region = '" .. region .. "'")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Region " .. region .. " is no longer a reset zone.[-]")
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("debug resets 2") end
+	if (debug) then dbug("debug resets line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "reset" and chatvars.words[2] == "zones") and (chatvars.playerid ~= 0) then
-		if (accessLevel(chatvars.playerid) > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			faultyChat = false
+		if (chatvars.accessLevel > 2) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			botman.faultyChat = false
 			return true
 		end
 
@@ -92,11 +97,11 @@ if debug then dbug("debug resets 2") end
 			row = cursor:fetch({}, "a")
 			while row do
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.region .. "[-]")
-				row = cursor:fetch(row, "a")	
+				row = cursor:fetch(row, "a")
 			end
 		end
 
-		faultyChat = false
+		botman.faultyChat = false
 		return true
 	end
 

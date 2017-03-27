@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -8,11 +8,11 @@
 --]]
 
 function fortyfiveSecondTimer()
-	if botDisabled then
+	local k, v, x, z, row, cursor, errorString
+
+	if botman.botDisabled or botman.botOffline or server.lagged then
 		return
 	end
-
-	local k, v, x, z, row, cursor, errorString
 
 	conn:execute("UPDATE keystones SET removed = 1")
 

@@ -1,26 +1,24 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-function llp()
+function llp(line)
 	local pos, temp, x, y, z
-
-	if string.find(line, "Executing command 'llp") then
-		pos = string.find(line, "llp") + 4
-		llpid = string.sub(line, pos, pos + 16)
+	
+	if string.find(line, "Executing command 'llp ") then
+		llpid = string.sub(line, string.find(line, "llp") + 4, string.find(line, " by ") - 2)
 		players[llpid].keystones = 0
 		return
 	end
 
 	-- depreciated in latest Allocs. Here for backwards compatibility
-	if string.find(line, "keystones (protected:") then
-		pos = string.find(line, " owns") - 3
-		llpid = string.sub(line, pos - 16, pos)
+	if string.find(line, "keystones (protected", nil, true) then
+		llpid = string.sub(line, string.find(line, "7656"), string.find(line, "7656") + 16)		
 		players[llpid].keystones = string.sub(line, string.find(line, "owns ") + 5, string.find(line, " keyst") - 1)
 		conn:execute("UPDATE players SET keystones = " .. players[llpid].keystones .. " WHERE steam = " .. llpid)
 	end
@@ -61,11 +59,11 @@ end
 
 
 function llpTrigger(line)
-	if botDisabled then
+	if botman.botDisabled then
 		return
 	end
 
-	if string.find(line, "LandProtectionOf:") or string.find(line, "Executing command 'llp") or string.find(line, "keystones (protected:") then
-		llp()
+	if string.find(line, "LandProtectionOf") or string.find(line, "Executing command 'llp") or string.find(line, "keystones (protected", nil, true) then
+		llp(line)
 	end
 end

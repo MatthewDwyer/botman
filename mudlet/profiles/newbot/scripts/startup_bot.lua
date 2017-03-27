@@ -1,18 +1,44 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	          This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+debugger = require "debug"
 local debug
 
+-- record start and end execution times of code and report it.  At the moment I'm sending the timing info to the bot's lists window.
+benchmarkBot = false
+
+function dbugi(text)
+	-- send text to the watch irc channel
+	if server ~= nil then
+		irc_chat(server.ircWatch, text)
+	end
+end
+
+
+function dbug(text)
+	-- send text to the debug window we created in Mudlet.
+	if server == nil then
+		display(text .. "\n")
+		return
+	end
+
+	if server.windowLists then
+		windowMessage(server.windowLists, text .. "\n")
+	end
+end
+
 function checkData()
+	local benchStart = os.clock()
+
 	if server.botName == nil then
 		loadServer()
-		botStarted = nil
+		botman.botStarted = nil
 		login()
 	end
 
@@ -28,211 +54,183 @@ function checkData()
 		send("gg")
 	end
 
-	if (playersOnline > 0) then
+	if (botman.playersOnline > 0) then
 		if 	tablelength(igplayers) == 0 then
 			igplayers = {}
 			send("lp")
 		end
 	end
+	
+	if benchmarkBot then	
+		dbug("function checkData elapsed time: " .. string.format("%.2f", os.clock() - benchStart))
+	end	
 end
 
 
 function getServerData()
-	tempTimer( 2, [[send("ban list")]] )
-	dbug("ban list")
+	local benchStart = os.clock()
 
-	tempTimer( 5, [[send("lkp")]] )
-	dbug("lkp")
-
-	tempTimer( 8, [[send("llp")]] )
-	dbug("llp")
-
-	tempTimer( 8, [[send("admin list")]] )
-	dbug("admin list")
-
-	tempTimer( 10, [[send("pm IPCHECK")]] )
-	dbug("ipcheck")
-
-	tempTimer( 11, [[send("teleh")]] )
-	dbug("coppi test")
+	--read mods
+	send("version")
 	
-	tempTimer( 12, [[send("ubex_ubexv")]] )
-	dbug("ubex test")
+	--read the ban list
+	tempTimer( 2, [[send("ban list")]] )
 
+	--list known players
+	tempTimer( 5, [[send("lkp -online")]] )
+
+	--read admin list
+	tempTimer( 8, [[send("admin list")]] )
+
+	--get the bot's IP
+	tempTimer( 10, [[send("pm IPCHECK")]] )
+
+	--read gg
 	tempTimer( 13, [[send("gg")]] )
-	dbug("gg")
 
+	--register the bot in the bots database
 	tempTimer( 15, [[registerBot()]] )
-	dbug("registerBot")
 
-	if db2Connected then
+	--get known servers for whitelisting
+	if botman.db2Connected then
 		tempTimer( 17, [[getWhitelistedServers()]] )
-		dbug("getWhitelistedServers")
 	end
+	
+	--list the zombies		
+	tempTimer( 22, [[send("se")]] )
+	
+	if benchmarkBot then	
+		dbug("function getServerData elapsed time: " .. string.format("%.2f", os.clock() - benchStart))
+	end		
 end
 
 
 function login()
+	local benchStart = os.clock()
+
 	debug = false
 	debugdb = false
 	
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end		
+	
+	if type(botman) ~= "table" then
+		botman = {}
+	end	
+	
 	if type(server) ~= "table" then
 		server = {}
-		scheduledReboot = false
-		scheduledRestartPaused = false
-		scheduledRestartForced = false
-		server.scheduledIdleRestart = false
-		server.scheduledRestart = false
-		server.scheduledRestartTimestamp = os.time()
+		botman.scheduledRestartPaused = false
+		botman.scheduledRestartForced = false
+		botman.scheduledRestart = false
+		botman.scheduledRestartTimestamp = os.time()
+		botman.lastBlockCommandOwner =	0
+		server.lagged = false
 	end	
+	
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end			
 
 	if reloadBotScripts == nil then
 		dofile(homedir .. "/scripts/reload_bot_scripts.lua")
 		reloadBotScripts()
 	end
+	
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end			
 
-	tempTimer( 30, [[checkData()]] )
-
+	tempTimer( 60, [[checkData()]] )
 	stackLimits = {}
 
-	if (botStarted == nil) then
-		botStarted = os.time()
-		
+	if (botman.botStarted == nil) then	
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end				
+		botman.botStarted = os.time()
 		initBot()
-
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end					
 		openDB()
-		initDB()
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end					
 		openBotsDB()
-
-		dbConnected = isDBConnected()
-		db2Connected = isDBBotsConnected()
-
-		initError = true
-		serverTime = ""
-		feralWarning = false
-		scheduledReboot = false
-		userHome = string.sub(homedir, 1, string.find(homedir, ".config") - 2)
-
-		fixMissingStuff()
-
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end					
+		initDB()		
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end					
+		botman.dbConnected = isDBConnected()
+		botman.db2Connected = isDBBotsConnected()
+		botman.initError = true
+		botman.serverTime = ""
+		botman.feralWarning = false
+		botman.playersOnline = -1
+		botman.userHome = string.sub(homedir, 1, string.find(homedir, ".config") - 2)
 		loadServer()
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end					
+		botman.ignoreAdmins	= true
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end				
 		
-		server.webdavFolderExists = true
-		if not isDir("/var/www/webdav/chatlogs/" .. webdavFolder) then
-			server.webdavFolderExists = false
+		if server.botID == nil then
+			server.botID = 0		
+		end
+		
+		botman.webdavFolderExists = true
+		
+		if botman.chatlogPath == nil then
+			botman.chatlogPath = webdavFolder
+			conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'")
+		end		
+
+		if not isDir(botman.chatlogPath) then
+			botman.webdavFolderExists = false
 		end
 
 		openUserWindow(server.windowGMSG) 
 		openUserWindow(server.windowDebug) 
 		openUserWindow(server.windowLists) 
 		openUserWindow(server.windowPlayers) 
-		openUserWindow(server.windowAlerts) 
+		openUserWindow(server.windowAlerts)
 
-		if not botDisabled and botTick == nil then
-			botTick = readBotTick()
-			tempTimer( 58, [[checkBotTick()]] )
-		end
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end			
 
-		if debug then dbug("debug login 1\n") end
+		fixTables()				
 
-		if type(igplayers) ~= "table" then
-		  igplayers = {}
-		end
-
-		if type(owners) ~= "table" then
-		  owners = {}
-		end
-
-		if type(admins) ~= "table" then
-		  admins = {}
-		end
-
-		if type(mods) ~= "table" then
-		  mods = {}
-		end
-
-		if type(friends) ~= "table" then
-		  friends = {}
-		end
-
-		if type(invTemp) ~= "table" then
-		  invTemp = {}
-		end
-
-		if type(hotspots) ~= "table" then
-		  hotspots = {}
-		end
-
-		if type(badItems) ~= "table" then
-		  badItems = {}
-		end
-
-		if type(restrictedItems) ~= "table" then
-		  restrictedItems = {}
-		end
-
-		if type(lastHotspots) ~= "table" then
-			lastHotspots = {}
-		end
-
-		if type(villagers) ~= "table" then
-		  villagers = {}
-		end
-
-		if type(shopCategories) ~= "table" then
-			shopCategories = {}
-		end
-
-		if type(stackLimits) ~= "table" then
-			stackLimits = {}
-		end
-
-		if type(customMessages) ~= "table" then
-		  customMessages = {}
-		end
-
-		if type(reservedSlots) ~= "table" then
-			reservedSlots = {}
-		end
-
-		if type(proxies) ~= "table" then
-			proxies = {}
-		end
-
-		if type(whitelistedServers) ~= "table" then
-			whitelistedServers = {}
-		end
-
-		if debug then dbug("debug login 2\n") end
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end			
 
 		-- add your steam id here so you can debug using your name
-		yourname = "your steam id here"
+		Smegz0r = "76561197983251951"
 
-		if (ExceptionCount == nil) then
-			ExceptionCount = 0
+		if (botman.ExceptionCount == nil) then
+			botman.ExceptionCount = 0
 		end
 
-		AnnounceBot = true
-		faultyGimme = false
-		faultyGimmeNumber = 0
-		faultyChat = false
-		gimmeHell = 0
-		server.scheduledRestartPaused  = false
-		server.scheduledRestart = false
-		ExceptionRebooted = false
-		scanZombies = false
+		botman.announceBot = true
+		botman.alertMods = true		
+		botman.faultyGimme = false
+		botman.faultyGimmeNumber = 0
+		botman.faultyChat = false
+		botman.gimmeHell = 0
+		botman.scheduledRestartPaused  = false
+		botman.scheduledRestart = false
+		botman.ExceptionRebooted = false
+		server.scanZombies = false
+		
+		fixMissingStuff()		
+		
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end					
 
 		-- load tables
 		loadTables()
+		
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end					
 
 		-- set all players to offline in cloud db
 		cleanupBotsData()
 
-		if debug then dbug("debug login 5\n") end
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end			
 
-		nextRebootTest = nil
-		initError = false
+		botman.nextRebootTest = nil
+		botman.initError = false
+		startLogging(true)		
+		getServerData()
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end					
 	end
 
-	if debug then dbug("debug login end\n") end
+	if debug then display("debug login end\n") end
+	
+	if benchmarkBot then	
+		dbug("function login elapsed time: " .. string.format("%.2f", os.clock() - benchStart))
+	end		
 end

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -8,7 +8,7 @@
 --]]
 
 function memTrigger(line)
-	if botDisabled then
+	if botman.botDisabled then
 		return
 	end
 
@@ -27,6 +27,6 @@ function memTrigger(line)
 		items = string.sub(line, string.find(line, "Items:") + 7, string.find(line, "CO:") - 2)
 
 		server.fps = fps
-		conn:execute("INSERT INTO performance (serverdate, gametime, fps, heap, heapMax, chunks, cgo, players, zombies, entities, items) VALUES ('" .. serverTime .. "'," .. time .. "," .. fps .. "," .. heap .. "," .. heapMax .. "," .. chunks .. "," .. cgo .. "," .. ply .. "," .. zom .. ",'" .. ent .. "'," .. items .. ")")
+		conn:execute("INSERT INTO performance (serverdate, gametime, fps, heap, heapMax, chunks, cgo, players, zombies, entities, items) VALUES ('" .. botman.serverTime .. "'," .. time .. "," .. fps .. "," .. heap .. "," .. heapMax .. "," .. chunks .. "," .. cgo .. "," .. ply .. "," .. zom .. ",'" .. ent .. "'," .. items .. ")")
 	end
 end

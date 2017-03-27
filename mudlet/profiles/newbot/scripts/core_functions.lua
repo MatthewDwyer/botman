@@ -1,11 +1,89 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
+
+function alertAdmins(msg, alert)
+	-- pm all in-game admins with msg
+	local k, v, msgColour
+
+	if type(server) == "table" then
+		msgColour = server.chatColour
+		if alert == "alert" then msgColour = server.alertColour end
+		if alert == "warn" then msgColour = server.warnColour end
+	else
+		msgColour = "D4FFD4"
+	end
+
+	for k, v in pairs(igplayers) do
+		if (accessLevel(k) < 3) then
+			message("pm " .. k .. " [" .. msgColour .. "]" .. msg .. "[-]")
+		end
+	end
+end
+
+
+function stripCommas(value)
+	if value == true or value == false then
+		return value
+	end
+
+	value = string.trim(value)
+	value = string.gsub(value, ",", "")
+	return value
+end
+
+
+function stripQuotes(name)
+	local oldName
+	oldName = name
+
+	name = string.trim(name)
+	name = string.match(name, "^'(.*)'$")
+
+	if name == oldName then
+		name = string.match(name, "^\"(.*)\"$")
+	end
+
+	if name == nil then name = oldName end
+
+	if string.sub(name, string.len(name)) == "'" then
+		name = string.sub(name, 1, string.len(name) - 1)
+	end
+
+	return name
+end
+
+
+function isFile(name)
+    if type(name)~="string" then return false end
+    if not isDir(name) then
+        return os.rename(name,name) and true or false
+        -- note that the short evaluation is to
+        -- return false instead of a possible nil
+    end
+
+    return false
+end
+
+
+function isFileOrDir(name)
+    if type(name)~="string" then return false end
+    return os.rename(name, name) and true or false
+end
+
+
+function isDir(name)
+    if type(name)~="string" then return false end
+    local cd = lfs.currentdir()
+    local is = lfs.chdir(name) and true or false
+    lfs.chdir(cd)
+    return is
+end
 
 
 function isNewPlayer(steam)
@@ -54,6 +132,8 @@ end
 
 function message(msg, irc)
 	-- parse msg and enclose the actual message in double quotes
+	local words, word
+
 	words = {}
 	for word in msg:gmatch("%S+") do table.insert(words, word) end
 
@@ -67,51 +147,79 @@ function message(msg, irc)
 
 		if irc ~= nil then
 			-- send a copy of the pm to irc
-			irc_QueueMsg(irc, "pm to " .. words[2] .. " " .. string.sub(msg, 21))
+			irc_chat(irc, "pm to " .. words[2] .. " " .. string.sub(msg, 21))
 		end
 	end
 end
 
 
 function pvpZone(x, z)
+	local k,v, result
+
+	if server.gameType == "pvp" then
+		result = true
+	else
+		result = false
+	end
+
 	-- is the coord x,z a pvp zone?
 	if server.northeastZone == "pvp" and tonumber(x) > 0 and tonumber(z) > 0 then
-		return true
+		result = true
+	end
+
+	if server.northeastZone == "pve" and tonumber(x) > 0 and tonumber(z) > 0 then
+		result = false
 	end
 
 	if server.northwestZone == "pvp" and tonumber(x) < 0 and tonumber(z) > 0 then
-		return true
+		result = true
+	end
+
+	if server.northwestZone == "pve" and tonumber(x) < 0 and tonumber(z) > 0 then
+		result = false
 	end
 
 	if server.southeastZone == "pvp" and tonumber(x) > 0 and tonumber(z) < 0 then
-		return true
+		result = true
+	end
+
+	if server.southeastZone == "pve" and tonumber(x) > 0 and tonumber(z) < 0 then
+		result = false
 	end
 
 	if server.southwestZone == "pvp" and tonumber(x) < 0 and tonumber(z) < 0 then
-		return true
+		result = true
+	end
+
+	if server.southwestZone == "pve" and tonumber(x) < 0 and tonumber(z) < 0 then
+		result = false
 	end
 
 	for k, v in pairs(locations) do
 		if (v.pvp) then
-			-- if the coord is inside this pvp location, return the location name
+			-- if the coord is inside a pvp location, return true
 			if math.abs(v.x-x) <= (tonumber(v.size)) and math.abs(v.z-z) <= (tonumber(v.size)) then
-				return true
+				result = true
 			end
 		else
-			-- if the coord is inside this pvp location, return the location name
+			-- if the coord is inside a pve location, return false
 			if math.abs(v.x-x) <= (tonumber(v.size)) and math.abs(v.z-z) <= (tonumber(v.size)) then
-				return false
+				result = false
 			end
 		end
 	end
 
-	return false
+	return result
 end
 
 
 function inLocation(x, z)
 	-- is the coord inside a location?
 	local closestLocation, closestDistance, dist, reset
+
+	if x == nil then
+		return false, false
+	end
 
 	-- since locations can exist inside other locations, work out which location centre is closest
 	closestDistance = 100000
@@ -126,7 +234,7 @@ function inLocation(x, z)
 					closestLocation = v.name
 					closestDistance = dist
 					reset = v.resetZone
-				end	
+				end
 			end
 		else
 			if math.abs(v.x-x) < 15 and math.abs(v.z-z) < 15 then
@@ -136,7 +244,7 @@ function inLocation(x, z)
 					closestLocation = v.name
 					closestDistance = dist
 					reset = v.resetZone
-				end	
+				end
 			end
 		end
 	end
@@ -150,6 +258,8 @@ end
 
 
 function LookupArenaPlayer(id)
+	local k,v
+
 	-- is id in the arenaPlayers table?
 	for k, v in pairs(arenaPlayers) do
 		if (id == v.id) then
@@ -161,7 +271,7 @@ end
 
 function LookupPlayer(search, match)
 	-- try to find the player amoung those who are playing right now
-	local id
+	local id, k,v
 
 	if string.trim(search) == "" then
 		return nil
@@ -175,34 +285,40 @@ function LookupPlayer(search, match)
 	end
 
 	for k, v in pairs(igplayers) do
-		if search == v.id then
-			-- matched the player id
-			return k
-		end
+		if match == "code" then
+			if tonumber(search) == tonumber(players[k].ircInvite) then
+				return k
+			end
+		else
+			if search == v.id then
+				-- matched the player id
+				return k
+			end
 
-		if k == search then
-			-- matched the steam id
-			return k
-		end
+			if k == search then
+				-- matched the steam id
+				return k
+			end
 
-		if (v.name ~= nil) then
-			if match == "all" then
-				-- look for an exact match
-				if (search == string.lower(v.name)) then
-					return k
-				end
+			if (v.name ~= nil) then
+				if match == "all" then
+					-- look for an exact match
+					if (search == string.lower(v.name)) then
+						return k
+					end
 
-				if (v.ircAlias ~= nil) and (search == string.lower(v.ircAlias)) then
-					return k
-				end
-			else
-				-- if it contains the search it is a match
-				if (search == string.lower(v.name)) or (string.find(string.lower(v.name), search, nil, true)) then
-					return k
-				end
+					if (v.ircAlias ~= nil) and (search == string.lower(v.ircAlias)) then
+						return k
+					end
+				else
+					-- if it contains the search it is a match
+					if (search == string.lower(v.name)) or (string.find(string.lower(v.name), search, nil, true)) then
+						return k
+					end
 
-				if (string.find(v.id, search)) then
-					return k
+					if (string.find(v.id, search)) then
+						return k
+					end
 				end
 			end
 		end
@@ -217,6 +333,8 @@ end
 
 
 function LookupOfflinePlayer(search, match)
+	local k,v
+
 	if string.trim(search) == "" then
 		return nil
 	end
@@ -229,28 +347,34 @@ function LookupOfflinePlayer(search, match)
 	end
 
 	for k, v in pairs(players) do
-		if (v.name ~= nil) then
-			if match == "all" then
-				if (search == string.lower(v.name)) then
-					return k
-				end
+		if match == "code" then
+			if tonumber(search) == tonumber(players[k].ircInvite) then
+				return k
+			end
+		else
+			if (v.name ~= nil) then
+				if match == "all" then
+					if (search == string.lower(v.name)) then
+						return k
+					end
 
-				if (v.ircAlias ~= nil) and (search == string.lower(v.ircAlias)) then
-					return k
-				end
-			else
-				if (search == string.lower(v.name)) or (string.find(string.lower(v.name), search, nil, true)) then
-					return k
+					if (v.ircAlias ~= nil) and (search == string.lower(v.ircAlias)) then
+						return k
+					end
+				else
+					if (search == string.lower(v.name)) or (string.find(string.lower(v.name), search, nil, true)) then
+						return k
+					end
 				end
 			end
-		end
 
-		if search == v.id then
-			return k
-		end
+			if search == v.id then
+				return k
+			end
 
-		if k == search then
-			return k
+			if k == search then
+				return k
+			end
 		end
 	end
 
@@ -258,17 +382,16 @@ function LookupOfflinePlayer(search, match)
 end
 
 
-function LookupIRCPass(pass)
+function LookupIRCPass(login, pass)
+	local k,v
+	
 	if string.trim(pass) == "" then
 		return nil
 	end
 
-	-- is this pass in use?
-	pass = string.lower(pass)
-
 	for k, v in pairs(players) do
 		if (v.ircPass ~= nil) then
-			if (pass == string.lower(v.ircPass)) then
+			if (login == v.ircLogin) and (pass == v.ircPass) then
 				return k
 			end
 		end
@@ -277,10 +400,12 @@ end
 
 
 function LookupLocation(command)
+	local k,v
+
 	-- is command the name of a location?
 	command = string.lower(command)
 
-	if (string.find(command, "/") == 1) then 
+	if (string.find(command, server.commandPrefix) == 1) then
 		command = string.sub(command, 2) -- strip off the leading /
 	end
 
@@ -293,6 +418,8 @@ end
 
 
 function LookupTeleportByName(tpname)
+	local k,v
+
 	-- find a teleport by its name
 	tpname = string.lower(tpname)
 
@@ -305,20 +432,116 @@ end
 
 
 function LookupTeleport(x,y,z)
+	local k,v, match
+
 	-- is this 3D coord inside a teleport?
+	-- 0 = no, 1 = match xyz, 2 = match dx dy dz (the other end)
 	match = 0
 
 	for k, v in pairs(teleports) do
-       if ((math.abs(math.abs(x) - math.abs(v.x)) < 1) and (math.abs(math.abs(y) - math.abs(v.y)) < 1) and (math.abs(math.abs(z) - math.abs(v.z)) < 1)) then
-			match = 1
-			return k
+       if ((math.abs(math.abs(x) - math.abs(v.x)) < 1.1) and (math.abs(math.abs(y) - math.abs(v.y)) < 1.1) and (math.abs(math.abs(z) - math.abs(v.z)) < 1.1)) then
+			if v.active then
+				match = 1
+				return k, match
+			end
 		end
 
 		if(v.dx) then
-	       if ((math.abs(math.abs(x) - math.abs(v.dx)) < 1) and (math.abs(math.abs(y) - math.abs(v.dy)) < 1) and (math.abs(math.abs(z) - math.abs(v.dz)) < 1)) then
-				match = 2
+	       if ((math.abs(math.abs(x) - math.abs(v.dx)) < 1.1) and (math.abs(math.abs(y) - math.abs(v.dy)) < 1.1) and (math.abs(math.abs(z) - math.abs(v.dz)) < 1.1)) then
+				if v.active then
+					match = 2
+					return k, match
+				end
+			end
+		end
+	end
+end
+
+
+function LookupWaypointByName(steam, name, friend)
+	-- return the waypoint id if a match found for name and owned by steam
+	local k, v
+	
+	name = string.lower(name)
+
+	for k,v in pairs(waypoints) do
+		if friend ~= nil then
+			if string.lower(v.name) == name and v.steam == friend then
+				if isFriend(friend, steam) then						
+					return k
+				end
+			end	
+		else
+			if v.steam == steam and string.lower(v.name) == name then
+				return k
+			end		
+		end	
+	end
+	
+	return 0
+end
+
+
+function LookupWaypoint(x,y,z)
+	-- return the waypoint owner's steam ID and waypoint 1 or 2 if the player's coords are within 3 blocks of a waypoint
+	local k, v
+
+	for k, v in pairs(waypoints) do
+		if tonumber(v.y) > 0 then
+			if distancexyz(x, y, z, v.x, v.y, v.z) <= 2 then
 				return k
 			end
+		end
+	end
+	
+	return 0
+end
+
+
+function ClosestWaypoint(x,y,z,steam)
+	-- what is the closest hotspot to this 3D coord?
+	local closest = 100000
+	local dist = 200000
+	local wp = 0
+	local k,v, dist
+
+	for k,v in pairs(waypoints) do
+		if steam ~= nil then
+			if v.steam == steam then
+				dist = distancexyz(x, y, z, v.x, v.y, v.z)
+				
+				if (dist < closest) then
+					closest = dist
+					wp = k
+				end				
+			end
+		else
+			dist = distancexyz(x, y, z, v.x, v.y, v.z)
+			
+			if (dist < closest) then			
+				closest = dist
+				wp = k
+			end			
+		end
+	end
+
+	return wp
+end
+
+
+function LookupHotspot(x,y,z)
+	-- return the closest hotspot that these coords are inside
+	local size, k, v
+
+	for k, v in pairs(hotspots) do
+		if (v.radius ~= nil) then
+			size = v.radius
+		else
+			size = 3
+		end
+
+		if distancexyz(x, y, z, v.x, v.y, v.z) <= tonumber(size) then
+			return k
 		end
 	end
 end
@@ -329,11 +552,12 @@ function ClosestHotspot(x, y, z)
 	local closest = 1000
 	local dist = 2000
 	local spot = 0
+	local k,v, dist
 
 	for k, v in pairs(hotspots) do
 		dist = distancexyz(x, y, z, v.x, v.y, v.z)
-			
-		if (dist < closest) and (dist < 21) then
+
+		if (dist < closest) then
 			closest = dist
 			spot = k
 		end
@@ -357,9 +581,9 @@ end
 
 function tablelength(T)
 	-- helper function to count the members of a Lua table
-  local count = 0
-  for _ in pairs(T) do count = count + 1 end
-  return count
+	local count = 0
+	for _ in pairs(T) do count = count + 1 end
+	return count
 end
 
 
@@ -371,6 +595,20 @@ function getRegion(xpos,zpos)
 	x = math.floor(tonumber(xpos) / 512)
 	z = math.floor(tonumber(zpos) / 512)
 	return "r." .. x .. "." .. z .. ".7rg", x, z
+end
+
+
+function getRegionChunkXZ(xpos,zpos)
+	-- calc the region XZ and chunk XZ from the coords.
+	local rx, rz, cx, cz
+
+	rx = math.floor(tonumber(xpos) / 512)
+	rz = math.floor(tonumber(zpos) / 512)
+
+	cx = math.floor(tonumber(xpos) / 16)
+	cz = math.floor(tonumber(zpos) / 16)
+
+	return rx, rz, cx, cz
 end
 
 
@@ -396,24 +634,24 @@ end
 
 function compare(a,b)
 	-- simple sort
-  return a[1] < b[1]
+	return a[1] < b[1]
 end
 
 
 function distancexyz( x1, y1, z1, x2, y2, z2 )
 	-- calc the distance between 2 points in 3D
-   local dx = x2 - x1
+	local dx = x2 - x1
 	local dy = y2 - y1
-	local dz = z2 - z1	
-   return math.sqrt((dx * dx) + (dy * dy) + (dz * dz))
+	local dz = z2 - z1
+	return math.sqrt((dx * dx) + (dy * dy) + (dz * dz))
 end
 
 
 function distancexz(x1, z1, x2, z2)
 	-- calc the distance between 2 points in 2D (xz)
 	local dx = x1 - x2
-   local dz = z1 - z2
-   return math.sqrt(dx * dx + dz * dz)
+	local dz = z1 - z2
+	return math.sqrt(dx * dx + dz * dz)
 end
 
 
@@ -431,7 +669,7 @@ end
 
 function getAngle(x1, z1, x2, z2)
 	-- Returns the angle between two points.
-	return math.atan2(z2-z1, x2-x1) 
+	return math.atan2(z2-z1, x2-x1)
 end
 
 
@@ -465,26 +703,47 @@ end
 
 
 function accessLevel(pid)
+	local debug
+
+	debug = false
+
 	-- determine the access level of the player
+
+	if debug then dbug("accesslevel pid " .. pid) end
+
+	if pid == 0 then
+		-- no pid?  return the worst possible access level.
+		return 99
+	end
+
+	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
 	if owners[pid] then
 		players[pid].accessLevel = 0
 		return 0
 	end
 
+	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
+
 	if admins[pid] then
 		players[pid].accessLevel = 1
 		return 1
 	end
+
+	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
 	if mods[pid] then
 		players[pid].accessLevel = 2
 		return 2
 	end
 
+	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
+
 	if tonumber(server.accessLevelOverride) < 99 then
-		return tonumber(server.accessLevelOverride) 
+		return tonumber(server.accessLevelOverride)
 	end
+
+	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
 	-- 3 is reserved for visiting admins
 
@@ -494,11 +753,15 @@ function accessLevel(pid)
 		return 10
 	end
 
+	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
+
 	-- anyone stripped of certain rights
 	if players[pid].denyRights == true then
 		players[pid].accessLevel = 99
 		return 99
 	end
+
+	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
 	-- regulars
 	if igplayers[pid] then
@@ -512,7 +775,9 @@ function accessLevel(pid)
 			return 90
 		end
 	end
-	
+
+	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
+
 	-- new players
 	players[pid].accessLevel = 99
 	return 99
@@ -521,7 +786,30 @@ end
 
 function fixMissingPlayer(steam)
 	-- if any fields are missing from the players player record, add them with default values
+--dbug("fixMissingPlayer" .. steam .. " " .. players[steam].name)	
+	
+	local k,v
 
+	for k,v in pairs(playerFields) do
+		if players[steam][k] == nil then
+			if v.default ~= "nil" then
+				if v.type == "tin" then
+					if v.default == "0" then
+						players[steam][k] = false
+					else
+						players[steam][k] = true					
+					end
+				else
+					if v.default == "CURRENT_TIMESTAMP" then
+						players[steam][k] = os.time()					
+					else
+						players[steam][k] = v.default
+					end
+				end
+			end
+		end
+	end	
+	
 	if (players[steam].steamOwner == nil) then
 		players[steam].steamOwner = steam
 	end
@@ -603,7 +891,7 @@ function fixMissingPlayer(steam)
 	end
 
 	if (players[steam].level == nil) then
-		players[steam].level = 1
+		players[steam].level = 0
 	end
 
 	if (players[steam].exitX == nil) then
@@ -712,6 +1000,13 @@ function fixMissingPlayer(steam)
 		players[steam].waypointY = 0
 		players[steam].waypointZ = 0
 	end
+	
+	if (players[steam].waypoint2X == nil) then
+		players[steam].waypoint2X = 0
+		players[steam].waypoint2Y = 0
+		players[steam].waypoint2Z = 0
+		players[steam].waypointsLinked = false
+	end	
 
 	if (players[steam].timeout == nil) then
 		players[steam].timeout = false
@@ -739,6 +1034,7 @@ function fixMissingPlayer(steam)
 
 	if (players[steam].newPlayer == nil) then
 		players[steam].newPlayer = true
+		players[steam].watchPlayer = true		
 	end
 
 	if (players[steam].sessionCount == nil) then
@@ -746,8 +1042,16 @@ function fixMissingPlayer(steam)
 	end
 
 	if (players[steam].watchPlayer == nil) then
-		players[steam].watchPlayer = true
+		players[steam].watchPlayer = false
 	end
+	
+	if (players[steam].watchPlayerTimer == nil) then
+		if players[steam].watchPlayer then
+			players[steam].watchPlayerTimer = os.time() + 259200 -- 3 days
+		else
+			players[steam].watchPlayerTimer = 0		
+		end
+	end	
 
 	if (players[steam].lastBaseRaid == nil) then
 		players[steam].lastBaseRaid = 0
@@ -830,9 +1134,13 @@ function fixMissingPlayer(steam)
 	if players[steam].autoFriend == nil then
 		players[steam].autoFriend = ""
 	end
-
+	
 	if players[steam].hackerScore == nil then
 		players[steam].hackerScore = 0
+	end	
+
+	if players[steam].hackerTPScore == nil then
+		players[steam].hackerTPScore = 0
 	end
 
 	if players[steam].tp == nil then
@@ -852,14 +1160,24 @@ function fixMissingPlayer(steam)
 	if players[steam].ping == nil then
 		players[steam].ping = 0
 	end
-	
+
 	if players[steam].ISP == nil then
 		players[steam].ISP = ""
 	end
-	
+
 	if players[steam].ignorePlayer == nil then
-		players[steam].ignorePlayer = false	
+		players[steam].ignorePlayer = false
 	end
+	
+	if players[steam].location == nil then
+		players[steam].location = ""
+	end	
+
+	if players[steam].GBLCount == nil then
+		players[steam].GBLCount = 0	
+	end
+	
+--	dbug("finished fixMissingPlayer")
 end
 
 
@@ -891,7 +1209,7 @@ function fixMissingIGPlayer(steam)
 	end
 
 	if (igplayers[steam].teleCooldown == nil) then
-		igplayers[steam].teleCooldown = 0
+		igplayers[steam].teleCooldown = 200
 	end
 
 	if (igplayers[steam].firstSeen == nil) then
@@ -1007,9 +1325,50 @@ function fixMissingIGPlayer(steam)
 	if igplayers[steam].highPingCount == nil then
 		igplayers[steam].highPingCount = 0
 	end
-	
+
 	if igplayers[steam].flying == nil then
 		igplayers[steam].flying = false
 		igplayers[steam].flyCount = 0
+		igplayers[steam].flyingX = 0
+		igplayers[steam].flyingZ = 0
+	end
+
+	if igplayers[steam].noclip == nil then
+		igplayers[steam].noclip = false
+		igplayers[steam].noclipX = 0
+		igplayers[steam].noclipZ = 0
+	end
+
+	if igplayers[steam].reservedSlot == nil then
+		igplayers[steam].reservedSlot = false
+	end
+
+	if igplayers[steam].rawRotation == nil then
+		igplayers[steam].rawRotation = 0
+	end
+
+	if igplayers[steam].rawPosition == nil then
+		igplayers[steam].rawPosition = 0
+	end
+end
+
+
+function fixMissingServer()
+	local k,v
+
+	for k,v in pairs(serverFields) do
+		if server[k] == nil then
+			if v.default ~= "nil" then
+				if v.type == "tin" then
+					if v.default == "0" then
+						server[k] = false
+					else
+						server[k] = true					
+					end
+				else
+					server[k] = v.default
+				end
+			end
+		end
 	end
 end

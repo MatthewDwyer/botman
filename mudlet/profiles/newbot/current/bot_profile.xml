@@ -70,7 +70,7 @@
             <name>Login</name>
             <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -135,9 +135,7 @@ endListPlayers(line)
             <script>-- This script now lives in scripts/triggers/pvp.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
-if string.find(line, &quot;eliminated&quot;) then
-	pvpPolice(line)
-end</script>
+pvpPolice(line)</script>
             <triggerType>0</triggerType>
             <conditonLineDelta>0</conditonLineDelta>
             <mStayOpen>0</mStayOpen>
@@ -150,8 +148,10 @@ end</script>
             <colorTriggerBgColor>#000000</colorTriggerBgColor>
             <regexCodeList>
                 <string>eliminated</string>
+                <string>killed by</string>
             </regexCodeList>
             <regexCodePropertyList>
+                <integer>0</integer>
                 <integer>0</integer>
             </regexCodePropertyList>
         </Trigger>
@@ -182,7 +182,7 @@ matchAll(line)</script>
             <name>InventorySlot</name>
             <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -233,7 +233,9 @@ end
 
 if string.find(line, &quot;Player connected&quot;) then
 	playerConnected(line)
-end</script>
+end
+
+</script>
             <triggerType>0</triggerType>
             <conditonLineDelta>0</conditonLineDelta>
             <mStayOpen>0</mStayOpen>
@@ -303,7 +305,7 @@ playerDisconnected(line)</script>
             <name>Inventory</name>
             <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -438,7 +440,7 @@ airDropAlert(line)</script>
             <name>Spam</name>
             <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -458,7 +460,7 @@ ExceptionCount = 0</script>
             <colorTriggerFgColor>#000000</colorTriggerFgColor>
             <colorTriggerBgColor>#000000</colorTriggerBgColor>
             <regexCodeList>
-                <string>^.*(ubex|FAPGD|NullReferenceException|Block on position|-&gt;|lifetime=|\'gt|\'mem|\'lp|command \'si|STATS|Time|Token|Started thread|RequestTo|Adding|Removing|Created player|Allowing|Authenticating|Player set to online|OnPlayer|NET: Received package|Infinity|Exited|Couldn\'t send RPC|Disconnected player|Error in|Exception in|INF VOICE|'GameManager| at AllocsFixes.|Freeing).*$</string>
+                <string>^.*(NullReferenceException|Block on position|-&gt;|lifetime=|\'gt|\'mem|\'lp|command \'si|STATS|Time|Token|Started thread|RequestTo|Adding|Removing|Created player|Allowing|Authenticating|Player set to online|OnPlayer|NET: Received package|Infinity|Exited|Couldn\'t send RPC|Disconnected player|Error in|Exception in|INF VOICE|'GameManager| at AllocsFixes.|Freeing).*$</string>
             </regexCodeList>
             <regexCodePropertyList>
                 <integer>1</integer>
@@ -607,44 +609,6 @@ overstackTrigger(line)</script>
             </regexCodePropertyList>
         </Trigger>
         <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Open Reserved Slot</name>
-            <script>--[[
-    Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
-	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
-    URL       http://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
---]]
-
-
---[[
-local steamid
-steamid = string.sub(line, string.find(line, &quot;from:&quot;) + 6)
-if (steamid == Smegz0r) or (steamid == Soylent) then
-	display(&quot;opening reserved slot\n&quot;)
-	send(&quot;sg ServerMaxPlayerCount &quot; .. tonumber(server.ServerMaxPlayerCount) + 1)
-	server.ServerMaxPlayerCount = server.ServerMaxPlayerCount + 1
-end
---]]</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>NET: P2PSessionRequest</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
             <name>mem</name>
             <script>-- This script now lives in scripts/triggers/mem.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
@@ -709,8 +673,8 @@ teleTrigger(line)
             <colorTriggerFgColor>#000000</colorTriggerFgColor>
             <colorTriggerBgColor>#000000</colorTriggerBgColor>
             <regexCodeList>
-                <string>Telnet executed 'tele</string>
-                <string>Executing command 'tele</string>
+                <string>Telnet executed 'tele </string>
+                <string>Executing command 'tele </string>
             </regexCodeList>
             <regexCodePropertyList>
                 <integer>0</integer>
@@ -732,9 +696,9 @@ teleTrigger(line)
             <colorTriggerFgColor>#000000</colorTriggerFgColor>
             <colorTriggerBgColor>#000000</colorTriggerBgColor>
             <regexCodeList>
-                <string>LandProtectionOf:</string>
+                <string>LandProtectionOf</string>
                 <string>Executing command 'llp</string>
-                <string>keystones (protected:</string>
+                <string>keystones (protected</string>
             </regexCodeList>
             <regexCodePropertyList>
                 <integer>0</integer>
@@ -746,7 +710,7 @@ teleTrigger(line)
             <name>Chat</name>
             <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -778,12 +742,10 @@ end
                 <string>INF Executing command 'pm </string>
                 <string>INF Denying command 'pm</string>
                 <string>GMSG:</string>
-                <string>CHATHOOK</string>
-                <string>CMDHOOK</string>
                 <string>Chat command from</string>
+                <string>INF Chat</string>
             </regexCodeList>
             <regexCodePropertyList>
-                <integer>0</integer>
                 <integer>0</integer>
                 <integer>0</integer>
                 <integer>0</integer>
@@ -794,33 +756,7 @@ end
         </Trigger>
         <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
             <name>le</name>
-            <script>-- 13. id=2647, [type=EntityZombie, name=zombieBoe, id=2647], pos=(-97.3, 128.0, 195.5), rot=(0.0, 2.3, 0.0), lifetime=float.Max, remleote=False, dead=False, health=200
-
-local temp, zedID, zedX, zedY, zedZ, zedDead, loc
-
-temp = string.split(line, &quot;,&quot;)
-
-if temp[13] == &quot; dead=False&quot; and not (string.find(temp[2], &quot;Item&quot;) or string.find(temp[2], &quot;Player&quot;)) then
-	zedID = string.sub(temp[1], string.find(temp[1], &quot;id=&quot;) + 3)
-	zedX = string.sub(temp[5], string.find(temp[5], &quot;pos&quot;) + 5)
-	zedY = temp[6]
-	zedZ = string.sub(temp[7], 1, string.len(temp[7]) - 1)
-
---	if distancexyz( players[Smegz0r].xPos, players[Smegz0r].yPos, players[Smegz0r].zPos, zedX, zedY, zedZ ) &lt; 20 then
---		send(&quot;kill &quot; .. zedID)
---	end
-
-	loc = inLocation(zedX, zedZ)
-
-	if locations[loc].killZombies then
-		send(&quot;kill &quot; .. zedID)
-	end
-end
-
--- do some checks with where players and items are.  want to detect item spawn cheaters
-if string.find(temp[2], &quot;Item&quot;) or string.find(temp[2], &quot;Player&quot;) then
-
-end</script>
+            <script>listEntities(line)</script>
             <triggerType>0</triggerType>
             <conditonLineDelta>0</conditonLineDelta>
             <mStayOpen>0</mStayOpen>
@@ -866,6 +802,31 @@ end</script>
                 <integer>0</integer>
             </regexCodePropertyList>
         </Trigger>
+        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+            <name>Auto Friend</name>
+            <script>getFriends(line)
+
+
+
+
+</script>
+            <triggerType>0</triggerType>
+            <conditonLineDelta>0</conditonLineDelta>
+            <mStayOpen>0</mStayOpen>
+            <mCommand></mCommand>
+            <packageName></packageName>
+            <mFgColor>#ff0000</mFgColor>
+            <mBgColor>#ffff00</mBgColor>
+            <mSoundFile></mSoundFile>
+            <colorTriggerFgColor>#000000</colorTriggerFgColor>
+            <colorTriggerBgColor>#000000</colorTriggerBgColor>
+            <regexCodeList>
+                <string>FriendsOf</string>
+            </regexCodeList>
+            <regexCodePropertyList>
+                <integer>2</integer>
+            </regexCodePropertyList>
+        </Trigger>
     </TriggerPackage>
     <TimerPackage>
         <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
@@ -896,7 +857,7 @@ oneMinuteTimer()</script>
 listPlayers()</script>
             <command></command>
             <packageName></packageName>
-            <time>00:00:03.500</time>
+            <time>00:00:03.000</time>
         </Timer>
         <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
             <name>OneHourTimer</name>
@@ -924,10 +885,7 @@ reconnectTimer()</script>
 	return
 end
 
-gimmeReset()
-
--- while we're here refresh the ban list
-send(&quot;ban list&quot;)</script>
+gimmeReset()</script>
             <command></command>
             <packageName></packageName>
             <time>02:00:00.000</time>
@@ -981,7 +939,7 @@ gimmeQueuedCommands()</script>
 ircQueueTimer()</script>
             <command></command>
             <packageName></packageName>
-            <time>00:00:00.400</time>
+            <time>00:00:00.200</time>
         </Timer>
         <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
             <name>Every45Seconds</name>
@@ -1033,6 +991,13 @@ disableTimer(&quot;ReloadScripts&quot;)</script>
             <packageName></packageName>
             <time>00:00:00.100</time>
         </Timer>
+        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+            <name>Every15Seconds</name>
+            <script>FifteenSecondTimer()</script>
+            <command></command>
+            <packageName></packageName>
+            <time>00:00:15.000</time>
+        </Timer>
     </TimerPackage>
     <AliasPackage/>
     <ActionPackage>
@@ -1058,12 +1023,7 @@ disableTimer(&quot;ReloadScripts&quot;)</script>
                 <name>Show Players</name>
                 <packageName></packageName>
                 <script>clearUserWindow(server.windowPlayers)
---clearUserWindow(server.windowLists)
-showPlayers = true
-
---for k, v in pairs(igplayers) do
---	cecho(server.windowLists, k .. &quot;   &quot; .. v.name .. &quot;        &quot; .. v.id .. &quot;\n&quot;)
---end</script>
+showPlayers = true</script>
                 <css></css>
                 <commandButtonUp></commandButtonUp>
                 <commandButtonDown></commandButtonDown>
@@ -1110,7 +1070,7 @@ showPlayers = true
                 <location>0</location>
                 <posX>0</posX>
                 <posY>0</posY>
-                <mButtonState>2</mButtonState>
+                <mButtonState>1</mButtonState>
                 <sizeX>75</sizeX>
                 <sizeY>41</sizeY>
                 <buttonColumn>1</buttonColumn>
@@ -1126,6 +1086,7 @@ showPlayers = true
 --echo(&quot;Players table\n&quot;)
 --display( players )
 --display( players[&quot;76561197983251951&quot;] )
+--display( players[&quot;76561198119816114&quot;] )
 
 --echo(&quot;In-game Players table\n&quot;)
 --display( igplayers )
@@ -1133,8 +1094,11 @@ showPlayers = true
 --echo(&quot;Admins table\n&quot;)
 --display( admins )
 
+--echo(&quot;prefabCopies table\n&quot;)
+--display( prefabCopies )
+
 --echo(&quot;Friends table\n&quot;)
---display( friends )
+--display( friends[Smegz0r] )
 
 --echo(&quot;Teleports table\n&quot;)
 --display( teleports )
@@ -1142,8 +1106,8 @@ showPlayers = true
 --echo(&quot;Locations table\n&quot;)
 --display( locations )
 
-echo(&quot;Server table\n&quot;)
-display( server )
+--echo(&quot;Server table\n&quot;)
+--display( server )
 
 --echo(&quot;chatvars table\n&quot;)
 --display( chatvars )
@@ -1196,7 +1160,9 @@ display( server )
 --echo(&quot;proxies table\n&quot;)
 --display( proxies )
 
---display(customCommands)</script>
+--display(customCommands)
+
+display(botman)</script>
                 <css></css>
                 <commandButtonUp></commandButtonUp>
                 <commandButtonDown></commandButtonDown>
@@ -1213,9 +1179,11 @@ display( server )
                 <buttonColor>#ffffff</buttonColor>
             </Action>
             <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
-                <name>Test Code</name>
+                <name>Trial Code</name>
                 <packageName></packageName>
-                <script></script>
+                <script>-- call trialCode in trialCode.lua in main scripts folder
+-- put all your test code here so you don't need to edit this profile constantly when testing new code.
+trialCode()</script>
                 <css></css>
                 <commandButtonUp></commandButtonUp>
                 <commandButtonDown></commandButtonDown>
@@ -1234,7 +1202,13 @@ display( server )
             <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
                 <name>temp test</name>
                 <packageName></packageName>
-                <script></script>
+                <script>--dbug(&quot;temp test start&quot;)
+
+--dbug(&quot;temp test end&quot;)
+
+--startLogging(true)
+
+botman.lagCheckRead = true</script>
                 <css></css>
                 <commandButtonUp></commandButtonUp>
                 <commandButtonDown></commandButtonDown>
@@ -1243,7 +1217,7 @@ display( server )
                 <location>0</location>
                 <posX>0</posX>
                 <posY>0</posY>
-                <mButtonState>1</mButtonState>
+                <mButtonState>2</mButtonState>
                 <sizeX>2097272</sizeX>
                 <sizeY>6881382</sizeY>
                 <buttonColumn>1</buttonColumn>
@@ -1302,7 +1276,7 @@ display( server )
                 <location>0</location>
                 <posX>0</posX>
                 <posY>0</posY>
-                <mButtonState>1</mButtonState>
+                <mButtonState>2</mButtonState>
                 <sizeX>0</sizeX>
                 <sizeY>0</sizeY>
                 <buttonColumn>1</buttonColumn>
@@ -1313,259 +1287,22 @@ display( server )
     </ActionPackage>
     <ScriptPackage>
         <Script isActive="yes" isFolder="no">
-            <name>Bot Functions</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/functions.lua
--- After editing it type /reload code or restart the bot for your changes to be used.
-</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>irc code</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/irc_functions.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>Gimme</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/gimme.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
             <name>IRCMessage</name>
             <packageName></packageName>
             <script>-- This script now lives in scripts/irc_message.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
+-- After editing it type /reload code or restart the bot for your changes to be used.
+
+-- DO NOT delete this script or you will delete the IRC message handler and the bot will not use IRC.</script>
             <eventHandlerList>
                 <string>sysIrcMessage</string>
             </eventHandlerList>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg functions</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/gmsg_functions.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_help</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/gmsg_help.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>Inventory</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/inventory.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>OneHourTimer</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/one_hour.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>OneMinuteTimer</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/one_minute.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>shop</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/shop.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>Core Functions</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/core_functions.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>mysql</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/mysql.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_base</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_base.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_admin</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_admin.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_fun</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_fun.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_hotspots</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_hotspots.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_info</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_info.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_trial_code</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_trial_code.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_locations</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_locations.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_resets</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_resets.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_server</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_server.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_shop</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_shop.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_teleports</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_teleports.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_villages</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_villages.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_waypoints</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_waypoints.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_unslashed</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_unslashed.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_tracker</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_tracker.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_mail</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_mail.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_friends</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_friends.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>Load Lua Tables</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/load_lua_tables.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>Save DB Tables</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/save_db_tables.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>Base Protection</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/base_protection.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>Reset Bot Code</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/reset_bot.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>irc help</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/irc_help.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>30MinuteTimer</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/thirty_minutes.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
         </Script>
         <Script isActive="yes" isFolder="no">
             <name>StartupBot</name>
             <packageName></packageName>
             <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2017  Matthew Dwyer
 	          This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -1579,55 +1316,6 @@ login()
             <eventHandlerList>
                 <string>sysConnectionEvent</string>
             </eventHandlerList>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>Teleport functions</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/teleport_functions.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>Lua Tables</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/lua_tables.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_misc</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_misc.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_pms</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_pms.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>gmsg_custom</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/chat/gmsg_custom.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>NewServer</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/new_server.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>Modded Allocs</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/coppi.lua
--- After editing it type /reload code or restart the bot for your changes to be used.</script>
-            <eventHandlerList/>
         </Script>
         <Script isActive="yes" isFolder="no">
             <name>FirstRun</name>
@@ -1649,6 +1337,7 @@ botDisabled = false
 dbConnected = false
 botOffline = 0
 
+-- it may be possible for the bot to update itself.  So far Mudlet is not cooperating.
 registerAnonymousEventHandler(&quot;sysDownloadDone&quot;, &quot;downloadHandler&quot;)
 registerAnonymousEventHandler(&quot;sysDownloadError&quot;, &quot;downloadHandler&quot;)</script>
             <eventHandlerList>
@@ -1657,4 +1346,7 @@ registerAnonymousEventHandler(&quot;sysDownloadError&quot;, &quot;downloadHandle
         </Script>
     </ScriptPackage>
     <KeyPackage/>
+    <VariablePackage>
+        <HiddenVariables/>
+    </VariablePackage>
 </MudletPackage>
