@@ -11,8 +11,6 @@
 --[[
 add /claims <distance> it will count all claims (using llp) within range.
 add /claim owners <distance> will list all the players with claims down in range
-update /tp so it accepts coords
-admin commands
 --]]
 
 function gmsg_admin()
@@ -789,7 +787,7 @@ if debug then dbug("debug admin") end
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[row.steam].name .. " " .. row.x .. " " .. row.y .. " " .. row.z .. "[-]")
 			else
---				irc_chat(players[chatvars.ircid].ircAlias, players[id].name .. " has been exiled.")
+				irc_chat(players[chatvars.ircid].ircAlias, players[row.steam].name .. " " .. row.x .. " " .. row.y .. " " .. row.z)
 			end
 
 			row = cursor:fetch(row, "a")
