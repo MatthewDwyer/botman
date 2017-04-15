@@ -45,6 +45,20 @@ end
 
 	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
+	if (chatvars.command == "restart bot") and (chatvars.accessLevel < 3) then
+		if botman.customMudlet then	
+			savePlayers()		
+			closeMudlet()		
+		else
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is not supported in your Mudlet.  You need the latest custom Mudlet by TheFae.[-]")		
+		end
+
+		botman.faultyChat = false
+		return true
+	end		
+	
+	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
+
 	if igplayers[chatvars.playerid].botQuestion == "pay player" then
 		payPlayer()
 
@@ -56,7 +70,7 @@ end
 
 	if (chatvars.playername ~= "Server") then
 		if igplayers[chatvars.playerid].botQuestion == "reset server" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
-			message("say [" .. server.chatColour .. "]Deleting all bot data and restarting it..[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Deleting all bot data and restarting it..[-]")
 			ResetServer()
 
 			igplayers[chatvars.playerid].botQuestion = ""
@@ -71,7 +85,7 @@ end
 	if (chatvars.playername ~= "Server") then
 		if igplayers[chatvars.playerid].botQuestion == "reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 			ResetBot()
-			message("say [" .. server.chatColour .. "]I have been reset.  All bases, inventories etc are forgotten, but not the players.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I have been reset.  All bases, inventories etc are forgotten, but not the players.[-]")
 
 			igplayers[chatvars.playerid].botQuestion = ""
 			igplayers[chatvars.playerid].botQuestionID = nil
@@ -85,7 +99,7 @@ end
 	if (chatvars.playername ~= "Server") then
 		if igplayers[chatvars.playerid].botQuestion == "quick reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 			QuickBotReset()
-			message("say [" .. server.chatColour .. "]I have been reset except for players, locations and reset zones.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I have been reset except for players, locations and reset zones.[-]")
 
 			igplayers[chatvars.playerid].botQuestion = ""
 			igplayers[chatvars.playerid].botQuestionID = nil
@@ -95,14 +109,7 @@ end
 		end
 	end	
 
-	
-	if (string.find(chatvars.command, "build") and string.find(chatvars.command, "reset")) then
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reset zones are deleted and regenerate with random POIs and prefabs.  Anything you build there will be lost.  Resets are done manually.[-]")
-		botman.faultyChat = false
-		return true
-	end
-	
-	
+		
 	if string.find(chatvars.command, "hack") or string.find(chatvars.command, "cheat") or string.find(chatvars.command, "grief") or string.find(chatvars.command, "flying") then
 		scanForPossibleHackersNearby(chatvars.playerid)
 
@@ -165,7 +172,6 @@ end
 
 	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
---	if (chatvars.words[2] == "server" or chatvars.words[2] == "bot" or chatvars.words[2] == "bot!" or chatvars.words[2] == string.lower(server.botName)) and (chatvars.words[3] == nil) and (chatvars.playername ~= "Server") then
 	if (chatvars.words[1] == "bot" or chatvars.words[2] == "bot" or chatvars.words[3] == "bot" or chatvars.words[4] == "bot" or chatvars.words[5] == "bot" or chatvars.words[6] == "bot" or string.find(chatvars.command, string.lower(server.botName)) or string.find(chatvars.command, string.lower("bot!"))) and (chatvars.words[7] == nil) and (chatvars.playername ~= "Server") then
 		if (chatvars.words[1] == "thanks" or chatvars.words[1] == "ty" or string.find(chatvars.words[1], "thx")) then
 			l = rand(4)
@@ -224,7 +230,7 @@ end
 				return true
 			end
 
-			r = rand(20)
+			r = rand(19)
 
 			if r < 6 and chatvars.words[3] == nil then
 				message("say [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]")
@@ -323,13 +329,6 @@ end
 			if r == 19 then
 				message("say [" .. server.chatColour .. "]GLORY TO ARSTOTZKA![-]")
 			end
-
-			if r == 20 then
-				tempTimer( 1, [[message("say [" .. server.chatColour .. "]All your base are belong to us![-]")]] )
-				tempTimer( 3, [[message("say [" .. server.chatColour .. "]You are on the way to destruction![-]")]] )
-				tempTimer( 5, [[message("say [" .. server.chatColour .. "]You have no chance to survive make your time![-]")]] )
-				tempTimer( 7, [[message("say [" .. server.chatColour .. "]Ha ha ha[-]")]] )
-			end
 		end
 
 		botman.faultyChat = false
@@ -353,10 +352,10 @@ end
 
 	if (string.find(chatvars.command, "when") or string.find(chatvars.command, "next")) and string.find(chatvars.command, "reboot") then
 		if server.delayReboot then
-			message("say [" .. server.chatColour .. "]Feral hordes run today so the reboot is suspended until midnight.[-]")
-		else
-			nextReboot()
+			message("say [" .. server.chatColour .. "]The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.[-]")
 		end
+		
+		nextReboot()		
 
 		botman.faultyChat = false
 		return true

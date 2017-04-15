@@ -81,7 +81,7 @@ if debug then dbug("check inventory 3") end
 				if table1[i] ~= "" then
 					table2 = string.split(table1[i], ",")
 
-					if (badItems[table2[2]]) and (accessLevel(k) > 2 or botman.ignoreAdmins == false) then
+					if (badItems[table2[2]]) and (accessLevel(k) > 2 or botman.ignoreAdmins == false) and (not players[k].ignorePlayer) then
 						dbFlag = dbFlag .. "B"
 					
 						igplayers[k].illegalInventory = true
@@ -144,7 +144,7 @@ if debug then dbug("check inventory 3") end
 					end
 
 					-- stack monitoring
-					if (stackLimits[table2[2]] ~= nil) and (accessLevel(k) > 2 or botman.ignoreAdmins == false) and (server.gameType ~= "cre") then
+					if (stackLimits[table2[2]] ~= nil) and (accessLevel(k) > 2 or botman.ignoreAdmins == false) and (server.gameType ~= "cre") and (not players[k].ignorePlayer) then
 						if tonumber(table2[1]) > tonumber(stackLimits[table2[2]].limit) * 2 and tonumber(table2[1]) > 1000 then
 							if (players[k].overstackScore < 0) then
 								players[k].overstackScore = 0
@@ -188,7 +188,7 @@ if debug then dbug("check inventory 4") end
 					if tonumber(rows) > 0 then
 						row = cursor:fetch({}, "a")
 
-						if tonumber(b.quantity) > tonumber(row.qty) then
+						if tonumber(b.quantity) > tonumber(row.qty) and (not players[k].ignorePlayer) then
 							if row.action == "timeout" then
 								timeout = true
 								
@@ -236,10 +236,7 @@ if debug then dbug("check inventory 4") end
 							end
 
 							if row.action == "watch" then
---								if players[k].watchPlayer == false then
---									players[k].watchPlayer = true
-									irc_chat(server.ircWatch, "Player " .. players[k].name .. " has " .. b.quantity .. " of " .. b.item)
---								end
+								irc_chat(server.ircWatch, "Player " .. players[k].name .. " has " .. b.quantity .. " of " .. b.item)
 							end
 
 						end
@@ -290,6 +287,11 @@ if debug then dbug("check inventory 6") end
 						delta = "+" .. delta
 					else
 						delta = delta
+						
+						-- list beds for this player if they drop 1 bed
+						if b.item == "bedroll" and delta == -1 and server.coppi then
+							send("lpb " .. k)
+						end
 					end
 
 					if (players[k].watchPlayer == true) then
@@ -325,13 +327,12 @@ if debug then dbug("check inventory 7") end
 			if (players[k].watchPlayer == true) then
 				if newItems ~= "" then
 					alertAdmins("Watched player " .. players[k].id .. " " .. players[k].name .. " " .. newItems)
---					irc_chat(server.ircWatch, "Watched player " .. players[k].id .. " " .. players[k].name .. " inventory " .. newItems .. " near " .. math.floor(igplayers[k].xPos) .. " " .. math.ceil(igplayers[k].yPos) .. " " .. math.floor(igplayers[k].zPos))
 				end
 			end
 
 if debug then dbug("check inventory 8") end
 
-			if inventoryChanged == true or (v.oldBelt ~= v.belt) then --  or (belt ~= v.belt)
+			if inventoryChanged == true or (v.oldBelt ~= v.belt) then 
 				conn:execute("INSERT INTO inventoryTracker (steam, x, y, z, session, belt, pack, equipment) VALUES (" .. k .. "," .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. "," .. players[k].sessionCount .. ",'" .. escape(v.belt) .. "','" .. escape(v.pack) .. "','" .. escape(v.equipment) .. "')")
 				invTemp[k] = items
 
@@ -352,7 +353,7 @@ if debug then dbug("check inventory 8") end
 
 if debug then dbug("check inventory 9") end
 
-			if (items["keystoneBlock"] and players[k].newPlayer == true and tonumber(items["keystoneBlock"].quantity) > 4 and accessLevel(k) > 2) and (server.gameType ~= "cre") then
+			if (items["keystoneBlock"] and players[k].newPlayer == true and tonumber(items["keystoneBlock"].quantity) > 4 and accessLevel(k) > 2) and (server.gameType ~= "cre") and (players[k].ignorePlayer ~= true) then
 				conn:execute("INSERT INTO inventoryTracker (steam, x, y, z, session, belt, pack, equipment) VALUES (" .. k .. "," .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. "," .. players[k].sessionCount .. ",'" .. escape(v.belt) .. "','" .. escape(v.pack) .. "','" .. escape(v.equipment) .. "')")
 				banPlayer(k, "1 week", "Too many keystones (" .. items["keystoneBlock"].quantity .. ")", "")
 				message("say [" .. server.chatColour .. "]Banning new player " .. igplayers[k].name .. " 1 week for too many keystones (" .. items["keystoneBlock"].quantity .. ") in inventory.  Cheating suspected.[-]")
@@ -390,10 +391,6 @@ if debug then dbug("check inventory 10") end
 			end
 
 			if tonumber(players[k].overstackScore) > 4 and (players[k].botTimeout == false) then
-				-- if players[k].watchPlayer then
-					-- irc_chat(server.ircTracker, server.gameDate .. " " .. k .. " " .. players[k].name .. " sent to timeout by bot")
-				-- end
-
 				players[k].botTimeout = true
 				players[k].xPosTimeout = math.floor(players[k].xPos)
 				players[k].yPosTimeout = math.ceil(players[k].yPos)
@@ -436,10 +433,6 @@ if debug then dbug("check inventory 10") end
 		if (move == true and players[k].exiled ~= 1) then
 			message("say [" .. server.chatColour .. "]Sending player " .. igplayers[k].name .. " to " .. moveTo .. " for " .. moveReason .. ".[-]")
 
-			-- if players[k].watchPlayer then
-				-- irc_chat(server.ircTracker, server.gameDate .. " " .. k .. " " .. players[k].name .. " exiled by bot")
-			-- end
-
 			dbug("inventory line " .. debugger.getinfo(1).currentline)	
 			teleport("tele " .. k .. " " .. locations[moveTo].x .. " " .. locations[moveTo].y + 1 .. " " .. locations[moveTo].z)
 			players[k].exiled = 1
@@ -452,15 +445,11 @@ if debug then dbug("check inventory 10") end
 
 if debug then dbug("check inventory 11") end
 
-		if (players[k].ignorePlayer ~= true) then
+		if (not players[k].ignorePlayer) then
 			if badItemsFound ~= "" then
 				igplayers[k].illegalInventory = true
 
 				if (players[k].timeout == false) and (accessLevel(k) > 2 or botman.ignoreAdmins == false) then
-					-- if players[k].watchPlayer then
-						-- irc_chat(server.ircTracker, server.gameDate .. " " .. k .. " " .. players[k].name .. " sent to timeout by bot")
-					-- end
-
 					players[k].timeout = true
 					players[k].botTimeout = true
 					players[k].xPosTimeout = math.floor(players[k].xPos)
@@ -517,17 +506,6 @@ function readInventorySlot()
 
 	for word in line:gmatch("%w+") do table.insert(words, word) end
 
-	--    Slot face: bandanaBlue - quality: 33
-	--    Slot armor: leatherJacket - quality: 13
-	--    Slot jacket: denimJacket - quality: 25
-	--    Slot shirt: plaidShirt - quality: 235
-	--    Slot pants: blackDenimPants - quality: 121
-	--    Slot boots: wornBoots - quality: 120
-	--    Slot gloves: clothGloves - quality: 58
-	--    Slot eyes: aviatorGoggles - quality: 24
-	--    Slot head: miningHelmet
-	--    Slot 31: 003 * emptyJar
-
 	slot = string.sub(line, string.find(line, "Slot") + 5, string.find(line, ": ") - 1)
 
 	if string.find(line, "*") then
@@ -555,22 +533,6 @@ function readInventorySlot()
 	if (invScan == "belt") then
 		igplayers[invCheckID].inventory = igplayers[invCheckID].inventory .. quantity .. "," .. item .. "," .. quality .. "|"
 		igplayers[invCheckID].belt = igplayers[invCheckID].belt .. slot .. "," .. quantity .. "," .. item .. "," .. quality .. "|"
-
-		-- if tonumber(slot) == 7 and tonumber(quantity) > 0 and item == "casinoCoin" then
-			-- -- do a gimme
-			-- if (server.allowGimme) then
-				-- igplayers[invCheckID].playGimme = true
-				-- gimme(invCheckID)
-				-- message("pm " .. invCheckID .. " [" .. server.chatColour .. "]To stop playing gimme, remove the casino coins from the last slot in your belt.[-]")
-			-- end
-		-- end
-		
-
-		-- if tonumber(slot) == 7 and tonumber(quantity) > 0 and item == "yuccaFibers" then
-			-- --run the who command
-			-- message("pm " .. invCheckID .. " [" .. server.chatColour .. "]Remove grass from last slot of belt stop the spam.[-]")
-			-- gmsg_who(invCheckID)
-		-- end
 	end
 
 	if (invScan == "bagpack") then

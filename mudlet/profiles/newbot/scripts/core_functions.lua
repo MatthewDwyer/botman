@@ -153,6 +153,7 @@ function message(msg, irc)
 end
 
 
+
 function pvpZone(x, z)
 	local k,v, result
 
@@ -379,6 +380,27 @@ function LookupOfflinePlayer(search, match)
 	end
 
 	return nil
+end
+
+
+function LookupIRCAlias(name)
+	-- returns a steam ID if only 1 player record uses the name.  
+	local k,v, nickCount, steam
+	
+	nickCount = 0
+
+	for k, v in pairs(players) do
+		if (v.ircAlias ~= nil) then
+			if (name == v.ircAlias) then
+				nickCount = nickCount + 1
+				steam = k
+			end
+		end
+	end
+	
+	if nickCount == 1 then
+		return steam
+	end
 end
 
 
@@ -1119,8 +1141,15 @@ function fixMissingPlayer(steam)
 
 	if players[steam].lastCommand == nil then
 		players[steam].lastCommand = ""
-		players[steam].lastCommandTimestamp = os.time()
 	end
+	
+	if players[steam].lastCommandTimestamp == nil then
+		players[steam].lastCommandTimestamp = os.time() -1
+	end	
+	
+	if players[steam].lastChatLine == nil then
+		players[steam].lastChatLine = ""
+	end	
 
 	if players[steam].lastLogout == nil then
 		players[steam].lastLogout = os.time()
@@ -1177,12 +1206,24 @@ function fixMissingPlayer(steam)
 		players[steam].GBLCount = 0	
 	end
 	
+	if players[steam].commandCooldown == nil then
+		players[steam].commandCooldown = 0
+	end		
+	
 --	dbug("finished fixMissingPlayer")
 end
 
 
 function fixMissingIGPlayer(steam)
 	-- if any fields are missing from the players in-game player record, add them with default values
+	
+	if (igplayers[steam].claimPass == nil) then
+		igplayers[steam].claimPass = 0
+	end		
+	
+	if (igplayers[steam].checkNewPlayer == nil) then
+		igplayers[steam].checkNewPlayer = true
+	end	
 
 	if (igplayers[steam].steamOwner == nil) then
 		igplayers[steam].steamOwner = steam
@@ -1260,10 +1301,6 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].botQuestion = ""
 	end
 
-	if (igplayers[steam].region == nil) then
-		igplayers[steam].region = ""
-	end
-
 	if (igplayers[steam].killTimer == nil) then
 		igplayers[steam].killTimer = 0
 	end
@@ -1296,6 +1333,10 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].xPosLastOK = 0
 		igplayers[steam].yPosLastOK = 0
 		igplayers[steam].zPosLastOK = 0
+		
+		igplayers[steam].xPosLastAlert = 0
+		igplayers[steam].yPosLastAlert = 0
+		igplayers[steam].zPosLastAlert = 0
 	end
 
 	if (igplayers[steam].afk == nil) then

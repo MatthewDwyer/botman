@@ -83,6 +83,7 @@ function gmsg_villages()
 				if locations[villageName] ~= nil then
 					locations[villageName].mayor = pid
 					locations[villageName].owner = pid					
+					locations[villageName].village = true
 					message("say [" .. server.chatColour .. "]Congratulations " .. players[pid].name .. " on becoming the new mayor of " .. villageName .. "[-]")
 					
 					r = rand(5)
@@ -93,7 +94,7 @@ function gmsg_villages()
 					if r == 4 then message("say [" .. server.chatColour .. "]Have fun sorting out all the spats, petty squabbles, and other fun social misadventures xD[-]") end										
 					if r == 5 then message("say [" .. server.chatColour .. "]Now add surfs, slaves, wenches and someone to put the bottles out.[-]") end					
 
-					conn:execute("UPDATE locations SET mayor = " .. pid .. ", owner = " .. pid .. " WHERE name = '" .. escape(villageName) .. "'")
+					conn:execute("UPDATE locations SET village = true, mayor = " .. pid .. ", owner = " .. pid .. " WHERE name = '" .. escape(villageName) .. "'")
 					conn:execute("INSERT INTO villagers SET steam = " .. pid .. ", village = '" .. escape(villageName) .. "'")
 
 					villagers[pid .. vid] = {}

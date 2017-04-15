@@ -14,10 +14,25 @@ mysql = require "luasql.mysql"
 local debug = false
 local statements = {}
 
+function migratePlayers()
+	cursor,errorString = connBots:execute("SHOW COLUMNS FROM players LIKE 'steamOwner'")
+	rows = cursor:numrows()
+	
+	if tonumber(rows) == 0 then
+		connBots:execute("CREATE TABLE players2 LIKE players")
+		connBots:execute("ALTER TABLE players2 DISABLE KEYS")	
+		connBots:execute("ALTER TABLE  players2 DROP PRIMARY KEY , ADD PRIMARY KEY (steam,botID)")		
+		connBots:execute("ALTER TABLE players2 ENABLE KEYS")		
+		connBots:execute("DROP TABLE players")		
+		connBots:execute("RENAME TABLE players2 TO players")		
+		connBots:execute("ALTER TABLE `players` ADD `steamOwner` BIGINT(17) NOT NULL DEFAULT '0'")
+	end	
+end
+
 function initBotsData()
 	local IP, country
 
-if debug then dbug("initBotsData start") end
+if debug then display("initBotsData start\n") end
 
 	-- insert players in bots db
 	for k, v in pairs(players) do
@@ -34,23 +49,23 @@ if debug then dbug("initBotsData start") end
 		end
 	end
 
-if debug then dbug("initBotsData end") end
+if debug then display("initBotsData end\n") end
 end
 
 
 function cleanupBotsData()
-if debug then dbug("cleanupBotsData start") end
+if debug then display("cleanupBotsData start\n") end
 
 	if botman.db2Connected then
 		connBots:execute("UPDATE players set online = 0 WHERE server = '" .. escape(server.serverName) .. "'")
 	end
 
-if debug then dbug("cleanupBotsData end") end
+if debug then display("cleanupBotsData end\n") end
 end
 
 
 function registerBot()
-if debug then dbug("registerBot start") end
+if debug then display("registerBot start\n") end
 
 	-- the server table in bots db should have 1 unique record for each server.  We achieve this by picking a random number and testing the server table
 	-- to see if it is present.  We keep trying random numbers till we find an unused one then we insert a record into the servers table for this server.
@@ -66,14 +81,26 @@ if debug then dbug("registerBot start") end
 
 		id = rand(9999)
 		cursor,errorString = connBots:execute("select botID from servers where botID = " .. id)
-
+		
 		while tonumber(cursor:numrows()) > 0 do
 			id = rand(9999)
 			cursor,errorString = connBots:execute("select botID from servers where botID = " .. id)
 		end
+			
 		connBots:execute("INSERT INTO servers (ServerPort, IP, botName, serverName, playersOnline, tick, botID, dbName, dbUser, dbPass) VALUES (" .. server.ServerPort .. ",'" .. server.IP .. "','" .. escape(server.botName) .. "','" .. escape(server.serverName) .. "'," .. botman.playersOnline .. ", now()," .. id .. ",'" .. escape(botDB) .. "','" .. escape(botDBUser) .. "','" .. escape(botDBPass) .. "')")
 		server.botID = id
 		conn:execute("UPDATE server SET botID = " .. id)
+	else
+		-- check that there is a server record for this bot in bots db
+		cursor,errorString = connBots:execute("select * from servers where botID = " .. server.botID)
+		rows = cursor:numrows()
+
+		if tonumber(rows) == 0 then		
+			connBots:execute("INSERT INTO servers (ServerPort, IP, botName, serverName, playersOnline, tick, botID, dbName, dbUser, dbPass) VALUES (" .. server.ServerPort .. ",'" .. escape(server.IP) .. "','" .. escape(server.botName) .. "','" .. escape(server.serverName) .. "'," .. botman.playersOnline .. ", now()," .. server.botID .. ",'" .. escape(botDB) .. "','" .. escape(botDBUser) .. "','" .. escape(botDBPass) .. "')")		
+		else
+			-- update it with current data
+			connBots:execute("UPDATE servers SET serverName = '" .. escape(server.serverName) .. "', IP = '" .. escape(server.IP) .. "', ServerPort = " .. server.ServerPort .. ", botName = '" .. escape(server.botName) .. "', playersOnline = " .. botman.playersOnline .. ", tick = now(), dbName = '" .. escape(botDB) .. "', dbUser = '" .. escape(botDBUser) .. "', dbPass = '" .. escape(botDBPass) .. "' WHERE botID = " .. server.botID)
+		end
 	end
 
 	-- Try to insert the current players into the players table on bots db
@@ -81,7 +108,7 @@ if debug then dbug("registerBot start") end
 		insertBotsPlayer(k)
 	end
 
-if debug then dbug("registerBot end") end
+if debug then display("registerBot end\n") end
 end
 
 
@@ -90,36 +117,20 @@ function insertBotsPlayer(steam)
 		return
 	end
 
-	connBots:execute("UPDATE players set online = 0 WHERE steam = " .. steam)
-
 	if tonumber(server.botID) > 0 then
-		-- insert player in bots db
-		connBots:execute("INSERT INTO players (botID, server, steam, ip, name, online, level, zombies, score, playerKills, deaths, timeOnServer, playtime, country, ping) VALUES (" .. server.botID .. ",'" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].IP .. "','" .. escape(players[steam].name) .. "', 1," .. players[steam].level .. "," .. players[steam].zombies .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].deaths .. "," .. players[steam].timeOnServer .. "," .. igplayers[steam].sessionPlaytime .. ",'" .. players[steam].country .. "'," .. players[steam].ping .. ")")
-	end
-end
-
-
-function updateBotsPlayer(steam)
-	if not botman.db2Connected then
-		return
-	end
-
-	connBots:execute("UPDATE players set online = 0 WHERE steam = " .. steam)
-
-	if tonumber(server.botID) > 0 then
-		-- update player in bots db
-		connBots:execute("UPDATE players SET ip = '" .. players[steam].IP .. "', name = '" .. escape(players[steam].name) .. "', online = 1, level = " .. players[steam].level .. ", zombies = " .. players[steam].zombies .. ", score = " .. players[steam].score .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. ", timeOnServer  = " .. players[steam].timeOnServer .. ", playtime = " .. igplayers[steam].sessionPlaytime .. ", country = '" .. players[steam].country .. "', ping = " .. players[steam].ping .. " WHERE steam = " .. steam .. " AND botID = " .. server.botID)
+		-- insert or update player in bots db
+		connBots:execute("INSERT INTO players (botID, server, steam, ip, name, online, level, zombies, score, playerKills, deaths, timeOnServer, playtime, country, ping) VALUES (" .. server.botID .. ",'" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].IP .. "','" .. escape(players[steam].name) .. "', 1," .. players[steam].level .. "," .. players[steam].zombies .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].deaths .. "," .. players[steam].timeOnServer .. "," .. igplayers[steam].sessionPlaytime .. ",'" .. players[steam].country .. "'," .. players[steam].ping .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].IP .. "', name = '" .. escape(players[steam].name) .. "', online = 1, level = " .. players[steam].level .. ", zombies = " .. players[steam].zombies .. ", score = " .. players[steam].score .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. ", timeOnServer  = " .. players[steam].timeOnServer .. ", playtime = " .. igplayers[steam].sessionPlaytime .. ", country = '" .. players[steam].country .. "', ping = " .. players[steam].ping)
 	end
 end
 
 
 function updateBotsServerTable()
-	if not botman.db2Connected then
+	if not botman.db2Connected or tonumber(server.botID) == 0 then
 		return
 	end
 
 	connBots:execute("UPDATE servers SET ServerPort = " .. server.ServerPort .. ", IP = '" .. server.IP .. "', botName = '" .. escape(server.botName) .. "', playersOnline = " .. botman.playersOnline .. ", tick = now() WHERE botID = '" .. escape(server.botID))
-	connBots:execute("UPDATE players set online = 0 WHERE server = '" .. escape(server.serverName) .. "'")
+--	connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID)
 
 	-- updated players on bots db
 	for k, v in pairs(igplayers) do
@@ -166,6 +177,12 @@ end
 
 function isDBBotsConnected()
 	cursor,errorString = connBots:execute("select RAND() as rnum")
+	
+	if cursor == nil then
+		env = mysql.mysql()
+		conn = env:connect(botDB, botDBUser, botDBPass)
+	end	
+	
 	row = cursor:fetch({}, "a")
 
 	if not row then
@@ -178,6 +195,13 @@ end
 
 function isDBConnected()
 	cursor,errorString = conn:execute("select RAND() as rnum")
+	
+	if cursor == nil then
+		env = mysql.mysql()	
+		connBots = env:connect(botsDB, botsDBUser, botsDBPass)			
+		cursor,errorString = conn:execute("select RAND() as rnum")		
+	end
+	
 	row = cursor:fetch({}, "a")
 
 	if not row then
@@ -221,6 +245,7 @@ end
 
 function dbBaseDefend(steam, base)
 -- experimental
+-- TODO: update with the new automatic trader-esk ejector
 	local cursor, errorString,row, dist
 
 	dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, players[base].homeX, players[base].homeZ)
@@ -229,9 +254,9 @@ function dbBaseDefend(steam, base)
 		cursor,errorString = conn:execute("SELECT x, y, z FROM tracker WHERE steam = " .. steam .." AND (abs(x - " .. players[base].homeX .. ") > " .. server.baseSize .. " AND abs(z - " .. players[base].homeZ .. ") > " .. server.baseSize .. ")  AND (abs(x - " .. players[base].homeX .. ") < " .. server.baseSize + 40 .. " AND abs(z - " .. players[base].homeZ .. ") < " .. server.baseSize + 40 .. ") ORDER BY trackerid DESC Limit 0, 50")
 		row = cursor:fetch({}, "a")
 		while row do
-			cmd = ("tele " .. steam .. " " .. row.x .. " " .. row.y .. " " .. row.z)
-			dbug("mysql line " .. debugger.getinfo(1).currentline)	
-			teleport(cmd)
+			cmd = ("tele " .. steam .. " " .. row.x .. " -1 " .. row.z)
+			prepareTeleport(steam, cmd)
+			teleport(cmd, true)			
 
 			if true then
 				return
@@ -285,22 +310,22 @@ end
 
 
 function initDB()
-if debug then dbug("initDB start") end
+if debug then display("initDB start") end
 	alterTables()
 
-	conn:execute("DELETE FROM ircQueue")
-	conn:execute("DELETE FROM memTracker")
-	conn:execute("DELETE FROM messageQueue")
-	conn:execute("DELETE FROM commandQueue")
-	conn:execute("DELETE FROM gimmeQueue")
-	conn:execute("DELETE FROM searchResults")
+	conn:execute("TRUNCATE TABLE ircQueue")
+	conn:execute("TRUNCATE TABLE memTracker")
+	conn:execute("TRUNCATE TABLE messageQueue")
+	conn:execute("TRUNCATE TABLE commandQueue")
+	conn:execute("TRUNCATE TABLE gimmeQueue")
+	conn:execute("TRUNCATE TABLE searchResults")
 
-	conn:execute("DELETE FROM memRestrictedItems")
+	conn:execute("TRUNCATE TABLE memRestrictedItems")
 	conn:execute("INSERT INTO memRestrictedItems (SELECT * from restrictedItems)")
 
 	getServerFields()
 	getPlayerFields()
-if debug then dbug("initDB end") end
+if debug then display("initDB end") end
 end
 
 
@@ -348,7 +373,7 @@ function importBadItems()
 		return
 	end
 
-	conn:execute("DELETE FROM badItems")
+	conn:execute("TRUNCATE TABLE badItems")
 
 	cursor,errorString = connBots:execute("SELECT * FROM badItems")
 	row = cursor:fetch({}, "a")
@@ -445,7 +470,7 @@ function alterTables()
 	local benchStart = os.clock()
 	local sql
 
-if debug then dbug("alterTables start") end
+if debug then display("alterTables start\n") end
 
 -- These are here to make it easier to update other bots while the bot is in development.
 -- If you think you are missing a table or field, try uncommenting these.
@@ -514,29 +539,17 @@ if debug then dbug("alterTables start") end
 
 	doSQL("CREATE TABLE `badWords` (`badWord` varchar(15) NOT NULL,`cost` int(11) NOT NULL DEFAULT '10',`counter` int(11) NOT NULL DEFAULT '0') ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE `list` (`thing` varchar(255) NOT NULL) ENGINE=MEMORY DEFAULT CHARSET=latin1 COMMENT='For sorting a list'")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	doSQL("CREATE TABLE `prefabCopies` (`owner` bigint(17) NOT NULL DEFAULT '0',`name` varchar(50) NOT NULL DEFAULT '',`x1` int(11) NOT NULL DEFAULT '0',`x2` int(11) NOT NULL DEFAULT '0',`y1` int(11) NOT NULL DEFAULT '0',`y2` int(11) NOT NULL DEFAULT '0',`z1` int(11) NOT NULL DEFAULT '0',`z2` int(11) NOT NULL DEFAULT '0',`blockName` VARCHAR(50) NOT NULL DEFAULT '',`rotation` INT NOT NULL DEFAULT '0', PRIMARY KEY (`owner`,`name`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	doSQL("CREATE TABLE `memEntities` (`entityID` bigint(20) NOT NULL,`type` varchar(20) NOT NULL DEFAULT '',`name` varchar(30) NOT NULL DEFAULT '',`x` int(11) NOT NULL DEFAULT '0',`y` int(11) NOT NULL DEFAULT '0',`z` int(11) DEFAULT '0',`dead` tinyint(1) NOT NULL DEFAULT '0',`health` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`entityID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	doSQL("CREATE TABLE `waypoints` (`steam` varchar(17) NOT NULL,`name` varchar(20) NOT NULL,`x` int(11) NOT NULL DEFAULT '0',`y` int(11) NOT NULL DEFAULT '0',`z` int(11) NOT NULL DEFAULT '0',`shared` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`steam`,`name`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	doSQL("CREATE TABLE `gimmeZombies` (`zombie` varchar(50) NOT NULL,`minPlayerLevel` int(11) NOT NULL DEFAULT '1',`minArenaLevel` int(11) NOT NULL DEFAULT '1', PRIMARY KEY (`zombie`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	doSQL("CREATE TABLE `miscQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) NOT NULL,`command` varchar(100) NOT NULL,`action` varchar(15) NOT NULL,`value` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	doSQL("CREATE TABLE `customCommands` (`commandID` int(11) NOT NULL AUTO_INCREMENT, `command` varchar(50) NOT NULL, `accessLevel` int(11) NOT NULL DEFAULT '2', `help` varchar(255) NOT NULL, PRIMARY KEY (`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	doSQL("CREATE TABLE `whitelist` (`steam` varchar(17) NOT NULL, PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	doSQL("CREATE TABLE `otherEntities` (`entity` varchar(50) NOT NULL,`entityID` int(11) NOT NULL DEFAULT '0',`doNotSpawn` tinyint(4) NOT NULL DEFAULT '0', PRIMARY KEY (`entity`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	doSQL("CREATE TABLE IF NOT EXISTS `helpCommands` (`commandID` int(11) NOT NULL AUTO_INCREMENT,`command` varchar(255) NOT NULL,`description` varchar(255) NOT NULL,`notes` text NOT NULL,`keywords` varchar(150) NOT NULL,`lastUpdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`accessLevel` int(11) NOT NULL DEFAULT '99',`ingameOnly` tinyint(1) NOT NULL DEFAULT '0', PRIMARY KEY (`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	doSQL("CREATE TABLE IF NOT EXISTS `helpTopicCommands` (`topicID` int(11) NOT NULL,`commandID` int(11) NOT NULL, PRIMARY KEY (`topicID`, `commandID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	doSQL("CREATE TABLE IF NOT EXISTS `helpTopics` (`topicID` int(11) NOT NULL AUTO_INCREMENT,`topic` varchar(20) NOT NULL,`description` varchar(200) NOT NULL, PRIMARY KEY (`topicID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
 	-- changes to players table
 	doSQL("ALTER TABLE `players` ADD COLUMN `waypoint2X` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Y` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Z` INT NOT NULL DEFAULT '0', ADD COLUMN `waypointsLinked` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -552,7 +565,7 @@ if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentlin
 	doSQL("ALTER TABLE `players` ADD `bail` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `watchPlayerTimer` INT(11) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `hackerScore` INT NOT NULL DEFAULT '0'")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
+if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	-- changes to server table
 	doSQL("ALTER TABLE `server` ADD COLUMN `teleportCost` INT NOT NULL DEFAULT '200'")
 	doSQL("ALTER TABLE `server` ADD COLUMN `ircPrivate` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -596,7 +609,23 @@ if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentlin
 	doSQL("ALTER TABLE `server` ADD `enableWindowMessages` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `updateBranch` VARCHAR(7) NOT NULL DEFAULT 'stable'")
 	doSQL("ALTER TABLE `server` ADD `chatColourNewPlayer` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF' , ADD `chatColourPlayer` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF' , ADD `chatColourDonor` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF' , ADD `chatColourPrisoner` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF' , ADD `chatColourMod` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF' , ADD `chatColourAdmin` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF' , ADD `chatColourOwner` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF'")
-if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentline) end
+	doSQL("ALTER TABLE `server` ADD `commandCooldown` INT NOT NULL DEFAULT '0'")	
+	doSQL("ALTER TABLE `server` CHANGE `ircAlerts` `ircAlerts` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '#new_alerts'")
+	doSQL("ALTER TABLE `server` CHANGE `ircWatch` `ircWatch` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '#new_watch'")
+	doSQL("ALTER TABLE `server` CHANGE `botName` `botName` VARCHAR(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'Bot'")
+	doSQL("ALTER TABLE `server` CHANGE `ircMain` `ircMain` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '#new'")
+	doSQL("ALTER TABLE `server` CHANGE `ircBotName` `ircBotName` VARCHAR(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'Bot'")
+	doSQL("ALTER TABLE `server` CHANGE `shopLocation` `shopLocation` VARCHAR(30) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL")
+	doSQL("ALTER TABLE `server` CHANGE `blockCountries` `blockCountries` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'CN'")
+	doSQL("ALTER TABLE `server` CHANGE `moneyName` `moneyName` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'Zenny|Zennies'")
+	doSQL("ALTER TABLE `server` CHANGE `ircTracker` `ircTracker` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '#new_tracker'")
+	doSQL("ALTER TABLE `server` CHANGE `mapSize` `mapSize` INT(11) NOT NULL DEFAULT '10000'")
+	doSQL("ALTER TABLE `server` ADD `telnetPass` VARCHAR(50) NOT NULL")
+	doSQL("ALTER TABLE `server` ADD `telnetPort` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `feralRebootDelay` INT NOT NULL DEFAULT '68'")
+
+	
+if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	-- misc table changes
 	doSQL("ALTER TABLE `friends` ADD `autoAdded` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `hotspots` ADD `action` VARCHAR(10) NOT NULL DEFAULT ''")
@@ -614,18 +643,24 @@ if (debug) then dbug("debug alterTables line " .. debugger.getinfo(1).currentlin
 	doSQL("ALTER TABLE `miscQueue` CHANGE `command` `command` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL")
 	doSQL("ALTER TABLE `miscQueue` CHANGE `id` `id` BIGINT( 20 ) NOT NULL AUTO_INCREMENT")
 	doSQL("ALTER TABLE `locations` ADD `newPlayersOnly` TINYINT(1) NOT NULL DEFAULT '0'")
-	doSQL("ALTER TABLE `locations` ADD `minimumLevel` INT NOT NULL DEFAULT '0', ADD `maximumLevel` INT NOT NULL DEFAULT '0', ADD `dayClosed` INT NOT NULL DEFAULT '0'")	
+	doSQL("ALTER TABLE `locations` ADD `minimumLevel` INT NOT NULL DEFAULT '0', ADD `maximumLevel` INT NOT NULL DEFAULT '0', ADD `dayClosed` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `locations` ADD `dailyTaxRate` INT NOT NULL DEFAULT '0', ADD `bank` INT NOT NULL DEFAULT '0', ADD `prisonX` INT NOT NULL DEFAULT '0' , ADD `prisonY` INT NOT NULL DEFAULT '0' , ADD `prisonZ` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `alerts` ADD `status` VARCHAR(30) NOT NULL DEFAULT ''")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)
 	doSQL("ALTER TABLE `messageQueue` ADD `messageTimestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", true)
+	doSQL("ALTER TABLE `players` ADD `ircAlias` VARCHAR(15) NOT NULL , ADD `ircAuthenticated` TINYINT(1) NOT NULL DEFAULT '0'", true)
 
 	statements = {}
+	
+	-- fix a bad choice of primary keys. Won't touch players again since it won't complete if a field exists which it then adds.
+	migratePlayers()
 
-if debug then dbug("alterTables end") end
+if debug then display("alterTables end") end
 
 	if benchmarkBot then
-		dbug("function alterTables elapsed time: " .. string.format("%.2f", os.clock() - benchStart))
+		display("function alterTables elapsed time: " .. string.format("%.2f", os.clock() - benchStart))
 	end
 end
 

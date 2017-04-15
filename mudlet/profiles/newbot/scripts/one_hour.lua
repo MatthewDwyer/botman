@@ -22,17 +22,16 @@ function OneHourTimer()
 	counter = 1
 	cursor,errorString = conn:execute("SELECT * FROM announcements")
 	rows = cursor:numrows()
-
 	row = cursor:fetch({}, "a")
 	while row do
-		if tonumber(announceRoller) == counter then
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape(row.message) .. "')")
+		if tonumber(announceRoller) == counter then		
+			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape(row.message) .. "')")	
 		end
 
 		counter = counter + 1
 		row = cursor:fetch(row, "a")	
 	end
-
+	
 	announceRoller = announceRoller + 1
 	if (tonumber(announceRoller) > rows) then announceRoller = 1 end
 	

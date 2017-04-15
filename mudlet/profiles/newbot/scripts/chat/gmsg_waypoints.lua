@@ -10,8 +10,6 @@
 local tmp
 
 function activateWaypointTunnel()
-	dbug("activateWaypointTunnel")
-
 	message("pm " .. tmp.steam .. " [" .. server.chatColour .. "]Chevron Seven is LOCKED![-]")
 	conn:execute("UPDATE waypoints SET linked = " .. tmp.wp1id .. " WHERE id = " .. tmp.wp2id)
 	conn:execute("UPDATE waypoints SET linked = " .. tmp.wp2id .. " WHERE id = " .. tmp.wp1id)
@@ -614,7 +612,6 @@ function gmsg_waypoints()
 			-- tp the player to the waypointwaypoint
 			cmd = "tele " .. chatvars.playerid .. " " .. waypoints[tmp.id].x .. " " .. waypoints[tmp.id].y .. " " .. waypoints[tmp.id].z
 
-			dbug("waypoints line " .. debugger.getinfo(1).currentline)	
 			teleport(cmd, true)
 			players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.waypointCost
 			

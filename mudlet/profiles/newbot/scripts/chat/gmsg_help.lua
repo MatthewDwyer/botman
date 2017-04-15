@@ -139,11 +139,11 @@ function help(command)
 
 	if command == "irc" then
 		if not server.ircPrivate or (chatvars.accessLevel < 3) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Our irc server is located at " .. server.ircServer .. "[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Our irc server is located at " .. server.ircServer .. ":" .. server.ircPort .. "[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Send an irc invite to anyone with " .. server.commandPrefix .. "invite <player name>[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Once there type /join " .. server.ircMain .. "[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Hexchat is a good free irc client which works on Windows.[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Or visit https://kiwiirc.com/client/" .. server.ircServer .. "/" .. server.ircMain .. "[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Or visit https://kiwiirc.com/client/" .. server.ircServer .. ":" .. server.ircPort .. "/" .. server.ircMain .. "[-]")
 		end
 
 		return
@@ -179,22 +179,6 @@ function help(command)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "remove command <command>.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Access level is optional and defaults to 99.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]See " .. server.commandPrefix .. "help access for the list of access levels.[-]")
-		return
-	end
-
-
-	if command == "pve" then
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]PVE means player versus environment.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The objective is to live off the land, gather resources, build shelter and survive.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can always ask others for help and if it gets too tough, you can take refuge in the library.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]On this server there are a few areas where PVP is allowed. Read " .. server.commandPrefix .. "help pvp for info.[-]")
-		return
-	end
-
-
-	if command == "pvp" then
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]PVP means player versus player.  You don't have to kill others but they may kill you or raid your stuff.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]If you are raiding someone's base, only break enough to gain entry and to unlock their stuff. Don't deliberately destroy containers.[-]")
 		return
 	end
 
@@ -487,9 +471,6 @@ function help(command)
 		if not server.ircPrivate or (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help irc[-]") end				
 
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "alert (pass a message to the admins with your current position)[-]")		
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help pve[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help pvp[-]")				
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "about bot[-]")
 		
 		return
 	end

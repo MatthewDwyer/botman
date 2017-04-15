@@ -30,14 +30,17 @@ function gameTimeTrigger(line)
 		end
 
 		if not server.delayReboot and botman.scheduledRestart then
-			message("say [" .. server.chatColour .. "]Feral hordes run today so the server will reboot later.[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes run today so the server will reboot tomorrow.[-]")
 			server.delayReboot = true
 		end
 	else
 		if server.delayReboot and botman.scheduledRestart then
-			if (botman.scheduledRestartTimestamp - os.time()) < 0 then
-				botman.scheduledRestartTimestamp = os.time() + ((server.DayLightLength  + server.DayNightLength) * 60)
-				message("say [" .. server.chatColour .. "]The server will reboot in 1 game day (" .. server.DayLightLength  + server.DayNightLength .. " minutes).[-]")
+			if tonumber(server.feralRebootDelay) == 0 then
+				botman.scheduledRestartTimestamp = os.time() + ((server.DayLightLength + server.DayNightLength) * 60)
+				message("say [" .. server.chatColour .. "]The server will reboot in 1 game day (" .. server.DayLightLength + server.DayNightLength .. " minutes).[-]")
+			else
+				botman.scheduledRestartTimestamp = os.time() + (server.feralRebootDelay * 60)
+				message("say [" .. server.chatColour .. "]The server will reboot in " .. server.feralRebootDelay .. " minutes.[-]")				
 			end
 		end
 
@@ -54,13 +57,13 @@ function gameTimeTrigger(line)
 	end
 
 	if tonumber(server.gameDay) < tonumber(server.gameDay) and tonumber(server.gameDay) > 0 and server.warnBotReset ~= true then
-		if tonumber(server.gameDay) < 10 then
+		if tonumber(server.gameDay) < 5 then
 			-- the server date has rolled back.  try to alert any level 0 admin that the bot may need a reset too.
 			server.warnBotReset = true
 
 			for k,v in pairs(igplayers) do
 				if accessLevel(k) == 0 then
-					message("pm " .. k .. " [" .. server.chatColour .. "]ALERT!  It appears that the server has been reset.[-]")
+					message("pm " .. k .. " [" .. server.chatColour .. "]ALERT!  It appears that the server has been reset but not the bot.[-]")
 					message("pm " .. k .. " [" .. server.chatColour .. "]To reset me type " .. server.commandPrefix .. "reset bot.[-]")
 					message("pm " .. k .. " [" .. server.chatColour .. "]To dismiss this alert type " .. server.commandPrefix .. "no reset.[-]")
 				end
@@ -71,7 +74,7 @@ function gameTimeTrigger(line)
 	conn:execute("UPDATE server SET server.gameDay = " .. server.gameDay)
 
 	 --check locations for opening and closing times
-	 for k,v in pairs(locations) do
+	for k,v in pairs(locations) do
 		if isLocationOpen(v.name) then
 			if not v.open then
 				message("say [" .. server.chatColour .. "]The location " .. v.name .. " is now open.[-]")
@@ -83,5 +86,5 @@ function gameTimeTrigger(line)
 				v.open = false			
 			end
 		end
-	 end
+	end
 end

@@ -16,6 +16,11 @@ function oneHourTimer()
 
 	OneHourTimer()
 	dailyMaintenance()
+	
+	-- Flag all players as offline so we don't have any showing as online who left without being updated
+	if tonumber(server.botID) > 0 then
+		connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID)		
+	end
 
 	-- fix any problems with player records
 	for k,v in pairs(players) do

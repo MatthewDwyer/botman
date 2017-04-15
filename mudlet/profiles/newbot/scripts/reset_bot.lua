@@ -190,7 +190,7 @@ function ResetBot()
 
 	dbug("Reading server, players, bans and admin data")
 
---	send("lkp")
+	send("lkp")
 	tempTimer( 10, [[send("pm IPCHECK")]] )
 	tempTimer( 12, [[send("admin list")]] )
 	tempTimer( 14, [[send("gg")]] )

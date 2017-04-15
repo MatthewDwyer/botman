@@ -52,11 +52,7 @@ function thirtySecondTimer()
 		newDay()	
 
 		-- scan player inventories
-		for k, v in pairs(igplayers) do
-			-- if tonumber(players[k].hackerScore) > 0 then
-				-- players[k].hackerScore = tonumber(players[k].hackerScore) - 5
-			-- end
-		
+		for k, v in pairs(igplayers) do	
 			if (igplayers[k].killTimer == nil) then igplayers[k].killTimer = 9 end
 
 			if tonumber(igplayers[k].killTimer) < 2 then
@@ -67,19 +63,6 @@ function thirtySecondTimer()
 
 		cmd = "DoneInventory"
 		conn:execute("INSERT into commandQueue (command) VALUES ('" .. cmd .. "')")					
-	end
-
-	-- logout anyone on irc who hasn't typed anything and their session has expired
-	for k,v in pairs(players) do
-		if v.ircAuthenticated == true then
-			if v.ircSessionExpiry == nil then 
-				v.ircAuthenticated = false
-			else
-				if (v.ircSessionExpiry - os.time()) < 0 then
-					v.ircAuthenticated = false
-				end	
-			end
-		end
 	end
 
 	-- update the shared database (bots) server table (mainly for players online and a timestamp so others can see we're still online

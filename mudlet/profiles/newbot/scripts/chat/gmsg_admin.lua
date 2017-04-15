@@ -570,6 +570,62 @@ if debug then dbug("debug admin") end
 
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "feral") or string.find(chatvars.command, "rebo"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "feral reboot delay <minutes>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Set how many minutes after day 7 that the bot will wait before rebooting if a reboot is scheduled for day 7.")
+				irc_chat(players[chatvars.ircid].ircAlias, "To disable this feature, set it to 0.  The bot will wait a full game day instead.")				
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "feral" and chatvars.words[2] == "reboot" and chatvars.words[3] == "delay") then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 0) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 0) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		server.feralRebootDelay = math.abs(math.floor(chatvars.number))
+		conn:execute("UPDATE server SET feralRebootDelay = 0")
+
+		if (chatvars.playername ~= "Server") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reboots that fall on a feral day will happen " .. server.feralRebootDelay .. " minutes into the next day.[-]")
+		else
+			message("say [" .. server.chatColour .. "]Reboots that fall on a feral day will happen " .. server.feralRebootDelay .. " minutes into the next day.[-]")
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+	
+	if (chatvars.words[1] == "restart") and (chatvars.words[2] == "bot") and (chatvars.accessLevel < 3) then
+		if botman.customMudlet then	
+			savePlayers()		
+			closeMudlet()		
+		else
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is not supported in your Mudlet.  You need the latest custom Mudlet by TheFae.[-]")		
+		end
+
+		botman.faultyChat = false
+		return true
+	end		
+	
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end	
+
 	if (chatvars.words[1] == "hordeme") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
@@ -2034,7 +2090,7 @@ if debug then dbug("debug admin") end
 			return true
 		end
 
-		arrest(prisonerid, "Arrested by admin", 10000, 525600)
+		arrest(prisonerid, "Arrested by admin", 10000, 44640)
 
 		botman.faultyChat = false
 		return true
@@ -3227,8 +3283,6 @@ if debug then dbug("debug admin") end
 
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
-		
-		dbugi("pname " .. pname)
 
 		if id == nil then
 			if (chatvars.playername ~= "Server") then
@@ -3843,10 +3897,11 @@ if debug then dbug("debug admin") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "See who visited a player location or base.")
-				irc_chat(players[chatvars.ircid].ircAlias, "Example with defaults: " .. server.commandPrefix .. "who visited smeg days 1 hours 1 range 10 height 4")
+				irc_chat(players[chatvars.ircid].ircAlias, "Example with defaults: " .. server.commandPrefix .. "who visited player smeg days 1 hours 0 range 10 height 5")
+				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "who visited bed smeg")				
 				irc_chat(players[chatvars.ircid].ircAlias, "Add base to just see base visitors. Setting hours will reset days to zero.")
 				irc_chat(players[chatvars.ircid].ircAlias, "Use this command to discover who's been at the player's location.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -3857,99 +3912,112 @@ if debug then dbug("debug admin") end
 			botman.faultyChat = false
 			return true
 		end
+		
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end		
 
 		if (chatvars.words[3] == nil) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]See who visited a player location or base.[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Example with defaults:[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited smeg days 1 hours 1 range 10 height 4[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Add base to just see base visitors[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited player smeg days 1 hours 0 range 10 height 5[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited bed smeg[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Add base to just see their base visitors[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Setting hours will reset days to zero[-]")
+
 			botman.faultyChat = false
 			return true
 		end
 
-		-- optional params
-			-- range <distance in metres> Default 10
-			-- days.  Default is 1 day ago from today (local time not server)
-
-		name1 = nil
-		days = 1
-		hours = 0
-		range = 10
-		height = 4
-		baseOnly = "player"
-
-		if chatvars.words[3] ~= nil then
-			name1 = string.trim(chatvars.words[3])
-		end
+		tmp = {}
+		tmp.days = 1
+		tmp.hours = 0
+		tmp.range = 10
+		tmp.height = 5
+		tmp.basesOnly = "player"
 
 		for i=3,chatvars.wordCount,1 do
-			if chatvars.words[i] == "range" then
-				range = tonumber(chatvars.words[i+1])
+			if chatvars.words[i] == "player" or chatvars.words[i] == "bed" then
+				tmp.name = chatvars.words[i+1]
+				tmp.steam = LookupPlayer(tmp.name)
+
+				if tmp.steam and chatvars.words[i] == "player" then
+					tmp.player = true
+					tmp.x = players[tmp.steam].xPos
+					tmp.y = players[tmp.steam].yPos
+					tmp.z = players[tmp.steam].zPos
+				end
+
+				if tmp.steam and chatvars.words[i] == "bed" then
+					tmp.bed = true
+					tmp.x = players[tmp.steam].bedX
+					tmp.y = players[tmp.steam].bedY
+					tmp.z = players[tmp.steam].bedZ
+				end
 			end
 
-			if chatvars.words[i] == "height" then
-				height = tonumber(chatvars.words[i+1])
+			if chatvars.words[i] == "range" then
+				tmp.range = tonumber(chatvars.words[i+1])
 			end
 
 			if chatvars.words[i] == "days" then
-				days = tonumber(chatvars.words[i+1])
+				tmp.days = tonumber(chatvars.words[i+1])
+				tmp.hours = 0
 			end
 
 			if chatvars.words[i] == "hours" then
-				hours = tonumber(chatvars.words[i+1])
-				days = 0
+				tmp.hours = tonumber(chatvars.words[i+1])
+				tmp.days = 0
 			end
 
 			if chatvars.words[i] == "base" then
-				baseOnly = "base"
+				tmp.baseOnly = "base"
 			end
 
-			if chatvars.words[i] == "player" then
-				baseOnly = "player"
-				name1 = string.trim(chatvars.words[i+1])
+			if chatvars.words[i] == "x" then
+				tmp.x = tonumber(chatvars.words[i+1])
+			end
+
+			if chatvars.words[i] == "y" then
+				tmp.y = tonumber(chatvars.words[i+1])
+			end
+
+			if chatvars.words[i] == "z" then
+				tmp.z = tonumber(chatvars.words[i+1])
+			end
+
+			if chatvars.words[i] == "height" then
+				tmp.height = tonumber(chatvars.words[i+1])
 			end
 		end
 
-		if name1 ~= nil then
-			pid = LookupPlayer(name1)
-		else
-			pid = chatvars.playerid
-		end
-
-		if baseOnly == "base" or baseOnly == "all" then
-			if players[pid].homeX ~= 0 and players[pid].homeZ ~= 0 then
-				if days == 0 then
-					message("pm " .. chatvars.playerid .. " Players who visited within " .. range .. " metres of base 1 of " .. players[pid].name .. " in the last " .. hours .. " hours")
-				else
-					message("pm " .. chatvars.playerid .. " Players who visited within " .. range .. " metres of base 1 of " .. players[pid].name .. " in the last " .. days .. " days")
-				end
-
-				dbWho(chatvars.playerid, players[pid].homeX, players[pid].homeY, players[pid].homeZ, range, days, hours, height)
+		if (tmp.basesOnly == "base") and tmp.steam then
+			if players[tmp.steam].homeX ~= 0 and players[tmp.steam].homeZ ~= 0 then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 1 of " .. players[tmp.steam].name .. " at " .. players[tmp.steam].homeX .. " " .. players[tmp.steam].homeY .. " " .. players[tmp.steam].homeZ .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+				dbWho(chatvars.playerid, players[tmp.steam].homeX, players[tmp.steam].homeY, players[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, true)
 			else
-				message("pm " .. chatvars.playerid .. " " .. players[pid].name .. " does not have a base set yet.")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.steam].name .. " does not have a base set yet.[-]")
 			end
 
-			if players[pid].home2X ~= 0 and players[pid].home2Z ~= 0 then
-				message("pm " .. chatvars.playerid .. " ")
-				if days == 0 then
-					message("pm " .. chatvars.playerid .. " Players who visited within " .. range .. " metres of base 2 of " .. players[pid].name .. " in the last " .. hours .. " hours")
-				else
-					message("pm " .. chatvars.playerid .. " Players who visited within " .. range .. " metres of base 2 of " .. players[pid].name .. " in the last " .. days .. " days")
-				end
-
-				dbWho(chatvars.playerid, players[pid].home2X, players[pid].home2Y, players[pid].home2Z, range, days, hours, height)
+			if players[tmp.steam].home2X ~= 0 and players[tmp.steam].home2Z ~= 0 then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 2 of " .. players[tmp.steam].name .. " at " .. players[tmp.steam].home2X .. " " .. players[tmp.steam].home2Y .. " " .. players[tmp.steam].home2Z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+				dbWho(chatvars.playerid, players[tmp.steam].home2X, players[tmp.steam].home2Y, players[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, true)
 			end
 		end
 
-		if baseOnly == "player" or baseOnly == "all" then
-			if days == 0 then
-				message("pm " .. chatvars.playerid .. " Players who visited within " .. range .. " metres (X) " .. players[pid].xPos .. " (Z) " .. players[pid].zPos .. " of player " .. players[pid].name .. " in the last " .. hours .. " hours")
-			else
-				message("pm " .. chatvars.playerid .. " Players who visited within " .. range .. " metres (X) " .. players[pid].xPos .. " (Z) " .. players[pid].zPos .. " of player " .. players[pid].name .. " in the last " .. days .. " days")
+		if tmp.basesOnly == "player" and tmp.steam then
+			if tmp.player then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of player " .. players[tmp.steam].name .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
 			end
 
-			dbWho(chatvars.playerid, players[pid].xPos, players[pid].yPos, players[pid].zPos, range, days, hours, height)
+			if tmp.bed then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of player " .. players[tmp.steam].name .. "'s bed at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+			end
+
+			dbWho(chatvars.playerid, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height, true)
+		end
+
+		if not tmp.steam then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+			dbWho(chatvars.playerid, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height, true)
 		end
 
 		botman.faultyChat = false
@@ -4765,7 +4833,12 @@ if debug then dbug("debug admin") end
 		players[prisonerid].botTimeout = false
 		players[prisonerid].freeze = false
 		players[prisonerid].silentBob = false
-		setChatColour(prisonerid)
+		
+		if players[prisonerid].chatColour ~= "" then
+			send("cpc " .. prisonerid .. " " .. players[prisonerid].chatColour .. " 1")
+		else
+			setChatColour(prisonerid)
+		end
 
 		conn:execute("UPDATE players SET prisoner=0,timeout=0,botTimeout=0,silentBob=0 WHERE steam = " .. prisonerid)
 

@@ -362,7 +362,7 @@ function gimme(pid)
 			if (zombies > 299) and (zombies < 500) then spawnCount = rand(4) end
 			if (zombies > 499) and (zombies < 1000) then spawnCount = rand(5) end
 			if (zombies > 999) and (zombies < 5000) then spawnCount = rand(6) end
-			if (zombies > 4999) then spawnCount = rand(10) end			
+			if (zombies > 4999) then spawnCount = rand(8) end			
 		end
 
 if entity == "zombieferal" then

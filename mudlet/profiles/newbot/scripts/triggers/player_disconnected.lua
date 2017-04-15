@@ -70,9 +70,17 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 		
 		if players[steam].watchPlayer then
 			irc_chat(server.ircWatch, server.gameDate .. " " .. steam .. " " .. players[steam].name .. " disconnected")		
-		end		
+		end
+
+		-- attempt to insert the player into bots db players table
+		if	botman.db2Connected then
+			insertBotsPlayer(steam)
+		end			
 		
-		saveDisconnectedPlayer(steam)		
+		saveDisconnectedPlayer(steam)	
+		
+		-- set the player offline in bots db
+		connBots:execute("UPDATE players set online = 0 where steam = " .. steam .. " AND botID = " .. server.botID)		
 
 		-- check how many claims they have placed
 		send("llp " .. steam)

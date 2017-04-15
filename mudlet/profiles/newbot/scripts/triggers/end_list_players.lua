@@ -30,6 +30,13 @@ function endListPlayers(line)
 				updateReservedSlots()	
 			end
 		end
+		
+		if tonumber(server.botID) > 0 then			
+			for k,v in pairs(igplayers) do
+				insertBotsPlayer(k)
+			end
+		end		
+		
 		botman.listPlayers = false	
 	end	
 	

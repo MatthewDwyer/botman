@@ -12,7 +12,21 @@
 
 local debug = false
 
--- if (debug) then dbug("debug irc functions line " .. debugger.getinfo(1).currentline) end
+function getNick()
+	server.ircBotName = ircGetNick()
+end
+
+function joinIRCServer()
+	if server.ircPort == "" then
+		return
+	end
+
+	ircSetHost(server.ircServer, server.ircPort)
+	ircSetChannel(server.ircMain)
+	tempTimer( 1, [[ircJoin("]] .. server.ircAlerts .. [[")]] )
+	tempTimer( 2, [[ircJoin("]] .. server.ircWatch .. [[")]] )	
+	tempTimer( 3, [[getNick()]] )		
+end
 
 function irc_chat(name, message)
 	-- Don't allow the bot to command itself
@@ -356,7 +370,8 @@ function irc_PlayerShortInfo()
 	if players[irc_params.pid].firstSeen ~= nil then irc_chat(irc_params.name, "First seen: " .. os.date("%Y-%m-%d %H:%M:%S", players[irc_params.pid].firstSeen) ) end
 	irc_chat(irc_params.name, seen(irc_params.pid))
 	irc_chat(irc_params.name, "Total time played: " .. days .. " days " .. hours .. " hours " .. minutes .. " minutes " .. time .. " seconds")
-	if players[irc_params.pid].names ~= nil then irc_chat(irc_params.name, "Has played as " .. players[irc_params.pid].names) end
+	if players[irc_params.pid].names then irc_chat(irc_params.name, "Has played as " .. players[irc_params.pid].names) end
+	if players[irc_params.pid].hackerScore then irc_chat(irc_params.name, "Hacker score: " .. players[irc_params.pid].hackerScore) end
 	
 	if players[irc_params.pid].timeout == true then 
 		irc_chat(irc_params.name, "Is in timeout") 
@@ -367,6 +382,8 @@ function irc_PlayerShortInfo()
 	if players[irc_params.pid].prisoner then
 		irc_chat(irc_params.name, "Is a prisoner")
 		if players[irc_params.pid].prisonReason ~= nil then irc_chat(irc_params.name, "Reason Arrested: " .. players[irc_params.pid].prisonReason) end
+	else
+		irc_chat(irc_params.name, "Not a prisoner")	
 	end
 
 	irc_chat(irc_params.name, server.moneyPlural .. " " .. players[irc_params.pid].cash)
@@ -420,49 +437,50 @@ end
 
 function listOwners(steam)
 	local online = ""
-	local inGame = false
 
 	if igplayers[steam] then
-		inGame = true
-	end
-
-	if inGame then
 		message("pm " .. steam .. " [" .. server.chatColour .. "]The server owners are:[-]")
+	else
+		irc_chat(irc_params.name, "The server owners are:")	
 	end
-
-	irc_chat(irc_params.name, "The server owners are:")
 
 	for k, v in pairs(owners) do
 		if igplayers[k] then
 			online = "  [IN GAME NOW]"
 		else
-			online = ""
+			online = " "
 		end
-
-		if inGame then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]" .. players[k].name .. online .. "[-]")
+		
+		if igplayers[steam] then
+			if not players[k] then
+				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " UNKNOWN STEAM ID[-]")			
+			else
+				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " " .. players[k].name .. online .. "[-]")
+			end
+		else
+			if not players[k] then
+				irc_chat(irc_params.name, "UNKNOWN PLAYER " .. k .. " in admin list but not known to server.")		
+			else
+				irc_chat(irc_params.name,  k .. " " .. players[k].name .. online)
+			end		
 		end
-
-		irc_chat(irc_params.name, players[k].name .. online)
 	end
 
-	irc_chat(irc_params.name, "----")
+	if not igplayers[steam] then
+		irc_chat(irc_params.name, " ")
+	end
 end
 
 
 function listAdmins(steam)
 	local online = ""
-	local inGame = false
 
 	if igplayers[steam] then
-		inGame = true
-	end
-
-	if inGame then
 		message("pm " .. steam .. " [" .. server.chatColour .. "]The server admins are:[-]")
+	else
+		irc_chat(irc_params.name, "The server admins are..")	
 	end
 
-	irc_chat(irc_params.name, "The server admins are..")
 	for k, v in pairs(admins) do
 		if igplayers[k] then
 			online = "  [IN GAME NOW]"
@@ -470,30 +488,36 @@ function listAdmins(steam)
 			online = ""
 		end
 
-		if inGame then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]" .. players[k].name .. online .. "[-]")
+		if igplayers[steam] then
+			if not players[k] then
+				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " UNKNOWN STEAM ID[-]")			
+			else
+				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " " .. players[k].name .. online .. "[-]")
+			end
+		else
+			if not players[k] then
+				irc_chat(irc_params.name, "UNKNOWN PLAYER " .. k .. " in admin list but not known to server.")		
+			else
+				irc_chat(irc_params.name,  k .. " " .. players[k].name .. online)
+			end
 		end
-
-		irc_chat(irc_params.name, players[k].name .. online)
 	end
 
-	irc_chat(irc_params.name, " ")
+	if not igplayers[steam] then
+		irc_chat(irc_params.name, " ")
+	end
 end
 
 
 function listMods(steam)
 	local online = ""
-	local inGame = false
 
 	if igplayers[steam] then
-		inGame = true
-	end
-
-	if inGame then
 		message("pm " .. steam .. " [" .. server.chatColour .. "]The server mods are:[-]")
+	else
+		irc_chat(irc_params.name, "The server mods are..")	
 	end
 
-	irc_chat(irc_params.name, "The server mods are..")
 	for k, v in pairs(mods) do
 		if igplayers[k] then
 			online = "  [IN GAME NOW]"
@@ -501,14 +525,24 @@ function listMods(steam)
 			online = ""
 		end
 
-		if inGame then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]" .. players[k].name .. online .. "[-]")
+		if igplayers[steam] then
+			if not players[k] then
+				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " UNKNOWN STEAM ID[-]")			
+			else
+				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " " .. players[k].name .. online .. "[-]")
+			end
+		else
+			if not players[k] then
+				irc_chat(irc_params.name, "UNKNOWN PLAYER " .. k .. " in admin list but not known to server.")		
+			else
+				irc_chat(irc_params.name,  k .. " " .. players[k].name .. online)
+			end
 		end
-
-		irc_chat(irc_params.name, players[k].name .. online)
 	end
 
-	irc_chat(irc_params.name, " ")
+	if not igplayers[steam] then
+		irc_chat(irc_params.name, " ")
+	end
 end
 
 
@@ -692,9 +726,9 @@ function irc_players(name)
 			irc_chat(name, v.name .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " " .. flags)
 		else
 			if players[id].ircAuthenticated == true then
-				irc_chat(name, "steam: " .. k .. " id: " .. string.format("%-7d", v.id) .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " level " .. v.level.. " region r." .. x .. "." .. z .. ".7   name: " .. v.name  .. flags .. " [ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos) .. " ] " .. players[k].country .. " " .. v.ping)
+				irc_chat(name, "steam: " .. k .. " id: " .. string.format("%-7d", v.id) .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " level " .. v.level.. " region r." .. x .. "." .. z .. ".7   name: " .. v.name  .. flags .. " [ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos) .. " ] " .. players[k].country .. " " .. v.ping .. " Hacker score: " .. players[k].hackerScore)
 			else
-				irc_chat(name, v.name .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " " .. flags)
+				irc_chat(name, v.name .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " " .. flags .. " Hacker score: " .. players[k].hackerScore)
 			end
 		end
 	end

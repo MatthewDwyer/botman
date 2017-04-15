@@ -391,6 +391,12 @@ function gmsg_coppi()
 			else
 				irc_chat(players[chatvars.ircid].ircAlias, "New player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
 			end		
+			
+			for k,v in pairs(igplayers) do
+				if accessLevel(k) == 99 and string.upper(players[k].chatColour) == "FFFFFF" then
+					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+				end
+			end			
 		end
 		
 		if tmp.target == "player" then
@@ -401,7 +407,13 @@ function gmsg_coppi()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Non-new player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(players[chatvars.ircid].ircAlias, "Non-new player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
-			end		
+			end	
+
+			for k,v in pairs(igplayers) do
+				if accessLevel(k) == 90 and string.upper(players[k].chatColour) == "FFFFFF" then
+					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+				end
+			end			
 		end	
 
 		if tmp.target == "donor" then
@@ -412,7 +424,13 @@ function gmsg_coppi()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(players[chatvars.ircid].ircAlias, "Donor chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
-			end		
+			end
+
+			for k,v in pairs(igplayers) do
+				if accessLevel(k) > 3 and accessLevel(k) < 11 and string.upper(players[k].chatColour) == "FFFFFF" then
+					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+				end
+			end			
 		end	
 
 		if tmp.target == "prisoner" then
@@ -423,7 +441,13 @@ function gmsg_coppi()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Prisoner chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(players[chatvars.ircid].ircAlias, "Prisoner chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
-			end		
+			end
+
+			for k,v in pairs(igplayers) do
+				if players[k].prisoner and string.upper(players[k].chatColour) == "FFFFFF" then
+					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+				end
+			end						
 		end	
 		
 		if tmp.target == "mod" then
@@ -434,7 +458,13 @@ function gmsg_coppi()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Moderator chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(players[chatvars.ircid].ircAlias, "Moderator chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
-			end		
+			end	
+
+			for k,v in pairs(igplayers) do
+				if accessLevel(k) == 2 and string.upper(players[k].chatColour) == "FFFFFF" then
+					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+				end
+			end			
 		end
 
 		if tmp.target == "admin" then
@@ -445,7 +475,13 @@ function gmsg_coppi()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admin chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(players[chatvars.ircid].ircAlias, "Admin chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
-			end		
+			end
+
+			for k,v in pairs(igplayers) do
+				if accessLevel(k) == 1 and string.upper(players[k].chatColour) == "FFFFFF" then
+					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+				end
+			end			
 		end
 
 		if tmp.target == "owner" then
@@ -459,7 +495,7 @@ function gmsg_coppi()
 			end	
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 0 and players[k].chatColour == "FFFFFF" then
+				if accessLevel(k) == 0 and string.upper(players[k].chatColour) == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end
@@ -892,7 +928,6 @@ function gmsg_coppi()
 			tmp.coords = chatvars.intX .. " " .. chatvars.intY - 1 .. " " .. chatvars.intZ
 		end
 
-		dbugi("prender " .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face)
 		send("prender " .. chatvars.playerid .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face)
 		send("prender " .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face)
 		botman.lastBlockCommandOwner = chatvars.playerid

@@ -152,7 +152,6 @@ function gmsg_tracker()
 
 		if tmp.id ~= nil then
 			if tmp.dist ~= nil then
-				dbugi("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. tmp.id .. " and session = " ..tmp.session .. " and abs(x - " .. tmp.x .. ") <= " .. tmp.dist .. " AND abs(z - " .. tmp.z .. ") <= " .. tmp.dist .. ")")
 				conn:execute("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. tmp.id .. " and session = " .. tmp.session .. " and abs(x - " .. tmp.x .. ") <= " .. tmp.dist .. " AND abs(z - " .. tmp.z .. ") <= " .. tmp.dist .. ")")
 			else
 				conn:execute("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. tmp.id .. " and session = " .. tmp.session .. ")")

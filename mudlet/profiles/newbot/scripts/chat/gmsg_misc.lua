@@ -164,11 +164,11 @@ function gmsg_misc()
 		if players[chatvars.playerid].ircInvite ~= nil then
 			if chatvars.number == players[chatvars.playerid].ircInvite then
 				if server.ircServer ~= nil then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Great! Join our IRC server using this link, https://kiwiirc.com/client/" .. server.ircServer .. "/" .. server.ircMain .. "[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Great! Join our IRC server using this link, https://kiwiirc.com/client/" .. server.ircServer .. ":" .. server.ircPort .. "/" .. server.ircMain .. "[-]")
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]From the channel " .. server.ircMain .. " type hi bot.[-]")
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A private chat from " .. server.ircBotName .. " will appear. In it type I am " .. players[chatvars.playerid].ircInvite .. "[-]")
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will give you a brief introduction to IRC and what you can do there, and it will ask for a password which will become your login.[-]")
-					conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. chatvars.playerid .. ", '" .. escape("Join our IRC server at https://kiwiirc.com/client/" .. server.ircServer .. "/" .. server.ircMain .. ". Type hi bot then go to the private channel called " .. server.ircBotName .. " and type I am " .. players[chatvars.playerid].ircInvite .. "')"))
+					conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. chatvars.playerid .. ", '" .. escape("Join our IRC server at https://kiwiirc.com/client/" .. server.ircServer .. ":" .. server.ircPort .. "/" .. server.ircMain .. ". Type hi bot then go to the private channel called " .. server.ircBotName .. " and type I am " .. players[chatvars.playerid].ircInvite .. "')"))
 				else
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Great! Join our IRC server and on it type /join " .. server.ircMain .. "[-]")
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]From the channel " .. server.ircMain .. " type hi bot.[-]")

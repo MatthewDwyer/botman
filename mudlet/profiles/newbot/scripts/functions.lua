@@ -7,6 +7,38 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+function searchBlacklist(IP, name)
+	local IPInt
+	
+	IPInt = IPToInt(IP)
+	cursor,errorString = connBots:execute("SELECT * FROM IPBlacklist WHERE StartIP <=  " .. IPInt .. " AND EndIP >= " .. IPInt)
+	row = cursor:fetch({}, "a")
+	
+	if row then
+		if igplayers[name] then
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Found in blacklist.  startIP = " .. row.StartIP .. ", endIP = " .. row.EndIP .. "[-]")
+		else
+			irc_chat(name, "Found in blacklist.  startIP = " .. row.StartIP .. ", endIP = " .. row.EndIP)
+		end
+	else
+		if igplayers[name] then
+			message("pm " .. steam .. " [" .. server.chatColour .. "]" .. IP .. " is not in the blacklist.[-]")
+		else
+			irc_chat(name, IP .. " is not in the blacklist.")		
+		end	
+	end
+end
+
+
+function savePlayers()
+	local k,v
+
+	for k,v in pairs(igplayers) do
+		savePlayerData(k)
+	end
+end
+
+
 function setChatColour(steam)
 	if accessLevel(steam) > 3 and accessLevel(steam) < 11 then
 		send("cpc " .. steam .. " " .. server.chatColourDonor .. " 1")
@@ -39,36 +71,36 @@ end
 
 
 function isLocationOpen(loc)
-	local timeOpen, timeClosed, status
+	local timeOpen, timeClosed, isOpen
 	
 	timeOpen = tonumber(locations[loc].timeOpen)
 	timeClosed = tonumber(locations[loc].timeClosed)	
-	status = true
+	isOpen = true
 
 	-- check the location for opening and closing times
 	if tonumber(timeOpen) == 0 and tonumber(timeClosed) == 0 then
-		status = true
+		isOpen = true
 	else
 		if tonumber(server.gameHour) >= tonumber(timeOpen) then
-			status = true
+			isOpen = true
 		end
 
 		if tonumber(server.gameHour) >= tonumber(timeClosed) then
-			status = false
+			isOpen = false
 		end
 
 		if tonumber(timeOpen) >= tonumber(timeClosed) and tonumber(server.gameHour) >= tonumber(timeOpen) then
-			status = true
+			isOpen = true
 		end
 	end
 	
 	if tonumber(locations[loc].dayClosed) > 0 then
 		if ((server.gameDay + 7 - locations[loc].dayClosed) % 7 == 0) then
-			status = false
+			isOpen = false
 		end
 	end
 	
-	return status
+	return isOpen
 end
 
 
@@ -197,6 +229,7 @@ function fixBot()
 	fixMissingStuff()
 	fixShop()
 	enableTimer("ReloadScripts")	
+	getServerData()	
 end
 
 
@@ -589,23 +622,6 @@ function inWhitelist(steam)
 		return true
 	else
 		return false
-	end
-end
-
-
-function getWhitelistedServers()
-	local cursor, errorString, row
-
-	whitelistedServers = {}
-	whitelistedServers[server.IP] = {}
-	whitelistedServers[server.botsIP] = {}
-
-	cursor,errorString = connBots:execute("select IP from servers")
-	row = cursor:fetch({}, "a")
-
-	while row do
-		whitelistedServers[row.IP] = {}
-		row = cursor:fetch(row, "a")
 	end
 end
 
@@ -1188,10 +1204,12 @@ function arrest(steam, reason, bail, releaseTime)
 	end	
 	
 	if releaseTime ~= nil then
-		message("pm " .. steam .. " [" .. server.chatColour .. "]You will be released in " .. releaseTime .. " minutes.[-]")		
+		days, hours, minutes = timeRemaining(os.time() + (releaseTime * 60))
+		message("pm " .. steam .. " [" .. server.chatColour .. "]You will be released in " .. days .. " days " .. hours .. " hours and " .. minutes .. " minutes.[-]")		
 	else
 		if tonumber(server.maxPrisonTime) > 0 then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]You will be released in " .. server.maxPrisonTime .. " minutes.[-]")	
+			days, hours, minutes = timeRemaining(os.time() + (server.maxPrisonTime * 60))
+			message("pm " .. steam .. " [" .. server.chatColour .. "]You will be released in " .. days .. " days " .. hours .. " hours and " .. minutes .. " minutes.[-]")				
 		end
 	end
 	
@@ -1241,11 +1259,11 @@ function checkRegionClaims(x, z)
 end
 
 
-function dbWho(ownerid, x, y, z, dist, days, hours, height)
+function dbWho(ownerid, x, y, z, dist, days, hours, height, ingame)
 	local cursor, errorString,row, counter
 
 	if days == nil then days = 1 end
-	if height == nil then height = 4 end
+	if height == nil then height = 5 end
 
 	conn:execute("DELETE FROM searchResults WHERE owner = " .. ownerid)
 
@@ -1268,7 +1286,7 @@ function dbWho(ownerid, x, y, z, dist, days, hours, height)
 	while row do
 		conn:execute("INSERT INTO searchResults (owner, steam, session, counter) VALUES (" .. ownerid .. "," .. row.steam .. "," .. row.session .. "," .. counter .. ")")
 
-		if igplayers[ownerid] then
+		if ingame then
 			message("pm " .. ownerid .. " [" .. server.chatColour .. "] #" .. counter .." " .. row.steam .. " " .. players[row.steam].id .. " " .. players[row.steam].name .. " sess: " .. row.session .. "[-]")
 		else
 			irc_chat(ownerid, "#" .. counter .." " .. row.steam .. " " .. players[row.steam].name .. " sess: " .. row.session)
@@ -1282,9 +1300,6 @@ end
 
 function dailyMaintenance()
 	-- put something here to be run when the server date hits midnight
-	if botman.db2Connected then
-		getWhitelistedServers()
-	end
 
 	return true
 end
@@ -1320,6 +1335,9 @@ function finishReboot()
 
 	botman.ignoreAdmins = true	
 	send("shutdown")
+	
+	-- flag all players as offline
+	connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID)	
 end
 
 
@@ -1497,7 +1515,7 @@ function readDNS(steam)
 			iprange = string.sub(ln, a, a+b)
 		end
 
-		if not whitelist[steam] and not players[steam].donor and isNewPlayer(steam) then
+		if not whitelist[steam] and not players[steam].donor and players[steam].newPlayer then
 			for k,v in pairs(proxies) do
 				if string.find(ln, string.upper(v.scanString), nil, true) then
 					v.hits = tonumber(v.hits) + 1
@@ -1637,6 +1655,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].botTimeout = false
 	players[steam].cash = 0
 	players[steam].chatColour = "FFFFFF 1"
+	players[steam].commandCooldown = 0
 	players[steam].country = ""
 	players[steam].donor = false
 	players[steam].donorExpiry = os.time()
@@ -1657,6 +1676,9 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].ircPass = ""
 	players[steam].ISP = ""
 	players[steam].lastBaseRaid = 0
+	players[steam].lastChatLine = ""
+	players[steam].lastCommand = ""	
+	players[steam].lastCommandTimestamp = os.time()
 	players[steam].lastLogout = os.time()
 	players[steam].mute = false
 	players[steam].name = player
@@ -1729,9 +1751,13 @@ end
 function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam] = {}
 	igplayers[steam].afk = os.time() + 900
+	igplayers[steam].alertRemovedClaims = false
+	igplayers[steam].belt = ""
 	igplayers[steam].botQuestion = "" -- used for storing the last question the bot asked the player.
 	igplayers[steam].checkNewPlayer = true
 	igplayers[steam].connected = true
+	igplayers[steam].equipment = ""
+	igplayers[steam].fetch = false
 	igplayers[steam].firstSeen = os.time()
 	igplayers[steam].flyCount = 0
 	igplayers[steam].flying = false
@@ -1746,11 +1772,15 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].inventoryLast = ""
 	igplayers[steam].killTimer = 0
 	igplayers[steam].lastHotspot = 0
+	igplayers[steam].lastLogin = ""
 	igplayers[steam].lastLP = os.time()
 	igplayers[steam].name = player
 	igplayers[steam].noclipX = 0
 	igplayers[steam].noclipZ = 0
+	igplayers[steam].pack = ""
 	igplayers[steam].ping = 0
+	igplayers[steam].playGimme = false
+	igplayers[steam].region = ""
 	igplayers[steam].sessionPlaytime = 0
 	igplayers[steam].sessionStart = os.time()
 	igplayers[steam].steam = steam
@@ -1870,7 +1900,7 @@ function saveDisconnectedPlayer(steam)
 
 	if	botman.db2Connected then
 		-- insert or update player in bots db
-		connBots:execute("INSERT INTO players (server, steam, ip, name, online) VALUES ('" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].IP .. "','" .. escape(players[steam].name) .. "',0) ON DUPLICATE KEY UPDATE ip = '" .. players[steam].IP .. "', name = '" .. escape(players[steam].name) .. "', online = 0")
+		connBots:execute("INSERT INTO players (server, steam, ip, name, online, botid) VALUES ('" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].IP .. "','" .. escape(players[steam].name) .. "',0," .. server.botID .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].IP .. "', name = '" .. escape(players[steam].name) .. "', online = 0")
 	end
 end
 

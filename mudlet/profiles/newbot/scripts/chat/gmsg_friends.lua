@@ -161,7 +161,6 @@ if debug then dbug("debug friends") end
 
 		if (id ~= nil) then
 			-- check to see if this friend was auto friended and warn the player that they must unfriend them via the game.
-			dbugi("select * from friends where steam = " .. chatvars.playerid .. " AND friend = " .. id .. " AND autoAdded = 1")
 			cursor,errorString = conn:execute("select * from friends where steam = " .. chatvars.playerid .. " AND friend = " .. id .. " AND autoAdded = 1")
 			row = cursor:fetch({}, "a")
 

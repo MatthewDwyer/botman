@@ -790,19 +790,23 @@ function gmsg_teleports()
 	end
 
 	if (chatvars.words[1] == "stuck" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
-		if (tonumber(chatvars.intY) > 0 and tonumber(chatvars.intY) < 256) and (players[chatvars.playerid].lastCommand ~= chatvars.command)  then
-			-- bump the players position up 1 meter y + 1
-			send("tele " .. chatvars.playerid .. " " .. math.floor(igplayers[chatvars.playerid].xPos) .. " " .. math.ceil(igplayers[chatvars.playerid].yPos) + 1 .. " " .. math.floor(igplayers[chatvars.playerid].zPos))
-		else
-			cursor,errorString = conn:execute("SELECT x, y, z FROM tracker WHERE steam = " .. chatvars.playerid .. " AND ((abs(x - " .. chatvars.intX .. ") > 2 and abs(x - " .. chatvars.intX .. ") < 30) and (abs(z - " .. chatvars.intZ .. ") > 2 and abs(z - " .. chatvars.intZ .. ") < 30))  ORDER BY trackerid DESC Limit 0, 1")
-			if cursor:numrows() > 0 then
-				row = cursor:fetch({}, "a")
-				send("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y + 1 .. " " .. row.z)
-			else
-				-- bump the players position up 1 meter y + 1
-				send("tele " .. chatvars.playerid .. " " .. math.floor(igplayers[chatvars.playerid].xPos) .. " " .. math.ceil(igplayers[chatvars.playerid].yPos) + 1 .. " " .. math.floor(igplayers[chatvars.playerid].zPos))
-			end
-		end
+		cmd = "tele " .. chatvars.playerid .. " " .. chatvars.intX .. " -1 " .. chatvars.intZ
+		prepareTeleport(chatvars.playerid, cmd)
+		teleport(cmd, true)	
+	
+		-- if (tonumber(chatvars.intY) > 0 and tonumber(chatvars.intY) < 256) and (players[chatvars.playerid].lastCommand ~= chatvars.command)  then
+			-- -- bump the players position up 1 meter y + 1
+			-- send("tele " .. chatvars.playerid .. " " .. math.floor(igplayers[chatvars.playerid].xPos) .. " " .. math.ceil(igplayers[chatvars.playerid].yPos) + 1 .. " " .. math.floor(igplayers[chatvars.playerid].zPos))
+		-- else
+			-- cursor,errorString = conn:execute("SELECT x, y, z FROM tracker WHERE steam = " .. chatvars.playerid .. " AND ((abs(x - " .. chatvars.intX .. ") > 2 and abs(x - " .. chatvars.intX .. ") < 30) and (abs(z - " .. chatvars.intZ .. ") > 2 and abs(z - " .. chatvars.intZ .. ") < 30))  ORDER BY trackerid DESC Limit 0, 1")
+			-- if cursor:numrows() > 0 then
+				-- row = cursor:fetch({}, "a")
+				-- send("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y + 1 .. " " .. row.z)
+			-- else
+				-- -- bump the players position up 1 meter y + 1
+				-- send("tele " .. chatvars.playerid .. " " .. math.floor(igplayers[chatvars.playerid].xPos) .. " " .. math.ceil(igplayers[chatvars.playerid].yPos) + 1 .. " " .. math.floor(igplayers[chatvars.playerid].zPos))
+			-- end
+		-- end
 
 		botman.faultyChat = false
 		return true

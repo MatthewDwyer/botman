@@ -18,4 +18,19 @@ function twoMinuteTimer()
 			send("rcd " .. math.floor(v.xPos) .. " " .. math.floor(v.zPos))	
 		end	
 	end
+	
+	-- logout anyone on irc who hasn't typed anything and their session has expired
+	for k,v in pairs(players) do
+		if v.ircAuthenticated == true then
+			if v.ircSessionExpiry == nil then 
+				v.ircAuthenticated = false
+				connBots:execute("UPDATE players SET ircAuthenticated = 0 WHERE steam = " .. k)					
+			else
+				if (v.ircSessionExpiry - os.time()) < 0 then
+					v.ircAuthenticated = false
+					connBots:execute("UPDATE players SET ircAuthenticated = 0 WHERE steam = " .. k)					
+				end	
+			end
+		end
+	end	
 end

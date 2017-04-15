@@ -64,7 +64,8 @@ function initServer()
 	server.ircBotName = "Bot"
 	server.ircMain = "#bot"
 	server.ircPrivate = true
-	server.ircServer = "127.0.0.1:6667"
+	server.ircServer = "127.0.0.1"
+	server.ircPort = "6667"
 	server.ircTracker = "#bot_tracker"	
 	server.ircWatch = "#bot_watch"	
 	server.lastDailyReboot = 0

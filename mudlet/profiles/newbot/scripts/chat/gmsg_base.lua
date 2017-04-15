@@ -758,6 +758,11 @@ if debug then dbug("debug base") end
 	end					
 
 	if (chatvars.words[1] == "base" or chatvars.words[1] == "home" or chatvars.words[1] == "base2" or chatvars.words[1] == "home2") and chatvars.words[2] == nil and (chatvars.playerid ~= 0) then
+		if server.coppi then
+			-- update the coordinates of the players bedroll
+			send("lpb " .. chatvars.playerid)
+		end	
+	
 		if (chatvars.accessLevel > 10) and (chatvars.words[1] == "base2" or chatvars.words[1] == "home2") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only donors can have 2 base teleports and base protections.  Consider donating =D[-]")
 			botman.faultyChat = false
@@ -778,11 +783,6 @@ if debug then dbug("debug base") end
 
 		if (chatvars.words[1] == "base" or chatvars.words[1] == "home") and (players[chatvars.playerid].homeY == 0) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have not set a base yet. Type " .. server.commandPrefix .. "setbase in your base first then " .. server.commandPrefix .. "base will work.[-]")
-
-			if server.coppi then
-				igplayers[chatvars.playerid].sendHome = true
-				send("lpb " .. chatvars.playerid)
-			end
 
 			botman.faultyChat = false
 			return true

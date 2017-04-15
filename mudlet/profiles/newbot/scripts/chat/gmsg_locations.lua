@@ -15,7 +15,7 @@ function gmsg_locations()
 	local debug, temp
 	debug = false
 
-	local loc, locationName, locationName, id, pname, status, temp
+	local loc, locationName, locationName, id, pname, status, temp, pvp
 
 	tmp = {}
 
@@ -1628,6 +1628,8 @@ function gmsg_locations()
 			botman.faultyChat = false
 			return true
 		else
+			pvp = pvpZone(chatvars.intX, chatvars.intZ)
+		
 			locations[locationName] = {}
 			locations[locationName].name = locationName
 
@@ -1636,7 +1638,7 @@ function gmsg_locations()
 			message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " has created a location called " .. locationName .. "[-]")
 
 			loadLocations(locationName)			
-			locations[locationName].pvp = igplayers[chatvars.playerid].currentLocationPVP			
+			locations[locationName].pvp = pvp
 		end
 
 		if (locationName == "prison") and server.gameType ~= "pvp" then
@@ -2086,7 +2088,7 @@ function gmsg_locations()
 			end
 		end
 
-		if (row.public == "0" and chatvars.accessLevel > 2) and row.owner ~= chatvars.playerid then --  and not LookupVillager(chatvars.playerid, loc)
+		if (row.public == "0" and chatvars.accessLevel > 2) and row.owner ~= chatvars.playerid then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.name .. " is private[-]")
 			botman.faultyChat = false
 			return true
@@ -2106,7 +2108,7 @@ function gmsg_locations()
 			end
 		end
 
-		if not locations[loc].open then
+		if not locations[loc].open and chatvars.accessLevel > 2 then
 			if locations[loc].timeOpen == 0 then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.name .. " is closed. It will re-open at midnight.[-]")
 			else

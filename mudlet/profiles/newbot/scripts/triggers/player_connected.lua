@@ -164,13 +164,6 @@ function playerConnected(line)
 		conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','new player','New player joined " .. escape(player) .. " steam: " .. steam .. " owner: " .. steamOwner .. " id: " .. entityid .. "'," .. steam .. ")")
 
 		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
-
-		if	botman.db2Connected then
-			-- also update the bots db
-			insertBotsPlayer(steam)
-		end
-
-		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 	else
 		irc_chat(server.ircMain, server.gameDate .. " " .. steam .. " " .. player .. " connected")
 		logChat(botman.serverTime, "Server", steam .. " " .. player .. " connected")			
@@ -221,7 +214,7 @@ function playerConnected(line)
 		end
 		
 		if players[steam].chatColour ~= "" then
-			if players[steam].chatColour ~= "FFFFFF" then
+			if string.upper(players[steam].chatColour) ~= "FFFFFF" then
 				send("cpc " .. steam .. " " .. players[steam].chatColour)
 			else
 				if accessLevel(steam) > 3 and accessLevel(steam) < 11 then
@@ -367,17 +360,7 @@ function playerConnected(line)
 		conn:execute("UPDATE players SET watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. steam)
 	end
 	
-	send("lkp steam")
-	
-	if	botman.db2Connected then
-		if tonumber(players[steam].sessionCount) == 1 then
-			-- copy in bots db 
-			connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','new player','New player joined " .. escape(player) .. " steam: " .. steam .. " owner: " .. steamOwner .. " id: " .. entityid .. "'," .. steam .. ")")	
-		else
-			--update player in bots db
-			updateBotsPlayer(steam)
-		end
-	end
+	send("lkp steam")	
 
 	-- count GBL bans
 

@@ -264,16 +264,16 @@ function gmsg_info()
 		if server.delayReboot then
 			if (server.gameDay % 7 == 0) then
 				if (chatvars.playername ~= "Server") then			
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Feral hordes run today so the reboot will happen later.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.[-]")
 				else
-					irc_chat(players[chatvars.ircid].ircAlias, "Feral hordes run today so the reboot is suspended until midnight.")
+					irc_chat(players[chatvars.ircid].ircAlias, "The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.")
 				end
+			end
+			
+			if (chatvars.playername ~= "Server") then
+				nextReboot(chatvars.playerid)
 			else
-				if (chatvars.playername ~= "Server") then
-					nextReboot(chatvars.playerid)
-				else
-					nextReboot(chatvars.ircid)
-				end			
+				nextReboot(chatvars.ircid)
 			end
 		else
 			if (chatvars.playername ~= "Server") then
@@ -751,7 +751,7 @@ function gmsg_info()
 		end
 	end
 
-	if (chatvars.words[1] == "who" and chatvars.words[3] == nil) and (chatvars.playerid ~= 0) then
+	if (chatvars.words[1] == "who" and chatvars.words[2] ~= "visited" and chatvars.words[3] == nil) and (chatvars.playerid ~= 0) then
 		alone = true
 
 		if (chatvars.number == nil) then chatvars.number = 500 end
@@ -770,7 +770,7 @@ function gmsg_info()
 		if (tonumber(chatvars.intX) < 0) then xdir = " west " else xdir = " east " end
 		if (tonumber(chatvars.intZ) < 0) then zdir = " south" else zdir = " north" end
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are at " .. chatvars.intX .. xdir .. chatvars.intZ .. zdir .. " at a height of " .. chatvars.intY .. "[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in region r." .. x .. "." .. z .. ".7rg[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in region r." .. x .. "." .. z .. ".7[-]")
 
 		if (pvpZone(chatvars.intX, chatvars.intZ) == false) or (server.gameType ~= "pvp") then
 			for k, v in pairs(igplayers) do
@@ -966,15 +966,6 @@ function gmsg_info()
 		else
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player name required or no match found.[-]")
 		end
-
-		botman.faultyChat = false
-		return true
-	end
-
-	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
-
-	if (chatvars.words[1] == "about" and chatvars.words[2] == "bot") and (chatvars.playerid ~= 0) then
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.botName .. " is written by Smegzor. It is 100% free and open source.  Visit botman.nz for more info.[-]")
 
 		botman.faultyChat = false
 		return true

@@ -93,7 +93,7 @@ end
 
 
 function nextReboot(steam)
-	local timeRemaining, diff, days, hours, minutes, seconds
+	local timeRemaining, diff, days, hours, minutes, seconds, strDays, strHours, strMinutes
 
 	if not server.allowReboot then
 		if steam == nil then
@@ -164,14 +164,51 @@ function nextReboot(steam)
 				irc_chat(players[steam].ircAlias, "The reboot is paused at the moment. When it is resumed, the reboot will happen in " .. string.format("%02d", hours) .. ":" .. string.format("%02d", minutes) ..":" .. string.format("%02d", seconds))
 			end
 		else
-			if steam == nil then
-				message("say [" .. server.chatColour .. "]The next reboot is in " .. days .. " days " .. string.format("%02d", hours) .. ":" .. string.format("%02d", minutes) ..":" .. string.format("%02d", seconds) .. "[-]")
-			else
-				if igplayers[steam] then
-					message("pm " .. steam .. " [" .. server.chatColour .. "]The next reboot is in " .. days .. " days " .. string.format("%02d", hours) .. ":" .. string.format("%02d", minutes) ..":" .. string.format("%02d", seconds) .. "[-]")
-				end
+			if (server.gameDay % 7 == 0) then
+				if steam == nil then
+					message("say [" .. server.chatColour .. "]Feral hordes run today so the server will reboot tomorrow.[-]")
+				else
+					if igplayers[steam] then
+						message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes run today so the server will reboot tomorrow.[-]")
+					end
 
-				irc_chat(players[steam].ircAlias, "The next reboot is in " .. days .. " days " .. string.format("%02d", hours) .. ":" .. string.format("%02d", minutes) ..":" .. string.format("%02d", seconds))
+					irc_chat(players[steam].ircAlias, "Feral hordes run today so the server will reboot tomorrow.")
+				end			
+			else		
+				strDays = "days"
+				if days == 1 then strDays = "day" end				
+			
+				strHours = "hours"			
+				if hours == 1 then strHours = "hour" end
+				
+				strMinutes = "minutes"			
+				if minutes == 1 then strMinutes = "minute" end				
+			
+				if steam == nil then			
+					if days > 0 then
+						message("say [" .. server.chatColour .. "]The next reboot is in " .. days .. " " .. strDays .. " " .. hours .. " " .. strHours .. " and " .. minutes .." " .. strMinutes .. "[-]")
+					else
+						if hours > 0 then
+							message("say [" .. server.chatColour .. "]The next reboot is in " .. hours .. " " .. strHours .. " and " .. minutes .." " .. strMinutes .. "[-]")						
+						else
+							message("say [" .. server.chatColour .. "]The next reboot is in " .. minutes .." " .. strMinutes .. "[-]")						
+						end
+					end
+				else
+					if igplayers[steam] then
+						if days > 0 then
+							message("pm " .. steam .. " [" .. server.chatColour .. "]The next reboot is in " .. days .. " " .. strDays .. " " .. hours .. " " .. strHours .. " and " .. minutes .." " .. strMinutes .. "[-]")
+						else
+							if hours > 0 then
+								message("pm " .. steam .. " [" .. server.chatColour .. "]The next reboot is in " .. hours .. " " .. strHours .. " and " .. minutes .." " .. strMinutes .. "[-]")						
+							else
+								message("pm " .. steam .. " [" .. server.chatColour .. "]The next reboot is in " .. minutes .." " .. strMinutes .. "[-]")						
+							end
+						end					
+					end
+
+					irc_chat(players[steam].ircAlias, "The next reboot is in " .. days .. " days " .. string.format("%02d", hours) .. " hours and " .. string.format("%02d", minutes) .." minutes")
+				end
 			end
 		end
 	end
@@ -303,7 +340,7 @@ function gmsg_who(playerid, number)
 						x = math.floor(v.xPos / 512)
 						z = math.floor(v.zPos / 512)
 
-						message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. " distance: " .. string.format("%d", dist) .. " region r." .. x .. "." .. z .. ".7rg[-]")
+						message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. " distance: " .. string.format("%d", dist) .. " region r." .. x .. "." .. z .. ".7 Hacker score: " .. players[k].hackerScore .. "[-]")
 					else
 						if (players[playerid].watchPlayer == true) and accessLevel(v.steam) > 3 then
 							message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. "[-]")
@@ -340,7 +377,6 @@ function logChat(chatTime, chatOwner, chatLine)
 	botman.webdavFolderWriteable = true
 end
 
--- names that don't parse yet, sG | Nothing_but_fail [SO]
 
 function gmsg(line, ircid)
 	local result, x, z, id, pname, noWaypoint, temp, chatStringStart, cmd, msg, test, ircMsg
@@ -473,20 +509,16 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			temp = string.gsub(chatvars.playername, "%[[%/%!]-[^%[%]]-]", "") .. ": " .. string.sub(chatvars.command, 1, 200)
 			temp = string.gsub(temp, "%[[%/%!]-[^%[%]]-]", "")
 
---			if not string.find(line, "INF Chatting colored") then
 if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end				
-				ircMsg = server.gameDate .. " " .. temp
---			end
+			ircMsg = server.gameDate .. " " .. temp
 
 			temp = string.sub(chatvars.command, 201)
 			temp = string.gsub(temp, "%[[%/%!]-[^%[%]]-]", "")
 
---			if not string.find(line, "INF Chatting colored") then
 if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end				
-				ircMsg = server.gameDate .. " " .. temp
---			end
+			ircMsg = server.gameDate .. " " .. temp
+
 		else
---			if not string.find(chatvars.command, server.commandPrefix .. "accept") and not string.find(chatvars.command, server.commandPrefix .. "poke") and not string.find(line, "INF Chatting colored") then		
 			if not string.find(chatvars.command, server.commandPrefix .. "accept") and not string.find(chatvars.command, server.commandPrefix .. "poke") then
 if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end				
 				ircMsg = server.gameDate .. " " .. string.gsub(chatvars.playername, "%[[%/%!]-[^%[%]]-]", "") .. ": " .. string.gsub(chatvars.command, "%[[%/%!]-[^%[%]]-]", "")
@@ -511,13 +543,19 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end	
-
+	
 	if (chatvars.playername ~= "Server") then
-		-- if not igplayers[chatvars.playerid] then
-			-- botman.faultyChat = false
-			-- return
-		-- end
-		
+		if (players[chatvars.playerid].lastCommand ~= nil) then
+			-- don't allow commands or chat being spammed too quickly			
+			if (os.time() - players[chatvars.playerid].lastCommandTimestamp) < 1 then				
+				botman.faultyChat = false
+				result = true
+				return
+			end
+		end
+	end	
+
+	if (chatvars.playername ~= "Server") then	
 		if igplayers[chatvars.playerid] then
 			igplayers[chatvars.playerid].afk = os.time() + 900		
 			chatvars.intX = math.floor(igplayers[chatvars.playerid].xPos)
@@ -581,30 +619,28 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end	
 
+--[[	
 	if not result and (chatvars.playername ~= "Server") then
-		if players[chatvars.playerid].lastCommand ~= nil then
-			-- don't allow commands being spammed too quickly			
+		if (players[chatvars.playerid].lastCommand ~= nil) then
+			-- don't allow commands or chat being spammed too quickly			
 			if (os.time() - players[chatvars.playerid].lastCommandTimestamp) < 1 then				
 				botman.faultyChat = false
 				result = true
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end					
 				return
 			end
 		end
 	end
+--]]	
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end		
 		
 	if ircMsg ~= nil then
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end			
 		irc_chat(server.ircMain, ircMsg)
 		
 		if players[chatvars.playerid] or chatvars.playername == "Server" then
 			windowMessage(server.windowGMSG, chatvars.playername .. ": " .. chatvars.command .. "\n", true)
 			logChat(botman.serverTime, chatvars.playername, ircMsg)			
 		end
-	else
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end		
 	end
 	
 	
@@ -620,37 +656,39 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 	if not result and (chatvars.playername ~= "Server") then
 		if players[chatvars.playerid].lastCommand ~= nil then
 			if chatvars.command == server.commandPrefix then
-				gmsg(igplayers[chatvars.playerid].lastChatLine)
+				players[chatvars.playerid].lastCommandTimestamp = os.time() - 10
+				gmsg(players[chatvars.playerid].lastChatLine)
 if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end					
 				return							
 			end
 		
 			if (string.find(chatvars.command, server.commandPrefix .. "again") and chatvars.words[3] == nil) or (chatvars.command == server.commandPrefix .. " north") or (chatvars.command == server.commandPrefix .. " south") or (chatvars.command == server.commandPrefix .. " east") or (chatvars.command == server.commandPrefix .. " west") then
 				if string.find(chatvars.command, "north") then
-					igplayers[chatvars.playerid].lastChatLine = igplayers[chatvars.playerid].lastChatLine:gsub("south", "north")
-					igplayers[chatvars.playerid].lastChatLine = igplayers[chatvars.playerid].lastChatLine:gsub("east", "north")					
-					igplayers[chatvars.playerid].lastChatLine = igplayers[chatvars.playerid].lastChatLine:gsub("west", "north")					
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("south", "north")
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("east", "north")					
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("west", "north")					
 				end
 				
 				if string.find(chatvars.command, "south") then
-					igplayers[chatvars.playerid].lastChatLine = igplayers[chatvars.playerid].lastChatLine:gsub("north", "south")
-					igplayers[chatvars.playerid].lastChatLine = igplayers[chatvars.playerid].lastChatLine:gsub("east", "south")					
-					igplayers[chatvars.playerid].lastChatLine = igplayers[chatvars.playerid].lastChatLine:gsub("west", "south")					
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("north", "south")
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("east", "south")					
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("west", "south")					
 				end				
 				
 				if string.find(chatvars.command, "east") then
-					igplayers[chatvars.playerid].lastChatLine = igplayers[chatvars.playerid].lastChatLine:gsub("north", "east")
-					igplayers[chatvars.playerid].lastChatLine = igplayers[chatvars.playerid].lastChatLine:gsub("south", "east")					
-					igplayers[chatvars.playerid].lastChatLine = igplayers[chatvars.playerid].lastChatLine:gsub("west", "east")					
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("north", "east")
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("south", "east")					
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("west", "east")					
 				end					
 				
 				if string.find(chatvars.command, "west") then
-					igplayers[chatvars.playerid].lastChatLine = igplayers[chatvars.playerid].lastChatLine:gsub("north", "west")
-					igplayers[chatvars.playerid].lastChatLine = igplayers[chatvars.playerid].lastChatLine:gsub("east", "west")					
-					igplayers[chatvars.playerid].lastChatLine = igplayers[chatvars.playerid].lastChatLine:gsub("south", "west")					
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("north", "west")
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("east", "west")					
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("south", "west")					
 				end					
 
-				gmsg(igplayers[chatvars.playerid].lastChatLine)
+				players[chatvars.playerid].lastChatLineTimestamp = os.time() - 10
+				gmsg(players[chatvars.playerid].lastChatLine)
 				return				
 			end
 		end
@@ -660,8 +698,11 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 	
 	if chatvars.playername ~= "Server" then
 		players[chatvars.playerid].lastCommandTimestamp = os.time()				
-		players[chatvars.playerid].lastCommand = chatvars.command 
-		igplayers[chatvars.playerid].lastChatLine = line			
+	
+		if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) then
+			players[chatvars.playerid].lastCommand = chatvars.command
+			players[chatvars.playerid].lastChatLine = chatvars.oldLine -- used for storing the telnet line from the last command
+		end
 	end	
 	
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end			
@@ -744,22 +785,6 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end	
 
 	if (chatvars.playername ~= "Server") then
-		-- if chatvars.accessLevel > 2 and players[chatvars.playerid].newPlayer and tonumber(igplayers[chatvars.playerid].sessionPlaytime) < 180 then
-			-- test = string.sub(line, string.find(line, chatStringStart, nil, true) + 6)
-			-- temp = test:match("(%d+.%d+.%d+.%d+)")
-
-			-- if test:match("(%d%d?%d?)%.(%d%d?%d?)%.(%d%d?%d?)%.(%d%d?%d?)%:(%d+)") and not whitelistedServers[temp] then
-				-- message("say [" .. server.chatColour .. "]Do not advertise other servers! The offender has been given a temporary ban and this offense has been reported.[-]")
-				-- banPlayer(chatvars.playerid, "1 hour", "Advertising another server in public chat.", "")
-				-- messageAdmins("Banned player " .. players[chatvars.playerid].name .. " 1 hour for advertising another server in chat.")
-				-- irc_chat(server.ircAlerts, server.gameDate .. " Banned player " .. chatvars.playerid .. " " .. players[chatvars.playerid].name .. " 1 hour for advertising another server in chat.")
-				-- botman.faultyChat = false
-				-- result = true
-			-- end
-		-- end
-
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end			
-
 		if chatvars.words[1] == "hardcore" and chatvars.words[2] == "mode" and (chatvars.words[3] == "off" or chatvars.words[3] == "disable" or string.sub(chatvars.words[3], 1, 2) == "de") then
 			players[chatvars.playerid].silentBob = false
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will help you.[-]")

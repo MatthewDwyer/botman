@@ -205,6 +205,10 @@ function playerInfo(faultyInfo)
 
 		fixMissingIGPlayer(steam)
 	end
+	
+	if igplayers[steam].checkNewPlayer == nil then
+		fixMissingIGPlayer(steam)		
+	end				
 
 	-- add to players table
 	if (players[steam] == nil) then
@@ -274,7 +278,7 @@ function playerInfo(faultyInfo)
 
 			if tonumber(igplayers[steam].highPingCount) > 15 then
 				irc_chat(server.ircMain, "Kicked " .. name .. " steam: " .. steam.. " for high ping " .. ping)
-				kick(steam, "High ping. Contact an admin and ask to be whitelisted.")
+				kick(steam, "High ping kicked.")
 				return
 			end
 		end
@@ -319,14 +323,14 @@ function playerInfo(faultyInfo)
 	if tonumber(players[steam].hackerScore) >= 10000 then
 		players[steam].hackerScore = 0
 		message("say [" .. server.chatColour .. "]Banning " .. players[steam].name .. " detected evidence of hacking.[-]")
-		banPlayer(steam, "1 year", "Automatic ban for hacking", "")
+		banPlayer(steam, "1 year", "Automatic ban by server manager", "")
 		-- TODO:  Add GBL ban here
 	end
 	
 	if tonumber(players[steam].hackerScore) >= 100 and tonumber(players[steam].hackerScore) < 10000 then
 		players[steam].hackerScore = 0
-		message("say [" .. server.chatColour .. "]Temp banning " .. players[steam].name .. " for suspected hacking. Admins have been alerted.[-]")
-		banPlayer(steam, "1 day", "Automatic ban for suspected hacking.", "")
+		message("say [" .. server.chatColour .. "]Temp banning " .. players[steam].name .. " 1 week for suspected hacking. Admins have been alerted.[-]")
+		banPlayer(steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
 	end	
 
 	-- test for hackers teleporting
@@ -371,8 +375,8 @@ function playerInfo(faultyInfo)
 							if tonumber(players[steam].hackerTPScore) > 1 then
 								players[steam].hackerTPScore = 0
 								players[steam].tp = 0
-								message("say [" .. server.chatColour .. "]Temp-banning " .. players[steam].name .. " 1 day for unexplained teleporting. An admin will investigate the circumstances.[-]")
-								banPlayer(steam, "1 day", "We detected unusual teleporting from you and are investigating the circumstances.", "")
+								message("say [" .. server.chatColour .. "]Temp-banning " .. players[steam].name .. " 1 week for unexplained teleporting. An admin will investigate the circumstances.[-]")
+								banPlayer(steam, "1 week", "We detected unusual teleporting from you and are investigating the circumstances.", "")
 							end
 
 							alertAdmins(id .. " name: " .. name .. " detected teleporting! In fly mode, type " .. server.commandPrefix .. "near " .. id .. " to shadow them.", "warn")

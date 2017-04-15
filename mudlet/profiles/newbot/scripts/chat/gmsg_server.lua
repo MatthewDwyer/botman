@@ -7,6 +7,8 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+--  weathersurvival on/off
+
 function gmsg_server()
 	calledFunction = "gmsg_server"
 
@@ -259,8 +261,14 @@ if debug then dbug("debug server") end
 				irc_chat(players[chatvars.ircid].ircAlias, "The IRC server is now at " .. tmp)
 			end		
 		
-			server.ircServer = tmp
-			conn:execute("UPDATE server SET ircServer = '" .. escape(tmp) .. "'")
+			temp = string.split(tmp, ":")
+			server.ircServer = temp[1]		
+			server.ircPort = temp[2]			
+				
+			conn:execute("UPDATE server SET ircServer = '" .. escape(server.ircServer) .. "', ircPort = '" .. escape(server.ircPort) .. "'")
+			
+			joinIRCServer()
+			ircSaveSessionConfigs()					
 		end
 
 		botman.faultyChat = false
@@ -1933,11 +1941,12 @@ if debug then dbug("debug server") end
 		send("webpermission add webapi.viewallclaims 2")
 		send("webpermission add webapi.getplayerinventory 2")
 		send("webpermission add webapi.getplayerslocation 2")
--- uncomment if you want everyone to see animal or zed locations
---		send("webpermission add webapi.gethostilelocation 2000")
---		send("webpermission add webapi.getanimalslocation 2000")
 		send("webpermission add webapi.getplayersOnline 2000")
-		send("webpermission add webapi.getstats 2000")
+		send("webpermission add webapi.getstats 2000")		
+		
+-- comment if you don't want everyone to see animal and zed locations
+		send("webpermission add webapi.gethostilelocation 2000")
+		send("webpermission add webapi.getanimalslocation 2000")
 
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The map permissions have been set.[-]")

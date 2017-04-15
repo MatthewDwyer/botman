@@ -217,7 +217,6 @@ function savePlayer(steam, action)
 				end
 
 				if v.type == "tim" then
-					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"				
 --					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"					
 				end
 

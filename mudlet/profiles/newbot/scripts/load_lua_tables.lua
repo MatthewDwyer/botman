@@ -59,7 +59,16 @@ function loadServer()
 		server.moneyPlural = temp[2]			
 		
 		if server.coppi == nil then server.coppi = false end
-		if server.allocs == nil then server.allocs = false end		
+		if server.allocs == nil then server.allocs = false end
+
+		if server.ircServer ~= nil then
+			temp = string.split(server.ircServer, ":")	
+			server.ircServer = temp[1]		
+			server.ircPort = temp[2]
+		else
+			server.ircServer = ""
+			server.ircPort = ""
+		end
 		
 		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end			
 	end
@@ -257,7 +266,7 @@ function loadLocations(loc)
 	end
 	
 	while row do		
-	if (debug) then dbug("debug loadLocation " .. row.name) end			
+		if (debug) then dbug("debug loadLocation " .. row.name) end			
 		if loc == row.name or loc == nil then		
 			locations[row.name] = {}
 
@@ -280,7 +289,6 @@ function loadLocations(loc)
 			end
 		end
 		
-	if (debug) then dbug("debug loadLocations line " .. debugger.getinfo(1).currentline) end				
 		locations[row.name].open = true
 		row = cursor:fetch(row, "a")			
 	end	

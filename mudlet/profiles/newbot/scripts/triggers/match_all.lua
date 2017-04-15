@@ -7,6 +7,28 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+function removeOldStaff()
+	local k,v
+	
+	for k,v in pairs(owners) do
+		if not staffList[k] then
+			owners[k] = nil
+		end
+	end
+	
+	for k,v in pairs(admins) do
+		if not staffList[k] then
+			admins[k] = nil
+		end
+	end	
+	
+	for k,v in pairs(mods) do
+		if not staffList[k] then
+			mods[k] = nil
+		end
+	end	
+end
+
 
 function matchAll(line)
 	if botman.botDisabled then
@@ -123,7 +145,6 @@ function matchAll(line)
 		end
 
 		if server.lagged then
-			dbug("Server lag detected")
 			irc_chat(server.ircAlerts, "Server lag detected")
 		end
 	end
@@ -170,6 +191,7 @@ function matchAll(line)
 			players[pid].deathZ = igplayers[pid].zPos
 
 			irc_chat(server.ircMain, "Player " .. pid .. " name: " .. pname .. "'s death recorded at " .. igplayers[pid].deadX .. " " .. igplayers[pid].deadY .. " " .. igplayers[pid].deadZ)
+			irc_chat(server.ircAlerts, "Player " .. pid .. " name: " .. pname .. "'s death recorded at " .. igplayers[pid].deadX .. " " .. igplayers[pid].deadY .. " " .. igplayers[pid].deadZ)			
 
 			if tonumber(server.packCooldown) > 0 then
 				players[pid].packCooldown = os.time() + server.packCooldown
@@ -197,6 +219,16 @@ function matchAll(line)
 			end
 		end
 	end
+	
+	
+	if (string.sub(line, 1, 4) == os.date("%Y")) then
+		botman.readGG = false
+		
+		if (echoConsole ~= nil) then
+			echoConsole = nil
+			echoConsoleTo = l						
+		end
+	end		
 
 	
 	if botman.readGG then
@@ -221,6 +253,10 @@ function matchAll(line)
 		if (string.find(line, "DayNightLength =")) then
 			server.DayNightLength = number
 		end
+		
+		if (string.find(line, "DayLightLength =")) then
+			server.DayLightLength = number
+		end		
 
 		if (string.find(line, "DropOnDeath =")) then
 			server.DropOnDeath = number
@@ -288,8 +324,6 @@ function matchAll(line)
 			-- If we detect this line it means we are receiving data from the server so we set a flag to let us know elsewhere that we got server data ok.
 			serverDataLoaded = true
 		end
-	-- else
-		-- botman.readGG = false
 	end
 
 	
@@ -297,6 +331,8 @@ function matchAll(line)
 		if string.sub(line, 1, 4) ~= "    " then
 			getAdminList = nil
 		end
+		
+		removeOldStaff()
 	end
 
 	
@@ -310,14 +346,17 @@ function matchAll(line)
 
 		if number == 0 then
 			owners[pid] = {}
+			staffList[pid] = {}
 		end
 
 		if number == 1 then
 			admins[pid] = {}
+			staffList[pid] = {}
 		end
 
 		if number == 2 then
 			mods[pid] = {}
+			staffList[pid] = {}
 		end
 
 		if players[pid] then
@@ -339,8 +378,9 @@ function matchAll(line)
 
 	
 	-- update owners, admins and mods
-	if (line == "  Level: SteamID (Player name if online)") then
+	if string.find(line, "Level: SteamID (Player name if online)", nil, true) then
 		getAdminList = true
+		staffList = {}
 	end
 
 
@@ -446,7 +486,7 @@ function matchAll(line)
 	end
 
 
-	if (string.find(line, "please specify one of the entities")) then
+	if (string.find(line, "please specify one of the entities")) then	
 		-- flag all the zombies for removal so we can detect deleted zeds
 		for k,v in pairs(gimmeZombies) do
 			gimmeZombies[k].remove = true
@@ -460,6 +500,24 @@ function matchAll(line)
 	if string.find(line, "command 'rcd") and string.find(line, server.botsIP) then
 		fixChunkDensity = true
 	end
+	
+	
+	if string.find(line, "Executing command 'gg'") and string.find(line, server.botsIP) then
+		botman.readGG = true
+	end	
+
+	
+	if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
+		botman.listEntities = true
+	end	
+	
+	
+	if string.find(line, "Executing command 'version'") and string.find(line, server.botsIP) then
+		server.SDXDetected = false
+		server.ServerToolsDetected = false
+		conn:execute("UPDATE server SET SDXDetected = 0")
+		conn:execute("UPDATE server SET ServerToolsDetected = 0")
+	end	
 
 
 	if echoConsoleTo ~= nil then
@@ -469,17 +527,12 @@ function matchAll(line)
 		end
 
 		if string.find(line, "Executing command 'version'") and string.find(line, server.botsIP) then
-			server.SDXDetected = false
-			server.ServerToolsDetected = false
-			conn:execute("UPDATE server SET SDXDetected = 0")
-			conn:execute("UPDATE server SET ServerToolsDetected = 0")
 			echoConsole = true
 			return
 		end
 
 		if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
 			echoConsole = true
-			botman.listEntities = true
 			return
 		end
 
@@ -500,8 +553,6 @@ function matchAll(line)
 
 		if string.find(line, "Executing command 'gg'") and string.find(line, server.botsIP) then
 			echoConsole = true
-			botman.readGG = true
-			dbugi("readgg true")
 			return
 		end
 
@@ -514,12 +565,15 @@ function matchAll(line)
 			echoConsole = true
 			return
 		end
-
-		if (echoConsole ~= nil) and (string.sub(line, 1, 4) == os.date("%Y")) then
-			echoConsole = nil
-			echoConsoleTo = l			
-			botman.readGG = false
-		end
+		
+		-- if (string.sub(line, 1, 4) == os.date("%Y")) then
+			-- botman.readGG = false
+			
+			-- if (echoConsole ~= nil) then
+				-- echoConsole = nil
+				-- echoConsoleTo = l						
+			-- end
+		-- end		
 
 		if echoConsole == true then
 			line = line:gsub(",", "") -- strip out commas
@@ -552,24 +606,26 @@ function matchAll(line)
 	if string.find(line, "IPCHECK") then
 		temp = string.sub(line, string.find(line, "from ") + 5)
 		server.botsIP = string.sub(temp, 1, string.find(temp, ":") - 1)
+		return
 	end
 
 
 	-- detect Coppi's Mod
 	if string.find(line, "Mod Coppis command additions") then
 		server.coppi = true
-		dbug("Bot is using Coppi's additions")
 
 		if server.hideCommands then
 			send("tcch " .. server.commandPrefix)
 		end
+		
+		return
 	end
 
 	
 	-- detect Alloc's Mod
 	if string.find(line, "Mod Allocs server fixes") then
 		server.allocs = true
-		dbug("Bot is using Alloc's Mod")
+		return
 	end
 
 	
@@ -609,12 +665,14 @@ function matchAll(line)
 					end
 
 					if dist > temp then
-						alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos) .. "[-]", "warn")
-						irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
+						alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos) .. "[-]", "warn")
+						irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))						
+						irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
 					end
 				end
 			else
 				igplayers[pid].noclip = false
+				igplayers[pid].noclipCount = 0
 				igplayers[pid].noclipX = 0
 				igplayers[pid].noclipZ = 0
 			end
@@ -632,7 +690,7 @@ function matchAll(line)
 			igplayers[pid].flying = false
 			dist = tonumber(words[2])
 
-			if dist > 4 and accessLevel(pid) > 2 then
+			if dist > 5 and accessLevel(pid) > 2 then
 				if not players[pid].timeout and not players[pid].botTimeout and igplayers[pid].lastTP == nil and not players[pid].ignorePlayer then
 					igplayers[pid].flying = true
 
@@ -641,22 +699,7 @@ function matchAll(line)
 						igplayers[pid].flyingZ = math.floor(igplayers[pid].zPos)
 					else
 						dist = distancexz(igplayers[pid].flyingX,igplayers[pid].flyingZ,math.floor(igplayers[pid].xPos),math.floor(igplayers[pid].zPos))
-
-						igplayers[pid].flyingX = math.floor(igplayers[pid].xPos)
-						igplayers[pid].flyingZ = math.floor(igplayers[pid].zPos)
-
-						if dist > 15 and dist < 100 then
-							igplayers[pid].flyCount = igplayers[pid].flyCount + 1
-
-							if tonumber(igplayers[pid].flyCount) > 1 then
-								irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (" .. igplayers[pid].flyCount .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
-							end
-
-							if tonumber(igplayers[pid].flyCount) > 2 then
-								alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " may be flying (" .. igplayers[pid].flyCount .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos) .. "[-]", "warn")
-							end
-						end
-
+						
 						if tonumber(dist) > 5 then
 							if players[pid].newPlayer then
 								if tonumber(players[pid].ping) > 150 then
@@ -667,15 +710,25 @@ function matchAll(line)
 							else
 								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 10
 							end
+						end						
+
+						igplayers[pid].flyingX = math.floor(igplayers[pid].xPos)
+						igplayers[pid].flyingZ = math.floor(igplayers[pid].zPos)
+
+						if dist > 15 and dist < 100 then
+							igplayers[pid].flyCount = igplayers[pid].flyCount + 1
+
+							if tonumber(igplayers[pid].flyCount) > 1 then
+								irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))							
+								irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
+							end
+
+							if tonumber(igplayers[pid].flyCount) > 2 then
+								alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " may be flying (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos) .. "[-]", "warn")
+							end
 						end
 					end
 				end
-			end
-
-			if not igplayers[pid].noclip then
-				igplayers[pid].noclipCount = 0
-				igplayers[pid].noclipX = 0
-				igplayers[pid].noclipZ = 0
 			end
 
 			if not igplayers[pid].flying then
@@ -704,6 +757,26 @@ function matchAll(line)
 			players[tmp.steam].chatColour = tmp.colour
 			conn:execute("UPDATE players SET chatColour = '" .. escape(tmp.colour) .. "' WHERE steam = " .. tmp.steam)
 		end
+		
+		
+		-- player bed
+		if string.sub(line, 1, 11) == "PlayerBed: " then
+			tmp = {}
+			tmp.name = string.sub(line, 12, string.find(line, " at ") - 1)
+			tmp.steam = LookupPlayer(tmp.name)
+									
+			if tmp.steam then
+				tmp.split = string.split(string.sub(line, string.find(line, " at ") + 4), ",")
+				tmp.x = string.trim(tmp.split[1])
+				tmp.y = string.trim(tmp.split[2])
+				tmp.z = string.trim(tmp.split[3])	
+				
+				players[tmp.steam].bedX = tmp.x
+				players[tmp.steam].bedY = tmp.y				
+				players[tmp.steam].bedZ = tmp.z				
+				conn:execute("UPDATE players SET bedX = " .. tmp.x .. ", bedY = " .. tmp.y .. ", bedZ = " .. tmp.z .. " WHERE steam = " .. tmp.steam)				
+			end
+		end		
 	end
 end
 
