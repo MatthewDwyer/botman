@@ -248,9 +248,11 @@ function playerInfo(faultyInfo)
 
 	if faultyInfo == steam then
 		-- Attempt to fix the fault assuming it set some stuff because of it
-		igplayers[steam].xPosLastOK = intX
-		igplayers[steam].yPosLastOK = intY
-		igplayers[steam].zPosLastOK = intZ
+		if igplayers[steam].yPosLastOK == 0 then
+			igplayers[steam].xPosLastOK = intX
+			igplayers[steam].yPosLastOK = intY
+			igplayers[steam].zPosLastOK = intZ
+		end
 	end
 
 	if (players[steam].prisoner == true) then
@@ -980,31 +982,28 @@ function playerInfo(faultyInfo)
 	-- world fall catcher
 	fallCatcher(steam, intX, intY, intZ)
 
-	-- prevent player exceeding the map limit unless an admin and ignoreadmins is false
-	if outsideMap and players[steam].donor == false and (accessLevel(steam) > 3) then
-		if not inLocation(intX, intZ) then
+	-- prevent player exceeding the map limit unless they are an admin except when ignoreadmins is false
+	if not isDestinationAllowed(steam, intX, intZ) then
+		if players[steam].donor then
+			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")		
+		else
 			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")
-			players[steam].tp = 1
-			players[steam].hackerTPScore = 0
-
-			send ("tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK)
-			faultyPlayerinfo = false
-			return
 		end
-	end
-
-	if outsideMapDonor and players[steam].donor == true and (accessLevel(steam) > 3 or botman.ignoreAdmins == false) then
-		if not inLocation(intX, intZ) then
-			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. ((server.mapSize + 5000) / 1000) .. " km from the center.[-]")
-			players[steam].tp = 1
-			players[steam].hackerTPScore = 0
-
+		
+		players[steam].tp = 1
+		players[steam].hackerTPScore = 0
+		
+		if not isDestinationAllowed(steam, igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK) then
+			send ("tele " .. steam .. " 0 -1 0") -- if we don't know where to send the player, send them to the middle of the map. This should only happen rarely.
+			message("pm " .. steam .. " [" .. server.warnColour .. "]You have been moved to the center of the map.[-]")		
+		else
 			send ("tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK)
-			faultyPlayerinfo = false
-			return
 		end
+			
+		faultyPlayerinfo = false
+		return	
 	end
-
+	
 	if tonumber(players[steam].exiled) == 1 and locations["exile"] and not players[steam].prisoner then
 		if (distancexz( intX, intZ, locations["exile"].x, locations["exile"].z ) > tonumber(locations["exile"].size)) then
 			randomTP(steam, "exile", true)

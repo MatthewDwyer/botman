@@ -586,6 +586,15 @@ function gmsg_waypoints()
 					return true
 				end
 			end		
+			
+			-- check the waypoint destination in restricted area
+			if (chatvars.accessLevel > 3) then
+				if not isDestinationAllowed(chatvars.playerid, waypoints[tmp.id].x, waypoints[tmp.id].z) then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry, your waypoint is in a restricted area.[-]")
+					botman.faultyChat = false
+					return true				
+				end
+			end					
 		
 			-- teleport if sufficient zennies
 			if tonumber(server.waypointCost) > 0 and (chatvars.accessLevel > 2) then

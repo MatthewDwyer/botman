@@ -7,6 +7,40 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+function isDestinationAllowed(steam, x, z)
+	local outsideMap, outsideMapDonor, loc
+	
+	outsideMap = squareDistance(x, z, server.mapSize)
+	outsideMapDonor = squareDistance(x, z, server.mapSize + 5000)
+	loc = inLocation(x, z)
+
+	-- prevent player exceeding the map limit unless an admin and ignoreadmins is false
+	if outsideMap and not players[steam].donor and (accessLevel(steam) > 3) then
+		if not loc then
+			return false
+		else
+			-- check the locations access level restrictions
+			if tonumber(locations[loc].accessLevel) < accessLevel(steam) then
+				return false
+			end
+		end
+	end
+
+	if outsideMapDonor and (accessLevel(steam) > 3 or not botman.ignoreAdmins) then
+		if not loc then
+			return false
+		else
+			-- check the locations access level restrictions
+			if tonumber(locations[loc].accessLevel) < accessLevel(steam) then
+				return false
+			end		
+		end
+	end
+
+	return true
+end
+
+
 function searchBlacklist(IP, name)
 	local IPInt
 	

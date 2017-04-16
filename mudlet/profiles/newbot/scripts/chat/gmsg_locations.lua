@@ -1738,12 +1738,12 @@ function gmsg_locations()
 			if tonumber(v.cost) > 0 and v.currency ~= nil then
 				status = status .. " costs: " .. v.cost .. " " .. v.currency
 			end
+			
+			if not v.public then
+				status = status .. " [private]"
+			end			
 
 			if tonumber(chatvars.accessLevel) < 3 then
-				if not v.public then
-					status = status .. " [private]"
-				end
-
 				if not v.active then
 					status = status .. " [disabled]"
 				end
@@ -1754,7 +1754,7 @@ function gmsg_locations()
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. v.name .. "[-]")				
 				end
 			else
-				if v.active then
+				if v.active and tonumber(chatvars.accessLevel) <= v.accessLevel then
 					if status ~= "" then				
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. v.name .. " - " .. status .. "[-]")
 					else

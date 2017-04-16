@@ -16,7 +16,7 @@ add /claim owners <distance> will list all the players with claims down in range
 function gmsg_admin()
 	calledFunction = "gmsg_admin"
 
-	local debug, tmp, str
+	local debug, tmp, str, pid
 	local shortHelp = false
 	local skipHelp = false
 
@@ -567,6 +567,73 @@ if debug then dbug("debug admin") end
 	-- ##################################################################
 
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+		
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "temp") or string.find(chatvars.command, "admin") or string.find(chatvars.command, "remo"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "temp remove admin <optional name or ID of admin>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Remove an admin's status back to player for 5 minutes.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if chatvars.words[1] == "temp" and chatvars.words[2] == "admin" and chatvars.words[3] == "remove" then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		if chatvars.words[4] ~= nil then
+			pid = LookupPlayer(chatvars.words[4])
+		else
+			pid = chatvars.playerid
+		end
+
+		if pid then
+			local oldLevel = accessLevel(pid)
+			local cmd
+		
+			if oldLevel < 3 then
+				cmd = "ban remove " .. pid
+				tempTimer( 299, [[send("]] .. cmd .. [[")]] )			
+				cmd = "admin add " .. pid .. " " .. oldLevel
+				tempTimer( 300, [[send("]] .. cmd .. [[")]] )			
+				cmd = "pm " .. pid .. " [" .. server.chatColour .. "] Your admin status is restored."
+				tempTimer( 301, [[message("]].. cmd .. [[")]] )
+				
+				send("admin remove " .. pid)				
+				message("pm " .. pid .. " [" .. server.chatColour .. "]Your admin status has been temporarily removed.  You are now a player.  You will regain admin in 5 minutes.[-]")
+			
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admin " .. players[pid].name .. " will regain admin in 5 minutes.[-]")
+				else
+					irc_chat(players[chatvars.ircid].ircAlias, "Admin " .. players[pid].name .. " will regain admin in 5 minutes.")
+				end
+			end
+		else
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. chatvars.words[4] .. " did not match a player.[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, chatvars.words[4] .. " did not match a player.")
+			end				
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end	
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "feral") or string.find(chatvars.command, "rebo"))) or chatvars.words[1] ~= "help" then
