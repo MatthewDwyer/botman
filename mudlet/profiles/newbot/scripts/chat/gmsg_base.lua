@@ -795,6 +795,20 @@ if debug then dbug("debug base") end
 				return true
 			end
 		end
+		
+		if (chatvars.words[1] == "base" or chatvars.words[1] == "home") then
+			if not isDestinationAllowed(chatvars.playerid, players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your base is in a restricted area.  Please talk to an admin to assist you.[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if not isDestinationAllowed(chatvars.playerid, players[chatvars.playerid].home2X, players[chatvars.playerid].home2Z) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your second base is in a restricted area.  Please talk to an admin to assist you.[-]")
+				botman.faultyChat = false
+				return true
+			end
+		end		
 
 		wait = true
 

@@ -617,21 +617,6 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		display(chatvars)
 	end			
 
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end	
-
---[[	
-	if not result and (chatvars.playername ~= "Server") then
-		if (players[chatvars.playerid].lastCommand ~= nil) then
-			-- don't allow commands or chat being spammed too quickly			
-			if (os.time() - players[chatvars.playerid].lastCommandTimestamp) < 1 then				
-				botman.faultyChat = false
-				result = true
-				return
-			end
-		end
-	end
---]]	
-
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end		
 		
 	if ircMsg ~= nil then
