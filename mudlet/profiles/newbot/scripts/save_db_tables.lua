@@ -80,7 +80,7 @@ function getServerFields()
 	--function inspect the server table and store field names and types
 	serverFields = {}
 
-	cursor,errorString = conn:execute("SHOW FIELDS FROM server")
+	cursor,errorString = conn:execute("PRAGMA table_info(server)")
 	row = cursor:fetch({}, "a")
 	while row do
 		field = row.Field
@@ -167,7 +167,7 @@ function getPlayerFields()
 	--function inspect the player table and store field names and types
 	playerFields = {}
 
-	cursor,errorString = conn:execute("SHOW FIELDS FROM players")
+	local cursor,errorString = conn:execute("PRAGMA table_info(players)")
 	row = cursor:fetch({}, "a")
 	while row do
 		field = row.Field
@@ -288,7 +288,7 @@ function getTableFields(table)
 
 	_G[tbl] = {}
 
-	cursor,errorString = conn:execute("SHOW FIELDS FROM " .. table)
+	local cursor,errorString = conn:execute("PRAGMA table_info(" .. table .. ")")
 	row = cursor:fetch({}, "a")
 	
 	while row do
