@@ -42,8 +42,10 @@ end
 
 function openDB()
 	lastAction = "Open Database"
-	env = mysql.mysql()
-	conn = env:connect(botDB, botDBUser, botDBPass)
+	local sqliteDriver = require "luasql.sqlite3"
+	env = luasql.sqlite3()
+	
+	conn = env:connect(getMudletHomeDir() .. "/Database_" .. botDB .. ".db")
 
 	conn:execute("INSERT INTO memRestrictedItems (select * from restrictedItems)")
 	conn:execute("INSERT INTO memLottery (select * from lottery)")
@@ -51,5 +53,5 @@ end
 
 
 function openBotsDB()
-	connBots = env:connect(botsDB, botsDBUser, botsDBPass)
+	connBots = env:connect(getMudletHomeDir() .. "/Database_" .. botsDB .. ".db")
 end

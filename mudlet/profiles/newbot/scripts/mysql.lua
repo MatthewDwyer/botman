@@ -15,10 +15,10 @@ local debug = false
 local statements = {}
 
 function migratePlayers()
-	cursor,errorString = connBots:execute("SHOW COLUMNS FROM players LIKE 'steamOwner'")
-	rows = cursor:numrows()
-	
-	if tonumber(rows) == 0 then
+	-- returns 0 if there's no such table or the sqlite cursor (userdata) otherwise
+	local cursor, errorString = connBots:execute("PRAGMA table_info(players)")
+		
+	if type(cursor) ~= "userdata" then
 		connBots:execute("CREATE TABLE players2 LIKE players")
 		connBots:execute("ALTER TABLE players2 DISABLE KEYS")	
 		connBots:execute("ALTER TABLE  players2 DROP PRIMARY KEY , ADD PRIMARY KEY (steam,botID)")		
@@ -176,7 +176,7 @@ end
 
 
 function isDBBotsConnected()
-	cursor,errorString = connBots:execute("select RAND() as rnum")
+	cursor,errorString = connBots:execute("SELECT 'Database works'")
 	
 	if cursor == nil then
 		env = mysql.mysql()
@@ -194,12 +194,15 @@ end
 
 
 function isDBConnected()
-	cursor,errorString = conn:execute("select RAND() as rnum")
+	cursor,errorString = conn:execute("SELECT 'Database works'")
 	
 	if cursor == nil then
-		env = mysql.mysql()	
-		connBots = env:connect(botsDB, botsDBUser, botsDBPass)			
-		cursor,errorString = conn:execute("select RAND() as rnum")		
+		
+		local sqliteDriver = require "luasql.sqlite3"
+		env = luasql.sqlite3()
+
+		connBots = env:connect(getMudletHomeDir() .. "/Database_" .. botsDB .. ".db")
+		cursor,errorString = conn:execute("SELECT 'Database works'")		
 	end
 	
 	row = cursor:fetch({}, "a")
