@@ -58,7 +58,7 @@ function everyMinute()
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	-- save some server fields
-	conn:execute("UPDATE server SET lottery = " .. server.lottery .. ", date = '" .. server.date .. "', ircBotName = '" .. server.ircBotName .. "'")
+	if botman.dbConnected then conn:execute("UPDATE server SET lottery = " .. server.lottery .. ", date = '" .. server.date .. "', ircBotName = '" .. server.ircBotName .. "'") end
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
@@ -117,13 +117,15 @@ function everyMinute()
 			lastHotspots[k] = nil
 			players[k].lastLogout = os.time()
 
-			conn:execute("DELETE FROM messageQueue WHERE recipient = " .. k)
-			conn:execute("DELETE FROM gimmeQueue WHERE steam = " .. k)
-			conn:execute("DELETE FROM commandQueue WHERE steam = " .. k)
-			conn:execute("DELETE FROM playerQueue WHERE steam = " .. k)
+			if botman.dbConnected then 
+				conn:execute("DELETE FROM messageQueue WHERE recipient = " .. k)
+				conn:execute("DELETE FROM gimmeQueue WHERE steam = " .. k)
+				conn:execute("DELETE FROM commandQueue WHERE steam = " .. k)
+				conn:execute("DELETE FROM playerQueue WHERE steam = " .. k)
 
-			if accessLevel(k) < 3 then
-				conn:execute("DELETE FROM memTracker WHERE steam = " .. k)
+				if accessLevel(k) < 3 then
+					conn:execute("DELETE FROM memTracker WHERE steam = " .. k)
+				end
 			end
 
 			-- check how many claims they have placed

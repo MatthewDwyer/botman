@@ -67,7 +67,7 @@ function gmsg_teleports()
 	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "delete")) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -127,7 +127,7 @@ function gmsg_teleports()
 	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "private")) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -187,7 +187,7 @@ function gmsg_teleports()
 	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "public")) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -247,7 +247,7 @@ function gmsg_teleports()
 	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "enable")) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -307,7 +307,7 @@ function gmsg_teleports()
 	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "disable")) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -367,7 +367,7 @@ function gmsg_teleports()
 	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "one way")) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -415,7 +415,7 @@ function gmsg_teleports()
 	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "two way")) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -463,7 +463,7 @@ function gmsg_teleports()
 	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "owner")) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -602,7 +602,7 @@ function gmsg_teleports()
 	if chatvars.words[1] == "set" and string.find(chatvars.words[2], "tele") and chatvars.words[3] == "cost" then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -793,20 +793,6 @@ function gmsg_teleports()
 		cmd = "tele " .. chatvars.playerid .. " " .. chatvars.intX .. " -1 " .. chatvars.intZ
 		prepareTeleport(chatvars.playerid, cmd)
 		teleport(cmd, true)	
-	
-		-- if (tonumber(chatvars.intY) > 0 and tonumber(chatvars.intY) < 256) and (players[chatvars.playerid].lastCommand ~= chatvars.command)  then
-			-- -- bump the players position up 1 meter y + 1
-			-- send("tele " .. chatvars.playerid .. " " .. math.floor(igplayers[chatvars.playerid].xPos) .. " " .. math.ceil(igplayers[chatvars.playerid].yPos) + 1 .. " " .. math.floor(igplayers[chatvars.playerid].zPos))
-		-- else
-			-- cursor,errorString = conn:execute("SELECT x, y, z FROM tracker WHERE steam = " .. chatvars.playerid .. " AND ((abs(x - " .. chatvars.intX .. ") > 2 and abs(x - " .. chatvars.intX .. ") < 30) and (abs(z - " .. chatvars.intZ .. ") > 2 and abs(z - " .. chatvars.intZ .. ") < 30))  ORDER BY trackerid DESC Limit 0, 1")
-			-- if cursor:numrows() > 0 then
-				-- row = cursor:fetch({}, "a")
-				-- send("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y + 1 .. " " .. row.z)
-			-- else
-				-- -- bump the players position up 1 meter y + 1
-				-- send("tele " .. chatvars.playerid .. " " .. math.floor(igplayers[chatvars.playerid].xPos) .. " " .. math.ceil(igplayers[chatvars.playerid].yPos) + 1 .. " " .. math.floor(igplayers[chatvars.playerid].zPos))
-			-- end
-		-- end
 
 		botman.faultyChat = false
 		return true
@@ -831,16 +817,20 @@ function gmsg_teleports()
 			botman.faultyChat = false
 			return true
 		end
+		
+		-- reject if not an admin and pvpTeleportCooldown is > zero
+		if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
+			message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
+			botman.faultyChat = false
+			result = true
+			return
+		end			
 
 		-- return to previously recorded x y z
 		if tonumber(players[chatvars.playerid].yPosOld) ~= 0 or tonumber(players[chatvars.playerid].yPosOld2) ~= 0 then
 			if tonumber(players[chatvars.playerid].yPosOld2) ~= 0 then
 				-- the player has teleported within the same location so they are returning to somewhere in that location
 				cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPosOld2 .. " " .. players[chatvars.playerid].yPosOld2 .. " " .. players[chatvars.playerid].zPosOld2
-
-				-- if players[chatvars.playerid].watchPlayer then
-					-- irc_chat(server.ircTracker, server.gameDate .. " " .. chatvars.playerid .. " " .. chatvars.playername .. " command " .. chatvars.command  )
-				-- end
 
 				prepareTeleport(chatvars.playerid, cmd)
 				teleport(cmd)
@@ -857,10 +847,6 @@ function gmsg_teleports()
 			else
 				-- the player has teleported from outside their current location so they are returning to there.
 				cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPosOld .. " " .. players[chatvars.playerid].yPosOld .. " " .. players[chatvars.playerid].zPosOld
-
-				-- if players[chatvars.playerid].watchPlayer then
-					-- irc_chat(server.ircTracker, server.gameDate .. " " .. chatvars.playerid .. " " .. chatvars.playername .. " command " .. chatvars.command  )
-				-- end
 
 				prepareTeleport(chatvars.playerid, cmd)
 				teleport(cmd)
@@ -897,7 +883,7 @@ function gmsg_teleports()
 
 	if (chatvars.words[1] == "teleports" and chatvars.words[3] == nil) and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -933,7 +919,7 @@ function gmsg_teleports()
 
 	if (chatvars.words[1] == "opentp") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -978,7 +964,7 @@ function gmsg_teleports()
 
 	if (chatvars.words[1] == "closetp") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -1027,7 +1013,7 @@ function gmsg_teleports()
 	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "start")) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1094,7 +1080,7 @@ function gmsg_teleports()
 	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "end")) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1161,7 +1147,7 @@ function gmsg_teleports()
 
 	if (chatvars.words[1] == "tp" or chatvars.words[1] == "tele") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end

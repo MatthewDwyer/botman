@@ -36,9 +36,9 @@ function collectBan(line)
 	reason = string.sub(line, string.find(line, "reason:") + 8)
 
 	if reason ~= nil then
-		conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "','" .. expiryDate .. "'")
+		if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "','" .. expiryDate .. "'") end
 	else
-		conn:execute("INSERT INTO bans (BannedTo, steam, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. expiryDate .. "'")
+		if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. expiryDate .. "'") end
 	end
 
 	if botman.db2Connected then

@@ -71,10 +71,10 @@ local function makeMaze(w, h, xPos, yPos, zPos, wall, fill, tall)
     for j = 1, w*2+1 do
       if map[i][j] then
 		cmd = "pblock " .. wall .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos - 1 .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1 .. " 0"
-		conn:execute("INSERT into miscQueue (steam, command) VALUES (0, '" .. escape(cmd) .. "')")						  
+		if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (0, '" .. escape(cmd) .. "')") end
       else
 		cmd = "pblock " .. fill .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos - 1 .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1 .. " 0"
-		conn:execute("INSERT into miscQueue (steam, command) VALUES (0, '" .. escape(cmd) .. "')")						  		
+		if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (0, '" .. escape(cmd) .. "')") end
       end
     end
   end
@@ -91,7 +91,7 @@ function mutePlayer(steam)
 	players[steam].mute = true
 	irc_chat(server.ircMain, players[steam].name .. "'s chat has been muted :D")
 	message("pm " .. steam .. " [" .. server.warnColour .. "]Your chat has been muted.[-]")
-	conn:execute("UPDATE players SET mute = 1 WHERE steam = " .. steam)
+	if botman.dbConnected then conn:execute("UPDATE players SET mute = 1 WHERE steam = " .. steam) end
 end
 
 
@@ -100,7 +100,7 @@ function unmutePlayer(steam)
 	players[steam].mute = false
 	irc_chat(server.ircMain, players[steam].name .. "'s chat is no longer muted D:")
 	message("pm " .. steam .. " [" .. server.chatColour .. "]Your chat is no longer muted.[-]")
-	conn:execute("UPDATE players SET mute = 0 WHERE steam = " .. steam)
+	if botman.dbConnected then conn:execute("UPDATE players SET mute = 0 WHERE steam = " .. steam) end
 end
 
 
@@ -268,7 +268,7 @@ function gmsg_coppi()
 
 		if chatvars.words[1] == "hide" then
 			send("tcch " .. server.commandPrefix)
-			conn:execute("UPDATE server SET hideCommands = 1")
+			if botman.dbConnected then conn:execute("UPDATE server SET hideCommands = 1") end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bot commands are now hidden from global chat.[-]")
@@ -277,7 +277,7 @@ function gmsg_coppi()
 			end
 		else
 			send("tcch")
-			conn:execute("UPDATE server SET hideCommands = 0")
+			if botman.dbConnected then conn:execute("UPDATE server SET hideCommands = 0") end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bot commands are now visible in global chat.[-]")
@@ -307,7 +307,7 @@ function gmsg_coppi()
 	if chatvars.words[1] == "physics" and (chatvars.words[2] == "on" or chatvars.words[2] == "off") then
 		if chatvars.words[2] == "off" then
 			server.allowPhysics = false
-			conn:execute("UPDATE server SET allowPhysics = 0")
+			if botman.dbConnected then conn:execute("UPDATE server SET allowPhysics = 0") end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Physics is disabled.[-]")
@@ -316,7 +316,7 @@ function gmsg_coppi()
 			end
 		else
 			server.allowPhysics = true
-			conn:execute("UPDATE server SET allowPhysics = 1")
+			if botman.dbConnected then conn:execute("UPDATE server SET allowPhysics = 1") end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Physics is enabled.[-]")
@@ -384,7 +384,7 @@ function gmsg_coppi()
 
 		if tmp.target == "new" then
 			server.chatColourNewPlayer = tmp.colour
-			conn:execute("UPDATE server SET chatColourNewPlayer = '" .. escape(tmp.colour) .. "'")
+			if botman.dbConnected then conn:execute("UPDATE server SET chatColourNewPlayer = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
@@ -393,7 +393,7 @@ function gmsg_coppi()
 			end		
 			
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 99 and string.upper(players[k].chatColour) == "FFFFFF" then
+				if accessLevel(k) == 99 then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end			
@@ -401,7 +401,7 @@ function gmsg_coppi()
 		
 		if tmp.target == "player" then
 			server.chatColourPlayer = tmp.colour
-			conn:execute("UPDATE server SET chatColourPlayer = '" .. escape(tmp.colour) .. "'")
+			if botman.dbConnected then conn:execute("UPDATE server SET chatColourPlayer = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Non-new player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
@@ -410,7 +410,7 @@ function gmsg_coppi()
 			end	
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 90 and string.upper(players[k].chatColour) == "FFFFFF" then
+				if accessLevel(k) == 90 then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end			
@@ -418,7 +418,7 @@ function gmsg_coppi()
 
 		if tmp.target == "donor" then
 			server.chatColourDonor = tmp.colour
-			conn:execute("UPDATE server SET chatColourDonor = '" .. escape(tmp.colour) .. "'")
+			if botman.dbConnected then conn:execute("UPDATE server SET chatColourDonor = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
@@ -427,7 +427,7 @@ function gmsg_coppi()
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) > 3 and accessLevel(k) < 11 and string.upper(players[k].chatColour) == "FFFFFF" then
+				if accessLevel(k) > 3 and accessLevel(k) < 11 then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end			
@@ -435,7 +435,7 @@ function gmsg_coppi()
 
 		if tmp.target == "prisoner" then
 			server.chatColourPrisoner = tmp.colour
-			conn:execute("UPDATE server SET chatColourPrisoner = '" .. escape(tmp.colour) .. "'")
+			if botman.dbConnected then conn:execute("UPDATE server SET chatColourPrisoner = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Prisoner chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
@@ -444,7 +444,7 @@ function gmsg_coppi()
 			end
 
 			for k,v in pairs(igplayers) do
-				if players[k].prisoner and string.upper(players[k].chatColour) == "FFFFFF" then
+				if players[k].prisoner then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end						
@@ -452,7 +452,7 @@ function gmsg_coppi()
 		
 		if tmp.target == "mod" then
 			server.chatColourMod = tmp.colour
-			conn:execute("UPDATE server SET chatColourMod = '" .. escape(tmp.colour) .. "'")
+			if botman.dbConnected then conn:execute("UPDATE server SET chatColourMod = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Moderator chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
@@ -461,7 +461,7 @@ function gmsg_coppi()
 			end	
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 2 and string.upper(players[k].chatColour) == "FFFFFF" then
+				if accessLevel(k) == 2 then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end			
@@ -469,7 +469,7 @@ function gmsg_coppi()
 
 		if tmp.target == "admin" then
 			server.chatColourAdmin = tmp.colour
-			conn:execute("UPDATE server SET chatColourAdmin = '" .. escape(tmp.colour) .. "'")
+			if botman.dbConnected then conn:execute("UPDATE server SET chatColourAdmin = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admin chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
@@ -478,7 +478,7 @@ function gmsg_coppi()
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 1 and string.upper(players[k].chatColour) == "FFFFFF" then
+				if accessLevel(k) == 1 then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end			
@@ -486,7 +486,7 @@ function gmsg_coppi()
 
 		if tmp.target == "owner" then
 			server.chatColourOwner = tmp.colour
-			conn:execute("UPDATE server SET chatColourOwner = '" .. escape(tmp.colour) .. "'")
+			if botman.dbConnected then conn:execute("UPDATE server SET chatColourOwner = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Owner chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
@@ -495,7 +495,7 @@ function gmsg_coppi()
 			end	
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 0 and string.upper(players[k].chatColour) == "FFFFFF" then
+				if accessLevel(k) == 0 then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end
@@ -608,7 +608,7 @@ function gmsg_coppi()
 	end
 
 	if chatvars.words[1] == "stop" or chatvars.words[1] == "abort" or chatvars.words[1] == "cancel" and (chatvars.words[2] == "maze") and (chatvars.playerid ~= 0) then
-		conn:execute("delete from miscQueue")
+		if botman.dbConnected then conn:execute("delete from miscQueue") end
 
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Maze generation has been aborted.  You will need to clean up the mess yourself :)[-]")
@@ -737,20 +737,22 @@ function gmsg_coppi()
 			tmp.name = chatvars.playername
 		end
 
-		cursor,errorString = conn:execute("select * from prefabCopies where owner = " .. tmp.pid)
-		row = cursor:fetch({}, "a")
+		if botman.dbConnected then 
+			cursor,errorString = conn:execute("select * from prefabCopies where owner = " .. tmp.pid)
+			row = cursor:fetch({}, "a")
 
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Saved prefabs created by " .. tmp.name .. ":[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Saved prefabs created by " .. tmp.name .. ":[-]")
 
-		if not row then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]None recorded.[-]")
-		end
+			if not row then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]None recorded.[-]")
+			end
 
-		while row do
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Name: " .. row.name .. " coords P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. " P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2 .. "[-]")
+			while row do
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Name: " .. row.name .. " coords P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. " P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2 .. "[-]")
 
-			counter = counter + 1
-			row = cursor:fetch(row, "a")
+				counter = counter + 1
+				row = cursor:fetch(row, "a")
+			end
 		end
 
 		botman.faultyChat = false
@@ -791,7 +793,7 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 = chatvars.intZ
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.words[2] .. " end[-]")
-				conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'" .. escape(chatvars.words[2]) .. "'," .. chatvars.intX .. "," .. chatvars.intY -1 .. "," .. chatvars.intZ .. ")")
+				if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'" .. escape(chatvars.words[2]) .. "'," .. chatvars.intX .. "," .. chatvars.intY -1 .. "," .. chatvars.intZ .. ")") end
 			else
 				prefabCopies[chatvars.playerid .. chatvars.words[2]].owner = chatvars.playerid
 				prefabCopies[chatvars.playerid .. chatvars.words[2]].name = chatvars.words[2]
@@ -800,7 +802,7 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 = chatvars.intZ
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.words[2] .. " start[-]")
-				conn:execute("INSERT into prefabCopies (owner, name, x2, y2, z2) VALUES (" .. chatvars.playerid .. ",'" .. escape(chatvars.words[2]) .. "'," .. chatvars.intX .. "," .. chatvars.intY -1 .. "," .. chatvars.intZ .. ")")
+				if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x2, y2, z2) VALUES (" .. chatvars.playerid .. ",'" .. escape(chatvars.words[2]) .. "'," .. chatvars.intX .. "," .. chatvars.intY -1 .. "," .. chatvars.intZ .. ")") end
 			end
 		else
 			if chatvars.words[3] == "start" or chatvars.words[3] == "p1" then
@@ -811,7 +813,7 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 = chatvars.intZ
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.words[2] .. " end[-]")
-				conn:execute("UPDATE prefabCopies SET x1 = " .. chatvars.intX .. ", y1 = " .. chatvars.intY -1 .. ", z1 = " .. chatvars.intZ .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[2]) .. "'")
+				if botman.dbConnected then conn:execute("UPDATE prefabCopies SET x1 = " .. chatvars.intX .. ", y1 = " .. chatvars.intY -1 .. ", z1 = " .. chatvars.intZ .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[2]) .. "'") end
 			else
 				prefabCopies[chatvars.playerid .. chatvars.words[2]].owner = chatvars.playerid
 				prefabCopies[chatvars.playerid .. chatvars.words[2]].name = chatvars.words[2]
@@ -820,7 +822,7 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 = chatvars.intZ
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.words[2] .. " start[-]")
-				conn:execute("UPDATE prefabCopies SET x2 = " .. chatvars.intX .. ", y2 = " .. chatvars.intY -1 .. ", z2 = " .. chatvars.intZ .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[2]) .. "'")
+				if botman.dbConnected then conn:execute("UPDATE prefabCopies SET x2 = " .. chatvars.intX .. ", y2 = " .. chatvars.intY -1 .. ", z2 = " .. chatvars.intZ .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[2]) .. "'") end
 			end
 		end
 
@@ -999,7 +1001,7 @@ function gmsg_coppi()
 			if chatvars.words[4] == "up" then
 				prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 = prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number
 				prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 = prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 + chatvars.number
-				conn:execute("UPDATE prefabCopies SET y1 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number .. ", y2 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 + chatvars.number .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[3]) .. "'")
+				if botman.dbConnected then conn:execute("UPDATE prefabCopies SET y1 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number .. ", y2 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 + chatvars.number .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[3]) .. "'") end
 
 				-- render the block at its new position
 				send("pblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].rotation)
@@ -1008,7 +1010,7 @@ function gmsg_coppi()
 			if chatvars.words[4] == "down" then
 				prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 = prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 - chatvars.number
 				prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 = prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 - chatvars.number
-				conn:execute("UPDATE prefabCopies SET y1 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number .. ", y2 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 + chatvars.number .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[3]) .. "'")
+				if botman.dbConnected then conn:execute("UPDATE prefabCopies SET y1 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number .. ", y2 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 + chatvars.number .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[3]) .. "'") end
 
 				-- render the block at its new position
 				send("pblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].rotation)
@@ -1019,8 +1021,6 @@ function gmsg_coppi()
 
 			-- save the new coordinates
 --				conn:execute("UPDATE prefabCopies SET x2 = " .. chatvars.intX .. ", y2 = " .. chatvars.intY -1 .. ", z2 = " .. chatvars.intZ .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[2]) .. "'")
-
-			message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]This command is unfinished :([-]")
 		else
 			message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]No saved block called " .. chatvars.words[3] .. "[-]")
 		end
@@ -1088,54 +1088,6 @@ function gmsg_coppi()
 			message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]This command is unfinished :([-]")
 		else
 			message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]No saved block called " .. chatvars.words[3] .. "[-]")
-		end
-
-		botman.faultyChat = false
-		return true
-	end
-
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
-
-	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "place") or string.find(chatvars.command, "door") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "prefab"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "place door block <block name or id> or prefab <name of saved prefab> named <name your door>")
-
-			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Creates a special door block infront of you.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
-			end
-		end
-	end
-
-	if chatvars.words[1] == "place" and chatvars.words[2] == "door" and (chatvars.words[3] == "block" or chatvars.words[3] == "prefab") and (chatvars.playerid ~= 0) then
-		if (chatvars.playername ~= "Server") then
-			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]This command is restricted[-]")
-				botman.faultyChat = false
-				return true
-			end
-		end
-
-		if chatvars.words[6] == nil then
-			message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Missing name of door.[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]eg. " .. server.commandPrefix .. "place door " .. chatvars.words[3] .. " " .. chatvars.words[4] .. " named TheDoor[-]")
-			botman.faultyChat = false
-			return true
-		end
-
-		if chatvars.words[3] == "block" then
-			tmp.block = chatvars.words[4]
-			prefabCopies[chatvars.playerid .. "door" .. chatvars.words[6]] = {}
---			conn:execute("UPDATE prefabCopies SET y1 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number .. ", y2 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 + chatvars.number .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[3]) .. "'")
-
-			-- render the door
-	--		send("pblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].rotation)
-		else
-			if prefabCopies[chatvars.playerid .. chatvars.words[4]] then
-				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]This command is unfinished :([-]")
-			else
-				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]No saved block called " .. chatvars.words[3] .. "[-]")
-			end
 		end
 
 		botman.faultyChat = false
@@ -1652,7 +1604,7 @@ function gmsg_coppi()
 
 	if chatvars.words[1] == "fill" and chatvars.words[2] ~= nil and (chatvars.playerid ~= 0) then
 		if (chatvars.playername ~= "Server") then
-			if (chatvars.accessLevel > 2) then
+			if (chatvars.accessLevel > 1) then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]This command is restricted[-]")
 				botman.faultyChat = false
 				return true
@@ -1674,8 +1626,10 @@ function gmsg_coppi()
 			send("pblock " .. tmp.block ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 .. " " .. tmp.face)
 			botman.lastBlockCommandOwner = chatvars.playerid
 			-- save the block to the database
-			conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1, x2, y2, z2) VALUES (" .. chatvars.playerid .. ",'" .. escape(chatvars.words[2]) .. "'," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 .. ")")
-			conn:execute("UPDATE prefabCopies SET blockName = '" .. escape(tmp.block) .. "', rotation = " .. tmp.face .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[2]) .. "'")
+			if botman.dbConnected then 
+				conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1, x2, y2, z2) VALUES (" .. chatvars.playerid .. ",'" .. escape(chatvars.words[2]) .. "'," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 .. ")")
+				conn:execute("UPDATE prefabCopies SET blockName = '" .. escape(tmp.block) .. "', rotation = " .. tmp.face .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[2]) .. "'")
+			end
 		end
 
 		botman.faultyChat = false

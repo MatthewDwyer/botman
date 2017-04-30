@@ -24,11 +24,11 @@ function twoMinuteTimer()
 		if v.ircAuthenticated == true then
 			if v.ircSessionExpiry == nil then 
 				v.ircAuthenticated = false
-				connBots:execute("UPDATE players SET ircAuthenticated = 0 WHERE steam = " .. k)					
+				if botman.dbBotsConnected then connBots:execute("UPDATE players SET ircAuthenticated = 0 WHERE steam = " .. k) end
 			else
 				if (v.ircSessionExpiry - os.time()) < 0 then
 					v.ircAuthenticated = false
-					connBots:execute("UPDATE players SET ircAuthenticated = 0 WHERE steam = " .. k)					
+					if botman.dbBotsConnected then connBots:execute("UPDATE players SET ircAuthenticated = 0 WHERE steam = " .. k) end
 				end	
 			end
 		end

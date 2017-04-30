@@ -103,7 +103,7 @@ function pvpPolice(line)
 				players[killerID].hackerScore = 0
 				message("say [" .. server.chatColour .. "]Temp banning " .. players[killerID].name .. " for suspected hacking. Admins have been alerted.[-]")
 				banPlayer(killerID, "1 week", "Auto-banned for suspected hacking. Admins have been alerted.", "")
-				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[killerID].xPos) .. "," .. math.ceil(igplayers[killerID].yPos) .. "," .. math.floor(igplayers[killerID].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. escape(killerName) .. " temp banned for pvp with a hackerScore > 50')")				
+				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[killerID].xPos) .. "," .. math.ceil(igplayers[killerID].yPos) .. "," .. math.floor(igplayers[killerID].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. escape(killerName) .. " temp banned for pvp with a hackerScore > 50')") end
 				return
 			end			
 		
@@ -169,11 +169,15 @@ function pvpPolice(line)
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
 
 			-- record the pvp in the events table
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[killerID].xPos) .. "," .. math.ceil(igplayers[killerID].yPos) .. "," .. math.floor(igplayers[killerID].zPos) .. ",'" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " killed " .. escape(victimName) .. " in a pvp zone'," .. killerID .. ")")
+			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[killerID].xPos) .. "," .. math.ceil(igplayers[killerID].yPos) .. "," .. math.floor(igplayers[killerID].zPos) .. ",'" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " killed " .. escape(victimName) .. " in a pvp zone'," .. killerID .. ")") end
 
 			if botman.db2Connected then
 				-- copy in bots db
 				connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " killed " .. escape(victimName) .. " in a pvp zone'," .. killerID .. ")")
+			end
+			
+			if server.pvpTeleportCooldown > 0 then
+				players[killerID].pvpTeleportCooldown = os.time() + server.pvpTeleportCooldown
 			end
 
 			return
@@ -203,7 +207,7 @@ function pvpPolice(line)
 			message("say [" .. server.chatColour .. "]PvP is not allowed outside of PVP zones! However " .. killerName .. " is authorised to PVP[-]")
 			message("pm " .. killerID .. " [" .. server.chatColour .. "]You are allowed to pvp to defend yourself and others. Don't abuse this privilege.[-]")
 			table.save(homedir .. "/server.lua", server)
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[victimID].xPos) .. "," .. math.ceil(igplayers[victimID].yPos) .. "," .. math.floor(igplayers[victimID].zPos) .. ",'" .. botman.serverTime .. "','pvp','Admin " .. escape(killerName) .. " killed " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")")
+			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[victimID].xPos) .. "," .. math.ceil(igplayers[victimID].yPos) .. "," .. math.floor(igplayers[victimID].zPos) .. ",'" .. botman.serverTime .. "','pvp','Admin " .. escape(killerName) .. " killed " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")") end
 
 			if botman.db2Connected then
 				-- copy in bots db
@@ -219,7 +223,7 @@ function pvpPolice(line)
 		if (not isNewPlayer(killerID) and players[killerID].atHome and players[victimID].newPlayer) then
 			message("say [" .. server.chatColour .. "]Killing in self-defense is allowed.  No arrest made. Admins will review this killing and may decide to punish for it later.[-]")
 			irc_chat(server.ircAlerts, killerID .. " " .. killerName .. " killed new player " .. victimID .. " " .. victimName .. ".  No arrest made. Killer's location was " .. math.floor(igplayers[killerID].xPos) .. " " .. math.floor(igplayers[killerID].yPos) .. " " .. math.floor(igplayers[killerID].zPos))
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[victimID].xPos) .. "," .. math.ceil(igplayers[victimID].yPos) .. "," .. math.floor(igplayers[victimID].zPos) .. ",'" .. botman.serverTime .. "','pvp','" .. escape(killerName) .. " killed new player " .. escape(victimName) .. ".  No arrest made. Killer's location was " .. math.floor(igplayers[victimID].xPos) .. " " .. math.floor(igplayers[victimID].yPos) .. " " .. math.floor(igplayers[victimID].zPos) .. "'," .. killerID .. ")")
+			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[victimID].xPos) .. "," .. math.ceil(igplayers[victimID].yPos) .. "," .. math.floor(igplayers[victimID].zPos) .. ",'" .. botman.serverTime .. "','pvp','" .. escape(killerName) .. " killed new player " .. escape(victimName) .. ".  No arrest made. Killer's location was " .. math.floor(igplayers[victimID].xPos) .. " " .. math.floor(igplayers[victimID].yPos) .. " " .. math.floor(igplayers[victimID].zPos) .. "'," .. killerID .. ")") end
 
 			if botman.db2Connected then
 				-- copy in bots db
@@ -254,7 +258,7 @@ function pvpPolice(line)
 			message("pm " .. victimID  .. " [" .. server.chatColour .. "]You may release " .. killerName .. ". Do so at your own risk by typing[-]")
 			message("pm " .. victimID  .. " " .. server.commandPrefix .. "release " .. players[killerID].id .. " or " .. server.commandPrefix .. "release " .. killerName .. "[-]")
 
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[killerID].xPos) .. "," .. math.ceil(igplayers[killerID].yPos) .. "," .. math.floor(igplayers[killerID].zPos) .. ",'" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " sent to prison for killing " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")")
+			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[killerID].xPos) .. "," .. math.ceil(igplayers[killerID].yPos) .. "," .. math.floor(igplayers[killerID].zPos) .. ",'" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " sent to prison for killing " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")") end
 
 			if botman.db2Connected then
 				-- copy in bots db
@@ -270,7 +274,7 @@ function pvpPolice(line)
 					players[killerID].hackerScore = 0
 					message("say [" .. server.chatColour .. "]Temp banning " .. players[killerID].name .. " for suspected hacking. Admins have been alerted.[-]")
 					banPlayer(killerID, "1 week", "Auto-banned for suspected hacking. Admins have been alerted.", "")
-					conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[killerID].xPos) .. "," .. math.ceil(igplayers[killerID].yPos) .. "," .. math.floor(igplayers[killerID].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. escape(killerName) .. " temp banned for pvp with a hackerScore > 50')")				
+					if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[killerID].xPos) .. "," .. math.ceil(igplayers[killerID].yPos) .. "," .. math.floor(igplayers[killerID].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. escape(killerName) .. " temp banned for pvp with a hackerScore > 50')") end
 					return
 				end							
 			
@@ -279,7 +283,7 @@ function pvpPolice(line)
 				kick(killerID, "This is a PVE server.  PVP somewhere else.  An admin may unban you pending the circumstances of the pvp.")
 				banPlayer(killerID, "1 hour", "PVP", "")
 
-				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[killerID].xPos) .. "," .. math.ceil(igplayers[killerID].yPos) .. "," .. math.floor(igplayers[killerID].zPos) .. ",'" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " banned 1 hour for killing " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")")
+				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[killerID].xPos) .. "," .. math.ceil(igplayers[killerID].yPos) .. "," .. math.floor(igplayers[killerID].zPos) .. ",'" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " banned 1 hour for killing " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")") end
 
 				if botman.db2Connected then
 					-- copy in bots db

@@ -66,7 +66,7 @@ function setupArenaPlayers(pid)
 	botman.arenaCount = 0
 
 	for k, v in pairs(igplayers) do
-		if (distancexyz(v.xPos, v.yPos, v.zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z) < tonumber(locations["arena"].size)) and math.abs(v.yPos - locations["arena"].y) < 11 then
+		if (distancexyz(v.xPos, v.yPos, v.zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z) < tonumber(locations["arena"].size)) and math.abs(v.yPos - locations["arena"].y) < 4 then
 			botman.arenaCount = botman.arenaCount + 1
 			arenaPlayers[tostring(botman.arenaCount)] = {}
 			arenaPlayers[tostring(botman.arenaCount)].id = k

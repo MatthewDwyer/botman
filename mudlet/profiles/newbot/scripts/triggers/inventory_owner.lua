@@ -39,6 +39,4 @@ function inventoryOwner(line)
 	if (string.find(line, "Equipment of player")) then
 		invScan = "equipment"
 	end
-
-	deleteLine()
 end

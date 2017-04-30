@@ -66,7 +66,7 @@ if debug then dbug("debug base") end
 	if (chatvars.words[1] == "set" and (chatvars.words[2] == "base" or chatvars.words[2] == "base2") and chatvars.words[3] == "size") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				chatvars.botman.faultyChat = false
 				return true
 			end
@@ -78,7 +78,7 @@ if debug then dbug("debug base") end
 	if (chatvars.words[1] == "set" and (chatvars.words[2] == "base" or chatvars.words[2] == "base2") and chatvars.words[3] == "size") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				chatvars.botman.faultyChat = false
 				return true
 			end
@@ -105,7 +105,7 @@ if debug then dbug("debug base") end
 			if (players[id]) then players[id].protectSize = psize end
 
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .."'s base is protected to " .. psize .. " metres from their base teleport[-]")
-			conn:execute("UPDATE players SET protectSize = " .. psize .. " WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET protectSize = " .. psize .. " WHERE steam = " .. id) end
 
 			if botman.db2Connected then
 				-- update player in bots db
@@ -116,7 +116,7 @@ if debug then dbug("debug base") end
 				if (players[id]) then players[id].protect2Size = psize end
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .."'s 2nd base is protected to " .. psize .. " metres from their base teleport[-]")
-				conn:execute("UPDATE players SET protect2Size = " .. psize .. " WHERE steam = " .. id)
+				if botman.dbConnected then conn:execute("UPDATE players SET protect2Size = " .. psize .. " WHERE steam = " .. id) end
 
 				if botman.db2Connected then
 					-- update player in bots db
@@ -132,8 +132,9 @@ if debug then dbug("debug base") end
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 	
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and string.find(chatvars.command, "bed") or string.find(chatvars.command, "set")) or chatvars.words[1] ~= "help" then
+		if (chatvars.words[1] == "help" and string.find(chatvars.command, "bed") or string.find(chatvars.command, "set") or string.find(chatvars.command, "clear")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "setbed")
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "clearbed")			
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "When you die, the bot can automatically return you to your first or second base.")
@@ -142,18 +143,26 @@ if debug then dbug("debug base") end
 			end
 		end
 	end		
+	
+	if (chatvars.words[1] == "clearbed") then
+		players[chatvars.playerid].bed = ""
+		message(string.format("pm %s [%s]You will no longer spawn at your base after you die.[-]", chatvars.playerid, server.chatColour))
+		botman.faultyChat = false
+		return true			
+	end	
 
 	if (chatvars.words[1] == "setbed") then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "setbed makes your nearest base your spawn point after you die.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "clearbed stops this and you will spawn randomly after you die.[-]")		
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Unlike a real bed, this can't be broken or stolen. Also it doesn't show up on the map or compass.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Use it within 50 metres of your base.[-]")
 
 		dist = distancexz(chatvars.intX, chatvars.intZ, players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ)
 		if dist < 50 then
 			players[chatvars.playerid].bed = "base1"
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will respawn at your first base after death.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have set your bed at your first base. When you respawn after a death, you will be moved to here.[-]")
 
-			conn:execute("UPDATE players SET bed = 'base1' WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET bed = 'base1' WHERE steam = " .. id) end
 		end
 
 		if (players[chatvars.playerid].homeX ~= 0 and players[chatvars.playerid].homeZ ~= 0) then
@@ -162,7 +171,7 @@ if debug then dbug("debug base") end
 				players[chatvars.playerid].bed = "base2"
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will respawn at your second base after death.[-]")
 
-				conn:execute("UPDATE players SET bed = 'base2' WHERE steam = " .. id)
+				if botman.dbConnected then conn:execute("UPDATE players SET bed = 'base2' WHERE steam = " .. id) end
 			end
 		end
 
@@ -244,8 +253,11 @@ if debug then dbug("debug base") end
 			players[chatvars.playerid].protect = false
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is your new home location.[-]")
 
-			conn:execute("UPDATE players SET homeX = " .. chatvars.intX .. ", homeY = " .. chatvars.intY .. ", homeZ = " .. chatvars.intZ .. ", exitX = " .. chatvars.intX .. ", exitY = " .. chatvars.intY .. ", exitZ = " .. chatvars.intZ .. ", protect = 0 WHERE steam = " .. chatvars.playerid)
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','setbase','Player " .. escape(players[chatvars.playerid].name) .. " set a base'," .. chatvars.playerid .. ")")
+			if botman.dbConnected then 
+				conn:execute("UPDATE players SET homeX = " .. chatvars.intX .. ", homeY = " .. chatvars.intY .. ", homeZ = " .. chatvars.intZ .. ", exitX = " .. chatvars.intX .. ", exitY = " .. chatvars.intY .. ", exitZ = " .. chatvars.intZ .. ", protect = 0 WHERE steam = " .. chatvars.playerid)
+				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','setbase','Player " .. escape(players[chatvars.playerid].name) .. " set a base'," .. chatvars.playerid .. ")")
+			end
+			
 			removeInvalidHotspots(chatvars.playerid)
 			irc_chat(server.ircAlerts, players[chatvars.playerid].name .. " has setbase at " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ)
 
@@ -264,7 +276,7 @@ if debug then dbug("debug base") end
 				players[chatvars.playerid].protect2 = false
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is the location of your 2nd base.[-]")
 
-				conn:execute("UPDATE players SET home2X = " .. chatvars.intX .. ", home2Y = " .. chatvars.intY .. ", home2Z = " .. chatvars.intZ .. ", exit2X = " .. chatvars.intX .. ", exit2Y = " .. chatvars.intY .. ", exit2Z = " .. chatvars.intZ .. ", protect2 = 0 WHERE steam = " .. chatvars.playerid)
+				if botman.dbConnected then conn:execute("UPDATE players SET home2X = " .. chatvars.intX .. ", home2Y = " .. chatvars.intY .. ", home2Z = " .. chatvars.intZ .. ", exit2X = " .. chatvars.intX .. ", exit2Y = " .. chatvars.intY .. ", exit2Z = " .. chatvars.intZ .. ", protect2 = 0 WHERE steam = " .. chatvars.playerid) end
 				removeInvalidHotspots(chatvars.playerid)
 				irc_chat(server.ircAlerts, players[chatvars.playerid].name .. " has setbase 2 at " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ)
 
@@ -388,7 +400,7 @@ if debug then dbug("debug base") end
 			players[id].exitY = chatvars.intY
 			players[id].exitZ = chatvars.intZ
 
-			conn:execute("UPDATE players SET exitX = " .. chatvars.intX .. ", exitY = " .. chatvars.intY .. ", exitZ = " .. chatvars.intZ .. " WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET exitX = " .. chatvars.intX .. ", exitY = " .. chatvars.intY .. ", exitZ = " .. chatvars.intZ .. " WHERE steam = " .. id) end
 
 			igplayers[chatvars.playerid].alertBaseExit = nil
 			igplayers[chatvars.playerid].alertBaseID = nil
@@ -467,7 +479,7 @@ if debug then dbug("debug base") end
 			players[id].exit2Y = chatvars.intY
 			players[id].exit2Z = chatvars.intZ
 
-			conn:execute("UPDATE players SET exit2X = " .. chatvars.intX .. ", exit2Y = " .. chatvars.intY .. ", exit2Z = " .. chatvars.intZ .. " WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET exit2X = " .. chatvars.intX .. ", exit2Y = " .. chatvars.intY .. ", exit2Z = " .. chatvars.intZ .. " WHERE steam = " .. id) end
 
 			igplayers[chatvars.playerid].alertBaseExit = nil
 			igplayers[chatvars.playerid].alertBaseID = nil
@@ -574,7 +586,7 @@ if debug then dbug("debug base") end
 		players[id].exitZ = 0
 		players[id].protect = false
 
-		conn:execute("UPDATE players SET homeX = 0, homeY = 0, homeZ = 0, exitX = 0, exitY = 0, exitZ = 0, protect = 0  WHERE steam = " .. id)
+		if botman.dbConnected then conn:execute("UPDATE players SET homeX = 0, homeY = 0, homeZ = 0, exitX = 0, exitY = 0, exitZ = 0, protect = 0  WHERE steam = " .. id) end
 
 		if botman.db2Connected then
 			-- update player in bots db
@@ -638,7 +650,7 @@ if debug then dbug("debug base") end
 		players[id].exit2Z = 0
 		players[id].protect2 = false
 
-		conn:execute("UPDATE players SET home2X = 0, home2Y = 0, home2Z = 0, exit2X = 0, exit2Y = 0, exit2Z = 0, protect2 = 0  WHERE steam = " .. id)
+		if botman.dbConnected then conn:execute("UPDATE players SET home2X = 0, home2Y = 0, home2Z = 0, exit2X = 0, exit2Y = 0, exit2Z = 0, protect2 = 0  WHERE steam = " .. id) end
 
 		if botman.db2Connected then
 			-- update player in bots db
@@ -676,7 +688,7 @@ if debug then dbug("debug base") end
 	if (chatvars.words[1] == "unprotectbase" or chatvars.words[1] == "unprotectbase2") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -693,7 +705,7 @@ if debug then dbug("debug base") end
 
 		if (chatvars.words[1] == "unprotectbase") then
 			if (players[id]) then players[id].protect = false end
-			conn:execute("UPDATE players SET protect = 0 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET protect = 0 WHERE steam = " .. id) end
 
 			if botman.db2Connected then
 				-- update player in bots db
@@ -708,7 +720,7 @@ if debug then dbug("debug base") end
 		else
 			if (players[id].donor == true or (accessLevel(id) < 4)) then
 				if (players[id]) then players[id].protect2 = false end
-				conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. id)
+				if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. id) end
 
 				if botman.db2Connected then
 					-- update player in bots db
@@ -837,17 +849,27 @@ if debug then dbug("debug base") end
 					return true
 				end
 			end
+			
+			-- reject if not an admin and pvpTeleportCooldown is > zero
+			if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
+				message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
+				botman.faultyChat = false
+				result = true
+				return
+			end				
 		end
 		
-		if tonumber(server.baseCost) > 0 and (chatvars.accessLevel > 3) then
-			if players[chatvars.playerid].cash < tonumber(server.baseCost) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You do not have enough " .. server.moneyPlural .. ".  You need " .. server.baseCost .. ".[-]")
-				botman.faultyChat = false
-				return true		
-			else
-				players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.baseCost
-				conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid)				
-				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. server.baseCost .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")			
+		if wait then -- if the player is within 200 metres of the base, there is no charge.
+			if tonumber(server.baseCost) > 0 and (chatvars.accessLevel > 3) then
+				if players[chatvars.playerid].cash < tonumber(server.baseCost) then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You do not have enough " .. server.moneyPlural .. ".  You need " .. server.baseCost .. ".[-]")
+					botman.faultyChat = false
+					return true		
+				else
+					players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.baseCost
+					if botman.dbConnected then conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid) end
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. server.baseCost .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")			
+				end
 			end
 		end
 
@@ -870,7 +892,7 @@ if debug then dbug("debug base") end
 			end
 		end
 
-		conn:execute("UPDATE players SET xPosOld = " .. players[chatvars.playerid].xPosOld .. ", yPosOld = " .. players[chatvars.playerid].yPosOld .. ", zPosOld = " .. players[chatvars.playerid].zPosOld .. ", baseCooldown = " .. players[chatvars.playerid].baseCooldown .. " WHERE steam = " .. chatvars.playerid)
+		if botman.dbConnected then conn:execute("UPDATE players SET xPosOld = " .. players[chatvars.playerid].xPosOld .. ", yPosOld = " .. players[chatvars.playerid].yPosOld .. ", zPosOld = " .. players[chatvars.playerid].zPosOld .. ", baseCooldown = " .. players[chatvars.playerid].baseCooldown .. " WHERE steam = " .. chatvars.playerid) end
 
 		if (chatvars.words[1] == "base" or chatvars.words[1] == "home") then
 			cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].homeX .. " " .. players[chatvars.playerid].homeY .. " " .. players[chatvars.playerid].homeZ
@@ -932,8 +954,11 @@ if debug then dbug("debug base") end
 			players[id].protect = false
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. "'s base has been set at where you are standing.[-]")
 
-			conn:execute("UPDATE players SET protectSize = " .. server.baseSize .. ", homeX = " .. chatvars.intX .. ", homeY = " .. chatvars.intY .. ", homeZ = " .. chatvars.intZ .. ", protect = 0 WHERE steam = " .. id)
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','setbase','Player " .. escape(players[id].name) .. " set a base'," .. id .. ")")
+			if botman.dbConnected then 
+				conn:execute("UPDATE players SET protectSize = " .. server.baseSize .. ", homeX = " .. chatvars.intX .. ", homeY = " .. chatvars.intY .. ", homeZ = " .. chatvars.intZ .. ", protect = 0 WHERE steam = " .. id)
+				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','setbase','Player " .. escape(players[id].name) .. " set a base'," .. id .. ")")
+			end
+			
 			irc_chat(server.ircAlerts, players[id].name .. " has setbase at " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ)
 
 			if botman.db2Connected then
@@ -987,8 +1012,11 @@ if debug then dbug("debug base") end
 			players[id].protect2 = false
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. "'s 2nd base has been set at where you are standing.[-]")
 
-			conn:execute("UPDATE players SET protect2Size = " .. server.baseSize .. ", home2X = " .. chatvars.intX .. ", home2Y = " .. chatvars.intY .. ", home2Z = " .. chatvars.intZ .. ", protect2 = 0 WHERE steam = " .. id)
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','setbase','Player " .. escape(players[id].name) .. " set a 2nd base'," .. id .. ")")
+			if botman.dbConnected then 
+				conn:execute("UPDATE players SET protect2Size = " .. server.baseSize .. ", home2X = " .. chatvars.intX .. ", home2Y = " .. chatvars.intY .. ", home2Z = " .. chatvars.intZ .. ", protect2 = 0 WHERE steam = " .. id)
+				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','setbase','Player " .. escape(players[id].name) .. " set a 2nd base'," .. id .. ")")
+			end
+			
 			irc_chat(server.ircAlerts, players[id].name .. " has setbase2 at " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ)
 
 			if botman.db2Connected then

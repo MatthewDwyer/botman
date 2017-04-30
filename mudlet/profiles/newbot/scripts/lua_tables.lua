@@ -90,8 +90,6 @@ function importServer()
 	openUserWindow(server.windowGMSG) 
 	openUserWindow(server.windowDebug) 
 	openUserWindow(server.windowLists) 
-	openUserWindow(server.windowPlayers) 
-	openUserWindow(server.windowAlerts) 
 end
 
 

@@ -185,7 +185,6 @@ function playerInfo(faultyInfo)
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- check for invalid or missing steamid.  kick if not passed
-	steamtest = 0
 	steamtest = tonumber(steam)
 	if (steamtest == nil) and (steam ~= "") or (string.len(steam) < 17) then
 		message("say [" .. server.chatColour .. "]Kicking player " .. name .. " for bad steam ID: " .. steam .. "[-]")
@@ -204,6 +203,17 @@ function playerInfo(faultyInfo)
 		igplayers[steam].steamOwner = steam
 
 		fixMissingIGPlayer(steam)
+		
+		-- don't initially warn the player about pvp or pve zone.  Too many players complain about it when the bot is restarted.  We can warn them next time their zone changes.
+		if pvpZone(posX, posZ) then
+			if players[steam].alertPVP == true then
+				players[steam].alertPVP = false
+			end
+		else
+			if players[steam].alertPVP == false then
+				players[steam].alertPVP = true
+			end
+		end
 	end
 	
 	if igplayers[steam].checkNewPlayer == nil then
@@ -232,8 +242,10 @@ function playerInfo(faultyInfo)
 		irc_chat(server.ircAlerts, "New player joined")
 		irc_chat(server.ircAlerts, line)
 
-		conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(posX) .. "," .. math.floor(posY) .. "," .. math.floor(posZ) .. ",'" .. botman.serverTime .. "','new player','New player joined " .. name .. " steam: " .. steam.. " id: " .. id .. "'," .. steam .. ")")
-		conn:execute("INSERT INTO players (steam, name, id, IP, newPlayer, watchPlayer, watchPlayerTimer) VALUES (" .. steam .. ",'" .. escape(name) .. "'," .. id .. "," .. IP .. ",1,1, " .. os.time() + 2419200 .. ")")
+		if botman.dbConnected then 
+			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(posX) .. "," .. math.floor(posY) .. "," .. math.floor(posZ) .. ",'" .. botman.serverTime .. "','new player','New player joined " .. name .. " steam: " .. steam.. " id: " .. id .. "'," .. steam .. ")")
+			conn:execute("INSERT INTO players (steam, name, id, IP, newPlayer, watchPlayer, watchPlayerTimer) VALUES (" .. steam .. ",'" .. escape(name) .. "'," .. id .. "," .. IP .. ",1,1, " .. os.time() + 2419200 .. ")")
+		end
 
 		fixMissingPlayer(steam)
 		CheckBlacklist(steam, IP)
@@ -302,7 +314,7 @@ function playerInfo(faultyInfo)
 			randomTP(steam, players[steam].location, true)
 
 			players[steam].location = ""
-			conn:execute("UPDATE players SET location = '' WHERE steam = " .. steam)
+			if botman.dbConnected then conn:execute("UPDATE players SET location = '' WHERE steam = " .. steam) end
 		end
 
 		if (players[steam].location == "return player") then
@@ -318,7 +330,7 @@ function playerInfo(faultyInfo)
 
 			teleport(cmd, true)
 			players[steam].location = ""
-			conn:execute("UPDATE players SET location = '' WHERE steam = " .. steam)
+			if botman.dbConnected then conn:execute("UPDATE players SET location = '' WHERE steam = " .. steam) end
 		end
 	end
 	
@@ -360,7 +372,7 @@ function playerInfo(faultyInfo)
 							players[steam].hackerTPScore = tonumber(players[steam].hackerTPScore) + 1
 							players[steam].watchPlayer = true
 							players[steam].watchPlayerTimer = os.time() + 259200 -- watch for 3 days
-							conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. steam)
+							if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. steam) end
 
 							if tonumber(players[steam].exiled) == 1 or players[steam].newPlayer then
 								players[steam].hackerTPScore = tonumber(players[steam].hackerTPScore) + 1
@@ -403,11 +415,11 @@ function playerInfo(faultyInfo)
 	igplayers[steam].steam = steam
 	
 	if igplayers[steam].deaths ~= nil then
-		if igplayers[steam].deaths < tonumber(deaths) then
+		if tonumber(igplayers[steam].deaths) < tonumber(deaths) then
 			if server.SDXDetected then
-				players[chatvars.playerid].deathX = igplayers[steam].xPosLast
-				players[chatvars.playerid].deathY = igplayers[steam].yPosLast
-				players[chatvars.playerid].deathZ = igplayers[steam].zPosLast
+				players[chatvars.playerid].deathX = math.floor(igplayers[steam].xPosLast)
+				players[chatvars.playerid].deathY = math.ceil(igplayers[steam].yPosLast)
+				players[chatvars.playerid].deathZ = math.floor(igplayers[steam].zPosLast)
 			end
 		end	
 	end
@@ -496,7 +508,7 @@ function playerInfo(faultyInfo)
 			players[steam].newPlayer = false
 			players[steam].watchPlayer = false
 			players[steam].watchPlayerTimer = 0
-			conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0  WHERE steam = " .. steam)
+			if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0  WHERE steam = " .. steam) end
 			irc_chat(server.ircMain, "Player " .. name .. "'s new player status has been removed because their level is " .. level)
 		end
 	end
@@ -658,36 +670,42 @@ function playerInfo(faultyInfo)
 		end
 
 		if server.MOTD ~= "" then
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]" .. server.MOTD .. "[-]") .. "')")
+			if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]" .. server.MOTD .. "[-]") .. "')") end
 		end
 
 		if tonumber(players[steam].removedClaims) > 0 then
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]I am holding " .. players[steam].removedClaims .. " land claim blocks for you. Type " .. server.commandPrefix .. "give claims to receive them.[-]") .. "')")
+			if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]I am holding " .. players[steam].removedClaims .. " land claim blocks for you. Type " .. server.commandPrefix .. "give claims to receive them.[-]") .. "')") end
 		end
 
-		cursor,errorString = conn:execute("SELECT * FROM mail WHERE recipient = " .. steam .. " and status = 0")
-		if cursor:numrows() > 0 then
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]You have unread mail.  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')")
+		if botman.dbConnected then 
+			cursor,errorString = conn:execute("SELECT * FROM mail WHERE recipient = " .. steam .. " and status = 0")
+			rows = cursor:numrows()
+			
+			if rows > 0 then
+				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]You have unread mail.  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')") end
+			end
 		end
 
 		if players[steam].newPlayer == true and server.rules ~= "" then
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]" .. server.rules .."[-]") .. "')")
+			if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]" .. server.rules .."[-]") .. "')") end
 		end
 
 		if server.warnBotReset == true and accessLevel(steam) == 0 then
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]ALERT!  It appears that the server has been reset.[-]") .. "')")
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To reset me type " .. server.commandPrefix .. "reset bot.[-]") .. "')")
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To dismiss this alert type " .. server.commandPrefix .. "no reset.[-]") .. "')")
+			if botman.dbConnected then 
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]ALERT!  It appears that the server has been reset.[-]") .. "')")
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To reset me type " .. server.commandPrefix .. "reset bot.[-]") .. "')")
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To dismiss this alert type " .. server.commandPrefix .. "no reset.[-]") .. "')")
+			end
 		end
 
 		if (not players[steam].santa) and specialDay == "christmas" then
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]HO HO HO! Merry Christmas!  Type " .. server.commandPrefix .. "santa to open your Christmas stocking![-]") .. "')")
+			if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]HO HO HO! Merry Christmas!  Type " .. server.commandPrefix .. "santa to open your Christmas stocking![-]") .. "')") end
 		end
 	end
 
 
 	if igplayers[steam].alertLocation == "" and currentLocation ~= false then
-		conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]Welcome to " .. currentLocation .. "[-]") .. "')")
+		if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]Welcome to " .. currentLocation .. "[-]") .. "')") end
 		igplayers[steam].alertLocation = currentLocation
 	end
 
@@ -710,37 +728,7 @@ function playerInfo(faultyInfo)
 		players[steam].watchPlayer = false
 		players[steam].watchPlayerTimer = 0
 		message("pm " .. steam .. " [" .. server.chatColour .. "]Your new player status has been lifted.  You may now use the base command to teleport home. :D[-]")
-		conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. steam)
-	end
-
-	if (showPlayers == true) then
-		if players[steam].prisoner then
-			isPrisoner = "yes"
-		else
-			isPrisoner = "no"
-		end
-
-		if accessLevel(steam) < 3 then
-			isAdmin = "yes"
-		else
-			isAdmin = "no"
-		end
-
-		cecho(server.windowLists, "id:" .. id .. " name:" .. igplayers[steam].name .. " steam:" .. steam .. " admin:" .. isAdmin .. " xyz:" .. math.floor(igplayers[steam].xPos) .. " " .. math.ceil(igplayers[steam].yPos) .. " " .. math.floor(igplayers[steam].zPos) .. " prisoner:" .. isPrisoner .. " score:" .. igplayers[steam].score .. "\n")
-
-		cecho(server.windowPlayers, "id: " .. id .. "\n")
-		cecho(server.windowPlayers, "playerName: " .. igplayers[steam].name .. "\n")
-		cecho(server.windowPlayers, "current X Y Z: " .. math.floor(igplayers[steam].xPos) .. " " .. math.ceil(igplayers[steam].yPos) .. " " .. math.floor(igplayers[steam].zPos) .. "\n")
-		cecho(server.windowPlayers, "steamID: " .. steam .. "\n")
-		cecho(server.windowPlayers, "playerKills: " .. igplayers[steam].playerKills .. "\n")
-		cecho(server.windowPlayers, "zombies: " .. igplayers[steam].zombies .. "\n")
-		cecho(server.windowPlayers, "score: " .. igplayers[steam].score .. "\n")
-		cecho(server.windowPlayers, "admin: " .. isAdmin .. "\n")
-		cecho(server.windowPlayers, "prisoner: " .. isPrisoner .. "\n")
-		cecho(server.windowPlayers, "home XYZ: " .. players[steam].homeX .. " " .. players[steam].homeY .. " " .. players[steam].homeZ .. "\n")
-		cecho(server.windowPlayers, "home2 XYZ: " .. players[steam].homeX .. " " .. players[steam].home2Y .. " " .. players[steam].home2Z .. "\n")
-		cecho(server.windowPlayers, "session time: " .. os.date("!%X",igplayers[steam].sessionPlaytime) .. " seconds\n")
-		cecho(server.windowPlayers, " \n")
+		if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. steam) end
 	end
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
@@ -780,7 +768,7 @@ function playerInfo(faultyInfo)
 			locations[igplayers[steam].alertLocationExit].exitZ = intZ
 			locations[igplayers[steam].alertLocationExit].protected = true
 
-			conn:execute("UPDATE locations SET exitX = " .. intX .. ", exitY = " .. intY .. ", exitZ = " .. intZ .. ", protected = 1 WHERE name = '" .. igplayers[steam].alertLocationExit .. "'")
+			if botman.dbConnected then conn:execute("UPDATE locations SET exitX = " .. intX .. ", exitY = " .. intY .. ", exitZ = " .. intZ .. ", protected = 1 WHERE name = '" .. igplayers[steam].alertLocationExit .. "'") end
 			message("pm " .. steam .. " [" .. server.chatColour .. "]You have enabled protection for " .. igplayers[steam].alertLocationExit .. ".[-]")
 
 			igplayers[steam].alertLocationExit = nil
@@ -1133,18 +1121,22 @@ function playerInfo(faultyInfo)
 			if (players[steam].walkies ~= true) then
 				if (accessLevel(steam) < 3) or (teleports[tp].owner == igplayers[steam].steam or teleports[tp].public == true or isFriend(ownerid, steam)) then
 					if match == 1 then
-						igplayers[steam].teleCooldown = 2
-						cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].dx) .. " " .. math.ceil(teleports[tp].dy) .. " " .. math.floor(teleports[tp].dz)
-						teleport(cmd, true)
+						if isDestinationAllowed(steam, teleports[tp].dx, teleports[tp].dz) then
+							igplayers[steam].teleCooldown = 2
+							cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].dx) .. " " .. math.ceil(teleports[tp].dy) .. " " .. math.floor(teleports[tp].dz)
+							teleport(cmd, true)
+						end
 
 						faultyPlayerinfo = false
 						return
 					end
 
 					if match == 2 and teleports[tp].oneway == false then
-						igplayers[steam].teleCooldown = 2
-						cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
-						teleport(cmd, true)
+						if isDestinationAllowed(steam, teleports[tp].x, teleports[tp].z) then					
+							igplayers[steam].teleCooldown = 2
+							cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
+							teleport(cmd, true)
+						end
 
 						faultyPlayerinfo = false
 						return
@@ -1167,9 +1159,11 @@ function playerInfo(faultyInfo)
 			if (waypoints[tmp.wpid].shared and isFriend(waypoints[tmp.wpid].steam, steam) or waypoints[tmp.wpid].steam == steam) and tonumber(tmp.linkedID) > 0 then							
 				-- reject if not an admin and player teleporting has been disabled
 				if server.allowTeleporting then
-					igplayers[steam].teleCooldown = 2
-					cmd = "tele " .. steam .. " " .. math.floor(waypoints[tmp.linkedID].x) .. " " .. math.ceil(waypoints[tmp.linkedID].y) .. " " .. math.floor(waypoints[tmp.linkedID].z)
-					teleport(cmd, true)
+					if isDestinationAllowed(steam, waypoints[tmp.linkedID].x, waypoints[tmp.linkedID].z) then				
+						igplayers[steam].teleCooldown = 2
+						cmd = "tele " .. steam .. " " .. math.floor(waypoints[tmp.linkedID].x) .. " " .. math.ceil(waypoints[tmp.linkedID].y) .. " " .. math.floor(waypoints[tmp.linkedID].z)
+						teleport(cmd, true)
+					end
 					
 					faultyPlayerinfo = false
 					return
@@ -1235,10 +1229,10 @@ function playerInfo(faultyInfo)
 			flag = flag .. "F"
 		end
 
-		conn:execute("INSERT INTO tracker (steam, x, y, z, session, flag) VALUES (" .. steam .. "," .. intX .. "," .. intY .. "," .. intZ .. "," .. players[steam].sessionCount .. ",'" .. flag .. "')")
+		if botman.dbConnected then conn:execute("INSERT INTO tracker (steam, x, y, z, session, flag) VALUES (" .. steam .. "," .. intX .. "," .. intY .. "," .. intZ .. "," .. players[steam].sessionCount .. ",'" .. flag .. "')") end
 
 		if igplayers[steam].location ~= nil then
-			conn:execute("INSERT INTO locationSpawns (location, x, y, z) VALUES ('" .. igplayers[steam].location .. "'," .. intX .. "," .. intY .. "," .. intZ .. ")")
+			if botman.dbConnected then conn:execute("INSERT INTO locationSpawns (location, x, y, z) VALUES ('" .. igplayers[steam].location .. "'," .. intX .. "," .. intY .. "," .. intZ .. ")") end
 		end
 	end
 
@@ -1285,7 +1279,7 @@ function playerInfo(faultyInfo)
 				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. hotspots[hotspot].hotspot .. "[-]")
 
 				if (lastHotspots[steam] == nil) then lastHotspots[steam] = {} end
-				if (table.maxn(lastHotspots[steam]) > 10) then
+				if (table.maxn(lastHotspots[steam]) > 4) then
 					table.remove(lastHotspots[steam], 1)
 				end
 
@@ -1381,6 +1375,5 @@ function playerInfoTrigger(line)
 		end
 
 		playerInfo(faultyPlayerinfoID)
-		deleteLine()
 	end
 end

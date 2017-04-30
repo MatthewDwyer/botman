@@ -112,7 +112,7 @@ if debug then dbug("debug fun") end
 		message("say [" .. server.chatColour .. "]Gimme has been silenced[-]")
 		server.gimmePeace = true
 
-		conn:execute("UPDATE server SET gimmePeace = 1")
+		if botman.dbConnected then conn:execute("UPDATE server SET gimmePeace = 1") end
 
 		botman.faultyChat = false
 		return true
@@ -219,7 +219,7 @@ if debug then dbug("debug fun") end
 	if (chatvars.words[1] == "gimme" and chatvars.words[2] == "gimme") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -228,7 +228,7 @@ if debug then dbug("debug fun") end
 		message("say [" .. server.chatColour .. "]Gimme messages are now public[-]")
 		server.gimmePeace = false
 
-		conn:execute("UPDATE server SET gimmePeace = 0")
+		if botman.dbConnected then conn:execute("UPDATE server SET gimmePeace = 0") end
 
 		botman.faultyChat = false
 		return true
@@ -250,7 +250,7 @@ if debug then dbug("debug fun") end
 	if (chatvars.words[1] == "gimme" and chatvars.words[2] == "off") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -259,7 +259,7 @@ if debug then dbug("debug fun") end
 		message("say [" .. server.chatColour .. "]Gimme has been disabled[-]")
 		server.allowGimme = false
 
-		conn:execute("UPDATE server SET allowGimme = 0")
+		if botman.dbConnected then conn:execute("UPDATE server SET allowGimme = 0") end
 
 		botman.faultyChat = false
 		return true
@@ -281,7 +281,7 @@ if debug then dbug("debug fun") end
 	if (chatvars.words[1] == "gimme" and chatvars.words[2] == "on") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -290,7 +290,7 @@ if debug then dbug("debug fun") end
 		message("say [" .. server.chatColour .. "]Gimme has been enabled[-]")
 		server.allowGimme = true
 
-		conn:execute("UPDATE server SET allowGimme = 1")
+		if botman.dbConnected then conn:execute("UPDATE server SET allowGimme = 1") end
 
 		botman.faultyChat = false
 		return true
@@ -312,7 +312,7 @@ if debug then dbug("debug fun") end
 	if (chatvars.words[1] == "gimme" and chatvars.words[2] == "zombies") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -321,7 +321,7 @@ if debug then dbug("debug fun") end
 		message("say [" .. server.chatColour .. "]Gimme prizes proudly sponsored by Zombie Surplus![-]")
 		server.gimmeZombies = true
 
-		conn:execute("UPDATE server SET gimmeZombies = 1")
+		if botman.dbConnected then conn:execute("UPDATE server SET gimmeZombies = 1") end
 
 		botman.faultyChat = false
 		return true
@@ -343,7 +343,7 @@ if debug then dbug("debug fun") end
 	if (chatvars.words[1] == "gimme" and chatvars.words[2] == "no" and chatvars.words[3] == "zombies") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -352,7 +352,7 @@ if debug then dbug("debug fun") end
 		message("say [" .. server.chatColour .. "]Gimme prizes now 100% certified zombie free![-]")
 		server.gimmeZombies = false
 
-		conn:execute("UPDATE server SET gimmeZombies = 0")
+		if botman.dbConnected then conn:execute("UPDATE server SET gimmeZombies = 0") end
 
 		botman.faultyChat = false
 		return true
@@ -418,10 +418,10 @@ if debug then dbug("debug fun") end
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You now have " .. players[chatvars.playerid].cash .. " " .. server.moneyPlural .. ".[-]")
 
 			-- update the player's bounty
-			conn:execute("UPDATE players SET pvpBounty = " .. players[id].pvpBounty .. " WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET pvpBounty = " .. players[id].pvpBounty .. " WHERE steam = " .. id) end
 
 			-- reduce the cash of the player who placed the bounty
-			conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid)
+			if botman.dbConnected then conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid) end
 
 			if oldBounty > 0 then
 				message("say [" .. server.chatColour .. "]" .. players[id].name .. "'s life is now worth " .. players[id].pvpBounty .. ".[-]")

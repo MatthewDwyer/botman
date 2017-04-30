@@ -8,6 +8,7 @@
 --]]
 
 debugger = require "debug"
+mysql = require "luasql.mysql"
 local debug
 
 -- record start and end execution times of code and report it.  At the moment I'm sending the timing info to the bot's lists window.
@@ -62,11 +63,10 @@ function checkData()
 	end
 	
 	if not server.allocs then
-		alertAdmins("Alloc's mod appears to be missing and is required to run the bot (and the server).", "warn")
 		irc_chat(name, "Alloc's mod appears to be missing and is required to run the bot (and the server).")	
 	end
 	
-	if not server.allocs then
+	if not server.coppi then
 		irc_chat(name, "Coppi's mod appears to be missing.  While not essential, it adds many great features.  Grab it here https://onedrive.live.com/?authkey=%21AGmv1pqf4fK2Oto&id=CD9F5C1DCDA5845%21111316&cid=0CD9F5C1DCDA5845")	
 	end	
 	
@@ -151,7 +151,7 @@ function login()
 	
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end			
 
-	tempTimer( 60, [[checkData()]] )
+	tempTimer( 120, [[checkData()]] )
 	stackLimits = {}
 
 	if (botman.botStarted == nil) then	
@@ -187,7 +187,7 @@ function login()
 		
 		if botman.chatlogPath == nil then
 			botman.chatlogPath = webdavFolder
-			conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'")
+			if botman.dbConnected then conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'") end
 		end		
 
 		if not isDir(botman.chatlogPath) then
@@ -197,14 +197,12 @@ function login()
 		openUserWindow(server.windowGMSG) 
 		openUserWindow(server.windowDebug) 
 		openUserWindow(server.windowLists) 
-		openUserWindow(server.windowPlayers) 
-		openUserWindow(server.windowAlerts)
 		
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end							
 		
-		if ircReconnect ~= nil then
+		if closeMudlet ~= nil then
 			botman.customMudlet = true
-		 	loadWindowLayout()		
+		 	--loadWindowLayout()		
 		end
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end			

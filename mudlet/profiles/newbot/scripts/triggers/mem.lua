@@ -27,6 +27,6 @@ function memTrigger(line)
 		items = string.sub(line, string.find(line, "Items:") + 7, string.find(line, "CO:") - 2)
 
 		server.fps = fps
-		conn:execute("INSERT INTO performance (serverdate, gametime, fps, heap, heapMax, chunks, cgo, players, zombies, entities, items) VALUES ('" .. botman.serverTime .. "'," .. time .. "," .. fps .. "," .. heap .. "," .. heapMax .. "," .. chunks .. "," .. cgo .. "," .. ply .. "," .. zom .. ",'" .. ent .. "'," .. items .. ")")
+		if botman.dbConnected then conn:execute("INSERT INTO performance (serverdate, gametime, fps, heap, heapMax, chunks, cgo, players, zombies, entities, items) VALUES ('" .. botman.serverTime .. "'," .. time .. "," .. fps .. "," .. heap .. "," .. heapMax .. "," .. chunks .. "," .. cgo .. "," .. ply .. "," .. zom .. ",'" .. ent .. "'," .. items .. ")") end
 	end
 end

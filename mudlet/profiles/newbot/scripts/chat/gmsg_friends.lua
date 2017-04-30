@@ -25,7 +25,7 @@ if debug then dbug("debug friends") end
 	if (chatvars.words[1] == "player") and string.find(chatvars.command, " friend ") and (chatvars.playerid ~= 0) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -123,7 +123,7 @@ if debug then dbug("debug friends") end
 				friends[id] = {}
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " have no friends :([-]")
 
-				conn:execute("DELETE FROM friends WHERE steam = " .. id)
+				if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. id) end
 
 				botman.faultyChat = false
 				return true
@@ -134,7 +134,7 @@ if debug then dbug("debug friends") end
 		friends[chatvars.playerid] = {}
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have no friends :([-]")
 
-		conn:execute("DELETE FROM friends WHERE steam = " .. chatvars.playerid)
+		if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. chatvars.playerid) end
 
 		botman.faultyChat = false
 		return true
@@ -160,15 +160,17 @@ if debug then dbug("debug friends") end
 		end
 
 		if (id ~= nil) then
-			-- check to see if this friend was auto friended and warn the player that they must unfriend them via the game.
-			cursor,errorString = conn:execute("select * from friends where steam = " .. chatvars.playerid .. " AND friend = " .. id .. " AND autoAdded = 1")
-			row = cursor:fetch({}, "a")
+			if botman.dbConnected then 
+				-- check to see if this friend was auto friended and warn the player that they must unfriend them via the game.
+				cursor,errorString = conn:execute("select * from friends where steam = " .. chatvars.playerid .. " AND friend = " .. id .. " AND autoAdded = 1")
+				row = cursor:fetch({}, "a")
 
-			if row then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You need to unfriend " .. players[id].name .. " via the game since the bot can't unfriend them from there for you.[-]")
-				botman.faultyChat = false
-				return true
-			end		
+				if row then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You need to unfriend " .. players[id].name .. " via the game since the bot can't unfriend them from there for you.[-]")
+					botman.faultyChat = false
+					return true
+				end		
+			end
 		
 		
 			friendlist = string.split(friends[chatvars.playerid].friends, ",")
@@ -186,7 +188,7 @@ if debug then dbug("debug friends") end
 				end
 			end
 
-			conn:execute("DELETE FROM friends WHERE steam = " .. chatvars.playerid .. " AND friend = " .. id)
+			if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. chatvars.playerid .. " AND friend = " .. id) end
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are no longer friends with " .. players[id].name .. "[-]")
 		end
 
@@ -198,7 +200,7 @@ if debug then dbug("debug friends") end
 
 	if (chatvars.words[1] == "friendme") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -216,7 +218,7 @@ if debug then dbug("debug friends") end
 				end
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " now lists you as a friend.[-]")
-				conn:execute("INSERT INTO friends (steam, friend) VALUES (" .. id .. "," .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT INTO friends (steam, friend) VALUES (" .. id .. "," .. chatvars.playerid .. ")") end
 
 				botman.faultyChat = false
 				return true
@@ -282,7 +284,7 @@ if debug then dbug("debug friends") end
 
 	if (chatvars.words[1] == "unfriendme") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -314,7 +316,7 @@ if debug then dbug("debug friends") end
 
 				if (k == id) then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are off " .. players[id].name .. "'s friends list.[-]")
-					conn:execute("DELETE FROM friends WHERE steam = " .. k .. " AND friend = " .. chatvars.playerid)
+					if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. k .. " AND friend = " .. chatvars.playerid) end
 					botman.faultyChat = false
 					return true
 				end
@@ -322,7 +324,7 @@ if debug then dbug("debug friends") end
 		end
 
 		if (chatvars.words[2] == "everyone") then
-			conn:execute("DELETE FROM friends WHERE friend = " .. chatvars.playerid)
+			if botman.dbConnected then conn:execute("DELETE FROM friends WHERE friend = " .. chatvars.playerid) end
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are off everyones friends list.[-]")
 			botman.faultyChat = false
 			return true

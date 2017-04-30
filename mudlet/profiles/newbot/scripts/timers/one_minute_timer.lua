@@ -14,11 +14,7 @@ function oneMinuteTimer()
 
 	if botman.botDisabled or botman.botOffline or server.lagged then
 		return
-	end
-	
-	-- run a quick test to prove or disprove that we are still connected to the database.
-	-- there is a rare instance where we lose the connection for unknown reasons.
-	botman.dbConnected = isDBConnected()	
+	end	
 
 	everyMinute()
 
@@ -51,5 +47,5 @@ function oneMinuteTimer()
 		end	
 	end
 
-	writeBotTick()
+	botHeartbeat()
 end

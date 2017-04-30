@@ -235,7 +235,7 @@ function gmsg_misc()
 
 	if chatvars.words[1] == "bk" then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -255,7 +255,6 @@ function gmsg_misc()
 				savePosition(chatvars.playerid)
 
 				cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
-				dbug("misc line " .. debugger.getinfo(1).currentline)	
 				prepareTeleport(chatvars.playerid, cmd)
 				teleport(cmd, true)
 			end

@@ -14,37 +14,42 @@ function irc_commands()
 	local id
 	id = LookupOfflinePlayer(irc_params.name, "all")
 
+	-- help visible to all
 	irc_chat(irc_params.name, "Commands that output to IRC:")
 	irc_chat(irc_params.name, "============================")
 
-	if (accessLevel(id) > 2) then
-		irc_chat(irc_params.name, "help (display this list)")
-		irc_chat(irc_params.name, "staff (see who your admins are.  You can also type owners, admins, or mods to just see a partial list)")
-		irc_chat(irc_params.name, "day or date or time (show the game date and time)")
-		irc_chat(irc_params.name, "say <something> to talk to players ingame")
-		irc_chat(irc_params.name, "date, time, day (display the current game date and time)")
-		irc_chat(irc_params.name, "locations")
-		irc_chat(irc_params.name, "new players (list new players in the last 2 days)")
-		irc_chat(irc_params.name, "stop (stop the bot spamming you. If the command you ran has a lot of output, this stops it)")
-		irc_chat(irc_params.name, "resetzones")
-		irc_chat(irc_params.name, "uptime (server and bot running times)")
-		irc_chat(irc_params.name, "who (list in-game players)")
-		irc_chat(irc_params.name, "server status (some daily stats)")
-		irc_chat(irc_params.name, "shop categories  (list categories)")
-		irc_chat(irc_params.name, "shop <category>  (list items in a category)")
-		irc_chat(irc_params.name, "shop <item>  (list all items that partially match what you type)")
-		irc_chat(irc_params.name, "villages (list)")
-		irc_chat(irc_params.name, "villagers (list villages and villagers)")
-		irc_chat(name, "")
+	irc_chat(irc_params.name, "help (display this list)")
+	irc_chat(irc_params.name, "help manual (New to the bot and IRC?  Read this.)")	
+
+	irc_chat(irc_params.name, "fps (display current server performance metrics)")		
+	irc_chat(irc_params.name, "say <something> to talk to players ingame")		
+	irc_chat(irc_params.name, "staff (see who your admins are.  You can also type owners, admins, or mods to just see a partial list)")		
+	irc_chat(irc_params.name, "server (server ip and port and number of players)")		
+	irc_chat(irc_params.name, "stop (stop the bot spamming you. If the command you ran has a lot of output, this stops it)")		
+	irc_chat(irc_params.name, "uptime (server and bot running times)")		
+	irc_chat(irc_params.name, "who (list in-game players)")		
+	irc_chat(irc_params.name, " ")
+	irc_chat(irc_params.name, "Misc commands:")			
+	irc_chat(irc_params.name, "day, date or time (show the game date and time)")
+	irc_chat(irc_params.name, "locations")
+	irc_chat(irc_params.name, "new players (list new players in the last 2 days)")
+	irc_chat(irc_params.name, "server status (some daily stats)")
+	irc_chat(irc_params.name, "shop categories  (list categories)")
+	irc_chat(irc_params.name, "shop <category>  (list items in a category)")
+	irc_chat(irc_params.name, "shop <item>  (list all items that partially match what you type)")
+	irc_chat(irc_params.name, "villages (list)")
+	irc_chat(irc_params.name, " ")
+		
+	if (accessLevel(id) > 2) then		
 		return
 	end
 
+	-- admin restricted help
 	irc_chat(irc_params.name, "If your login is not working properly try typing rescue me, hit return then login again.")
-	irc_chat(irc_params.name, "")
-	irc_chat(irc_params.name, "help (display this list)")
+	irc_chat(irc_params.name, " ")
 	irc_chat(irc_params.name, "help topics (display help topics only)")
 	irc_chat(irc_params.name, "help commands (for ingame commands that you can also do in irc)")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 	irc_chat(irc_params.name, "invite <player name> (Send the player a code and instructions to join irc and give themselves a password)")
 	irc_chat(irc_params.name, "add player <playername> login <password> (create a password for an irc player to authenticate on irc).")
 	irc_chat(irc_params.name, "bases (list all bases and their regions)")
@@ -56,7 +61,6 @@ function irc_commands()
 	irc_chat(irc_params.name, "friends <player name>")
 	irc_chat(irc_params.name, "info <player name> (lots of quick info about a player)")
 	irc_chat(irc_params.name, "inv <player name> (current inventory of player)")
-	irc_chat(irc_params.name, "view alerts (lists the last 20) add a number for more")
 	irc_chat(irc_params.name, "list bad items")
 	irc_chat(irc_params.name, "locations (list)")
 	irc_chat(irc_params.name, "new players")
@@ -73,25 +77,100 @@ function irc_commands()
 	irc_chat(irc_params.name, "status <player name>")
 	irc_chat(irc_params.name, "stealth translate <player> (ingame chat from the player will not be translated to irc only)")
 	irc_chat(irc_params.name, "stop translating <player> (ingame chat from the player will not be translated)")
+	irc_chat(irc_params.name, "stop watching <player>")	
 	irc_chat(irc_params.name, "teleports (list)")
 	irc_chat(irc_params.name, "translate <player> (ingame chat from the player will be translated ingame)")
-	irc_chat(irc_params.name, "watch player <player>")
-	irc_chat(irc_params.name, "stop watching <player>")
+	irc_chat(irc_params.name, "view alerts (lists the last 20) add a number for more")	
+	irc_chat(irc_params.name, "villagers (list villages and villagers)")	
+	irc_chat(irc_params.name, "watch player <player>")	
 	irc_chat(irc_params.name, "who (list in-game players)")
 	irc_chat(irc_params.name, "uptime")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 	irc_chat(irc_params.name, "type say <something> to talk to players ingame")
 	irc_chat(irc_params.name, "type pm <playername or id> PM a player ingame")
 	irc_chat(irc_params.name, "type con <server command> (send a command to the server in console")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 	irc_chat(irc_params.name, "help <keyword> (adding a new help system.  As it grows, more keywords will be known to it.)")
 	irc_chat(irc_params.name, "list help <optional section> (eg. admin, server). Short help, just a list.")
 	irc_chat(irc_params.name, "command help <optional section> (eg. admin, server). Longer help with info.")
 	irc_chat(irc_params.name, "Commands are divided into sections eg. admin, server, locations etc.")
 	irc_chat(irc_params.name, "You can view section specific help using list help or command help for any of the following sections:")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 
 	return
+end
+
+
+function irc_Manual()
+	local id
+	id = LookupOfflinePlayer(irc_params.name, "all")
+
+--irc_chat(irc_params.name, "")
+--irc_chat(irc_params.name, string.format("", ))
+	irc_chat(irc_params.name, string.format("Hi %s! Here is a quick guide on getting started with your bot on IRC.", irc_params.name))
+	irc_chat(irc_params.name, " ")
+	irc_chat(irc_params.name, "If you have just arrived and you are using the web clients, Shout or The Lounge, you will love them :)")
+	irc_chat(irc_params.name, "The web client connects to the IRC server 24/7 and caches the channels.  You can connect from any number of devices with internet access and a browser.")
+	irc_chat(irc_params.name, "Anything you do is instantly available on all of your connected devices since they're all the same login.")		
+	irc_chat(irc_params.name, "To read stuff that happened while you were offline, simply scroll up and click a button that will appear if you need to go further back.")		
+	irc_chat(irc_params.name, string.format("You will see some channels listed down the left side %s, %s and %s and %s which has no #", server.ircMain, server.ircAlerts, server.ircWatch, server.ircBotName))
+	irc_chat(irc_params.name, string.format("%s is the main channel where you will see game chat and various events and bot messages.", server.ircMain))
+	irc_chat(irc_params.name, string.format("The %s channel lists events such as new players, deaths, pvp's, hackers and more.", server.ircAlerts))
+	irc_chat(irc_params.name, string.format("The %s channel lists live inventory for new and watched players.  Players aren't watched forever.", server.ircWatch))	
+	irc_chat(irc_params.name, string.format("The %s channel (this one) is a private chat between you and the bot *waves*", server.ircBotName))
+	irc_chat(irc_params.name, "Below the channels you will see 3 icons.  If you are hearing funny noises, you may need to turn off sound notifications.")
+	irc_chat(irc_params.name, "Click on the middle icon that looks like a cog.  This is the preferences screen.  Look for and untick Enable notification sound.")
+	irc_chat(irc_params.name, string.format("To return to these instructions click on %s)", server.ircBotName))
+	irc_chat(irc_params.name, " ")
+	irc_chat(irc_params.name, "There are many commands and you can explore the help to read about them. Depending on your level (admin or player), you usually only see help for stuff you can do.  If you aren't supposed to use a command, it simply won't work for you.")
+	irc_chat(irc_params.name, "At any time if you need to stop the bot spamming you on IRC just type stop")
+	irc_chat(irc_params.name, "On IRC, bot commands are just typed.  There is no leading character like there is in-game.")
+	irc_chat(irc_params.name, "Here are some commonly used commands that everyone can do:")
+	irc_chat(irc_params.name, "help, server, who, fps, uptime, staff, say (requires login)")	
+	irc_chat(irc_params.name, " ")
+
+	-- staff only
+	if (accessLevel(id) > 2) then
+		irc_chat(irc_params.name, "For further assistance, please read help or talk to your admins.")	
+		irc_chat(irc_params.name, " ")		
+		return
+	end	
+	
+	if not players[id].ircAuthenticated then
+		irc_chat(irc_params.name, "You are currently not logged in to the bot and you won't have access to admin commands until you login.")
+		irc_chat(irc_params.name, "If you don't yet have a login or you've lost it >.< Type bow before me.  This will only work if your IRC nick matches your steam name or you've been logged in before.")
+		irc_chat(irc_params.name, "If you typed bow before me, you should have been told by the bot that you have logged in.  You can do admin commands, but if you want, you can also set yourself a bot login using a user and pass.")
+		irc_chat(irc_params.name, string.format("To do that type new login %s pass somepassword", id))
+		irc_chat(irc_params.name, " ")
+	else
+		irc_chat(irc_params.name, "As an admin, you have a lot more help available to you with the help command.  The best thing to do is explore.")	
+		irc_chat(irc_params.name, "To talk to players in your server type say followed by what you want said in-game.  You can also pm players eg. pm joe You're on fire!")
+
+		if (accessLevel(id) == 0) then
+			irc_chat(irc_params.name, "As server owner, you have access to server console commands from IRC.")
+			irc_chat(irc_params.name, "To do a console command type con followed by the console command.  eg. con help ban.")
+			irc_chat(irc_params.name, "Your bot requires the latest version of Allocs mod, though it may work with older versions.")
+			irc_chat(irc_params.name, "It also supports Coppi's mod, which it uses for many great features such as digging, spawning prefabs and detecting flying/clipping players.")
+			irc_chat(irc_params.name, "If you don't have the mods, you can find them online or grab them from me http://botman.nz/Botman_Mods.zip")
+			irc_chat(irc_params.name, "Many game hosts block uploading dll files.  If yours does that, send them a support ticket with the url above and request that they install the Mods folder in the zip.")			
+		end
+		
+		irc_chat(irc_params.name, " ")
+		irc_chat(irc_params.name, string.format("You can do many ingame commands from IRC. eg. cmd %suptime.  Note that you need cmd and the bot command needs the normal command prefix.", server.commandPrefix))
+		irc_chat(irc_params.name, "There are several help topics available.  Type help topics.")
+		irc_chat(irc_params.name, "The bot also knows many keywords and you can do more specific help commands eg. help ban.  For a list of the help sections just type help.  They list at the end as single words.  To view one type help followed by the word eg. help coppi")
+		irc_chat(irc_params.name, "You can also view the complete help in two ways (warning its LONG).  Type list help, or type command help (it includes short descriptions).. then go watch a movie or something.")		
+		
+		irc_chat(irc_params.name, " ")		
+		irc_chat(irc_params.name, "You can make a bot login for another player by typing add player Joe login Joe pass password")
+		irc_chat(irc_params.name, "You can send players IRC invites by typing invite joe.  You will need to have previously told the bot your IRC server's IP and port or Joe will see 0.0.0.0 instead.")			
+		irc_chat(irc_params.name, " ")
+		irc_chat(irc_params.name, "I hope this guide is useful to you.  There are over 1,000 commands but you'll only use around 20 routinely.  If you get stuck, you can send me a message on Steam or an email to smegzor@gmail.com")		
+		irc_chat(irc_params.name, "Enjoy your new bot and make your server #1! xD")		
+		irc_chat(irc_params.name, " ")		
+		irc_chat(irc_params.name, "           Smegz0r")	
+		irc_chat(irc_params.name, " ")	
+	end
 end
 
 
@@ -113,7 +192,7 @@ function irc_HelpTopics()
 	irc_chat(irc_params.name, "help server")
 	irc_chat(irc_params.name, "help shop")
 	irc_chat(irc_params.name, "help watchlist")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 end
 
 
@@ -130,7 +209,7 @@ function irc_HelpServer()
 	irc_chat(irc_params.name, "set irc server ip:port (point the bot to a new irc server).")	
 	irc_chat(irc_params.name, "set rules <new rules> (to view just type rules)")
 	irc_chat(irc_params.name, "See help motd for setting the message of the day")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 end
 
 
@@ -148,7 +227,7 @@ function irc_HelpCSI()
 	irc_chat(irc_params.name, "show inventory (See built in help. Just type show inventory)")
 	irc_chat(irc_params.name, "who visited (See built in help. Just type who visited)")
 	irc_chat(irc_params.name, "view alerts (lists the last 20) add a number for more")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 end
 
 
@@ -162,7 +241,7 @@ function irc_HelpAnnouncements()
 	irc_chat(irc_params.name, "announcements (view a numbered list of the server announcements).")
 	irc_chat(irc_params.name, "add announcement <your message here>")
 	irc_chat(irc_params.name, "delete announcement <number> (from the numbered list given with announcements)")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 end
 
 
@@ -179,7 +258,7 @@ function irc_HelpCustomCommands()
 	irc_chat(irc_params.name, "Type remove command <command>.[-]")
 	irc_chat(irc_params.name, "Access level is optional and defaults to 99.[-]")
 	irc_chat(irc_params.name, "See help access for the list of access levels.[-]")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 end
 
 
@@ -193,12 +272,12 @@ function irc_HelpBadItems()
 	irc_chat(irc_params.name, "list bad items")
 	irc_chat(irc_params.name, "add bad item <name of item as given by server>")
 	irc_chat(irc_params.name, "remove bad item <name of item as given by server>")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 	irc_chat(irc_params.name, "Any player caught with an item on this list will be sent to timeout or banned.")
 	irc_chat(irc_params.name, "You can allow a player to have these items (except bedrock and smokestorm) with..")
 	irc_chat(irc_params.name, "exclude <player> (They can have bad items in inventory)")
 	irc_chat(irc_params.name, "include <player> (They may not have bad items on them)")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 end
 
 
@@ -235,7 +314,7 @@ function irc_HelpCommands()
 	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "sendhome <playername>")
 	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "timeout <playername>")
 	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "return <playername>")	
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 end
 
 
@@ -249,7 +328,7 @@ function irc_HelpMOTD()
 	irc_chat(irc_params.name, "motd (view the current message of the day if set).")
 	irc_chat(irc_params.name, "motd clear (or motd delete).")
 	irc_chat(irc_params.name, "set motd followed by anything else sets the message of the day.")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 end
 
 
@@ -265,7 +344,7 @@ function irc_HelpWatchlist()
 	irc_chat(irc_params.name, "To add a player type watch <player>")
 	irc_chat(irc_params.name, "To remove them type stop watching <player>")
 	irc_chat(irc_params.name, "The bot will automatically add players that are detected with certain items in unusual quantities.")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 end
 
 
@@ -279,7 +358,7 @@ function irc_HelpDonors()
 	irc_chat(irc_params.name, "donors (list donors known to the bot)")
 	irc_chat(irc_params.name, "add donor <player>")
 	irc_chat(irc_params.name, "remove donor <player>")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 end
 
 
@@ -288,7 +367,7 @@ function irc_HelpShop()
 	id = LookupOfflinePlayer(irc_params.name, "all")
 	if (accessLevel(id) > 2) then return end
 
-	irc_chat(irc_params.name, "Shop Management")
+	irc_chat(irc_params.name, "Shop Manglement")
 	irc_chat(irc_params.name, "===============")
 	irc_chat(irc_params.name, "shop categories (list categories)")
 	irc_chat(irc_params.name, "shop <category> (list items in a category)")
@@ -304,5 +383,5 @@ function irc_HelpShop()
 	irc_chat(irc_params.name, "shop variation <item> <number>")
 	irc_chat(irc_params.name, "open shop")
 	irc_chat(irc_params.name, "close shop (staff can still access)")
-	irc_chat(irc_params.name, "")
+	irc_chat(irc_params.name, " ")
 end

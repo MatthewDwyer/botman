@@ -10,11 +10,16 @@
 function timedCommandsTimer()
 	local cursor, errorString, row
 
-	if botman.botDisabled or botman.botOffline or server.lagged then
+	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
 		return
 	end
 
 	cursor,errorString = conn:execute("select * from commandQueue order by id limit 0,1")
+	
+	if not cursor then
+		return
+	end	
+	
 	row = cursor:fetch({}, "a")
 
 	if row then

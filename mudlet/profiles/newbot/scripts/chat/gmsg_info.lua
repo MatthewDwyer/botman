@@ -310,14 +310,16 @@ function gmsg_info()
 	end
 
 	if (chatvars.words[1] == "fps" and chatvars.words[2] == nil) then
-		cursor,errorString = conn:execute("SELECT * FROM performance  ORDER BY serverdate DESC Limit 0, 1")
-		row = cursor:fetch({}, "a")
+		if botman.dbConnected then 
+			cursor,errorString = conn:execute("SELECT * FROM performance  ORDER BY serverdate DESC Limit 0, 1")
+			row = cursor:fetch({}, "a")
 
-		if row then
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server FPS: " .. server.fps .. " Players: " .. row.players .. " Zombies: " .. row.zombies .. " Entities: " .. row.entities .. " Heap: " .. row.heap .. " HeapMax: " .. row.heapMax .. "[-]")
-			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Server FPS: " .. server.fps .. " Players: " .. row.players .. " Zombies: " .. row.zombies .. " Entities: " .. row.entities .. " Heap: " .. row.heap .. " HeapMax: " .. row.heapMax)
+			if row then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server FPS: " .. server.fps .. " Players: " .. row.players .. " Zombies: " .. row.zombies .. " Entities: " .. row.entities .. " Heap: " .. row.heap .. " HeapMax: " .. row.heapMax .. "[-]")
+				else
+					irc_chat(players[chatvars.ircid].ircAlias, "Server FPS: " .. server.fps .. " Players: " .. row.players .. " Zombies: " .. row.zombies .. " Entities: " .. row.entities .. " Heap: " .. row.heap .. " HeapMax: " .. row.heapMax)
+				end
 			end
 		end
 
@@ -460,7 +462,7 @@ function gmsg_info()
 	if (chatvars.words[1] == "new" and chatvars.words[2] == "players") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -833,7 +835,7 @@ function gmsg_info()
 		sendIrc(server.ircAlerts, "***** " .. chatvars.playerid .. " " .. chatvars.playername .. " at position " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ .. " said: " .. command .. "\n")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Thank you! Your message has been recorded! =D[-]")
 
-		conn:execute("INSERT INTO alerts (steam, x, y, z, message) VALUES (" .. chatvars.playerid .. "," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. command .. "')")
+		if botman.dbConnected then conn:execute("INSERT INTO alerts (steam, x, y, z, message) VALUES (" .. chatvars.playerid .. "," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. command .. "')") end
 
 		botman.faultyChat = false
 		return true

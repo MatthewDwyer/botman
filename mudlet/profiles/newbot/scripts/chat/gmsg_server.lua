@@ -401,8 +401,6 @@ if debug then dbug("debug server") end
 				return true
 			end
 		else
---			scheduledReboot = false
---			server.scheduledIdleRestart = false
 			botman.scheduledRestart = false
 			botman.scheduledRestartTimestamp = os.time()
 			botman.scheduledRestartPaused = false
@@ -436,7 +434,12 @@ if debug then dbug("debug server") end
 		end
 
 		if (string.find(chatvars.command, "minute")) then
-			message("say [" .. server.chatColour .. "]A server reboot is happening in " .. restartDelay .. " minutes.[-]")
+			if restartDelay == 1 then
+				message("say [" .. server.chatColour .. "]A server reboot is happening in " .. restartDelay .. " minute.[-]")			
+			else
+				message("say [" .. server.chatColour .. "]A server reboot is happening in " .. restartDelay .. " minutes.[-]")
+			end
+				
 			restartDelay = restartDelay * 60
 		end
 
@@ -1206,7 +1209,7 @@ if debug then dbug("debug server") end
 		end
 	end
 
-	if (chatvars.words[1] == "set" or chatvars.words[1] == "server") and chatvars.words[3] ~= nil then
+	if (chatvars.words[1] == "set" and chatvars.words[2] == "server") and chatvars.words[3] ~= nil then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
@@ -1268,6 +1271,57 @@ if debug then dbug("debug server") end
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+	
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pvp") or string.find(chatvars.command, "cool") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set pvp cooldown <seconds>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Set how long after a pvp kill before the player can use teleport commands again.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if chatvars.words[1] == "set" and chatvars.words[2] == "pvp" and (chatvars.words[3] == "cooldown" or chatvars.words[3] == "delay" or chatvars.words[3] == "timer") and chatvars.words[4] ~= nil then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 1) then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 1) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		if chatvars.number ~= nil then
+			chatvars.number = math.abs(chatvars.number) -- eliminate the negative
+		
+			if (chatvars.playername ~= "Server") then
+				message(string.format("pm %s [%s]Players must wait %s seconds after killing a player before they can teleport.[-]", chatvars.playerid, server.chatColour, chatvars.number))
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, string.format("Players must wait %s seconds after killing a player before they can teleport.", chatvars.number))
+			end		
+		
+			server.pvpTeleportCooldown = chatvars.number
+			conn:execute("UPDATE server SET pvpTeleportCooldown = " .. chatvars.number)
+		else
+			if (chatvars.playername ~= "Server") then
+				message(string.format("pm %s [%s]A number (seconds) is required.  Set to 0 to have no timer.[-]", chatvars.playerid, server.chatColour))
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "A number (seconds) is required.  Set to 0 to have no timer.")
+			end				
+		end
+		
+		botman.faultyChat = false
+		return true		
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end	
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "bad") or string.find(chatvars.command, "name"))) or chatvars.words[1] ~= "help" then
@@ -2574,7 +2628,7 @@ if debug then dbug("debug server") end
 	if chatvars.words[1] == "enable" and chatvars.words[2] == "base" and chatvars.words[3] == "protection" then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3294,6 +3348,59 @@ if debug then dbug("debug server") end
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+	
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "able"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "enable p2p")
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "disable p2p")			
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Allow or block players teleporting to other players via shared waypoints or teleporting to friends.")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "p2p" then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 0) then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 0) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+			
+		if (chatvars.words[1] == "enable") then
+			server.allowPlayerToPlayerTeleporting = true
+			conn:execute("UPDATE server SET allowPlayerToPlayerTeleporting = 1")
+			
+			if (chatvars.playername ~= "Server") then
+				message(string.format("pm %s [%s]Players can teleport to friends.[-]", chatvars.playerid, server.chatColour))
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "Players can teleport to friends.")
+			end
+		else
+			server.allowPlayerToPlayerTeleporting = false
+			conn:execute("UPDATE server SET allowPlayerToPlayerTeleporting = 0")			
+			
+			if (chatvars.playername ~= "Server") then
+				message(string.format("pm %s [%s]Players can not teleport to friends.[-]", chatvars.playerid, server.chatColour))
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "Players can not teleport to friends.")
+			end			
+		end
+		
+		botman.faultyChat = false
+		return true		
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end		
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "hard") or string.find(chatvars.command, "mode") or string.find(chatvars.command, "server"))) or chatvars.words[1] ~= "help" then
@@ -3654,7 +3761,7 @@ if debug then dbug("debug server") end
 			-- first update the currency name in the locations table
 			conn:execute("UPDATE locations SET currency = '" .. escape(tmp.money) .. "' where currency = '" .. escape(server.moneyName) .. "'")		
 			for k,v in pairs(locations) do
-				if v.currency == server.moneyName then
+				if string.lower(v.currency) == string.lower(server.moneyName) then
 					v.currency = tmp.money
 				end
 			end

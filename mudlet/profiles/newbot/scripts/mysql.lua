@@ -9,16 +9,19 @@
 
 
 -- useful reference: luapower.com/mysql
+-- locals and cursor updated
 
 mysql = require "luasql.mysql"
 local debug = false
 local statements = {}
 
 function migratePlayers()
-	-- returns 0 if there's no such table or the sqlite cursor (userdata) otherwise
-	local cursor, errorString = connBots:execute("PRAGMA table_info(players)")
-		
-	if type(cursor) ~= "userdata" then
+	local cursor, errorString
+	
+	cursor,errorString = connBots:execute("SHOW COLUMNS FROM players LIKE 'steamOwner'")
+	rows = cursor:numrows()
+	
+	if rows == 0 then
 		connBots:execute("CREATE TABLE players2 LIKE players")
 		connBots:execute("ALTER TABLE players2 DISABLE KEYS")	
 		connBots:execute("ALTER TABLE  players2 DROP PRIMARY KEY , ADD PRIMARY KEY (steam,botID)")		
@@ -71,7 +74,7 @@ if debug then display("registerBot start\n") end
 	-- to see if it is present.  We keep trying random numbers till we find an unused one then we insert a record into the servers table for this server.
 	-- we record the new botID locally for later use.
 
-	local id
+	local id, cursor, errorString, k, v
 
 	isDBBotsConnected()
 
@@ -95,7 +98,7 @@ if debug then display("registerBot start\n") end
 		cursor,errorString = connBots:execute("select * from servers where botID = " .. server.botID)
 		rows = cursor:numrows()
 
-		if tonumber(rows) == 0 then		
+		if rows == 0 then		
 			connBots:execute("INSERT INTO servers (ServerPort, IP, botName, serverName, playersOnline, tick, botID, dbName, dbUser, dbPass) VALUES (" .. server.ServerPort .. ",'" .. escape(server.IP) .. "','" .. escape(server.botName) .. "','" .. escape(server.serverName) .. "'," .. botman.playersOnline .. ", now()," .. server.botID .. ",'" .. escape(botDB) .. "','" .. escape(botDBUser) .. "','" .. escape(botDBPass) .. "')")		
 		else
 			-- update it with current data
@@ -125,12 +128,13 @@ end
 
 
 function updateBotsServerTable()
+	local k, v
+
 	if not botman.db2Connected or tonumber(server.botID) == 0 then
 		return
 	end
 
 	connBots:execute("UPDATE servers SET ServerPort = " .. server.ServerPort .. ", IP = '" .. server.IP .. "', botName = '" .. escape(server.botName) .. "', playersOnline = " .. botman.playersOnline .. ", tick = now() WHERE botID = '" .. escape(server.botID))
---	connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID)
 
 	-- updated players on bots db
 	for k, v in pairs(igplayers) do
@@ -176,46 +180,36 @@ end
 
 
 function isDBBotsConnected()
-	cursor,errorString = connBots:execute("SELECT 'Database works'")
+	local cursor, errorString
+		
+	cursor,errorString = connBots:execute("select RAND() as rnum")
 	
-	if cursor == nil then
-		env = mysql.mysql()
-		conn = env:connect(botDB, botDBUser, botDBPass)
-	end	
-	
-	row = cursor:fetch({}, "a")
-
-	if not row then
-		return false
-	else
+	if cursor then
 		return true
-	end
+	else
+		-- this never executes if the db isn't connected
+		return false
+	end	
 end
 
 
 function isDBConnected()
-	cursor,errorString = conn:execute("SELECT 'Database works'")
-	
-	if cursor == nil then
+	local cursor, errorString
 		
-		local sqliteDriver = require "luasql.sqlite3"
-		env = luasql.sqlite3()
-
-		connBots = env:connect(getMudletHomeDir() .. "/Database_" .. botsDB .. ".db")
-		cursor,errorString = conn:execute("SELECT 'Database works'")		
-	end
+	cursor,errorString = conn:execute("select RAND() as rnum")
 	
-	row = cursor:fetch({}, "a")
-
-	if not row then
-		return false
-	else
+	if cursor then
 		return true
+	else
+		-- this never executes if the db isn't connected
+		return false
 	end
 end
 
 
 function rand(high, low, real)
+	local cursor, errorString
+
 	-- generate a random number using MySQL
 	if low == nil then low = 1 end
 	if real == nil then
@@ -309,7 +303,7 @@ function dbBool(value)
 	else
 		return 1
 	end
-end
+end 
 
 
 function initDB()
@@ -335,13 +329,16 @@ end
 function closeDB()
 	conn:close()
 	connBots:close()
-	env:close()
+	--env:close()
 
 	botman.dbConnected = false
+	botman.dbBotsConnected = false	
 end
 
 
 function migrateWhitelist()
+	local k, v
+
 	for k,v in pairs(players) do
 		if v.whitelisted then
 			conn:execute("INSERT INTO Whitelist (steam) VALUES ('" .. k .. "')")
@@ -391,6 +388,9 @@ end
 
 
 function migrateWaypoints()
+	local cursor, errorString, row, k, v
+	local fields, values, wp1ID, wp2ID
+
 	-- fix the waypoints table
 	cursor,errorString = conn:execute("select * from waypoints")
 	row = cursor:fetch({}, "a")
@@ -403,45 +403,44 @@ function migrateWaypoints()
 
 		-- now walk through the players table and migrate waypoints to the new waypoints table
 		for k,v in pairs(players) do
-			tmp = {}
 
 			if tonumber(v.waypointY) > 0 then
-				tmp.fields = "steam, name, x, y, z"
-				tmp.values = k .. ",'wp1'," .. v.waypointX .. "," .. v.waypointY .. "," .. v.waypointZ
+				fields = "steam, name, x, y, z"
+				values = k .. ",'wp1'," .. v.waypointX .. "," .. v.waypointY .. "," .. v.waypointZ
 
 				if v.shareWaypoint then
-					tmp.fields = tmp.fields .. ",shared"
-					tmp.values = tmp.values .. ",1"
+					fields = fields .. ",shared"
+					values = values .. ",1"
 				end
 
-				conn:execute("insert into waypoints (" .. tmp.fields .. ") values (" .. tmp.values .. ")")
+				conn:execute("insert into waypoints (" .. fields .. ") values (" .. values .. ")")
 
 				cursor,errorString = conn:execute("select LAST_INSERT_ID() as id")
 				row = cursor:fetch({}, "a")
 
-				tmp.wp1ID = row.id
+				wp1ID = row.id
 			end
 
 			if tonumber(v.waypoint2Y) > 0 then
-				tmp.fields = "steam, name, x, y, z"
-				tmp.values = k .. ",'wp2'," .. v.waypoint2X .. "," .. v.waypoint2Y .. "," .. v.waypoint2Z
+				fields = "steam, name, x, y, z"
+				values = k .. ",'wp2'," .. v.waypoint2X .. "," .. v.waypoint2Y .. "," .. v.waypoint2Z
 
 				if v.shareWaypoint then
-					tmp.fields = tmp.fields .. ",shared"
-					tmp.values = tmp.values .. ",1"
+					fields = fields .. ",shared"
+					values = values .. ",1"
 				end
 
-				conn:execute("insert into waypoints (" .. tmp.fields .. ") values (" .. tmp.values .. ")")
+				conn:execute("insert into waypoints (" .. fields .. ") values (" .. values .. ")")
 
 				cursor,errorString = conn:execute("select LAST_INSERT_ID() as id")
 				row = cursor:fetch({}, "a")
 
-				tmp.wp2ID = row.id
+				wp2ID = row.id
 			end
 
 			if v.waypointsLinked and tonumber(v.waypointY) > 0 and tonumber(v.waypoint2Y) > 0 then
-				conn:execute("update waypoints set linked = " .. tmp.wp2ID .. " where id = " .. tmp.wp1ID)
-				conn:execute("update waypoints set linked = " .. tmp.wp1ID .. " where id = " .. tmp.wp2ID)
+				conn:execute("update waypoints set linked = " .. wp2ID .. " where id = " .. wp1ID)
+				conn:execute("update waypoints set linked = " .. wp1ID .. " where id = " .. wp2ID)
 			end
 
 		end
@@ -553,6 +552,7 @@ if debug then display("alterTables start\n") end
 	doSQL("CREATE TABLE IF NOT EXISTS `helpCommands` (`commandID` int(11) NOT NULL AUTO_INCREMENT,`command` varchar(255) NOT NULL,`description` varchar(255) NOT NULL,`notes` text NOT NULL,`keywords` varchar(150) NOT NULL,`lastUpdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`accessLevel` int(11) NOT NULL DEFAULT '99',`ingameOnly` tinyint(1) NOT NULL DEFAULT '0', PRIMARY KEY (`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE IF NOT EXISTS `helpTopicCommands` (`topicID` int(11) NOT NULL,`commandID` int(11) NOT NULL, PRIMARY KEY (`topicID`, `commandID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE IF NOT EXISTS `helpTopics` (`topicID` int(11) NOT NULL AUTO_INCREMENT,`topic` varchar(20) NOT NULL,`description` varchar(200) NOT NULL, PRIMARY KEY (`topicID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `staff` (`steam` bigint(17) NOT NULL DEFAULT '0',`adminLevel` int(11) NOT NULL DEFAULT '2',`blockDelete` tinyint(1) NOT NULL DEFAULT '0', PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 
 	-- changes to players table
 	doSQL("ALTER TABLE `players` ADD COLUMN `waypoint2X` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Y` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Z` INT NOT NULL DEFAULT '0', ADD COLUMN `waypointsLinked` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -568,6 +568,8 @@ if debug then display("alterTables start\n") end
 	doSQL("ALTER TABLE `players` ADD `bail` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `watchPlayerTimer` INT(11) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `hackerScore` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `players` ADD `pvpTeleportCooldown` INT NOT NULL DEFAULT '0'")
+	
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	-- changes to server table
 	doSQL("ALTER TABLE `server` ADD COLUMN `teleportCost` INT NOT NULL DEFAULT '200'")
@@ -626,6 +628,9 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `telnetPass` VARCHAR(50) NOT NULL")
 	doSQL("ALTER TABLE `server` ADD `telnetPort` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `feralRebootDelay` INT NOT NULL DEFAULT '68'")
+	doSQL("ALTER TABLE `server` ADD `pvpTeleportCooldown` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `allowPlayerToPlayerTeleporting` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `server` ADD `ircPort` INT NOT NULL DEFAULT '6667'")
 
 	
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
@@ -649,11 +654,14 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `locations` ADD `minimumLevel` INT NOT NULL DEFAULT '0', ADD `maximumLevel` INT NOT NULL DEFAULT '0', ADD `dayClosed` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `locations` ADD `dailyTaxRate` INT NOT NULL DEFAULT '0', ADD `bank` INT NOT NULL DEFAULT '0', ADD `prisonX` INT NOT NULL DEFAULT '0' , ADD `prisonY` INT NOT NULL DEFAULT '0' , ADD `prisonZ` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `alerts` ADD `status` VARCHAR(30) NOT NULL DEFAULT ''")
+	doSQL("ALTER TABLE `IPBlacklist` ADD `DateAdded` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , ADD `botID` INT NOT NULL DEFAULT '0' , ADD `steam` BIGINT(17) NOT NULL DEFAULT '0' , ADD `playerName` VARCHAR(25) NOT NULL DEFAULT ''")		
+	doSQL("ALTER TABLE `miscQueue` ADD `timerDelay` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)
 	doSQL("ALTER TABLE `messageQueue` ADD `messageTimestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", true)
 	doSQL("ALTER TABLE `players` ADD `ircAlias` VARCHAR(15) NOT NULL , ADD `ircAuthenticated` TINYINT(1) NOT NULL DEFAULT '0'", true)
+	doSQL("ALTER TABLE `IPBlacklist` ADD `DateAdded` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , ADD `botID` INT NOT NULL DEFAULT '0' , ADD `steam` BIGINT(17) NOT NULL DEFAULT '0' , ADD `playerName` VARCHAR(25) NOT NULL DEFAULT ''", true)	
 
 	statements = {}
 	
@@ -668,36 +676,9 @@ if debug then display("alterTables end") end
 end
 
 
-function readBotTick()
-	local cursor, errorString, row
-
-	cursor,errorString = conn:execute("select botTick from server")
-	row = cursor:fetch({}, "a")
-
-	if row then
-		return tonumber(row.botTick)
-	end
-
-	cursor:close()
-end
-
-
-function writeBotTick()
-	if botman.botTick == nil then
-		botman.botTick = 0
-	end
-
-	botman.botTick = tonumber(botman.botTick) + 1
-	conn:execute("update server set botman.botTick = " .. botman.botTick)
-
+function botHeartbeat()
+	-- update the servers table in database bots with the current timestamp so the web interface can see that this bot is awake.
 	if botman.db2Connected then
 		connBots:execute("UPDATE servers SET tick = now() WHERE botID = " .. server.botID)
 	end
-end
-
-
-function checkBotTick()
-	local tick
-
-	tick = readBotTick()
 end

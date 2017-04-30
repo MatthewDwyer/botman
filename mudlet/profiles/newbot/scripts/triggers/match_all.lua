@@ -94,13 +94,13 @@ function matchAll(line)
 	-- detect server tools
 	if string.find(line, "Mod SDX:") or string.find(line, "SDX: ") and not server.SDXDetected then
 		server.SDXDetected = true
-		conn:execute("UPDATE server SET SDXDetected = 1")
+		if botman.dbConnected then conn:execute("UPDATE server SET SDXDetected = 1") end
 	end
 
 	-- detect SDX mods
 	if string.find(line, "Mod Server Tools:") or string.find(line, "mod 'Server Tools'") and not server.ServerToolsDetected then
 		server.ServerToolsDetected = true
-		conn:execute("UPDATE server SET ServerToolsDetected = 1")
+		if botman.dbConnected then conn:execute("UPDATE server SET ServerToolsDetected = 1") end
 	end
 
 	-- detect CBSM
@@ -109,7 +109,7 @@ function matchAll(line)
 			message("say [" .. server.chatColour .. "]CBSM detected.  Bot commands now begin with a ! to not clash with CBSM commands.[-]")
 			message("say [" .. server.chatColour .. "]To use bot commands such as /who you must now type !who[-]")
 			server.commandPrefix = "!"
-			conn:execute("UPDATE server SET commandPrefix = '!'")
+			if botman.dbConnected then conn:execute("UPDATE server SET commandPrefix = '!'") end
 		end
 	end
 
@@ -177,7 +177,7 @@ function matchAll(line)
 		pid = LookupPlayer(pname, "all")
 
 		if (pid ~= nil) then
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[pid].xPos) .. "," .. math.ceil(igplayers[pid].yPos) .. "," .. math.floor(igplayers[pid].zPos) .. ",'" .. botman.serverTime .. "','death','" .. escape(pname) .. " died'," .. pid .. ")")
+			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[pid].xPos) .. "," .. math.ceil(igplayers[pid].yPos) .. "," .. math.floor(igplayers[pid].zPos) .. ",'" .. botman.serverTime .. "','death','" .. escape(pname) .. " died'," .. pid .. ")") end
 
 			players[pid].tp = 1
 			players[pid].hackerTPScore = 0
@@ -288,7 +288,7 @@ function matchAll(line)
 
 		if (string.find(line, "ServerPort =")) then
 			server.ServerPort = number
-			conn:execute("UPDATE server SET serverName = '" .. escape(server.serverName) .. "', ServerPort = " .. server.ServerPort)
+			if botman.dbConnected then conn:execute("UPDATE server SET serverName = '" .. escape(server.serverName) .. "', ServerPort = " .. server.ServerPort) end
 		end
 
 		if (string.find(line, "ZombiesRun =")) then
@@ -372,7 +372,7 @@ function matchAll(line)
 			players[pid].enableTP = true
 			players[pid].botHelp = true
 			players[pid].hackerScore = 0
-			conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. number .. " WHERE steam = " .. pid)
+			if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. number .. " WHERE steam = " .. pid) end
 		end
 	end
 
@@ -392,8 +392,10 @@ function matchAll(line)
 				players[llpid].removedClaims = 0
 			end
 
-			conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3] .. " AND remove > 1")
-			conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3])
+			if botman.dbConnected then 
+				conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3] .. " AND remove > 1")
+				conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3])
+			end
 
 			if accessLevel(llpid) > 3 then
 				region = getRegion(coords[1], coords[3])
@@ -401,12 +403,12 @@ function matchAll(line)
 				loc, reset = inLocation(coords[1], coords[3])
 
 				if (resetRegions[region]) or reset or players[llpid].removeClaims == true then
-					conn:execute("INSERT INTO keystones (steam, x, y, z, remove) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ",1) ON DUPLICATE KEY UPDATE remove = 1")
+					if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ",1) ON DUPLICATE KEY UPDATE remove = 1") end
 				else
-					conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")")
+					if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")") end
 				end
 			else
-				conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")")
+				if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")") end
 			end
 		end
 	end
@@ -446,10 +448,10 @@ function matchAll(line)
 			temp = string.split(line, "-")
 			steam = string.trim(temp[2])
 
-			conn:execute("INSERT INTO bans (BannedTo, steam, reason) VALUES ('" .. string.trim(temp[1]) .. "'," .. steam .. ",'" .. string.trim(temp[3]) .. "')")
+			if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason) VALUES ('" .. string.trim(temp[1]) .. "'," .. steam .. ",'" .. string.trim(temp[3]) .. "')") end
 
 			-- also insert the steam owner (will only work if the steam id is different)
-			conn:execute("INSERT INTO bans (BannedTo, steam, reason) VALUES ('" .. string.trim(temp[1]) .. "'," .. players[steam].steamOwner .. ",'" .. string.trim(temp[3]) .. "')")
+			if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason) VALUES ('" .. string.trim(temp[1]) .. "'," .. players[steam].steamOwner .. ",'" .. string.trim(temp[3]) .. "')") end
 		end
 	end
 
@@ -469,7 +471,7 @@ function matchAll(line)
 			tmp.entityID = string.trim(temp[1])
 			tmp.zombie = string.trim(temp[2])
 
-			conn:execute("INSERT INTO gimmeZombies (zombie, entityID) VALUES ('" .. tmp.zombie .. "'," .. tmp.entityID .. ")")
+			if botman.dbConnected then conn:execute("INSERT INTO gimmeZombies (zombie, entityID) VALUES ('" .. tmp.zombie .. "'," .. tmp.entityID .. ")") end
 			updateGimmeZombies(tmp.entityID, tmp.zombie)
 		else
 			if (string.sub(line, 1, 4) ~= os.date("%Y")) then
@@ -479,7 +481,7 @@ function matchAll(line)
 				tmp.entityID = string.trim(temp[1])
 				tmp.entity = string.trim(temp[2])
 
-				conn:execute("INSERT INTO otherEntities (entity, entityID) VALUES ('" .. tmp.entity .. "'," .. tmp.entityID .. ")")
+				if botman.dbConnected then conn:execute("INSERT INTO otherEntities (entity, entityID) VALUES ('" .. tmp.entity .. "'," .. tmp.entityID .. ")") end
 				updateOtherEntities(tmp.entityID, tmp.entity)
 			end
 		end
@@ -515,8 +517,11 @@ function matchAll(line)
 	if string.find(line, "Executing command 'version'") and string.find(line, server.botsIP) then
 		server.SDXDetected = false
 		server.ServerToolsDetected = false
-		conn:execute("UPDATE server SET SDXDetected = 0")
-		conn:execute("UPDATE server SET ServerToolsDetected = 0")
+		
+		if botman.dbConnected then 
+			conn:execute("UPDATE server SET SDXDetected = 0")
+			conn:execute("UPDATE server SET ServerToolsDetected = 0")
+		end
 	end	
 
 
@@ -595,9 +600,11 @@ function matchAll(line)
 				end
 			end
 
-			cursor,errorString = conn:execute("SELECT Count(entityID) as maxZeds from gimmeZombies")
-			row = cursor:fetch({}, "a")
-			botman.maxGimmeZombies = tonumber(row.maxZeds)
+			if botman.dbConnected then 
+				cursor,errorString = conn:execute("SELECT Count(entityID) as maxZeds from gimmeZombies")
+				row = cursor:fetch({}, "a")
+				botman.maxGimmeZombies = tonumber(row.maxZeds)
+			end
 		end
 	end
 
@@ -660,7 +667,7 @@ function matchAll(line)
 						if players[pid].newPlayer then
 							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
 						else
-							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 5
+							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 10
 						end
 					end
 
@@ -748,14 +755,14 @@ function matchAll(line)
 		-- player chat colour
 		if string.find(line, "command 'cpc", nil, true) then
 			tmp = {}
-			tmp.line = string.sub(line, string.find(line, "command '") + 9, string.find(line, "' from") - 1)
+			tmp.line = string.sub(line, string.find(line, "command ") + 9, string.find(line, " from") - 2)
 			tmp.parts = string.split(tmp.line, " ")
 			tmp.colour = tmp.parts[3]
 			tmp.name = tmp.parts[2]
 			tmp.steam = LookupPlayer(tmp.name, "all")
 
 			players[tmp.steam].chatColour = tmp.colour
-			conn:execute("UPDATE players SET chatColour = '" .. escape(tmp.colour) .. "' WHERE steam = " .. tmp.steam)
+			if botman.dbConnected then conn:execute("UPDATE players SET chatColour = '" .. escape(tmp.colour) .. "' WHERE steam = " .. tmp.steam) end
 		end
 		
 		
@@ -774,7 +781,7 @@ function matchAll(line)
 				players[tmp.steam].bedX = tmp.x
 				players[tmp.steam].bedY = tmp.y				
 				players[tmp.steam].bedZ = tmp.z				
-				conn:execute("UPDATE players SET bedX = " .. tmp.x .. ", bedY = " .. tmp.y .. ", bedZ = " .. tmp.z .. " WHERE steam = " .. tmp.steam)				
+				if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. tmp.x .. ", bedY = " .. tmp.y .. ", bedZ = " .. tmp.z .. " WHERE steam = " .. tmp.steam) end
 			end
 		end		
 	end

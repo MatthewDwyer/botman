@@ -7,6 +7,20 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+function adminsOnline()
+	-- this function helps us choose different actions depending on if an admin is playing or not.
+	local k, v
+	
+	for k,v in pairs(igplayers) do
+		if v.accessLevel < 3 then
+			return true
+		end
+	end
+	
+	return false
+end
+
+
 function isDestinationAllowed(steam, x, z)
 	local outsideMap, outsideMapDonor, loc
 	
@@ -170,7 +184,7 @@ function scanForPossibleHackersNearby(steam, world)
 					players[k].exiled = 1
 					players[k].silentBob = true
 					players[k].canTeleport = false
-					conn:execute("UPDATE players SET exiled = 1, silentBob = 1, canTeleport = 0 WHERE steam = " .. k)
+					if botman.dbConnected then conn:execute("UPDATE players SET exiled = 1, silentBob = 1, canTeleport = 0 WHERE steam = " .. k) end
 
 					if world ~= nil then
 						msg = v.name .. " has been sent to exile, detected with a non-zero hacker score."										
@@ -190,9 +204,9 @@ end
 
 
 function registerHelp()
-	conn:execute("insert into helpCommands (command, description, keywords, accessLevel, ingameOnly) values ('" .. escape(tmp.command) .. "','" .. escape(tmp.description) .. "','" .. escape(tmp.keywords) .. "'," .. tmp.accessLevel .. "," .. tmp.ingameOnly .. ")")
+	if botman.dbConnected then conn:execute("insert into helpCommands (command, description, keywords, accessLevel, ingameOnly) values ('" .. escape(tmp.command) .. "','" .. escape(tmp.description) .. "','" .. escape(tmp.keywords) .. "'," .. tmp.accessLevel .. "," .. tmp.ingameOnly .. ")") end
 	tmp.commandID = tonumber(tmp.commandID) + 1	
-	conn:execute("insert into helpTopicCommands (topicID, commandID) values (" .. tmp.topicID .. "," .. tmp.commandID .. ")")			
+	if botman.dbConnected then conn:execute("insert into helpTopicCommands (topicID, commandID) values (" .. tmp.topicID .. "," .. tmp.commandID .. ")") end
 end
 
 
@@ -226,7 +240,7 @@ function removeBadPlayerRecords()
 		end
 	end
 	
-	conn:execute("DELETE FROM players WHERE id < 1")		
+	if botman.dbConnected then conn:execute("DELETE FROM players WHERE id < 1") end
 end
 
 
@@ -275,9 +289,9 @@ function addFriend(player, friend, auto)
 
 	if (not string.find(friends[player].friends, friend)) then
 		if auto then
-			conn:execute("INSERT INTO friends (steam, friend, autoAdded) VALUES (" .. player .. "," .. friend .. ", 1)")			
+			if botman.dbConnected then conn:execute("INSERT INTO friends (steam, friend, autoAdded) VALUES (" .. player .. "," .. friend .. ", 1)") end
 		else
-			conn:execute("INSERT INTO friends (steam, friend, autoAdded) VALUES (" .. player .. "," .. friend .. ", 0)")	
+			if botman.dbConnected then conn:execute("INSERT INTO friends (steam, friend, autoAdded) VALUES (" .. player .. "," .. friend .. ", 0)") end
 		end
 			
 		friends[player].friends = friends[player].friends .. "," .. friend		
@@ -296,14 +310,14 @@ function getFriends(line)
 	fpid = string.trim(string.sub(temp[2], 10, 26))
 	
 	-- delete auto-added friends from the MySQL table
-	conn:execute("DELETE FROM friends WHERE steam = " .. pid .. " AND autoAdded = 1")	
+	if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. pid .. " AND autoAdded = 1") end
 	
 	-- add friends read from Coppi's lpf command
 	-- grab the first one
 	if not string.find(friends[pid].friends, fpid) then
 		addFriend(pid, fpid, true)
 	else
-		conn:execute("INSERT INTO friends (steam, friend, autoAdded) VALUES (" .. pid .. "," .. fpid .. ", 1)")				
+		if botman.dbConnected then conn:execute("INSERT INTO friends (steam, friend, autoAdded) VALUES (" .. pid .. "," .. fpid .. ", 1)") end
 	end
 
 	-- grab the rest
@@ -313,7 +327,7 @@ function getFriends(line)
 		if not string.find(friends[pid].friends, fpid) then
 			addFriend(pid, fpid, true)
 		else
-			conn:execute("INSERT INTO friends (steam, friend, autoAdded) VALUES (" .. pid .. "," .. fpid .. ", 1)")						
+			if botman.dbConnected then conn:execute("INSERT INTO friends (steam, friend, autoAdded) VALUES (" .. pid .. "," .. fpid .. ", 1)") end
 		end
 	end
 end
@@ -649,11 +663,15 @@ function inWhitelist(steam)
 	local cursor, errorString, row
 
 	-- is the player in the whitelist?
-	cursor,errorString = conn:execute("SELECT * FROM whitelist WHERE steam = " .. steam)
-	row = cursor:fetch({}, "a")
+	if botman.dbConnected then 
+		cursor,errorString = conn:execute("SELECT * FROM whitelist WHERE steam = " .. steam)
+		row = cursor:fetch({}, "a")
 
-	if row then
-		return true
+		if row then
+			return true
+		else
+			return false
+		end
 	else
 		return false
 	end
@@ -790,7 +808,7 @@ function pmsg(msg, all)
 	-- queue msg for output by a timer
 	for k,v in pairs(igplayers) do
 		if all ~= nil or players[k].noSpam == false then
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. k .. ",'" .. escape(msg) .. ")")
+			if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. k .. ",'" .. escape(msg) .. ")") end
 		end
 	end
 end
@@ -871,21 +889,23 @@ function inInventory(steam, item, quantity, slot)
 	-- search the most recent inventory recording for an item
 	local tbl, test, i, max
 
-	cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .."  ORDER BY inventoryTrackerID DESC Limit 0, 1")
-	row = cursor:fetch({}, "a")
+	if botman.dbConnected then 
+		cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .."  ORDER BY inventoryTrackerID DESC Limit 0, 1")
+		row = cursor:fetch({}, "a")
 
-	tbl = string.split(row.belt .. row.pack .. row.equipment, "|")
+		tbl = string.split(row.belt .. row.pack .. row.equipment, "|")
 
-	max = table.maxn(tbl)
-	for i=1, max, 1 do
-		test = string.split(tbl[i], ",")
-		if slot ~= nil then
-			if tonumber(test[2]) >= tonumber(quantity) and test[3] == item and tonumber(test[1]) == slot then
-				return true
-			end
-		else
-			if tonumber(test[2]) >= tonumber(quantity) and test[3] == item then
-				return true
+		max = table.maxn(tbl)
+		for i=1, max, 1 do
+			test = string.split(tbl[i], ",")
+			if slot ~= nil then
+				if tonumber(test[2]) >= tonumber(quantity) and test[3] == item and tonumber(test[1]) == slot then
+					return true
+				end
+			else
+				if tonumber(test[2]) >= tonumber(quantity) and test[3] == item then
+					return true
+				end
 			end
 		end
 	end
@@ -898,21 +918,23 @@ function inBelt(steam, item, quantity, slot)
 	-- search the most recent inventory recording for an item in the belt
 	local tbl, test, i, max
 
-	cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .."  ORDER BY inventoryTrackerID DESC Limit 0, 1")
-	row = cursor:fetch({}, "a")
+	if botman.dbConnected then 
+		cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .."  ORDER BY inventoryTrackerID DESC Limit 0, 1")
+		row = cursor:fetch({}, "a")
 
-	tbl = string.split(row.belt, "|")
+		tbl = string.split(row.belt, "|")
 
-	max = table.maxn(tbl)
-	for i=1, max, 1 do
-		test = string.split(tbl[i], ",")
-		if slot ~= nil then
-			if tonumber(test[2]) >= tonumber(quantity) and test[3] == item and tonumber(test[1]) == slot then
-				return true
-			end
-		else
-			if tonumber(test[2]) >= tonumber(quantity) and test[3] == item then
-				return true
+		max = table.maxn(tbl)
+		for i=1, max, 1 do
+			test = string.split(tbl[i], ",")
+			if slot ~= nil then
+				if tonumber(test[2]) >= tonumber(quantity) and test[3] == item and tonumber(test[1]) == slot then
+					return true
+				end
+			else
+				if tonumber(test[2]) >= tonumber(quantity) and test[3] == item then
+					return true
+				end
 			end
 		end
 	end
@@ -964,13 +986,13 @@ function savePosition(steam, temp)
 			players[steam].yPosOld = math.ceil(players[steam].yPos)
 			players[steam].zPosOld = math.floor(players[steam].zPos)
 
-			conn:execute("UPDATE players SET xPosOld = " .. players[steam].xPosOld .. ", yPosOld = " .. players[steam].yPosOld .. ", zPosOld = " .. players[steam].zPosOld .. " WHERE steam = " .. steam)
+			if botman.dbConnected then conn:execute("UPDATE players SET xPosOld = " .. players[steam].xPosOld .. ", yPosOld = " .. players[steam].yPosOld .. ", zPosOld = " .. players[steam].zPosOld .. " WHERE steam = " .. steam) end
 		else
 			players[steam].xPosOld2 = math.floor(players[steam].xPos)
 			players[steam].yPosOld2 = math.ceil(players[steam].yPos)
 			players[steam].zPosOld2 = math.floor(players[steam].zPos)
 
-			conn:execute("UPDATE players SET xPosOld2 = " .. players[steam].xPosOld2 .. ", yPosOld2 = " .. players[steam].yPosOld2 .. ", zPosOld2 = " .. players[steam].zPosOld2 .. " WHERE steam = " .. steam)
+			if botman.dbConnected then conn:execute("UPDATE players SET xPosOld2 = " .. players[steam].xPosOld2 .. ", yPosOld2 = " .. players[steam].yPosOld2 .. ", zPosOld2 = " .. players[steam].zPosOld2 .. " WHERE steam = " .. steam) end
 		end
 	end
 end
@@ -1039,7 +1061,7 @@ function messageAdmins(message)
 			if igplayers[k] then
 				message("pm " .. k .. " [" .. server.chatColour .. "]" .. message .. "[-]")
 			else
-				conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. k .. ", '" .. escape(message) .. "')")
+				if botman.dbConnected then conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. k .. ", '" .. escape(message) .. "')") end
 			end
 		end
 	end
@@ -1058,7 +1080,7 @@ function kick(steam, reason)
 	end
 
 	if igplayers[steam] then
-		conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','kick','Player " .. steam .. " " .. escape(players[steam].name) .. " kicked for " .. escape(reason) .. "'," .. steam .. ")")
+		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','kick','Player " .. steam .. " " .. escape(players[steam].name) .. " kicked for " .. escape(reason) .. "'," .. steam .. ")") end
 	end
 
 	send("kick " .. steam .. " " .. " \"" .. reason .. "\"")
@@ -1103,15 +1125,18 @@ function banPlayer(steam, duration, reason, issuer, gblBan)
 
 	-- grab their belt, pack and equipment
 	if players[steam] then
-		cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .." ORDER BY inventoryTrackerid DESC Limit 1")
-		row = cursor:fetch({}, "a")
-		if row then
-			belt = row.belt
-			pack = row.pack
-			equipment = row.equipment
-		end
+		if botman.dbConnected then 
+			cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .." ORDER BY inventoryTrackerid DESC Limit 1")
+			row = cursor:fetch({}, "a")
+			if row then
+				belt = row.belt
+				pack = row.pack
+				equipment = row.equipment
+			end
 
-		conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(players[steam].name) .. " has has been banned for " .. duration .. " for " .. escape(reason) .. "'," .. steam .. ")")
+			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(players[steam].name) .. " has has been banned for " .. duration .. " for " .. escape(reason) .. "'," .. steam .. ")")
+		end
+		
 		irc_chat(server.ircMain, "[BANNED] Player " .. steam .. " " .. players[steam].name .. " has been banned for " .. duration .. " " .. reason)
 		irc_chat(server.ircAlerts, "[BANNED] Player " .. steam .. " " .. players[steam].name .. " has been banned for " .. duration .. " " .. reason)
 		alertAdmins("Player " .. players[steam].name .. " has been banned for " .. duration .. " " .. reason)
@@ -1130,15 +1155,18 @@ function banPlayer(steam, duration, reason, issuer, gblBan)
 			if players[k].IP == players[steam].IP and k ~= steam then				
 				send("ban add " .. k .. " " .. duration .. " \"same IP as banned player\"")
 				
-				cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. k .." ORDER BY inventoryTrackerid DESC Limit 1")
-				row = cursor:fetch({}, "a")
-				if row then
-					belt = row.belt
-					pack = row.pack
-					equipment = row.equipment
-				end
+				if botman.dbConnected then 
+					cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. k .." ORDER BY inventoryTrackerid DESC Limit 1")
+					row = cursor:fetch({}, "a")
+					if row then
+						belt = row.belt
+						pack = row.pack
+						equipment = row.equipment
+					end
 
-				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[k].xPos) .. "," .. math.ceil(players[k].yPos) .. "," .. math.floor(players[k].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. k .. " " .. escape(players[k].name) .. " has has been banned for " .. duration .. " for " .. escape("same IP as banned player") .. "'," .. k .. ")")
+					conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[k].xPos) .. "," .. math.ceil(players[k].yPos) .. "," .. math.floor(players[k].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. k .. " " .. escape(players[k].name) .. " has has been banned for " .. duration .. " for " .. escape("same IP as banned player") .. "'," .. k .. ")")
+				end
+				
 				irc_chat(server.ircMain, "[BANNED] Player " .. k .. " " .. players[k].name .. " has been banned for " .. duration .. " same IP as banned player")
 				irc_chat(server.ircAlerts, "[BANNED] Player " .. k .. " " .. players[k].name .. " has been banned for " .. duration .. " same IP as banned player")
 				alertAdmins("Player " .. players[k].name .. " has been banned for " .. duration .. " same IP as banned player")
@@ -1153,7 +1181,7 @@ function banPlayer(steam, duration, reason, issuer, gblBan)
 		end
 	else
 		-- handle unknown steam id
-		conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. steam .. " has has been banned for " .. duration .. " for " .. escape(reason) .. "'," .. steam .. ")")
+		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. steam .. " has has been banned for " .. duration .. " for " .. escape(reason) .. "'," .. steam .. ")") end
 		irc_chat(server.ircMain, "[BANNED] Unknown player " .. steam .. " has been banned for " .. duration .. " " .. reason)
 		irc_chat(server.ircAlerts, "[BANNED] Unknown player " .. steam .. " has been banned for " .. duration .. " " .. reason)
 
@@ -1215,18 +1243,26 @@ function arrest(steam, reason, bail, releaseTime)
 
 	if accessLevel(steam) > 2 and (tonumber(bail) == 0) then
 		players[steam].silentBob = true
-		conn:execute("UPDATE players SET prisoner = 1, silentBob = 1, bail = 0, prisonReleaseTime = " .. players[steam].prisonReleaseTime .. ", prisonxPosOld = " .. players[steam].prisonxPosOld .. ", prisonyPosOld = " .. players[steam].prisonyPosOld .. ", prisonzPosOld = " .. players[steam].prisonzPosOld .. " WHERE steam = " .. steam)
+		if botman.dbConnected then conn:execute("UPDATE players SET prisoner = 1, silentBob = 1, bail = 0, prisonReleaseTime = " .. players[steam].prisonReleaseTime .. ", prisonxPosOld = " .. players[steam].prisonxPosOld .. ", prisonyPosOld = " .. players[steam].prisonyPosOld .. ", prisonzPosOld = " .. players[steam].prisonzPosOld .. " WHERE steam = " .. steam) end
 	else
-		conn:execute("UPDATE players SET prisoner = 1, bail = " .. bail .. ", prisonReleaseTime = " .. players[steam].prisonReleaseTime .. ", prisonxPosOld = " .. players[steam].prisonxPosOld .. ", prisonyPosOld = " .. players[steam].prisonyPosOld .. ", prisonzPosOld = " .. players[steam].prisonzPosOld .. " WHERE steam = " .. steam)
+		if botman.dbConnected then conn:execute("UPDATE players SET prisoner = 1, bail = " .. bail .. ", prisonReleaseTime = " .. players[steam].prisonReleaseTime .. ", prisonxPosOld = " .. players[steam].prisonxPosOld .. ", prisonyPosOld = " .. players[steam].prisonyPosOld .. ", prisonzPosOld = " .. players[steam].prisonzPosOld .. " WHERE steam = " .. steam) end
 	end
 
-	cursor,errorString = conn:execute("select * from locationSpawns where location='prison'")
-	if cursor:numrows() > 0 then
-		randomTP(steam, "prison")
-	else	
+	if botman.dbConnected then 
+		cursor,errorString = conn:execute("select * from locationSpawns where location='prison'")
+		rows = cursor:numrows()
+		
+		if rows > 0 then
+			randomTP(steam, "prison")
+		else	
+			cmd = "tele " .. steam .. " " .. locations["prison"].x .. " " .. locations["prison"].y .. " " .. locations["prison"].z
+			prepareTeleport(steam, cmd)
+			teleport(cmd, true)		
+		end
+	else
 		cmd = "tele " .. steam .. " " .. locations["prison"].x .. " " .. locations["prison"].y .. " " .. locations["prison"].z
 		prepareTeleport(steam, cmd)
-		teleport(cmd, true)		
+		teleport(cmd, true)			
 	end
 	
 	message("say [" .. server.warnColour .. "]" .. players[steam].name .. " has been sent to prison for " .. reason .. ".[-]")
@@ -1247,7 +1283,7 @@ function arrest(steam, reason, bail, releaseTime)
 		end
 	end
 	
-	conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','prison','Player " .. steam .. " " .. escape(players[steam].name) .. " has has been sent to prison for " .. escape(reason) .. "'," .. steam .. ")")		
+	if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','prison','Player " .. steam .. " " .. escape(players[steam].name) .. " has has been sent to prison for " .. escape(reason) .. "'," .. steam .. ")") end
 end
 
 
@@ -1262,8 +1298,10 @@ function timeoutPlayer(steam, reason, bot)
 		players[steam].yPosTimeout = math.ceil(players[steam].yPos) + 1
 		players[steam].zPosTimeout = math.floor(players[steam].zPos)
 
-		conn:execute("UPDATE players SET timeout = 1, botTimeout = " .. dbBool(bot) .. ", xPosTimeout = " .. players[steam].xPosTimeout .. ", yPosTimeout = " .. players[steam].yPosTimeout .. ", zPosTimeout = " .. players[steam].zPosTimeout .. " WHERE steam = " .. steam)
-		conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','timeout','Player " .. steam .. " " .. escape(players[steam].name) .. " has has been sent to timeout for " .. escape(reason) .. "'," .. steam .. ")")
+		if botman.dbConnected then 
+			conn:execute("UPDATE players SET timeout = 1, botTimeout = " .. dbBool(bot) .. ", xPosTimeout = " .. players[steam].xPosTimeout .. ", yPosTimeout = " .. players[steam].yPosTimeout .. ", zPosTimeout = " .. players[steam].zPosTimeout .. " WHERE steam = " .. steam)
+			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','timeout','Player " .. steam .. " " .. escape(players[steam].name) .. " has has been sent to timeout for " .. escape(reason) .. "'," .. steam .. ")")
+		end
 
 		-- then teleport the player to timeout
 		players[steam].tp = 1
@@ -1280,15 +1318,17 @@ end
 function checkRegionClaims(x, z)
 	local cursor, errorString, row
 
-	cursor,errorString = conn:execute("SELECT * FROM keystones WHERE floor(x / 512) =  " .. x .. " AND floor(z / 512) = " .. z)
-	row = cursor:fetch({}, "a")
-	while row do
-		if row.remove == "1" then
-			send("rlp " .. row.x .. " " .. row.y .. " " .. row.z)
-			conn:execute("UPDATE keystones SET remove = 2 WHERE steam = " .. row.steam .. " AND x = " .. row.x .. " AND y = " .. row.y .. " AND z = " .. row.z )
-		end
+	if botman.dbConnected then 
+		cursor,errorString = conn:execute("SELECT * FROM keystones WHERE floor(x / 512) =  " .. x .. " AND floor(z / 512) = " .. z)
+		row = cursor:fetch({}, "a")
+		while row do
+			if row.remove == "1" then
+				send("rlp " .. row.x .. " " .. row.y .. " " .. row.z)
+				conn:execute("UPDATE keystones SET remove = 2 WHERE steam = " .. row.steam .. " AND x = " .. row.x .. " AND y = " .. row.y .. " AND z = " .. row.z )
+			end
 
-		row = cursor:fetch(row, "a")
+			row = cursor:fetch(row, "a")
+		end
 	end
 end
 
@@ -1298,6 +1338,10 @@ function dbWho(ownerid, x, y, z, dist, days, hours, height, ingame)
 
 	if days == nil then days = 1 end
 	if height == nil then height = 5 end
+	
+	if not botman.dbConnected then 
+		return
+	end
 
 	conn:execute("DELETE FROM searchResults WHERE owner = " .. ownerid)
 
@@ -1502,7 +1546,7 @@ function CheckBlacklist(steam, ip)
 			if server.blacklistResponse == 'exile' then
 				if tonumber(players[steam].exiled) == 0 then
 					players[steam].exiled = 1
-					conn:execute("UPDATE players SET country = 'CN', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam)
+					if botman.dbConnected then conn:execute("UPDATE players SET country = 'CN', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam) end
 				end
 
 				-- alert players
@@ -1595,7 +1639,7 @@ function readDNS(steam)
 			country = string.sub(ln, a + 1)
 			if players[steam].country ~= "" and players[steam].country ~= country and (players[steam].country == "CN" or players[steam].country == "HK" or country == "CN" or country == "HK") and not whitelist[steam] then
 				irc_chat(server.ircAlerts, "Possible proxy detected! Country changed! " .. steam .. " " .. players[steam].name .. " " .. players[steam].IP .. " old country " .. players[steam].country .. " new " .. country)
-				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (0,0,0'" .. botman.serverTime .. "','proxy','Suspected proxy used by " .. escape(players[steam].name) .. " " .. players[steam].IP .. " old country " .. players[steam].country .. " new " .. country .. "," .. steam .. ")")
+				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (0,0,0'" .. botman.serverTime .. "','proxy','Suspected proxy used by " .. escape(players[steam].name) .. " " .. players[steam].IP .. " old country " .. players[steam].country .. " new " .. country .. "," .. steam .. ")") end
 				proxy = true
 			else
 				 players[steam].country = country
@@ -1646,8 +1690,11 @@ function readDNS(steam)
 				end
 			end
 
-			conn:execute("UPDATE players SET country = '" .. escape(country) .. "', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam)
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Chinese player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. players[steam].IP  .. "'," .. steam .. ")")
+			if botman.dbConnected then 
+				conn:execute("UPDATE players SET country = '" .. escape(country) .. "', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam)
+				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Chinese player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. players[steam].IP  .. "'," .. steam .. ")")
+			end
+			
 			file:close()
 
 			-- got country so stop processing the dns record
@@ -1662,7 +1709,7 @@ function readDNS(steam)
 		os.rename(homedir .. "/dns/" .. steam .. ".txt", homedir .. "/dns/" .. steam .. "_old.txt")
 	end
 
-	conn:execute("UPDATE players SET country = '" .. country .. "' WHERE steam = " .. steam)
+	if botman.dbConnected then conn:execute("UPDATE players SET country = '" .. country .. "' WHERE steam = " .. steam) end
 
 	file:close()
 
@@ -1673,7 +1720,7 @@ end
 
 
 function initNewPlayer(steam, player, entityid, steamOwner)
-	conn:execute("INSERT INTO players (steam, id, name, steamOwner) VALUES (" .. steam .. "," .. entityid .. ",'" .. escape(player) .. "'," .. steamOwner .. ")")
+	if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, steamOwner) VALUES (" .. steam .. "," .. entityid .. ",'" .. escape(player) .. "'," .. steamOwner .. ")") end
 
 	players[steam] = {}
 	players[steam].alertMapLimit = false
@@ -1846,6 +1893,7 @@ function fixMissingStuff()
 	lfs.mkdir(homedir .. "/temp")
 	lfs.mkdir(homedir .. "/scripts")
 	lfs.mkdir(homedir .. "/data_backup")						
+	lfs.mkdir(homedir .. "/chatlogs")	
 
 	if not isFile(homedir .. "/custom/gmsg_custom.lua") then
 		file = io.open(homedir .. "/custom/gmsg_custom.lua", "a")
@@ -1916,13 +1964,15 @@ function saveDisconnectedPlayer(steam)
 	end
 
 	if accessLevel(steam) < 3 then
-		conn:execute("DELETE FROM memTracker WHERE admin = " .. steam)
+		if botman.dbConnected then conn:execute("DELETE FROM memTracker WHERE admin = " .. steam) end
 	end
 
-	conn:execute("DELETE FROM messageQueue WHERE recipient = " .. steam)
-	conn:execute("DELETE FROM gimmeQueue WHERE steam = " .. steam)
-	conn:execute("DELETE FROM commandQueue WHERE steam = " .. steam)
-	conn:execute("DELETE FROM playerQueue WHERE steam = " .. steam)
+	if botman.dbConnected then 
+		conn:execute("DELETE FROM messageQueue WHERE recipient = " .. steam)
+		conn:execute("DELETE FROM gimmeQueue WHERE steam = " .. steam)
+		conn:execute("DELETE FROM commandQueue WHERE steam = " .. steam)
+		conn:execute("DELETE FROM playerQueue WHERE steam = " .. steam)
+	end
 
 	-- delete player from igplayers table
 	igplayers[steam] = nil

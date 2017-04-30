@@ -80,7 +80,7 @@ function getServerFields()
 	--function inspect the server table and store field names and types
 	serverFields = {}
 
-	cursor,errorString = conn:execute("PRAGMA table_info(server)")
+	cursor,errorString = conn:execute("SHOW FIELDS FROM server")
 	row = cursor:fetch({}, "a")
 	while row do
 		field = row.Field
@@ -167,7 +167,7 @@ function getPlayerFields()
 	--function inspect the player table and store field names and types
 	playerFields = {}
 
-	local cursor,errorString = conn:execute("PRAGMA table_info(players)")
+	cursor,errorString = conn:execute("SHOW FIELDS FROM players")
 	row = cursor:fetch({}, "a")
 	while row do
 		field = row.Field
@@ -205,21 +205,30 @@ function savePlayer(steam, action)
 	if action == nil then
 		sqlString = "update players set"
 
-		for k,v in pairs(playerFields) do
-			if sql[k] then
+		for k,v in pairs(playerFields) do		
+			if sql[k] and sql[k].value and v.type ~= "tim" then
+--dbug("k " .. k)			
+--if v.type == "tin" then dbug("tim") end
+--dbug("sql[k].value " .. sql[k].value)
+			
 				if v.type == "var" then
+--dbug("var")				
 					sql[k].value = "'" .. escape(sql[k].value) .. "'"
 				end
 
 				if v.type == "tin" then
+--dbug("tim")
 					if sql[k].value == true then sql[k].value = 1 end
 					if sql[k].value == false then sql[k].value = 0 end
 				end
 
 				if v.type == "tim" then
---					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"					
+--dbug("tim")				
+				--dbug("tim " .. sql[k].value)
+					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"					
 				end
 
+--dbug("num")				
 				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. "=" .. sql[k].value .. ","
 			end
 		end
@@ -231,7 +240,7 @@ function savePlayer(steam, action)
 		sqlValues = " values ("
 
 		for k,v in pairs(playerFields) do
-			if sql[k] then
+			if sql[k] and v.type ~= "tim" then
 				if v.type == "var" then
 					sql[k].value = "'" .. escape(sql[k].value) .. "'"
 				end
@@ -288,7 +297,7 @@ function getTableFields(table)
 
 	_G[tbl] = {}
 
-	local cursor,errorString = conn:execute("PRAGMA table_info(" .. table .. ")")
+	cursor,errorString = conn:execute("SHOW FIELDS FROM " .. table)
 	row = cursor:fetch({}, "a")
 	
 	while row do

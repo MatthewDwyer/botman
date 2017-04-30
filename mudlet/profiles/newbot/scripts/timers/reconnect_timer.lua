@@ -8,6 +8,8 @@
 --]]
 
 function reconnectTimer()
+	local channels
+
 	if botman.botConnectedTimestamp == nil then	
 		botman.botConnectedTimestamp = os.time()
 	end
@@ -53,5 +55,26 @@ function reconnectTimer()
 		botman.lagCheckRead = false
 		botman.lagCheckTime = os.time()
 		send("pm LagCheck " .. server.botID)			
-	end			
+	end	
+
+	if ircGetChannels ~= nil then
+		channels = ircGetChannels()
+		
+		if channels == "" then
+			joinIRCServer()	
+			return
+		end
+		
+		if not string.find(channels, server.ircMain) then
+			ircJoin(server.ircMain)
+		end
+		
+		if not string.find(channels, server.ircAlerts) then
+			ircJoin(server.ircAlerts)
+		end
+
+		if not string.find(channels, server.ircWatch) then
+			ircJoin(server.ircWatch)
+		end		
+	end
 end

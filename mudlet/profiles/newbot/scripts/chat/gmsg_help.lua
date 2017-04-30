@@ -428,15 +428,17 @@ function help(command)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "uptime[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who[-]")
 
-		cursor,errorString = conn:execute("select * from customMessages order by command")
-		row = cursor:fetch({}, "a")
+		if botman.dbConnected then 
+			cursor,errorString = conn:execute("select * from customMessages order by command")
+			row = cursor:fetch({}, "a")
 
-		while row do
-			if (chatvars.accessLevel <= tonumber(row.accessLevel)) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. row.command .. "[-]")
+			while row do
+				if (chatvars.accessLevel <= tonumber(row.accessLevel)) then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. row.command .. "[-]")
+				end
+
+				row = cursor:fetch(row, "a")
 			end
-
-			row = cursor:fetch(row, "a")
 		end
 
 		return

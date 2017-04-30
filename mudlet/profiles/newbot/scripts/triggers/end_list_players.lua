@@ -13,10 +13,8 @@ function endListPlayers(line)
 	end
 
 	if botman.listPlayers and not botman.listEntities then	
-		showPlayers = false
 		botman.playersOnline = tonumber(string.match(line, "%d+"))
-		playerConnectCounter = botman.playersOnline
-		deleteLine()		
+		playerConnectCounter = botman.playersOnline		
 		
 		server.reservedSlotsUsed = tonumber(botman.playersOnline) - (tonumber(server.maxPlayers) - tonumber(server.reservedSlots))	
 		if server.reservedSlotsUsed < 0 then

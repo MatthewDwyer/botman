@@ -29,7 +29,7 @@ function teleTrigger(line)
 		players[id].hackerTPScore = 0
 	end
 	
-	if string.find(line, "from ") and legit then
+	if string.find(line, "teleportplayer") and legit then
 		cmd = string.sub(line, string.find(line, "teleportplayer "), string.find(line, "from") - 3)
 		cmd = string.split(cmd, " ")		
 		id = LookupPlayer(cmd[2])

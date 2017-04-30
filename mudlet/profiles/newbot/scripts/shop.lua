@@ -81,7 +81,6 @@ function LookupShop(search,all)
 		cursor,errorString = conn:execute("SELECT * FROM shop WHERE item like '%" .. escape(search) .. "%' or category like '%" .. escape(search) .. "%' ORDER BY idx")
 	end
 
-	shopRows = cursor:numrows()
 	row = cursor:fetch({}, "a")
 
 	while row do
@@ -267,7 +266,7 @@ end
 
 
 function doShop(command, playerid, words)
-	local k, v, i, number, cmd, list
+	local k, v, i, number, cmd, list, cursor, errorString
 	
 if (debug) then 
 dbug("debug shop line " .. debugger.getinfo(1).currentline) 
@@ -473,7 +472,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			number = 1
 		end
 
-		if shopRows > 1 then
+		if not cursor == 0 then
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]I sell several items called " .. words[2] .. ".  Try again using with one of the following fine wares.")
 
 			cursor,errorString = conn:execute("SELECT * FROM memShop ORDER BY category, item")
@@ -524,9 +523,8 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
 		cursor,errorString = conn:execute("SELECT * FROM shop")
-		shopRows = cursor:numrows()
 
-		if shopRows == 0 then
+		if cursor == 0 then
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]CALL THE POLICE!  The shop is empty![-]")
 			return false
 		end

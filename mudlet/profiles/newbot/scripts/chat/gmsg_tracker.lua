@@ -80,7 +80,7 @@ function gmsg_tracker()
 
 	if ((chatvars.words[1] == "track") or (chatvars.words[1] == "next") or (chatvars.words[1] == "last")) and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -129,12 +129,19 @@ function gmsg_tracker()
 					tmp.session = players[tmp.id].sessionCount
 					igplayers[chatvars.playerid].trackerSession = players[tmp.id].sessionCount
 					igplayers[chatvars.playerid].trackerSteam = tmp.id
+					igplayers[chatvars.playerid].trackerLastSession = true
 				end				
 			end			
 		
 			if chatvars.words[i] == "session" then
 				tmp.session = chatvars.words[i+1]
 				igplayers[chatvars.playerid].trackerSession = tmp.session
+				
+				if tonumber(tmp.session) == players[tmp.id].sessionCount then
+					igplayers[chatvars.playerid].trackerLastSession = true
+				else
+					igplayers[chatvars.playerid].trackerLastSession = false				
+				end
 			end		
 		
 			if chatvars.words[i] == "here" then
@@ -330,7 +337,7 @@ function gmsg_tracker()
 		end
 	end
 
-	if (chatvars.words[1] == "stop" or chatvars.words[1] == "sotp" or chatvars.words[1] == "s" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
+	if (chatvars.words[1] == "stop" or chatvars.words[1] == "sotp" or chatvars.words[1] == "s") and chatvars.words[2] == nil and chatvars.playerid ~= 0 then
 		if (chatvars.accessLevel > 2) then
 			botman.faultyChat = false
 			return true
@@ -403,7 +410,7 @@ function gmsg_tracker()
 
 	if ((chatvars.words[1] == "check") and (chatvars.words[2] == "bases")) and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -435,7 +442,7 @@ function gmsg_tracker()
 
 	if (chatvars.words[1] == "nb" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -467,7 +474,7 @@ function gmsg_tracker()
 
 	if (chatvars.words[1] == "pb" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -501,7 +508,7 @@ function gmsg_tracker()
 
 	if (chatvars.words[1] == "killbase" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end

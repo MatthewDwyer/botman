@@ -25,7 +25,8 @@ function joinIRCServer()
 	ircSetChannel(server.ircMain)
 	tempTimer( 1, [[ircJoin("]] .. server.ircAlerts .. [[")]] )
 	tempTimer( 2, [[ircJoin("]] .. server.ircWatch .. [[")]] )	
-	tempTimer( 3, [[getNick()]] )		
+	tempTimer( 3, [[ircReconnect()]] )		
+	server.ircBotName = getNick()
 end
 
 function irc_chat(name, message)
@@ -436,7 +437,10 @@ end
 
 
 function listOwners(steam)
+	local pid
 	local online = ""
+	
+	pid = LookupPlayer(steam)
 
 	if igplayers[steam] then
 		message("pm " .. steam .. " [" .. server.chatColour .. "]The server owners are:[-]")
@@ -451,17 +455,29 @@ function listOwners(steam)
 			online = " "
 		end
 		
-		if igplayers[steam] then
-			if not players[k] then
-				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " UNKNOWN STEAM ID[-]")			
+		if accessLevel(pid) < 3 then
+			if igplayers[steam] then
+				if not players[k] then
+					message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " UNKNOWN STEAM ID[-]")			
+				else
+					message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " " .. players[k].name .. online .. "[-]")
+				end
 			else
-				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " " .. players[k].name .. online .. "[-]")
+				if not players[k] then
+					irc_chat(irc_params.name, "UNKNOWN PLAYER " .. k .. " in admin list but not known to server.")		
+				else
+					irc_chat(irc_params.name,  k .. " " .. players[k].name .. online)
+				end		
 			end
 		else
-			if not players[k] then
-				irc_chat(irc_params.name, "UNKNOWN PLAYER " .. k .. " in admin list but not known to server.")		
+			if igplayers[steam] then
+				if players[k] then
+					message("pm " .. steam .. " [" .. server.chatColour .. "]" .. players[k].name .. online .. "[-]")
+				end
 			else
-				irc_chat(irc_params.name,  k .. " " .. players[k].name .. online)
+				if players[k] then
+					irc_chat(irc_params.name,  players[k].name .. online)
+				end		
 			end		
 		end
 	end
@@ -473,7 +489,10 @@ end
 
 
 function listAdmins(steam)
+	local pid
 	local online = ""
+	
+	pid = LookupPlayer(steam)
 
 	if igplayers[steam] then
 		message("pm " .. steam .. " [" .. server.chatColour .. "]The server admins are:[-]")
@@ -488,18 +507,30 @@ function listAdmins(steam)
 			online = ""
 		end
 
-		if igplayers[steam] then
-			if not players[k] then
-				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " UNKNOWN STEAM ID[-]")			
+		if accessLevel(pid) < 3 then
+			if igplayers[steam] then
+				if not players[k] then
+					message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " UNKNOWN STEAM ID[-]")			
+				else
+					message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " " .. players[k].name .. online .. "[-]")
+				end
 			else
-				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " " .. players[k].name .. online .. "[-]")
+				if not players[k] then
+					irc_chat(irc_params.name, "UNKNOWN PLAYER " .. k .. " in admin list but not known to server.")		
+				else
+					irc_chat(irc_params.name,  k .. " " .. players[k].name .. online)
+				end		
 			end
 		else
-			if not players[k] then
-				irc_chat(irc_params.name, "UNKNOWN PLAYER " .. k .. " in admin list but not known to server.")		
+			if igplayers[steam] then
+				if players[k] then
+					message("pm " .. steam .. " [" .. server.chatColour .. "]" .. players[k].name .. online .. "[-]")
+				end
 			else
-				irc_chat(irc_params.name,  k .. " " .. players[k].name .. online)
-			end
+				if players[k] then
+					irc_chat(irc_params.name,  players[k].name .. online)
+				end		
+			end		
 		end
 	end
 
@@ -510,7 +541,10 @@ end
 
 
 function listMods(steam)
+	local pid
 	local online = ""
+	
+	pid = LookupPlayer(steam)
 
 	if igplayers[steam] then
 		message("pm " .. steam .. " [" .. server.chatColour .. "]The server mods are:[-]")
@@ -525,18 +559,30 @@ function listMods(steam)
 			online = ""
 		end
 
-		if igplayers[steam] then
-			if not players[k] then
-				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " UNKNOWN STEAM ID[-]")			
+		if accessLevel(pid) < 3 then
+			if igplayers[steam] then
+				if not players[k] then
+					message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " UNKNOWN STEAM ID[-]")			
+				else
+					message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " " .. players[k].name .. online .. "[-]")
+				end
 			else
-				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. k .. " " .. players[k].name .. online .. "[-]")
+				if not players[k] then
+					irc_chat(irc_params.name, "UNKNOWN PLAYER " .. k .. " in admin list but not known to server.")		
+				else
+					irc_chat(irc_params.name,  k .. " " .. players[k].name .. online)
+				end		
 			end
 		else
-			if not players[k] then
-				irc_chat(irc_params.name, "UNKNOWN PLAYER " .. k .. " in admin list but not known to server.")		
+			if igplayers[steam] then
+				if players[k] then
+					message("pm " .. steam .. " [" .. server.chatColour .. "]" .. players[k].name .. online .. "[-]")
+				end
 			else
-				irc_chat(irc_params.name,  k .. " " .. players[k].name .. online)
-			end
+				if players[k] then
+					irc_chat(irc_params.name,  players[k].name .. online)
+				end		
+			end		
 		end
 	end
 

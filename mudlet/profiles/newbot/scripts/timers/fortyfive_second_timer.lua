@@ -10,7 +10,7 @@
 function fortyfiveSecondTimer()
 	local k, v, x, z, row, cursor, errorString
 
-	if botman.botDisabled or botman.botOffline or server.lagged then
+	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
 		return
 	end
 
@@ -21,23 +21,26 @@ function fortyfiveSecondTimer()
 
 		if accessLevel(k) > 2 then
 			cursor,errorString = conn:execute("SELECT count(remove) as deleted FROM keystones WHERE steam = " .. k .. " AND remove = 2")
-			row = cursor:fetch({}, "a")
+			
+			if cursor then
+				row = cursor:fetch({}, "a")
 
-			if tonumber(row.deleted) > 0 then
-				players[k].removedClaims = players[k].removedClaims + tonumber(row.deleted)
-				players[k].alertRemovedClaims = true
-				conn:execute("DELETE FROM keystones WHERE steam = " .. k .. " AND remove = 2")
-			end
+				if tonumber(row.deleted) > 0 then
+					players[k].removedClaims = players[k].removedClaims + tonumber(row.deleted)
+					players[k].alertRemovedClaims = true
+					conn:execute("DELETE FROM keystones WHERE steam = " .. k .. " AND remove = 2")
+				end
 
-			if v.claimPass == 1 then
-				x = math.floor(v.xPos / 512)
-				z = math.floor(v.zPos / 512)
-				checkRegionClaims(x, z)
+				if v.claimPass == 1 then
+					x = math.floor(v.xPos / 512)
+					z = math.floor(v.zPos / 512)
+					checkRegionClaims(x, z)
 
-				v.claimPass = 2
-			else
-				send("llp " .. k)
-				v.claimPass = 1
+					v.claimPass = 2
+				else
+					send("llp " .. k)
+					v.claimPass = 1
+				end
 			end
 		end
 	end

@@ -13,7 +13,7 @@ debug = false
 function loadServer()
 	local temp, cursor, errorString, row, rows
 	
-	-- debug = true
+--	debug = false
 	calledFunction = "loadServer"
 	
 	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end	
@@ -27,9 +27,10 @@ function loadServer()
 		server = {}
 	end
 
-	local cursor,errorString = conn:execute("select * from server")
+	cursor,errorString = conn:execute("select * from server")
+	rows = tonumber(cursor:numrows())
 	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end	
-	if cursor and cursor ~= 0 then
+	if rows == 0 then
 		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end		
 		initServer()
 		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end	
@@ -50,6 +51,10 @@ function loadServer()
 				server[k] = dbTrue(row[k])
 			end					
 		end	
+		
+		if row.chatlogPath == "" or row.chatlogPath == nil then
+			botman.chatlogPath = homedir .. "/chatlogs"
+		end
 
 		botman.chatlogPath = row.chatlogPath
 		
@@ -77,9 +82,7 @@ end
 function loadPlayers(steam)
 	local word, words, rdate, ryear, rmonth, rday, rhour, rmin, rsec, k, v
 
-	-- load players table
-	--getTableFields("players")
-	
+	-- load players table)	
 	if playerFields == nil then
 		getPlayerFields()
 	end	
@@ -148,10 +151,10 @@ function loadShopCategories()
 	shopCategories = {}
 	getTableFields("shopCategories")
 
-	local cursor,errorString = conn:execute("select * from shopCategories")
+	cursor,errorString = conn:execute("select * from shopCategories")
 
 	-- add the misc category so it always exists
-	if type(cursor) == "userdata" then
+	if cursor:numrows() > 0 then
 		shopCategories["misc"] = {}
 		shopCategories["misc"].idx = 1
 		shopCategories["misc"].code = "misc"
@@ -257,8 +260,8 @@ function loadLocations(loc)
 	
 	if loc == nil then locations = {} end	
 
-	local cursor,errorString = conn:execute("select * from locations")
-	local row = cursor:fetch({}, "a")
+	cursor,errorString = conn:execute("select * from locations")
+	row = cursor:fetch({}, "a")
 	
 	if row then
 		cols = cursor:getcolnames()		
@@ -664,7 +667,7 @@ function loadGimmeZombies()
 	row = cursor:fetch({}, "a")	
 
 	if row then
-		cols = cursor:getcolnames()
+		cols = cursor:getcolnames()		
 	end	
 	
 	while row do		
@@ -672,8 +675,8 @@ function loadGimmeZombies()
 		gimmeZombies[idx] = {}
 
 		for k,v in pairs(cols) do						
-			for n,m in pairs(row) do
-				if _G["gimmeZombiesFields"][v] and n == _G["gimmeZombiesFields"][v].field then					
+			for n,m in pairs(row) do	
+				if n == _G["gimmeZombiesFields"][v].field then					
 					if _G["gimmeZombiesFields"][v].type == "var" or _G["gimmeZombiesFields"][v].type == "big" then
 						gimmeZombies[idx][n] = m
 					end

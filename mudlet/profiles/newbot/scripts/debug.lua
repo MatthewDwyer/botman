@@ -8,7 +8,7 @@ function fixTeleportsBug()
 	
 	-- now we will re-save all the teleports to the db correctly
 	for k,v in pairs(teleports) do
-		conn:execute("UPDATE teleports SET x = " .. v.x .. ", y = " .. v.y .. ", z = " .. v.z .. ", dx = " .. v.dx .. ", dy = " .. v.dy .. ", dz = " .. v.dz .. " WHERE name = '" .. escape(k) .. "'")
+		if botman.dbConnected then conn:execute("UPDATE teleports SET x = " .. v.x .. ", y = " .. v.y .. ", z = " .. v.z .. ", dx = " .. v.dx .. ", dy = " .. v.dy .. ", dz = " .. v.dz .. " WHERE name = '" .. escape(k) .. "'") end
 	end
 	
 	irc_chat(server.ircMain, "Check teleports in database.  Should be correct now.")

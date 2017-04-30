@@ -181,7 +181,7 @@ function baseProtection(steam, posX, posY, posZ)
 							if (v.protect2 and v.protect2 == true) and v.home2X ~= 0 and v.home2Y ~= 0 and v.home2Z ~= 0 then
 								if os.time() - tonumber(players[k].donorExpiry) > (60 * 60 * 24 * 7) then
 									players[k].protect2 = false
-									conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. k)
+									if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. k) end
 								end
 							end
 

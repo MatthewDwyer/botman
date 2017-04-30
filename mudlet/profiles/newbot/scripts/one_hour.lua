@@ -20,16 +20,19 @@ function OneHourTimer()
 	end
 
 	counter = 1
-	cursor,errorString = conn:execute("SELECT * FROM announcements")
-	rows = cursor:numrows()
-	row = cursor:fetch({}, "a")
-	while row do
-		if tonumber(announceRoller) == counter then		
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape(row.message) .. "')")	
-		end
+	
+	if botman.dbConnected then 
+		cursor,errorString = conn:execute("SELECT * FROM announcements")
+		rows = cursor:numrows()
+		row = cursor:fetch({}, "a")
+		while row do
+			if tonumber(announceRoller) == counter then		
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape(row.message) .. "')")	
+			end
 
-		counter = counter + 1
-		row = cursor:fetch(row, "a")	
+			counter = counter + 1
+			row = cursor:fetch(row, "a")	
+		end
 	end
 	
 	announceRoller = announceRoller + 1
@@ -41,7 +44,7 @@ function OneHourTimer()
 	
 	if botman.chatlogPath == nil then
 		botman.chatlogPath = webdavFolder
-		conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'")
+		if botman.dbConnected then conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'") end
 	end		
 
 	if not isDir(botman.chatlogPath) then

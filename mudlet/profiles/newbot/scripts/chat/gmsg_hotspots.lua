@@ -153,7 +153,7 @@ function gmsg_hotspots()
 		end
 
 		hotspots[idx].size = size
-		conn:execute("UPDATE hotspots SET size = " .. size .. " WHERE idx = " .. idx)
+		if botman.dbConnected then conn:execute("UPDATE hotspots SET size = " .. size .. " WHERE idx = " .. idx) end
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Hotspot: " .. hotspots[idx].hotspot .. " now covers " .. size * 2 .. " metres[-]")
 		botman.faultyChat = false
 		return true
@@ -195,7 +195,7 @@ function gmsg_hotspots()
 
 		if chatvars.accessLevel < 4 then
 			if hotspots[chatvars.number] then
-				conn:execute("UPDATE hotspots SET x = " .. chatvars.intX .. ", y = " .. chatvars.intY .. ", z = " .. chatvars.intZ .. " WHERE idx = " .. chatvars.number)
+				if botman.dbConnected then conn:execute("UPDATE hotspots SET x = " .. chatvars.intX .. ", y = " .. chatvars.intY .. ", z = " .. chatvars.intZ .. " WHERE idx = " .. chatvars.number) end
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You moved the hotspot: " .. hotspots[chatvars.number].hotspot .. "[-]")
 				hotspots[chatvars.number].x = chatvars.intX
 				hotspots[chatvars.number].y = chatvars.intY
@@ -273,12 +273,12 @@ function gmsg_hotspots()
 				end
 			end
 
-			conn:execute("DELETE FROM hotspots WHERE owner = " .. pid)
+			if botman.dbConnected then conn:execute("DELETE FROM hotspots WHERE owner = " .. pid) end
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You deleted the hotspots belonging to " .. players[pid].name .. "[-]")
 			-- reload the hotspots lua table
 			loadHotspots()
 		else
-			conn:execute("DELETE FROM hotspots WHERE owner = " .. chatvars.playerid)
+			if botman.dbConnected then conn:execute("DELETE FROM hotspots WHERE owner = " .. chatvars.playerid) end
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your hotspots have been deleted.[-]")
 			-- reload the hotspots lua table
 			loadHotspots()
@@ -316,7 +316,7 @@ function gmsg_hotspots()
 
 		if chatvars.accessLevel < 3 then
 			if hotspots[chatvars.number] then
-				conn:execute("DELETE FROM hotspots WHERE idx = " .. chatvars.number)
+				if botman.dbConnected then conn:execute("DELETE FROM hotspots WHERE idx = " .. chatvars.number) end
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You deleted the hotspot: " .. hotspots[chatvars.number].hotspot .. "[-]")
 				hotspots[chatvars.number] = nil
 			else
@@ -541,7 +541,7 @@ function gmsg_hotspots()
 	if (chatvars.words[1] == "hotspot" and chatvars.words[3] == "action" and chatvars.words[4] ~= nil) and (chatvars.playerid ~= 0) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end

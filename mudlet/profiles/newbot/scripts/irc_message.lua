@@ -339,7 +339,6 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		return
 	end
 
-
 	if (words[1] == "help" and words[2] == "topics") then
 		irc_HelpTopics()
 		return
@@ -363,11 +362,22 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				active = "disabled"
 			end
 			
-			irc_chat(name, v.name .. " " .. public .. " " .. active .. " xyz " .. v.x .. "," .. v.y .. "," .. v.z)
+			if ircid then
+				if players[ircid].accessLevel < 3 then
+					irc_chat(name, v.name .. " " .. public .. " " .. active .. " xyz " .. v.x .. "," .. v.y .. "," .. v.z)
+				else
+					if public == "public" then
+						irc_chat(name, v.name)
+					end
+				end
+			else			
+				if public == "public" then
+					irc_chat(name, v.name)
+				end
+			end
 		end
 
 		irc_chat(name, " ")
-
 		return
 	end	
 	
@@ -414,7 +424,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		ircid = LookupOfflinePlayer(name)	
 	end
 	
-	if ircid ~= nil and debug then
+	if ircid then
 		if players[ircid].ircAuthenticated == false then
 			requireLogin(name, true)
 		else
@@ -425,13 +435,37 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				players[ircid].ircSessionExpiry = os.time() + 10800
 			end		
 			
-			connBots:execute("UPDATE players SET ircAuthenticated = 1 WHERE steam = " .. k)								
+			connBots:execute("UPDATE players SET ircAuthenticated = 1 WHERE steam = " .. ircid)								
 		end		
 	
 		if debug then dbug("IRC: " .. name .. " access " .. accessLevel(ircid) .. " said " .. msg) end
 	end
 		
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end	
+
+	if (words[1] == "hi" or words[1] == "hello") and (string.lower(words[2]) == string.lower(server.botName) or string.lower(words[2]) == string.lower(server.ircBotName) or words[2] == "bot" or words[2] == "server") then
+		if channel == name then
+			irc_chat(name, "Hi there " .. name .. "!  How can I help you today?")
+		else
+			if not players[ircid].ircAuthenticated then
+				requireLogin(name, true)
+			end			
+			
+			irc_chat(name, "Hi there " .. name .. "!  How can I help you today?")				
+		
+			if not ircid then
+				irc_chat(channel, "Hi there " .. name .. ", this is the " .. channel .. " channel.  Please move to " .. server.ircBotName .. " to login.")
+			else
+				if players[ircid].ircAuthenticated then
+					irc_chat(channel, "Hi there " .. name .. "!  Welcome to " .. channel .. ". You are logged in.")
+				end			
+			end		
+		end
+			
+		return
+	end		
+	
+if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "who" and words[2] == nil) then
 		if not players[ircid].ircAuthenticated then
@@ -443,28 +477,6 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end	
-	
-	if (words[1] == "hi" or words[1] == "hello") and (string.lower(words[2]) == string.lower(server.botName) or string.lower(words[2]) == string.lower(server.ircBotName) or words[2] == "bot" or words[2] == "server") then
-		if channel == name then
-			irc_chat(name, "Hi there " .. name .. "!  How can I help you today?")
-		else
-			if not players[ircid].ircAuthenticated then
-				requireLogin(name, true)
-			end			
-		
-			if not players[ircid].ircAuthenticated then
-				irc_chat(channel, "Hi there " .. name .. ", this is the " .. channel .. " channel and your login has expired.  Please move to " .. server.ircBotName .. " to login.")					
-			else				
-				irc_chat(channel, "Hi there " .. name .. "!  Welcome to " .. channel .. ".")
-			end
-			
-			irc_chat(name, "Hi there " .. name .. "!  How can I help you today?")			
-		end
-			
-		return
-	end		
-	
-	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "login") then
 		tmp = {}		
@@ -613,9 +625,15 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	
 	if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end	
 	
+	if words[1] == "help" and (words[2] == "intro" or words[2] == "guide" or words[2] == "manual") then
+		irc_Manual()
+	end			
+	
+	if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end	
+	
 	if (words[1] == "server") then
 		if words[2] == "ip" then
-			if players[ircid].ircAuthenticated == false then
+			if not players[ircid].ircAuthenticated then
 				if requireLogin(name) then
 					return
 				end
@@ -736,7 +754,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end	
 
-	if (words[1] == "help" and words[2] == nil) and (accessLevel(ircid) < 3) then
+	if (words[1] == "help" and words[2] == nil) then --  and (accessLevel(ircid) < 3)
 		irc_commands()
 		gmsg(server.commandPrefix .. "help sections", ircid)
 		return
@@ -1007,7 +1025,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end		
 	
 	if (words[1] == "restart" and words[2] == "bot") then	
-		if botman.customMudlet then		
+		if botman.customMudlet then
 			-- Mudlet will only automatically restart if you compiled TheFae's latest Mudlet and launched it from run-mudlet.sh with -r
 			savePlayers()			
 			closeMudlet()		
@@ -1952,7 +1970,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if (words[1] == "reset") and (words[2] == "bot") and (accessLevel(ircid) == 0) then
 			if resetbotCount == nil then resetbotCount = 0 end
 
-			if tonumber(resetbotCount) < 2 then
+			if tonumber(resetbotCount) < 1 then
 				resetbotCount = tonumber(resetbotCount) + 1
 				irc_chat(name, "ALERT! Only do this after a server wipe!  To reset me repeat the reset bot command again.")
 				irc_chat(name, " ")

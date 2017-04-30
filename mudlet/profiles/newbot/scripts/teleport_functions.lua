@@ -71,62 +71,27 @@ function fallCatcher(steam, x, y, z)
 		prepareTeleport(steam, cmd)
 		teleport(cmd, true)		
 	end
-
-
-	-- -- world fall catcher
-	-- if igplayers[steam].lastCatchTimestamp - os.time() < 0 then
-		-- if (tonumber(y) < 0 and players[steam].timeout == false and players[steam].botTimeout == false and igplayers[steam].sessionPlaytime > 5)  then
-			-- igplayers[steam].lastCatchTimestamp = os.time() + 10
-		
-			-- if igplayers[steam].lastTP ~= nil then
-				-- players[steam].tp = 1
-				-- players[steam].hackerTPScore = 0
-				-- send(igplayers[steam].lastTP)
-				-- return
-			-- end
-
-			-- sql = "SELECT count(*) as num, x,y,z FROM tracker WHERE steam = " .. steam .. " and y > 0 and y < 255 and ((abs(x - " .. x .. ") > 2 and abs(x - " .. x .. ") < 30) and (abs(z - " .. z .. ") > 2 and abs(z - " .. z .. ") < 30)) GROUP BY y ORDER BY num DESC limit 0,1"
-
-			-- cursor,errorString = conn:execute(sql)
-			-- if cursor:numrows() > 0 then
-				-- row = cursor:fetch({}, "a")
-				-- cmd = ""
-				
-				-- while row do
-					-- cmd = ("tele " .. steam .. " " .. row.x .. " " .. row.y + 1 .. " " .. row.z)
-					
-					-- if cmd ~= "" then
-						-- players[steam].tp = 1
-						-- players[steam].hackerTPScore = 0
-						-- send(cmd)
-						-- players[id].tp = 1
-						-- players[id].hackerTPScore = 0
-						-- return
-					-- else
-						-- message("pm " .. steam .. " [" .. server.chatColour .. "]You have fallen through the ground. Relog to rescue yourself.[-]")
-					-- end
-
-					-- row = cursor:fetch(row, "a")	
-				-- end
-			-- end
-
-			-- return
-		-- end
-	-- end
 end
 
 
 function randomTP(playerid, location, forced)
 	local r, rows, row, rowCount
 
-	cursor,errorString = conn:execute("select * from locationSpawns where location='" .. location .. "'")
-	rows = tonumber(cursor:numrows())
+	if botman.dbConnected then 
+		cursor,errorString = conn:execute("select * from locationSpawns where location='" .. location .. "'")
+		rows = tonumber(cursor:numrows())
 
-	if rows == 0 then
+		if rows == 0 then
+			cmd = "tele " .. playerid .. " " .. locations[location].x .. " " .. locations[location].y .. " " .. locations[location].z
+			prepareTeleport(playerid, cmd)
+			teleport(cmd, true)
+			return
+		end
+	else
 		cmd = "tele " .. playerid .. " " .. locations[location].x .. " " .. locations[location].y .. " " .. locations[location].z
 		prepareTeleport(playerid, cmd)
 		teleport(cmd, true)
-		return
+		return	
 	end
 
 	rowCount = 1

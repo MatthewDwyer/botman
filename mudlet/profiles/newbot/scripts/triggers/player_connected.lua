@@ -116,7 +116,7 @@ function playerConnected(line)
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
 	-- log the player connection in events table
-	conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player joined','Player joined " .. escape(player) .. " " .. steam .. " Owner " .. steamOwner .. " " .. entityid .. " " .. IP .. "'," .. steamOwner .. ")")
+	if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player joined','Player joined " .. escape(player) .. " " .. steam .. " Owner " .. steamOwner .. " " .. entityid .. " " .. IP .. "'," .. steamOwner .. ")") end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
@@ -138,7 +138,7 @@ function playerConnected(line)
 	if isReservedName(player, steam) then
 		kick(steam, "That name is reserved.  You cannot play as " .. player .. " here.")
 		alertAdmins("A player was kicked using an admin's name! " .. entityid .. " " .. player, "alert")
-		conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','impersonated admin','Player joined posing as an admin " .. escape(player) .. " " .. steam .. " Owner " .. steamOwner .. " " .. entityid .. " " .. IP .. "'," .. steamOwner .. ")")
+		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','impersonated admin','Player joined posing as an admin " .. escape(player) .. " " .. steam .. " Owner " .. steamOwner .. " " .. entityid .. " " .. IP .. "'," .. steamOwner .. ")") end
 		irc_chat(server.ircMain, "!!  Player joined with admin's name but a different steam key !! " .. player .. " steam: " .. steam.. " owner: " .. steamOwner .. " id: " .. entityid)
 		irc_chat(server.ircAlerts, "!!  Player joined with admin's name but a different steam key !! " .. player .. " steam: " .. steam.. " owner: " .. steamOwner .. " id: " .. entityid)
 		return
@@ -157,11 +157,11 @@ function playerConnected(line)
 
 		alertAdmins("New player joined " .. entityid .. " " .. player, "warn")
 
-		conn:execute("INSERT INTO players (steam, steamOwner, id, name, protectSize, protect2Size, firstSeen) VALUES (" .. steam .. "," .. steamOwner .. "," .. entityid .. ",'" .. escape(player) .. "'," .. server.baseSize .. "," .. server.baseSize .. "," .. os.time() .. ")")		
+		if botman.dbConnected then conn:execute("INSERT INTO players (steam, steamOwner, id, name, protectSize, protect2Size, firstSeen) VALUES (" .. steam .. "," .. steamOwner .. "," .. entityid .. ",'" .. escape(player) .. "'," .. server.baseSize .. "," .. server.baseSize .. "," .. os.time() .. ")") end
 
 		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
-		conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','new player','New player joined " .. escape(player) .. " steam: " .. steam .. " owner: " .. steamOwner .. " id: " .. entityid .. "'," .. steam .. ")")
+		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','new player','New player joined " .. escape(player) .. " steam: " .. steam .. " owner: " .. steamOwner .. " id: " .. entityid .. "'," .. steam .. ")") end
 
 		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 	else
@@ -280,15 +280,19 @@ function playerConnected(line)
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
-	conn:execute("UPDATE players SET aliases = '" .. players[steam].names .. "', sessionCount = " .. players[steam].sessionCount .. " WHERE steam = " .. steam)
+	if botman.dbConnected then conn:execute("UPDATE players SET aliases = '" .. players[steam].names .. "', sessionCount = " .. players[steam].sessionCount .. " WHERE steam = " .. steam) end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
 	-- kick player if currently banned or permabanned
-	cursor,errorString = conn:execute("SELECT * FROM bans WHERE Steam = " .. steam .. " or Steam = " .. steamOwner .. " and expiryDate > '" .. os.date("%Y-%m-%d %H:%M:%S") .. "'")
-	if cursor:numrows() > 0 then
-		kick(steam, "You are currently banned. Contact us if this is in error.")
-		return
+	if botman.dbConnected then 
+		cursor,errorString = conn:execute("SELECT * FROM bans WHERE Steam = " .. steam .. " or Steam = " .. steamOwner .. " and expiryDate > '" .. os.date("%Y-%m-%d %H:%M:%S") .. "'")
+		rows = cursor:numrows()
+		
+		if rows > 0 then
+			kick(steam, "You are currently banned. Contact us if this is in error.")
+			return
+		end
 	end
 	
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
@@ -330,7 +334,7 @@ function playerConnected(line)
 	end
 
 	-- delete read mail that isn't flagged as saved (status = 2).
-	conn:execute("DELETE FROM mail WHERE id = " .. steam .. " and status = 1")
+	if botman.dbConnected then conn:execute("DELETE FROM mail WHERE id = " .. steam .. " and status = 1") end
 
 	if server.coppi then
 		-- limit ingame chat length to block chat bombs.
@@ -339,17 +343,17 @@ function playerConnected(line)
 
 	if tonumber(players[steam].donorExpiry) < os.time() and players[steam].donor then
 		irc_chat(server.ircAlerts, "Player " .. player ..  " " .. steam .. " donor status has expired.") 	
-		conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','donor','" .. escape(player) .. " " .. steam .. " donor status expired.'," .. steam ..")")	
+		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','donor','" .. escape(player) .. " " .. steam .. " donor status expired.'," .. steam ..")") end
 	
 		players[steam].donor = false
 		players[steam].donorLevel = 0
-		conn:execute("UPDATE players SET donor = 0, donorLevel = 0 WHERE steam = " .. steam)
+		if botman.dbConnected then conn:execute("UPDATE players SET donor = 0, donorLevel = 0 WHERE steam = " .. steam) end
 
 		message("pm " .. steam .. " [" .. server.chatColour .. "]Your donor status has expired :(  Contact an admin if you need help accessing your second base. Your 2nd base's protection will be disabled one week from when your donor status expired.[-]")
 
 		if os.time() - tonumber(players[steam].donorExpiry) > (60 * 60 * 24 * 7) then
 			players[steam].protect2 = false
-			conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. steam)
+			if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. steam) end
 			message("pm " .. steam .. " [" .. server.alertColour .. "]ALERT! Your second base is no longer bot protected![-]")
 		end
 	end
@@ -357,7 +361,7 @@ function playerConnected(line)
 	if players[steam].watchPlayer and tonumber(players[steam].watchPlayerTimer) < os.time() then
 		players[steam].watchPlayer = false
 		players[steam].watchPlayerTimer = 0
-		conn:execute("UPDATE players SET watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. steam)
+		if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. steam) end
 	end
 	
 	send("lkp steam")	

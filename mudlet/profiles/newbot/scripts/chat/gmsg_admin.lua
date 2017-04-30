@@ -73,7 +73,7 @@ if debug then dbug("debug admin") end
 	if chatvars.words[1] == "read" and chatvars.words[2] == "claims" then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -174,7 +174,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "timeout") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 90) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -235,9 +235,9 @@ if debug then dbug("debug admin") end
 		players[tmp.id].zPosTimeout = math.floor(players[tmp.id].zPos)
 
 		if (chatvars.playername ~= "Server") then
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. players[tmp.id].xPosTimeout .. "," .. players[tmp.id].yPosTimeout .. "," .. players[tmp.id].zPosTimeout .. ",'" .. botman.serverTime .. "','timeout','Player " .. escape(players[tmp.id].name) .. " SteamID: " .. tmp.id .. " sent to timeout by " .. escape(players[chatvars.playerid].name) .. "'," .. tmp.id .. ")")
+			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. players[tmp.id].xPosTimeout .. "," .. players[tmp.id].yPosTimeout .. "," .. players[tmp.id].zPosTimeout .. ",'" .. botman.serverTime .. "','timeout','Player " .. escape(players[tmp.id].name) .. " SteamID: " .. tmp.id .. " sent to timeout by " .. escape(players[chatvars.playerid].name) .. "'," .. tmp.id .. ")") end
 		else
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. players[tmp.id].xPosTimeout .. "," .. players[tmp.id].yPosTimeout .. "," .. players[tmp.id].zPosTimeout .. ",'" .. botman.serverTime .. "','timeout','Player " .. escape(players[tmp.id].name) .. " SteamID: " .. tmp.id .. " sent to timeout by " .. escape(players[chatvars.ircid].name) .. "'," .. tmp.id .. ")")
+			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. players[tmp.id].xPosTimeout .. "," .. players[tmp.id].yPosTimeout .. "," .. players[tmp.id].zPosTimeout .. ",'" .. botman.serverTime .. "','timeout','Player " .. escape(players[tmp.id].name) .. " SteamID: " .. tmp.id .. " sent to timeout by " .. escape(players[chatvars.ircid].name) .. "'," .. tmp.id .. ")") end
 		end
 
 		-- then teleport the player to timeout
@@ -245,7 +245,7 @@ if debug then dbug("debug admin") end
 
 		message("say [" .. server.chatColour .. "]" .. players[tmp.id].name .. " has been sent to timeout.[-]")
 
-		conn:execute("UPDATE players SET timeout = 1, silentBob = 1, xPosTimeout = " .. players[tmp.id].xPosTimeout .. ", yPosTimeout = " .. players[tmp.id].yPosTimeout .. ", zPosTimeout = " .. players[tmp.id].zPosTimeout .. " WHERE steam = " .. tmp.id)
+		if botman.dbConnected then conn:execute("UPDATE players SET timeout = 1, silentBob = 1, xPosTimeout = " .. players[tmp.id].xPosTimeout .. ", yPosTimeout = " .. players[tmp.id].yPosTimeout .. ", zPosTimeout = " .. players[tmp.id].zPosTimeout .. " WHERE steam = " .. tmp.id) end
 
 		botman.faultyChat = false
 		return true
@@ -340,7 +340,7 @@ if debug then dbug("debug admin") end
 					players[tmp.id].yPosTimeout = 0
 					players[tmp.id].zPosTimeout = 0
 
-					conn:execute("UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0, xPosTimeout = 0, yPosTimeout = 0, zPosTimeout = 0 WHERE steam = " .. tmp.id)
+					if botman.dbConnected then conn:execute("UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0, xPosTimeout = 0, yPosTimeout = 0, zPosTimeout = 0 WHERE steam = " .. tmp.id) end
 
 					message("say [" .. server.chatColour .. "]Returning " .. players[tmp.id].name .. "[-]")
 
@@ -361,7 +361,7 @@ if debug then dbug("debug admin") end
 					message("say [" .. server.chatColour .. "]Returning " .. players[tmp.id].name .. "[-]")
 				end
 
-				conn:execute("UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0, xPosTimeout = 0, yPosTimeout = 0, zPosTimeout = 0 WHERE steam = " .. tmp.id)
+				if botman.dbConnected then conn:execute("UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0, xPosTimeout = 0, yPosTimeout = 0, zPosTimeout = 0 WHERE steam = " .. tmp.id) end
 
 				botman.faultyChat = false
 				return true
@@ -384,7 +384,7 @@ if debug then dbug("debug admin") end
 				players[tmp.id].yPosOld = 0
 				players[tmp.id].zPosOld = 0
 
-				conn:execute("UPDATE players SET timeout = 0, botTimeout = 0, xPosOld = 0, yPosOld = 0, zPosOld = 0 WHERE steam = " .. tmp.id)
+				if botman.dbConnected then conn:execute("UPDATE players SET timeout = 0, botTimeout = 0, xPosOld = 0, yPosOld = 0, zPosOld = 0 WHERE steam = " .. tmp.id) end
 
 				if tmp.loc ~= nil then
 					if (chatvars.playername ~= "Server") then
@@ -409,7 +409,7 @@ if debug then dbug("debug admin") end
 
 				message("say [" .. server.chatColour .. "]" .. players[tmp.id].name .. " will be returned when they next join the server.[-]")
 
-				conn:execute("UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0 WHERE steam = " .. tmp.id)
+				if botman.dbConnected then conn:execute("UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0 WHERE steam = " .. tmp.id) end
 
 				botman.faultyChat = false
 				return true
@@ -472,7 +472,7 @@ if debug then dbug("debug admin") end
 			gmsg(server.commandPrefix .. "return " .. prisonerid)
 			setChatColour(prisonerid)
 
-			conn:execute("UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0, prisoner = 0 WHERE steam = " .. prisonerid)
+			if botman.dbConnected then conn:execute("UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0, prisoner = 0 WHERE steam = " .. prisonerid) end
 
 			botman.faultyChat = false
 			return true
@@ -503,7 +503,7 @@ if debug then dbug("debug admin") end
 				message("pm " .. prisonerid .. " [" .. server.chatColour .. "]You are a free citizen, but you must find your own way back.[-]")
 			end
 
-			conn:execute("UPDATE players SET prisoner = 0, silentBob = 0, xPosOld = " .. players[prisonerid].prisonxPosOld .. ", yPosOld = " .. players[prisonerid].prisonyPosOld .. ", zPosOld = " .. players[prisonerid].prisonzPosOld .. " WHERE steam = " .. prisonerid)
+			if botman.dbConnected then conn:execute("UPDATE players SET prisoner = 0, silentBob = 0, xPosOld = " .. players[prisonerid].prisonxPosOld .. ", yPosOld = " .. players[prisonerid].prisonyPosOld .. ", zPosOld = " .. players[prisonerid].prisonzPosOld .. " WHERE steam = " .. prisonerid) end
 		else
 			if (players[prisonerid]) then
 				players[prisonerid].location = "return player"
@@ -513,7 +513,7 @@ if debug then dbug("debug admin") end
 				players[prisonerid].yPosOld = players[prisonerid].prisonyPosOld
 				players[prisonerid].zPosOld = players[prisonerid].prisonzPosOld
 
-				conn:execute("UPDATE players SET prisoner = 0, silentBob = 0, location = 'return player', xPosOld = " .. players[prisonerid].prisonxPosOld .. ", yPosOld = " .. players[prisonerid].prisonyPosOld .. ", zPosOld = " .. players[prisonerid].prisonzPosOld .. " WHERE steam = " .. prisonerid)
+				if botman.dbConnected then conn:execute("UPDATE players SET prisoner = 0, silentBob = 0, location = 'return player', xPosOld = " .. players[prisonerid].prisonxPosOld .. ", yPosOld = " .. players[prisonerid].prisonyPosOld .. ", zPosOld = " .. players[prisonerid].prisonzPosOld .. " WHERE steam = " .. prisonerid) end
 			end
 		end
 
@@ -569,65 +569,42 @@ if debug then dbug("debug admin") end
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 		
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "temp") or string.find(chatvars.command, "admin") or string.find(chatvars.command, "remo"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "temp remove admin <optional name or ID of admin>")
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "test") or string.find(chatvars.command, "admin") or string.find(chatvars.command, "remo"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "test as player")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Remove an admin's status back to player for 5 minutes.")
+				irc_chat(players[chatvars.ircid].ircAlias, "Remove your admin status for 5 minutes.  It will be automatically restored.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
 	end
 
-	if chatvars.words[1] == "temp" and chatvars.words[2] == "admin" and chatvars.words[3] == "remove" then
+	if chatvars.words[1] == "test" and chatvars.words[2] == "as" and chatvars.words[3] == "player" then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) > 2) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
-				botman.faultyChat = false
-				return true
-			end
+			irc_chat(players[chatvars.ircid].ircAlias, "This command is ingame only.")
+			botman.faultyChat = false
+			return true
 		end
 
-		if chatvars.words[4] ~= nil then
-			pid = LookupPlayer(chatvars.words[4])
-		else
-			pid = chatvars.playerid
-		end
-
-		if pid then
-			local oldLevel = accessLevel(pid)
-			local cmd
+		local cmd
+	
+		cmd = string.format("ban remove %s", chatvars.playerid)
+		if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 299) .. "')") end
 		
-			if oldLevel < 3 then
-				cmd = "ban remove " .. pid
-				tempTimer( 299, [[send("]] .. cmd .. [[")]] )			
-				cmd = "admin add " .. pid .. " " .. oldLevel
-				tempTimer( 300, [[send("]] .. cmd .. [[")]] )			
-				cmd = "pm " .. pid .. " [" .. server.chatColour .. "] Your admin status is restored."
-				tempTimer( 301, [[message("]].. cmd .. [[")]] )
+		cmd = string.format("admin add %s %s", chatvars.playerid, chatvars.accessLevel)
+		if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 300) .. "')") end
+		
+		cmd = string.format("pm %s [%s]Your admin status is restored.[-]", chatvars.playerid, server.chatColour)
+		if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 301) .. "')") end
 				
-				send("admin remove " .. pid)				
-				message("pm " .. pid .. " [" .. server.chatColour .. "]Your admin status has been temporarily removed.  You are now a player.  You will regain admin in 5 minutes.[-]")
-			
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admin " .. players[pid].name .. " will regain admin in 5 minutes.[-]")
-				else
-					irc_chat(players[chatvars.ircid].ircAlias, "Admin " .. players[pid].name .. " will regain admin in 5 minutes.")
-				end
-			end
-		else
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. chatvars.words[4] .. " did not match a player.[-]")
-			else
-				irc_chat(players[chatvars.ircid].ircAlias, chatvars.words[4] .. " did not match a player.")
-			end				
-		end
+		send("admin remove " .. chatvars.playerid)		
+		message(string.format("pm %s [%s]Your admin status has been temporarily removed.  You are now a player.  You will regain admin in 5 minutes.  Good luck![-]", chatvars.playerid, server.chatColour))			
 
 		botman.faultyChat = false
 		return true
@@ -650,7 +627,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "feral" and chatvars.words[2] == "reboot" and chatvars.words[3] == "delay") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -663,7 +640,7 @@ if debug then dbug("debug admin") end
 		end
 
 		server.feralRebootDelay = math.abs(math.floor(chatvars.number))
-		conn:execute("UPDATE server SET feralRebootDelay = 0")
+		if botman.dbConnected then conn:execute("UPDATE server SET feralRebootDelay = 0") end
 
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reboots that fall on a feral day will happen " .. server.feralRebootDelay .. " minutes into the next day.[-]")
@@ -694,7 +671,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "hordeme") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -708,7 +685,7 @@ if debug then dbug("debug admin") end
 
 		for i=1,50,1 do
 			cmd = "se " .. players[chatvars.playerid].id .. " " .. PicknMix()
-			conn:execute("INSERT INTO gimmeQueue (steam, command) VALUES (" .. chatvars.playerid .. ",'" .. cmd .. "')")
+			if botman.dbConnected then conn:execute("INSERT INTO gimmeQueue (steam, command) VALUES (" .. chatvars.playerid .. ",'" .. cmd .. "')") end
 		end
 
 		botman.faultyChat = false
@@ -731,7 +708,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "leave" and chatvars.words[2] == "claims" and chatvars.words[3] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -750,7 +727,7 @@ if debug then dbug("debug admin") end
 		if id ~= nil then
 			-- this players claims wil not be removed unless in a reset zone and not staff
 			players[id].removeClaims = false
-			conn:execute("UPDATE keystones SET remove = 0 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE keystones SET remove = 0 WHERE steam = " .. id) end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. "'s claims will not be removed unless found in reset zones (if not staff).[-]")
@@ -758,7 +735,7 @@ if debug then dbug("debug admin") end
 				irc_chat(players[chatvars.ircid].ircAlias, players[id].name .. "'s claims will not be removed unless found in reset zones (if not staff)")
 			end
 
-			conn:execute("UPDATE players SET removeClaims = 0 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET removeClaims = 0 WHERE steam = " .. id) end
 		end
 
 		botman.faultyChat = false
@@ -781,7 +758,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "remove" and chatvars.words[2] == "claims" and chatvars.words[3] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -809,7 +786,7 @@ if debug then dbug("debug admin") end
 
 			send("llp " .. id)
 
-			conn:execute("UPDATE players SET removeClaims = 1 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET removeClaims = 1 WHERE steam = " .. id) end
 		end
 
 		botman.faultyChat = false
@@ -832,7 +809,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "claims") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -848,16 +825,18 @@ if debug then dbug("debug admin") end
 			chatvars.number = 50
 		end
 
-		cursor,errorString = conn:execute("SELECT * FROM keystones WHERE abs(x - " .. chatvars.intX .. ") <= " .. chatvars.number .. " AND abs(z - " .. chatvars.intZ .. ") <= " .. chatvars.number)
-		row = cursor:fetch({}, "a")
-		while row do
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[row.steam].name .. " " .. row.x .. " " .. row.y .. " " .. row.z .. "[-]")
-			else
-				irc_chat(players[chatvars.ircid].ircAlias, players[row.steam].name .. " " .. row.x .. " " .. row.y .. " " .. row.z)
-			end
+		if botman.dbConnected then 
+			cursor,errorString = conn:execute("SELECT * FROM keystones WHERE abs(x - " .. chatvars.intX .. ") <= " .. chatvars.number .. " AND abs(z - " .. chatvars.intZ .. ") <= " .. chatvars.number)
+			row = cursor:fetch({}, "a")
+			while row do
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[row.steam].name .. " " .. row.x .. " " .. row.y .. " " .. row.z .. "[-]")
+				else
+					irc_chat(players[chatvars.ircid].ircAlias, players[row.steam].name .. " " .. row.x .. " " .. row.y .. " " .. row.z)
+				end
 
-			row = cursor:fetch(row, "a")
+				row = cursor:fetch(row, "a")
+			end
 		end
 
 		botman.faultyChat = false
@@ -881,7 +860,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "exile" and chatvars.words[2] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -909,7 +888,7 @@ if debug then dbug("debug admin") end
 				irc_chat(players[chatvars.ircid].ircAlias, players[id].name .. " has been exiled.")
 			end
 
-			conn:execute("UPDATE players SET exiled = 1, silentBob = 1, canTeleport = 0 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET exiled = 1, silentBob = 1, canTeleport = 0 WHERE steam = " .. id) end
 		end
 
 		botman.faultyChat = false
@@ -932,7 +911,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "free") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -949,7 +928,7 @@ if debug then dbug("debug admin") end
 			players[id].canTeleport = true
 			message("say [" .. server.chatColour .. "]" .. players[id].name .. " has been released from exile! :D[-]")
 
-			conn:execute("UPDATE players SET exiled = 2, silentBob = 0, canTeleport = 1 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET exiled = 2, silentBob = 0, canTeleport = 1 WHERE steam = " .. id) end
 		end
 
 		botman.faultyChat = false
@@ -972,7 +951,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "player" and string.find(chatvars.command, "is not new")) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -989,7 +968,7 @@ if debug then dbug("debug admin") end
 			players[id].watchPlayerTimer = 0
 			message("say [" .. server.chatColour .. "]" .. players[id].name .. " is no longer new here. Welcome back " .. players[id].name .. "! =D[-]")
 
-			conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. id) end
 		end
 
 		botman.faultyChat = false
@@ -1014,7 +993,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "add" and chatvars.words[2] == "donor") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1100,10 +1079,10 @@ if debug then dbug("debug admin") end
 			players[tmp.id].donorLevel = tmp.level
 			players[tmp.id].donorExpiry = tmp.expiry
 			message("say [" .. server.chatColour .. "]" .. players[tmp.id].name .. " has donated! Thanks =D[-]")
-			conn:execute(tmp.sql .. " WHERE steam = " .. tmp.id)
+			if botman.dbConnected then conn:execute(tmp.sql .. " WHERE steam = " .. tmp.id) end
 			-- also add them to the bot's whitelist
 			whitelist[tmp.id] = {}
-			conn:execute("INSERT INTO whitelist (steam) VALUES (" .. tmp.id .. ")")
+			if botman.dbConnected then conn:execute("INSERT INTO whitelist (steam) VALUES (" .. tmp.id .. ")") end
 
 			send("ban remove " .. tmp.id)
 
@@ -1134,7 +1113,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "remove" and chatvars.words[2] == "donor" and chatvars.words[3] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1157,7 +1136,7 @@ if debug then dbug("debug admin") end
 			players[id].donorExpiry = os.time() - 1
 			message("say [" .. server.chatColour .. "]" .. players[id].name .. " no longer has donor status :([-]")
 
-			conn:execute("UPDATE players SET donor = 0, donorLevel = 0, donorExpiry = " .. os.time() - 1 .. " WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET donor = 0, donorLevel = 0, donorExpiry = " .. os.time() - 1 .. " WHERE steam = " .. id) end
 
 			if server.serverGroup ~= "" then
 				connBots:execute("UPDATE donors SET donor = 0, donorLevel = 0, donorExpiry = " .. os.time() - 1 .. " WHERE steam = " .. id .. " AND serverGroup = '" .. escape(server.serverGroup) .. "'")
@@ -1190,7 +1169,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "give" and chatvars.words[2] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1237,7 +1216,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "disallow" and chatvars.words[2] == "teleport" and chatvars.words[3] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1257,7 +1236,7 @@ if debug then dbug("debug admin") end
 			players[id].canTeleport = false
 			message("say [" .. server.chatColour .. "] " .. players[id].name ..  " is not allowed to use teleports.[-]")
 
-			conn:execute("UPDATE players SET canTeleport = 0 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET canTeleport = 0 WHERE steam = " .. id) end
 		end
 
 		botman.faultyChat = false
@@ -1280,7 +1259,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "allow" and chatvars.words[2] == "teleport" and chatvars.words[3] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1300,7 +1279,7 @@ if debug then dbug("debug admin") end
 			players[id].canTeleport = true
 			message("say [" .. server.chatColour .. "] " .. players[id].name ..  " is allowed to use teleports.[-]")
 
-			conn:execute("UPDATE players SET canTeleport = 1 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET canTeleport = 1 WHERE steam = " .. id) end
 		end
 
 		botman.faultyChat = false
@@ -1323,7 +1302,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "enable" and chatvars.words[2] == "waypoints" and chatvars.words[3] == nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1337,7 +1316,7 @@ if debug then dbug("debug admin") end
 
 		server.allowWaypoints = true
 
-		conn:execute("UPDATE server SET allowWaypoints = 1")
+		if botman.dbConnected then conn:execute("UPDATE server SET allowWaypoints = 1") end
 
 		if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Waypoints are enabled for donors.[-]")
@@ -1365,7 +1344,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "disable" and chatvars.words[2] == "waypoints" and chatvars.words[3] == nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1379,7 +1358,7 @@ if debug then dbug("debug admin") end
 
 		server.allowWaypoints = false
 
-		conn:execute("UPDATE server SET allowWaypoints = 0")
+		if botman.dbConnected then conn:execute("UPDATE server SET allowWaypoints = 0") end
 
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Waypoints are restricted to admins.[-]")
@@ -1407,7 +1386,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "close" and chatvars.words[2] == "shop") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1422,7 +1401,7 @@ if debug then dbug("debug admin") end
 		message("say [" .. server.chatColour .. "]The shop is closed until further notice.[-]")
 		server.allowShop = false
 
-		conn:execute("UPDATE server SET allowShop = 0")
+		if botman.dbConnected then conn:execute("UPDATE server SET allowShop = 0") end
 
 		botman.faultyChat = false
 		return true
@@ -1444,7 +1423,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "open" and chatvars.words[2] == "shop") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1459,7 +1438,7 @@ if debug then dbug("debug admin") end
 		message("say [" .. server.chatColour .. "]The shop is open for business.[-]")
 		server.allowShop = true
 
-		conn:execute("UPDATE server SET allowShop = 1")
+		if botman.dbConnected then conn:execute("UPDATE server SET allowShop = 1") end
 		loadShopCategories()
 
 		botman.faultyChat = false
@@ -1480,7 +1459,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "reset" and chatvars.words[2] == "shop") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1514,7 +1493,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "set" and chatvars.words[2] == "shop" and chatvars.words[3] == "open") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1540,7 +1519,7 @@ if debug then dbug("debug admin") end
 			end
 
 			server.shopOpenHour = chatvars.number
-			conn:execute("UPDATE server SET shopOpenHour = " .. chatvars.number)
+			if botman.dbConnected then conn:execute("UPDATE server SET shopOpenHour = " .. chatvars.number) end
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The shop opens at " .. chatvars.number .. ":00 hours[-]")
 
 			botman.faultyChat = false
@@ -1563,7 +1542,7 @@ if debug then dbug("debug admin") end
 
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1590,7 +1569,7 @@ if debug then dbug("debug admin") end
 
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The shop closes at " .. chatvars.number .. ":00 hours[-]")
 			server.shopCloseHour = chatvars.number
-			conn:execute("UPDATE server SET shopCloseHour = " .. chatvars.number)
+			if botman.dbConnected then conn:execute("UPDATE server SET shopCloseHour = " .. chatvars.number) end
 
 			botman.faultyChat = false
 			return true
@@ -1611,7 +1590,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "set" and chatvars.words[2] == "shop" and chatvars.words[3] == "location") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1634,7 +1613,7 @@ if debug then dbug("debug admin") end
 		else
 			message("say [" .. server.chatColour .. "]The shop is now located at ".. str .. "[-]")
 			server.shopLocation = str
-			conn:execute("UPDATE server SET shopLocation = '" .. str .. "'")
+			if botman.dbConnected then conn:execute("UPDATE server SET shopLocation = '" .. str .. "'") end
 
 			botman.faultyChat = false
 			return true
@@ -1655,7 +1634,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "clear" and chatvars.words[2] == "shop" and chatvars.words[3] == "location") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1669,7 +1648,7 @@ if debug then dbug("debug admin") end
 
 		message("say [" .. server.chatColour .. "]The shop is no longer bound to a location.[-]")
 		server.shopLocation = nil
-		conn:execute("UPDATE server SET shopLocation = null")
+		if botman.dbConnected then conn:execute("UPDATE server SET shopLocation = null") end
 
 		botman.faultyChat = false
 		return true
@@ -1692,7 +1671,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "whitelist" and chatvars.words[2] == "add" and chatvars.words[3] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1722,7 +1701,7 @@ if debug then dbug("debug admin") end
 		end
 
 		whitelist[id] = {}
-		conn:execute("INSERT INTO whitelist (steam) VALUES (" .. id .. ")")
+		if botman.dbConnected then conn:execute("INSERT INTO whitelist (steam) VALUES (" .. id .. ")") end
 
 		send("ban remove " .. id)
 
@@ -1752,7 +1731,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "whitelist" and chatvars.words[2] == "remove" and chatvars.words[3] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1782,7 +1761,7 @@ if debug then dbug("debug admin") end
 		end
 
 		whitelist[id] = nil
-		conn:execute("DELETE FROM whitelist WHERE steam = " .. id)
+		if botman.dbConnected then conn:execute("DELETE FROM whitelist WHERE steam = " .. id) end
 
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .. " is no longer whitelisted.[-]")
@@ -1810,7 +1789,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "ignore" and chatvars.words[2] == "player" and chatvars.words[3] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1842,7 +1821,7 @@ if debug then dbug("debug admin") end
 		if (players[id]) then
 			players[id].ignorePlayer = true
 
-			conn:execute("UPDATE players SET ignorePlayer = 1 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET ignorePlayer = 1 WHERE steam = " .. id) end
 		end
 
 		if (chatvars.playername ~= "Server") then
@@ -1871,7 +1850,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "include" and chatvars.words[2] == "player" and chatvars.words[3] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1903,7 +1882,7 @@ if debug then dbug("debug admin") end
 		if (players[id]) then
 			players[id].ignorePlayer = false
 
-			conn:execute("UPDATE players SET ignorePlayer = 0 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET ignorePlayer = 0 WHERE steam = " .. id) end
 		end
 
 		if (chatvars.playername ~= "Server") then
@@ -1933,7 +1912,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "block" or chatvars.words[1] == "unblock") and chatvars.words[2] == "player" and chatvars.words[3] ~= nil then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -1965,7 +1944,7 @@ if debug then dbug("debug admin") end
 		if (players[id]) then
 			if chatvars.words[1] == "block" then
 				players[id].denyRights = true
-				conn:execute("UPDATE players SET denyRights = 1 WHERE steam = " .. id)
+				if botman.dbConnected then conn:execute("UPDATE players SET denyRights = 1 WHERE steam = " .. id) end
 
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .. " will be ignored on IRC.[-]")
@@ -1974,7 +1953,7 @@ if debug then dbug("debug admin") end
 				end
 			else
 				players[id].denyRights = false
-				conn:execute("UPDATE players SET denyRights = 0 WHERE steam = " .. id)
+				if botman.dbConnected then conn:execute("UPDATE players SET denyRights = 0 WHERE steam = " .. id) end
 
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .. " can talk to the bot on IRC.[-]")
@@ -2005,7 +1984,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "prisoner") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2044,7 +2023,7 @@ if debug then dbug("debug admin") end
 		if players[prisonerid].prisoner then
 			if reason ~= nil then
 				players[prisonerid].prisonReason = reason
-				conn:execute("UPDATE players SET prisonReason = '" .. escape(reason) .. "' WHERE steam = " .. prisonerid)
+				if botman.dbConnected then conn:execute("UPDATE players SET prisonReason = '" .. escape(reason) .. "' WHERE steam = " .. prisonerid) end
 
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You added a reason for prisoner " .. prisoner .. "'s arrest[-]")
@@ -2088,7 +2067,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "arrest") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2177,7 +2156,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "resettimers") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2205,7 +2184,7 @@ if debug then dbug("debug admin") end
 			players[id].baseCooldown = 0
 			players[id].gimmeCount = 0
 
-			conn:execute("UPDATE players SET baseCooldown = 0, gimmeCount = 0 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET baseCooldown = 0, gimmeCount = 0 WHERE steam = " .. id) end
 		end
 
 		message("say [" .. server.chatColour .. "]Cooldown timers have been reset for " .. players[id].name .. "[-]")
@@ -2230,7 +2209,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "exclude" and chatvars.words[2] == "admins") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2270,7 +2249,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "includeadmins") or (chatvars.words[1] == "include" and chatvars.words[2] == "admins") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2310,7 +2289,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "freeze" and chatvars.words[2] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2370,7 +2349,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "unfreeze" and chatvars.words[2] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2420,7 +2399,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "move") and chatvars.words[2] ~= nil and string.find(chatvars.command, " to ") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2462,7 +2441,7 @@ if debug then dbug("debug admin") end
 					irc_chat(players[chatvars.ircid].ircAlias, "Player " .. players[id].name .. " will spawn at " .. locations[loc].name .. " next time they join.")
 				end
 
-				conn:execute("UPDATE players SET location = '" .. loc .. "' WHERE steam = " .. id)
+				if botman.dbConnected then conn:execute("UPDATE players SET location = '" .. loc .. "' WHERE steam = " .. id) end
 			end
 		end
 
@@ -2490,7 +2469,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "sendhome" or chatvars.words[1] == "sendhome2") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2628,7 +2607,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "watch") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2645,7 +2624,7 @@ if debug then dbug("debug admin") end
 				if v.newPlayer == true then
 					v.watchPlayer = true
 					v.watchPlayerTimer = os.time() + 2419200 -- 1 month or until not new
-					conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 2419200 .. " WHERE steam = " .. k)
+					if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 2419200 .. " WHERE steam = " .. k) end
 				end
 			end
 
@@ -2666,7 +2645,7 @@ if debug then dbug("debug admin") end
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admins will be alerted whenever " .. players[id].name ..  " enters a base.[-]")
 			end
 
-			conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. id) end
 		end
 
 		botman.faultyChat = false
@@ -2690,7 +2669,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "stop" and chatvars.words[2] == "watching") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2706,7 +2685,7 @@ if debug then dbug("debug admin") end
 			for k,v in pairs(players) do
 				v.watchPlayer = false
 				v.watchPlayerTimer = 0
-				conn:execute("UPDATE players SET watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. k)
+				if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. k) end
 			end
 
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Nobody is being watched right now.[-]")
@@ -2725,7 +2704,7 @@ if debug then dbug("debug admin") end
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name ..  " will no longer be watched.[-]")
 			end
 
-			conn:execute("UPDATE players SET watchPlayer = 0 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 0 WHERE steam = " .. id) end
 		end
 
 		botman.faultyChat = false
@@ -2748,7 +2727,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "send") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2823,7 +2802,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "burn" and chatvars.words[2] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2879,7 +2858,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "shit" and chatvars.words[2] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2935,7 +2914,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "mend") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -2983,7 +2962,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "cure") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3039,7 +3018,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "warm") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3086,7 +3065,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "cool") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3133,7 +3112,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "heal") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3180,7 +3159,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "shutdown" and chatvars.words[2] == "bot") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3222,7 +3201,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "clear" or chatvars.words[1] == "reset") and chatvars.words[2] == "stack" then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3262,7 +3241,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "unban" and chatvars.words[2] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3319,7 +3298,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "ban" and chatvars.words[2] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3400,7 +3379,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "list" and chatvars.words[2] == "owners" and chatvars.words[3] == nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3434,7 +3413,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "list" and chatvars.words[2] == "admins" and chatvars.words[3] == nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3468,7 +3447,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "list" and chatvars.words[2] == "mods" and chatvars.words[3] == nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3502,7 +3481,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "list" and chatvars.words[2] == "staff" and chatvars.words[3] == nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3537,7 +3516,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "add" and chatvars.words[2] == "bad" and chatvars.words[3] == "item" and chatvars.words[4] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3551,7 +3530,7 @@ if debug then dbug("debug admin") end
 
 		bad = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, "bad item") + 9)
 
-		conn:execute("INSERT INTO badItems SET item = '" .. bad .. "'")
+		if botman.dbConnected then conn:execute("INSERT INTO badItems SET item = '" .. bad .. "'") end
 
 		badItems[bad] = {}
 
@@ -3581,7 +3560,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "remove" and chatvars.words[2] == "bad" and chatvars.words[3] == "item" and chatvars.words[4] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3595,7 +3574,7 @@ if debug then dbug("debug admin") end
 
 		bad = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, "bad item") + 9)
 
-		conn:execute("DELETE FROM badItems WHERE item = '" .. bad .. "'")
+		if botman.dbConnected then conn:execute("DELETE FROM badItems WHERE item = '" .. bad .. "'") end
 
 		badItems[bad] = nil
 
@@ -3625,7 +3604,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "bad" and chatvars.words[2] == "items") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 3) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3676,7 +3655,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "add" and chatvars.words[2] == "restricted") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3750,8 +3729,10 @@ if debug then dbug("debug admin") end
 				irc_chat(players[chatvars.ircid].ircAlias, "Valid actions are timeout, ban, exile. Bans last 1 day.")
 			end
 		else
-			conn:execute("INSERT INTO restrictedItems (item, qty, accessLevel, action) VALUES ('" .. escape(item) .. "'," .. qty .. "," .. access .. ",'" .. action .. "') ON DUPLICATE KEY UPDATE item = '" .. escape(item) .. "', qty = " .. qty .. ", accessLevel = " .. access .. ", action = '" .. action .. "'")
-			conn:execute("INSERT INTO memRestrictedItems (item, qty, accessLevel, action) VALUES ('" .. escape(item) .. "'," .. qty .. "," .. access .. ",'" .. action .. "') ON DUPLICATE KEY UPDATE item = '" .. escape(item) .. "', qty = " .. qty .. ", accessLevel = " .. access .. ", action = '" .. action .. "'")
+			if botman.dbConnected then 
+				conn:execute("INSERT INTO restrictedItems (item, qty, accessLevel, action) VALUES ('" .. escape(item) .. "'," .. qty .. "," .. access .. ",'" .. action .. "') ON DUPLICATE KEY UPDATE item = '" .. escape(item) .. "', qty = " .. qty .. ", accessLevel = " .. access .. ", action = '" .. action .. "'")
+				conn:execute("INSERT INTO memRestrictedItems (item, qty, accessLevel, action) VALUES ('" .. escape(item) .. "'," .. qty .. "," .. access .. ",'" .. action .. "') ON DUPLICATE KEY UPDATE item = '" .. escape(item) .. "', qty = " .. qty .. ", accessLevel = " .. access .. ", action = '" .. action .. "'")
+			end
 
 			restrictedItems[item] = {}
 			restrictedItems[item].qty = tonumber(qty)
@@ -3791,8 +3772,10 @@ if debug then dbug("debug admin") end
 
 		bad = string.sub(chatvars.command, string.find(chatvars.command, "restricted item") + 16)
 
-		conn:execute("DELETE FROM restrictedItems WHERE item = '" .. bad .. "'")
-		conn:execute("DELETE FROM memRestrictedItems WHERE item = '" .. bad .. "'")
+		if botman.dbConnected then 
+			conn:execute("DELETE FROM restrictedItems WHERE item = '" .. bad .. "'")
+			conn:execute("DELETE FROM memRestrictedItems WHERE item = '" .. bad .. "'")
+		end
 
 		restrictedItems[bad] = nil
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You removed " .. bad .. " from the list of restricted items[-]")
@@ -3817,7 +3800,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "restricted" and chatvars.words[2] == "items") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3865,7 +3848,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "reserve" and chatvars.words[2] == "slot") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3889,7 +3872,7 @@ if debug then dbug("debug admin") end
 				irc_chat(players[chatvars.ircid].ircAlias, "Player " .. players[id].name ..  " can take a reserved slot when the server is full.")
 			end
 
-			conn:execute("UPDATE players SET reserveSlot = 1 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET reserveSlot = 1 WHERE steam = " .. id) end
 		end
 
 		botman.faultyChat = false
@@ -3912,7 +3895,7 @@ if debug then dbug("debug admin") end
 	if (chatvars.words[1] == "unreserve" and chatvars.words[2] == "slot") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -3936,7 +3919,7 @@ if debug then dbug("debug admin") end
 				irc_chat(players[chatvars.ircid].ircAlias, "Player " .. players[id].name ..  " can not reserve a slot when the server is full.")
 			end
 
-			conn:execute("UPDATE players SET reserveSlot = 0 WHERE steam = " .. id)
+			if botman.dbConnected then conn:execute("UPDATE players SET reserveSlot = 0 WHERE steam = " .. id) end
 		end
 
 		botman.faultyChat = false
@@ -3973,7 +3956,7 @@ if debug then dbug("debug admin") end
 
 	if (chatvars.words[1] == "who" and chatvars.words[2] == "visited") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -4107,7 +4090,7 @@ if debug then dbug("debug admin") end
 
 	if (chatvars.words[1] == "bases" or chatvars.words[1] == "homes") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -4310,7 +4293,7 @@ if debug then dbug("debug admin") end
 
 	if chatvars.words[1] == "goto" and chatvars.words[2] ~= nil and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -4357,7 +4340,7 @@ if debug then dbug("debug admin") end
 
 	if (chatvars.words[1] == "offline" and chatvars.words[2] == "players" and chatvars.words[3] == "nearby") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -4407,7 +4390,7 @@ if debug then dbug("debug admin") end
 
 	if (chatvars.words[1] == "crimescene") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -4463,7 +4446,7 @@ if debug then dbug("debug admin") end
 
 	if (chatvars.words[1] == "closeto" or chatvars.words[1] == "near") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -4521,7 +4504,7 @@ if debug then dbug("debug admin") end
 
 	if (chatvars.words[1] == "prisoners" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -4565,7 +4548,7 @@ if debug then dbug("debug admin") end
 
 	if (chatvars.words[1] == "equip" and chatvars.words[2] == "admin") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 1) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -4576,7 +4559,7 @@ if debug then dbug("debug admin") end
 
 
 		if not string.find(tmp.inventory .. tmp.equipment, "ironBoots") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironBoots 1 600', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironBoots 1 600', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quality = getEquipment(tmp.equipment, "ironBoots")
 
@@ -4585,30 +4568,30 @@ if debug then dbug("debug admin") end
 			end
 
 			if tmp.found and tonumber(tmp.quality) < 300 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironBoots 1 600', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironBoots 1 600', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "auger") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " auger 1 600', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " auger 1 600', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "auger")
 
 			if tmp.found and tonumber(tmp.quality) < 300 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " auger 1 600', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " auger 1 600', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "chainsaw") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " chainsaw 1 600', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " chainsaw 1 600', " .. chatvars.playerid .. ")") end
 		end
 
 
 		-- nailgun
 		if not string.find(tmp.inventory, "nailgun") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " nailgun 1', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " nailgun 1', " .. chatvars.playerid .. ")") end
 		end
 
 
@@ -4620,16 +4603,16 @@ if debug then dbug("debug admin") end
 		end
 
 		if not tmp.found then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " miningHelmet 1 600', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " miningHelmet 1 600', " .. chatvars.playerid .. ")") end
 		else
 			if tmp.quality < 100 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " miningHelmet 1 600', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " miningHelmet 1 600', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory .. tmp.equipment, "ironChestArmor") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironChestArmor 1 600', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironChestArmor 1 600', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quality = getEquipment(tmp.equipment, "ironChestArmor")
 
@@ -4638,13 +4621,13 @@ if debug then dbug("debug admin") end
 			end
 
 			if tmp.found and tmp.quality < 300 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironChestArmor 1 600', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironChestArmor 1 600', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory .. tmp.equipment, "ironLegArmor") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironLegArmor 1 600', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironLegArmor 1 600', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quality = getEquipment(tmp.equipment, "ironLegArmor")
 
@@ -4655,7 +4638,7 @@ if debug then dbug("debug admin") end
 
 
 		if not string.find(tmp.inventory .. tmp.equipment, "ironGloves") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironGloves 1 600', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironGloves 1 600', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quality = getEquipment(tmp.equipment, "ironGloves")
 
@@ -4666,7 +4649,7 @@ if debug then dbug("debug admin") end
 
 
 		if not string.find(tmp.inventory .. tmp.equipment, "leatherDuster") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " leatherDuster 1 600', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " leatherDuster 1 600', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quality = getEquipment(tmp.equipment, "leatherDuster")
 
@@ -4677,78 +4660,78 @@ if debug then dbug("debug admin") end
 
 
 		if not string.find(tmp.inventory, "redTea") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " redTea 10', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " redTea 10', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "redTea")
 
 			if tonumber(tmp.quantity) < 10 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " redTea " .. 10 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " redTea " .. 10 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "gasCan") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " gasCan 400', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " gasCan 400', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "gasCan")
 
 			if tonumber(tmp.quantity) < 400 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " gasCan " .. 400 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " gasCan " .. 400 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "meatStew") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " meatStew 20', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " meatStew 20', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "meatStew")
 
 			if tonumber(tmp.quantity) < 20 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " meatStew " .. 20 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " meatStew " .. 20 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "firstAidKit") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " firstAidKit 10', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " firstAidKit 10', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "firstAidKit")
 
 			if tonumber(tmp.quantity) < 10 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " firstAidKit " .. 10 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " firstAidKit " .. 10 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "antibiotics") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " antibiotics 10', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " antibiotics 10', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "antibiotics")
 
 			if tonumber(tmp.quantity) < 10 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " antibiotics " .. 10 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " antibiotics " .. 10 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "shotgunShell") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " shotgunShell 500', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " shotgunShell 500', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "shotgunShell")
 
 			if tonumber(tmp.quantity) < 500 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " shotgunShell " .. 500 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " shotgunShell " .. 500 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "gunPumpShotgun") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " gunPumpShotgun 1', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " gunPumpShotgun 1', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "gunPumpShotgun")
 
 			if tonumber(tmp.quality) < 300 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " gunPumpShotgun 1', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " gunPumpShotgun 1', " .. chatvars.playerid .. ")") end
 			end
 		end
 
@@ -4770,7 +4753,7 @@ if debug then dbug("debug admin") end
 
 	if (chatvars.words[1] == "supplies") then
 		if (chatvars.accessLevel > 1) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -4780,72 +4763,72 @@ if debug then dbug("debug admin") end
 		tmp.equipment = igplayers[chatvars.playerid].equipment
 
 		if not string.find(tmp.inventory, "redTea") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " redTea 10', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " redTea 10', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "redTea")
 
 			if tonumber(tmp.quantity) < 10 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " redTea " .. 10 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " redTea " .. 10 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "gasCan") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " gasCan 800', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " gasCan 800', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "gasCan")
 
 			if tonumber(tmp.quantity) < 800 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " gasCan " .. 800 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " gasCan " .. 800 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "meatStew") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " meatStew 20', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " meatStew 20', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "meatStew")
 
 			if tonumber(tmp.quantity) < 20 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " meatStew " .. 20 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " meatStew " .. 20 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "firstAidKit") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " firstAidKit 10', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " firstAidKit 10', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "firstAidKit")
 
 			if tonumber(tmp.quantity) < 10 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " firstAidKit " .. 10 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " firstAidKit " .. 10 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "antibiotics") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " antibiotics 10', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " antibiotics 10', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "antibiotics")
 
 			if tonumber(tmp.quantity) < 10 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " antibiotics " .. 10 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " antibiotics " .. 10 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
 		if not string.find(tmp.inventory, "shotgunShell") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " shotgunShell 500', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " shotgunShell 500', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "shotgunShell")
 
 			if tonumber(tmp.quantity) < 500 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " shotgunShell " .. 500 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " shotgunShell " .. 500 - tonumber(tmp.quantity) .. "', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 		if not string.find(tmp.inventory .. tmp.equipment, "miningHelmet") then
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " miningHelmet 1 600', " .. chatvars.playerid .. ")")
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " miningHelmet 1 600', " .. chatvars.playerid .. ")") end
 		else
 			tmp.found, tmp.quality = getEquipment(tmp.equipment, "miningHelmet")
 
@@ -4854,7 +4837,7 @@ if debug then dbug("debug admin") end
 			end
 
 			if tmp.found and tmp.quality < 300 then
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " miningHelmet 1 600', " .. chatvars.playerid .. ")")
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " miningHelmet 1 600', " .. chatvars.playerid .. ")") end
 			end
 		end
 
@@ -4878,7 +4861,7 @@ if debug then dbug("debug admin") end
 
 	if (chatvars.words[1] == "release" and chatvars.words[2] == "here" and chatvars.words[3] ~= nil) and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -4905,7 +4888,7 @@ if debug then dbug("debug admin") end
 			setChatColour(prisonerid)
 		end
 
-		conn:execute("UPDATE players SET prisoner=0,timeout=0,botTimeout=0,silentBob=0 WHERE steam = " .. prisonerid)
+		if botman.dbConnected then conn:execute("UPDATE players SET prisoner=0,timeout=0,botTimeout=0,silentBob=0 WHERE steam = " .. prisonerid) end
 
 		message("say [" .. server.chatColour .. "]Releasing prisoner " .. players[prisonerid].name .. "[-]")
 
@@ -4945,7 +4928,7 @@ if debug then dbug("debug admin") end
 
 	if (chatvars.words[1] == "playerhome" or chatvars.words[1] == "playerbase" or chatvars.words[1] == "playerhome2" or chatvars.words[1] == "playerbase2") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end

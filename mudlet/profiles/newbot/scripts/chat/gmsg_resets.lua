@@ -56,7 +56,7 @@ function gmsg_resets()
 
 	if ((chatvars.words[1] == "add" or chatvars.words[1] == "remove" or chatvars.words[1] == "delete") and chatvars.words[2] == "reset" and (chatvars.words[3] == "region" or chatvars.words[3] == "zone")) and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 3) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -72,6 +72,7 @@ function gmsg_resets()
 		else
 			resetRegions[region] = nil
 			conn:execute("DELETE FROM resetZones WHERE region = '" .. region .. "'")
+			conn:execute("UPDATE keystones SET remove = 0") -- clear the remove flag from the keystones table to prevent removals that we don't want.
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Region " .. region .. " is no longer a reset zone.[-]")
 		end
 
@@ -83,13 +84,15 @@ function gmsg_resets()
 
 	if (chatvars.words[1] == "reset" and chatvars.words[2] == "zones") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
 
 		cursor,errorString = conn:execute("select * from resetZones")
-		if cursor:numrows() == 0 then
+		rows = cursor:numrows()
+		
+		if rows == 0 then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No regions have been flagged as reset zones.[-]")
 		else
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The following regions are reset zones:[-]")

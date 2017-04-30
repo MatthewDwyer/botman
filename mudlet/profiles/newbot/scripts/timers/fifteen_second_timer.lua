@@ -8,6 +8,26 @@
 --]]	
 	
 function FifteenSecondTimer()
+	-- run a quick test to prove or disprove that we are still connected to the database.
+	-- there is a rare instance where we lose the connection for unknown reasons.
+	
+	if not botman.dbConnected then
+		--conn = env:connect(botDB, botDBUser, botDBPass)
+		openDB()
+	end	
+	
+	-- this looks weird but its the only way that works
+	botman.dbConnected = false
+	botman.dbConnected = isDBConnected()
+
+	if not botman.db2Connected then
+		--connBots = env:connect(botsDB, botsDBUser, botsDBPass)
+		openBotsDB()
+	end		
+	
+	botman.db2Connected = false	
+	botman.db2Connected = isDBBotsConnected()
+
 	if botman.botOffline or botman.botDisabled or server.lagged then
 		return
 	end

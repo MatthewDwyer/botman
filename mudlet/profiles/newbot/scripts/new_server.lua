@@ -118,6 +118,8 @@ function initServer()
 	server.zombieKillReward = 1
 	server.reservedSlotsUsed = 0	
 
-	conn:execute("DELETE FROM server")
-	cursor,errorString = conn:execute("INSERT INTO server (botName, windowGMSG, windowAlerts, windowDebug, windowLists, windowPlayers) values ('Bot', 'Chat', 'Alerts', 'Debug', 'Lists', 'Players')")
+	if botman.dbConnected then 
+		conn:execute("DELETE FROM server")
+		cursor,errorString = conn:execute("INSERT INTO server (botName, windowGMSG, windowAlerts, windowDebug, windowLists, windowPlayers) values ('Bot', 'Chat', 'Alerts', 'Debug', 'Lists', 'Players')")
+	end
 end

@@ -11,14 +11,6 @@ function thirtySecondTimer()
 	local k, v, cmd
 
 	windowMessage(server.windowDebug, "30 second timer\n")
-		
-	if botman.dbConnected ~= true then
-		openDB()
-		botman.dbConnected = isDBConnected()
-	end
-
-	-- are we still connected to botsDB?
-	botman.db2Connected = isDBBotsConnected()
 
 	if botman.botDisabled or botman.botOffline then
 		return
@@ -57,12 +49,12 @@ function thirtySecondTimer()
 
 			if tonumber(igplayers[k].killTimer) < 2 then
 				cmd = "si " .. k
-				conn:execute("INSERT into commandQueue (command, steam) VALUES ('" .. cmd .. "'," .. k .. ")")					
+				if botman.dbConnected then conn:execute("INSERT into commandQueue (command, steam) VALUES ('" .. cmd .. "'," .. k .. ")") end
 			end		
 		end
 
 		cmd = "DoneInventory"
-		conn:execute("INSERT into commandQueue (command) VALUES ('" .. cmd .. "')")					
+		if botman.dbConnected then conn:execute("INSERT into commandQueue (command) VALUES ('" .. cmd .. "')") end
 	end
 
 	-- update the shared database (bots) server table (mainly for players online and a timestamp so others can see we're still online

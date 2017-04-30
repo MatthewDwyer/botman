@@ -10,7 +10,7 @@
 function gmsg_unslashed()
 	calledFunction = "gmsg_unslashed"
 
-	local debug
+	local debug, r, l
 
 	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
 	debug = false
@@ -181,7 +181,7 @@ end
 			if l == 4 then message("say [" .. server.chatColour .. "]Glad to be of service[-]") end
 		else
 			if string.find(chatvars.words[1], "bad") then
-				l = rand(27)
+				l = rand(32)
 				if l == 1 then message("say [" .. server.chatColour .. "]Don't hate me! D:[-]") end
 				if l == 2 then message("say [" .. server.chatColour .. "]The voices made me do it![-]") end
 				if l == 3 then message("say [" .. server.chatColour .. "]I'm a really cute bunny.  How can you hate me!? :O[-]") end
@@ -206,7 +206,7 @@ end
 				end
 
 				if l == 8 then message("say [" .. server.chatColour .. "]Donald Trump set me up to it. Don't fire me! >.<[-]") end
-				if l == 9 then message("say [" .. server.chatColour .. "]Sorry? X.x[-]") end
+				if l == 9 then message("say [" .. server.chatColour .. "]Sorry? x.x[-]") end
 				if l == 10 then message("say [" .. server.chatColour .. "]I must be punished " .. chatvars.playername .. "![-]") end
 				if l == 11 then message("say [" .. server.chatColour .. "]I didn't break it![-]") end
 				if l == 12 then message("say [" .. server.chatColour .. "]It was like that when I found it honest![-]") end
@@ -225,6 +225,11 @@ end
 				if l == 25 then message("say [" .. server.chatColour .. "]You know it :)[-]") end
 				if l == 26 then message("say [" .. server.chatColour .. "]This is fine[-]") end
 				if l == 27 then message("say [" .. server.chatColour .. "]Bite me[-]") end				
+				if l == 28 then message("say [" .. server.chatColour .. "]It's fine.  It's just.. Some assembly required.. And maybe a new door.[-]") end				
+				if l == 29 then message("say [" .. server.chatColour .. "][BUSTED][-]") end								
+				if l == 30 then message("say [" .. server.chatColour .. "]*hides matches*[-]") end								
+				if l == 31 then message("say [" .. server.chatColour .. "]It'll be fine with a lick of paint.. and a total rebuild.[-]") end								
+				if l == 32 then message("say [" .. server.chatColour .. "]YEEEEEEEAH!!![-]") end								
 
 				botman.faultyChat = false
 				return true

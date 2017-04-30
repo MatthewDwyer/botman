@@ -75,7 +75,7 @@ function gmsg_waypoints()
 	if (chatvars.words[1] == "set" and (string.find(chatvars.words[2], "wayp") or chatvars.words[2] == "wp")) and (chatvars.words[3] == "public" or chatvars.words[3] == "private" or chatvars.words[3] == "restricted") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -129,7 +129,7 @@ function gmsg_waypoints()
 	if chatvars.words[1] == "set" and chatvars.words[2] == "max" and chatvars.words[3] == "waypoints" then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -226,7 +226,7 @@ function gmsg_waypoints()
 	if chatvars.words[1] == "set" and string.find(chatvars.words[2], "way") and chatvars.words[3] == "cost" then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -265,7 +265,7 @@ function gmsg_waypoints()
 	if chatvars.words[1] == "set" and string.find(chatvars.words[2], "way") and chatvars.words[3] == "create" and chatvars.words[4] == "cost" then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -304,7 +304,7 @@ function gmsg_waypoints()
 	if chatvars.words[1] == "set" and string.find(chatvars.words[2], "way") and chatvars.words[3] == "cooldown" then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 1) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -585,7 +585,15 @@ function gmsg_waypoints()
 					botman.faultyChat = false
 					return true
 				end
-			end		
+			end	
+
+			-- reject if not an admin and pvpTeleportCooldown is > zero
+			if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
+				message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
+				botman.faultyChat = false
+				result = true
+				return
+			end				
 			
 			-- check the waypoint destination in restricted area
 			if (chatvars.accessLevel > 3) then

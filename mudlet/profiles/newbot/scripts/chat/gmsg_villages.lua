@@ -54,7 +54,7 @@ function gmsg_villages()
 	if (chatvars.words[1] == "elect" and chatvars.words[2] ~= nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false				return true
 			end
 		end
@@ -121,7 +121,7 @@ function gmsg_villages()
 
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) and (locations[villageName].mayor ~= chatvars.playerid) then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 					botman.faultyChat = false
 					return true
 				end
@@ -173,7 +173,7 @@ function gmsg_villages()
 	if (chatvars.words[1] == "remove" and chatvars.words[2] == "village") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -220,7 +220,7 @@ function gmsg_villages()
 	if (chatvars.words[1] == "village") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -264,7 +264,7 @@ function gmsg_villages()
 
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) and (locations[villageName].mayor ~= chatvars.playerid) then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 					botman.faultyChat = false
 					return true
 				end
@@ -362,7 +362,7 @@ function gmsg_villages()
 
 	if (chatvars.words[1] == "add" and chatvars.words[2] == "village") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -399,7 +399,7 @@ function gmsg_villages()
 
 	if (chatvars.words[1] == "protect" and chatvars.words[2] == "village" and chatvars.words[3] ~= nil) and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 			botman.faultyChat = false
 			return true
 		end
@@ -429,7 +429,7 @@ function gmsg_villages()
 	if (chatvars.words[1] == "unprotect" and (chatvars.words[2] == "village") and chatvars.words[3] ~= nil) and (chatvars.playerid ~= 0) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end

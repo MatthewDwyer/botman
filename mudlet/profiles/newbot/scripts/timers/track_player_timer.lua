@@ -8,15 +8,13 @@
 --]]
 
 function trackPlayerTimer()
-	if botman.botDisabled or botman.botOffline or server.lagged then
+	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
 		return
 	end
 
-	local lastSession, row, rows, k, v, cursor, errorString
+	local row, rows, k, v, cursor, errorString
 
-	for k, v in pairs(igplayers) do	
-		lastSession = false
-
+	for k, v in pairs(igplayers) do
 		if v.trackerCount ~= nil then
 			if v.trackerStopped == false then
 				v.trackerCountdown = tonumber(v.trackerCountdown) - 1
@@ -29,57 +27,36 @@ function trackPlayerTimer()
 					else
 						cursor,errorString = conn:execute("select * from memTracker where admin = " .. k .. " and trackerID > " .. v.trackerCount .. " order by trackerID limit 0," .. v.trackerSkip + 1)
 					end
+					
+					if not cursor then
+						return
+					end
 
-					rows = cursor:numrows()
+					row = cursor:fetch({}, "a")
 
-					if rows > 0 then
-						row = cursor:fetch({}, "a")
-
-						if tonumber(row.session) == tonumber(players[row.steam].sessionCount) then lastSession = true end
-
+					if row then				
 						send("tele " .. k .. " " .. row.x .. " " .. row.y .. " " .. row.z)
+					end
 
-						if rows == 1 then
-							v.trackerStopped = true
+					while row do
+						row = cursor:fetch(row, "a")
+						v.trackerCount = row.trackerID
+					end
+					
+					v.trackerStopped = true
 
-							if lastSession then
-								message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. You have reached the players current position.[-]")
-							else
-								message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. Type " .. server.commandPrefix .. "next track or " .. server.commandPrefix .. "last track to continue from the next session.[-]")
-							end
-						end
-
-						while row do
-							row = cursor:fetch(row, "a")	
-
-							if row.trackerID == nil then
-								v.trackerStopped = true
-
-								if lastSession then
-									message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. You have reached the players current position.[-]")
-								else
-									message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. Type " .. server.commandPrefix .. "next track or " .. server.commandPrefix .. "last track to continue from the next session.[-]")
-								end
-							end
-
-							v.trackerCount = row.trackerID
-						end
-
-						if v.trackerStop ~= nil then
-							v.trackerStopped = true
-							v.trackerStop = nil
-						end
-					else
+					if v.trackerStop ~= nil then
 						v.trackerStopped = true
+						v.trackerStop = nil
+					end
 
-						if lastSession then
-							message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. You have reached the players current position.[-]")
-						else
-							message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. Type " .. server.commandPrefix .. "next track or " .. server.commandPrefix .. "last track to continue from the next session.[-]")
-						end
+					if igplayers[chatvars.playerid].trackerLastSession then
+						message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. You have reached the players current position.[-]")
+					else
+						message("pm " .. k .. " [" .. server.chatColour .. "]Tracking complete. Type " .. server.commandPrefix .. "next track or " .. server.commandPrefix .. "last track to continue from the next session.[-]")
 					end
 				end
 			end
 		end
-	end	
+	end
 end

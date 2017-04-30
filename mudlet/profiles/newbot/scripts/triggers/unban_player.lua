@@ -24,8 +24,8 @@ function unbanPlayer(line)
 	players[steam].freeze = false
 	players[steam].silentBob = false	
 	players[steam].permanentBan = false	
-	conn:execute("UPDATE players SET hackerScore=0,timeout=0,botTimeout=0,silentBob=0,permanentBan=0 WHERE steam = " .. steam)
+	if botman.dbConnected then conn:execute("UPDATE players SET hackerScore=0,timeout=0,botTimeout=0,silentBob=0,permanentBan=0 WHERE steam = " .. steam) end
 
 	-- also remove the steam owner from the bans table
-	conn:execute("DELETE FROM bans WHERE steam = " .. steam .. " or steam = " .. players[steam].steamOwner)
+	if botman.dbConnected then conn:execute("DELETE FROM bans WHERE steam = " .. steam .. " or steam = " .. players[steam].steamOwner) end
 end

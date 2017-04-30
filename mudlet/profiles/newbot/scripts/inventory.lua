@@ -10,13 +10,12 @@
 
 function CheckInventory()
 	local temp, newPlayer, ban, timeout, move, newItems, table1, table2, items, reason, moveTo, moveReason, banReason, timeoutReason
-	local d1, delta, inventoryChanged, changes, flags, debug, badItemsFound, badItemAction, count500, dbFlag, tmp, flag, max
+	local d1, delta, inventoryChanged, changes, flags, debug, badItemsFound, badItemAction, count500, dbFlag, tmp, flag, max, search
+	local k, v
 
 	debug = false
 
 if debug then dbug("check inventory 1") end
-
-	tmp = {}
 
 	-- do a quick sanity check to prevent a rare fault causing this to get stuck
 	for k, v in pairs(igplayers) do
@@ -118,8 +117,8 @@ if debug then dbug("check inventory 3") end
 						-- check for wildcard items in badItems and search for those
 						for a,b in pairs(badItems) do
 							if string.find(a, "*", nil, true) then
-								tmp.search = a:gsub('%W','')
-								if string.find(igplayers[k].inventory, tmp.search) then
+								search = a:gsub('%W','')
+								if string.find(igplayers[k].inventory, search) then
 									timeout = true
 									timeoutReason = "Restricted items found in inventory"									
 									
@@ -139,8 +138,17 @@ if debug then dbug("check inventory 3") end
 						items[table2[2]].item = table2[2]
 						items[table2[2]].quantity = tonumber(table2[1])
 						items[table2[2]].quality = tonumber(table2[3])
+						items[table2[2]].dupe = 0
+												
+						if tonumber(table2[1]) == 1 then				
+							items[table2[2]].dupe = 1
+						end						
 					else
 						items[table2[2]].quantity = items[table2[2]].quantity + tonumber(table2[1])
+						
+						if tonumber(table2[1]) == 1 then					
+							items[table2[2]].dupe = items[table2[2]].dupe + 1					
+						end												
 					end
 
 					-- stack monitoring
@@ -157,16 +165,16 @@ if debug then dbug("check inventory 3") end
 							end
 						end
 
-						-- instant ban for overstacking any of these if a new player
-						if tonumber(table2[1]) > tonumber(stackLimits[table2[2]].limit) and newPlayer == true then
+						-- instant ban for a full stack of any of these if a new player
+						if tonumber(table2[1]) >= tonumber(stackLimits[table2[2]].limit) and newPlayer == true then
 							if (table2[2] == "tnt" or table2[2] == "keystoneBlock" or table2[2] == "mineAirFilter" or table2[2] == "mineHubcap" or table2[2] == "rScrapIronPlateMine") then
 								ban = true
-								banReason = "Banned for overstacking " .. table2[2] .. "(" .. table2[1] .. ")."
+								banReason = "Banned for excessive amounts of " .. table2[2] .. "(" .. table2[1] .. ")."
 							end
 						end
 					end					
 				end
-			end
+			end			
 
 			if v.raiding and timeout then
 				players[k].exiled = 1
@@ -180,6 +188,18 @@ if debug then dbug("check inventory 3") end
 if debug then dbug("check inventory 4") end
 
 			for a, b in pairs(items) do
+				if newPlayer and b.dupe > 15 then
+					if not igplayers[k].dupeItem then
+						igplayers[k].dupeItem = b.item
+						irc_chat(server.ircAlerts, "New player " .. players[k].name .. " has " .. b.dupe .. " x 1 of " .. b.item)
+					end
+				
+					if b.item ~= igplayers[k].dupeItem then
+						igplayers[k].dupeItem = b.item
+						irc_chat(server.ircAlerts, "New player " .. players[k].name .. " has " .. b.dupe .. " x 1 of " .. b.item)
+					end
+				end
+			
 				if (players[k].newPlayer == true and igplayers[k].skipExcessInventory ~= true) then
 
 					cursor,errorString = conn:execute("SELECT * FROM memRestrictedItems where item = '" .. escape(b.item) .. "' and accessLevel < " .. players[k].accessLevel)				
@@ -189,7 +209,7 @@ if debug then dbug("check inventory 4") end
 						row = cursor:fetch({}, "a")
 
 						if tonumber(b.quantity) > tonumber(row.qty) and (not players[k].ignorePlayer) then
-							if row.action == "timeout" then
+							if row.action == "timeout" and server.gameType ~= "pvp" then
 								timeout = true
 								
 								if timeoutReason == nil then
@@ -242,7 +262,7 @@ if debug then dbug("check inventory 4") end
 						end
 					end				
 				end 
-			end
+			end		
 
 if debug then dbug("check inventory 5") end
 
@@ -405,10 +425,7 @@ if debug then dbug("check inventory 10") end
 			end
 		end
 
-		if (ban == true) then			
---			dbug("INSERT INTO inventoryTracker (steam, x, y, z, session, belt, pack, equipment) VALUES (" .. k .. "," .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. "," .. players[k].sessionCount .. ",'" .. escape(v.belt) .. "','" .. escape(v.pack) .. "','" .. escape(v.equipment) .. "')")
---			conn:execute("INSERT INTO inventoryTracker (steam, x, y, z, session, belt, pack, equipment) VALUES (" .. k .. "," .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. "," .. players[k].sessionCount .. ",'" .. escape(v.belt) .. "','" .. escape(v.pack) .. "','" .. escape(v.equipment) .. "')")
-			
+		if (ban == true) then					
 			if accessLevel(k) > 2 then
 				banPlayer(k, "1 year", banReason, "")			
 			
@@ -433,7 +450,6 @@ if debug then dbug("check inventory 10") end
 		if (move == true and players[k].exiled ~= 1) then
 			message("say [" .. server.chatColour .. "]Sending player " .. igplayers[k].name .. " to " .. moveTo .. " for " .. moveReason .. ".[-]")
 
-			dbug("inventory line " .. debugger.getinfo(1).currentline)	
 			teleport("tele " .. k .. " " .. locations[moveTo].x .. " " .. locations[moveTo].y + 1 .. " " .. locations[moveTo].z)
 			players[k].exiled = 1
 			if accessLevel(k) > 2 then players[k].silentBob = true end
@@ -488,14 +504,15 @@ if debug then dbug("check inventory 11") end
 			igplayers[k].lastLocation = ""
 		end
 
-	end
+	end	
 
 if debug then dbug("check inventory end") end
 end
 
 
 function readInventorySlot()
-	local timestamp, slot, item, quantity, quality, pos, words
+	local timestamp, slot, item, quantity, quality, pos, words, dupeTest
+	
 
 	timestamp = os.time()
 	item = ""
@@ -503,6 +520,7 @@ function readInventorySlot()
 	quantity = 0
 	quality = 0
 	words = {}
+	dupeTest = {}
 
 	for word in line:gmatch("%w+") do table.insert(words, word) end
 
@@ -543,6 +561,4 @@ function readInventorySlot()
 	if (invScan == "equipment") then
 		igplayers[invCheckID].equipment = igplayers[invCheckID].equipment .. slot .. "," .. item .. "," .. quality .. "|"
 	end
-
-	deleteLine()
 end

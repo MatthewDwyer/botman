@@ -625,8 +625,6 @@ function reloadBotScripts(skipTables)
 			openUserWindow(server.windowGMSG)
 			openUserWindow(server.windowDebug)
 			openUserWindow(server.windowLists)
-			openUserWindow(server.windowPlayers)
-			openUserWindow(server.windowAlerts)			
 
 			for k,v in pairs(igplayers) do
 				fixMissingIGPlayer(k)
@@ -646,7 +644,7 @@ function reloadBotScripts(skipTables)
 			botman.webdavFolderWriteable = true			
 			if botman.chatlogPath == nil or botman.chatlogPath == "" then
 				botman.chatlogPath = webdavFolder
-				conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'")
+				if botman.dbConnected then conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'") end
 			end				
 			
 			send("gg")

@@ -71,7 +71,7 @@ function gameTimeTrigger(line)
 		end
 	end
 
-	conn:execute("UPDATE server SET server.gameDay = " .. server.gameDay)
+	if botman.dbConnected then conn:execute("UPDATE server SET server.gameDay = " .. server.gameDay) end
 
 	 --check locations for opening and closing times
 	for k,v in pairs(locations) do
