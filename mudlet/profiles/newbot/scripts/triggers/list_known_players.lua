@@ -28,21 +28,21 @@ function listKnownPlayers(line)
 
 	if (not players[steam] and (playtime ~= "0")) then
 		players[steam] = {}
-		
+
 		if id ~= "-1" then
 			players[steam].id = id
 		end
-			
+
 		players[steam].name = name
 		players[steam].steam = steam
 		players[steam].playtime = playtime
 		players[steam].seen = seen
 
 		if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steam .. "," .. id .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "'") end
-	else	
+	else
 		if id ~= "-1" then
 			players[steam].id = id
-		end			
+		end
 
 		players[steam].name = name
 		players[steam].playtime = playtime

@@ -15,21 +15,42 @@ mysql = require "luasql.mysql"
 local debug = false
 local statements = {}
 
+function deleteTrackingData(keepDays)
+	-- to prevent the database collecting too much data, becoming slow and potentially filling the root partition
+	-- we periodically clear out old data.  The default is to keep the last 28 days.
+	-- It will be necessary to optimise the tables occasionally to purge the deleted records, but we need to give this task time to complete.
+
+	-- don't run if the password is empty till I fix it so it'll work then
+	if botDBPass == "" then
+		return
+	end
+
+	local cmd, deletionDate
+	local DateYear = os.date('%Y', os.time())
+	local DateMonth = os.date('%m', os.time())
+	local DateDay = os.date('%d', os.time())
+	local deletionDate = os.time({day = DateDay - keepDays, month = DateMonth, year = DateYear})
+
+	cmd = "mysql -u " .. botDBUser .. " -p" .. botDBPass .. " -e 'DELETE FROM inventoryChanges WHERE timestamp < \"" .. os.date("%Y-%m-%d", deletionDate) .. "\";  DELETE FROM inventoryTracker WHERE timestamp < \"" .. os.date("%Y-%m-%d", deletionDate) .. "\";  DELETE FROM tracker WHERE timestamp < \"" .. os.date("%Y-%m-%d", deletionDate) .. "\"; UPDATE server set databaseMaintenanceFinished = 1;' " .. botDB
+	os.execute(cmd)
+end
+
+
 function migratePlayers()
 	local cursor, errorString
-	
+
 	cursor,errorString = connBots:execute("SHOW COLUMNS FROM players LIKE 'steamOwner'")
 	rows = cursor:numrows()
-	
+
 	if rows == 0 then
 		connBots:execute("CREATE TABLE players2 LIKE players")
-		connBots:execute("ALTER TABLE players2 DISABLE KEYS")	
-		connBots:execute("ALTER TABLE  players2 DROP PRIMARY KEY , ADD PRIMARY KEY (steam,botID)")		
-		connBots:execute("ALTER TABLE players2 ENABLE KEYS")		
-		connBots:execute("DROP TABLE players")		
-		connBots:execute("RENAME TABLE players2 TO players")		
+		connBots:execute("ALTER TABLE players2 DISABLE KEYS")
+		connBots:execute("ALTER TABLE  players2 DROP PRIMARY KEY , ADD PRIMARY KEY (steam,botID)")
+		connBots:execute("ALTER TABLE players2 ENABLE KEYS")
+		connBots:execute("DROP TABLE players")
+		connBots:execute("RENAME TABLE players2 TO players")
 		connBots:execute("ALTER TABLE `players` ADD `steamOwner` BIGINT(17) NOT NULL DEFAULT '0'")
-	end	
+	end
 end
 
 function initBotsData()
@@ -84,12 +105,12 @@ if debug then display("registerBot start\n") end
 
 		id = rand(9999)
 		cursor,errorString = connBots:execute("select botID from servers where botID = " .. id)
-		
+
 		while tonumber(cursor:numrows()) > 0 do
 			id = rand(9999)
 			cursor,errorString = connBots:execute("select botID from servers where botID = " .. id)
 		end
-			
+
 		connBots:execute("INSERT INTO servers (ServerPort, IP, botName, serverName, playersOnline, tick, botID, dbName, dbUser, dbPass) VALUES (" .. server.ServerPort .. ",'" .. server.IP .. "','" .. escape(server.botName) .. "','" .. escape(server.serverName) .. "'," .. botman.playersOnline .. ", now()," .. id .. ",'" .. escape(botDB) .. "','" .. escape(botDBUser) .. "','" .. escape(botDBPass) .. "')")
 		server.botID = id
 		conn:execute("UPDATE server SET botID = " .. id)
@@ -98,8 +119,8 @@ if debug then display("registerBot start\n") end
 		cursor,errorString = connBots:execute("select * from servers where botID = " .. server.botID)
 		rows = cursor:numrows()
 
-		if rows == 0 then		
-			connBots:execute("INSERT INTO servers (ServerPort, IP, botName, serverName, playersOnline, tick, botID, dbName, dbUser, dbPass) VALUES (" .. server.ServerPort .. ",'" .. escape(server.IP) .. "','" .. escape(server.botName) .. "','" .. escape(server.serverName) .. "'," .. botman.playersOnline .. ", now()," .. server.botID .. ",'" .. escape(botDB) .. "','" .. escape(botDBUser) .. "','" .. escape(botDBPass) .. "')")		
+		if rows == 0 then
+			connBots:execute("INSERT INTO servers (ServerPort, IP, botName, serverName, playersOnline, tick, botID, dbName, dbUser, dbPass) VALUES (" .. server.ServerPort .. ",'" .. escape(server.IP) .. "','" .. escape(server.botName) .. "','" .. escape(server.serverName) .. "'," .. botman.playersOnline .. ", now()," .. server.botID .. ",'" .. escape(botDB) .. "','" .. escape(botDBUser) .. "','" .. escape(botDBPass) .. "')")
 		else
 			-- update it with current data
 			connBots:execute("UPDATE servers SET serverName = '" .. escape(server.serverName) .. "', IP = '" .. escape(server.IP) .. "', ServerPort = " .. server.ServerPort .. ", botName = '" .. escape(server.botName) .. "', playersOnline = " .. botman.playersOnline .. ", tick = now(), dbName = '" .. escape(botDB) .. "', dbUser = '" .. escape(botDBUser) .. "', dbPass = '" .. escape(botDBPass) .. "' WHERE botID = " .. server.botID)
@@ -181,23 +202,23 @@ end
 
 function isDBBotsConnected()
 	local cursor, errorString
-		
+
 	cursor,errorString = connBots:execute("select RAND() as rnum")
-	
+
 	if cursor then
 		return true
 	else
 		-- this never executes if the db isn't connected
 		return false
-	end	
+	end
 end
 
 
 function isDBConnected()
 	local cursor, errorString
-		
+
 	cursor,errorString = conn:execute("select RAND() as rnum")
-	
+
 	if cursor then
 		return true
 	else
@@ -253,7 +274,7 @@ function dbBaseDefend(steam, base)
 		while row do
 			cmd = ("tele " .. steam .. " " .. row.x .. " -1 " .. row.z)
 			prepareTeleport(steam, cmd)
-			teleport(cmd, true)			
+			teleport(cmd, true)
 
 			if true then
 				return
@@ -303,7 +324,7 @@ function dbBool(value)
 	else
 		return 1
 	end
-end 
+end
 
 
 function initDB()
@@ -332,7 +353,7 @@ function closeDB()
 	--env:close()
 
 	botman.dbConnected = false
-	botman.dbBotsConnected = false	
+	botman.dbBotsConnected = false
 end
 
 
@@ -363,6 +384,26 @@ function importBlacklist()
 
 	cursor:close()
 	cursor2:close()
+end
+
+
+function importBlacklistCSV()
+	-- This will take several minutes and will lock up the bot until completed.  Let it finish.
+	-- There is no command to run this function, you must run it manually via Mudlet.  One way is to add it to the test command in gmsg_custom.lua
+	-- then run /test command
+	local file, ln, split, ip1, ip2
+	connBots("TRUNCATE IPBlacklist")
+
+	file = io.open(homedir .. "/cn.txt", "r")
+	for ln in file:lines() do
+		if string.find(ln, "-") then
+			ln = string.sub(ln, string.find(ln, ":") + 1)
+			split = string.split(ln, "-")
+			ip1 = IPToInt(string.trim(split[1]))
+			ip2 = IPToInt(string.trim(split[2]))
+			connBots:execute("INSERT INTO IPBlacklistClean (StartIP, EndIP, Country) VALUES (" .. ip1 .. "," .. ip2 .. ",'CN')")
+		end
+	end
 end
 
 
@@ -569,7 +610,7 @@ if debug then display("alterTables start\n") end
 	doSQL("ALTER TABLE `players` ADD `watchPlayerTimer` INT(11) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `hackerScore` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `pvpTeleportCooldown` INT NOT NULL DEFAULT '0'")
-	
+
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	-- changes to server table
 	doSQL("ALTER TABLE `server` ADD COLUMN `teleportCost` INT NOT NULL DEFAULT '200'")
@@ -614,7 +655,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `enableWindowMessages` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `updateBranch` VARCHAR(7) NOT NULL DEFAULT 'stable'")
 	doSQL("ALTER TABLE `server` ADD `chatColourNewPlayer` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF' , ADD `chatColourPlayer` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF' , ADD `chatColourDonor` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF' , ADD `chatColourPrisoner` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF' , ADD `chatColourMod` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF' , ADD `chatColourAdmin` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF' , ADD `chatColourOwner` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF'")
-	doSQL("ALTER TABLE `server` ADD `commandCooldown` INT NOT NULL DEFAULT '0'")	
+	doSQL("ALTER TABLE `server` ADD `commandCooldown` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` CHANGE `ircAlerts` `ircAlerts` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '#new_alerts'")
 	doSQL("ALTER TABLE `server` CHANGE `ircWatch` `ircWatch` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '#new_watch'")
 	doSQL("ALTER TABLE `server` CHANGE `botName` `botName` VARCHAR(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'Bot'")
@@ -631,8 +672,12 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `pvpTeleportCooldown` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `allowPlayerToPlayerTeleporting` TINYINT(1) NOT NULL DEFAULT '1'")
 	doSQL("ALTER TABLE `server` ADD `ircPort` INT NOT NULL DEFAULT '6667'")
+	doSQL("ALTER TABLE `server` CHANGE `botVersion` `botVersion` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT ''")
+	doSQL("ALTER TABLE `server` CHANGE `updateBot` `updateBot` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `botRestartHour` INT NOT NULL DEFAULT '25'")
+	doSQL("ALTER TABLE `server` ADD `trackingKeepDays` INT NOT NULL DEFAULT '28' , ADD `databaseMaintenanceFinished` TINYINT(1) NOT NULL DEFAULT '1'")
 
-	
+
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	-- misc table changes
 	doSQL("ALTER TABLE `friends` ADD `autoAdded` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -654,17 +699,28 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `locations` ADD `minimumLevel` INT NOT NULL DEFAULT '0', ADD `maximumLevel` INT NOT NULL DEFAULT '0', ADD `dayClosed` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `locations` ADD `dailyTaxRate` INT NOT NULL DEFAULT '0', ADD `bank` INT NOT NULL DEFAULT '0', ADD `prisonX` INT NOT NULL DEFAULT '0' , ADD `prisonY` INT NOT NULL DEFAULT '0' , ADD `prisonZ` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `alerts` ADD `status` VARCHAR(30) NOT NULL DEFAULT ''")
-	doSQL("ALTER TABLE `IPBlacklist` ADD `DateAdded` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , ADD `botID` INT NOT NULL DEFAULT '0' , ADD `steam` BIGINT(17) NOT NULL DEFAULT '0' , ADD `playerName` VARCHAR(25) NOT NULL DEFAULT ''")		
+	doSQL("ALTER TABLE `IPBlacklist` ADD `DateAdded` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , ADD `botID` INT NOT NULL DEFAULT '0' , ADD `steam` BIGINT(17) NOT NULL DEFAULT '0' , ADD `playerName` VARCHAR(25) NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `miscQueue` ADD `timerDelay` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)
 	doSQL("ALTER TABLE `messageQueue` ADD `messageTimestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", true)
 	doSQL("ALTER TABLE `players` ADD `ircAlias` VARCHAR(15) NOT NULL , ADD `ircAuthenticated` TINYINT(1) NOT NULL DEFAULT '0'", true)
-	doSQL("ALTER TABLE `IPBlacklist` ADD `DateAdded` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , ADD `botID` INT NOT NULL DEFAULT '0' , ADD `steam` BIGINT(17) NOT NULL DEFAULT '0' , ADD `playerName` VARCHAR(25) NOT NULL DEFAULT ''", true)	
+	doSQL("ALTER TABLE `IPBlacklist` ADD  `DateAdded` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , ADD `botID` INT NOT NULL DEFAULT '0' , ADD `steam` BIGINT(17) NOT NULL DEFAULT '0' , ADD `playerName` VARCHAR(25) NOT NULL DEFAULT '', ADD `IP` VARCHAR(15) NOT NULL DEFAULT ''", true)
+	doSQL("ALTER TABLE `bans` ADD `GBLBanExpiry` DATE NOT NULL", true)
+	doSQL("ALTER TABLE `bans` ADD `GBLBanReason` VARCHAR(255) NOT NULL DEFAULT ''", true)
+	doSQL("ALTER TABLE `bans` ADD `GBLBanVetted` TINYINT(1) NOT NULL DEFAULT '0',  ADD `GBLBanActive` TINYINT(1) NOT NULL DEFAULT '0'", true)
+
+	-- change the primary key of table bans from steam to id (an auto incrementing integer field) if the id field does not exist.
+	cursor,errorString = connBots:execute("SHOW COLUMNS FROM `bans` LIKE 'id'")
+	rows = cursor:numrows()
+
+	if rows == 0 then
+		doSQL("ALTER TABLE  `bans` DROP PRIMARY KEY , ADD `id` bigint(20) NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (  `id` )", true)
+	end
 
 	statements = {}
-	
+
 	-- fix a bad choice of primary keys. Won't touch players again since it won't complete if a field exists which it then adds.
 	migratePlayers()
 

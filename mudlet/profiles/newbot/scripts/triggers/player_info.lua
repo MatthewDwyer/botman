@@ -30,7 +30,8 @@ function playerInfo(faultyInfo)
 	local ping, dist, IP, hotspot, currentLocation
 	local skipTPtest = false
 	local badData = false
-	
+	local banned = false
+
 	debug = false
 
 	if debugPlayerInfo == nil then debugPlayerInfo = 0 end
@@ -58,11 +59,11 @@ function playerInfo(faultyInfo)
 	-- it is probably a read error
 	if (table.maxn(name_table) < 18) then
 		faultyPlayerinfoID = 0
-		dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true)		
+		dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true)
 		return
 	end
-	
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)		
+
+--dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
 
 	temp = string.split(name_table[1], "=")
 	id = temp[2]
@@ -117,53 +118,53 @@ function playerInfo(faultyInfo)
 
 	temp = string.split(name_table[17], "=")
 	IP = temp[2]
-	IP = IP:gsub("::ffff:","")	
+	IP = IP:gsub("::ffff:","")
 
 	temp = string.split(name_table[18], "=")
 	ping = temp[2]
-	
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)		
 
---dbug("debug playerinfo steam " .. steam)		
---dbug("debug debugplayerinfo  " .. debugPlayerInfo)		
+--dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
+
+--dbug("debug playerinfo steam " .. steam)
+--dbug("debug debugplayerinfo  " .. debugPlayerInfo)
 
 	if badData then
-		dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true)			
+		dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true)
 		dbug("Bad lp line: " .. line .. "\n", true)
 		return
 	end
-	
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)			
+
+--dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
 
 	rawPosition = posX .. posY .. posZ
 	rawRotation = rotY
-	
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)			
+
+--dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
 
 	intX = math.floor(posX)
 	intY = math.ceil(posY)
 	intZ = math.floor(posZ)
-	
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)			
+
+--dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
 
 	region = getRegion(intX, intZ)
 	regionX, regionZ, chunkX, chunkZ = getRegionChunkXZ(intX, intZ)
-	
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)			
+
+--dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
 
 	if (resetRegions[region]) then
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)			
+--dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
 		resetZone = true
 	else
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)			
+--dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
 		resetZone = false
 	end
-	
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)			
+
+--dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-	
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)			
+
+--dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
 
 	-- check for crazy server crash
 	if (string.find(line, "type=EntityZombie")) then
@@ -187,7 +188,7 @@ function playerInfo(faultyInfo)
 	-- check for invalid or missing steamid.  kick if not passed
 	steamtest = tonumber(steam)
 	if (steamtest == nil) and (steam ~= "") or (string.len(steam) < 17) then
-		message("say [" .. server.chatColour .. "]Kicking player " .. name .. " for bad steam ID: " .. steam .. "[-]")
+		message(string.format("say [%s]Kicking player %s for invalid steam ID.[-]", server.chatColour, name))
 		send ("kick " .. id)
 
 		faultyPlayerinfo = false
@@ -203,7 +204,7 @@ function playerInfo(faultyInfo)
 		igplayers[steam].steamOwner = steam
 
 		fixMissingIGPlayer(steam)
-		
+
 		-- don't initially warn the player about pvp or pve zone.  Too many players complain about it when the bot is restarted.  We can warn them next time their zone changes.
 		if pvpZone(posX, posZ) then
 			if players[steam].alertPVP == true then
@@ -215,10 +216,10 @@ function playerInfo(faultyInfo)
 			end
 		end
 	end
-	
+
 	if igplayers[steam].checkNewPlayer == nil then
-		fixMissingIGPlayer(steam)		
-	end				
+		fixMissingIGPlayer(steam)
+	end
 
 	-- add to players table
 	if (players[steam] == nil) then
@@ -242,7 +243,7 @@ function playerInfo(faultyInfo)
 		irc_chat(server.ircAlerts, "New player joined")
 		irc_chat(server.ircAlerts, line)
 
-		if botman.dbConnected then 
+		if botman.dbConnected then
 			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(posX) .. "," .. math.floor(posY) .. "," .. math.floor(posZ) .. ",'" .. botman.serverTime .. "','new player','New player joined " .. name .. " steam: " .. steam.. " id: " .. id .. "'," .. steam .. ")")
 			conn:execute("INSERT INTO players (steam, name, id, IP, newPlayer, watchPlayer, watchPlayerTimer) VALUES (" .. steam .. ",'" .. escape(name) .. "'," .. id .. "," .. IP .. ",1,1, " .. os.time() + 2419200 .. ")")
 		end
@@ -250,11 +251,11 @@ function playerInfo(faultyInfo)
 		fixMissingPlayer(steam)
 		CheckBlacklist(steam, IP)
 	end
-	
+
 	if tonumber(ping) > 0 then
 		igplayers[steam].ping = ping
 		players[steam].ping = ping
-	end	
+	end
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
@@ -310,7 +311,7 @@ function playerInfo(faultyInfo)
 	if players[steam].location ~= "" and tonumber(igplayers[steam].teleCooldown) < 1 then
 		-- spawn the player at location
 		if (locations[players[steam].location]) then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]You have been moved to " .. players[steam].location .. "[-]")
+			message(string.format("pm %s [%s]You have been moved to %s[-]", steam, server.chatColour, players[steam].location))
 			randomTP(steam, players[steam].location, true)
 
 			players[steam].location = ""
@@ -333,19 +334,22 @@ function playerInfo(faultyInfo)
 			if botman.dbConnected then conn:execute("UPDATE players SET location = '' WHERE steam = " .. steam) end
 		end
 	end
-	
+
 	if tonumber(players[steam].hackerScore) >= 10000 then
 		players[steam].hackerScore = 0
-		message("say [" .. server.chatColour .. "]Banning " .. players[steam].name .. " detected evidence of hacking.[-]")
+		message(string.format("say [%s]Banning %s. Detected evidence of hacking.[-]", server.chatColour, players[steam].name))
 		banPlayer(steam, "1 year", "Automatic ban by server manager", "")
-		-- TODO:  Add GBL ban here
+
+		banned = true
 	end
-	
+
 	if tonumber(players[steam].hackerScore) >= 100 and tonumber(players[steam].hackerScore) < 10000 then
 		players[steam].hackerScore = 0
-		message("say [" .. server.chatColour .. "]Temp banning " .. players[steam].name .. " 1 week for suspected hacking. Admins have been alerted.[-]")
+		message(string.format("say [%s]Temp banning %s 1 week for suspected hacking. Admins have been alerted.[-]", server.chatColour, players[steam].name))
 		banPlayer(steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
-	end	
+
+		banned = true
+	end
 
 	-- test for hackers teleporting
 	if (os.time() - players[steam].lastCommandTimestamp > 60) and not server.ServerToolsDetected and not server.SDXDetected then
@@ -357,7 +361,7 @@ function playerInfo(faultyInfo)
 					dist = distancexz(posX, posZ, igplayers[steam].xPos, igplayers[steam].zPos)
 				end
 
-				if (dist >= 500) and tonumber(igplayers[steam].deaths) == tonumber(deaths) then
+				if (dist >= 700) and tonumber(igplayers[steam].deaths) == tonumber(deaths) then
 					if tonumber(players[steam].tp) < 1 then
 						if players[steam].newPlayer == true then
 							new = " [FF8C40]NEW player "
@@ -389,8 +393,10 @@ function playerInfo(faultyInfo)
 							if tonumber(players[steam].hackerTPScore) > 1 then
 								players[steam].hackerTPScore = 0
 								players[steam].tp = 0
-								message("say [" .. server.chatColour .. "]Temp-banning " .. players[steam].name .. " 1 week for unexplained teleporting. An admin will investigate the circumstances.[-]")
+								message(string.format("say [%s]Temp banning %s 1 week for unexplained teleporting. An admin will investigate the circumstances.[-]", server.chatColour, players[steam].name))
 								banPlayer(steam, "1 week", "We detected unusual teleporting from you and are investigating the circumstances.", "")
+
+								banned = true
 							end
 
 							alertAdmins(id .. " name: " .. name .. " detected teleporting! In fly mode, type " .. server.commandPrefix .. "near " .. id .. " to shadow them.", "warn")
@@ -407,13 +413,13 @@ function playerInfo(faultyInfo)
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	players[steam].id = id	
+	players[steam].id = id
 	players[steam].name = name
 	players[steam].steamOwner = igplayers[steam].steamOwner
-	igplayers[steam].id = id	
+	igplayers[steam].id = id
 	igplayers[steam].name = name
 	igplayers[steam].steam = steam
-	
+
 	if igplayers[steam].deaths ~= nil then
 		if tonumber(igplayers[steam].deaths) < tonumber(deaths) then
 			if server.SDXDetected then
@@ -421,7 +427,7 @@ function playerInfo(faultyInfo)
 				players[chatvars.playerid].deathY = math.ceil(igplayers[steam].yPosLast)
 				players[chatvars.playerid].deathZ = math.floor(igplayers[steam].zPosLast)
 			end
-		end	
+		end
 	end
 
 	igplayers[steam].xPosLast = igplayers[steam].xPos
@@ -432,15 +438,15 @@ function playerInfo(faultyInfo)
 	igplayers[steam].yPos = posY
 	igplayers[steam].zPos = posZ
 	igplayers[steam].playerKills = kills
-	
+
 	igplayers[steam].deaths = deaths
 	igplayers[steam].zombies = zombies
 	igplayers[steam].score = score
 
-	if tonumber(players[steam].level) > 2000 then	
+	if tonumber(players[steam].level) > 2000 then
 		players[steam].hackerScore = 10000
-	end	
-	
+	end
+
 	igplayers[steam].level = level
 	players[steam].level = level
 	igplayers[steam].killTimer = 0 -- to help us detect a player that has disconnected unnoticed
@@ -449,7 +455,7 @@ function playerInfo(faultyInfo)
 	igplayers[steam].regionZ = regionZ
 	igplayers[steam].chunkX = chunkX
 	igplayers[steam].chunkZ = chunkZ
-	
+
 	if pvpZone(posX, posZ) then
 		igplayers[steam].currentLocationPVP = true
 	else
@@ -483,14 +489,14 @@ function playerInfo(faultyInfo)
 
 	if players[steam].showLocationMessages then
 		if igplayers[steam].alertLocation ~= currentLocation and currentLocation ~= false then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Welcome to " .. currentLocation .. "[-]")
+			message(string.format("pm %s [%s]Welcome to %s[-]", steam, server.chatColour, currentLocation))
 		end
 	end
 
 	if currentLocation == false then
 		if players[steam].showLocationMessages then
 			if igplayers[steam].alertLocation ~= "" then
-				message("pm " .. steam .. " [" .. server.chatColour .. "]You have left " .. igplayers[steam].alertLocation .. "[-]")
+				message(string.format("pm %s [%s]You have left %s[-]", steam, server.chatColour, igplayers[steam].alertLocation))
 			end
 		end
 
@@ -512,7 +518,7 @@ function playerInfo(faultyInfo)
 			irc_chat(server.ircMain, "Player " .. name .. "'s new player status has been removed because their level is " .. level)
 		end
 	end
-	
+
 	-- fix weird cash bug
 	if tonumber(players[steam].cash) < 0 then
 		players[steam].cash = 0
@@ -524,82 +530,72 @@ function playerInfo(faultyInfo)
 			players[steam].cash = tonumber(players[steam].cash) + math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillReward
 
 			if (players[steam].watchCash == true) then
-				message("pm " .. steam .. " [" .. server.chatColour .. "]+" .. math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillReward .. " " .. server.moneyPlural .. ". $" .. players[steam].cash .. " in the bank[-]")
+				message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", steam, server.chatColour, math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillReward, server.moneyPlural, players[steam].cash))
 			end
 		end
 
 		if igplayers[steam].doge then
-			r = rand(70)
-			if r == 1 then message("pm " .. steam .. " [" .. server.chatColour .. "]MUCH KILL[-]")	end
-			if r == 2 then message("pm " .. steam .. " [" .. server.chatColour .. "]GREAT PAIN[-]")	end
-			if r == 3 then message("pm " .. steam .. " [" .. server.chatColour .. "]WOW[-]")	end
-			if r == 4 then message("pm " .. steam .. " [" .. server.chatColour .. "]VERY DEATH[-]")	end
-			if r == 5 then message("pm " .. steam .. " [" .. server.chatColour .. "]AMAZING[-]")	end
-			if r == 6 then message("pm " .. steam .. " [" .. server.chatColour .. "]CALL 911[-]")	end
-			if r == 7 then message("pm " .. steam .. " [" .. server.chatColour .. "]BIG HIT[-]")	end
-			if r == 8 then message("pm " .. steam .. " [" .. server.chatColour .. "]EXTREME GORE[-]")	end
-			if r == 9 then message("pm " .. steam .. " [" .. server.chatColour .. "]EXTREME POWER SHOT[-]")	end
-			if r == 10 then message("pm " .. steam .. " [" .. server.chatColour .. "]EPIC BLOOD LOSS[-]")	end
-			if r == 11 then message("pm " .. steam .. " [" .. server.chatColour .. "]OMG[-]")	end
-			if r == 12 then message("pm " .. steam .. " [" .. server.chatColour .. "]OVERKILL[-]")	end
-			if r == 13 then message("pm " .. steam .. " [" .. server.chatColour .. "]EXTREME OVERKILL[-]")	end
-			if r == 14 then message("pm " .. steam .. " [" .. server.chatColour .. "]VERY OP[-]")	end
-			if r == 15 then message("pm " .. steam .. " [" .. server.chatColour .. "]DISMEMBERMENT[-]")	end
-			if r == 16 then message("pm " .. steam .. " [" .. server.chatColour .. "]HEAD SHOT[-]")	end
-			if r == 17 then message("pm " .. steam .. " [" .. server.chatColour .. "]PSYCHO[-]")	end
-			if r == 18 then message("pm " .. steam .. " [" .. server.chatColour .. "]HAX[-]")	end
-			if r == 19 then message("pm " .. steam .. " [" .. server.chatColour .. "]GAME OVER[-]")	end
-			if r == 20 then message("pm " .. steam .. " [" .. server.chatColour .. "]OWNED[-]")	end
-			if r == 21 then message("pm " .. steam .. " [" .. server.chatColour .. "]DUDE[-]")	end
-			if r == 22 then message("pm " .. steam .. " [" .. server.chatColour .. "]SICK[-]")	end
-			if r == 23 then message("pm " .. steam .. " [" .. server.chatColour .. "]INCREDIBLE[-]")	end
-			if r == 24 then message("pm " .. steam .. " [" .. server.chatColour .. "]BODY PARTS[-]")	end
-			if r == 25 then message("pm " .. steam .. " [" .. server.chatColour .. "]WTF[-]")	end
-			if r == 26 then message("pm " .. steam .. " [" .. server.chatColour .. "]EPIC[-]")	end
-			if r == 27 then message("pm " .. steam .. " [" .. server.chatColour .. "]AIMBOT[-]")	end
-			if r == 28 then message("pm " .. steam .. " [" .. server.chatColour .. "]EXPLOSIVE[-]")	end
-			if r == 29 then message("pm " .. steam .. " [" .. server.chatColour .. "]IMPOSSIBLE[-]")	end
-			if r == 30 then message("pm " .. steam .. " [" .. server.chatColour .. "]MASSIVE HURT[-]")	end
-			if r == 31 then message("pm " .. steam .. " [" .. server.chatColour .. "]C-C-C-COMBO BREAKER[-]")	end
-			if r == 32 then message("pm " .. steam .. " [" .. server.chatColour .. "]ULTRA KILL[-]")	end
-			if r == 33 then message("pm " .. steam .. " [" .. server.chatColour .. "]SUPPRESSED[-]")	end
-			if r == 34 then message("pm " .. steam .. " [" .. server.chatColour .. "]IMPRESSIVE[-]")	end
-			if r == 35 then message("pm " .. steam .. " [" .. server.chatColour .. "]ONE UP[-]")	end
-			if r == 36 then message("pm " .. steam .. " [" .. server.chatColour .. "]MEGA KILL[-]")	end
-			if r == 37 then message("pm " .. steam .. " [" .. server.chatColour .. "]SUPER KILL[-]")	end
-			if r == 38 then message("pm " .. steam .. " [" .. server.chatColour .. "]SKILL SHOT[-]")	end
-			if r == 39 then message("pm " .. steam .. " [" .. server.chatColour .. "]VERY AMAZING[-]")	end
-			if r == 40 then message("pm " .. steam .. " [" .. server.chatColour .. "]EPIC OWNAGE[-]")	end
-			if r == 41 then message("pm " .. steam .. " [" .. server.chatColour .. "]OMG WTF HAX[-]")	end
-			if r == 42 then message("pm " .. steam .. " [" .. server.chatColour .. "]HOW[-]")	end
-			if r == 43 then message("pm " .. steam .. " [" .. server.chatColour .. "]IMPOSSIBLE[-]")	end
-			if r == 44 then message("pm " .. steam .. " [" .. server.chatColour .. "]CRAZY KILL[-]")	end
-			if r == 45 then message("pm " .. steam .. " [" .. server.chatColour .. "]LEGENDARY KILL[-]")	end
-			if r == 46 then message("pm " .. steam .. " [" .. server.chatColour .. "]GUTSY[-]")	end
-			if r == 47 then message("pm " .. steam .. " [" .. server.chatColour .. "]SMOOTH[-]")	end
-			if r == 48 then message("pm " .. steam .. " [" .. server.chatColour .. "]PRO[-]")	end
-			if r == 49 then message("pm " .. steam .. " [" .. server.chatColour .. "]NUKED[-]")	end
-			if r == 50 then message("pm " .. steam .. " [" .. server.chatColour .. "]STOLEN KILL[-]")	end
-			if r == 51 then message("pm " .. steam .. " [" .. server.chatColour .. "]LEEEEEEEEEEEEEROY JENKINS!!!!!![-]")	end
-			if r == 52 then message("pm " .. steam .. " [" .. server.chatColour .. "]THANKS OBAMA[-]")	end
-			if r == 53 then message("pm " .. steam .. " [" .. server.chatColour .. "]WE GOT A BADDASS OVER HERE[-]")	end
-			if r == 54 then message("pm " .. steam .. " [" .. server.chatColour .. "]WTF BBQ[-]")	end
-			if r == 55 then message("pm " .. steam .. " [" .. server.chatColour .. "]JUST A FLESH WOUND[-]")	end
-			if r == 56 then message("pm " .. steam .. " [" .. server.chatColour .. "]WALK IT OFF[-]")	end
-			if r == 57 then message("pm " .. steam .. " [" .. server.chatColour .. "]THAT'S GOTTA HURT[-]")	end
-			if r == 58 then message("pm " .. steam .. " [" .. server.chatColour .. "]OOPS[-]")	end
-			if r == 59 then message("pm " .. steam .. " [" .. server.chatColour .. "]DAMN[-]")	end
-			if r == 60 then message("pm " .. steam .. " [" .. server.chatColour .. "]THUD[-]")	end
-			if r == 61 then message("pm " .. steam .. " [" .. server.chatColour .. "]FLUKE[-]")	end
-			if r == 62 then message("pm " .. steam .. " [" .. server.chatColour .. "]SORRY![-]")	end
-			if r == 63 then message("pm " .. steam .. " [" .. server.chatColour .. "]CHEAP[-]")	end
-			if r == 64 then message("pm " .. steam .. " [" .. server.chatColour .. "]BEGINNERS LUCK[-]")	end
-			if r == 65 then message("pm " .. steam .. " [" .. server.chatColour .. "]I'LL BE BACK[-]")	end
-			if r == 66 then message("pm " .. steam .. " [" .. server.chatColour .. "]HASTA LA VISTA BABY[-]")	end
-			if r == 67 then message("pm " .. steam .. " [" .. server.chatColour .. "]NOT THE KNEE![-]")	end
-			if r == 68 then message("pm " .. steam .. " [" .. server.chatColour .. "]KILLED DEAD[-]")	end
-			if r == 69 then message("pm " .. steam .. " [" .. server.chatColour .. "]LUCKY SHOT[-]")	end
-			if r == 70 then message("pm " .. steam .. " [" .. server.chatColour .. "]HE'S DEAD JIM[-]")	end
+			r = rand(60)
+			if r == 1 then message(string.format("pm %s [%s]MUCH KILL[-]", steam, server.chatColour)) end
+			if r == 2 then message(string.format("pm %s [%s]GREAT PAIN[-]", steam, server.chatColour)) end
+			if r == 3 then message(string.format("pm %s [%s]WOW[-]", steam, server.chatColour)) end
+			if r == 4 then message(string.format("pm %s [%s]VERY DEATH[-]", steam, server.chatColour)) end
+			if r == 5 then message(string.format("pm %s [%s]AMAZING[-]", steam, server.chatColour)) end
+			if r == 6 then message(string.format("pm %s [%s]CALL 911[-]", steam, server.chatColour)) end
+			if r == 7 then message(string.format("pm %s [%s]BIG HIT[-]", steam, server.chatColour)) end
+			if r == 8 then message(string.format("pm %s [%s]EXTREME GORE[-]", steam, server.chatColour)) end
+			if r == 9 then message(string.format("pm %s [%s]EXTREME POWER SHOT[-]", steam, server.chatColour)) end
+			if r == 10 then message(string.format("pm %s [%s]EPIC BLOOD LOSS[-]", steam, server.chatColour)) end
+			if r == 11 then message(string.format("pm %s [%s]OMG[-]", steam, server.chatColour)) end
+			if r == 12 then message(string.format("pm %s [%s]OVERKILL[-]", steam, server.chatColour)) end
+			if r == 13 then message(string.format("pm %s [%s]EXTREME OVERKILL[-]", steam, server.chatColour)) end
+			if r == 14 then message(string.format("pm %s [%s]VERY OP[-]", steam, server.chatColour)) end
+			if r == 15 then message(string.format("pm %s [%s]DISMEMBERMENT[-]", steam, server.chatColour)) end
+			if r == 16 then message(string.format("pm %s [%s]HEADSHOT[-]", steam, server.chatColour)) end
+			if r == 17 then message(string.format("pm %s [%s]PSYCHO[-]", steam, server.chatColour)) end
+			if r == 18 then message(string.format("pm %s [%s]HAX[-]", steam, server.chatColour)) end
+			if r == 19 then message(string.format("pm %s [%s]GAME OVER MAN!  GAME OVER![-]", steam, server.chatColour)) end
+			if r == 20 then message(string.format("pm %s [%s]OWNED[-]", steam, server.chatColour)) end
+			if r == 21 then message(string.format("pm %s [%s]DUDE[-]", steam, server.chatColour)) end
+			if r == 22 then message(string.format("pm %s [%s]SICK[-]", steam, server.chatColour)) end
+			if r == 23 then message(string.format("pm %s [%s]INCREDIBLE[-]", steam, server.chatColour)) end
+			if r == 24 then message(string.format("pm %s [%s]BODY PARTS FLYING[-]", steam, server.chatColour)) end
+			if r == 25 then message(string.format("pm %s [%s]WTF[-]", steam, server.chatColour)) end
+			if r == 26 then message(string.format("pm %s [%s]EPIC[-]", steam, server.chatColour)) end
+			if r == 27 then message(string.format("pm %s [%s]AIMBOT HAX[-]", steam, server.chatColour)) end
+			if r == 28 then message(string.format("pm %s [%s]EXPLOSIVE[-]", steam, server.chatColour)) end
+			if r == 29 then message(string.format("pm %s [%s]IMPOSSIBRU[-]", steam, server.chatColour)) end
+			if r == 30 then message(string.format("pm %s [%s]MASSIVE HURT[-]", steam, server.chatColour)) end
+			if r == 31 then message(string.format("pm %s [%s]C-C-C-COMBO BREAKER[-]", steam, server.chatColour)) end
+			if r == 32 then message(string.format("pm %s [%s]ULTRA KILL[-]", steam, server.chatColour)) end
+			if r == 33 then message(string.format("pm %s [%s]SUPPRESSED[-]", steam, server.chatColour)) end
+			if r == 34 then message(string.format("pm %s [%s]IMPRESSIVE[-]", steam, server.chatColour)) end
+			if r == 35 then message(string.format("pm %s [%s]ONE UP[-]", steam, server.chatColour)) end
+			if r == 36 then message(string.format("pm %s [%s]MEGA KILL[-]", steam, server.chatColour)) end
+			if r == 37 then message(string.format("pm %s [%s]SUPER KILL[-]", steam, server.chatColour)) end
+			if r == 38 then message(string.format("pm %s [%s]SKILL SHOT[-]", steam, server.chatColour)) end
+			if r == 39 then message(string.format("pm %s [%s]VERY AMAZING[-]", steam, server.chatColour)) end
+			if r == 40 then message(string.format("pm %s [%s]EPIC OWNAGE[-]", steam, server.chatColour)) end
+			if r == 41 then message(string.format("pm %s [%s]OMG WTF HAX[-]", steam, server.chatColour)) end
+			if r == 42 then message(string.format("pm %s [%s]HOW?[-]", steam, server.chatColour)) end
+			if r == 43 then message(string.format("pm %s [%s]UNPOSSIBLE![-]", steam, server.chatColour)) end
+			if r == 44 then message(string.format("pm %s [%s]CRAZY KILL[-]", steam, server.chatColour)) end
+			if r == 45 then message(string.format("pm %s [%s]LEGENDARY KILL[-]", steam, server.chatColour)) end
+			if r == 46 then message(string.format("pm %s [%s]GUTSY[-]", steam, server.chatColour)) end
+			if r == 47 then message(string.format("pm %s [%s]SMOOTH[-]", steam, server.chatColour)) end
+			if r == 48 then message(string.format("pm %s [%s]PRO[-]", steam, server.chatColour)) end
+			if r == 49 then message(string.format("pm %s [%s]NUKED[-]", steam, server.chatColour)) end
+			if r == 50 then message(string.format("pm %s [%s]STOLEN KILL[-]", steam, server.chatColour)) end
+			if r == 51 then message(string.format("pm %s [%s]LEEEEEEEEEEEEEROY JENKINS!!!!!![-]", steam, server.chatColour)) end
+			if r == 52 then message(string.format("pm %s [%s]TRUMPED[-]", steam, server.chatColour)) end
+			if r == 53 then message(string.format("pm %s [%s]CRAP[-]", steam, server.chatColour)) end
+			if r == 54 then message(string.format("pm %s [%s]WTF BBQ[-]", steam, server.chatColour)) end
+			if r == 55 then message(string.format("pm %s [%s]KILLJOY[-]", steam, server.chatColour)) end
+			if r == 56 then message(string.format("pm %s [%s]TIS BUT A SCRATCH[-]", steam, server.chatColour)) end
+			if r == 57 then message(string.format("pm %s [%s]LEGLESS[-]", steam, server.chatColour)) end
+			if r == 58 then message(string.format("pm %s [%s]OOPS[-]", steam, server.chatColour)) end
+			if r == 59 then message(string.format("pm %s [%s]DAMN[-]", steam, server.chatColour)) end
+			if r == 60 then message(string.format("pm %s [%s]RIM SHOT[-]", steam, server.chatColour)) end
 		end
 
 		if server.allowBank then
@@ -638,13 +634,15 @@ function playerInfo(faultyInfo)
 	end
 
 	if (igplayers[steam].greet == true) and tonumber(igplayers[steam].greetdelay) == 0 then
-	if (steam == debugPlayerInfo) and debug then dbug("greet is true", true) end	
+	if (steam == debugPlayerInfo) and debug then dbug("greet is true", true) end
 		igplayers[steam].greet = false
 
 		if server.welcome ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]" .. server.welcome .. "[-]")
+			message(string.format("pm %s [%s]%s[-]", steam, server.chatColour, server.welcome))
 		else
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Welcome to " .. server.serverName .. "!  Type " .. server.commandPrefix .. "info, " .. server.commandPrefix .. "rules or " .. server.commandPrefix .. "help for commands.[-]")
+			--message(string.format("pm %s [%s]Welcome to %s! Type %sinfo, %srules, or %shelp for commands[-]", steam, server.chatColour, server.name, server.commandPrefix, server.commandPrefix, server.commandPrefix))
+			message(string.format("pm %s [%s]We have a server manager bot called %s[-]", steam, server.chatColour, server.botName))
 		end
 
 		if (tonumber(igplayers[steam].zombies) ~= 0) then
@@ -677,10 +675,10 @@ function playerInfo(faultyInfo)
 			if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]I am holding " .. players[steam].removedClaims .. " land claim blocks for you. Type " .. server.commandPrefix .. "give claims to receive them.[-]") .. "')") end
 		end
 
-		if botman.dbConnected then 
+		if botman.dbConnected then
 			cursor,errorString = conn:execute("SELECT * FROM mail WHERE recipient = " .. steam .. " and status = 0")
 			rows = cursor:numrows()
-			
+
 			if rows > 0 then
 				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]You have unread mail.  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')") end
 			end
@@ -691,7 +689,7 @@ function playerInfo(faultyInfo)
 		end
 
 		if server.warnBotReset == true and accessLevel(steam) == 0 then
-			if botman.dbConnected then 
+			if botman.dbConnected then
 				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]ALERT!  It appears that the server has been reset.[-]") .. "')")
 				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To reset me type " .. server.commandPrefix .. "reset bot.[-]") .. "')")
 				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To dismiss this alert type " .. server.commandPrefix .. "no reset.[-]") .. "')")
@@ -973,25 +971,25 @@ function playerInfo(faultyInfo)
 	-- prevent player exceeding the map limit unless they are an admin except when ignoreadmins is false
 	if not isDestinationAllowed(steam, intX, intZ) then
 		if players[steam].donor then
-			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")		
+			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")
 		else
 			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")
 		end
-		
+
 		players[steam].tp = 1
 		players[steam].hackerTPScore = 0
-		
+
 		if not isDestinationAllowed(steam, igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK) then
 			send ("tele " .. steam .. " 0 -1 0") -- if we don't know where to send the player, send them to the middle of the map. This should only happen rarely.
-			message("pm " .. steam .. " [" .. server.warnColour .. "]You have been moved to the center of the map.[-]")		
+			message("pm " .. steam .. " [" .. server.warnColour .. "]You have been moved to the center of the map.[-]")
 		else
 			send ("tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK)
 		end
-			
+
 		faultyPlayerinfo = false
-		return	
+		return
 	end
-	
+
 	if tonumber(players[steam].exiled) == 1 and locations["exile"] and not players[steam].prisoner then
 		if (distancexz( intX, intZ, locations["exile"].x, locations["exile"].z ) > tonumber(locations["exile"].size)) then
 			randomTP(steam, "exile", true)
@@ -1018,7 +1016,7 @@ function playerInfo(faultyInfo)
 			if (locations["prison"]) then
 				if (squareDistanceXZXZ(locations["prison"].x, locations["prison"].z, intX, intZ, locations["prison"].size)) then
 					players[steam].alertPrison = false
-					randomTP(steam, "prison", true)					
+					randomTP(steam, "prison", true)
 				end
 			end
 
@@ -1052,65 +1050,65 @@ function playerInfo(faultyInfo)
 		faultyPlayerinfo = false
 		return
 	end
-	
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end	
+
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- remove player from location if the location is closed or their level is outside level restrictions
 	if currentLocation ~= false then
 		tmp = {}
 		tmp.bootPlayer = false
-	
+
 		if not locations[currentLocation].open and accessLevel(steam) > 2 then
 			tmp.bootPlayer = true
 		end
-		
+
 		-- check player level restrictions on the location
 		if (tonumber(locations[currentLocation].minimumLevel) > 0 or tonumber(locations[currentLocation].maximumLevel) > 0) and accessLevel(steam) > 2 then
 			if tonumber(locations[currentLocation].minimumLevel) > 0 and level < tonumber(locations[currentLocation].minimumLevel) then
 				tmp.bootPlayer = true
 			end
-			
+
 			if tonumber(locations[currentLocation].minimumLevel) > 0 and tonumber(locations[currentLocation].maximumLevel) > 0 and (level < tonumber(locations[currentLocation].minimumLevel) or level > tonumber(locations[currentLocation].maximumLevel)) then
-				tmp.bootPlayer = true			
-			end			
-			
+				tmp.bootPlayer = true
+			end
+
 			if tonumber(locations[currentLocation].maximumLevel) > 0 and level > tonumber(locations[currentLocation].maximumLevel) then
 				tmp.bootPlayer = true
-			end						
+			end
 		end
-	
+
 		if tmp.bootPlayer then
 			tmp = {}
-			tmp.side = rand(4)		
+			tmp.side = rand(4)
 			tmp.offset = rand(50)
-			
+
 			if tmp.side == 1 then
 				tmp.x = locations[currentLocation].x - (locations[currentLocation].size + 20 + tmp.offset)
 				tmp.z = locations[currentLocation].z
 			end
-			
+
 			if tmp.side == 2 then
 				tmp.x = locations[currentLocation].x + (locations[currentLocation].size + 20 + tmp.offset)
 				tmp.z = locations[currentLocation].z
-			end		
-			
+			end
+
 			if tmp.side == 3 then
-				tmp.x = locations[currentLocation].x 
+				tmp.x = locations[currentLocation].x
 				tmp.z = locations[currentLocation].z - (locations[currentLocation].size + 20 + tmp.offset)
-			end				
-			
+			end
+
 			if tmp.side == 4 then
-				tmp.x = locations[currentLocation].x 
+				tmp.x = locations[currentLocation].x
 				tmp.z = locations[currentLocation].z + (locations[currentLocation].size + 20 + tmp.offset)
-			end	
+			end
 
 			tmp.cmd = "tele " .. steam .. " " .. tmp.x .. " -1 " .. tmp.z
 			prepareTeleport(steam, tmp.cmd)
 			teleport(tmp.cmd, true)
 		end
 	end
-	
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end	
+
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- teleport lookup
 	if (igplayers[steam].teleCooldown < 1) and (players[steam].prisoner == false) then
@@ -1132,7 +1130,7 @@ function playerInfo(faultyInfo)
 					end
 
 					if match == 2 and teleports[tp].oneway == false then
-						if isDestinationAllowed(steam, teleports[tp].x, teleports[tp].z) then					
+						if isDestinationAllowed(steam, teleports[tp].x, teleports[tp].z) then
 							igplayers[steam].teleCooldown = 2
 							cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
 							teleport(cmd, true)
@@ -1150,21 +1148,21 @@ function playerInfo(faultyInfo)
 
 	-- linked waypoint lookup
 	if (igplayers[steam].teleCooldown < 1) and (players[steam].prisoner == false) then
-		tmp = {}	
+		tmp = {}
 		tmp.wpid = LookupWaypoint(posX, posY, posZ)
-		
+
 		if tonumber(tmp.wpid) > 0 then
 			tmp.linkedID = waypoints[tmp.wpid].linked
 
-			if (waypoints[tmp.wpid].shared and isFriend(waypoints[tmp.wpid].steam, steam) or waypoints[tmp.wpid].steam == steam) and tonumber(tmp.linkedID) > 0 then							
+			if (waypoints[tmp.wpid].shared and isFriend(waypoints[tmp.wpid].steam, steam) or waypoints[tmp.wpid].steam == steam) and tonumber(tmp.linkedID) > 0 then
 				-- reject if not an admin and player teleporting has been disabled
 				if server.allowTeleporting then
-					if isDestinationAllowed(steam, waypoints[tmp.linkedID].x, waypoints[tmp.linkedID].z) then				
+					if isDestinationAllowed(steam, waypoints[tmp.linkedID].x, waypoints[tmp.linkedID].z) then
 						igplayers[steam].teleCooldown = 2
 						cmd = "tele " .. steam .. " " .. math.floor(waypoints[tmp.linkedID].x) .. " " .. math.ceil(waypoints[tmp.linkedID].y) .. " " .. math.floor(waypoints[tmp.linkedID].z)
 						teleport(cmd, true)
 					end
-					
+
 					faultyPlayerinfo = false
 					return
 				else
@@ -1172,13 +1170,13 @@ function playerInfo(faultyInfo)
 						igplayers[steam].teleCooldown = 2
 						cmd = "tele " .. steam .. " " .. math.floor(waypoints[tmp.linkedID].x) .. " " .. math.ceil(waypoints[tmp.linkedID].y) .. " " .. math.floor(waypoints[tmp.linkedID].z)
 						teleport(cmd, true)
-						
+
 						faultyPlayerinfo = false
-						return					
+						return
 					end
-				end						
-			end	
-		end			
+				end
+			end
+		end
 	end
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
@@ -1215,7 +1213,7 @@ function playerInfo(faultyInfo)
 	-- add to tracker table
 	dist = distancexyz(intX, intY, intZ, igplayers[steam].xPosLast, igplayers[steam].yPosLast, igplayers[steam].zPosLast)
 
-	if (dist > 2) and tonumber(intY) > 0 and tonumber(intY) < 255 then
+	if (dist > 2) and tonumber(intY) < 10000 then
 		-- record the players position
 		if igplayers[steam].raiding then
 			flag = flag .. "R"
@@ -1225,7 +1223,7 @@ function playerInfo(faultyInfo)
 			flag = flag .. "B"
 		end
 
-		if igplayers[steam].flying then
+		if igplayers[steam].flying or igplayers[steam].noclip then
 			flag = flag .. "F"
 		end
 
@@ -1360,8 +1358,8 @@ function playerInfoTrigger(line)
 
 	if string.find(line, ", health=") then
 		if faultyPlayerinfo == true and tonumber(faultyPlayerinfoID) > -1 then
-			dbug("debug playerinfo faulty player " .. faultyPlayerinfoID, true)				
-		
+			dbug("debug playerinfo faulty player " .. faultyPlayerinfoID, true)
+
 			windowMessage(server.windowDebug, "!! Fault detected in playerinfo trigger\n")
 			windowMessage(server.windowDebug, faultyPlayerinfoLine .. "\n")
 

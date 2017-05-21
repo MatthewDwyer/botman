@@ -17,7 +17,7 @@ function inventoryOwner(line)
 	pname = string.sub(line, string.find(line, "player ") + 7)
 	pname = string.sub(pname, 1, string.len(pname) - 1)
 
-	invCheckID = LookupPlayer(pname, "all") 
+	invCheckID = LookupPlayer(pname, "all")
 
 	if (string.find(line, "Belt of player")) then
 		if (igplayers[invCheckID].inventoryLast ~= igplayers[invCheckID].inventory) then

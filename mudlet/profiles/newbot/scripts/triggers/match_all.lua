@@ -9,24 +9,24 @@
 
 function removeOldStaff()
 	local k,v
-	
+
 	for k,v in pairs(owners) do
 		if not staffList[k] then
 			owners[k] = nil
 		end
 	end
-	
+
 	for k,v in pairs(admins) do
 		if not staffList[k] then
 			admins[k] = nil
 		end
-	end	
-	
+	end
+
 	for k,v in pairs(mods) do
 		if not staffList[k] then
 			mods[k] = nil
 		end
-	end	
+	end
 end
 
 
@@ -89,7 +89,7 @@ function matchAll(line)
 
 	if string.find(line, "ERROR: unknown command 'pug'") then
 		server.scanNoclip = false
-	end	
+	end
 
 	-- detect server tools
 	if string.find(line, "Mod SDX:") or string.find(line, "SDX: ") and not server.SDXDetected then
@@ -191,7 +191,7 @@ function matchAll(line)
 			players[pid].deathZ = igplayers[pid].zPos
 
 			irc_chat(server.ircMain, "Player " .. pid .. " name: " .. pname .. "'s death recorded at " .. igplayers[pid].deadX .. " " .. igplayers[pid].deadY .. " " .. igplayers[pid].deadZ)
-			irc_chat(server.ircAlerts, "Player " .. pid .. " name: " .. pname .. "'s death recorded at " .. igplayers[pid].deadX .. " " .. igplayers[pid].deadY .. " " .. igplayers[pid].deadZ)			
+			irc_chat(server.ircAlerts, "Player " .. pid .. " name: " .. pname .. "'s death recorded at " .. igplayers[pid].deadX .. " " .. igplayers[pid].deadY .. " " .. igplayers[pid].deadZ)
 
 			if tonumber(server.packCooldown) > 0 then
 				players[pid].packCooldown = os.time() + server.packCooldown
@@ -219,21 +219,21 @@ function matchAll(line)
 			end
 		end
 	end
-	
-	
+
+
 	if (string.sub(line, 1, 4) == os.date("%Y")) then
 		botman.readGG = false
-		
+
 		if (echoConsole ~= nil) then
 			echoConsole = nil
-			echoConsoleTo = l						
+			echoConsoleTo = l
 		end
-	end		
+	end
 
-	
+
 	if botman.readGG then
 		number = tonumber(string.match(line, " (%d+)"))
-	
+
 		if (string.find(line, "MaxSpawnedZombies set to")) then
 			server.MaxSpawnedZombies = number
 		end
@@ -253,10 +253,10 @@ function matchAll(line)
 		if (string.find(line, "DayNightLength =")) then
 			server.DayNightLength = number
 		end
-		
+
 		if (string.find(line, "DayLightLength =")) then
 			server.DayLightLength = number
-		end		
+		end
 
 		if (string.find(line, "DropOnDeath =")) then
 			server.DropOnDeath = number
@@ -299,7 +299,7 @@ function matchAll(line)
 			server.serverName = string.trim(string.sub(line, 22))
 
 			if string.find(string.lower(server.serverName), "pvp") and not string.find(string.lower(server.serverName), "pve") then
-				server.gameType = "pvp"			
+				server.gameType = "pvp"
 			end
 		end
 
@@ -326,16 +326,16 @@ function matchAll(line)
 		end
 	end
 
-	
+
 	if getAdminList ~= nil then
 		if string.sub(line, 1, 4) ~= "    " then
 			getAdminList = nil
 		end
-		
+
 		removeOldStaff()
 	end
 
-	
+
 	if getAdminList ~= nil then
 		temp = string.split(line, ":")
 		temp[1] = string.trim(temp[1])
@@ -376,7 +376,7 @@ function matchAll(line)
 		end
 	end
 
-	
+
 	-- update owners, admins and mods
 	if string.find(line, "Level: SteamID (Player name if online)", nil, true) then
 		getAdminList = true
@@ -392,7 +392,7 @@ function matchAll(line)
 				players[llpid].removedClaims = 0
 			end
 
-			if botman.dbConnected then 
+			if botman.dbConnected then
 				conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3] .. " AND remove > 1")
 				conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3])
 			end
@@ -488,7 +488,7 @@ function matchAll(line)
 	end
 
 
-	if (string.find(line, "please specify one of the entities")) then	
+	if (string.find(line, "please specify one of the entities")) then
 		-- flag all the zombies for removal so we can detect deleted zeds
 		for k,v in pairs(gimmeZombies) do
 			gimmeZombies[k].remove = true
@@ -502,27 +502,27 @@ function matchAll(line)
 	if string.find(line, "command 'rcd") and string.find(line, server.botsIP) then
 		fixChunkDensity = true
 	end
-	
-	
+
+
 	if string.find(line, "Executing command 'gg'") and string.find(line, server.botsIP) then
 		botman.readGG = true
-	end	
+	end
 
-	
+
 	if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
 		botman.listEntities = true
-	end	
-	
-	
+	end
+
+
 	if string.find(line, "Executing command 'version'") and string.find(line, server.botsIP) then
 		server.SDXDetected = false
 		server.ServerToolsDetected = false
-		
-		if botman.dbConnected then 
+
+		if botman.dbConnected then
 			conn:execute("UPDATE server SET SDXDetected = 0")
 			conn:execute("UPDATE server SET ServerToolsDetected = 0")
 		end
-	end	
+	end
 
 
 	if echoConsoleTo ~= nil then
@@ -570,15 +570,15 @@ function matchAll(line)
 			echoConsole = true
 			return
 		end
-		
+
 		-- if (string.sub(line, 1, 4) == os.date("%Y")) then
 			-- botman.readGG = false
-			
+
 			-- if (echoConsole ~= nil) then
 				-- echoConsole = nil
-				-- echoConsoleTo = l						
+				-- echoConsoleTo = l
 			-- end
-		-- end		
+		-- end
 
 		if echoConsole == true then
 			line = line:gsub(",", "") -- strip out commas
@@ -600,7 +600,7 @@ function matchAll(line)
 				end
 			end
 
-			if botman.dbConnected then 
+			if botman.dbConnected then
 				cursor,errorString = conn:execute("SELECT Count(entityID) as maxZeds from gimmeZombies")
 				row = cursor:fetch({}, "a")
 				botman.maxGimmeZombies = tonumber(row.maxZeds)
@@ -608,7 +608,7 @@ function matchAll(line)
 		end
 	end
 
-	
+
 	--2015-08-23T15:08:25 87646.450 INF Executing command 'pm IPCHECK' by Telnet from 127.0.0.1:59765
 	if string.find(line, "IPCHECK") then
 		temp = string.sub(line, string.find(line, "from ") + 5)
@@ -624,18 +624,18 @@ function matchAll(line)
 		if server.hideCommands then
 			send("tcch " .. server.commandPrefix)
 		end
-		
+
 		return
 	end
 
-	
+
 	-- detect Alloc's Mod
 	if string.find(line, "Mod Allocs server fixes") then
 		server.allocs = true
 		return
 	end
 
-	
+
 	if server.coppi and not server.playersCanFly then
 		if string.find(line, "PUG: entity_id") then
 			words = {}
@@ -646,11 +646,11 @@ function matchAll(line)
 			pid = words[1]
 			pid = LookupPlayer(pid)
 
-			if players[pid].newPlayer then
-				temp = 10
-			else
-				temp = 30
-			end
+			-- if players[pid].newPlayer then
+				temp = 5
+			-- else
+				-- temp = 30
+			-- end
 
 			if string.find(line, "isUnderGround=True") and accessLevel(pid) > 2 then
 				igplayers[pid].noclip = true
@@ -665,16 +665,20 @@ function matchAll(line)
 
 					if tonumber(dist) > 5 then
 						if players[pid].newPlayer then
-							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
+							if tonumber(players[pid].ping) > 150 then
+								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 40
+							else
+								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
+							end
 						else
-							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 10
+							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 15
 						end
 					end
 
 					if dist > temp then
 						alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos) .. "[-]", "warn")
-						irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))						
-						irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
+						irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
+						irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
 					end
 				end
 			else
@@ -685,7 +689,7 @@ function matchAll(line)
 			end
 		end
 
-		
+
 		if string.find(line, "PGD: entity_id") then
 			words = {}
 			for word in string.gmatch(line, "(-?%d+)") do
@@ -706,7 +710,7 @@ function matchAll(line)
 						igplayers[pid].flyingZ = math.floor(igplayers[pid].zPos)
 					else
 						dist = distancexz(igplayers[pid].flyingX,igplayers[pid].flyingZ,math.floor(igplayers[pid].xPos),math.floor(igplayers[pid].zPos))
-						
+
 						if tonumber(dist) > 5 then
 							if players[pid].newPlayer then
 								if tonumber(players[pid].ping) > 150 then
@@ -715,19 +719,20 @@ function matchAll(line)
 									players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
 								end
 							else
-								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 10
+								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 15
 							end
-						end						
+						end
 
 						igplayers[pid].flyingX = math.floor(igplayers[pid].xPos)
 						igplayers[pid].flyingZ = math.floor(igplayers[pid].zPos)
 
-						if dist > 15 and dist < 100 then
+						if dist > 5 then
+						--if dist > 15 and dist < 100 then
 							igplayers[pid].flyCount = igplayers[pid].flyCount + 1
 
 							if tonumber(igplayers[pid].flyCount) > 1 then
-								irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))							
-								irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
+								irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (session: " .. players[pid].sessionCount .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
+								irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (session: " .. players[pid].sessionCount .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
 							end
 
 							if tonumber(igplayers[pid].flyCount) > 2 then
@@ -751,7 +756,7 @@ function matchAll(line)
 			end
 		end
 
-		
+
 		-- player chat colour
 		if string.find(line, "command 'cpc", nil, true) then
 			tmp = {}
@@ -764,26 +769,26 @@ function matchAll(line)
 			players[tmp.steam].chatColour = tmp.colour
 			if botman.dbConnected then conn:execute("UPDATE players SET chatColour = '" .. escape(tmp.colour) .. "' WHERE steam = " .. tmp.steam) end
 		end
-		
-		
+
+
 		-- player bed
 		if string.sub(line, 1, 11) == "PlayerBed: " then
 			tmp = {}
 			tmp.name = string.sub(line, 12, string.find(line, " at ") - 1)
 			tmp.steam = LookupPlayer(tmp.name)
-									
+
 			if tmp.steam then
 				tmp.split = string.split(string.sub(line, string.find(line, " at ") + 4), ",")
 				tmp.x = string.trim(tmp.split[1])
 				tmp.y = string.trim(tmp.split[2])
-				tmp.z = string.trim(tmp.split[3])	
-				
+				tmp.z = string.trim(tmp.split[3])
+
 				players[tmp.steam].bedX = tmp.x
-				players[tmp.steam].bedY = tmp.y				
-				players[tmp.steam].bedZ = tmp.z				
+				players[tmp.steam].bedY = tmp.y
+				players[tmp.steam].bedZ = tmp.z
 				if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. tmp.x .. ", bedY = " .. tmp.y .. ", bedZ = " .. tmp.z .. " WHERE steam = " .. tmp.steam) end
 			end
-		end		
+		end
 	end
 end
 

@@ -22,13 +22,13 @@ function gmsg_misc()
 		botman.faultyChat = false
 		return false
 	end
-	
+
 	-- votecrate for Deadlights server
 	if chatvars.words[1] == "votecrate" then
 		send("cvc " .. chatvars.playerid)
 		botman.faultyChat = false
 		return true
-	end	
+	end
 
 	if chatvars.words[1] == "list" and chatvars.words[2] == "bookmarks" then
 		pid = string.sub(chatvars.command, string.find(chatvars.command, "bookmarks ") + 10)
@@ -68,63 +68,63 @@ function gmsg_misc()
 	end
 
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.words[1] == "bail" then
 		pid = string.sub(chatvars.command, string.find(chatvars.command, "bail") + 5)
 		pid = stripQuotes(string.trim(pid))
-		pid = LookupPlayer(pid)	
+		pid = LookupPlayer(pid)
 
 		if (pid == nil) then
 			if tonumber(players[chatvars.playerid].bail) == 0 then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You cannot be bailed out of prison.[-]")		
-				botman.faultyChat = false
-				return true		
-			end				
-		
-			if not players[chatvars.playerid].prisoner then			
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not a prisoner.[-]")		
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You cannot be bailed out of prison.[-]")
 				botman.faultyChat = false
 				return true
-			else		
+			end
+
+			if not players[chatvars.playerid].prisoner then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not a prisoner.[-]")
+				botman.faultyChat = false
+				return true
+			else
 				if tonumber(players[chatvars.playerid].cash) < tonumber(players[chatvars.playerid].bail) then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You don't have enough " .. server.moneyPlural .. " to post bail.[-]")		
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You don't have enough " .. server.moneyPlural .. " to post bail.[-]")
 					botman.faultyChat = false
-					return true				
-				else				
+					return true
+				else
 					players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - tonumber(players[chatvars.playerid].bail)
 					conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid)
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[chatvars.playerid].bail .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")												
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[chatvars.playerid].bail .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")
 					gmsg(server.commandPrefix .. "release " .. chatvars.playerid)
 				end
-			end		
-			
+			end
+
 			botman.faultyChat = false
 			return true
-		else				
+		else
 			if not players[pid].prisoner then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[pid].name .. " is not a prisoner.[-]")		
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[pid].name .. " is not a prisoner.[-]")
 				botman.faultyChat = false
 				return true
 			else
 				if tonumber(players[pid].bail) == 0 then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[pid].name .. "  cannot be bailed out of prison.[-]")		
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[pid].name .. "  cannot be bailed out of prison.[-]")
 					botman.faultyChat = false
-					return true		
-				end							
-			
+					return true
+				end
+
 				if tonumber(players[chatvars.playerid].cash) < tonumber(players[pid].bail) then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You don't have enough " .. server.moneyPlural .. " to bail " .. players[pid].name .. ".[-]")		
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You don't have enough " .. server.moneyPlural .. " to bail " .. players[pid].name .. ".[-]")
 					botman.faultyChat = false
-					return true				
+					return true
 				else
 					if not isFriend(pid, chatvars.playerid) then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are only allowed to bail out friends.[-]")		
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are only allowed to bail out friends.[-]")
 						botman.faultyChat = false
 						return true
-					else				
+					else
 						players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - players[pid].bail
 						conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid)
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[pid].bail .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")													
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[pid].bail .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")
 						gmsg(server.commandPrefix .. "release " .. pid)
 					end
 				end
@@ -135,7 +135,7 @@ function gmsg_misc()
 		return true
 	end
 
-	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end	
+	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.words[1] == "get" and chatvars.words[2] == "region" and chatvars.words[3] ~=  nil then
 		if ToInt(chatvars.words[3]) == nil or ToInt(chatvars.words[4]) == nil then
@@ -263,9 +263,9 @@ function gmsg_misc()
 		botman.faultyChat = false
 		return true
 	end
-	
-	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end	
-	
+
+	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
+
 	if (chatvars.playername ~= "Server") then
 		if igplayers[chatvars.playerid].botQuestion == "reset server" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 			message("say [" .. server.chatColour .. "]Deleting all bot data and starting fresh..[-]")
@@ -279,7 +279,7 @@ function gmsg_misc()
 		end
 	end
 
-	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end	
+	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.playername ~= "Server") then
 		if igplayers[chatvars.playerid].botQuestion == "reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
@@ -293,9 +293,9 @@ function gmsg_misc()
 			return true
 		end
 	end
-	
-	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end	
-	
+
+	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
+
 	if (chatvars.playername ~= "Server") then
 		if igplayers[chatvars.playerid].botQuestion == "quick reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 			QuickBotReset()
@@ -307,7 +307,7 @@ function gmsg_misc()
 			botman.faultyChat = false
 			return true
 		end
-	end		
+	end
 
 if debug then dbug("debug misc end") end
 

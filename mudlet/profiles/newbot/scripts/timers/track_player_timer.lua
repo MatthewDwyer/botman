@@ -27,14 +27,14 @@ function trackPlayerTimer()
 					else
 						cursor,errorString = conn:execute("select * from memTracker where admin = " .. k .. " and trackerID > " .. v.trackerCount .. " order by trackerID limit 0," .. v.trackerSkip + 1)
 					end
-					
+
 					if not cursor then
 						return
 					end
 
 					row = cursor:fetch({}, "a")
 
-					if row then				
+					if row then
 						send("tele " .. k .. " " .. row.x .. " " .. row.y .. " " .. row.z)
 					end
 
@@ -42,7 +42,7 @@ function trackPlayerTimer()
 						row = cursor:fetch(row, "a")
 						v.trackerCount = row.trackerID
 					end
-					
+
 					v.trackerStopped = true
 
 					if v.trackerStop ~= nil then

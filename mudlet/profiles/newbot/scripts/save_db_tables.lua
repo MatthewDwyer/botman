@@ -35,10 +35,10 @@ end
 
 function updatePlayer(steam)
 	local k,v,value,temp
-	
+
 	if tonumber(steam) == nil or (string.len(steam) < 17) then
 		dbug("skipping player " .. v.name .. " for invalid steam id")
-	
+
 		-- don't process if steam is invalid
 		return
 	end
@@ -205,14 +205,14 @@ function savePlayer(steam, action)
 	if action == nil then
 		sqlString = "update players set"
 
-		for k,v in pairs(playerFields) do		
+		for k,v in pairs(playerFields) do
 			if sql[k] and sql[k].value and v.type ~= "tim" then
---dbug("k " .. k)			
+--dbug("k " .. k)
 --if v.type == "tin" then dbug("tim") end
 --dbug("sql[k].value " .. sql[k].value)
-			
+
 				if v.type == "var" then
---dbug("var")				
+--dbug("var")
 					sql[k].value = "'" .. escape(sql[k].value) .. "'"
 				end
 
@@ -223,12 +223,12 @@ function savePlayer(steam, action)
 				end
 
 				if v.type == "tim" then
---dbug("tim")				
+--dbug("tim")
 				--dbug("tim " .. sql[k].value)
-					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"					
+					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"
 				end
 
---dbug("num")				
+--dbug("num")
 				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. "=" .. sql[k].value .. ","
 			end
 		end
@@ -299,7 +299,7 @@ function getTableFields(table)
 
 	cursor,errorString = conn:execute("SHOW FIELDS FROM " .. table)
 	row = cursor:fetch({}, "a")
-	
+
 	while row do
 		field = row.Field
 

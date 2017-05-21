@@ -82,17 +82,17 @@ function gmsg_villages()
 			if (pid ~= nil) then
 				if locations[villageName] ~= nil then
 					locations[villageName].mayor = pid
-					locations[villageName].owner = pid					
+					locations[villageName].owner = pid
 					locations[villageName].village = true
 					message("say [" .. server.chatColour .. "]Congratulations " .. players[pid].name .. " on becoming the new mayor of " .. villageName .. "[-]")
-					
+
 					r = rand(5)
-					
+
 					if r == 1 then message("say [" .. server.chatColour .. "]The best village in all the land.[-]") end
-					if r == 2 then message("say [" .. server.chatColour .. "]Now you can show those home owner associations how it's really done![-]") end					
-					if r == 3 then message("say [" .. server.chatColour .. "]GLORY TO " .. string.upper(villageName) .. "![-]") end					
-					if r == 4 then message("say [" .. server.chatColour .. "]Have fun sorting out all the spats, petty squabbles, and other fun social misadventures xD[-]") end										
-					if r == 5 then message("say [" .. server.chatColour .. "]Now add surfs, slaves, wenches and someone to put the bottles out.[-]") end					
+					if r == 2 then message("say [" .. server.chatColour .. "]Now you can show those home owner associations how it's really done![-]") end
+					if r == 3 then message("say [" .. server.chatColour .. "]GLORY TO " .. string.upper(villageName) .. "![-]") end
+					if r == 4 then message("say [" .. server.chatColour .. "]Have fun sorting out all the spats, petty squabbles, and other fun social misadventures xD[-]") end
+					if r == 5 then message("say [" .. server.chatColour .. "]Now add surfs, slaves, wenches and someone to put the bottles out.[-]") end
 
 					conn:execute("UPDATE locations SET village = true, mayor = " .. pid .. ", owner = " .. pid .. " WHERE name = '" .. escape(villageName) .. "'")
 					conn:execute("INSERT INTO villagers SET steam = " .. pid .. ", village = '" .. escape(villageName) .. "'")
@@ -384,7 +384,7 @@ function gmsg_villages()
 			message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " has created a village portal called " .. villageName .. "[-]")
 			message("say [" .. server.chatColour .. "]" .. villageName .. " needs villagers and a mayor.[-]")
 
-			conn:execute("INSERT INTO locations (name, owner, x, y, z, village, size) VALUES ('" .. escape(villageName) .. "'," .. chatvars.playerid .. "," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",1," .. server.baseSize .. ") ON DUPLICATE KEY UPDATE x = " .. chatvars.intZ .. ", y = " .. chatvars.intY .. ", z = " .. chatvars.intZ .. ", village=1, size=" .. server.baseSize)			
+			conn:execute("INSERT INTO locations (name, owner, x, y, z, village, size) VALUES ('" .. escape(villageName) .. "'," .. chatvars.playerid .. "," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",1," .. server.baseSize .. ") ON DUPLICATE KEY UPDATE x = " .. chatvars.intZ .. ", y = " .. chatvars.intY .. ", z = " .. chatvars.intZ .. ", village=1, size=" .. server.baseSize)
 			-- refresh the locations lua table.  also makes it fill in missing properties.
 			loadLocations(villageName)
 		else

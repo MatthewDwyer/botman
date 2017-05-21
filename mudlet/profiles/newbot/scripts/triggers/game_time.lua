@@ -40,7 +40,7 @@ function gameTimeTrigger(line)
 				message("say [" .. server.chatColour .. "]The server will reboot in 1 game day (" .. server.DayLightLength + server.DayNightLength .. " minutes).[-]")
 			else
 				botman.scheduledRestartTimestamp = os.time() + (server.feralRebootDelay * 60)
-				message("say [" .. server.chatColour .. "]The server will reboot in " .. server.feralRebootDelay .. " minutes.[-]")				
+				message("say [" .. server.chatColour .. "]The server will reboot in " .. server.feralRebootDelay .. " minutes.[-]")
 			end
 		end
 
@@ -83,7 +83,7 @@ function gameTimeTrigger(line)
 		else
 			if v.open then
 				message("say [" .. server.chatColour .. "]The location " .. v.name .. " has closed.[-]")
-				v.open = false			
+				v.open = false
 			end
 		end
 	end

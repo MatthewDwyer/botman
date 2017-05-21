@@ -16,7 +16,7 @@ local function shuffle(t)
     t[i], t[r] = t[r], t[i]
   end
 end
- 
+
 -- builds a width-by-height grid of trues
 local function initialize_grid(w, h)
   local a = {}
@@ -28,30 +28,30 @@ local function initialize_grid(w, h)
   end
   return a
 end
- 
+
 -- average of a and b
 local function avg(a, b)
   return (a + b) / 2
 end
- 
- 
+
+
 local dirs = {
   {x = 0, y = -2}, -- north
   {x = 2, y = 0}, -- east
   {x = -2, y = 0}, -- west
   {x = 0, y = 2}, -- south
 }
- 
+
 local function makeMaze(w, h, xPos, yPos, zPos, wall, fill, tall)
   w = w or 16
   h = h or 8
- 
+
   local map = initialize_grid(w*2+1, h*2+1)
   local cmd
- 
+
   function walk(x, y)
     map[y][x] = false
- 
+
     local d = { 1, 2, 3, 4 }
     shuffle(d)
     for i, dirnum in ipairs(d) do
@@ -63,9 +63,9 @@ local function makeMaze(w, h, xPos, yPos, zPos, wall, fill, tall)
       end
     end
   end
- 
+
   walk(math.random(1, w)*2, math.random(1, h)*2)
- 
+
   local s = {}
   for i = 1, h*2+1 do
     for j = 1, w*2+1 do
@@ -81,9 +81,9 @@ local function makeMaze(w, h, xPos, yPos, zPos, wall, fill, tall)
 end
 
 function renderMaze(wallBlock, x, y, z, width, length, height, fillBlock)
-	local k, v, mazeX, mazeZ, block, maze, cmd	
-	
-	makeMaze(width, length, x, y, z, wallBlock, fillBlock, height)			
+	local k, v, mazeX, mazeZ, block, maze, cmd
+
+	makeMaze(width, length, x, y, z, wallBlock, fillBlock, height)
 end
 
 function mutePlayer(steam)
@@ -111,7 +111,7 @@ function gmsg_coppi()
 	local skipHelp = false
 	local tmp = {}
 	local debug
-	
+
 	debug = false
 
 	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
@@ -332,9 +332,9 @@ function gmsg_coppi()
 		botman.faultyChat = false
 		return true
 	end
-	
+
 	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "chat") or string.find(chatvars.command, "colo")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set new player/player/donor/prisoner/mod/admin/owner chat colour FFFFFF")
@@ -350,37 +350,37 @@ function gmsg_coppi()
 	if chatvars.words[1] == "set" and string.find(chatvars.command, "chat col") then
 		tmp = {}
 		tmp.target = chatvars.words[2]
-		
+
 		if chatvars.words[2] == "new" then
 			tmp.colour = chatvars.words[6]
 		else
-			tmp.colour = chatvars.words[5]		
+			tmp.colour = chatvars.words[5]
 		end
-		
+
 		if tmp.target ~= "new" and tmp.target ~= "player" and tmp.target ~= "donor" and tmp.target ~= "prisoner" and tmp.target ~= "mod" and tmp.target ~= "admin" and tmp.target ~= "owner" then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Missing target for chat colour.  Expected new player or player or donor or prisoner or mod or admin or owner.[-]")
 			else
 				irc_chat(players[chatvars.ircid].ircAlias, "Missing target for chat colour.  Expected new player or player or donor or prisoner or mod or admin or owner.")
-			end		
-			
+			end
+
 			botman.faultyChat = false
-			return true					
+			return true
 		end
-		
+
 		if tmp.colour == nil then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]6 character hex colour code required eg. FFFFFF for white.[-]")
 			else
 				irc_chat(players[chatvars.ircid].ircAlias, "6 character hex colour code required eg. FFFFFF for white.")
-			end		
-			
+			end
+
 			botman.faultyChat = false
-			return true			
+			return true
 		end
 
 		-- strip out any # characters
-		tmp.colour = tmp.colour:gsub("#", "")	
+		tmp.colour = tmp.colour:gsub("#", "")
 
 		if tmp.target == "new" then
 			server.chatColourNewPlayer = tmp.colour
@@ -390,15 +390,15 @@ function gmsg_coppi()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(players[chatvars.ircid].ircAlias, "New player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
-			end		
-			
+			end
+
 			for k,v in pairs(igplayers) do
 				if accessLevel(k) == 99 then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
-			end			
+			end
 		end
-		
+
 		if tmp.target == "player" then
 			server.chatColourPlayer = tmp.colour
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourPlayer = '" .. escape(tmp.colour) .. "'") end
@@ -407,14 +407,14 @@ function gmsg_coppi()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Non-new player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(players[chatvars.ircid].ircAlias, "Non-new player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
-			end	
+			end
 
 			for k,v in pairs(igplayers) do
 				if accessLevel(k) == 90 then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
-			end			
-		end	
+			end
+		end
 
 		if tmp.target == "donor" then
 			server.chatColourDonor = tmp.colour
@@ -430,8 +430,8 @@ function gmsg_coppi()
 				if accessLevel(k) > 3 and accessLevel(k) < 11 then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
-			end			
-		end	
+			end
+		end
 
 		if tmp.target == "prisoner" then
 			server.chatColourPrisoner = tmp.colour
@@ -447,9 +447,9 @@ function gmsg_coppi()
 				if players[k].prisoner then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
-			end						
-		end	
-		
+			end
+		end
+
 		if tmp.target == "mod" then
 			server.chatColourMod = tmp.colour
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourMod = '" .. escape(tmp.colour) .. "'") end
@@ -458,13 +458,13 @@ function gmsg_coppi()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Moderator chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(players[chatvars.ircid].ircAlias, "Moderator chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
-			end	
+			end
 
 			for k,v in pairs(igplayers) do
 				if accessLevel(k) == 2 then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
-			end			
+			end
 		end
 
 		if tmp.target == "admin" then
@@ -481,7 +481,7 @@ function gmsg_coppi()
 				if accessLevel(k) == 1 then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
-			end			
+			end
 		end
 
 		if tmp.target == "owner" then
@@ -492,20 +492,20 @@ function gmsg_coppi()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Owner chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(players[chatvars.ircid].ircAlias, "Owner chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
-			end	
+			end
 
 			for k,v in pairs(igplayers) do
 				if accessLevel(k) == 0 then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end
-		end		
+		end
 
 		botman.faultyChat = false
 		return true
 	end
-	
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
 
 	-- ###################  do not allow remote commands beyond this point ################
 	if (chatvars.playerid == nil) then
@@ -515,12 +515,12 @@ function gmsg_coppi()
 	-- ####################################################################################
 
 	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "maze")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "make maze")
-			irc_chat(players[chatvars.ircid].ircAlias, "Optional parts: wall <block name> fill <air block> width <number> length <number> height <number> x <x coord> y <y coord> z <z coord>")			
-			irc_chat(players[chatvars.ircid].ircAlias, "Default values: wall steelBlock fill air width 20 length 20 height 3. It uses your current position for x, y and z if not given.")						
+			irc_chat(players[chatvars.ircid].ircAlias, "Optional parts: wall <block name> fill <air block> width <number> length <number> height <number> x <x coord> y <y coord> z <z coord>")
+			irc_chat(players[chatvars.ircid].ircAlias, "Default values: wall steelBlock fill air width 20 length 20 height 3. It uses your current position for x, y and z if not given.")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Generate and build a random maze. ")
@@ -528,73 +528,73 @@ function gmsg_coppi()
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end	
-	
+	end
+
 	if chatvars.words[1] == "make" and chatvars.words[2] == "maze" and (chatvars.playerid ~= 0) then
-	
+
 		if (chatvars.playername == "Server") then
 			irc_chat(players[chatvars.ircid].ircAlias, "You can only use this command ingame.")
 			botman.faultyChat = false
-			return true		
+			return true
 		end
 
 	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
-	
+
 		tmp = {}
 		tmp.wallBlock = "steelBlock"
-		tmp.fillBlock = "air"		
+		tmp.fillBlock = "air"
 		tmp.x = chatvars.intX
 		tmp.y = chatvars.intY
-		tmp.z = chatvars.intZ		
+		tmp.z = chatvars.intZ
 		tmp.width = 20
 		tmp.length = 20
 		tmp.height = 3
-		
+
 		for i=2,chatvars.wordCount,1 do
 			if chatvars.words[i] == "wall" then
 				tmp.wallBlock = chatvars.words[i+1]
 			end
-			
+
 			if chatvars.words[i] == "fill" then
 				tmp.fillBlock = chatvars.words[i+1]
-			end			
-			
+			end
+
 			if chatvars.words[i] == "x" then
 				tmp.x = chatvars.words[i+1]
-			end			
+			end
 
 			if chatvars.words[i] == "y" then
 				tmp.y = chatvars.words[i+1]
-			end			
-						
+			end
+
 			if chatvars.words[i] == "z" then
 				tmp.z = chatvars.words[i+1]
-			end						
-			
+			end
+
 			if chatvars.words[i] == "width" then
 				tmp.width = chatvars.words[i+1]
-			end				
-			
+			end
+
 			if chatvars.words[i] == "length" then
 				tmp.length = chatvars.words[i+1]
-			end				
+			end
 
 			if chatvars.words[i] == "height" then
 				tmp.height = chatvars.words[i+1]
-			end				
+			end
 		end
-		
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end		
-		
-		renderMaze(tmp.wallBlock, tmp.x, tmp.y, tmp.z, tmp.width, tmp.length, tmp.height, tmp.fillBlock)			
-		
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+
+		renderMaze(tmp.wallBlock, tmp.x, tmp.y, tmp.z, tmp.width, tmp.length, tmp.height, tmp.fillBlock)
+
+	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
 
 		botman.faultyChat = false
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end			
+	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "maze")) or chatvars.words[1] ~= "help" then
@@ -614,13 +614,13 @@ function gmsg_coppi()
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Maze generation has been aborted.  You will need to clean up the mess yourself :)[-]")
 		else
 			irc_chat(players[chatvars.ircid].ircAlias, "Maze generation has been aborted.  You will need to clean up the mess yourself :)")
-		end		
+		end
 
 		botman.faultyChat = false
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end				
+	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "horde")) or chatvars.words[1] ~= "help" then
@@ -737,7 +737,7 @@ function gmsg_coppi()
 			tmp.name = chatvars.playername
 		end
 
-		if botman.dbConnected then 
+		if botman.dbConnected then
 			cursor,errorString = conn:execute("select * from prefabCopies where owner = " .. tmp.pid)
 			row = cursor:fetch({}, "a")
 
@@ -961,7 +961,7 @@ function gmsg_coppi()
 				return true
 			end
 		end
-		
+
 		playerListItems = chatvars.playerid
 		send("li " .. chatvars.words[2])
 
@@ -1175,7 +1175,7 @@ function gmsg_coppi()
 	end
 
 	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set p1")
@@ -1198,8 +1198,8 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end	
-	
+	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set p2")
@@ -1222,7 +1222,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "erase") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
@@ -1280,14 +1280,14 @@ function gmsg_coppi()
 				irc_chat(players[chatvars.ircid].ircAlias, "Default block is air, base is at your feet and the others default to 5.")
 				irc_chat(players[chatvars.ircid].ircAlias, "Examples:")
 				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig north wide 3 tall 3 long 100")
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig bedrock wide 1")				
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig up (makes a 5x5 room)")						
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig up (or room) wide 5 tall 10 (makes a 10x10 room)")										
+				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig bedrock wide 1")
+				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig up (makes a 5x5 room)")
+				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig up (or room) wide 5 tall 10 (makes a 10x10 room)")
 				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fill east base 70 wide 2 tall 10 long 50 block steelBlock")
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fill bedrock wide 2 block 1")								
-				irc_chat(players[chatvars.ircid].ircAlias, "")						
-				irc_chat(players[chatvars.ircid].ircAlias, "You can repeat the last command with /again and change direction with /again west")						
-				irc_chat(players[chatvars.ircid].ircAlias, "")				
+				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fill bedrock wide 2 block 1")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, "You can repeat the last command with /again and change direction with /again west")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
 	end
@@ -1305,17 +1305,17 @@ function gmsg_coppi()
 		tmp.tall = chatvars.intY + 5
 		tmp.block = "air"
 		tmp.width = 5
-		tmp.long = 5		
+		tmp.long = 5
 
 		for i=2,chatvars.wordCount,1 do
 			if chatvars.words[i] == "wide" then
 				tmp.width = chatvars.words[i+1]
 				tmp.tall = tmp.width
 			end
-			
+
 			if chatvars.words[i] == "replace" then
 				tmp.newblock = chatvars.words[i+1]
-			end			
+			end
 
 			if chatvars.words[i] == "block" then
 				tmp.block = chatvars.words[i+1]
@@ -1378,14 +1378,14 @@ function gmsg_coppi()
 			if chatvars.words[1] == "dig" then
 				if tmp.newblock then
 				--prepblock <block_to_be_replaced> <block_name> <x1> <x2> <y1> <y2> <z1> <z2> <rot>
-					send("prepblock " .. tmp.newblock .. " air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")				
+					send("prepblock " .. tmp.newblock .. " air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 				else
 					send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 				end
 			else
 				if tmp.newblock then
-					send("prepblock " .. tmp.newblock .. " " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")				
-				else			
+					send("prepblock " .. tmp.newblock .. " " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
+				else
 					send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 				end
 			end
@@ -1546,7 +1546,7 @@ function gmsg_coppi()
 			return true
 		end
 	end
-	
+
 	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
 
 		if chatvars.showHelp and not skipHelp then
@@ -1569,7 +1569,7 @@ function gmsg_coppi()
 				return true
 			end
 		end
-		
+
 		if chatvars.number == nil then
 			chatvars.number	= 40
 		end
@@ -1582,11 +1582,11 @@ function gmsg_coppi()
 		tmp.z1 = chatvars.intZ - chatvars.number
 		tmp.z2 = chatvars.intZ + chatvars.number
 
-		send("pblock 12 " .. tmp.x1 .. " " .. tmp.x2 .. " " .. tmp.y1 .. " " .. tmp.y2 .. " " .. tmp.z1 .. " " .. tmp.z2 .. " 0")		
-		
+		send("pblock 12 " .. tmp.x1 .. " " .. tmp.x2 .. " " .. tmp.y1 .. " " .. tmp.y2 .. " " .. tmp.z1 .. " " .. tmp.z2 .. " 0")
+
 		botman.faultyChat = false
 		return true
-	end	
+	end
 
 	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
 
@@ -1626,7 +1626,7 @@ function gmsg_coppi()
 			send("pblock " .. tmp.block ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 .. " " .. tmp.face)
 			botman.lastBlockCommandOwner = chatvars.playerid
 			-- save the block to the database
-			if botman.dbConnected then 
+			if botman.dbConnected then
 				conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1, x2, y2, z2) VALUES (" .. chatvars.playerid .. ",'" .. escape(chatvars.words[2]) .. "'," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 .. "," .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 .. ")")
 				conn:execute("UPDATE prefabCopies SET blockName = '" .. escape(tmp.block) .. "', rotation = " .. tmp.face .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[2]) .. "'")
 			end

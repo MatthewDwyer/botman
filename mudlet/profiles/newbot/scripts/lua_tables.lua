@@ -31,7 +31,7 @@ function dumpTable( tbl )
         table.key_to_str( k ) .. "=" .. table.val_to_str( v ) )
     end
   end
-  
+
   file = io.open(homedir .. "/" .. "table_dump.txt", "a")
   file:write("{" .. table.concat( result, "," ) .. "}" .. "\n")
   file:close()
@@ -58,8 +58,8 @@ function saveLuaTables(date)
 	table.save(homedir .. "/" .. date .. "shopCategories.lua", shopCategories)
 	table.save(homedir .. "/" .. date .. "teleports.lua", teleports)
 	table.save(homedir .. "/" .. date .. "villagers.lua", villagers)
-	table.save(homedir .. "/" .. date .. "waypoints.lua", waypoints)	
-	
+	table.save(homedir .. "/" .. date .. "waypoints.lua", waypoints)
+
 	table.save(homedir .. "/data_backup/badItems.lua", badItems)
 	table.save(homedir .. "/data_backup/customMessages.lua", customMessages)
 	table.save(homedir .. "/data_backup/friends.lua", friends)
@@ -73,7 +73,7 @@ function saveLuaTables(date)
 	table.save(homedir .. "/data_backup/teleports.lua", teleports)
 	table.save(homedir .. "/data_backup/villagers.lua", villagers)
 	table.save(homedir .. "/data_backup/waypoints.lua", waypoints)
-	
+
 	dbug("finished saving Lua tables")
 end
 
@@ -87,9 +87,9 @@ function importServer()
 	-- reload from db to grab defaults for any missing data
 	loadServer()
 
-	openUserWindow(server.windowGMSG) 
-	openUserWindow(server.windowDebug) 
-	openUserWindow(server.windowLists) 
+	openUserWindow(server.windowGMSG)
+	openUserWindow(server.windowDebug)
+	openUserWindow(server.windowLists)
 end
 
 
@@ -110,7 +110,7 @@ function importPlayers()
 	message("say [" .. server.chatColour .. "]Importing players[-]")
 
 	for k,v in pairs(players) do
-		conn:execute("INSERT INTO players (steam, id, name) VALUES (" .. k .. "," .. v.id .. ",'" .. escape(v.name) .. "')")		
+		conn:execute("INSERT INTO players (steam, id, name) VALUES (" .. k .. "," .. v.id .. ",'" .. escape(v.name) .. "')")
 		fixMissingPlayer(k)
 		updatePlayer(k)
 	end
@@ -142,48 +142,48 @@ function importLocations()
 		if v.protect ~= nil then
 			fields = fields .. ", protected"
 			values = values .. "," .. dbBool(v.protect)
-		end	
+		end
 
 		if v.village ~= nil then
 			fields = fields .. ", village"
 			values = values .. "," .. dbBool(v.village)
-		end	
+		end
 
 		if v.pvp ~= nil then
 			fields = fields .. ", pvp"
 			values = values .. "," .. dbBool(v.pvp)
-		end	
+		end
 
 		if v.allowBase ~= nil then
 			fields = fields .. ", allowBase"
 			values = values .. "," .. dbBool(v.allowBase)
-		end	
+		end
 
 		if v.accessLevel ~= nil then
 			fields = fields .. ", accessLevel"
 			values = values .. "," .. dbBool(v.accessLevel)
-		end	
+		end
 
 		if v.owner ~= nil then
 			fields = fields .. ", owner"
 			values = values .. "," .. v.owner
-		end	
+		end
 
 		if v.mayor ~= nil then
 			fields = fields .. ", mayor"
 			values = values .. "," .. v.mayor
-		end	
+		end
 
 		if v.protectSize ~= nil then
 			fields = fields .. ", protectSize"
 			values = values .. "," .. v.protectSize
-		end	
+		end
 
 		if v.killZombies ~= nil then
 			fields = fields .. ", killZombies"
 			values = values .. "," .. dbBool(v.killZombies)
-		end	
-	
+		end
+
 		sql = "INSERT INTO locations (" .. fields .. ") VALUES (" .. values .. ")"
 
 		conn:execute(sql)

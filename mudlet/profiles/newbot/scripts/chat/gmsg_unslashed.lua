@@ -35,6 +35,7 @@ end
 	end
 	-- ####################################################################################
 
+
 	-- #################  do not proceed if the line starts with a slash  #################
 	if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) then
 		-- line starts with a slash so stop processing it.
@@ -46,17 +47,17 @@ end
 	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.command == "restart bot") and (chatvars.accessLevel < 3) then
-		if botman.customMudlet then	
-			savePlayers()		
-			closeMudlet()		
+		if botman.customMudlet then
+			savePlayers()
+			closeMudlet()
 		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is not supported in your Mudlet.  You need the latest custom Mudlet by TheFae.[-]")		
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is not supported in your Mudlet.  You need the latest custom Mudlet by TheFae.[-]")
 		end
 
 		botman.faultyChat = false
 		return true
-	end		
-	
+	end
+
 	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
 	if igplayers[chatvars.playerid].botQuestion == "pay player" then
@@ -94,8 +95,8 @@ end
 			return true
 		end
 	end
-	
-	
+
+
 	if (chatvars.playername ~= "Server") then
 		if igplayers[chatvars.playerid].botQuestion == "quick reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 			QuickBotReset()
@@ -107,15 +108,15 @@ end
 			botman.faultyChat = false
 			return true
 		end
-	end	
+	end
 
-		
+
 	if string.find(chatvars.command, "hack") or string.find(chatvars.command, "cheat") or string.find(chatvars.command, "grief") or string.find(chatvars.command, "flying") then
 		scanForPossibleHackersNearby(chatvars.playerid)
 
 		botman.faultyChat = false
 		return true
-	end	
+	end
 
 	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
@@ -128,7 +129,12 @@ end
 
 	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
-	if (string.find(chatvars.command, "server")) and (string.find(chatvars.command, "suck") or string.find(chatvars.command, "stupid") or string.find(chatvars.command, "gay") or string.find(chatvars.command, "fuck")) then
+	if (string.find(chatvars.command, "this server")) and (string.find(chatvars.command, "suck") or string.find(chatvars.command, "gay")) then
+		if string.find(chatvars.command, "love") or string.find(chatvars.command, "great") or string.find(chatvars.command, "best") or string.find(chatvars.command, "fav") then
+			botman.faultyChat = false
+			return true
+		end
+
 		r = rand(10)
 
 		if (r == 1) then message("say [" .. server.chatColour .. "]Look who's talking :P[-]") end
@@ -224,12 +230,12 @@ end
 				if l == 24 then message("say [" .. server.chatColour .. "]Aww poor " .. chatvars.playername .. "[-]") end
 				if l == 25 then message("say [" .. server.chatColour .. "]You know it :)[-]") end
 				if l == 26 then message("say [" .. server.chatColour .. "]This is fine[-]") end
-				if l == 27 then message("say [" .. server.chatColour .. "]Bite me[-]") end				
-				if l == 28 then message("say [" .. server.chatColour .. "]It's fine.  It's just.. Some assembly required.. And maybe a new door.[-]") end				
-				if l == 29 then message("say [" .. server.chatColour .. "][BUSTED][-]") end								
-				if l == 30 then message("say [" .. server.chatColour .. "]*hides matches*[-]") end								
-				if l == 31 then message("say [" .. server.chatColour .. "]It'll be fine with a lick of paint.. and a total rebuild.[-]") end								
-				if l == 32 then message("say [" .. server.chatColour .. "]YEEEEEEEAH!!![-]") end								
+				if l == 27 then message("say [" .. server.chatColour .. "]Bite me[-]") end
+				if l == 28 then message("say [" .. server.chatColour .. "]It's fine.  It's just.. Some assembly required.. And maybe a new door.[-]") end
+				if l == 29 then message("say [" .. server.chatColour .. "][BUSTED][-]") end
+				if l == 30 then message("say [" .. server.chatColour .. "]*hides matches*[-]") end
+				if l == 31 then message("say [" .. server.chatColour .. "]It'll be fine with a lick of paint.. and a total rebuild.[-]") end
+				if l == 32 then message("say [" .. server.chatColour .. "]YEEEEEEEAH!!![-]") end
 
 				botman.faultyChat = false
 				return true
@@ -359,8 +365,8 @@ end
 		if server.delayReboot then
 			message("say [" .. server.chatColour .. "]The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.[-]")
 		end
-		
-		nextReboot()		
+
+		nextReboot()
 
 		botman.faultyChat = false
 		return true

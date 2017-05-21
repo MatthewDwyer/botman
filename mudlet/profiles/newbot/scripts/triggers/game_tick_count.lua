@@ -46,6 +46,6 @@ function gameTickCountTrigger(line)
 		message("say [" .. server.chatColour .. "]The server will reboot in 15 minutes.[-]")
 		botman.scheduledRestartPaused = false
 		botman.scheduledRestart = true
-		botman.scheduledRestartTimestamp = os.time() + 900		
+		botman.scheduledRestartTimestamp = os.time() + 900
 	end
 end

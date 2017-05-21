@@ -678,6 +678,14 @@ function gmsg_teleports()
 			return true
 		end
 
+		-- reject if not an admin and player to player teleporting has been disabled
+		if tonumber(chatvars.accessLevel) > 2 and not server.allowPlayerToPlayerTeleporting then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Fetching friends has been disabled on this server.[-]")
+			botman.faultyChat = false
+			result = true
+			return
+		end
+
 		if (accessLevel(id) < 3) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Staff cannot be fetched.[-]")
 			botman.faultyChat = false
@@ -736,12 +744,12 @@ function gmsg_teleports()
 				botman.faultyChat = false
 				return true
 			end
-			
+
 			if tonumber(server.packCost) > 0 and (tonumber(players[chatvars.playerid].cash) < tonumber(server.packCost)) and (chatvars.accessLevel > 3) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You do not have enough " .. server.moneyPlural .. " to teleport to your pack.  You need " .. server.packCost .. " " .. server.moneyPlural .. ".[-]")
 				botman.faultyChat = false
 				return true
-			end			
+			end
 
 			cursor,errorString = conn:execute("SELECT x, y, z FROM tracker WHERE steam = " .. chatvars.playerid .. " and ((abs(x - " .. players[chatvars.playerid].deathX .. ") > 0 and abs(x - " .. players[chatvars.playerid].deathX .. ") < 50) and (abs(z - " .. players[chatvars.playerid].deathZ .. ") > 5 and abs(z - " .. players[chatvars.playerid].deathZ .. ") < 50))  ORDER BY trackerid DESC Limit 0, 1")
 			if cursor:numrows() > 0 then
@@ -756,10 +764,10 @@ function gmsg_teleports()
 
 				prepareTeleport(chatvars.playerid, cmd)
 				teleport(cmd, true)
-				
-				if tonumber(server.packCost) > 0 and (chatvars.accessLevel > 3) then				
+
+				if tonumber(server.packCost) > 0 and (chatvars.accessLevel > 3) then
 					players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.packCost
-					conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid)				
+					conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid)
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. server.packCost .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")
 				end
 			else
@@ -792,7 +800,7 @@ function gmsg_teleports()
 	if (chatvars.words[1] == "stuck" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
 		cmd = "tele " .. chatvars.playerid .. " " .. chatvars.intX .. " -1 " .. chatvars.intZ
 		prepareTeleport(chatvars.playerid, cmd)
-		teleport(cmd, true)	
+		teleport(cmd, true)
 
 		botman.faultyChat = false
 		return true
@@ -817,14 +825,14 @@ function gmsg_teleports()
 			botman.faultyChat = false
 			return true
 		end
-		
+
 		-- reject if not an admin and pvpTeleportCooldown is > zero
 		if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
 			message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
 			botman.faultyChat = false
 			result = true
 			return
-		end			
+		end
 
 		-- return to previously recorded x y z
 		if tonumber(players[chatvars.playerid].yPosOld) ~= 0 or tonumber(players[chatvars.playerid].yPosOld2) ~= 0 then

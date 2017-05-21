@@ -104,35 +104,35 @@ function help(command)
 
 	if command == "waypoints" then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Waypoints are personal teleports that you can set and share with friends.[-]")
-	
+
 		if server.waypointsPublic then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can set up to " .. players[chatvars.playerid].maxWaypoints .. " waypoints.[-]")		
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can set up to " .. players[chatvars.playerid].maxWaypoints .. " waypoints.[-]")
 		else
 			if chatvars.accessLevel > 10 then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Waypoints are available to donors and admins only.[-]")
 			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can set up to " .. players[chatvars.playerid].maxWaypoints .. " waypoints.[-]")					
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can set up to " .. players[chatvars.playerid].maxWaypoints .. " waypoints.[-]")
 			end
 		end
-		
+
 		if chatvars.accessLevel < 3 then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints <number> (default 2).[-]")						
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints donors <number>.[-]")						
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints <player> number <number>.[-]")									
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set waypoint create cost <number> (default 0).[-]")			
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set waypoint cost <number>. (Cost to use, default 0)[-]")						
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set waypoint cooldown <number>. (Timer in seconds between uses, default 0)[-]")									
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints <number> (default 2).[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints donors <number>.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints <player> number <number>.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set waypoint create cost <number> (default 0).[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set waypoint cost <number>. (Cost to use, default 0)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set waypoint cooldown <number>. (Timer in seconds between uses, default 0)[-]")
 		end
-		
-			
+
+
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set wp <name of waypoint> to set or re-set them.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "wp <name of waypoint>.  Teleport to the named waypoint. eg. " .. server.commandPrefix .. "wp wp1[-]")		
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "wp <name of waypoint>.  Teleport to the named waypoint. eg. " .. server.commandPrefix .. "wp wp1[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "share wp <name of waypoint>.  Allow your friends to tele to it with " .. server.commandPrefix .. "wp <your name> <name of waypoint>[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "close (or unshare) wp <name of waypoint>.  Make it private again.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "clear wp <name of waypoint>.  Deletes the waypoint.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "link <wp1> to <wp2>. Convert two waypoints to a portal. In this mode nobody can tp to them, instead you step into them.[-]")		
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "link <wp1> to <wp2>. Convert two waypoints to a portal. In this mode nobody can tp to them, instead you step into them.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "unlink <wp1> (or <wp2>).  Unlinking either end of a portal unlinks both.  They revert to waypoints again.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "waypoints <optional name of friend>.  List your waypoints or the shared ones of a friend.[-]")		
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "waypoints <optional name of friend>.  List your waypoints or the shared ones of a friend.[-]")
 		return
 	end
 
@@ -388,7 +388,7 @@ function help(command)
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "teleports (list them all)[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "tp <tpname> (tp to a teleport)[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "lobby <player name> (send a player to the lobby if it exists)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleports are private by default.[-]")			
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleports are private by default.[-]")
 		end
 
 		return
@@ -428,7 +428,7 @@ function help(command)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "uptime[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who[-]")
 
-		if botman.dbConnected then 
+		if botman.dbConnected then
 			cursor,errorString = conn:execute("select * from customMessages order by command")
 			row = cursor:fetch({}, "a")
 
@@ -446,16 +446,16 @@ function help(command)
 
 	-- always have the main help last so it catches any unsupported help commands.
 	if command == nil then
-		if (chatvars.accessLevel < 3) then 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help access[-]") 
+		if (chatvars.accessLevel < 3) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help access[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help admin[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help custom commands[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help setup[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help manual[-]")			
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help manual[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help reboot[-]")
 		end
-		
-		if not (server.hardcore) then 
+
+		if not (server.hardcore) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help base[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help bookmarks[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help commands or " .. server.commandPrefix .. "commands[-]")
@@ -469,11 +469,11 @@ function help(command)
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help villages[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help waypoints[-]")
 		end
-		
-		if not server.ircPrivate or (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help irc[-]") end				
 
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "alert (pass a message to the admins with your current position)[-]")		
-		
+		if not server.ircPrivate or (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help irc[-]") end
+
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "alert (pass a message to the admins with your current position)[-]")
+
 		return
 	end
 end

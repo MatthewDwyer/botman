@@ -160,7 +160,7 @@ if debug then dbug("debug friends") end
 		end
 
 		if (id ~= nil) then
-			if botman.dbConnected then 
+			if botman.dbConnected then
 				-- check to see if this friend was auto friended and warn the player that they must unfriend them via the game.
 				cursor,errorString = conn:execute("select * from friends where steam = " .. chatvars.playerid .. " AND friend = " .. id .. " AND autoAdded = 1")
 				row = cursor:fetch({}, "a")
@@ -169,10 +169,10 @@ if debug then dbug("debug friends") end
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You need to unfriend " .. players[id].name .. " via the game since the bot can't unfriend them from there for you.[-]")
 					botman.faultyChat = false
 					return true
-				end		
+				end
 			end
-		
-		
+
+
 			friendlist = string.split(friends[chatvars.playerid].friends, ",")
 
 			-- now simply rebuild friend skipping over the one we are removing

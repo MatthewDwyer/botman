@@ -9,19 +9,19 @@
 
 function oneMinuteTimer()
 	local k, v, days, hours, minutes
-	
-	fixMissingStuff()	
+
+	fixMissingStuff()
 
 	if botman.botDisabled or botman.botOffline or server.lagged then
 		return
-	end	
+	end
 
 	everyMinute()
 
 	if tablelength(players) == 0 then
 		gatherServerData()
 		return
-	end	
+	end
 
 	if server.coppi then
 		for k, v in pairs(igplayers) do
@@ -29,8 +29,8 @@ function oneMinuteTimer()
 				send("lpf " .. k)
 			end
 		end
-	end	
-	
+	end
+
 	if tonumber(server.maxPrisonTime) > 0 then
 		-- check for players to release from prison
 		for k,v in pairs(igplayers) do
@@ -38,13 +38,13 @@ function oneMinuteTimer()
 				gmsg(server.commandPrefix .. "release " .. k)
 			else
 				if players[k].prisoner then
-					if players[k].prisonReleaseTime - os.time() < 86164 then					
+					if players[k].prisonReleaseTime - os.time() < 86164 then
 						days, hours, minutes = timeRemaining(players[k].prisonReleaseTime)
 						message("pm " .. k .. " [" .. server.chatColour .. "]You will be released in about " .. days .. " days " .. hours .. " hours and " .. minutes .. " minutes.[-]")
 					end
 				end
 			end
-		end	
+		end
 	end
 
 	botHeartbeat()

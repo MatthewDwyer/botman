@@ -91,7 +91,7 @@ function gmsg_resets()
 
 		cursor,errorString = conn:execute("select * from resetZones")
 		rows = cursor:numrows()
-		
+
 		if rows == 0 then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No regions have been flagged as reset zones.[-]")
 		else

@@ -10,18 +10,18 @@
 function reconnectTimer()
 	local channels
 
-	if botman.botConnectedTimestamp == nil then	
+	if botman.botConnectedTimestamp == nil then
 		botman.botConnectedTimestamp = os.time()
 	end
-	
+
 	if botman.lagCheckRead == nil then
 		botman.lagCheckRead = true
 	end
-	
-	if botman.botOffline == nil then	
+
+	if botman.botOffline == nil then
 		botman.botOffline = false
-	end		
-	
+	end
+
 	if botman.botOfflineCount == nil then
 		botman.botOfflineCount = 2
 	end
@@ -30,51 +30,51 @@ function reconnectTimer()
 
 	if tonumber(botman.botOfflineCount) < 1 then
 		if not botman.botOffline then
-			botman.botConnectedTimestamp = os.time()		
+			botman.botConnectedTimestamp = os.time()
 		end
-	
+
 		botman.botOffline = true
-	
+
 		if math.abs(os.time() - botman.botConnectedTimestamp) < 600 then -- 600
 			dbug("Bot is offline - attempting reconnection.")
 			botman.botOfflineCount = 2
 			reconnect()
-			irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")		
+			irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
 		else
-			if tonumber(botman.botOfflineCount) < -6 then	
+			if tonumber(botman.botOfflineCount) < -6 then
 				dbug("Bot is offline - attempting reconnection (2 minute delay).")
 				botman.botOfflineCount = 2
 				reconnect()
-				irc_chat(server.ircMain, "Bot is offline - attempting reconnection (2 minute delay).")					
+				irc_chat(server.ircMain, "Bot is offline - attempting reconnection (2 minute delay).")
 			end
 		end
 	end
-	
+
 	-- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
 	if botman.lagCheckRead and not botman.botOffline then
 		botman.lagCheckRead = false
 		botman.lagCheckTime = os.time()
-		send("pm LagCheck " .. server.botID)			
-	end	
+		send("pm LagCheck " .. server.botID)
+	end
 
 	if ircGetChannels ~= nil then
 		channels = ircGetChannels()
-		
+
 		if channels == "" then
-			joinIRCServer()	
+			joinIRCServer()
 			return
 		end
-		
+
 		if not string.find(channels, server.ircMain) then
 			ircJoin(server.ircMain)
 		end
-		
+
 		if not string.find(channels, server.ircAlerts) then
 			ircJoin(server.ircAlerts)
 		end
 
 		if not string.find(channels, server.ircWatch) then
 			ircJoin(server.ircWatch)
-		end		
+		end
 	end
 end

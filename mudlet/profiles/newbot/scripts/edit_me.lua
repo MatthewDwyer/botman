@@ -15,28 +15,28 @@ require "lfs"
 function initBot()
 	homedir = getMudletHomeDir()
 	lfs.mkdir(homedir .. "/daily")
-	lfs.mkdir(homedir .. "/dns")	
+	lfs.mkdir(homedir .. "/dns")
 	lfs.mkdir(homedir .. "/proxies")
 	lfs.mkdir(homedir .. "/temp")
 	lfs.mkdir(homedir .. "/scripts")
-	lfs.mkdir(homedir .. "/chatlogs")		
-	
--- EDIT ME!	
+	lfs.mkdir(homedir .. "/chatlogs")
+
+-- EDIT ME!
 	telnetPassword = ""
 	webdavFolder = "/var/www/chatlogs/bot"
 	ircServer = "127.0.0.1"
 	ircPort = 6667
 	ircChannel = "bot"
-	
--- EDIT ME!	
+
+-- EDIT ME!
 	botDB = "bot"
 	botDBUser = "bot"
-	botDBPass = ""	
-	
--- EDIT ME!		
+	botDBPass = ""
+
+-- EDIT ME!
 	botsDB = "bots"
-	botsDBUser = "bots"	
-	botsDBPass = ""		
+	botsDBUser = "bots"
+	botsDBPass = ""
 end
 
 
@@ -44,7 +44,7 @@ function openDB()
 	lastAction = "Open Database"
 	local sqliteDriver = require "luasql.sqlite3"
 	env = luasql.sqlite3()
-	
+
 	conn = env:connect(getMudletHomeDir() .. "/Database_" .. botDB .. ".db")
 
 	conn:execute("INSERT INTO memRestrictedItems (select * from restrictedItems)")

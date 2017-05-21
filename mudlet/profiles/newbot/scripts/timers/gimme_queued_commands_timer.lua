@@ -9,46 +9,46 @@
 
 function miscCommandsTimer()
 	local cursor, errorString, row
-	
-	cursor,errorString = conn:execute("select * from miscQueue where timerDelay = '0000-00-00 00:00:00'  order by id limit 0,1")
-	
-	if cursor then
-		row = cursor:fetch({}, "a")	
 
-		if row then	
+	cursor,errorString = conn:execute("select * from miscQueue where timerDelay = '0000-00-00 00:00:00'  order by id limit 0,1")
+
+	if cursor then
+		row = cursor:fetch({}, "a")
+
+		if row then
 			if tonumber(row.steam) > 0 then
 				if igplayers[row.steam] == nil then
 					conn:execute("delete from miscQueue where steam = " .. row.steam)
 					return
 				end
 			end
-			
-			send(row.command)	
+
+			send(row.command)
 			conn:execute("delete from miscQueue where id = " .. row.id)
 		end
-	end	
-	
+	end
+
 	-- check all the delayed commands.  send any that are not in the future
 	cursor,errorString = conn:execute("select id, steam, command, action, value, UNIX_TIMESTAMP(timerDelay) as delay from miscQueue where timerDelay <> '0000-00-00 00:00:00' order by id")
-	
+
 	if cursor then
-		row = cursor:fetch({}, "a")	
+		row = cursor:fetch({}, "a")
 
 		if row then
-			while row do	
+			while row do
 				if row.delay - os.time() <= 0 then
 					if string.sub(row.command, 1, 3) == "pm " or string.sub(row.command, 1, 3) == "say" then
 						message(row.command)
 					else
-						send(row.command)	
+						send(row.command)
 					end
-						
+
 					conn:execute("delete from miscQueue where id = " .. row.id)
 				end
-			
+
 				row = cursor:fetch(row, "a")
 			end
-		end	
+		end
 	end
 end
 
@@ -61,13 +61,13 @@ function gimmeQueuedCommands()
 	end
 
 	cursor1,errorString = conn:execute("select distinct steam from gimmeQueue")
-	
+
 	if cursor1 then
 		row1 = cursor1:fetch({}, "a")
 
 		while row1 do
 			cursor2,errorString = conn:execute("select * from gimmeQueue where steam = " .. row1.steam .. " order by id limit 0,1")
-			
+
 			if cursor2 then
 				row2 = cursor2:fetch({}, "a")
 
@@ -78,10 +78,10 @@ function gimmeQueuedCommands()
 			end
 
 			row1 = cursor1:fetch(row1, "a")
-		end	
+		end
 	end
-	
+
 	-- piggy back on this timer so we don't need to add more timers to the profile.
 	-- miscCommands are whatever we need done on a timer that isn't covered elsewhere
-	miscCommandsTimer()		
+	miscCommandsTimer()
 end

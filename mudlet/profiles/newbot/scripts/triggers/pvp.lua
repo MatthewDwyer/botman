@@ -29,35 +29,35 @@ function pvpPolice(line)
 	score = string.format("%.1f", math.random() * 10)
 
 	nameStart = string.find(line, "INF GMSG") + 10
-	
+
 	if string.find(line, " eliminated") then
 		nameEnd = string.find(line, " eliminated") - 1
 	end
-	
+
 	if string.find(line, " killed by") then
-		nameStart = string.find(line, "INF GMSG") + 17	
+		nameStart = string.find(line, "INF GMSG") + 17
 		nameEnd = string.find(line, " killed by") - 1
-		
+
 		victimName = stripQuotes(string.sub(line, nameStart, nameEnd))
-		victimID = LookupPlayer(victimName, "all")		
-	end	
-	
+		victimID = LookupPlayer(victimName, "all")
+	end
+
 --dbug("victimName " .. victimName)
 --dbug("victimID " .. victimID)
 
 	if string.find(line, " eliminated") then
 		nameStart = string.find(line, "eliminated") + 11
 	end
-	
+
 	if string.find(line, " killed by") then
 		nameStart = string.find(line, "killed by") + 10
-		
+
 		killerName = stripQuotes(string.sub(line, string.find(line, "killed by") + 10))
 		killerID = LookupPlayer(killerName, "all")
-	end		
-	
+	end
+
 --dbug("killerName " .. killerName)
---dbug("killerID " .. killerID)	
+--dbug("killerID " .. killerID)
 
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
 
@@ -72,7 +72,7 @@ function pvpPolice(line)
 
 	if (killerName == victimName) then
 		if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
-		
+
 		if (r == 1) then message("say [" .. server.chatColour .. "]" .. killerName .. " removed themselves from the gene pool.[-]") end
 		if (r == 2) then message("say [" .. server.chatColour .. "]LOL!  Didn't run far away enough did you " .. killerName .. "?[-]") end
 		if (r == 3) then message("say [" .. server.chatColour .. "]And the prize for most creative way to end themselves goes to.. " .. killerName .. "[-]") end
@@ -96,7 +96,7 @@ function pvpPolice(line)
 		return
 	else
 		if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
-		
+
 		if (igplayers[killerID].currentLocationPVP or igplayers[victimID].currentLocationPVP) then
 			-- check for evidence of hacking
 			if players[killerID].newPlayer and tonumber(players[killerID].hackerScore) > 50 then
@@ -105,8 +105,8 @@ function pvpPolice(line)
 				banPlayer(killerID, "1 week", "Auto-banned for suspected hacking. Admins have been alerted.", "")
 				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[killerID].xPos) .. "," .. math.ceil(igplayers[killerID].yPos) .. "," .. math.floor(igplayers[killerID].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. escape(killerName) .. " temp banned for pvp with a hackerScore > 50')") end
 				return
-			end			
-		
+			end
+
 			if tonumber(players[killerID].playerKills) == 0 then
 				r = rand(4)
 				if r == 1 then message("say [" .. server.chatColour .. "]" .. killerName .. " makes their first kill and is now a hit.. sorry has a hit on themselves.[-]") end
@@ -175,7 +175,7 @@ function pvpPolice(line)
 				-- copy in bots db
 				connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " killed " .. escape(victimName) .. " in a pvp zone'," .. killerID .. ")")
 			end
-			
+
 			if server.pvpTeleportCooldown > 0 then
 				players[killerID].pvpTeleportCooldown = os.time() + server.pvpTeleportCooldown
 			end
@@ -245,7 +245,7 @@ function pvpPolice(line)
 			message("say [" .. server.chatColour .. "]Admins or the victim can release them by typing " .. server.commandPrefix .. "release " .. killerName .. "[-]")
 			message("pm " .. killerID .. " [" .. server.chatColour .. "]You can not return until released from prison.[-]")
 			irc_chat(server.ircAlerts, killerID .. " " .. killerName .. " has been sent to prison, charged with PVP at " .. players[killerID].xPosOld .. " " .. players[killerID].yPosOld .. " " .. players[killerID].zPosOld)
-		
+
 			randomTP(killerID, "prison", true)
 
 			players[killerID].prisoner = true
@@ -276,8 +276,8 @@ function pvpPolice(line)
 					banPlayer(killerID, "1 week", "Auto-banned for suspected hacking. Admins have been alerted.", "")
 					if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[killerID].xPos) .. "," .. math.ceil(igplayers[killerID].yPos) .. "," .. math.floor(igplayers[killerID].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. escape(killerName) .. " temp banned for pvp with a hackerScore > 50')") end
 					return
-				end							
-			
+				end
+
 				message("say [" .. server.chatColour .. "]" .. killerName .. " has been banned for 1 hour, charged with PVP.  Contact an admin to get them unbanned any sooner.[-]")
 				irc_chat(server.ircAlerts, killerID .. " " .. killerName .. " has been banned for 1 hour, charged with PVP at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos)
 				kick(killerID, "This is a PVE server.  PVP somewhere else.  An admin may unban you pending the circumstances of the pvp.")

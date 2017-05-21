@@ -18,15 +18,15 @@ function listPlayers()
 		botman.finalCountdown = false
 	end
 
-	server.scanZombies = false	
+	server.scanZombies = false
 	send("lp")
 
 	if (botman.scheduledRestart == true and botman.scheduledRestartPaused == false) and server.allowReboot == true then
-	
+
 		if server.delayReboot == nil then
 			server.delayReboot = false
 		end
-		
+
 		if not server.delayReboot then
 			if (botman.scheduledRestartTimestamp - os.time() < 0) then
 				startReboot()
@@ -54,12 +54,12 @@ function listPlayers()
 			end
 		end
 	end
-	
-	if server.idleKick and (tonumber(botman.playersOnline) == tonumber(server.maxPlayers)) then	
+
+	if server.idleKick and (tonumber(botman.playersOnline) == tonumber(server.maxPlayers)) then
 		for k,v in pairs(igplayers) do
 			if (igplayers[k].afk - os.time() < 61) and accessLevel(k) > 2 then
 				message("pm " .. k .. " [" .. server.alertColour .. "]Kicking you for idling in " .. igplayers[k].afk - os.time() .. "[-]")
 			end
-		end	
-	end	
+		end
+	end
 end

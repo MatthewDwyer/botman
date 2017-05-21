@@ -21,7 +21,7 @@ function fortyfiveSecondTimer()
 
 		if accessLevel(k) > 2 then
 			cursor,errorString = conn:execute("SELECT count(remove) as deleted FROM keystones WHERE steam = " .. k .. " AND remove = 2")
-			
+
 			if cursor then
 				row = cursor:fetch({}, "a")
 

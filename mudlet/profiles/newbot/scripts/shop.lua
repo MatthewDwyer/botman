@@ -15,7 +15,7 @@ debug = false
 function fixShop()
 	-- automatically fix missing categories and check each category and shop item for bad data
 	local cursor, cursor2, errorString, row, k, v
-	
+
 	-- refresh the categories from the database
 	loadShopCategories()
 
@@ -24,12 +24,12 @@ function fixShop()
 
 	while row do
 		if row.category == "" or shopCategories[row.category] == nil then
-			cursor2,errorString = conn:execute("UPDATE shop SET category = 'misc' WHERE item = '" .. escape(row.item) .. "'")		
+			cursor2,errorString = conn:execute("UPDATE shop SET category = 'misc' WHERE item = '" .. escape(row.item) .. "'")
 		end
 
-		row = cursor:fetch(row, "a")	
+		row = cursor:fetch(row, "a")
 	end
-	
+
 	-- reindex each category
 	for k, v in pairs(shopCategories) do
 		reindexShop(k)
@@ -92,7 +92,7 @@ function LookupShop(search,all)
 		shopPrice = (row.price + row.variation) * ((100 - row.special) / 100)
 		conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(row.category) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "')")
 
-		row = cursor:fetch(row, "a")	
+		row = cursor:fetch(row, "a")
 	end
 
 	-- search for the shop code
@@ -102,7 +102,7 @@ function LookupShop(search,all)
 
 		while row do
 			temp = shopCategories[row.category].code .. string.format("%02d", row.idx)
-		
+
 			if temp == search then
 				shopRows = 1
 				shopCode = temp
@@ -115,7 +115,7 @@ function LookupShop(search,all)
 				return
 			end
 
-			row = cursor:fetch(row, "a")	
+			row = cursor:fetch(row, "a")
 		end
 	end
 
@@ -132,10 +132,10 @@ function reindexShop(category)
 
 	nextidx = 1
 	while row do
-		conn:execute("UPDATE shop SET idx = " .. nextidx .. " WHERE item = '" .. escape(row.item) .. "'")		
+		conn:execute("UPDATE shop SET idx = " .. nextidx .. " WHERE item = '" .. escape(row.item) .. "'")
 		nextidx = nextidx + 1
 
-		row = cursor:fetch(row, "a")	
+		row = cursor:fetch(row, "a")
 	end
 end
 
@@ -149,17 +149,17 @@ function drawLottery(steam)
 
 	winners = {}
 	winnersCount = 0
-	
+
 	if steam ~= nil then
 		-- test lottery
 		prizeDraw = 500
-		
+
 		conn:execute("INSERT INTO memLottery (steam, ticket) VALUES (" .. steam .. ",500)")
-		conn:execute("INSERT INTO lottery (steam, ticket) VALUES (" .. steam .. ",500)")		
+		conn:execute("INSERT INTO lottery (steam, ticket) VALUES (" .. steam .. ",500)")
 		winnersCount = 1
-		
+
 		cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE ticket = " .. prizeDraw)
-		rows = cursor:numrows()		
+		rows = cursor:numrows()
 	else
 		for x=1,100,1 do
 			prizeDraw = rand(100)
@@ -182,7 +182,7 @@ function drawLottery(steam)
 		row = cursor:fetch({}, "a")
 		while row do
 			players[row.steam].cash = players[row.steam].cash + prizeDraw
-			conn:execute("UPDATE players SET cash = " .. players[row.steam].cash .. " WHERE steam = " .. row.steam)			
+			conn:execute("UPDATE players SET cash = " .. players[row.steam].cash .. " WHERE steam = " .. row.steam)
 			message("say [" .. server.chatColour .. "]" .. players[row.steam].name .. " won " .. prizeDraw .. " " .. server.moneyPlural .. "![-]")
 
 			if not igplayers[row.steam] then
@@ -193,7 +193,7 @@ function drawLottery(steam)
 				end
 			end
 
-			row = cursor:fetch(row, "a")	
+			row = cursor:fetch(row, "a")
 		end
 
 		message("say [" .. server.chatColour .. "]$$$ Congratulation$ $$$   xD[-]")
@@ -205,7 +205,7 @@ function drawLottery(steam)
 			conn:execute("UPDATE server SET lottery = 0")
 		else
 			conn:execute("DELETE FROM memLottery where steam = '" .. steam .. "'")
-			conn:execute("DELETE FROM lottery where steam = '" .. steam .. "'")	
+			conn:execute("DELETE FROM lottery where steam = '" .. steam .. "'")
 		end
 	else
 		r = rand(7)
@@ -213,20 +213,20 @@ function drawLottery(steam)
 		if (r == 2) then
 			thing = PicknMix()
 			thing = PicknMix()
-			message("say [" .. server.chatColour .. "]Tonight's winner is.. " .. gimmeZimbies[thing].zombie .. "! Who gave that a ticket? O.o[-]") 
+			message("say [" .. server.chatColour .. "]Tonight's winner is.. " .. gimmeZimbies[thing].zombie .. "! Who gave that a ticket? O.o[-]")
 		end
 
-		if (r == 3) then 
-			message("say [" .. server.chatColour .. "]OH NO! A zombie ate the winning number![-]") 
+		if (r == 3) then
+			message("say [" .. server.chatColour .. "]OH NO! A zombie ate the winning number![-]")
 			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]BAD ZOMBIE!  No biscuit![-]") .. "')")
 		end
 
-		if (r == 4) then 
+		if (r == 4) then
 			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
 			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody again!  That guy has all the luck.[-]") .. "')")
 		end
 
-		if (r == 5) then 
+		if (r == 5) then
 			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
 			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]*CRASH*    BLUUUUEERGH!      AAAAH!  ZOMBIES!   *SCREAM!*[-]") .. "')")
 			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]CUT!  Go to commercials![-]") .. "')")
@@ -238,7 +238,7 @@ function drawLottery(steam)
 			tempTimer( 15, [[drawLottery()]] )
 		end
 
-		if (r == 7) then 
+		if (r == 7) then
 			r = rand(6)
 			if r == 1 then thing = "severed head" end
 			if r == 2 then thing = "severed hand" end
@@ -267,16 +267,16 @@ end
 
 function doShop(command, playerid, words)
 	local k, v, i, number, cmd, list, cursor, errorString
-	
-if (debug) then 
-dbug("debug shop line " .. debugger.getinfo(1).currentline) 
+
+if (debug) then
+dbug("debug shop line " .. debugger.getinfo(1).currentline)
 dbug(command)
 dbug(playerid)
-end		
+end
 
 	-- check for missing money :O
 	if server.moneyName == nil then server.moneyName = "Zenny" end
-	if server.moneyPlural == nil then server.moneyPlural = "Zennies" end	
+	if server.moneyPlural == nil then server.moneyPlural = "Zennies" end
 
 	list = ""
 	for k, v in pairs(shopCategories) do
@@ -285,8 +285,8 @@ end
 		end
 	end
 	list = string.sub(list, 1, string.len(list) - 3)
-	
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
+
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	shopState = "[OPEN]"
 
@@ -295,12 +295,12 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			shopState = "[CLOSED]"
 		end
 	end
-	
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
+
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	number = tonumber(string.match(command, " (-?\%d+)"))
-	
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
+
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if words[1] == "shop" and words[2] == nil then
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have " .. players[playerid].cash .. " " .. server.moneyPlural .. " in the bank. Shop is " .. shopState .. "[-]")
@@ -312,7 +312,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		return false
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "shop" and words[2] == "admin") and (accessLevel(playerid) < 3) then
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop price <code or item name> <whole number without $>[-]")
@@ -322,9 +322,9 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]You can manage categories and items for sale via IRC.[-]")
 		return false
 	end
-	
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
-	
+
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+
 	if (shopCategories[words[2]]) then
 		LookupShop(words[2],all)
 
@@ -344,19 +344,19 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 				end
 			end
 
-			row = cursor:fetch(row, "a")	
+			row = cursor:fetch(row, "a")
 		end
 
 		return false
-	end	
+	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[2] == "list") then
 		list = ""
 
 		for k, v in pairs(shopCategories) do
-			list = list .. k .. ",  " 
+			list = list .. k .. ",  "
 		end
 		list = string.sub(list, 1, string.len(list) - 3)
 
@@ -364,8 +364,8 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 		return false
 	end
-	
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
+
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[2] == "variation" and words[3] ~= nil) then
 		if (accessLevel(playerid) > 2) then
@@ -376,12 +376,12 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		LookupShop(words[3])
 
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have changed the price variation for " .. shopItem .. " to " .. number .. "[-]")
-		conn:execute("UPDATE shop SET variation = " .. number .. " WHERE item = '" .. escape(shopItem) .. "'")		
+		conn:execute("UPDATE shop SET variation = " .. number .. " WHERE item = '" .. escape(shopItem) .. "'")
 
 		return false
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[2] == "special" and words[3] ~= nil) then
 		if (accessLevel(playerid) > 2) then
@@ -398,7 +398,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		return false
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[2] == "price" and words[3] ~= nil) then
 		if (accessLevel(playerid) > 2) then
@@ -414,8 +414,8 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		conn:execute("UPDATE shop SET price = " .. number .. " WHERE item = '" .. escape(shopItem) .. "'")
 		return false
 	end
-	
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
+
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[2] == "restock" and words[3] ~= nil) then
 		if (accessLevel(playerid) > 2) then
@@ -434,8 +434,8 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 		return false
 	end
-	
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
+
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "buy" and words[2] ~= nil) then
 		if server.shopOpenHour ~= server.shopCloseHour then
@@ -444,13 +444,13 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 				return false
 			end
 		end
-		
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
+
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 		if server.shopLocation ~= nil then
 			if not locations[server.shopLocation] then
 				server.shopLocation = nil
-				conn:execute("UPDATE server SET shopLocation = null")			
+				conn:execute("UPDATE server SET shopLocation = null")
 			else
 				dist = distancexz(igplayers[playerid].xPos, igplayers[playerid].zPos, locations[server.shopLocation].x, locations[server.shopLocation].z)
 
@@ -458,13 +458,13 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 					message("pm " .. playerid .. " [" .. server.chatColour .. "]The shop is only available in the " .. server.shopLocation .. " location.[-]")
 					message("pm " .. playerid .. " [" .. server.chatColour .. "]Type " .. server.commandPrefix .. server.shopLocation .. " to go there now and " .. server.commandPrefix .. "return when finished.[-]")
 					return false
-				end			
+				end
 			end
 		end
-		
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
 
-		LookupShop(words[2], true) 
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+
+		LookupShop(words[2], true)
 
 		if words[3] ~= nil then
 			number = tonumber(words[3])
@@ -489,13 +489,13 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 					end
 				end
 
-				row = cursor:fetch(row, "a")	
+				row = cursor:fetch(row, "a")
 			end
 
 			return false
 		end
-		
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end			
+
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 		if (tonumber(players[playerid].cash) > (tonumber(shopPrice) * number)) and ((number <= tonumber(shopStock) or (tonumber(shopStock) == -1))) then
 			players[playerid].cash = tonumber(players[playerid].cash) - (tonumber(shopPrice) * number)
@@ -518,8 +518,8 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 		return false
 	end
-	
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end				
+
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
 		cursor,errorString = conn:execute("SELECT * FROM shop")
@@ -530,7 +530,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		end
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end				
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
 		LookupShop(words[2], true)
@@ -549,11 +549,11 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 				end
 			end
 
-			row = cursor:fetch(row, "a")	
+			row = cursor:fetch(row, "a")
 		end
-	
+
 		return false
 	end
-	
+
 if debug then dbug("debug shop end") end
 end

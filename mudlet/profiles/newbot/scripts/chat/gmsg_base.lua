@@ -50,19 +50,19 @@ if debug then dbug("debug base") end
 	if chatvars.showHelpSections then
 		irc_chat(players[chatvars.ircid].ircAlias, "base")
 	end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "base") or string.find(chatvars.command, "set")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set base size <number> <player>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set base2 size <number> <player>")			
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set base2 size <number> <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set the base protection size for a player's first or second base.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end	
-	
+	end
+
 	if (chatvars.words[1] == "set" and (chatvars.words[2] == "base" or chatvars.words[2] == "base2") and chatvars.words[3] == "size") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
@@ -130,30 +130,30 @@ if debug then dbug("debug base") end
 	end
 
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "bed") or string.find(chatvars.command, "set") or string.find(chatvars.command, "clear")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "setbed")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "clearbed")			
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "clearbed")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "When you die, the bot can automatically return you to your first or second base.")
-				irc_chat(players[chatvars.ircid].ircAlias, "Set within 50 metres of your base.  The closest base will become your new spawn point after death.")				
+				irc_chat(players[chatvars.ircid].ircAlias, "Set within 50 metres of your base.  The closest base will become your new spawn point after death.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end		
-	
+	end
+
 	if (chatvars.words[1] == "clearbed") then
 		players[chatvars.playerid].bed = ""
 		message(string.format("pm %s [%s]You will no longer spawn at your base after you die.[-]", chatvars.playerid, server.chatColour))
 		botman.faultyChat = false
-		return true			
-	end	
+		return true
+	end
 
 	if (chatvars.words[1] == "setbed") then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "setbed makes your nearest base your spawn point after you die.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "clearbed stops this and you will spawn randomly after you die.[-]")		
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "clearbed stops this and you will spawn randomly after you die.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Unlike a real bed, this can't be broken or stolen. Also it doesn't show up on the map or compass.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Use it within 50 metres of your base.[-]")
 
@@ -180,18 +180,18 @@ if debug then dbug("debug base") end
 	end
 
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base") or string.find(chatvars.command, "set")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "sethome (or sethome2)")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "setbase (or setbase2)")			
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "setbase (or setbase2)")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot where your first or second base is for base protection, raid alerting and the ability to teleport home.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end			
+	end
 
 	if (chatvars.words[1] == "sethome" or chatvars.words[1] == "setbase" or chatvars.words[1] == "sethome2" or chatvars.words[1] == "setbase2") and chatvars.words[2] == nil then
 		if (players[chatvars.playerid].timeout == true) then
@@ -229,18 +229,18 @@ if debug then dbug("debug base") end
 
 				if dist <= tonumber(psize) then
 					if not v.allowBase then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not allowed to set your base here.[-]")					
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not allowed to set your base here.[-]")
 					else
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are too close to a location.  You are not allowed to set your base here.[-]")
 					end
-						
+
 					botman.faultyChat = false
 					return true
 				end
 			end
 		end
-		
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
 		-- set the players home coords
 		if (chatvars.words[1] == "sethome" or chatvars.words[1] == "setbase") then
@@ -253,11 +253,11 @@ if debug then dbug("debug base") end
 			players[chatvars.playerid].protect = false
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is your new home location.[-]")
 
-			if botman.dbConnected then 
+			if botman.dbConnected then
 				conn:execute("UPDATE players SET homeX = " .. chatvars.intX .. ", homeY = " .. chatvars.intY .. ", homeZ = " .. chatvars.intZ .. ", exitX = " .. chatvars.intX .. ", exitY = " .. chatvars.intY .. ", exitZ = " .. chatvars.intZ .. ", protect = 0 WHERE steam = " .. chatvars.playerid)
 				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','setbase','Player " .. escape(players[chatvars.playerid].name) .. " set a base'," .. chatvars.playerid .. ")")
 			end
-			
+
 			removeInvalidHotspots(chatvars.playerid)
 			irc_chat(server.ircAlerts, players[chatvars.playerid].name .. " has setbase at " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ)
 
@@ -295,31 +295,31 @@ if debug then dbug("debug base") end
 	end
 
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "protect") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "protect (or protect2)")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set up the bot's base protection.  The bot will tell the player to move towards or away from their base and will")
-				irc_chat(players[chatvars.ircid].ircAlias, "automatically set protection outside of their base protected area.  Players should not set traps in this area.")				
+				irc_chat(players[chatvars.ircid].ircAlias, "automatically set protection outside of their base protected area.  Players should not set traps in this area.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end				
-	
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end	
+	end
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "protect" or chatvars.words[1] == "protect2") and chatvars.words[2] ~= "village" then
-	
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end			
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 		if server.disableBaseProtection or pvpZone(chatvars.intX, chatvars.intZ) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base protection is disabled on this server.  Use claim blocks instead.[-]")
 			botman.faultyChat = false
 			return true
 		end
-		
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
 		-- allow base protection after player has played 30 minutes
 		if (players[chatvars.playerid].newPlayer == true) and (players[chatvars.playerid].timeOnServer + igplayers[chatvars.playerid].sessionPlaytime < 1800) then
@@ -327,8 +327,8 @@ if debug then dbug("debug base") end
 			botman.faultyChat = false
 			return true
 		end
-		
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
 		id = chatvars.playerid
 
@@ -337,8 +337,8 @@ if debug then dbug("debug base") end
 			pname = string.trim(pname)
 			id = LookupPlayer(pname)
 		end
-		
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
 		if players[chatvars.playerid].inLocation ~= "" then
 			if locations[players[chatvars.playerid].inLocation].pvp then
@@ -347,14 +347,14 @@ if debug then dbug("debug base") end
 				return true
 			end
 		end
-		
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end		
-		
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
+
 		if igplayers[chatvars.playerid].currentLocationPVP then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base protection is not allowed where PVP rules are in effect.[-]")
 			botman.faultyChat = false
 			return true
-		end	
+		end
 
 			if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
@@ -362,16 +362,16 @@ if debug then dbug("debug base") end
 			botman.faultyChat = false
 			return true
 		end
-		
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
 		if chatvars.words[1] == "protect" then
 			dist = distancexz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].zPos, players[id].homeX, players[id].homeZ)
 		else
 			dist = distancexz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].zPos, players[id].home2X, players[id].home2Z)
 		end
-		
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
 		if (chatvars.words[1] == "protect") then
 			if (tonumber(dist) <  tonumber(players[id].protectSize) + 1) then
@@ -382,8 +382,8 @@ if debug then dbug("debug base") end
 				botman.faultyChat = false
 				return true
 			end
-			
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end			
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
 			if (tonumber(dist) >  tonumber(players[id].protectSize) + 20) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are too far from the base, but just walk towards the base and I will set it when you are close enough.[-]")
@@ -393,8 +393,8 @@ if debug then dbug("debug base") end
 				botman.faultyChat = false
 				return true
 			end
-			
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end			
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
 			players[id].exitX = chatvars.intX
 			players[id].exitY = chatvars.intY
@@ -548,14 +548,14 @@ if debug then dbug("debug base") end
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delbase")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delbase <player>")			
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delbase <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot to forget about a tbase.  Players can only remove their own bases.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end			
+	end
 
 	if (chatvars.words[1] == "delbase") then
 		id = chatvars.playerid
@@ -608,18 +608,18 @@ if debug then dbug("debug base") end
 	end
 
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delbase2")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delbase2 <player>")			
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delbase2 <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot to forget about a base.  Players can only remove their own bases.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end			
+	end
 
 	if chatvars.words[1] == "delbase2" and (chatvars.accessLevel < 4) then
 		id = chatvars.playerid
@@ -672,18 +672,18 @@ if debug then dbug("debug base") end
 	end
 
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "unprotectbase <player>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "unprotectbase2 <player>")			
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "unprotectbase2 <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Disable base protection for a player.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end		
+	end
 
 	if (chatvars.words[1] == "unprotectbase" or chatvars.words[1] == "unprotectbase2") then
 		if (chatvars.playername ~= "Server") then
@@ -749,32 +749,32 @@ if debug then dbug("debug base") end
 
 	-- ###################  do not allow remote commands beyond this point ################
 	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
-	
+
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
 		irc_chat(players[chatvars.ircid].ircAlias, "")
 		irc_chat(players[chatvars.ircid].ircAlias, "Base In-Game Only:")
 		irc_chat(players[chatvars.ircid].ircAlias, "===================")
 		irc_chat(players[chatvars.ircid].ircAlias, "")
-	end	
-	
+	end
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "home (or base)")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "home2 (or base2)")			
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "home2 (or base2)")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Teleport back to your first or second base. A timer and/or a cost may apply.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end					
+	end
 
 	if (chatvars.words[1] == "base" or chatvars.words[1] == "home" or chatvars.words[1] == "base2" or chatvars.words[1] == "home2") and chatvars.words[2] == nil and (chatvars.playerid ~= 0) then
 		if server.coppi then
 			-- update the coordinates of the players bedroll
 			send("lpb " .. chatvars.playerid)
-		end	
-	
+		end
+
 		if (chatvars.accessLevel > 10) and (chatvars.words[1] == "base2" or chatvars.words[1] == "home2") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only donors can have 2 base teleports and base protections.  Consider donating =D[-]")
 			botman.faultyChat = false
@@ -807,7 +807,7 @@ if debug then dbug("debug base") end
 				return true
 			end
 		end
-		
+
 		if (chatvars.words[1] == "base" or chatvars.words[1] == "home") then
 			if not isDestinationAllowed(chatvars.playerid, players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your base is in a restricted area.  Please talk to an admin to assist you.[-]")
@@ -820,7 +820,7 @@ if debug then dbug("debug base") end
 				botman.faultyChat = false
 				return true
 			end
-		end		
+		end
 
 		wait = true
 
@@ -849,26 +849,26 @@ if debug then dbug("debug base") end
 					return true
 				end
 			end
-			
+
 			-- reject if not an admin and pvpTeleportCooldown is > zero
 			if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
 				message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
 				botman.faultyChat = false
 				result = true
 				return
-			end				
+			end
 		end
-		
+
 		if wait then -- if the player is within 200 metres of the base, there is no charge.
 			if tonumber(server.baseCost) > 0 and (chatvars.accessLevel > 3) then
 				if players[chatvars.playerid].cash < tonumber(server.baseCost) then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You do not have enough " .. server.moneyPlural .. ".  You need " .. server.baseCost .. ".[-]")
 					botman.faultyChat = false
-					return true		
+					return true
 				else
 					players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.baseCost
 					if botman.dbConnected then conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid) end
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. server.baseCost .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")			
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. server.baseCost .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")
 				end
 			end
 		end
@@ -913,19 +913,19 @@ if debug then dbug("debug base") end
 		return true
 	end
 
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end	
-	
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "setbase <player>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "sethome <player>")			
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "sethome <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set a player's first base for them where you are standing.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end						
+	end
 
 	if ((chatvars.words[1] == "setbase" or chatvars.words[1] == "sethome" and chatvars.words[2] ~= nil) and not players[chatvars.playerid].prisoner) and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
@@ -954,11 +954,11 @@ if debug then dbug("debug base") end
 			players[id].protect = false
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. "'s base has been set at where you are standing.[-]")
 
-			if botman.dbConnected then 
+			if botman.dbConnected then
 				conn:execute("UPDATE players SET protectSize = " .. server.baseSize .. ", homeX = " .. chatvars.intX .. ", homeY = " .. chatvars.intY .. ", homeZ = " .. chatvars.intZ .. ", protect = 0 WHERE steam = " .. id)
 				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','setbase','Player " .. escape(players[id].name) .. " set a base'," .. id .. ")")
 			end
-			
+
 			irc_chat(server.ircAlerts, players[id].name .. " has setbase at " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ)
 
 			if botman.db2Connected then
@@ -972,18 +972,18 @@ if debug then dbug("debug base") end
 	end
 
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "setbase2 <player>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "sethome2 <player>")			
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "sethome2 <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set a player's second base for them where you are standing.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end				
+	end
 
 	if ((chatvars.words[1] == "setbase2" or chatvars.words[1] == "sethome2" and chatvars.words[2] ~= nil) and not players[chatvars.playerid].prisoner) and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
@@ -1012,11 +1012,11 @@ if debug then dbug("debug base") end
 			players[id].protect2 = false
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. "'s 2nd base has been set at where you are standing.[-]")
 
-			if botman.dbConnected then 
+			if botman.dbConnected then
 				conn:execute("UPDATE players SET protect2Size = " .. server.baseSize .. ", home2X = " .. chatvars.intX .. ", home2Y = " .. chatvars.intY .. ", home2Z = " .. chatvars.intZ .. ", protect2 = 0 WHERE steam = " .. id)
 				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','setbase','Player " .. escape(players[id].name) .. " set a 2nd base'," .. id .. ")")
 			end
-			
+
 			irc_chat(server.ircAlerts, players[id].name .. " has setbase2 at " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ)
 
 			if botman.db2Connected then
@@ -1030,7 +1030,7 @@ if debug then dbug("debug base") end
 	end
 
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "test base")
@@ -1040,7 +1040,7 @@ if debug then dbug("debug base") end
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end	
+	end
 
 	if (chatvars.words[1] == "test" and chatvars.words[2] == "base") and (chatvars.playerid ~= 0) then
 		if players[chatvars.playerid].protect == false and players[chatvars.playerid].protect2 == false then
@@ -1057,21 +1057,21 @@ if debug then dbug("debug base") end
 		botman.faultyChat = false
 		return true
 	end
-	
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end	
-	
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "pause")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Pause your base protection.")
-				irc_chat(players[chatvars.ircid].ircAlias, "Only works on your base(s) if you are within 100 metres of them and automatically resumes if you move away or leave the server.")				
-				irc_chat(players[chatvars.ircid].ircAlias, "This allows players who you haven't friended access to your base with you present.")				
+				irc_chat(players[chatvars.ircid].ircAlias, "Only works on your base(s) if you are within 100 metres of them and automatically resumes if you move away or leave the server.")
+				irc_chat(players[chatvars.ircid].ircAlias, "This allows players who you haven't friended access to your base with you present.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end		
+	end
 
 	if ((chatvars.words[1] == "pause" or chatvars.words[1] == "paws") and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
 		pname = igplayers[chatvars.playerid].name
@@ -1096,7 +1096,7 @@ if debug then dbug("debug base") end
 	end
 
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "resume or unpause")
@@ -1106,7 +1106,7 @@ if debug then dbug("debug base") end
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end	
+	end
 
 	if chatvars.words[1] == "resume" or chatvars.words[1] == "unpaws" or chatvars.words[1] == "unpause" and chatvars.words[2] == nil and (chatvars.playerid ~= 0) then
 		pname = igplayers[chatvars.playerid].name

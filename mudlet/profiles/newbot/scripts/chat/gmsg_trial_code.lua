@@ -29,11 +29,11 @@ function gmsg_trial_code()
 	end
 	-- ##################################################################
 
-	if (chatvars.words[1] == "run" and chatvars.words[2] == "code" and chatvars.accessLevel == 0) then		
+	if (chatvars.words[1] == "run" and chatvars.words[2] == "code" and chatvars.accessLevel == 0) then
 		-- run whatever is in trialCode.lua
-		trialCode()		
+		trialCode()
 		botman.faultyChat = false
-		return false		
+		return false
 	end
-	
+
 end

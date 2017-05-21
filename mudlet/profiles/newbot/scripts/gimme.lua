@@ -276,7 +276,7 @@ function gimme(pid)
 		r = math.random(1, botman.maxGimmeZombies + 30)
 	else
 		r = rand(5)
-		
+
 		if r==1 then
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " almost won a prize![-]")
@@ -287,9 +287,9 @@ function gimme(pid)
 			botman.faultyGimme = false
 			return
 		end
-		
+
 		if r == 2 or r == 3 then
-			r = botman.maxGimmeZombies + 1		
+			r = botman.maxGimmeZombies + 1
 		end
 
 		if r==4 then
@@ -301,8 +301,8 @@ function gimme(pid)
 
 			botman.faultyGimme = false
 			return
-		end		
-		
+		end
+
 		if r==5 then
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]Surprise! " .. pname .. " didn't win anything.[-]")
@@ -312,11 +312,11 @@ function gimme(pid)
 
 			botman.faultyGimme = false
 			return
-		end		
+		end
 	end
-		
+
 	botman.faultyGimmeNumber = r
-	
+
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 	if debug then dbug("gimme random  " .. r .. " player = " .. pname) end
 	if debug then dbug("max zombie id " .. botman.maxGimmeZombies) end
@@ -362,7 +362,7 @@ function gimme(pid)
 			if (zombies > 299) and (zombies < 500) then spawnCount = rand(4) end
 			if (zombies > 499) and (zombies < 1000) then spawnCount = rand(5) end
 			if (zombies > 999) and (zombies < 5000) then spawnCount = rand(6) end
-			if (zombies > 4999) then spawnCount = rand(8) end			
+			if (zombies > 4999) then spawnCount = rand(8) end
 		end
 
 if entity == "zombieferal" then
@@ -641,54 +641,54 @@ end
 		if (category == "clothes") then
 			descr = rand(10)
 
-			if (descr==1) then 
-				description = description .. "shitty " 
+			if (descr==1) then
+				description = description .. "shitty "
 				quality = 200
 			end
-			
-			if (descr==2) then 
-				description = description .. "sturdy " 
+
+			if (descr==2) then
+				description = description .. "sturdy "
 				quality = 500
 			end
-			
-			if (descr==3) then 			
-				description = description .. "tatty " 
+
+			if (descr==3) then
+				description = description .. "tatty "
 				quality = 200
 			end
-			
-			if (descr==4) then 
-				description = description .. "used " 
+
+			if (descr==4) then
+				description = description .. "used "
 				quality = 300
 			end
-			
-			if (descr==5) then 
-				description = description .. "brand new " 
+
+			if (descr==5) then
+				description = description .. "brand new "
 				quality = 600
 			end
-			
-			if (descr==6) then 
-				description = description .. "soiled " 
+
+			if (descr==6) then
+				description = description .. "soiled "
 				quality = 400
 			end
-			
-			if (descr==7) then 
-				description = description .. "boring " 
+
+			if (descr==7) then
+				description = description .. "boring "
 				quality = 300
 			end
-			
-			if (descr==8) then 
-				description = description .. "fabulous " 
+
+			if (descr==8) then
+				description = description .. "fabulous "
 				quality = 550
 			end
-			
-			if (descr==9) then 
-				description = description .. "natty " 
-				quality = 550				
+
+			if (descr==9) then
+				description = description .. "natty "
+				quality = 550
 			end
-			
-			if (descr==10) then 
-				description = description .. "stylish " 
-				quality = 550				
+
+			if (descr==10) then
+				description = description .. "stylish "
+				quality = 550
 			end
 		end
 
@@ -707,7 +707,7 @@ end
 		if qual ~= 0 then
 			send("give " .. pid .. " " .. prize .. " " .. qty .. " " .. quality)
 		else
-			send("give " .. pid .. " " .. prize .. " " .. qty)		
+			send("give " .. pid .. " " .. prize .. " " .. qty)
 		end
 
 		botman.faultyGimme = false
@@ -1074,7 +1074,7 @@ end
 	end
 
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
-	
+
 	if (r == botman.maxGimmeZombies + 21) then
 		spawnCount = rand(30,10)
 		if (not server.gimmePeace) then
@@ -1092,7 +1092,7 @@ end
 		return
 	end
 
-	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if r > botman.maxGimmeZombies + 21 then
 		if (not server.gimmePeace) then

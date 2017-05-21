@@ -63,7 +63,7 @@ function everyMinute()
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	if not server.delayReboot then
-		--if (scheduledReboot == true or botman.scheduledRestart == true) and botman.scheduledRestartPaused == false and tonumber(botman.playersOnline) > 0 and server.allowReboot == true then	
+		--if (scheduledReboot == true or botman.scheduledRestart == true) and botman.scheduledRestartPaused == false and tonumber(botman.playersOnline) > 0 and server.allowReboot == true then
 		if (botman.scheduledRestart == true) and botman.scheduledRestartPaused == false and tonumber(botman.playersOnline) > 0 and server.allowReboot == true then
 			restartTime = botman.scheduledRestartTimestamp - os.time()
 
@@ -117,7 +117,7 @@ function everyMinute()
 			lastHotspots[k] = nil
 			players[k].lastLogout = os.time()
 
-			if botman.dbConnected then 
+			if botman.dbConnected then
 				conn:execute("DELETE FROM messageQueue WHERE recipient = " .. k)
 				conn:execute("DELETE FROM gimmeQueue WHERE steam = " .. k)
 				conn:execute("DELETE FROM commandQueue WHERE steam = " .. k)
@@ -161,8 +161,8 @@ function everyMinute()
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
-	if tonumber(botman.playersOnline) == 0 and botman.scheduledRestart and server.allowReboot then	
-		irc_chat(server.ircMain, "A reboot is scheduled and nobody is on so the server is rebooting now.")	
+	if tonumber(botman.playersOnline) == 0 and botman.scheduledRestart and server.allowReboot then
+		irc_chat(server.ircMain, "A reboot is scheduled and nobody is on so the server is rebooting now.")
 		botman.scheduledRestart = false
 		botman.scheduledRestartTimestamp = os.time()
 		botman.scheduledRestartPaused = false
@@ -175,7 +175,7 @@ function everyMinute()
 		rebootTimerDelayID = nil
 
 		send("sa")
-		finishReboot()	
+		finishReboot()
 	end
 
 	if (botman.playersOnline == 0 and gameTick < 0) and (scheduledReboot ~= true) and server.allowReboot == true then

@@ -19,9 +19,9 @@ end
 function prepareTeleport(steam, cmd)
 	if igplayers[steam] then
 		igplayers[steam].lastCatchTimestamp = os.time() + 10
-		igplayers[steam].lastTP = cmd		
+		igplayers[steam].lastTP = cmd
 		players[steam].tp = 1
-		players[steam].hackerTPScore = 0		
+		players[steam].hackerTPScore = 0
 	end
 end
 
@@ -48,7 +48,7 @@ function teleport(cmd, forced)
 
 	players[id].tp = 1
 	players[id].hackerTPScore = 0
-	
+
 	send(cmd)
 
 	players[id].tp = 1
@@ -66,10 +66,10 @@ function fallCatcher(steam, x, y, z)
 		return
 	end
 
-	if (tonumber(y) < 0 and players[steam].timeout == false and players[steam].botTimeout == false and igplayers[steam].sessionPlaytime > 5)  then	
+	if (tonumber(y) < 0 and players[steam].timeout == false and players[steam].botTimeout == false and igplayers[steam].sessionPlaytime > 5)  then
 		cmd = "tele " .. steam .. " " .. x .. " -1 " .. z
 		prepareTeleport(steam, cmd)
-		teleport(cmd, true)		
+		teleport(cmd, true)
 	end
 end
 
@@ -77,7 +77,7 @@ end
 function randomTP(playerid, location, forced)
 	local r, rows, row, rowCount
 
-	if botman.dbConnected then 
+	if botman.dbConnected then
 		cursor,errorString = conn:execute("select * from locationSpawns where location='" .. location .. "'")
 		rows = tonumber(cursor:numrows())
 
@@ -91,7 +91,7 @@ function randomTP(playerid, location, forced)
 		cmd = "tele " .. playerid .. " " .. locations[location].x .. " " .. locations[location].y .. " " .. locations[location].z
 		prepareTeleport(playerid, cmd)
 		teleport(cmd, true)
-		return	
+		return
 	end
 
 	rowCount = 1

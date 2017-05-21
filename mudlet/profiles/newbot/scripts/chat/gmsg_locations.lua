@@ -1167,7 +1167,7 @@ function gmsg_locations()
 	end
 
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "close"))) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> day closed <0-7>")
@@ -1244,7 +1244,7 @@ function gmsg_locations()
 		return true
 	end
 
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end	
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "open"))) or chatvars.words[1] ~= "help" then
@@ -1401,12 +1401,12 @@ function gmsg_locations()
 	end
 
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-	
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "lev"))) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> min level <minimum player level>")
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> max level <maximum player level>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> min level <minimum player level> max level <maximum player level>")			
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> min level <minimum player level> max level <maximum player level>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set a player level requirement to teleport to a location.")
@@ -1436,48 +1436,48 @@ function gmsg_locations()
 
 		if (string.find(chatvars.command, "min level")) then
 			tmp.locationName = string.trim(string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "min level") - 2))
-		end		
+		end
 
 		tmp.loc = LookupLocation(tmp.locationName)
-		
-		if tmp.loc ~= nil then			
+
+		if tmp.loc ~= nil then
 			tmp.minLevel = locations[tmp.loc].minimumLevel
 			tmp.maxLevel = locations[tmp.loc].maximumLevel
-			
+
 			if (string.find(chatvars.command, "min level") and not string.find(chatvars.command, "max level")) then
 				tmp.minLevel = string.sub(chatvars.command, string.find(chatvars.command, "min level") + 10)
 			end
-			
+
 			if (not string.find(chatvars.command, "min level") and string.find(chatvars.command, "max level")) then
 				tmp.maxLevel = string.sub(chatvars.command, string.find(chatvars.command, "max level") + 10)
-			end		
-					
+			end
+
 			if (string.find(chatvars.command, "min level") and string.find(chatvars.command, "max level")) then
-				tmp.minLevel = string.sub(chatvars.command, string.find(chatvars.command, "min level") + 10, string.find(chatvars.command, "max level") - 2)		
-				tmp.maxLevel = string.sub(chatvars.command, string.find(chatvars.command, "max level") + 10)			
-			end	
+				tmp.minLevel = string.sub(chatvars.command, string.find(chatvars.command, "min level") + 10, string.find(chatvars.command, "max level") - 2)
+				tmp.maxLevel = string.sub(chatvars.command, string.find(chatvars.command, "max level") + 10)
+			end
 
 			tmp.minLevel = tonumber(tmp.minLevel)
-			tmp.maxLevel = tonumber(tmp.maxLevel)			
-		
+			tmp.maxLevel = tonumber(tmp.maxLevel)
+
 			-- flip if max < min and max not zero
 			if tmp.minLevel > tmp.maxLevel and tmp.maxLevel > 0 then
 				temp = tmp.maxLevel
 				tmp.maxLevel = tmp.minLevel
 				tmp.minLevel = temp
 			end
-			
+
 			-- update the levels for the location
 			conn:execute("UPDATE locations set minimumLevel = " .. tmp.minLevel .. ", maximumLevel = " .. tmp.maxLevel .. " WHERE name = '" .. escape(tmp.locationName) .. "'")
 			locations[tmp.loc].minimumLevel = tmp.minLevel
 			locations[tmp.loc].maximumLevel = tmp.maxLevel
-			
+
 			if tmp.minLevel == 0 and tmp.maxLevel == 0 then
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. tmp.locationName .. " is not restricted by player level.[-]")
 				else
 					irc_chat(players[chatvars.ircid].ircAlias, "The location " .. tmp.locationName .. " is not restricted by player level.")
-				end			
+				end
 
 				botman.faultyChat = false
 				return true
@@ -1495,13 +1495,13 @@ function gmsg_locations()
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. tmp.locationName .. " is restricted to players with minimum player level of " .. tmp.minLevel .. " and above.[-]")
 					else
 						irc_chat(players[chatvars.ircid].ircAlias, "The location " .. tmp.locationName .. " is restricted to players with minimum player level of " .. tmp.minLevel .. " and above.")
-					end				
+					end
 				end
-				
+
 				botman.faultyChat = false
-				return true				
+				return true
 			end
-			
+
 			if tmp.maxLevel > 0 then
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. tmp.locationName .. " is restricted to players with a player level below " .. tmp.maxLevel + 1 .. ".[-]")
@@ -1523,7 +1523,7 @@ function gmsg_locations()
 		return true
 	end
 
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end	
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	-- ###################  do not run remote commands beyond this point ################
 	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
@@ -1629,7 +1629,7 @@ function gmsg_locations()
 			return true
 		else
 			pvp = pvpZone(chatvars.intX, chatvars.intZ)
-		
+
 			locations[locationName] = {}
 			locations[locationName].name = locationName
 
@@ -1637,7 +1637,7 @@ function gmsg_locations()
 			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','location added','Location " .. escape(locationName) .. " added'," .. chatvars.playerid .. ")")
 			message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " has created a location called " .. locationName .. "[-]")
 
-			loadLocations(locationName)			
+			loadLocations(locationName)
 			locations[locationName].pvp = pvp
 		end
 
@@ -1714,34 +1714,34 @@ function gmsg_locations()
 				status = "[CLOSED]"
 				v.open = false
 			else
-				if v.timeOpen ~= v.timeClosed then			
+				if v.timeOpen ~= v.timeClosed then
 					if v.timeClosed == 0 then
 						status = status .. "closes midnight"
 					else
 						status = status .. "closes " .. string.format("%02d", v.timeClosed) .. ":00"
 					end
-				
+
 					if v.timeOpen == 0 then
 						status = status .. " re-opens midnight"
 					else
 						status = status .. " re-opens " .. string.format("%02d", v.timeOpen) .. ":00"
-					end				
+					end
 				end
-				
+
 				if tonumber(v.dayClosed) > 0 then
 					status = status .. " closed on day " .. v.dayClosed
-				end				
+				end
 
 				v.open = true
 			end
-			
+
 			if tonumber(v.cost) > 0 and v.currency ~= nil then
 				status = status .. " costs: " .. v.cost .. " " .. v.currency
 			end
-			
+
 			if not v.public then
 				status = status .. " [private]"
-			end			
+			end
 
 			if tonumber(chatvars.accessLevel) < 3 then
 				if not v.active then
@@ -1751,14 +1751,14 @@ function gmsg_locations()
 				if status ~= "" then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. v.name .. " - " .. status .. "[-]")
 				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. v.name .. "[-]")				
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. v.name .. "[-]")
 				end
 			else
 				if v.active and tonumber(chatvars.accessLevel) <= v.accessLevel then
-					if status ~= "" then				
+					if status ~= "" then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. v.name .. " - " .. status .. "[-]")
 					else
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. v.name .. "[-]")					
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. v.name .. "[-]")
 					end
 				end
 			end
@@ -1962,14 +1962,14 @@ function gmsg_locations()
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Protected: " .. dbYN(row.protected) .. "[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]PVP: " .. dbYN(row.pvp) .. "[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Access Level: " .. row.accessLevel .. "[-]")
-			
+
 			if row.minimumLevel == row.maximumLevel then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Not player level restricted.[-]")			
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Not player level restricted.[-]")
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Minimum player level: " .. row.minimumLevel .. ".[-]")
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Maximum player level: " .. row.maximumLevel .. ".[-]")
 			end
-			
+
 			temp = ""
 			if tonumber(row.owner) > 0 then
 				temp = LookupPlayer(row.owner)
@@ -2052,14 +2052,14 @@ function gmsg_locations()
 			botman.faultyChat = false
 			return true
 		end
-		
+
 		-- reject if not an admin and pvpTeleportCooldown is > zero
 		if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
 			message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
 			botman.faultyChat = false
 			result = true
 			return
-		end	
+		end
 
 		cursor,errorString = conn:execute("SELECT * FROM locations WHERE name = '" .. escape(loc) .."'")
 		row = cursor:fetch({}, "a")
@@ -2140,19 +2140,19 @@ function gmsg_locations()
 				botman.faultyChat = false
 				return true
 			end
-			
+
 			if tonumber(row.minimumLevel) > 0 and tonumber(row.maximumLevel) > 0 and (tonumber(players[chatvars.playerid].level) < tonumber(row.minimumLevel) or tonumber(players[chatvars.playerid].level) > tonumber(row.maximumLevel)) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleporting to " .. row.name .. " is level restricted. You can go there when your level is " .. row.minimumLevel .. " to " .. row.maximumLevel .. ".[-]")
 				botman.faultyChat = false
 				return true
-			end			
-			
+			end
+
 			if tonumber(row.maximumLevel) > 0 and tonumber(players[chatvars.playerid].level) > tonumber(row.maximumLevel) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleporting to " .. row.name .. " is level restricted and your level is too high.[-]")
 				botman.faultyChat = false
 				return true
-			end						
-		end		
+			end
+		end
 
 		if tonumber(row.cost) > 0 then
 			if string.lower(row.currency) == string.lower(server.moneyPlural) then
@@ -2163,7 +2163,7 @@ function gmsg_locations()
 				else
 					-- collect payment
 					players[chatvars.playerid].cash = players[chatvars.playerid].cash - tonumber(row.cost)
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.cost .. " " .. server.moneyPlural .. " have been deducted for teleporting to " .. row.name .. ".[-]")					
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.cost .. " " .. server.moneyPlural .. " have been deducted for teleporting to " .. row.name .. ".[-]")
 				end
 			else
 				if not inInventory(chatvars.playerid, row.currency, row.cost) then

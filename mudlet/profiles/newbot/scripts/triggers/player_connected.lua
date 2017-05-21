@@ -1,4 +1,4 @@
---[[ 
+--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
     Copyright (C) 2017  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
@@ -18,12 +18,12 @@ function freeReservedSlot(steam)
 	-- returns true if the server is full and nobody can be kicked or false if someone gets kicked
 	for k,v in pairs(igplayers) do
 		if v.reservedSlot and not players[k].reserveSlot and accessLevel(k) > 2 then
-			kick(k, "Sorry, you have been kicked to make room for a reserved slot :( Please wait a minute before trying to rejoin.")					
-			irc_chat(server.ircAlerts, "Player " .. v.name ..  " was kicked from a reserved slot.") 
+			kick(k, "Sorry, you have been kicked to make room for a reserved slot :( Please wait a minute before trying to rejoin.")
+			irc_chat(server.ircAlerts, "Player " .. v.name ..  " was kicked from a reserved slot.")
 			return false
 		end
 	end
-	
+
 	return true
 end
 
@@ -47,59 +47,59 @@ function playerConnected(line)
 	debug = false
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
-	
+
 	if playerConnectCounter == nil then
 		playerConnectCounter = 1
 	else
 		playerConnectCounter = 	playerConnectCounter + 1
 	end
-	
-	if (debug) then 
-		dbug("debug playerConnectCounter " .. playerConnectCounter) 
+
+	if (debug) then
+		dbug("debug playerConnectCounter " .. playerConnectCounter)
 		dbug("botman.playersOnline " .. botman.playersOnline)
 		dbug("server.maxPlayers " .. server.maxPlayers)
-		dbug("server.reservedSlots " .. server.reservedSlots)		
-	end		
-	
-	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end	
-	
+		dbug("server.reservedSlots " .. server.reservedSlots)
+	end
+
+	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
+
 	local _, commas = string.gsub(line, ",", "")
-	
-	tmp = string.sub(line, 1, string.find(line, " INF "))	
+
+	tmp = string.sub(line, 1, string.find(line, " INF "))
 	if string.find(tmp, ",") then
 		commas = commas - 1
 	end
-	
-	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end	
-	
+
+	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
+
 	if commas > 5 then
 		-- player has one or more commas in their name.  That screws with parsing lines so kick them with a message to change their name.
 		temp = string.find(line, "steamOwner=") + 11
 		steam = string.sub(line, temp, temp + 16)
-		
+
 		kick(steam, "You have one or more commas in your name. Please remove them.")
 	end
-	
-	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end	
-	
+
+	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
+
 	botman.playersOnline = botman.playersOnline + 1
 	temp_table = string.split(line, ",")
 	timeConnected = string.sub(line, 1, 19)
-	
-	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end	
 
-	if string.find(line, "steamid=") then 
+	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
+
+	if string.find(line, "steamid=") then
 		player = string.trim(string.sub(temp_table[3], string.find(temp_table[3], "name=") + 5, string.find(temp_table[3], ",")))
 		steam = string.sub(temp_table[4], string.find(temp_table[4], "steamid=") + 8, string.find(temp_table[4], ","))
 		entityid = string.sub(temp_table[2], string.find(temp_table[2], "entityid=") + 9, string.find(temp_table[2], ","))
 		if string.find(line, "steamOwner") then
 			steamOwner = string.sub(temp_table[5], string.find(temp_table[5], "steamOwner=") + 11)
 			IP = string.sub(temp_table[6], string.find(temp_table[6], "ip=") + 3)
-			IP = IP:gsub("::ffff:","")					
+			IP = IP:gsub("::ffff:","")
 		else
 			steamOwner = steam
 			IP = string.sub(temp_table[5], string.find(temp_table[5], "ip=") + 3)
-			IP = IP:gsub("::ffff:","")		
+			IP = IP:gsub("::ffff:","")
 		end
 	end
 
@@ -112,7 +112,7 @@ function playerConnected(line)
 		player = string.trim(string.sub(line, string.find(line, "PlayerName=") + 12, string.len(line) - 1))
 		entityid = string.sub(line, string.find(line, "EntityID=") + 9, string.find(line, "PlayerID=") - 3)
 	end
-	
+
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
 	-- log the player connection in events table
@@ -152,8 +152,8 @@ function playerConnected(line)
 		irc_chat(server.ircMain, "###  New player joined " .. player .. " steam: " .. steam.. " owner: " .. steamOwner .. " id: " .. entityid .. " ###")
 		irc_chat(server.ircAlerts, "New player joined")
 		irc_chat(server.ircAlerts, line:gsub("%,", ""))
-		irc_chat(server.ircWatch, server.gameDate .. " " .. steam .. " " .. player .. " new player connected")		
-		logChat(botman.serverTime, "Server", "New player joined " .. player .. " steam: " .. steam.. " owner: " .. steamOwner .. " id: " .. entityid)				
+		irc_chat(server.ircWatch, server.gameDate .. " " .. steam .. " " .. player .. " new player connected")
+		logChat(botman.serverTime, "Server", "New player joined " .. player .. " steam: " .. steam.. " owner: " .. steamOwner .. " id: " .. entityid)
 
 		alertAdmins("New player joined " .. entityid .. " " .. player, "warn")
 
@@ -166,83 +166,83 @@ function playerConnected(line)
 		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 	else
 		irc_chat(server.ircMain, server.gameDate .. " " .. steam .. " " .. player .. " connected")
-		logChat(botman.serverTime, "Server", steam .. " " .. player .. " connected")			
-		
+		logChat(botman.serverTime, "Server", steam .. " " .. player .. " connected")
+
 		if players[steam].watchPlayer then
-			irc_chat(server.ircWatch, server.gameDate .. " " .. steam .. " " .. player .. " connected")		
-		end		
-	
+			irc_chat(server.ircWatch, server.gameDate .. " " .. steam .. " " .. player .. " connected")
+		end
+
 		players[steam].IP = IP
-	
+
 		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
-		
+
 		cmd = "llp " .. steam
 		tempTimer( 5, [[send("]] .. cmd .. [[")]] )
 	end
-	
+
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
-	
+
 	-- add to in-game players table
 	if (igplayers[steam] == nil) then
 		initNewIGPlayer(steam, player, entityid, steamOwner)
 		fixMissingIGPlayer(steam, steamOwner)
-	end		
-	
-	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end	
-	
-	igplayers[steam].playerConnectCounter = playerConnectCounter	
-	
+	end
+
+	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
+
+	igplayers[steam].playerConnectCounter = playerConnectCounter
+
 	if (tonumber(botman.playersOnline) > tonumber(server.maxPlayers)) and tonumber(server.reservedSlots) > 0 then
 		if players[steam].reserveSlot == true then
 			serverFull = freeReservedSlot(steam)
-			
+
 			if serverFull then
 				kick(steam, "Server is full :(")
-				return					
+				return
 			end
 		else
 			kick(steam, "Server is full :(")
-			return		
+			return
 		end
 	end
-	
+
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
 	if server.coppi then
 		if players[steam].mute then
 			send("mpc " .. steam .. " true")
 		end
-		
+
 		if players[steam].chatColour ~= "" then
 			if string.upper(players[steam].chatColour) ~= "FFFFFF" then
 				send("cpc " .. steam .. " " .. players[steam].chatColour)
 			else
 				if accessLevel(steam) > 3 and accessLevel(steam) < 11 then
 					send("cpc " .. steam .. " " .. server.chatColourDonor .. " 1")
-				end			
-			
+				end
+
 				if accessLevel(steam) == 0 then
 					send("cpc " .. steam .. " " .. server.chatColourOwner .. " 1")
-				end		
-				
+				end
+
 				if accessLevel(steam) == 1 then
 					send("cpc " .. steam .. " " .. server.chatColourAdmin .. " 1")
 				end
-				
+
 				if accessLevel(steam) == 2 then
 					send("cpc " .. steam .. " " .. server.chatColourMod .. " 1")
 				end
-				
+
 				if accessLevel(steam) == 90 then
 					send("cpc " .. steam .. " " .. server.chatColourPlayer .. " 1")
-				end				
-				
+				end
+
 				if accessLevel(steam) == 99 then
 					send("cpc " .. steam .. " " .. server.chatColourNewPlayer .. " 1")
-				end				
-				
+				end
+
 				if players[steam].prisoner then
-					send("cpc " .. steam .. " " .. server.chatColourPrisoner .. " 1")				
+					send("cpc " .. steam .. " " .. server.chatColourPrisoner .. " 1")
 				end
 			end
 		end
@@ -285,16 +285,16 @@ function playerConnected(line)
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
 	-- kick player if currently banned or permabanned
-	if botman.dbConnected then 
+	if botman.dbConnected then
 		cursor,errorString = conn:execute("SELECT * FROM bans WHERE Steam = " .. steam .. " or Steam = " .. steamOwner .. " and expiryDate > '" .. os.date("%Y-%m-%d %H:%M:%S") .. "'")
 		rows = cursor:numrows()
-		
+
 		if rows > 0 then
 			kick(steam, "You are currently banned. Contact us if this is in error.")
 			return
 		end
 	end
-	
+
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
 	-- kick for bad player name
@@ -313,16 +313,16 @@ function playerConnected(line)
 	if (tonumber(botman.playersOnline)) > (tonumber(server.maxPlayers) - tonumber(server.reservedSlots) - 1) then
 		-- flag the player as kickable so they can be chosen for kickage if the server becomes full and a reserved slot player joins.
 		igplayers[steam].reservedSlot = true
-		
+
 		if accessLevel(steam) < 3 then
-			message("pm " .. steam .. " [" .. server.warnColour .. "]You are using a reserved slot.  As soon as a non-reserved slotter leaves, you will take their slot.[-]")		
-		else	
+			message("pm " .. steam .. " [" .. server.warnColour .. "]You are using a reserved slot.  As soon as a non-reserved slotter leaves, you will take their slot.[-]")
+		else
 			if not players[steam].reserveSlot then
 				message("pm " .. steam .. " [" .. server.warnColour .. "]You are using a reserved slot. You may be kicked to make room for another player if the server becomes full.[-]")
-			end		
+			end
 		end
-	end	
-	
+	end
+
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
 	if not server.allowRapidRelogging then
@@ -342,9 +342,9 @@ function playerConnected(line)
 	end
 
 	if tonumber(players[steam].donorExpiry) < os.time() and players[steam].donor then
-		irc_chat(server.ircAlerts, "Player " .. player ..  " " .. steam .. " donor status has expired.") 	
+		irc_chat(server.ircAlerts, "Player " .. player ..  " " .. steam .. " donor status has expired.")
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','donor','" .. escape(player) .. " " .. steam .. " donor status expired.'," .. steam ..")") end
-	
+
 		players[steam].donor = false
 		players[steam].donorLevel = 0
 		if botman.dbConnected then conn:execute("UPDATE players SET donor = 0, donorLevel = 0 WHERE steam = " .. steam) end
@@ -357,16 +357,38 @@ function playerConnected(line)
 			message("pm " .. steam .. " [" .. server.alertColour .. "]ALERT! Your second base is no longer bot protected![-]")
 		end
 	end
-	
+
 	if players[steam].watchPlayer and tonumber(players[steam].watchPlayerTimer) < os.time() then
 		players[steam].watchPlayer = false
 		players[steam].watchPlayerTimer = 0
 		if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. steam) end
 	end
-	
-	send("lkp steam")	
 
-	-- count GBL bans
+	send("lkp steam")
+	players[steam].pendingBans = 0
+
+	-- check if GBL ban
+	if botman.db2Connected then
+		cursor,errorString = connBots:execute("SELECT * FROM bans WHERE (Steam = " .. steam .. " or Steam = " .. steamOwner .. ") and GBLBan = 1 and GBLBanActive = 1")
+		rows = cursor:numrows()
+
+		if tonumber(rows) > 0 then
+			kick(steam, "You are on the global ban list. " .. rows.GBLBanReason)
+			banPlayer(steam, "10 years", "On global ban list", 0, 0, true)
+			return
+		else
+			-- check number of pending global bans and alert if this player has any, but allow them to join.
+			cursor,errorString = connBots:execute("SELECT count(steam) as pendingBans FROM bans WHERE (Steam = " .. steam .. " or Steam = " .. steamOwner .. ") and GBLBan = 1 and GBLBanVetted = 0")
+			row = cursor:fetch({}, "a")
+			if tonumber(row.pendingBans) > 0 then
+
+				irc_chat(server.ircMain, "ALERT!  Player " .. steam ..  " " .. player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")
+				players[steam].pendingBans = row.pendingBans
+
+				alertAdmins("ALERT!  Player " .. steam ..  " " .. player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")
+			end
+		end
+	end
 
 
 	if debug then dbug("playerConnected end") end

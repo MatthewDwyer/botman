@@ -39,12 +39,12 @@ if debug then dbug(k .. " " .. v.name) end
 		count500 = 0
 
 if debug then dbug("check inventory 2") end
-	
+
 		if igplayers[k] then
 			if (tonumber(players[k].timeOnServer) + tonumber(igplayers[k].sessionPlaytime) < (tonumber(server.newPlayerTimer) * 60) ) then
 				newPlayer = true
 			else
-				newPlayer = false	
+				newPlayer = false
 			end
 		end
 
@@ -82,37 +82,37 @@ if debug then dbug("check inventory 3") end
 
 					if (badItems[table2[2]]) and (accessLevel(k) > 2 or botman.ignoreAdmins == false) and (not players[k].ignorePlayer) then
 						dbFlag = dbFlag .. "B"
-					
+
 						igplayers[k].illegalInventory = true
 						if badItems[table2[2]].action == "ban" then
 							ban = true
 							banReason = "Bad items found in inventory"
-							
+
 							if v.raiding then
 								banReason = "Bad items found in inventory while base raiding"
 							end
 						end
-						
+
 						if badItems[table2[2]].action == "exile" then
 							move = true
-							moveTo = "exile"										
-							
+							moveTo = "exile"
+
 							if moveReason == nil then
 								moveReason = "Bad items found " .. b.item .. "(" .. b.quantity .. ")"
-								
+
 								if v.raiding then
 									moveReason = "Bad items found while raiding "
-								end								
+								end
 							else
 								moveReason = moveReason .. ", " .. b.item .. "(" .. b.quantity .. ")"
-							end							
-						end																
-						
+							end
+						end
+
 						if badItemsFound == "" then
 							badItemsFound = table2[2] .. "(" .. table2[1] .. ")"
 						else
 							badItemsFound = badItemsFound .. ", " .. table2[2] .. "(" .. table2[1] .. ")"
-						end						
+						end
 
 						-- check for wildcard items in badItems and search for those
 						for a,b in pairs(badItems) do
@@ -120,17 +120,17 @@ if debug then dbug("check inventory 3") end
 								search = a:gsub('%W','')
 								if string.find(igplayers[k].inventory, search) then
 									timeout = true
-									timeoutReason = "Restricted items found in inventory"									
-									
+									timeoutReason = "Restricted items found in inventory"
+
 									if badItemsFound == "" then
 										badItemsFound = a
 									else
 										badItemsFound = badItemsFound .. ", " .. a
-									end									
+									end
 								end
 							end
 						end
-	
+
 					end
 
 					if items[table2[2]] == nil then
@@ -139,20 +139,20 @@ if debug then dbug("check inventory 3") end
 						items[table2[2]].quantity = tonumber(table2[1])
 						items[table2[2]].quality = tonumber(table2[3])
 						items[table2[2]].dupe = 0
-												
-						if tonumber(table2[1]) == 1 then				
+
+						if tonumber(table2[1]) == 1 then
 							items[table2[2]].dupe = 1
-						end						
+						end
 					else
 						items[table2[2]].quantity = items[table2[2]].quantity + tonumber(table2[1])
-						
-						if tonumber(table2[1]) == 1 then					
-							items[table2[2]].dupe = items[table2[2]].dupe + 1					
-						end												
+
+						if tonumber(table2[1]) == 1 then
+							items[table2[2]].dupe = items[table2[2]].dupe + 1
+						end
 					end
 
 					-- stack monitoring
-					if (stackLimits[table2[2]] ~= nil) and (accessLevel(k) > 2 or botman.ignoreAdmins == false) and (server.gameType ~= "cre") and (not players[k].ignorePlayer) then
+					if (stackLimits[table2[2]] ~= nil) and (accessLevel(k) > 2 or botman.ignoreAdmins == false) and (server.gameType ~= "cre") and (not players[k].ignorePlayer) and not server.allowOverstacking then
 						if tonumber(table2[1]) > tonumber(stackLimits[table2[2]].limit) * 2 and tonumber(table2[1]) > 1000 then
 							if (players[k].overstackScore < 0) then
 								players[k].overstackScore = 0
@@ -172,17 +172,17 @@ if debug then dbug("check inventory 3") end
 								banReason = "Banned for excessive amounts of " .. table2[2] .. "(" .. table2[1] .. ")."
 							end
 						end
-					end					
+					end
 				end
-			end			
+			end
 
 			if v.raiding and timeout then
 				players[k].exiled = 1
 				if accessLevel(k) > 2 then players[k].silentBob = true end
-				players[k].canTeleport = false	
+				players[k].canTeleport = false
 
 				irc_chat(server.ircMain, "Exiling " .. igplayers[k].name .. " detected with bad inventory while raiding.")
-				irc_chat(server.ircAlerts, "Exiling " .. igplayers[k].name .. " detected with bad inventory while raiding.")				
+				irc_chat(server.ircAlerts, "Exiling " .. igplayers[k].name .. " detected with bad inventory while raiding.")
 			end
 
 if debug then dbug("check inventory 4") end
@@ -193,16 +193,16 @@ if debug then dbug("check inventory 4") end
 						igplayers[k].dupeItem = b.item
 						irc_chat(server.ircAlerts, "New player " .. players[k].name .. " has " .. b.dupe .. " x 1 of " .. b.item)
 					end
-				
+
 					if b.item ~= igplayers[k].dupeItem then
 						igplayers[k].dupeItem = b.item
 						irc_chat(server.ircAlerts, "New player " .. players[k].name .. " has " .. b.dupe .. " x 1 of " .. b.item)
 					end
 				end
-			
+
 				if (players[k].newPlayer == true and igplayers[k].skipExcessInventory ~= true) then
 
-					cursor,errorString = conn:execute("SELECT * FROM memRestrictedItems where item = '" .. escape(b.item) .. "' and accessLevel < " .. players[k].accessLevel)				
+					cursor,errorString = conn:execute("SELECT * FROM memRestrictedItems where item = '" .. escape(b.item) .. "' and accessLevel < " .. players[k].accessLevel)
 					rows = cursor:numrows()
 
 					if tonumber(rows) > 0 then
@@ -211,43 +211,43 @@ if debug then dbug("check inventory 4") end
 						if tonumber(b.quantity) > tonumber(row.qty) and (not players[k].ignorePlayer) then
 							if row.action == "timeout" and server.gameType ~= "pvp" then
 								timeout = true
-								
+
 								if timeoutReason == nil then
 									timeoutReason = "excessive inventory for a new player " .. b.item .. "(" .. b.quantity .. ")"
 								else
 									timeoutReason = timeoutReason .. ", " .. b.item .. "(" .. b.quantity .. ")"
 								end
 							end
-							
+
 							if row.action == "exile" then
 								move = true
-								moveTo = "exile"										
-								
+								moveTo = "exile"
+
 								if moveReason == nil then
 									moveReason = "Restricted items found " .. b.item .. "(" .. b.quantity .. ")"
-									
+
 									if v.raiding then
 										moveReason = "Restricted items found while raiding "
-									end								
+									end
 								else
 									moveReason = moveReason .. ", " .. b.item .. "(" .. b.quantity .. ")"
-								end							
-							end								
-						
+								end
+							end
+
 							if row.action == "ban" then
 								ban = true
-							
+
 								if banReason == nil then
 									banReason = "bad inventory " .. b.item .. "(" .. b.quantity .. ")"
 								else
 									banReason = banReason .. ", " .. b.item .. "(" .. b.quantity .. ")"
 								end
 							end
-						
+
 							if locations[row.action] then
 								move = true
 								moveTo = row.action
-							
+
 								if moveReason == nil then
 									moveReason = "excessive inventory for a new player " .. b.item .. "(" .. b.quantity .. ")"
 								else
@@ -260,14 +260,14 @@ if debug then dbug("check inventory 4") end
 							end
 
 						end
-					end				
-				end 
-			end		
+					end
+				end
+			end
 
 if debug then dbug("check inventory 5") end
 
-			if tablelength(invTemp[k]) == 0 then 
-				invTemp[k] = items 
+			if tablelength(invTemp[k]) == 0 then
+				invTemp[k] = items
 			end
 
 if debug then dbug("check inventory 6") end
@@ -279,11 +279,11 @@ if debug then dbug("check inventory 6") end
 					items[b.item] = {}
 					items[b.item].item = b.item
 					items[b.item].quantity = 0
-					
+
 					if badItems[b.item] then
 						flag = "B"
 					end
-					
+
 					if v.raiding then
 						flag = flag .. "R"
 					end
@@ -291,9 +291,9 @@ if debug then dbug("check inventory 6") end
 
 				if tonumber(b.quantity) ~= tonumber(items[a].quantity) then
 					inventoryChanged = true
-					table.insert(changes, { b.item, tonumber(items[a].quantity) - tonumber(b.quantity) } )	
+					table.insert(changes, { b.item, tonumber(items[a].quantity) - tonumber(b.quantity) } )
 					conn:execute("INSERT INTO inventoryChanges (steam, item, delta, x, y, z, session, flag) VALUES (" .. k .. ",'" .. escape(b.item) .. "'," .. tonumber(items[a].quantity) - tonumber(b.quantity) .. "," .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. "," .. players[k].sessionCount .. ",'" .. flag .. "')")
-					
+
 					if igplayers[k] then igplayers[k].afk = os.time() + 900 end
 
 					if (items[a] == nil) then
@@ -307,7 +307,7 @@ if debug then dbug("check inventory 6") end
 						delta = "+" .. delta
 					else
 						delta = delta
-						
+
 						-- list beds for this player if they drop 1 bed
 						if b.item == "bedroll" and delta == -1 and server.coppi then
 							send("lpb " .. k)
@@ -319,20 +319,20 @@ if debug then dbug("check inventory 6") end
 						row = cursor:fetch({}, "a")
 						if row then
 							if (b.item == row.item) and not string.find(newItems, b.item, nil, true) then
-								newItems = newItems .. row.item .. " (" .. delta .. "), "	
+								newItems = newItems .. row.item .. " (" .. delta .. "), "
 							end
 						end
 
 						if tonumber(delta) > 30 and players[k].newPlayer == true and not string.find(newItems, b.item, nil, true) then
-							newItems = newItems .. b.item .. " (" .. delta .. "), "	
+							newItems = newItems .. b.item .. " (" .. delta .. "), "
 						end
 
 						if (b.item == "keystoneBlock") and not string.find(newItems, b.item, nil, true) then
-							newItems = newItems .. "keystoneBlock (" .. delta .. "), "	
-								
+							newItems = newItems .. "keystoneBlock (" .. delta .. "), "
+
 							if tonumber(delta) < 0 then
 								players[k].keystones = 0
-								
+
 								if not server.lagged then
 									send("llp " .. k)
 								end
@@ -352,7 +352,7 @@ if debug then dbug("check inventory 7") end
 
 if debug then dbug("check inventory 8") end
 
-			if inventoryChanged == true or (v.oldBelt ~= v.belt) then 
+			if inventoryChanged == true or (v.oldBelt ~= v.belt) then
 				conn:execute("INSERT INTO inventoryTracker (steam, x, y, z, session, belt, pack, equipment) VALUES (" .. k .. "," .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. "," .. players[k].sessionCount .. ",'" .. escape(v.belt) .. "','" .. escape(v.pack) .. "','" .. escape(v.equipment) .. "')")
 				invTemp[k] = items
 
@@ -395,7 +395,7 @@ if debug then dbug("check inventory 9") end
 if debug then dbug("check inventory 10") end
 
 		changes = nil
-		
+
 		if (players[k].overstack == false) then
 			players[k].overstackScore = 0
 		end
@@ -425,20 +425,20 @@ if debug then dbug("check inventory 10") end
 			end
 		end
 
-		if (ban == true) then					
+		if (ban == true) then
 			if accessLevel(k) > 2 then
-				banPlayer(k, "1 year", banReason, "")			
-			
+				banPlayer(k, "1 year", banReason, "")
+
 				message("say [" .. server.chatColour .. "]Banning player " .. igplayers[k].name .. " 1 year for suspected inventory cheating.[-]")
 				irc_chat(server.ircMain, "[BANNED] Player " .. k .. " " .. igplayers[k].name .. " has has been banned for " .. banReason .. ".")
 				irc_chat(server.ircAlerts, "[BANNED] Player " .. k .. " " .. igplayers[k].name .. " has has been banned for 1 year for " .. banReason .. ".")
-				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. k .. " " .. escape(igplayers[k].name) .. " has has been banned for 1 year for " .. escape(banReason) .. ".'," .. k .. ")")				
-				
+				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. k .. " " .. escape(igplayers[k].name) .. " has has been banned for 1 year for " .. escape(banReason) .. ".'," .. k .. ")")
+
 				if botman.db2Connected then
 					-- copy in bots db
 					connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','ban','Player " .. k .. " " .. escape(igplayers[k].name) .. " has has been banned for 1 year for " .. escape(banReason) .. ".'," .. k .. ")")
-				end				
-			end			
+				end
+			end
 		end
 
 		if (timeout == true) then
@@ -504,7 +504,7 @@ if debug then dbug("check inventory 11") end
 			igplayers[k].lastLocation = ""
 		end
 
-	end	
+	end
 
 if debug then dbug("check inventory end") end
 end
@@ -512,7 +512,7 @@ end
 
 function readInventorySlot()
 	local timestamp, slot, item, quantity, quality, pos, words, dupeTest
-	
+
 
 	timestamp = os.time()
 	item = ""

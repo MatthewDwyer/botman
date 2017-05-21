@@ -15,11 +15,11 @@ function timedCommandsTimer()
 	end
 
 	cursor,errorString = conn:execute("select * from commandQueue order by id limit 0,1")
-	
+
 	if not cursor then
 		return
-	end		
-	
+	end
+
 	row = cursor:fetch({}, "a")
 
 	if row then
@@ -32,7 +32,7 @@ function timedCommandsTimer()
 				return
 			end
 
-			send(row.command)	
+			send(row.command)
 			conn:execute("delete from commandQueue where id = " .. row.id)
 		else
 			conn:execute("delete from commandQueue where id = " .. row.id)

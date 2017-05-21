@@ -15,7 +15,7 @@ function messageQueueTimer()
 	end
 
 	cursor,errorString = conn:execute("select * from messageQueue where recipient = 0 order by id limit 0,1")
-	
+
 	if cursor then
 		row = cursor:fetch({}, "a")
 
@@ -23,12 +23,12 @@ function messageQueueTimer()
 			message("say [" .. server.chatColour .. "]" .. row.message .. "[-]")
 			conn:execute("delete from messageQueue where id = " .. row.id)
 		end
-	end	
+	end
 
 
 	for k,v in pairs(igplayers) do
 		cursor,errorString = conn:execute("select * from messageQueue where recipient = " .. k .. " order by id limit 0,1")
-		
+
 		if cursor then
 			row = cursor:fetch({}, "a")
 

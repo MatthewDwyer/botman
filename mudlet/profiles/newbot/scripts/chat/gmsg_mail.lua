@@ -33,35 +33,35 @@ function gmsg_mail()
 
 	if (chatvars.words[1] == "pm" and chatvars.words[2] ~= nil) then
 		if string.find(chatvars.words[2], "admin") then
-			msg = string.sub(chatvars.commandOld, string.find(chatvars.commandOld, chatvars.wordsOld[2]) + string.len(chatvars.wordsOld[2]), string.len(chatvars.commandOld))		
+			msg = string.sub(chatvars.commandOld, string.find(chatvars.commandOld, chatvars.wordsOld[2]) + string.len(chatvars.wordsOld[2]), string.len(chatvars.commandOld))
 			msg = "PM from " .. chatvars.playername .. ", " .. msg
-			alertAdmins(msg, "chat")	
+			alertAdmins(msg, "chat")
 
 			if chatvars.accessLevel > 2 then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Thank you. An admin may respond to your PM.[-]")
 			end
 
 			botman.faultyChat = false
-			return true		
+			return true
 		end
-		
+
 		if string.find(chatvars.words[2], "tag") then
-			msg = string.sub(chatvars.commandOld, string.find(chatvars.commandOld, chatvars.wordsOld[3]) + string.len(chatvars.wordsOld[3]), string.len(chatvars.commandOld))		
+			msg = string.sub(chatvars.commandOld, string.find(chatvars.commandOld, chatvars.wordsOld[3]) + string.len(chatvars.wordsOld[3]), string.len(chatvars.commandOld))
 			msg = "PM from " .. chatvars.playername .. ", " .. msg
-			
+
 			for k,v in pairs(igplayers) do
 				if string.find(v.name, chatvars.wordsOld[3]) then
-					message("pm " .. k .. " [" .. server.chatColour .. "]" .. msg .. "[-]")		
+					message("pm " .. k .. " [" .. server.chatColour .. "]" .. msg .. "[-]")
 				end
 			end
 
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message sent to all " .. chatvars.wordsOld[3] .. " players that are ingame right now.[-]")
 
 			botman.faultyChat = false
-			return true		
-		end		
-	
-		msg = string.sub(chatvars.commandOld, 4, string.len(chatvars.commandOld))		
+			return true
+		end
+
+		msg = string.sub(chatvars.commandOld, 4, string.len(chatvars.commandOld))
 
 		irc_chat(server.ircMain, server.gameDate .. " " .. chatvars.playername .. " said " .. msg)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your hidden message has been sent to IRC.[-]")
@@ -94,17 +94,17 @@ function gmsg_mail()
 		while row do
 			if chatvars.number ~= nil then
 				if tonumber(chatvars.number) == counter then
-					conn:execute("UPDATE mail set status = 1 WHERE id = " .. row.id)				
+					conn:execute("UPDATE mail set status = 1 WHERE id = " .. row.id)
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message #" .. counter .. "[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")					
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")
 				end
 			else
-				conn:execute("UPDATE mail set status = 1 WHERE id = " .. row.id)			
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")									
+				conn:execute("UPDATE mail set status = 1 WHERE id = " .. row.id)
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")
 			end
 
 			counter = counter + 1
-			row = cursor:fetch(row, "a")	
+			row = cursor:fetch(row, "a")
 		end
 
 		botman.faultyChat = false
@@ -123,14 +123,14 @@ function gmsg_mail()
 			if row.status == "1" then status = " [READ]" end
 			if row.status == "2" then status = " [SAVED]" end
 
-			if tonumber(row.sender) == 0 then		
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "](" .. counter .. ")  Message from server" .. status .. " " .. string.sub(row.message, 1, 100) .. "..[-]")			
-			else		
+			if tonumber(row.sender) == 0 then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "](" .. counter .. ")  Message from server" .. status .. " " .. string.sub(row.message, 1, 100) .. "..[-]")
+			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "](" .. counter .. ")  Message from " .. players[row.sender].name .. status .. " " .. string.sub(row.message, 1, 100) .. "..[-]")
 			end
 
 			counter = counter + 1
-			row = cursor:fetch(row, "a")	
+			row = cursor:fetch(row, "a")
 		end
 
 		botman.faultyChat = false
@@ -175,7 +175,7 @@ function gmsg_mail()
 			end
 
 			counter = counter + 1
-			row = cursor:fetch(row, "a")	
+			row = cursor:fetch(row, "a")
 		end
 
 		botman.faultyChat = false

@@ -19,8 +19,8 @@ function gmsg_fun()
 		botman.faultyChat = false
 		return false
 	end
-	
-if debug then dbug("debug fun") end	
+
+if debug then dbug("debug fun") end
 
 	if chatvars.showHelp then
 		if chatvars.words[3] then
@@ -48,8 +48,8 @@ if debug then dbug("debug fun") end
 	if chatvars.showHelpSections then
 		irc_chat(players[chatvars.ircid].ircAlias, "fun")
 	end
-	
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end	
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "bounty") or string.find(chatvars.command, "pvp"))) or chatvars.words[1] ~= "help" then
@@ -61,8 +61,8 @@ if debug then dbug("debug fun") end
 			end
 		end
 	end
-	
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "bounty") then
 		id = chatvars.playerid
@@ -82,7 +82,7 @@ if debug then dbug("debug fun") end
 		return true
 	end
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "haven" and chatvars.words[2] ~= nil) then
 		if type(brchat) ~= "table" then
@@ -94,8 +94,8 @@ if debug then dbug("debug fun") end
 		botman.faultyChat = false
 		return true
 	end
-	
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
@@ -117,9 +117,9 @@ if debug then dbug("debug fun") end
 		botman.faultyChat = false
 		return true
 	end
-	
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
-	
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fix gimme")
@@ -143,8 +143,8 @@ if debug then dbug("debug fun") end
 		botman.faultyChat = false
 		return true
 	end
-	
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
@@ -174,8 +174,8 @@ if debug then dbug("debug fun") end
 			return true
 		end
 	end
-	
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
@@ -202,8 +202,8 @@ if debug then dbug("debug fun") end
 		botman.faultyChat = false
 		return true
 	end
-	
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
@@ -233,8 +233,8 @@ if debug then dbug("debug fun") end
 		botman.faultyChat = false
 		return true
 	end
-	
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
@@ -264,8 +264,8 @@ if debug then dbug("debug fun") end
 		botman.faultyChat = false
 		return true
 	end
-	
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
@@ -296,8 +296,8 @@ if debug then dbug("debug fun") end
 		return true
 	end
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end	
-	
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "gimme zombies")
@@ -307,7 +307,7 @@ if debug then dbug("debug fun") end
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end	
+	end
 
 	if (chatvars.words[1] == "gimme" and chatvars.words[2] == "zombies") then
 		if (chatvars.playername ~= "Server") then
@@ -326,8 +326,8 @@ if debug then dbug("debug fun") end
 		botman.faultyChat = false
 		return true
 	end
-	
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end	
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
@@ -338,8 +338,8 @@ if debug then dbug("debug fun") end
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
 		end
-	end		
-	
+	end
+
 	if (chatvars.words[1] == "gimme" and chatvars.words[2] == "no" and chatvars.words[3] == "zombies") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
@@ -357,8 +357,8 @@ if debug then dbug("debug fun") end
 		botman.faultyChat = false
 		return true
 	end
-	
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end				
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	-- ###################  do not allow remote commands beyond this point ################
 	if (chatvars.playerid == 0) then
@@ -367,7 +367,7 @@ if debug then dbug("debug fun") end
 	end
 	-- ####################################################################################
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "waiter" or chatvars.words[1] == "beer" and chatvars.words[2] == nil) then
 		if string.find(inLocation(chatvars.intX, chatvars.intZ), "beer") then
@@ -379,7 +379,7 @@ if debug then dbug("debug fun") end
 		return true
 	end
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "suicide") then
 		if players[chatvars.playerid].prisoner or players[chatvars.playerid].timeout == true or players[chatvars.playerid].botTimeout == true then
@@ -402,7 +402,7 @@ if debug then dbug("debug fun") end
 		return true
 	end
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "place" and chatvars.words[2] == "bounty") then
 		pname = chatvars.words[3]
@@ -434,7 +434,7 @@ if debug then dbug("debug fun") end
 		return true
 	end
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "santa" and specialDay == "christmas" and chatvars.words[2] == nil) then
 		if (not players[chatvars.playerid].santa) then
@@ -489,15 +489,15 @@ if debug then dbug("debug fun") end
 		return true
 	end
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "gimmie" or chatvars.words[1] == "gimme") and chatvars.words[2] == nil then
-		if (server.allowGimme) then	
+		if (server.allowGimme) then
 			if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
 				loadGimmeZombies()
 				send("se")
 			end
-		
+
 			dist1 = distancexz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].zPos, players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ)
 			dist2 = distancexz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].zPos, players[chatvars.playerid].home2X, players[chatvars.playerid].home2Z)
 
@@ -514,7 +514,7 @@ if debug then dbug("debug fun") end
 		return true
 	end
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if string.find(chatvars.words[1], "poke") and chatvars.words[2] ==  nil then
 		r = rand(45)
@@ -546,7 +546,7 @@ if debug then dbug("debug fun") end
 		return true
 	end
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if string.find(chatvars.words[1], "quit") and chatvars.words[2] ==  nil then
 		if string.find(chatvars.words[1], "rage") and chatvars.words[2] ==  nil then
@@ -580,7 +580,7 @@ if debug then dbug("debug fun") end
 		return true
 	end
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "quit") then
 		msg = stripQuotes(string.sub(line, string.find(line, "quit") + 5))
@@ -595,15 +595,15 @@ if debug then dbug("debug fun") end
 		return true
 	end
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "gimmehell" and chatvars.words[2] == nil) then
 		-- abort if not in arena
-		
+
 		if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
 			loadGimmeZombies()
 			send("se")
-		end		
+		end
 
 		dist = distancexyz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].yPos, igplayers[chatvars.playerid].zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z)
 
@@ -621,7 +621,7 @@ if debug then dbug("debug fun") end
 
 		if (botman.gimmeHell == 0) then
 			removeZombies() -- make sure there are no zeds left that we have flagged for removal
-			removeEntities() -- make sure there are no entities left that we have flagged for removal			
+			removeEntities() -- make sure there are no entities left that we have flagged for removal
 			botman.gimmeHell = 1
 
 			setupArenaPlayers(chatvars.playerid)
@@ -642,7 +642,7 @@ if debug then dbug("debug fun") end
 		end
 	end
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.words[1] == "doge" and (chatvars.words[2] == "on" or chatvars.words[2] == "mode") then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have activated doge mode.[-]")
@@ -652,7 +652,7 @@ if debug then dbug("debug fun") end
 		return true
 	end
 
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "doge" and chatvars.words[2] == "off") then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have de-activated doge mode.[-]")
@@ -661,7 +661,7 @@ if debug then dbug("debug fun") end
 		botman.faultyChat = false
 		return true
 	end
-	
-if debug then dbug("debug fun end") end	
+
+if debug then dbug("debug fun end") end
 
 end

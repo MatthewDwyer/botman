@@ -391,7 +391,7 @@ function gmsg_hotspots()
 
 					cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
 					prepareTeleport(chatvars.playerid, cmd)
-					dbug("hotspots line " .. debugger.getinfo(1).currentline)	
+					dbug("hotspots line " .. debugger.getinfo(1).currentline)
 					teleport(cmd, true)
 				else
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no hotspot #" .. chatvars.number .. ".[-]")

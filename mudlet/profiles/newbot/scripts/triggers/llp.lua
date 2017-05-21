@@ -9,7 +9,7 @@
 
 function llp(line)
 	local pos, temp, x, y, z
-	
+
 	if string.find(line, "Executing command 'llp ") then
 		llpid = string.sub(line, string.find(line, "llp") + 4, string.find(line, " by ") - 2)
 		players[llpid].keystones = 0
@@ -18,7 +18,7 @@ function llp(line)
 
 	-- depreciated in latest Allocs. Here for backwards compatibility
 	if string.find(line, "keystones (protected", nil, true) then
-		llpid = string.sub(line, string.find(line, "7656"), string.find(line, "7656") + 16)		
+		llpid = string.sub(line, string.find(line, "7656"), string.find(line, "7656") + 16)
 		players[llpid].keystones = string.sub(line, string.find(line, "owns ") + 5, string.find(line, " keyst") - 1)
 		if botman.dbConnected then conn:execute("UPDATE players SET keystones = " .. players[llpid].keystones .. " WHERE steam = " .. llpid) end
 	end
@@ -26,7 +26,7 @@ function llp(line)
 	-- New format of output
 	if string.find(line, "LandProtectionOf:") then
 		--LandProtectionOf: id=76561197983251951,  location=-99, 128, 192
-		temp = string.split(line, ",")		
+		temp = string.split(line, ",")
 
 		pos = string.find(temp[1], "=") + 1
 		llpid = string.sub(temp[1], pos)
@@ -39,7 +39,7 @@ function llp(line)
 			players[llpid].removedClaims = 0
 		end
 
-		if botman.dbConnected then 
+		if botman.dbConnected then
 			conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. llpid .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z .. " AND remove > 1")
 			conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. llpid .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z)
 		end
@@ -52,7 +52,7 @@ function llp(line)
 				if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove) VALUES (" .. llpid .. "," .. x .. "," .. y .. "," .. z .. ",1) ON DUPLICATE KEY UPDATE remove = 1") end
 			else
 				if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. x .. "," .. y .. "," .. z .. ")") end
-			end		
+			end
 		else
 			if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. x .. "," .. y .. "," .. z .. ")") end
 		end

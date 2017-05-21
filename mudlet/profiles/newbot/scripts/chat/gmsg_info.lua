@@ -263,13 +263,13 @@ function gmsg_info()
 	if ((chatvars.words[1] == "when" or chatvars.words[1] == "next") and chatvars.words[2] == "reboot") then
 		if server.delayReboot then
 			if (server.gameDay % 7 == 0) then
-				if (chatvars.playername ~= "Server") then			
+				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.[-]")
 				else
 					irc_chat(players[chatvars.ircid].ircAlias, "The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.")
 				end
 			end
-			
+
 			if (chatvars.playername ~= "Server") then
 				nextReboot(chatvars.playerid)
 			else
@@ -295,7 +295,7 @@ function gmsg_info()
 		botman.faultyChat = false
 		return true
 	end
-	
+
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
@@ -310,7 +310,7 @@ function gmsg_info()
 	end
 
 	if (chatvars.words[1] == "fps" and chatvars.words[2] == nil) then
-		if botman.dbConnected then 
+		if botman.dbConnected then
 			cursor,errorString = conn:execute("SELECT * FROM performance  ORDER BY serverdate DESC Limit 0, 1")
 			row = cursor:fetch({}, "a")
 
@@ -955,7 +955,7 @@ function gmsg_info()
 
 			if players[id].donor then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is a donor[-]")
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor status expires on " .. os.date("%Y-%m-%d %H:%M:%S",  players[id].donorExpiry))						
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor status expires on " .. os.date("%Y-%m-%d %H:%M:%S",  players[id].donorExpiry))
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is not a donor[-]")
 			end

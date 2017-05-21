@@ -32,18 +32,18 @@ function QuickBotReset()
 	conn:execute("TRUNCATE TABLE memLottery")
 	conn:execute("TRUNCATE TABLE memTracker")
 	conn:execute("TRUNCATE TABLE messageQueue")
-	conn:execute("TRUNCATE TABLE miscQueue")	
+	conn:execute("TRUNCATE TABLE miscQueue")
 	conn:execute("TRUNCATE TABLE performance")
 	conn:execute("TRUNCATE TABLE playerQueue")
-	conn:execute("TRUNCATE TABLE polls")	
-	conn:execute("TRUNCATE TABLE pollVotes")	
+	conn:execute("TRUNCATE TABLE polls")
+	conn:execute("TRUNCATE TABLE pollVotes")
 	conn:execute("TRUNCATE TABLE teleports")
 	conn:execute("TRUNCATE TABLE tracker")
 	conn:execute("TRUNCATE TABLE searchResults")
 	conn:execute("TRUNCATE TABLE villagers")
 	conn:execute("TRUNCATE TABLE inventoryChanges")
 	conn:execute("TRUNCATE TABLE inventoryTracker")
-	conn:execute("TRUNCATE TABLE waypoints")	
+	conn:execute("TRUNCATE TABLE waypoints")
 end
 
 
@@ -127,7 +127,7 @@ function ResetBot()
 		v.zombies = 0
 		v.zPos = 0
 		v.zPosOld = 0
-		
+
 		-- remove some fields
 		v.santa = nil
 		v.protection = nil
@@ -137,11 +137,11 @@ function ResetBot()
 		v.waypointX = nil
 		v.waypointZ = nil
 		v.shareWaypoint = nil
-		v.baseprotection = nil	
+		v.baseprotection = nil
 
-		updatePlayer(k)	
-	end	
-	
+		updatePlayer(k)
+	end
+
 	-- clean up other tables
 	teleports = {}
 	invTemp = {}
@@ -174,11 +174,11 @@ function ResetBot()
 	conn:execute("TRUNCATE TABLE memLottery")
 	conn:execute("TRUNCATE TABLE memTracker")
 	conn:execute("TRUNCATE TABLE messageQueue")
-	conn:execute("TRUNCATE TABLE miscQueue")	
+	conn:execute("TRUNCATE TABLE miscQueue")
 	conn:execute("TRUNCATE TABLE performance")
 	conn:execute("TRUNCATE TABLE playerQueue")
-	conn:execute("TRUNCATE TABLE polls")	
-	conn:execute("TRUNCATE TABLE pollVotes")	
+	conn:execute("TRUNCATE TABLE polls")
+	conn:execute("TRUNCATE TABLE pollVotes")
 	conn:execute("TRUNCATE TABLE resetZones")
 	conn:execute("TRUNCATE TABLE teleports")
 	conn:execute("TRUNCATE TABLE tracker")
@@ -186,7 +186,7 @@ function ResetBot()
 	conn:execute("TRUNCATE TABLE villagers")
 	conn:execute("TRUNCATE TABLE inventoryChanges")
 	conn:execute("TRUNCATE TABLE inventoryTracker")
-	conn:execute("TRUNCATE TABLE waypoints")	
+	conn:execute("TRUNCATE TABLE waypoints")
 
 	dbug("Reading server, players, bans and admin data")
 
@@ -212,8 +212,8 @@ function ResetServer()
 	lfs.mkdir(homedir .. "/daily")
 	lfs.mkdir(homedir .. "/dns")
 	lfs.mkdir(homedir .. "/temp")
-	lfs.mkdir(homedir .. "/chatlogs")	
-	lfs.mkdir(homedir .. "/data_backup")		
+	lfs.mkdir(homedir .. "/chatlogs")
+	lfs.mkdir(homedir .. "/data_backup")
 
 	admins = {}
 	friends = {}
@@ -235,9 +235,9 @@ function ResetServer()
 	villagers = {}
 	waypoints = {}
 
-	openUserWindow(server.windowGMSG) 
-	openUserWindow(server.windowDebug) 
-	openUserWindow(server.windowLists) 
+	openUserWindow(server.windowGMSG)
+	openUserWindow(server.windowDebug)
+	openUserWindow(server.windowLists)
 
 	dbug("Resetting Bot (full wipe)")
 

@@ -13,7 +13,7 @@ function ThirtyMinuteTimer()
 
 	-- save the world (and the kitties)
 	send("sa")
-	
+
 	-- check for new proxies
 	loadProxies()
 end

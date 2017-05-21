@@ -550,8 +550,8 @@ function gmsg_waypoints()
 			botman.faultyChat = false
 			result = true
 			return
-		end				
-	
+		end
+
 		if (chatvars.accessLevel > 10) and not server.waypointsPublic then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only donors and admins can have waypoints.[-]")
 			botman.faultyChat = false
@@ -585,7 +585,7 @@ function gmsg_waypoints()
 					botman.faultyChat = false
 					return true
 				end
-			end	
+			end
 
 			-- reject if not an admin and pvpTeleportCooldown is > zero
 			if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
@@ -593,17 +593,17 @@ function gmsg_waypoints()
 				botman.faultyChat = false
 				result = true
 				return
-			end				
-			
+			end
+
 			-- check the waypoint destination in restricted area
 			if (chatvars.accessLevel > 3) then
 				if not isDestinationAllowed(chatvars.playerid, waypoints[tmp.id].x, waypoints[tmp.id].z) then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry, your waypoint is in a restricted area.[-]")
 					botman.faultyChat = false
-					return true				
+					return true
 				end
-			end					
-		
+			end
+
 			-- teleport if sufficient zennies
 			if tonumber(server.waypointCost) > 0 and (chatvars.accessLevel > 2) then
 				if tonumber(players[chatvars.playerid].cash) < tonumber(server.waypointCost) then
@@ -631,16 +631,16 @@ function gmsg_waypoints()
 
 			teleport(cmd, true)
 			players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.waypointCost
-			
+
 			if tonumber(server.waypointCooldown) > 0 then
 				players[chatvars.playerid].waypointCooldown = os.time() + server.waypointCooldown
 			end
 		else
 			if tmp.friend ~= nil then
-				if not isFriend(tmp.friend, chatvars.playerid) then						
+				if not isFriend(tmp.friend, chatvars.playerid) then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.friend].name .. " is not friends with you so you can't visit their waypoints.[-]")
 				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.friend].name .. " does not have a waypoint called " .. tmp.name .. ".[-]")				
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.friend].name .. " does not have a waypoint called " .. tmp.name .. ".[-]")
 				end
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no waypoint called " .. tmp.name .. ".[-]")

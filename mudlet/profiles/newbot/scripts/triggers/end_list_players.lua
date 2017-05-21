@@ -12,11 +12,11 @@ function endListPlayers(line)
 		return
 	end
 
-	if botman.listPlayers and not botman.listEntities then	
+	if botman.listPlayers and not botman.listEntities then
 		botman.playersOnline = tonumber(string.match(line, "%d+"))
-		playerConnectCounter = botman.playersOnline		
-		
-		server.reservedSlotsUsed = tonumber(botman.playersOnline) - (tonumber(server.maxPlayers) - tonumber(server.reservedSlots))	
+		playerConnectCounter = botman.playersOnline
+
+		server.reservedSlotsUsed = tonumber(botman.playersOnline) - (tonumber(server.maxPlayers) - tonumber(server.reservedSlots))
 		if server.reservedSlotsUsed < 0 then
 			server.reservedSlotsUsed = 0
 		end
@@ -25,21 +25,21 @@ function endListPlayers(line)
 			-- we could schedule something to happen when no players are online
 		else
 			if tonumber(server.reservedSlotsUsed) == 0 and tonumber(server.reservedSlots) > 0 then
-				updateReservedSlots()	
+				updateReservedSlots()
 			end
 		end
-		
-		if tonumber(server.botID) > 0 then			
+
+		if tonumber(server.botID) > 0 then
 			for k,v in pairs(igplayers) do
 				insertBotsPlayer(k)
 			end
-		end		
-		
-		botman.listPlayers = false	
-	end	
-	
+		end
+
+		botman.listPlayers = false
+	end
+
 	if botman.listEntities then
-		botman.listEntities = false		
+		botman.listEntities = false
 	end
 
 	-- reset relogCount as we have established that the server is talking to us

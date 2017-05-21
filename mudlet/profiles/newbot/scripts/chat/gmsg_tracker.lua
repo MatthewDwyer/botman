@@ -13,6 +13,7 @@ function gmsg_tracker()
 	local debug
 	local shortHelp = false
 	local skipHelp = false
+	local filter = ""
 
 	debug = false
 
@@ -115,35 +116,35 @@ function gmsg_tracker()
 				igplayers[chatvars.playerid].trackerCount = 1000000000
 				igplayers[chatvars.playerid].trackerReversed = true
 			end
-			
-			tmp.id = igplayers[chatvars.playerid].trackerSteam			
-			tmp.session = igplayers[chatvars.playerid].trackerSession			
+
+			tmp.id = igplayers[chatvars.playerid].trackerSteam
+			tmp.session = igplayers[chatvars.playerid].trackerSession
 		end
 
 		for i=1,chatvars.wordCount,1 do
 			if chatvars.words[i] == "track" then
 				tmp.name = chatvars.words[i+1]
-				tmp.id = LookupPlayer(tmp.name)	
+				tmp.id = LookupPlayer(tmp.name)
 
 				if tmp.id ~= nil then
 					tmp.session = players[tmp.id].sessionCount
 					igplayers[chatvars.playerid].trackerSession = players[tmp.id].sessionCount
 					igplayers[chatvars.playerid].trackerSteam = tmp.id
 					igplayers[chatvars.playerid].trackerLastSession = true
-				end				
-			end			
-		
+				end
+			end
+
 			if chatvars.words[i] == "session" then
 				tmp.session = chatvars.words[i+1]
 				igplayers[chatvars.playerid].trackerSession = tmp.session
-				
+
 				if tonumber(tmp.session) == players[tmp.id].sessionCount then
 					igplayers[chatvars.playerid].trackerLastSession = true
 				else
-					igplayers[chatvars.playerid].trackerLastSession = false				
+					igplayers[chatvars.playerid].trackerLastSession = false
 				end
-			end		
-		
+			end
+
 			if chatvars.words[i] == "here" then
 				tmp.x = chatvars.intX
 				tmp.z = chatvars.intZ
@@ -155,17 +156,21 @@ function gmsg_tracker()
 				tmp.z = chatvars.intZ
 				tmp.dist = chatvars.words[i+1]
 			end
+
+			if chatvars.words[i] == "hax" or chatvars.words[i] == "hack" or chatvars.words[i] == "hacking" or chatvars.words[i] == "cheat" then
+				filter = " and flag like '%F%'"
+			end
 		end
 
 		if tmp.id ~= nil then
 			if tmp.dist ~= nil then
-				conn:execute("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. tmp.id .. " and session = " .. tmp.session .. " and abs(x - " .. tmp.x .. ") <= " .. tmp.dist .. " AND abs(z - " .. tmp.z .. ") <= " .. tmp.dist .. ")")
+				conn:execute("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. tmp.id .. " and session = " .. tmp.session .. " and abs(x - " .. tmp.x .. ") <= " .. tmp.dist .. " AND abs(z - " .. tmp.z .. ") <= " .. tmp.dist .. " " .. filter .. ")")
 			else
-				conn:execute("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. tmp.id .. " and session = " .. tmp.session .. ")")
+				conn:execute("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. tmp.id .. " and session = " .. tmp.session .. " " .. filter .. ")")
 			end
 		else
 			if tmp.name == nil then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player name, game id, or steam id required.[-]")			
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player name, game id, or steam id required.[-]")
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player or steam id matched " .. tmp.name .. "[-]")
 			end

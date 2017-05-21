@@ -384,9 +384,9 @@ end
 
 
 function LookupIRCAlias(name)
-	-- returns a steam ID if only 1 player record uses the name.  
+	-- returns a steam ID if only 1 player record uses the name.
 	local k,v, nickCount, steam
-	
+
 	nickCount = 0
 
 	for k, v in pairs(players) do
@@ -397,7 +397,7 @@ function LookupIRCAlias(name)
 			end
 		end
 	end
-	
+
 	if nickCount == 1 then
 		return steam
 	end
@@ -406,7 +406,7 @@ end
 
 function LookupIRCPass(login, pass)
 	local k,v
-	
+
 	if string.trim(pass) == "" then
 		return nil
 	end
@@ -483,23 +483,23 @@ end
 function LookupWaypointByName(steam, name, friend)
 	-- return the waypoint id if a match found for name and owned by steam
 	local k, v
-	
+
 	name = string.lower(name)
 
 	for k,v in pairs(waypoints) do
 		if friend ~= nil then
 			if string.lower(v.name) == name and v.steam == friend then
-				if isFriend(friend, steam) then						
+				if isFriend(friend, steam) then
 					return k
 				end
-			end	
+			end
 		else
 			if v.steam == steam and string.lower(v.name) == name then
 				return k
-			end		
-		end	
+			end
+		end
 	end
-	
+
 	return 0
 end
 
@@ -515,7 +515,7 @@ function LookupWaypoint(x,y,z)
 			end
 		end
 	end
-	
+
 	return 0
 end
 
@@ -531,19 +531,19 @@ function ClosestWaypoint(x,y,z,steam)
 		if steam ~= nil then
 			if v.steam == steam then
 				dist = distancexyz(x, y, z, v.x, v.y, v.z)
-				
+
 				if (dist < closest) then
 					closest = dist
 					wp = k
-				end				
+				end
 			end
 		else
 			dist = distancexyz(x, y, z, v.x, v.y, v.z)
-			
-			if (dist < closest) then			
+
+			if (dist < closest) then
 				closest = dist
 				wp = k
-			end			
+			end
 		end
 	end
 
@@ -808,8 +808,8 @@ end
 
 function fixMissingPlayer(steam)
 	-- if any fields are missing from the players player record, add them with default values
---dbug("fixMissingPlayer" .. steam .. " " .. players[steam].name)	
-	
+--dbug("fixMissingPlayer" .. steam .. " " .. players[steam].name)
+
 	local k,v
 
 	for k,v in pairs(playerFields) do
@@ -819,19 +819,19 @@ function fixMissingPlayer(steam)
 					if v.default == "0" then
 						players[steam][k] = false
 					else
-						players[steam][k] = true					
+						players[steam][k] = true
 					end
 				else
 					if v.default == "CURRENT_TIMESTAMP" then
-						players[steam][k] = os.time()					
+						players[steam][k] = os.time()
 					else
 						players[steam][k] = v.default
 					end
 				end
 			end
 		end
-	end	
-	
+	end
+
 	if (players[steam].steamOwner == nil) then
 		players[steam].steamOwner = steam
 	end
@@ -1022,13 +1022,13 @@ function fixMissingPlayer(steam)
 		players[steam].waypointY = 0
 		players[steam].waypointZ = 0
 	end
-	
+
 	if (players[steam].waypoint2X == nil) then
 		players[steam].waypoint2X = 0
 		players[steam].waypoint2Y = 0
 		players[steam].waypoint2Z = 0
 		players[steam].waypointsLinked = false
-	end	
+	end
 
 	if (players[steam].timeout == nil) then
 		players[steam].timeout = false
@@ -1056,7 +1056,7 @@ function fixMissingPlayer(steam)
 
 	if (players[steam].newPlayer == nil) then
 		players[steam].newPlayer = true
-		players[steam].watchPlayer = true		
+		players[steam].watchPlayer = true
 	end
 
 	if (players[steam].sessionCount == nil) then
@@ -1066,14 +1066,14 @@ function fixMissingPlayer(steam)
 	if (players[steam].watchPlayer == nil) then
 		players[steam].watchPlayer = false
 	end
-	
+
 	if (players[steam].watchPlayerTimer == nil) then
 		if players[steam].watchPlayer then
 			players[steam].watchPlayerTimer = os.time() + 259200 -- 3 days
 		else
-			players[steam].watchPlayerTimer = 0		
+			players[steam].watchPlayerTimer = 0
 		end
-	end	
+	end
 
 	if (players[steam].lastBaseRaid == nil) then
 		players[steam].lastBaseRaid = 0
@@ -1142,14 +1142,14 @@ function fixMissingPlayer(steam)
 	if players[steam].lastCommand == nil then
 		players[steam].lastCommand = ""
 	end
-	
+
 	if players[steam].lastCommandTimestamp == nil then
 		players[steam].lastCommandTimestamp = os.time() -1
-	end	
-	
+	end
+
 	if players[steam].lastChatLine == nil then
 		players[steam].lastChatLine = ""
-	end	
+	end
 
 	if players[steam].lastLogout == nil then
 		players[steam].lastLogout = os.time()
@@ -1163,10 +1163,10 @@ function fixMissingPlayer(steam)
 	if players[steam].autoFriend == nil then
 		players[steam].autoFriend = ""
 	end
-	
+
 	if players[steam].hackerScore == nil then
 		players[steam].hackerScore = 0
-	end	
+	end
 
 	if players[steam].hackerTPScore == nil then
 		players[steam].hackerTPScore = 0
@@ -1197,33 +1197,37 @@ function fixMissingPlayer(steam)
 	if players[steam].ignorePlayer == nil then
 		players[steam].ignorePlayer = false
 	end
-	
+
 	if players[steam].location == nil then
 		players[steam].location = ""
-	end	
+	end
 
 	if players[steam].GBLCount == nil then
-		players[steam].GBLCount = 0	
+		players[steam].GBLCount = 0
 	end
-	
+
 	if players[steam].commandCooldown == nil then
 		players[steam].commandCooldown = 0
-	end		
-	
+	end
+
+	if players[steam].pendingBans == nil then
+		players[steam].pendingBans = 0
+	end
+
 --	dbug("finished fixMissingPlayer")
 end
 
 
 function fixMissingIGPlayer(steam)
 	-- if any fields are missing from the players in-game player record, add them with default values
-	
+
 	if (igplayers[steam].claimPass == nil) then
 		igplayers[steam].claimPass = 0
-	end		
-	
+	end
+
 	if (igplayers[steam].checkNewPlayer == nil) then
 		igplayers[steam].checkNewPlayer = true
-	end	
+	end
 
 	if (igplayers[steam].steamOwner == nil) then
 		igplayers[steam].steamOwner = steam
@@ -1333,7 +1337,7 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].xPosLastOK = 0
 		igplayers[steam].yPosLastOK = 0
 		igplayers[steam].zPosLastOK = 0
-		
+
 		igplayers[steam].xPosLastAlert = 0
 		igplayers[steam].yPosLastAlert = 0
 		igplayers[steam].zPosLastAlert = 0
@@ -1404,7 +1408,7 @@ function fixMissingServer()
 					if v.default == "0" then
 						server[k] = false
 					else
-						server[k] = true					
+						server[k] = true
 					end
 				else
 					server[k] = v.default

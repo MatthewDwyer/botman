@@ -39,7 +39,7 @@ function initServer()
 	server.allowTeleporting = true
 	server.allowVoting = false
 	server.allowWaypoints = false
-	server.announceTeleports = false	
+	server.announceTeleports = false
 	server.bailCost = 0
 	server.baseCooldown = 2400
 	server.baseCost = 0
@@ -66,8 +66,8 @@ function initServer()
 	server.ircPrivate = true
 	server.ircServer = "127.0.0.1"
 	server.ircPort = "6667"
-	server.ircTracker = "#bot_tracker"	
-	server.ircWatch = "#bot_watch"	
+	server.ircTracker = "#bot_tracker"
+	server.ircWatch = "#bot_watch"
 	server.lastDailyReboot = 0
 	server.lottery = 0
 	server.lotteryMultiplier = 1
@@ -81,12 +81,12 @@ function initServer()
 	server.MOTD = "We have a new server bot!"
 	server.newPlayerTimer = 120
 	server.northeastZone = "pve"
-	server.northwestZone = "pve"	
+	server.northwestZone = "pve"
 	server.overstackThreshold = 2000
 	server.packCooldown = 0
 	server.packCost = 0
 	server.pingKick = -1
-	server.playersCanFly = false  
+	server.playersCanFly = false
 	server.prisonSize = 100
 	server.protectionMaxDays = 31
 	server.rebootHour = -1
@@ -97,17 +97,17 @@ function initServer()
 	server.ServerPort = "0"
 	server.shopCountdown = 3
 	server.southeastZone = "pve"
-	server.southwestZone = "pve"	
+	server.southwestZone = "pve"
 	server.swearCash = 0
 	server.swearFine = 5
 	server.swearJar = false
 	server.teleportCost = 200
 	server.teleportPublicCooldown = 0
-	server.teleportPublicCost = 0	
+	server.teleportPublicCost = 0
 	server.warnColour = "FFA500"
 	server.waypointCooldown = 0
 	server.waypointCost = 0
-	server.waypointsPublic = false  
+	server.waypointsPublic = false
 	server.website = ""
 	server.welcome = ""
 	server.windowAlerts = "Alerts"
@@ -116,9 +116,9 @@ function initServer()
 	server.windowLists = "Lists"
 	server.windowPlayers = "Players"
 	server.zombieKillReward = 1
-	server.reservedSlotsUsed = 0	
+	server.reservedSlotsUsed = 0
 
-	if botman.dbConnected then 
+	if botman.dbConnected then
 		conn:execute("DELETE FROM server")
 		cursor,errorString = conn:execute("INSERT INTO server (botName, windowGMSG, windowAlerts, windowDebug, windowLists, windowPlayers) values ('Bot', 'Chat', 'Alerts', 'Debug', 'Lists', 'Players')")
 	end
