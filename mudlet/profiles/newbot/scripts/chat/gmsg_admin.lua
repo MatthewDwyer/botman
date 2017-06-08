@@ -348,8 +348,7 @@ if debug then dbug("debug admin") end
 					return true
 				end
 
-				prepareTeleport(tmp.id, tmp.cmd)
-				teleport(tmp.cmd, true)
+				teleport(tmp.cmd, tmp.id)
 
 				players[tmp.id].xPosTimeout = 0
 				players[tmp.id].yPosTimeout = 0
@@ -377,8 +376,7 @@ if debug then dbug("debug admin") end
 					tmp.cmd = "tele " .. tmp.id .. " " .. players[tmp.id].xPosOld .. " " .. players[tmp.id].yPosOld .. " " .. players[tmp.id].zPosOld
 				end
 
-				prepareTeleport(tmp.id, tmp.cmd)
-				teleport(tmp.cmd, true)
+				teleport(tmp.cmd, tmp.id)
 
 				players[tmp.id].xPosOld = 0
 				players[tmp.id].yPosOld = 0
@@ -496,8 +494,7 @@ if debug then dbug("debug admin") end
 				if (players[prisonerid].prisonxPosOld) then
 					cmd = "tele " .. prisonerid .. " " .. players[prisonerid].prisonxPosOld .. " " .. players[prisonerid].prisonyPosOld .. " " .. players[prisonerid].prisonzPosOld
 					igplayers[prisonerid].lastTP = cmd
-					prepareTeleport(prisonerid, cmd)
-					teleport(cmd, true)
+					teleport(cmd, prisonerid)
 				end
 			else
 				message("pm " .. prisonerid .. " [" .. server.chatColour .. "]You are a free citizen, but you must find your own way back.[-]")
@@ -2425,7 +2422,7 @@ if debug then dbug("debug admin") end
 			if (igplayers[id]) then
 				cmd = "tele " .. id .. " " .. locations[loc].x .. " " .. locations[loc].y .. " " .. locations[loc].z
 				igplayers[id].lastTP = cmd
-				teleport(cmd, true)
+				teleport(cmd, id)
 
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " has been sent to " .. locations[loc].name .. "[-]")
@@ -2550,8 +2547,7 @@ if debug then dbug("debug admin") end
 				else
 					if (igplayers[id]) then
 						cmd = "tele " .. id .. " " .. players[id].homeX .. " " .. players[id].homeY .. " " .. players[id].homeZ
-						prepareTeleport(id, cmd)
-						teleport(cmd, true)
+						teleport(cmd, id)
 					end
 
 					if (chatvars.playername ~= "Server") then
@@ -2573,8 +2569,7 @@ if debug then dbug("debug admin") end
 				else
 					if (igplayers[id]) then
 						cmd = "tele " .. id .. " " .. players[id].home2X .. " " .. players[id].home2Y .. " " .. players[id].home2Z
-						prepareTeleport(id, cmd)
-						teleport(cmd, true)
+						teleport(cmd, id)
 					end
 
 					if (chatvars.playername ~= "Server") then
@@ -2773,12 +2768,10 @@ if debug then dbug("debug admin") end
 
 			if (igplayers[id2]) then
 				cmd = "tele " .. id1 .. " " .. id2
-				prepareTeleport(id1, cmd)
-				teleport(cmd, true)
+				teleport(cmd, id1)
 			else
 				cmd = "tele " .. id1 .. " " .. math.floor(players[id2].xPos) .. " " .. math.ceil(players[id2].yPos) .. " " .. math.floor(players[id2].zPos)
-				prepareTeleport(id1, cmd)
-				teleport(cmd, true)
+				teleport(cmd, id1)
 			end
 		end
 
@@ -4423,7 +4416,7 @@ if debug then dbug("debug admin") end
 		if not (id == nil) then
 			-- then teleport to the player
 			cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[id].xPos) + 1 .. " " .. math.ceil(players[id].yPos) .. " " .. math.floor(players[id].zPos)
-			teleport(cmd, true)
+			teleport(cmd, chatvars.playerid)
 		end
 
 		botman.faultyChat = false
@@ -4513,8 +4506,7 @@ if debug then dbug("debug admin") end
 
 			-- then teleport to the prisoners old coords
 			cmd = "tele " .. chatvars.playerid .. " " .. players[prisonerid].prisonxPosOld .. " " .. players[prisonerid].prisonyPosOld .. " " .. players[prisonerid].prisonzPosOld
-			prepareTeleport(chatvars.playerid, cmd)
-			teleport(cmd, true)
+			teleport(cmd, chatvars.playerid)
 		else
 			-- tp to their return coords if they are set
 			if tonumber(players[prisonerid].yPosTimeout) ~= 0 then
@@ -4525,8 +4517,7 @@ if debug then dbug("debug admin") end
 
 				-- then teleport to the prisoners old coords
 				cmd = "tele " .. chatvars.playerid .. " " .. players[prisonerid].xPosTimeout .. " " .. players[prisonerid].yPosTimeout .. " " .. players[prisonerid].zPosTimeout
-				prepareTeleport(chatvars.playerid, cmd)
-				teleport(cmd, true)
+				teleport(cmd, chatvars.playerid)
 			end
 		end
 
@@ -5001,9 +4992,7 @@ if debug then dbug("debug admin") end
 		if (players[prisonerid].steam) then
 			message("pm " .. prisonerid .. " [" .. server.chatColour .. "]You are released from prison.  Be a good citizen if you wish to remain free.[-]")
 			cmd = "tele " .. prisonerid .. " " .. chatvars.playerid
-			prepareTeleport(prisonerid, cmd)
-
-			teleport(cmd, true)
+			teleport(cmd, prisonerid)
 			players[prisonerid].xPosOld = 0
 			players[prisonerid].yPosOld = 0
 			players[prisonerid].zPosOld = 0
@@ -5060,8 +5049,7 @@ if debug then dbug("debug admin") end
 					players[chatvars.playerid].zPosOld = math.floor(igplayers[chatvars.playerid].zPos)
 
 					cmd = "tele " .. chatvars.playerid .. " " .. players[id].homeX .. " " .. players[id].homeY .. " " .. players[id].homeZ
-					prepareTeleport(chatvars.playerid, cmd)
-					teleport(cmd, true)
+					teleport(cmd, chatvars.playerid)
 				end
 			else
 				if (players[id].home2X == 0 and players[id].home2Z == 0) then
@@ -5075,8 +5063,7 @@ if debug then dbug("debug admin") end
 					players[chatvars.playerid].zPosOld = math.floor(igplayers[chatvars.playerid].zPos)
 
 					cmd = "tele " .. chatvars.playerid .. " " .. players[id].home2X .. " " .. players[id].home2Y .. " " .. players[id].home2Z
-					prepareTeleport(chatvars.playerid, cmd)
-					teleport(cmd, true)
+					teleport(cmd, chatvars.playerid)
 				end
 			end
 		end

@@ -2776,7 +2776,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		    for k, v in ipairs(tmp.list) do
 				tmp.steam = LookupOfflinePlayer(v, "all")
 
-				diff = os.difftime(players[tmp.steam].donorExpiry, os.time(dateNow))
+				diff = os.difftime(players[tmp.steam].donorExpiry, os.time()) -- diff = os.difftime(players[tmp.steam].donorExpiry, os.time(dateNow))
 				days = math.floor(diff / 86400)
 
 				if (days > 0) then
@@ -2792,7 +2792,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				minutes = math.floor(diff / 60)
 
 				if tonumber(days) < 0 then
-					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " *** expired *** Donor status is still active!")
+					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " *** expired ***")
 				else
 					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " expires in " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
 				end

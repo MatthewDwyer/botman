@@ -10,7 +10,7 @@
 function gmsg_info()
 	calledFunction = "gmsg_info"
 
-	local xdir, zdir, dist, x, z, diff, days, hours, minutes, result, time	, werds, word, cmd
+	local xdir, zdir, dist, x, z, diff, days, hours, minutes, result, time	, werds, word, cmd, direction
 	local debug
 	local shortHelp = false
 	local skipHelp = false
@@ -683,6 +683,20 @@ function gmsg_info()
 
 		if players[chatvars.playerid].inLocation ~= "" then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in the location " .. players[chatvars.playerid].inLocation .. "[-]")
+		end
+
+		if players[chatvars.playerid].atHome then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are at home.[-]")
+		else
+			if tonumber(players[chatvars.playerid].homeY) > 0 then
+				direction = getCompass(players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ, chatvars.intX, chatvars.intZ)
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are " .. string.format("%.2f", (distancexz(chatvars.intX, chatvars.intZ, players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ) / 1000)) .. " km to the " .. direction .. " of your first home.[-]")
+			end
+
+			if tonumber(players[chatvars.playerid].home2Y) > 0 then
+				direction = getCompass(players[chatvars.playerid].home2X, players[chatvars.playerid].home2Z, chatvars.intX, chatvars.intZ)
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are " .. string.format("%.2f", (distancexz(chatvars.intX, chatvars.intZ, players[chatvars.playerid].home2X, players[chatvars.playerid].home2Z) / 1000)) .. " km to the " .. direction .. " of your second home.[-]")
+			end
 		end
 
 		botman.faultyChat = false

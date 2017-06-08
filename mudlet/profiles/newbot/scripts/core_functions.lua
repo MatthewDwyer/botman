@@ -40,14 +40,19 @@ end
 
 function stripQuotes(name)
 	local oldName
-	oldName = name
 
 	name = string.trim(name)
+	oldName = name
+
 	name = string.match(name, "^'(.*)'$")
 
-	if name == oldName then
-		name = string.match(name, "^\"(.*)\"$")
+	if name == nil then
+		name = oldName
+	else
+		return name
 	end
+
+	name = string.match(name, "^\"(.*)\"$")
 
 	if name == nil then name = oldName end
 
@@ -1347,10 +1352,6 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].afk = os.time() + 900
 	end
 
-	if igplayers[steam].lastCatchTimestamp == nil then
-		igplayers[steam].lastCatchTimestamp = os.time()
-	end
-
 	if igplayers[steam].alertLocation == nil then
 		igplayers[steam].alertLocation = ""
 	end
@@ -1375,12 +1376,14 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].flying = false
 		igplayers[steam].flyCount = 0
 		igplayers[steam].flyingX = 0
+		igplayers[steam].flyingY = 0
 		igplayers[steam].flyingZ = 0
 	end
 
 	if igplayers[steam].noclip == nil then
 		igplayers[steam].noclip = false
 		igplayers[steam].noclipX = 0
+		igplayers[steam].noclipY = 0
 		igplayers[steam].noclipZ = 0
 	end
 

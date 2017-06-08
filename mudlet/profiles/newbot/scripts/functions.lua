@@ -537,7 +537,10 @@ end
 function restrictedCommandMessage()
 	local r
 
-	if chatvars.command ~= players[chatvars.playerid].lastCommand then
+	chatvars.restrictedCommand = true
+
+	if not igplayers[chatvars.playerid].restrictedCommand then
+		igplayers[chatvars.playerid].restrictedCommand = true
 		return("This command is restricted")
 	else
 		r = rand(16)
@@ -775,6 +778,14 @@ function calcTimestamp(str)
 
 	str = string.lower(str)
 	number = math.abs(math.floor(tonumber(string.match(str, "(-?%d+)"))))
+
+	if string.find(str, "minute") then
+		period = 60
+	end
+
+	if string.find(str, "hour") then
+		period = 60 * 60
+	end
 
 	if string.find(str, "day") then
 		period = 60 * 60 * 24
@@ -1014,6 +1025,10 @@ function seen(steam)
 		return "A new player on for the first time now."
 	end
 
+	if igplayers[steam] then
+		return players[steam].name .. " is on the server now."
+	end
+
 	words = {}
 	for word in botman.serverTime:gmatch("%w+") do table.insert(words, word) end
 
@@ -1092,6 +1107,7 @@ function kick(steam, reason)
 
 	send("kick " .. steam .. " " .. " \"" .. reason .. "\"")
 	botman.playersOnline = botman.playersOnline - 1
+	irc_chat(server.ircMain, "Player " .. players[steam].name .. " kicked. Reason: " .. reason)
 end
 
 
@@ -1266,13 +1282,11 @@ function arrest(steam, reason, bail, releaseTime)
 			randomTP(steam, "prison")
 		else
 			cmd = "tele " .. steam .. " " .. locations["prison"].x .. " " .. locations["prison"].y .. " " .. locations["prison"].z
-			prepareTeleport(steam, cmd)
-			teleport(cmd, true)
+			teleport(cmd, steam)
 		end
 	else
 		cmd = "tele " .. steam .. " " .. locations["prison"].x .. " " .. locations["prison"].y .. " " .. locations["prison"].z
-		prepareTeleport(steam, cmd)
-		teleport(cmd, true)
+		teleport(cmd, steam)
 	end
 
 	message("say [" .. server.warnColour .. "]" .. players[steam].name .. " has been sent to prison for " .. reason .. ".[-]")
@@ -1579,18 +1593,18 @@ function CheckBlacklist(steam, ip)
 				-- alert players
 				for k, v in pairs(igplayers) do
 					if players[k].exiled~=1 and not players[k].prisoner then
-						message("pm " .. k .. " Chinese player " .. players[steam].name .. " detected and sent to exile.[-]")
+						message("pm " .. k .. " Chinese player " .. players[steam].name .. " detected and exiled.[-]")
 					end
 				end
 			end
 
 			if server.blacklistResponse == 'ban' then
-				irc_chat(server.ircMain, "Chinese player " .. players[steam].name .. " banned.")
-				irc_chat(server.ircAlerts, "Chinese player " .. players[steam].name .. " banned.")
+				irc_chat(server.ircMain, "Blacklisted player " .. players[steam].name .. " banned.")
+				irc_chat(server.ircAlerts, "Blacklisted player " .. players[steam].name .. " banned.")
 				banPlayer(steam, "10 years", "blacklisted", "")
 			end
 
-			connBots:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Chinese player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. ip  .. "'," .. steam .. ")")
+			connBots:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined and banned. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. ip  .. "'," .. steam .. ")")
 		else
 			reverseDNS(steam, ip)
 		end
@@ -1620,7 +1634,7 @@ function readDNS(steam)
 			iprange = string.sub(ln, a, a+b)
 		end
 
-		if not whitelist[steam] and not players[steam].donor and players[steam].newPlayer then
+		if not whitelist[steam] and not players[steam].donor then
 			for k,v in pairs(proxies) do
 				if string.find(ln, string.upper(v.scanString), nil, true) then
 					v.hits = tonumber(v.hits) + 1
@@ -1877,6 +1891,7 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].flyCount = 0
 	igplayers[steam].flying = false
 	igplayers[steam].flyingX = 0
+	igplayers[steam].flyingY = 0
 	igplayers[steam].flyingZ = 0
 	igplayers[steam].greet = true
 	igplayers[steam].greetdelay = 4
@@ -1891,6 +1906,7 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].lastLP = os.time()
 	igplayers[steam].name = player
 	igplayers[steam].noclipX = 0
+	igplayers[steam].noclipY = 0
 	igplayers[steam].noclipZ = 0
 	igplayers[steam].pack = ""
 	igplayers[steam].ping = 0

@@ -10,7 +10,6 @@
 
 function forgetLastTP(steam)
 	if igplayers[steam] then
-		igplayers[steam].lastCatchTimestamp = os.time() + 10
 		igplayers[steam].lastTP = nil
 	end
 end
@@ -18,22 +17,28 @@ end
 
 function prepareTeleport(steam, cmd)
 	if igplayers[steam] then
-		igplayers[steam].lastCatchTimestamp = os.time() + 10
 		igplayers[steam].lastTP = cmd
 		players[steam].tp = 1
 		players[steam].hackerTPScore = 0
+
+		-- record the player's current x y z
+		players[steam].xPosOld = math.floor(players[steam].xPos)
+		players[steam].yPosOld = math.ceil(players[steam].yPos)
+		players[steam].zPosOld = math.floor(players[steam].zPos)
+		igplayers[steam].lastLocation = ""
 	end
 end
 
 
-function teleport(cmd, forced)
-	local id, coords, temp, dist
-	id = string.sub(cmd, 6, 22)
+function teleport(cmd, steam)
+	local coords, temp, dist
 	dist = nil
 
+	prepareTeleport(steam, cmd)
+
 	-- disable some stuff because we are teleporting
-	igplayers[id].location = nil
-	igplayers[id].lastTP = cmd
+	igplayers[steam].location = nil
+	igplayers[steam].lastTP = cmd
 
 	coords = string.sub(cmd, 24)
 	coords = string.split(coords, " ")
@@ -44,15 +49,15 @@ function teleport(cmd, forced)
 	end
 
 	-- if an admin is following a player (using the /near command) and they teleport away, stop following the player
-	if igplayers[id].following ~= nil then igplayers[id].following = nil end
+	if igplayers[steam].following ~= nil then igplayers[steam].following = nil end
 
-	players[id].tp = 1
-	players[id].hackerTPScore = 0
+	players[steam].tp = 1
+	players[steam].hackerTPScore = 0
 
 	send(cmd)
 
-	players[id].tp = 1
-	players[id].hackerTPScore = 0
+	players[steam].tp = 1
+	players[steam].hackerTPScore = 0
 
 	return true
 end
@@ -68,8 +73,7 @@ function fallCatcher(steam, x, y, z)
 
 	if (tonumber(y) < 0 and players[steam].timeout == false and players[steam].botTimeout == false and igplayers[steam].sessionPlaytime > 5)  then
 		cmd = "tele " .. steam .. " " .. x .. " -1 " .. z
-		prepareTeleport(steam, cmd)
-		teleport(cmd, true)
+		teleport(cmd, steam)
 	end
 end
 
@@ -83,14 +87,20 @@ function randomTP(playerid, location, forced)
 
 		if rows == 0 then
 			cmd = "tele " .. playerid .. " " .. locations[location].x .. " " .. locations[location].y .. " " .. locations[location].z
-			prepareTeleport(playerid, cmd)
-			teleport(cmd, true)
+
+			if tonumber(server.playerTeleportDelay) == 0 or forced or not igplayers[playerid].currentLocationPVP or tonumber(players[playerid].accessLevel) < 2 then
+				teleport(cmd, playerid)
+			else
+				message("pm " .. playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
+				if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
+			end
+
 			return
 		end
 	else
 		cmd = "tele " .. playerid .. " " .. locations[location].x .. " " .. locations[location].y .. " " .. locations[location].z
-		prepareTeleport(playerid, cmd)
-		teleport(cmd, true)
+		teleport(cmd, playerid)
+
 		return
 	end
 
@@ -100,15 +110,15 @@ function randomTP(playerid, location, forced)
 	cursor,errorString = conn:execute("select * from locationSpawns where location='" .. location .. "' limit " .. r - 1 .. ",1")
 	row = cursor:fetch({}, "a")
 	cmd = "tele " .. playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
-	prepareTeleport(playerid, cmd)
 
 	if location == "lobby" then
-		teleport(cmd, true)
+		teleport(cmd, playerid)
 	else
-		if forced ~= nil then
-			teleport(cmd, true)
+		if tonumber(server.playerTeleportDelay) == 0 or forced or not igplayers[playerid].currentLocationPVP or tonumber(players[playerid].accessLevel) < 2 then
+			teleport(cmd, playerid)
 		else
-			teleport(cmd)
+			message("pm " .. playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
+			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
 		end
 	end
 end

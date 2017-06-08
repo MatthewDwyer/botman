@@ -392,6 +392,7 @@ function gmsg(line, ircid)
 	noWaypoint = false
 	chatStringStart = ""
 	chatvars = {}
+	chatvars.restrictedCommand = false
 	chatvars.timestamp = os.time()
 	botman.ExceptionCount = 0
 	chatvars.gmsg = line
@@ -1029,6 +1030,10 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		if result and debug then dbug("debug ran command in gmsg_coppi") end
 	end
 
+	if not chatvars.restrictedCommand then
+		igplayers[chatvars.playerid].restrictedCommand = false
+	end
+
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 
@@ -1108,9 +1113,15 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[id].xPos-1) .. " " .. math.ceil(players[id].yPos) .. " " .. math.floor(players[id].zPos)
 
 			players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.teleportCost
-			prepareTeleport(chatvars.playerid, cmd)
-			teleport(cmd)
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have teleported to " .. players[id].name .. "'s location.[-]")
+
+			if tonumber(server.playerTeleportDelay) == 0 or not igplayers[chatvars.playerid].currentLocationPVP or tonumber(players[chatvars.playerid].accessLevel) < 2 then
+				teleport(cmd, chatvars.playerid)
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have teleported to " .. players[id].name .. "'s location.[-]")
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. players[id].name .. "'s location in " .. server.playerTeleportDelay .. " seconds.[-]")
+				if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
+			end
+
 			botman.faultyChat = false
 			result = true
 if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end

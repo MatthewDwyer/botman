@@ -70,8 +70,14 @@ function loadServer()
 			server.ircServer = temp[1]
 			server.ircPort = temp[2]
 		else
-			server.ircServer = ""
-			server.ircPort = ""
+			server.ircServer = ircServer
+			server.ircPort = ircPort
+		end
+
+		if server.ircMain == "#new" or server.ircMain == "" then
+			server.ircMain = ircChannel
+			server.ircAlerts = ircChannel .. "_alerts"
+			server.ircWatch = ircChannel .. "_watch"
 		end
 
 		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end

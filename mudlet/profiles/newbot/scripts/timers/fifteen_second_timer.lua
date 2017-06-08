@@ -43,7 +43,7 @@ function FifteenSecondTimer()
 			if server.scanNoclip then
 				-- check for noclipped players
 				for k,v in pairs(igplayers) do
-					if players[k].newPlayer or tonumber(players[k].ping) > 150 then
+					if tonumber(players[k].accessLevel) > 2 then
 						send("pug " .. k)
 					end
 				end
@@ -52,7 +52,7 @@ function FifteenSecondTimer()
 			if not server.playersCanFly then
 				-- check for flying players
 				for k,v in pairs(igplayers) do
-					if players[k].newPlayer or tonumber(players[k].ping) > 150 then
+					if tonumber(players[k].accessLevel) > 2 then
 						send("pgd " .. k)
 					end
 				end

@@ -24,6 +24,19 @@ function miscCommandsTimer()
 			end
 
 			send(row.command)
+
+			if string.find(row.command, "admin add") then
+				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been given admin.")
+			end
+
+			if string.find(row.command, "ban remove") then
+				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been unbanned.")
+			end
+
+			if string.find(row.command, "tele ") then
+				teleport(row.command, row.steam)
+			end
+
 			conn:execute("delete from miscQueue where id = " .. row.id)
 		end
 	end
@@ -41,6 +54,10 @@ function miscCommandsTimer()
 						message(row.command)
 					else
 						send(row.command)
+					end
+
+					if string.find(row.command, "tele ") then
+						teleport(row.command, row.steam)
 					end
 
 					conn:execute("delete from miscQueue where id = " .. row.id)

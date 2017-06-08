@@ -217,33 +217,7 @@ function playerConnected(line)
 			if string.upper(players[steam].chatColour) ~= "FFFFFF" then
 				send("cpc " .. steam .. " " .. players[steam].chatColour)
 			else
-				if accessLevel(steam) > 3 and accessLevel(steam) < 11 then
-					send("cpc " .. steam .. " " .. server.chatColourDonor .. " 1")
-				end
-
-				if accessLevel(steam) == 0 then
-					send("cpc " .. steam .. " " .. server.chatColourOwner .. " 1")
-				end
-
-				if accessLevel(steam) == 1 then
-					send("cpc " .. steam .. " " .. server.chatColourAdmin .. " 1")
-				end
-
-				if accessLevel(steam) == 2 then
-					send("cpc " .. steam .. " " .. server.chatColourMod .. " 1")
-				end
-
-				if accessLevel(steam) == 90 then
-					send("cpc " .. steam .. " " .. server.chatColourPlayer .. " 1")
-				end
-
-				if accessLevel(steam) == 99 then
-					send("cpc " .. steam .. " " .. server.chatColourNewPlayer .. " 1")
-				end
-
-				if players[steam].prisoner then
-					send("cpc " .. steam .. " " .. server.chatColourPrisoner .. " 1")
-				end
+				setChatColour(steam)
 			end
 		end
 	end
@@ -373,7 +347,8 @@ function playerConnected(line)
 		rows = cursor:numrows()
 
 		if tonumber(rows) > 0 then
-			kick(steam, "You are on the global ban list. " .. rows.GBLBanReason)
+			row = cursor:fetch({}, "a")
+			kick(steam, "You are on the global ban list. " .. row.GBLBanReason)
 			banPlayer(steam, "10 years", "On global ban list", 0, 0, true)
 			return
 		else
@@ -381,10 +356,8 @@ function playerConnected(line)
 			cursor,errorString = connBots:execute("SELECT count(steam) as pendingBans FROM bans WHERE (Steam = " .. steam .. " or Steam = " .. steamOwner .. ") and GBLBan = 1 and GBLBanVetted = 0")
 			row = cursor:fetch({}, "a")
 			if tonumber(row.pendingBans) > 0 then
-
 				irc_chat(server.ircMain, "ALERT!  Player " .. steam ..  " " .. player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")
 				players[steam].pendingBans = row.pendingBans
-
 				alertAdmins("ALERT!  Player " .. steam ..  " " .. player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")
 			end
 		end

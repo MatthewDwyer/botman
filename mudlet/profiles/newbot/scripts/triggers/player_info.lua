@@ -30,7 +30,6 @@ function playerInfo(faultyInfo)
 	local ping, dist, IP, hotspot, currentLocation
 	local skipTPtest = false
 	local badData = false
-	local banned = false
 
 	debug = false
 
@@ -311,7 +310,7 @@ function playerInfo(faultyInfo)
 	if players[steam].location ~= "" and tonumber(igplayers[steam].teleCooldown) < 1 then
 		-- spawn the player at location
 		if (locations[players[steam].location]) then
-			message(string.format("pm %s [%s]You have been moved to %s[-]", steam, server.chatColour, players[steam].location))
+			message(string.format("pm %s [%s]You are being moved to %s[-]", steam, server.chatColour, players[steam].location))
 			randomTP(steam, players[steam].location, true)
 
 			players[steam].location = ""
@@ -329,7 +328,7 @@ function playerInfo(faultyInfo)
 				cmd = "tele " .. steam .. " " .. players[steam].xPosOld .. " " .. players[steam].yPosOld .. " " .. players[steam].zPosOld
 			end
 
-			teleport(cmd, true)
+			teleport(cmd, steam)
 			players[steam].location = ""
 			if botman.dbConnected then conn:execute("UPDATE players SET location = '' WHERE steam = " .. steam) end
 		end
@@ -340,15 +339,28 @@ function playerInfo(faultyInfo)
 		message(string.format("say [%s]Banning %s. Detected evidence of hacking.[-]", server.chatColour, players[steam].name))
 		banPlayer(steam, "1 year", "Automatic ban by server manager", "")
 
-		banned = true
-	end
+		-- if the player has any pending global bans, activate them
+		connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. steam)
+	else
+		if tonumber(players[steam].hackerScore) >= 49  then
+			if tonumber(players[steam].pendingBans) > 0 then
+				players[steam].hackerScore = 0
+				message(string.format("say [%s]Temp banning %s 1 week for suspected hacking. Admins have been alerted.[-]", server.chatColour, players[steam].name))
+				banPlayer(steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
 
-	if tonumber(players[steam].hackerScore) >= 100 and tonumber(players[steam].hackerScore) < 10000 then
-		players[steam].hackerScore = 0
-		message(string.format("say [%s]Temp banning %s 1 week for suspected hacking. Admins have been alerted.[-]", server.chatColour, players[steam].name))
-		banPlayer(steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
+				-- activate the pending bans
+				connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. steam)
+			end
+		end
 
-		banned = true
+		if tonumber(players[steam].hackerScore) >= 100 then
+			players[steam].hackerScore = 0
+			message(string.format("say [%s]Temp banning %s 1 week for suspected hacking. Admins have been alerted.[-]", server.chatColour, players[steam].name))
+			banPlayer(steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
+
+			-- if the player has any pending global bans, activate them
+			connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. steam)
+		end
 	end
 
 	-- test for hackers teleporting
@@ -396,7 +408,8 @@ function playerInfo(faultyInfo)
 								message(string.format("say [%s]Temp banning %s 1 week for unexplained teleporting. An admin will investigate the circumstances.[-]", server.chatColour, players[steam].name))
 								banPlayer(steam, "1 week", "We detected unusual teleporting from you and are investigating the circumstances.", "")
 
-								banned = true
+								-- if the player has any pending global bans, activate them
+								connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. steam)
 							end
 
 							alertAdmins(id .. " name: " .. name .. " detected teleporting! In fly mode, type " .. server.commandPrefix .. "near " .. id .. " to shadow them.", "warn")
@@ -516,6 +529,10 @@ function playerInfo(faultyInfo)
 			players[steam].watchPlayerTimer = 0
 			if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0  WHERE steam = " .. steam) end
 			irc_chat(server.ircMain, "Player " .. name .. "'s new player status has been removed because their level is " .. level)
+
+			if string.upper(players[steam].chatColour) == "FFFFFF" then
+				setChatColour(steam)
+			end
 		end
 	end
 
@@ -727,6 +744,10 @@ function playerInfo(faultyInfo)
 		players[steam].watchPlayerTimer = 0
 		message("pm " .. steam .. " [" .. server.chatColour .. "]Your new player status has been lifted.  You may now use the base command to teleport home. :D[-]")
 		if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. steam) end
+
+		if string.upper(players[steam].chatColour) == "FFFFFF" then
+			setChatColour(steam)
+		end
 	end
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
@@ -1103,8 +1124,7 @@ function playerInfo(faultyInfo)
 			end
 
 			tmp.cmd = "tele " .. steam .. " " .. tmp.x .. " -1 " .. tmp.z
-			prepareTeleport(steam, tmp.cmd)
-			teleport(tmp.cmd, true)
+			teleport(tmp.cmd, steam)
 		end
 	end
 
@@ -1122,7 +1142,7 @@ function playerInfo(faultyInfo)
 						if isDestinationAllowed(steam, teleports[tp].dx, teleports[tp].dz) then
 							igplayers[steam].teleCooldown = 2
 							cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].dx) .. " " .. math.ceil(teleports[tp].dy) .. " " .. math.floor(teleports[tp].dz)
-							teleport(cmd, true)
+							teleport(cmd, steam)
 						end
 
 						faultyPlayerinfo = false
@@ -1133,7 +1153,7 @@ function playerInfo(faultyInfo)
 						if isDestinationAllowed(steam, teleports[tp].x, teleports[tp].z) then
 							igplayers[steam].teleCooldown = 2
 							cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
-							teleport(cmd, true)
+							teleport(cmd, steam)
 						end
 
 						faultyPlayerinfo = false
@@ -1160,7 +1180,7 @@ function playerInfo(faultyInfo)
 					if isDestinationAllowed(steam, waypoints[tmp.linkedID].x, waypoints[tmp.linkedID].z) then
 						igplayers[steam].teleCooldown = 2
 						cmd = "tele " .. steam .. " " .. math.floor(waypoints[tmp.linkedID].x) .. " " .. math.ceil(waypoints[tmp.linkedID].y) .. " " .. math.floor(waypoints[tmp.linkedID].z)
-						teleport(cmd, true)
+						teleport(cmd, steam)
 					end
 
 					faultyPlayerinfo = false
@@ -1169,7 +1189,7 @@ function playerInfo(faultyInfo)
 					if accessLevel(steam) < 3 then
 						igplayers[steam].teleCooldown = 2
 						cmd = "tele " .. steam .. " " .. math.floor(waypoints[tmp.linkedID].x) .. " " .. math.ceil(waypoints[tmp.linkedID].y) .. " " .. math.floor(waypoints[tmp.linkedID].z)
-						teleport(cmd, true)
+						teleport(cmd, steam)
 
 						faultyPlayerinfo = false
 						return
@@ -1246,12 +1266,12 @@ function playerInfo(faultyInfo)
 			if players[steam].bed ~= "" then
 				if players[steam].bed == "base1" then
 					cmd = "tele " .. steam .. " " .. players[steam].homeX .. " " .. players[steam].homeY .. " " .. players[steam].homeZ
-					teleport(cmd, true)
+					teleport(cmd, steam)
 				end
 
 				if players[steam].bed == "base2" then
 					cmd = "tele " .. steam .. " " .. players[steam].home2X .. " " .. players[steam].home2Y .. " " .. players[steam].home2Z
-					teleport(cmd, true)
+					teleport(cmd, steam)
 				end
 			end
 		end

@@ -255,8 +255,7 @@ function gmsg_misc()
 				savePosition(chatvars.playerid)
 
 				cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
-				prepareTeleport(chatvars.playerid, cmd)
-				teleport(cmd, true)
+				teleport(cmd, chatvars.playerid)
 			end
 		end
 

@@ -148,6 +148,7 @@ function ResetBot()
 	hotspots = {}
 	resetRegions = {}
 	lastHotspots = {}
+	stackLimits = {}
 	villagers = {}
 	locations = {}
 	waypoints = {}

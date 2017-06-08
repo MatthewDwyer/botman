@@ -273,8 +273,7 @@ function dbBaseDefend(steam, base)
 		row = cursor:fetch({}, "a")
 		while row do
 			cmd = ("tele " .. steam .. " " .. row.x .. " -1 " .. row.z)
-			prepareTeleport(steam, cmd)
-			teleport(cmd, true)
+			teleport(cmd, steam, true)
 
 			if true then
 				return
@@ -676,6 +675,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` CHANGE `updateBot` `updateBot` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `botRestartHour` INT NOT NULL DEFAULT '25'")
 	doSQL("ALTER TABLE `server` ADD `trackingKeepDays` INT NOT NULL DEFAULT '28' , ADD `databaseMaintenanceFinished` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `server` ADD `allowHomeTeleport` TINYINT(1) NOT NULL DEFAULT '1' , ADD `playerTeleportDelay` INT NOT NULL DEFAULT '0'")
 
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end

@@ -44,7 +44,9 @@ function matchAll(line)
 	end
 
 	if string.find(line, "WRN ") then -- what is this shit?  ignore it.
-		return
+		if not string.find(line, "DENSITYMISMATCH") then
+			return
+		end
 	end
 
 	if string.find(line, "NaN") then -- what is this shit?  ignore it.
@@ -646,21 +648,17 @@ function matchAll(line)
 			pid = words[1]
 			pid = LookupPlayer(pid)
 
-			-- if players[pid].newPlayer then
-				temp = 5
-			-- else
-				-- temp = 30
-			-- end
-
 			if string.find(line, "isUnderGround=True") and accessLevel(pid) > 2 then
 				igplayers[pid].noclip = true
 
 				if igplayers[pid].noclipX == 0 and igplayers[pid].noclipZ == 0 then
 					igplayers[pid].noclipX = math.floor(igplayers[pid].xPos)
+					igplayers[pid].noclipY = math.floor(igplayers[pid].yPos)
 					igplayers[pid].noclipZ = math.floor(igplayers[pid].zPos)
 				else
-					dist = distancexz(igplayers[pid].noclipX,igplayers[pid].noclipZ,math.floor(igplayers[pid].xPos),math.floor(igplayers[pid].zPos))
+					dist = distancexyz(igplayers[pid].noclipX,igplayers[pid].noclipY,igplayers[pid].noclipZ,math.floor(igplayers[pid].xPos),math.floor(igplayers[pid].yPos),math.floor(igplayers[pid].zPos))
 					igplayers[pid].noclipX = math.floor(igplayers[pid].xPos)
+					igplayers[pid].noclipY = math.floor(igplayers[pid].yPos)
 					igplayers[pid].noclipZ = math.floor(igplayers[pid].zPos)
 
 					if tonumber(dist) > 5 then
@@ -668,14 +666,14 @@ function matchAll(line)
 							if tonumber(players[pid].ping) > 150 then
 								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 40
 							else
-								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
+								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 25
 							end
 						else
-							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 15
+							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
 						end
 					end
 
-					if dist > temp then
+					if tonumber(dist) > 5 then
 						alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos) .. "[-]", "warn")
 						irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
 						irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
@@ -685,6 +683,7 @@ function matchAll(line)
 				igplayers[pid].noclip = false
 				igplayers[pid].noclipCount = 0
 				igplayers[pid].noclipX = 0
+				igplayers[pid].noclipY = 0
 				igplayers[pid].noclipZ = 0
 			end
 		end
@@ -701,12 +700,13 @@ function matchAll(line)
 			igplayers[pid].flying = false
 			dist = tonumber(words[2])
 
-			if dist > 5 and accessLevel(pid) > 2 then
+			if tonumber(dist) > 5 and accessLevel(pid) > 2 then
 				if not players[pid].timeout and not players[pid].botTimeout and igplayers[pid].lastTP == nil and not players[pid].ignorePlayer then
 					igplayers[pid].flying = true
 
 					if igplayers[pid].flyingX == 0 then
 						igplayers[pid].flyingX = math.floor(igplayers[pid].xPos)
+						igplayers[pid].flyingY = math.floor(igplayers[pid].yPos)
 						igplayers[pid].flyingZ = math.floor(igplayers[pid].zPos)
 					else
 						dist = distancexz(igplayers[pid].flyingX,igplayers[pid].flyingZ,math.floor(igplayers[pid].xPos),math.floor(igplayers[pid].zPos))
@@ -716,18 +716,18 @@ function matchAll(line)
 								if tonumber(players[pid].ping) > 150 then
 									players[pid].hackerScore = tonumber(players[pid].hackerScore) + 40
 								else
-									players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
+									players[pid].hackerScore = tonumber(players[pid].hackerScore) + 25
 								end
 							else
-								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 15
+								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
 							end
 						end
 
 						igplayers[pid].flyingX = math.floor(igplayers[pid].xPos)
+						igplayers[pid].flyingY = math.floor(igplayers[pid].yPos)
 						igplayers[pid].flyingZ = math.floor(igplayers[pid].zPos)
 
-						if dist > 5 then
-						--if dist > 15 and dist < 100 then
+						if tonumber(dist) > 5 then
 							igplayers[pid].flyCount = igplayers[pid].flyCount + 1
 
 							if tonumber(igplayers[pid].flyCount) > 1 then
@@ -746,6 +746,7 @@ function matchAll(line)
 			if not igplayers[pid].flying then
 				igplayers[pid].flyCount = 0
 				igplayers[pid].flyingX = 0
+				igplayers[pid].flyingY = 0
 				igplayers[pid].flyingZ = 0
 			end
 

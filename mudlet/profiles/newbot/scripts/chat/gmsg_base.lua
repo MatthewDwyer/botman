@@ -747,6 +747,56 @@ if debug then dbug("debug base") end
 
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "enable base (or home) teleport")
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "disable base (or home) teleport")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Enable or disable the home or base teleport command (except for staff).")
+				irc_chat(players[chatvars.ircid].ircAlias, "")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and (chatvars.words[2] == "base" or chatvars.words[2] == "home") and chatvars.words[3] == "teleport" then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+
+		if (chatvars.words[1] == "enable") then
+			server.allowHomeTeleport = true
+
+			conn:execute("UPDATE server SET allowHomeTeleport = 1")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Players can teleport home.[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "Players can teleport home.")
+			end
+		else
+			server.allowHomeTeleport = false
+
+			conn:execute("UPDATE server SET allowHomeTeleport = 0")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Players are not allowed to teleport home.[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "Players are not allowed to teleport home.")
+			end
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
+
 	-- ###################  do not allow remote commands beyond this point ################
 	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
 
@@ -773,6 +823,12 @@ if debug then dbug("debug base") end
 		if server.coppi then
 			-- update the coordinates of the players bedroll
 			send("lpb " .. chatvars.playerid)
+		end
+
+		if (chatvars.accessLevel > 2) and not server.allowHomeTeleport then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleporting home is disabled on this server.  Walking is good for you!  Running even more so. :D[-]")
+			botman.faultyChat = false
+			return true
 		end
 
 		if (chatvars.accessLevel > 10) and (chatvars.words[1] == "base2" or chatvars.words[1] == "home2") then
@@ -901,8 +957,7 @@ if debug then dbug("debug base") end
 		end
 
 		if wait then
-			prepareTeleport(chatvars.playerid, cmd)
-			teleport(cmd)
+			teleport(cmd, chatvars.playerid)
 		else
 			players[chatvars.playerid].tp = 1
 			players[chatvars.playerid].hackerTPScore = 0
