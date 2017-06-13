@@ -217,6 +217,16 @@ function gmsg_misc()
 	-- ####################################################################################
 
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
+	
+	if (chatvars.words[1] == "fetch" and chatvars.words[2] == "claims") then
+		send("llp " .. chatvars.playerid .. " parseable")
+		
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end	
 
 	if (chatvars.words[1] == "bookmark" and chatvars.words[2] ~= nil) then
 

@@ -4533,7 +4533,7 @@ if debug then dbug("debug admin") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Teleport below and a short distance away from a player.  You must be flying for this or you will just fall all the time.")
-				irc_chat(players[chatvars.ircid].ircAlias, "You arrive 20 metres below the player and 10 metres to the side.  If you give a number after the player name you will be that number metres off to the side.")
+				irc_chat(players[chatvars.ircid].ircAlias, "You arrive 20 metres below the player and 30 metres to the south.  If you give a number after the player name you will be that number metres south of them.")
 				irc_chat(players[chatvars.ircid].ircAlias, "The bot will keep you near the player, teleporting you close to them if they get away from you.")
 				irc_chat(players[chatvars.ircid].ircAlias, "To stop following them type " .. server.commandPrefix .. "stop.")
 				irc_chat(players[chatvars.ircid].ircAlias, " ")
@@ -4561,6 +4561,8 @@ if debug then dbug("debug admin") end
 		if chatvars.words[1] == "near" then
 			pname = chatvars.words[2]
 		end
+		
+		igplayers[chatvars.playerid].followDistance = 30
 
 		if chatvars.words[3] ~= nil then
 			igplayers[chatvars.playerid].followDistance = tonumber(chatvars.words[3])
@@ -4578,7 +4580,12 @@ if debug then dbug("debug admin") end
 			igplayers[chatvars.playerid].following = id
 
 			-- then teleport close to the player
-			cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos + 10) .. " " .. math.ceil(igplayers[id].yPos - 20) .. " " .. math.floor(igplayers[id].zPos + 10)
+			if not string.find(server.gameVersion, "Alpha 16") then
+				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos) .. " " .. math.ceil(igplayers[id].yPos - 20) .. " " .. math.floor(igplayers[id].zPos - igplayers[chatvars.playerid].followDistance)
+			else
+				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos) .. " -1 " .. math.floor(igplayers[id].zPos - igplayers[chatvars.playerid].followDistance)
+			end
+				
 			send(cmd)
 		end
 

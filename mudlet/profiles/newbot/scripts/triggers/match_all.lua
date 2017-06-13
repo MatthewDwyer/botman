@@ -92,6 +92,13 @@ function matchAll(line)
 	if string.find(line, "ERROR: unknown command 'pug'") then
 		server.scanNoclip = false
 	end
+	
+	-- detect server version
+	-- Game version: Alpha 16 (b105) Compatibility Version: Alpha 16
+	if string.find(line, "Game version:") then
+		server.gameVersion = string.trim(string.sub(line, string.find(line, "Game version:") + 14, string.find(line, "Compatibility") - 2))
+		if botman.dbConnected then conn:execute("UPDATE server SET gameVersion = '" .. escape(server.gameVersion) .. "'") end
+	end	
 
 	-- detect server tools
 	if string.find(line, "Mod SDX:") or string.find(line, "SDX: ") and not server.SDXDetected then
@@ -473,7 +480,7 @@ function matchAll(line)
 			tmp.entityID = string.trim(temp[1])
 			tmp.zombie = string.trim(temp[2])
 
-			if botman.dbConnected then conn:execute("INSERT INTO gimmeZombies (zombie, entityID) VALUES ('" .. tmp.zombie .. "'," .. tmp.entityID .. ")") end
+			if botman.dbConnected then conn:execute("INSERT INTO gimmeZombies (zombie, entityID) VALUES ('" .. tmp.zombie .. "'," .. tmp.entityID .. ") ON DUPLICATE KEY UPDATE remove = 0") end
 			updateGimmeZombies(tmp.entityID, tmp.zombie)
 		else
 			if (string.sub(line, 1, 4) ~= os.date("%Y")) then
@@ -492,10 +499,8 @@ function matchAll(line)
 
 	if (string.find(line, "please specify one of the entities")) then
 		-- flag all the zombies for removal so we can detect deleted zeds
-		for k,v in pairs(gimmeZombies) do
-			gimmeZombies[k].remove = true
-		end
-
+		if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET remove = 1") end		
+				
 		getZombies = true
 		return
 	end
@@ -573,15 +578,6 @@ function matchAll(line)
 			return
 		end
 
-		-- if (string.sub(line, 1, 4) == os.date("%Y")) then
-			-- botman.readGG = false
-
-			-- if (echoConsole ~= nil) then
-				-- echoConsole = nil
-				-- echoConsoleTo = l
-			-- end
-		-- end
-
 		if echoConsole == true then
 			line = line:gsub(",", "") -- strip out commas
 			irc_chat(echoConsoleTo, line)
@@ -594,13 +590,9 @@ function matchAll(line)
 
 		if getZombies then
 			getZombies = nil
-
-			-- remove any zombies that are still flagged for removal
-			for k,v in pairs(gimmeZombies) do
-				if gimmeZombies[k].remove then
-					gimmeZombies[k] = nil
-				end
-			end
+			
+			if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies WHERE remove = 1") end							
+			loadGimmeZombies()
 
 			if botman.dbConnected then
 				cursor,errorString = conn:execute("SELECT Count(entityID) as maxZeds from gimmeZombies")

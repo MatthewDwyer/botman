@@ -38,10 +38,14 @@ function fortyfiveSecondTimer()
 
 					v.claimPass = 2
 				else
-					send("llp " .. k)
+					send("llp " .. k .. " parseable")
 					v.claimPass = 1
 				end
 			end
+		else
+			x = math.floor(v.xPos / 512)
+			z = math.floor(v.zPos / 512)
+			--checkRegionClaims(x, z)
 		end
 	end
 end

@@ -104,7 +104,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "update" and (words[2] == "code" or words[2] == "scripts") and words[3] == nil) then
+	if (words[1] == "update" and (words[2] == "code" or words[2] == "scripts" or words[2] == "bot") and words[3] == nil) then
 		updateBot(true)
 		return
 	end

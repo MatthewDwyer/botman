@@ -463,7 +463,7 @@ function removeZombies()
 	local maxCount = 0
 
 	for k,v in pairs(gimmeZombies) do
-		if v.remove ~= nil then
+		if v.remove then
 			gimmeZombies[k] = nil
 		else
 			maxCount = maxCount + 1
@@ -477,26 +477,17 @@ end
 function updateGimmeZombies(entityID, zombie)
 	local k, v
 
-
-
-	if gimmeZombies[entityID] == nil then
+	if gimmeZombies[entityID] == nil then	
 		-- new zombie so add it to gimmeZombies
 		gimmeZombies[entityID] = {}
 		gimmeZombies[entityID].zombie = zombie
 		gimmeZombies[entityID].minPlayerLevel = 1
 		gimmeZombies[entityID].minArenaLevel = 1
 
-		if string.find(zombie, "cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "feral") then
-			if string.find(zombie, "cop") then
-				gimmeZombies[entityID].bossZombie = false
-				gimmeZombies[entityID].doNotSpawn = true
-			else
-				gimmeZombies[entityID].bossZombie = true
-				gimmeZombies[entityID].doNotSpawn = false
-			end
-		else
+		if string.find(zombie, "cop") or string.find(zombie, "Cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "Feral") or string.find(zombie, "Radiated") or string.find(zombie, "Behemoth") or string.find(zombie, "Template") then
 			gimmeZombies[entityID].bossZombie = false
-			gimmeZombies[entityID].doNotSpawn = false
+			gimmeZombies[entityID].doNotSpawn = true
+			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end			
 		end
 
 		gimmeZombies[entityID].maxHealth = 0
@@ -515,17 +506,10 @@ function updateGimmeZombies(entityID, zombie)
 			gimmeZombies[entityID].minPlayerLevel = 1
 			gimmeZombies[entityID].minArenaLevel = 1
 
-			if string.find(zombie, "cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "feral") then
-				if string.find(zombie, "cop") then
-					gimmeZombies[entityID].bossZombie = false
-					gimmeZombies[entityID].doNotSpawn = true
-				else
-					gimmeZombies[entityID].bossZombie = true
-					gimmeZombies[entityID].doNotSpawn = false
-				end
-			else
+			if string.find(zombie, "cop") or string.find(zombie, "Cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "Feral") or string.find(zombie, "Radiated") or string.find(zombie, "Behemoth") or string.find(zombie, "Template") then
 				gimmeZombies[entityID].bossZombie = false
-				gimmeZombies[entityID].doNotSpawn = false
+				gimmeZombies[entityID].doNotSpawn = true
+				if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end							
 			end
 
 			gimmeZombies[entityID].maxHealth = 0
@@ -1404,6 +1388,9 @@ function dailyMaintenance()
 	-- put something here to be run when the server date hits midnight
 	updateBot()
 
+	-- update the list of claims
+	send("llp")
+
 	-- purge old tracking data and set a flag so we can tell when the database maintenance is complete.
 	if tonumber(server.trackingKeepDays) > 0 then
 		conn:execute("UPDATE server set databaseMaintenanceFinished = 0")
@@ -1553,7 +1540,7 @@ function CheckClaimsRemoved()
 
 	for k,v in pairs(igplayers) do
 		if players[k].alertRemovedClaims == true then
-			message("pm " .. k .. " [" .. server.chatColour .. "]You placed claims in a restricted area and they have been automatically removed.  You can get them back by typing " .. server.commandPrefix .. "give lcb.[-]")
+			message("pm " .. k .. " [" .. server.chatColour .. "]You had expired claims or you placed claims in a restricted area and they have been automatically removed.  You can get them back by typing " .. server.commandPrefix .. "give claims.[-]")
 			players[k].alertRemovedClaims = false
 		end
 	end

@@ -629,7 +629,7 @@ function gmsg_waypoints()
 			-- tp the player to the waypointwaypoint
 			cmd = "tele " .. chatvars.playerid .. " " .. waypoints[tmp.id].x .. " " .. waypoints[tmp.id].y .. " " .. waypoints[tmp.id].z
 
-			teleport(cmd, true)
+			teleport(cmd, chatvars.playerid)
 			players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.waypointCost
 
 			if tonumber(server.waypointCooldown) > 0 then

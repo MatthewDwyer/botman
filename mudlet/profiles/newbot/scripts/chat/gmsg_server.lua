@@ -4456,7 +4456,7 @@ if debug then dbug("debug server") end
 		end
 	end
 
-	if chatvars.words[1] == "update" and (chatvars.words[2] == "code" or chatvars.words[2] == "scripts") and chatvars.words[3] == nil then
+	if chatvars.words[1] == "update" and (chatvars.words[2] == "code" or chatvars.words[2] == "scripts" or words[2] == "bot") and chatvars.words[3] == nil then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")

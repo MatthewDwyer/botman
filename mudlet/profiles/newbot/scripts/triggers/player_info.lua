@@ -436,9 +436,43 @@ function playerInfo(faultyInfo)
 	if igplayers[steam].deaths ~= nil then
 		if tonumber(igplayers[steam].deaths) < tonumber(deaths) then
 			if server.SDXDetected then
-				players[chatvars.playerid].deathX = math.floor(igplayers[steam].xPosLast)
-				players[chatvars.playerid].deathY = math.ceil(igplayers[steam].yPosLast)
-				players[chatvars.playerid].deathZ = math.floor(igplayers[steam].zPosLast)
+				players[steam].deathX = math.floor(igplayers[steam].xPosLast)
+				players[steam].deathY = math.ceil(igplayers[steam].yPosLast)
+				players[steam].deathZ = math.floor(igplayers[steam].zPosLast)
+				
+				igplayers[steam].deadX = math.floor(igplayers[steam].xPosLast)
+				igplayers[steam].deadY = math.ceil(igplayers[steam].yPosLast)
+				igplayers[steam].deadZ = math.floor(igplayers[steam].zPosLast)
+				igplayers[steam].teleCooldown = 1000
+
+				irc_chat(server.ircMain, "Player " .. steam .. " name: " .. name .. "'s death recorded at " .. igplayers[steam].deadX .. " " .. igplayers[steam].deadY .. " " .. igplayers[steam].deadZ)
+				irc_chat(server.ircAlerts, "Player " .. steam .. " name: " .. name .. "'s death recorded at " .. igplayers[steam].deadX .. " " .. igplayers[steam].deadY .. " " .. igplayers[steam].deadZ)
+				
+				message("say [" .. server.chatColour .. "]" .. name .. " has died.[-]")
+
+				r = rand(14)
+				if (r == 1) then message("say [" .. server.chatColour .. "]" .. name .. " removed themselves from the gene pool.[-]") end
+				if (r == 2) then message("say [" .. server.chatColour .. "]LOL!  Didn't run far away enough did you " .. name .. "?[-]") end
+				if (r == 3) then message("say [" .. server.chatColour .. "]And the prize for most creative way to end themselves goes to.. " .. name .. "[-]") end
+				if (r == 4) then message("say [" .. server.chatColour .. "]" .. name .. " really shouldn't handle explosives.[-]") end
+				if (r == 5) then message("say Oh no! " .. name .. " died.  What a shame.[-]") end
+				if (r == 6) then message("say [" .. server.chatColour .. "]Great effort there " .. name .. ". I'm awarding " .. score .. " points.[-]") end
+				if (r == 7) then message("say [" .. server.chatColour .. "]LOL! REKT[-]") end
+
+				if (r == 8) then
+					message("say [" .. server.chatColour .. "]We are gathered here today to remember with sadness the passing of " .. name .. ". Rest in pieces. Amen.[-]")
+				end
+
+				if (r == 9) then message("say [" .. server.chatColour .. "]" .. name .. " cut the wrong wire.[-]") end
+				if (r == 10) then message("say [" .. server.chatColour .. "]" .. name .. " really showed that explosive who's boss![-]") end
+				if (r == 11) then message("say [" .. server.chatColour .. "]" .. name .. " shouldn't play Russian Roulette with a fully loaded gun.[-]") end
+				if (r == 12) then message("say [" .. server.chatColour .. "]" .. name .. " added a new stain to the floor.[-]") end
+				if (r == 13) then message("say [" .. server.chatColour .. "]ISIS got nothing on " .. name .. "'s suicide bomber skillz.[-]") end
+				if (r == 14) then message("say [" .. server.chatColour .. "]" .. name .. " reached a new low with that death. Six feet under.[-]") end
+
+				if tonumber(server.packCooldown) > 0 then
+					players[steam].packCooldown = os.time() + server.packCooldown
+				end				
 			end
 		end
 	end

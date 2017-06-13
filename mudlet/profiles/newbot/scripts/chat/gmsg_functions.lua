@@ -379,6 +379,22 @@ end
 
 function gmsg(line, ircid)
 	local result, x, z, id, pname, noWaypoint, temp, chatStringStart, cmd, msg, test, ircMsg
+	
+	function messageIRC()
+		if ircMsg ~= nil then
+			-- ignore game messages
+			if (chatvars.playername ~= "Server") and chatvars.playerid == nil then
+				return
+			end		
+		
+			irc_chat(server.ircMain, ircMsg)
+
+			if players[chatvars.playerid] or chatvars.playername == "Server" then
+				windowMessage(server.windowGMSG, chatvars.playername .. ": " .. chatvars.command .. "\n", true)
+				logChat(botman.serverTime, chatvars.playername, ircMsg)
+			end
+		end	
+	end
 
 	if debug then
 		display("line " .. line)
@@ -532,6 +548,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			ircMsg = server.gameDate .. " " .. temp
+			messageIRC()
 
 			temp = string.sub(chatvars.command, 201)
 			temp = string.gsub(temp, "%[[%/%!]-[^%[%]]-]", "")
@@ -641,12 +658,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if ircMsg ~= nil then
-		irc_chat(server.ircMain, ircMsg)
-
-		if players[chatvars.playerid] or chatvars.playername == "Server" then
-			windowMessage(server.windowGMSG, chatvars.playername .. ": " .. chatvars.command .. "\n", true)
-			logChat(botman.serverTime, chatvars.playername, ircMsg)
-		end
+		messageIRC()
 	end
 
 
@@ -655,6 +667,14 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		botman.faultyChat = false
 		return
 	end
+	
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end	
+	
+	if not result then
+		if not result and debug then dbug("debug entering gmsg_custom") end
+		result = gmsg_custom()
+		if result and debug then dbug("debug ran command in gmsg_custom") end
+	end	
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
@@ -890,11 +910,11 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-	if not result then
-		if not result and debug then dbug("debug entering gmsg_custom") end
-		result = gmsg_custom()
-		if result and debug then dbug("debug ran command in gmsg_custom") end
-	end
+	-- if not result then
+		-- if not result and debug then dbug("debug entering gmsg_custom") end
+		-- result = gmsg_custom()
+		-- if result and debug then dbug("debug ran command in gmsg_custom") end
+	-- end
 
 	-- If you want to override any commands in the sections below, create commands in gmsg_custom.lua or call them from within it making sure to match the commands keywords.
 

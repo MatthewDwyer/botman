@@ -8,7 +8,7 @@
 --]]
 
 function llp(line)
-	local pos, temp, x, y, z
+	local pos, temp, x, y, z, expired
 
 	if string.find(line, "Executing command 'llp ") then
 		llpid = string.sub(line, string.find(line, "llp") + 4, string.find(line, " by ") - 2)
@@ -18,9 +18,20 @@ function llp(line)
 
 	-- depreciated in latest Allocs. Here for backwards compatibility
 	if string.find(line, "keystones (protected", nil, true) then
+		if string.find(line, "protected: True", nil, true) then
+			expired = 0
+		else
+			expired = 1
+		end
+
 		llpid = string.sub(line, string.find(line, "7656"), string.find(line, "7656") + 16)
 		players[llpid].keystones = string.sub(line, string.find(line, "owns ") + 5, string.find(line, " keyst") - 1)
-		if botman.dbConnected then conn:execute("UPDATE players SET keystones = " .. players[llpid].keystones .. " WHERE steam = " .. llpid) end
+		players[llpid].keystonesExpired = dbTrue(expired)
+
+		if botman.dbConnected then
+			conn:execute("UPDATE players SET keystones = " .. players[llpid].keystones .. ", keystonesExpired = " .. expired .. " WHERE steam = " .. llpid)
+			conn:execute("UPDATE keystones SET expired = " .. expired .. " WHERE steam = " .. llpid)
+		end
 	end
 
 	-- New format of output

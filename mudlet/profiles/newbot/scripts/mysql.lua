@@ -273,7 +273,7 @@ function dbBaseDefend(steam, base)
 		row = cursor:fetch({}, "a")
 		while row do
 			cmd = ("tele " .. steam .. " " .. row.x .. " -1 " .. row.z)
-			teleport(cmd, steam, true)
+			teleport(cmd, steam)
 
 			if true then
 				return
@@ -298,7 +298,7 @@ end
 
 function dbTrue(value)
 	-- translate db true false to Lua true false
-	if value == "0" then
+	if tonumber(value) == 0 then
 		return false
 	else
 		return true
@@ -308,7 +308,7 @@ end
 
 function dbYN(value)
 	-- translate db true false to Lua true false
-	if value == "0" then
+	if tonumber(value) == 0 then
 		return "No"
 	else
 		return "Yes"
@@ -676,6 +676,8 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `botRestartHour` INT NOT NULL DEFAULT '25'")
 	doSQL("ALTER TABLE `server` ADD `trackingKeepDays` INT NOT NULL DEFAULT '28' , ADD `databaseMaintenanceFinished` TINYINT(1) NOT NULL DEFAULT '1'")
 	doSQL("ALTER TABLE `server` ADD `allowHomeTeleport` TINYINT(1) NOT NULL DEFAULT '1' , ADD `playerTeleportDelay` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `allowPackTeleport` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `server` ADD `gameVersion` VARCHAR(30) NOT NULL DEFAULT ''")
 
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
@@ -701,6 +703,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `alerts` ADD `status` VARCHAR(30) NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `IPBlacklist` ADD `DateAdded` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , ADD `botID` INT NOT NULL DEFAULT '0' , ADD `steam` BIGINT(17) NOT NULL DEFAULT '0' , ADD `playerName` VARCHAR(25) NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `miscQueue` ADD `timerDelay` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00'")
+	doSQL("ALTER TABLE `keystones` ADD `expired` TINYINT(1) NOT NULL DEFAULT '0'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)
@@ -718,6 +721,15 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	if rows == 0 then
 		doSQL("ALTER TABLE  `bans` DROP PRIMARY KEY , ADD `id` bigint(20) NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (  `id` )", true)
 	end
+	
+	-- change the primary key of table gimmeZombies from zombie to entityID if the remove field does not exist.
+	cursor,errorString = conn:execute("SHOW COLUMNS FROM `gimmeZombies` LIKE 'remove'")
+	rows = cursor:numrows()
+
+	if rows == 0 then
+		doSQL("DELETE FROM gimmeZombies")	
+		doSQL("ALTER TABLE `gimmeZombies` DROP PRIMARY KEY , ADD PRIMARY KEY (  `entityID` ), ADD `remove` TINYINT(1) NOT NULL DEFAULT '0'")
+	end	
 
 	statements = {}
 

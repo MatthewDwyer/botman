@@ -130,7 +130,7 @@ function everyMinute()
 				end
 
 				-- check how many claims they have placed
-				send("llp " .. k)
+				send("llp " .. k .. " parseable")
 
 				-- flag this ingame player record for deletion
 				zombiePlayers[k] = {}

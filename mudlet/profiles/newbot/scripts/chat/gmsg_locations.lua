@@ -619,7 +619,7 @@ function gmsg_locations()
 			-- if the player is ingame, send them to the lobby otherwise flag it to happen when they rejoin
 			if (igplayers[id]) then
 				cmd = "tele " .. id .. " " .. locations["spawnpoint1"].x .. " " .. locations["spawnpoint1"].y .. " " .. locations["spawnpoint1"].z
-				teleport(cmd)
+				teleport(cmd, id)
 
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " has been sent to the lobby.[-]")
@@ -2188,7 +2188,7 @@ function gmsg_locations()
 			randomTP(chatvars.playerid, loc)
 
 			if server.announceTeleports then
-				if server.coppi and tonumber(chatvars.accessLevel) > 2 then message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " is porting to " .. loc .. "[-]") end
+				if tonumber(chatvars.accessLevel) > 2 then message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " is porting to " .. loc .. "[-]") end
 			end
 		else
 			cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
@@ -2201,7 +2201,7 @@ function gmsg_locations()
 			end
 
 			if server.announceTeleports then
-				if server.coppi and tonumber(chatvars.accessLevel) > 2 then message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " is porting to " .. loc .. "[-]") end
+				if tonumber(chatvars.accessLevel) > 2 then message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " is porting to " .. loc .. "[-]") end
 			end
 		end
 

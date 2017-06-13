@@ -450,7 +450,7 @@ if debug then dbug("check inventory 10") end
 		if (move == true and players[k].exiled ~= 1) then
 			message("say [" .. server.chatColour .. "]Sending player " .. igplayers[k].name .. " to " .. moveTo .. " for " .. moveReason .. ".[-]")
 
-			teleport("tele " .. k .. " " .. locations[moveTo].x .. " " .. locations[moveTo].y + 1 .. " " .. locations[moveTo].z)
+			teleport("tele " .. k .. " " .. locations[moveTo].x .. " " .. locations[moveTo].y + 1 .. " " .. locations[moveTo].z, k)
 			players[k].exiled = 1
 			if accessLevel(k) > 2 then players[k].silentBob = true end
 			players[k].canTeleport = false

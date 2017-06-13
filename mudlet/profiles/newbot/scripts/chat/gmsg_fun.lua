@@ -494,7 +494,6 @@ if debug then dbug("debug fun") end
 	if (chatvars.words[1] == "gimmie" or chatvars.words[1] == "gimme") and chatvars.words[2] == nil then
 		if (server.allowGimme) then
 			if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
-				loadGimmeZombies()
 				send("se")
 			end
 
@@ -601,7 +600,6 @@ if debug then dbug("debug fun") end
 		-- abort if not in arena
 
 		if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
-			loadGimmeZombies()
 			send("se")
 		end
 
