@@ -1970,6 +1970,19 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 					irc_chat(name, " ")
 				end
 			end
+			
+			if string.lower(words[3]) == "gimmeZombies" then
+				for k, v in pairs(gimmeZombies) do
+					irc_chat(name, "Zombie " .. k)
+					irc_chat(name, " ")
+
+					for n,m in pairs(gimmeZombies[k]) do
+						irc_chat(name, n .. "," .. tostring(m))
+					end
+
+					irc_chat(name, " ")
+				end
+			end			
 
 			return
 		end

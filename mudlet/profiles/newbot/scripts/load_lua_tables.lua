@@ -677,7 +677,7 @@ function loadGimmeZombies()
 	end
 
 	while row do
-		idx = tonumber(row.entityID)
+		idx = row.entityID
 		gimmeZombies[idx] = {}
 
 		for k,v in pairs(cols) do

@@ -358,7 +358,7 @@ end
 
 
 function logChat(chatTime, chatOwner, chatLine)
-	if botman.webdavFolderWriteable == false then
+	if botman.webdavFolderWriteable == false or string.find(chatLine, " INF ") or string.find(chatLine, "' from client") then
 		return
 	end
 
@@ -366,12 +366,10 @@ function logChat(chatTime, chatOwner, chatLine)
 	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
 	botman.webdavFolderWriteable = false
 
-	if not (string.find(line, " command 'pm") and string.find(line, "' from client")) then
-		-- log the chat
-		file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_chatlog.txt", "a")
-		file:write(chatTime .. " " .. string.trim(chatLine) .. "\n")
-		file:close()
-	end
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_chatlog.txt", "a")
+	file:write(chatTime .. " " .. string.trim(chatLine) .. "\n")
+	file:close()
 
 	botman.webdavFolderWriteable = true
 end
@@ -383,7 +381,7 @@ function gmsg(line, ircid)
 	function messageIRC()
 		if ircMsg ~= nil then
 			-- ignore game messages
-			if (chatvars.playername ~= "Server") and chatvars.playerid == nil then
+			if (chatvars.playername ~= "Server" and chatvars.playerid == nil) or string.find(ircMsg, " INF ") then
 				return
 			end		
 		
@@ -661,6 +659,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		messageIRC()
 	end
 
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end		
 
 	-- don't process any chat coming from irc or death messages
 	if string.find(chatvars.gmsg, "-irc:", nil, true) or (chatvars.playername == "Server" and (string.find(chatvars.gmsg, "died") or string.find(chatvars.gmsg, "eliminated"))) then

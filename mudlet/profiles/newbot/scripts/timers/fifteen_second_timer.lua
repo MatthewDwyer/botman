@@ -41,7 +41,7 @@ function FifteenSecondTimer()
 
 		if server.coppi then
 			if server.scanNoclip then
-				if not string.find(server.gameVersion, "Alpha 16") then
+				if not string.find(server.gameVersion, "Alpha 16 (b105)") then
 					-- check for noclipped players
 					for k,v in pairs(igplayers) do
 						if tonumber(players[k].accessLevel) > 2 then

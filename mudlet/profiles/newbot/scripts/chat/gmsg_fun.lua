@@ -138,6 +138,8 @@ if debug then dbug("debug fun") end
 			irc_chat(players[chatvars.ircid].ircAlias, "The zombies have been reloaded.")
 		end
 
+		gimmeZombies = {}
+		if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies") end		
 		send("se")
 
 		botman.faultyChat = false

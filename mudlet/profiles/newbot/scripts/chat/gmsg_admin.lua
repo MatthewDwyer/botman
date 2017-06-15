@@ -4580,7 +4580,7 @@ if debug then dbug("debug admin") end
 			igplayers[chatvars.playerid].following = id
 
 			-- then teleport close to the player
-			if not string.find(server.gameVersion, "Alpha 16") then
+			if not string.find(server.gameVersion, "Alpha 16 (b105)") then
 				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos) .. " " .. math.ceil(igplayers[id].yPos - 20) .. " " .. math.floor(igplayers[id].zPos - igplayers[chatvars.playerid].followDistance)
 			else
 				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos) .. " -1 " .. math.floor(igplayers[id].zPos - igplayers[chatvars.playerid].followDistance)

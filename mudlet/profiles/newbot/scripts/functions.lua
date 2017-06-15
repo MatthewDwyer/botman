@@ -483,11 +483,14 @@ function updateGimmeZombies(entityID, zombie)
 		gimmeZombies[entityID].zombie = zombie
 		gimmeZombies[entityID].minPlayerLevel = 1
 		gimmeZombies[entityID].minArenaLevel = 1
+		gimmeZombies[entityID].bossZombie = false
+		gimmeZombies[entityID].doNotSpawn = false		
 
 		if string.find(zombie, "cop") or string.find(zombie, "Cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "Feral") or string.find(zombie, "Radiated") or string.find(zombie, "Behemoth") or string.find(zombie, "Template") then
-			gimmeZombies[entityID].bossZombie = false
 			gimmeZombies[entityID].doNotSpawn = true
-			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end			
+			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end		
+		else
+			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end				
 		end
 
 		gimmeZombies[entityID].maxHealth = 0
@@ -505,11 +508,14 @@ function updateGimmeZombies(entityID, zombie)
 			gimmeZombies[entityID].zombie = zombie
 			gimmeZombies[entityID].minPlayerLevel = 1
 			gimmeZombies[entityID].minArenaLevel = 1
+			gimmeZombies[entityID].bossZombie = false
+			gimmeZombies[entityID].doNotSpawn = false					
 
 			if string.find(zombie, "cop") or string.find(zombie, "Cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "Feral") or string.find(zombie, "Radiated") or string.find(zombie, "Behemoth") or string.find(zombie, "Template") then
-				gimmeZombies[entityID].bossZombie = false
 				gimmeZombies[entityID].doNotSpawn = true
 				if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end							
+			else
+				if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end				
 			end
 
 			gimmeZombies[entityID].maxHealth = 0
