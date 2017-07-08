@@ -23,6 +23,7 @@ end
 function initServer()
 	local cursor, errorString
 
+	server.botsIP = "127.0.0.1"
 	server.accessLevelOverride = 99
 	server.alertColour = "DC143C"
 	server.allowBank = true
@@ -43,7 +44,7 @@ function initServer()
 	server.bailCost = 0
 	server.baseCooldown = 2400
 	server.baseCost = 0
-	server.baseSize = 32
+	server.baseSize = 41
 	server.blacklistResponse = "ban"
 	server.blockCountries = "CN,HK"
 	server.botID = 0
@@ -74,7 +75,7 @@ function initServer()
 	server.mapSize = 10000
 	server.maxPlayers = 0
 	server.maxPrisonTime = -1
-	server.maxServerUptime = 12
+	server.maxServerUptime = 48 
 	server.maxWaypoints = 2
 	server.moneyName = "Zenny"
 	server.moneyPlural = "Zennies"

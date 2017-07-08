@@ -631,55 +631,6 @@ function gmsg_teleports()
 
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "delay") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set teleport delay <number>")
-
-			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Set a time delay for player initiated teleport commands.  The player will see a PM informing them that their teleport will happen in x seconds.  The default is 0 and no PM will be sent.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
-			end
-		end
-	end
-
-	if chatvars.words[1] == "set" and string.find(chatvars.words[2], "tele") and chatvars.words[3] == "delay" then
-		if (chatvars.playername ~= "Server") then
-			if (chatvars.accessLevel > 1) then
-				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-				botman.faultyChat = false
-				return true
-			end
-		else
-			if (accessLevel(chatvars.ircid) > 1) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
-				botman.faultyChat = false
-				return true
-			end
-		end
-
-		if chatvars.number == nil then
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A number is expected.  Setting a delay of 0 means there will be no delay or PM.[-]")
-			else
-				irc_chat(players[chatvars.ircid].ircAlias, "A number is expected.  Setting a delay of 0 means there will be no delay or PM.")
-			end
-		else
-			server.playerTeleportDelay = math.abs(chatvars.number)
-			conn:execute("UPDATE server SET playerTeleportDelay = " .. math.abs(chatvars.number))
-
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player initiated teleporting will delay by " .. server.playerTeleportDelay .. " seconds.[-]")
-			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Player initiated teleporting will delay by " .. server.playerTeleportDelay .. " seconds.")
-			end
-		end
-
-		botman.faultyChat = false
-		return true
-	end
-
-	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
-
 	-- ###################  do not allow remote commands beyond this point ################
 	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
 
@@ -759,7 +710,8 @@ function gmsg_teleports()
 
 		-- then teleport the player to you
 		cmd = "tele " .. id .. " " .. chatvars.intX + 1 .. " " .. chatvars.intY .. " " .. chatvars.intZ
-		teleport(cmd, chatvars.playerid)
+		prepareTeleport(chatvars.playerid, cmd)
+		teleport(cmd, true)
 
 		if (chatvars.accessLevel > 2) then
 			players[chatvars.playerid].cash = players[chatvars.playerid].cash - server.teleportCost
@@ -799,6 +751,10 @@ function gmsg_teleports()
 				return true
 			end
 
+			if(players[chatvars.playerid].deathZ == nil) then
+				players[chatvars.playerid].deathZ = 0
+			end
+
 			cursor,errorString = conn:execute("SELECT x, y, z FROM tracker WHERE steam = " .. chatvars.playerid .. " and ((abs(x - " .. players[chatvars.playerid].deathX .. ") > 0 and abs(x - " .. players[chatvars.playerid].deathX .. ") < 50) and (abs(z - " .. players[chatvars.playerid].deathZ .. ") > 5 and abs(z - " .. players[chatvars.playerid].deathZ .. ") < 50))  ORDER BY trackerid DESC Limit 0, 1")
 			if cursor:numrows() > 0 then
 				row = cursor:fetch({}, "a")
@@ -810,7 +766,8 @@ function gmsg_teleports()
 				-- first record their current x y z
 				savePosition(chatvars.playerid)
 
-				teleport(cmd, chatvars.playerid)
+				prepareTeleport(chatvars.playerid, cmd)
+				teleport(cmd, true)
 
 				if tonumber(server.packCost) > 0 and (chatvars.accessLevel > 3) then
 					players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.packCost
@@ -846,13 +803,8 @@ function gmsg_teleports()
 
 	if (chatvars.words[1] == "stuck" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
 		cmd = "tele " .. chatvars.playerid .. " " .. chatvars.intX .. " -1 " .. chatvars.intZ
-
-		if tonumber(server.playerTeleportDelay) == 0 then
-			teleport(cmd, chatvars.playerid)
-		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will teleport in " .. server.playerTeleportDelay .. " seconds.[-]")
-			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
-		end
+		prepareTeleport(chatvars.playerid, cmd)
+		teleport(cmd, true)
 
 		botman.faultyChat = false
 		return true
@@ -892,12 +844,8 @@ function gmsg_teleports()
 				-- the player has teleported within the same location so they are returning to somewhere in that location
 				cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPosOld2 .. " " .. players[chatvars.playerid].yPosOld2 .. " " .. players[chatvars.playerid].zPosOld2
 
-				if tonumber(server.playerTeleportDelay) == 0 or not igplayers[chatvars.playerid].currentLocationPVP then
-					teleport(cmd, chatvars.playerid)
-				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will return in " .. server.playerTeleportDelay .. " seconds.[-]")
-					if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
-				end
+				prepareTeleport(chatvars.playerid, cmd)
+				teleport(cmd)
 
 				if players[chatvars.playerid].yPos < 1000 then
 					players[chatvars.playerid].xPosOld2 = 0
@@ -912,12 +860,8 @@ function gmsg_teleports()
 				-- the player has teleported from outside their current location so they are returning to there.
 				cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPosOld .. " " .. players[chatvars.playerid].yPosOld .. " " .. players[chatvars.playerid].zPosOld
 
-				if tonumber(server.playerTeleportDelay) == 0 or not igplayers[chatvars.playerid].currentLocationPVP then
-					teleport(cmd, chatvars.playerid)
-				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will return in " .. server.playerTeleportDelay .. " seconds.[-]")
-					if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
-				end
+				prepareTeleport(chatvars.playerid, cmd)
+				teleport(cmd)
 
 				if players[chatvars.playerid].yPos < 1000 then
 					players[chatvars.playerid].xPosOld = 0
@@ -1233,7 +1177,8 @@ function gmsg_teleports()
 
 			if row then
 				cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
-				teleport(cmd, chatvars.playerid)
+				prepareTeleport(chatvars.playerid, cmd)
+				teleport(cmd, true)
 				botman.faultyChat = false
 				return true
 			end
@@ -1263,7 +1208,8 @@ function gmsg_teleports()
 				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[chatvars.playerid].xPos) + chatvars.number .. " " .. math.ceil(players[chatvars.playerid].yPos) .. " " .. math.floor(players[chatvars.playerid].zPos)
 			end
 
-			teleport(cmd, chatvars.playerid)
+			prepareTeleport(chatvars.playerid, cmd)
+			teleport(cmd, true)
 
 			botman.faultyChat = false
 			return true
@@ -1274,7 +1220,8 @@ function gmsg_teleports()
 			savePosition(chatvars.playerid)
 
 			cmd = "tele " .. chatvars.playerid .. " " .. math.floor(chatvars.words[2]) .. " " .. math.ceil(chatvars.words[3]) .. " " .. math.floor(chatvars.words[4])
-			teleport(cmd, chatvars.playerid)
+			prepareTeleport(chatvars.playerid, cmd)
+			teleport(cmd, true)
 
 			botman.faultyChat = false
 			return true
@@ -1303,7 +1250,8 @@ function gmsg_teleports()
 				savePosition(chatvars.playerid)
 
 				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
-				teleport(cmd, chatvars.playerid)
+				prepareTeleport(chatvars.playerid, cmd)
+				teleport(cmd, true)
 
 				botman.faultyChat = false
 				return true
@@ -1316,7 +1264,8 @@ function gmsg_teleports()
 				savePosition(chatvars.playerid)
 
 				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[tp].xPos) .. " " .. math.ceil(players[tp].yPos) .. " " .. math.floor(players[tp].zPos)
-				teleport(cmd, chatvars.playerid)
+				prepareTeleport(chatvars.playerid, cmd)
+				teleport(cmd, true)
 
 				botman.faultyChat = false
 				return true

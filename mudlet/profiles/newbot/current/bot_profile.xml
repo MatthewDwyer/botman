@@ -1,76 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE MudletPackage>
 <MudletPackage version="1.0">
-    <HostPackage>
-        <Host autoClearCommandLineAfterSend="no" disableAutoCompletion="no" printCommand="no" USE_IRE_DRIVER_BUGFIX="yes" mUSE_FORCE_LF_AFTER_PROMPT="no" mUSE_UNIX_EOL="no" mNoAntiAlias="no" mRawStreamDump="no" mAlertOnNewData="yes" mFORCE_NO_COMPRESSION="no" mFORCE_GA_OFF="no" mFORCE_SAVE_ON_EXIT="no" mEnableGMCP="no" mMapStrongHighlight="no" mLogStatus="yes" mEnableSpellCheck="no" mShowInfo="no" mAcceptServerGUI="yes" mMapperUseAntiAlias="no" mFORCE_MXP_NEGOTIATION_OFF="no" mRoomSize="0.5" mLineSize="5" mBubbleMode="no" mShowRoomIDs="no" mShowPanel="no" mHaveMapperScript="no">
-            <name>7days Server</name>
-            <mInstalledPackages/>
-            <url>127.0.0.1</url>
-            <serverPackageName>nothing</serverPackageName>
-            <serverPackageVersion>-1</serverPackageVersion>
-            <port>26900</port>
-            <borderTopHeight>0</borderTopHeight>
-            <borderBottomHeight>0</borderBottomHeight>
-            <borderLeftWidth>0</borderLeftWidth>
-            <borderRightWidth>0</borderRightWidth>
-            <wrapAt>100</wrapAt>
-            <wrapIndentCount>0</wrapIndentCount>
-            <commandSeperator>;</commandSeperator>
-            <mFgColor>#c0c0c0</mFgColor>
-            <mBgColor>#000000</mBgColor>
-            <mCommandFgColor>#717100</mCommandFgColor>
-            <mCommandBgColor>#000000</mCommandBgColor>
-            <mCommandLineFgColor>#808080</mCommandLineFgColor>
-            <mCommandLineBgColor>#000000</mCommandLineBgColor>
-            <mBlack>#000000</mBlack>
-            <mLightBlack>#808080</mLightBlack>
-            <mRed>#800000</mRed>
-            <mLightRed>#ff0000</mLightRed>
-            <mBlue>#000080</mBlue>
-            <mLightBlue>#0000ff</mLightBlue>
-            <mGreen>#00b300</mGreen>
-            <mLightGreen>#00ff00</mLightGreen>
-            <mYellow>#808000</mYellow>
-            <mLightYellow>#ffff00</mLightYellow>
-            <mCyan>#008080</mCyan>
-            <mLightCyan>#00ffff</mLightCyan>
-            <mMagenta>#800080</mMagenta>
-            <mLightMagenta>#ff00ff</mLightMagenta>
-            <mWhite>#c0c0c0</mWhite>
-            <mLightWhite>#ffffff</mLightWhite>
-            <mDisplayFont>DejaVu Sans Mono,10,-1,5,2,0,0,0,1,0</mDisplayFont>
-            <mCommandLineFont>Bitstream Vera Sans Mono,10,-1,5,2,0,0,0,0,0</mCommandLineFont>
-            <mCommandSeparator>\</mCommandSeparator>
-            <commandLineMinimumHeight>30</commandLineMinimumHeight>
-            <mFgColor2>#c0c0c0</mFgColor2>
-            <mBgColor2>#000000</mBgColor2>
-            <mBlack2>#242424</mBlack2>
-            <mLightBlack2>#808080</mLightBlack2>
-            <mRed2>#800000</mRed2>
-            <mLightRed2>#ff0000</mLightRed2>
-            <mBlue2>#000080</mBlue2>
-            <mLightBlue2>#0000ff</mLightBlue2>
-            <mGreen2>#00b300</mGreen2>
-            <mLightGreen2>#00ff00</mLightGreen2>
-            <mYellow2>#808000</mYellow2>
-            <mLightYellow2>#ffff00</mLightYellow2>
-            <mCyan2>#008080</mCyan2>
-            <mLightCyan2>#00ffff</mLightCyan2>
-            <mMagenta2>#800080</mMagenta2>
-            <mLightMagenta2>#ff00ff</mLightMagenta2>
-            <mWhite2>#c0c0c0</mWhite2>
-            <mLightWhite2>#ffffff</mLightWhite2>
-            <mSpellDic>en_US</mSpellDic>
-            <mLineSize>5</mLineSize>
-            <mRoomSize>0.5</mRoomSize>
-        </Host>
-    </HostPackage>
     <TriggerPackage>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="yes" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Login</name>
-            <script>--[[
+        <TriggerGroup isActive="yes" isFolder="yes" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+            <name>7days_profile</name>
+            <script></script>
+            <triggerType>0</triggerType>
+            <conditonLineDelta>0</conditonLineDelta>
+            <mStayOpen>0</mStayOpen>
+            <mCommand></mCommand>
+            <packageName>7days_profile</packageName>
+            <mFgColor>#ff0000</mFgColor>
+            <mBgColor>#ffff00</mBgColor>
+            <mSoundFile></mSoundFile>
+            <colorTriggerFgColor>#000000</colorTriggerFgColor>
+            <colorTriggerBgColor>#000000</colorTriggerBgColor>
+            <regexCodeList/>
+            <regexCodePropertyList/>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="yes" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Login</name>
+                <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2015  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -86,26 +37,26 @@ if reloadBotScripts == nil then
 	dofile(homedir .. &quot;/scripts/reload_bot_scripts.lua&quot;)
 	enableTimer(&quot;ReloadScripts&quot;)
 end</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>lease enter password:</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>End list players</name>
-            <script>-- This script now lives in scripts/triggers/end_list_players.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>lease enter password:</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>End list players</name>
+                <script>-- This script now lives in scripts/triggers/end_list_players.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 endListPlayers(line)
@@ -113,76 +64,76 @@ endListPlayers(line)
 
 
 </script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>Total of </string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>2</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>PVP Police</name>
-            <script>-- This script now lives in scripts/triggers/pvp.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>Total of </string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>2</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>PVP Police</name>
+                <script>-- This script now lives in scripts/triggers/pvp.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 pvpPolice(line)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>eliminated</string>
-                <string>killed by</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>MatchAll</name>
-            <script>-- This script now lives in scripts/triggers/match_all.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>eliminated</string>
+                    <string>killed by</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>MatchAll</name>
+                <script>-- This script now lives in scripts/triggers/match_all.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
-matchAll(line)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>^(.*)$</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>1</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>InventorySlot</name>
-            <script>--[[
+if(matchAll(line) == true) then deleteLine() end</script>
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>^(.*)$</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>1</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>InventorySlot</name>
+                <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2015  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -201,26 +152,26 @@ end
 
 
 </script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>Slot</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Player connected</name>
-            <script>-- This script now lives in scripts/triggers/player_connected.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>Slot</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Player connected</name>
+                <script>-- This script now lives in scripts/triggers/player_connected.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 if botDisabled then
@@ -236,76 +187,76 @@ if string.find(line, &quot;Player connected&quot;) then
 end
 
 </script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>INF Player connected</string>
-                <string>denied: Too many players on the server</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>playerinfo</name>
-            <script>-- This script now lives in scripts/triggers/player_info.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>INF Player connected</string>
+                    <string>denied: Too many players on the server</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>playerinfo</name>
+                <script>-- This script now lives in scripts/triggers/player_info.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 playerInfoTrigger(line)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>, ip=</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="yes" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Player disconnected</name>
-            <script>-- This script now lives in scripts/triggers/player_disconnected.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>, ip=</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="yes" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Player disconnected</name>
+                <script>-- This script now lives in scripts/triggers/player_disconnected.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 playerDisconnected(line)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>Player disconnected:</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="yes" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Inventory</name>
-            <script>--[[
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>Player disconnected:</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="yes" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Inventory</name>
+                <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2015  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -321,396 +272,398 @@ if not string.find(line, server.botsIP) then
 end
 
 invCheckID = string.sub(line, string.find(line, &quot;si &quot;) + 3, string.find(line, &quot;by &quot;) - 2)
-deleteLine()</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>Executing command 'si</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>lkp</name>
-            <script>-- This script now lives in scripts/triggers/list_known_players.lua
+-- deleteLine()</script>
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>Executing command 'si</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>lkp</name>
+                <script>-- This script now lives in scripts/triggers/list_known_players.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 listKnownPlayers(line)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>online=</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Zombie Scouts</name>
-            <script>-- This script now lives in scripts/triggers/scouts.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>online=</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Zombie Scouts</name>
+                <script>-- This script now lives in scripts/triggers/scouts.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 scoutsWarning(line)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>AIDirector: Spawning scouts</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>InventoryOwner</name>
-            <script>-- This script now lives in scripts/triggers/inventory_owner.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>AIDirector: Spawning scouts</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>InventoryOwner</name>
+                <script>-- This script now lives in scripts/triggers/inventory_owner.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 inventoryOwner(line)
 </script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>Belt of player</string>
-                <string>Bagpack of player</string>
-                <string>Equipment of player</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-                <integer>0</integer>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>AirDrop alert</name>
-            <script>-- This script now lives in scripts/triggers/air_drop_alert.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>Belt of player</string>
+                    <string>Bagpack of player</string>
+                    <string>Equipment of player</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>AirDrop alert</name>
+                <script>-- This script now lives in scripts/triggers/air_drop_alert.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 airDropAlert(line)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>AIAirDrop: Spawned supply crate</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Spam</name>
-            <script>--[[
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>AIAirDrop: Spawned supply crate</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Spam</name>
+                <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2015  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-deleteLine()
+-- deleteLine()
 ExceptionCount = 0</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>^.*(NullReferenceException|Block on position|-&gt;|lifetime=|\'gt|\'mem|\'lp|command \'si|STATS|Time|Token|Started thread|RequestTo|Adding|Removing|Created player|Allowing|Authenticating|Player set to online|OnPlayer|NET: Received package|Infinity|Exited|Couldn\'t send RPC|Disconnected player|Error in|Exception in|INF VOICE|'GameManager| at AllocsFixes.|Freeing).*$</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>1</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Game Time</name>
-            <script>-- This script now lives in scripts/triggers/game_time.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>^.*(NullReferenceException|Block on position|-&gt;|lifetime=|\'gt|\'mem|\'lp|command \'si|STATS|Time|Token|Started thread|RequestTo|Adding|Removing|Created player|Allowing|Authenticating|Player set to online|OnPlayer|NET: Received package|Infinity|Exited|Couldn\'t send RPC|Disconnected player|Error in|Exception in|INF VOICE|'GameManager| at AllocsFixes.|Freeing).*$</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>1</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Game Time</name>
+                <script>-- This script now lives in scripts/triggers/game_time.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 gameTimeTrigger(line)
 </script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>Day </string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>2</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>GameTickCount</name>
-            <script>-- This script now lives in scripts/triggers/game_tick_count.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>Day </string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>2</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>GameTickCount</name>
+                <script>-- This script now lives in scripts/triggers/game_tick_count.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 gameTickCountTrigger(line)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>'gt'</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Logon Successful</name>
-            <script>-- This script now lives in scripts/triggers/login_successful.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>'gt'</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Logon Successful</name>
+                <script>-- This script now lives in scripts/triggers/login_successful.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 loginSuccessful(line)
 </script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>Logon successful.</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>2</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="yes" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Collect Ban</name>
-            <script>-- This script now lives in scripts/triggers/collect_ban.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>Logon successful.</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>2</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="yes" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Collect Ban</name>
+                <script>-- This script now lives in scripts/triggers/collect_ban.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 collectBan(line)
 </script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>banned until</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Unban player</name>
-            <script>-- This script now lives in scripts/triggers/unban_player.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>banned until</string>
+                    <string>(\d+)-(\d+)-(\d+)(\s)(\d+):(\d+):(\d+)(\s)-(\s)(\d+)(\s)-(\s)(\S+)</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                    <integer>1</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Unban player</name>
+                <script>-- This script now lives in scripts/triggers/unban_player.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 unbanPlayer(line)
 </script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>Executing command 'ban remove</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Overstack</name>
-            <script>-- This script now lives in scripts/triggers/overstack_trigger.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>Executing command 'ban remove</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Overstack</name>
+                <script>-- This script now lives in scripts/triggers/overstack_trigger.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 overstackTrigger(line)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>INF Player with ID</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>mem</name>
-            <script>-- This script now lives in scripts/triggers/mem.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>INF Player with ID</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>mem</name>
+                <script>-- This script now lives in scripts/triggers/mem.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 memTrigger(line)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>Heap:</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="yes" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>lp</name>
-            <script>-- This script now lives in scripts/triggers/lp.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>Heap:</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="yes" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>lp</name>
+                <script>-- This script now lives in scripts/triggers/lp.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 lpTrigger(line)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>Executing command 'lp</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Tele</name>
-            <script>-- This script now lives in scripts/triggers/tele.lua
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>Executing command 'lp</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Tele</name>
+                <script>-- This script now lives in scripts/triggers/tele.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 teleTrigger(line)
 
 </script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>Telnet executed 'tele </string>
-                <string>Executing command 'tele </string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>llp</name>
-            <script>llpTrigger(line)
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>Telnet executed 'tele </string>
+                    <string>Executing command 'tele </string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                    <integer>1</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>llp</name>
+                <script>llpTrigger(line)
 </script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>LandProtectionOf</string>
-                <string>Executing command 'llp</string>
-                <string>keystones (protected</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-                <integer>0</integer>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Chat</name>
-            <script>--[[
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>LandProtectionOf</string>
+                    <string>Executing command 'llp</string>
+                    <string>keystones (protected</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Chat</name>
+                <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2015  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -727,360 +680,444 @@ else
 	gmsg(line)
 end
 </script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>Chat:</string>
-                <string>INF Executing command 'pm </string>
-                <string>INF Denying command 'pm</string>
-                <string>GMSG:</string>
-                <string>Chat command from</string>
-                <string>INF Chat</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-                <integer>0</integer>
-                <integer>0</integer>
-                <integer>0</integer>
-                <integer>0</integer>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>le</name>
-            <script>listEntities(line)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>type=EntityZombie</string>
-                <string>type=EntityHornet</string>
-                <string>type=EntityAnimalBear</string>
-                <string>type=EntityItem</string>
-                <string>type=EntityPlayer</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-                <integer>0</integer>
-                <integer>0</integer>
-                <integer>0</integer>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Reload admins</name>
-            <script>send(&quot;admin list&quot;)</script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>INF Loading permissions file done.</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>0</integer>
-            </regexCodePropertyList>
-        </Trigger>
-        <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
-            <name>Auto Friend</name>
-            <script>getFriends(line)
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>Chat:</string>
+                    <string>INF Executing command 'pm </string>
+                    <string>INF Denying command 'pm</string>
+                    <string>GMSG:</string>
+                    <string>Chat command from</string>
+                    <string>INF Chat</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>le</name>
+                <script>listEntities(line)</script>
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>type=EntityZombie</string>
+                    <string>type=EntityHornet</string>
+                    <string>type=EntityAnimalBear</string>
+                    <string>type=EntityItem</string>
+                    <string>type=EntityPlayer</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Reload admins</name>
+                <script>send(&quot;admin list&quot;)</script>
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>INF Loading permissions file done.</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>0</integer>
+                </regexCodePropertyList>
+            </Trigger>
+            <Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+                <name>Auto Friend</name>
+                <script>getFriends(line)
 
 
 
 
 </script>
-            <triggerType>0</triggerType>
-            <conditonLineDelta>0</conditonLineDelta>
-            <mStayOpen>0</mStayOpen>
-            <mCommand></mCommand>
-            <packageName></packageName>
-            <mFgColor>#ff0000</mFgColor>
-            <mBgColor>#ffff00</mBgColor>
-            <mSoundFile></mSoundFile>
-            <colorTriggerFgColor>#000000</colorTriggerFgColor>
-            <colorTriggerBgColor>#000000</colorTriggerBgColor>
-            <regexCodeList>
-                <string>FriendsOf</string>
-            </regexCodeList>
-            <regexCodePropertyList>
-                <integer>2</integer>
-            </regexCodePropertyList>
-        </Trigger>
+                <triggerType>0</triggerType>
+                <conditonLineDelta>0</conditonLineDelta>
+                <mStayOpen>0</mStayOpen>
+                <mCommand></mCommand>
+                <packageName></packageName>
+                <mFgColor>#ff0000</mFgColor>
+                <mBgColor>#ffff00</mBgColor>
+                <mSoundFile></mSoundFile>
+                <colorTriggerFgColor>#000000</colorTriggerFgColor>
+                <colorTriggerBgColor>#000000</colorTriggerBgColor>
+                <regexCodeList>
+                    <string>FriendsOf</string>
+                </regexCodeList>
+                <regexCodePropertyList>
+                    <integer>2</integer>
+                </regexCodePropertyList>
+            </Trigger>
+        </TriggerGroup>
     </TriggerPackage>
     <TimerPackage>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>EveryHalfMinute</name>
-            <script>-- This script now lives in scripts/timers/30_second_timer.lua
+        <TimerGroup isActive="yes" isFolder="yes" isTempTimer="no" isOffsetTimer="no">
+            <name>7days_profile</name>
+            <script></script>
+            <command></command>
+            <packageName>7days_profile</packageName>
+            <time>00:00:00.000</time>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>EveryHalfMinute</name>
+                <script>-- This script now lives in scripts/timers/30_second_timer.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 thirtySecondTimer()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:00:40.000</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>OneMinuteTimer</name>
-            <script>-- This script now lives in scripts/timers/one_minute_timer.lua
+                <command></command>
+                <packageName></packageName>
+                <time>00:00:30.000</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>OneMinuteTimer</name>
+                <script>-- This script now lives in scripts/timers/one_minute_timer.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 oneMinuteTimer()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:01:00.000</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>listPlayers</name>
-            <script>-- This script now lives in scripts/timers/list_players_timer.lua
+                <command></command>
+                <packageName></packageName>
+                <time>00:01:00.000</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>listPlayers</name>
+                <script>-- This script now lives in scripts/timers/list_players_timer.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 listPlayers()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:00:03.000</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>OneHourTimer</name>
-            <script>-- This script now lives in scripts/timers/one_hour_timer.lua
+                <command></command>
+                <packageName></packageName>
+                <time>00:00:03.000</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>OneHourTimer</name>
+                <script>-- This script now lives in scripts/timers/one_hour_timer.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 oneHourTimer()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>01:00:00.000</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>Reconnect</name>
-            <script>-- This script now lives in scripts/timers/reconnect_timer.lua
+                <command></command>
+                <packageName></packageName>
+                <time>01:00:00.000</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>Reconnect</name>
+                <script>-- This script now lives in scripts/timers/reconnect_timer.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 reconnectTimer()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:00:20.000</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>GimmeReset</name>
-            <script>if botDisabled then
+                <command></command>
+                <packageName></packageName>
+                <time>00:00:20.000</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>GimmeReset</name>
+                <script>if botDisabled then
 	return
 end
 
 gimmeReset()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>02:00:00.000</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>TimedCommands</name>
-            <script>-- This script now lives in scripts/timers/timed_commands_timer.lua
+                <command></command>
+                <packageName></packageName>
+                <time>02:00:00.000</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>TimedCommands</name>
+                <script>-- This script now lives in scripts/timers/timed_commands_timer.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 timedCommandsTimer()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:00:02.000</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>ThirtyMinuteTimer</name>
-            <script>if botDisabled then
+                <command></command>
+                <packageName></packageName>
+                <time>00:00:02.000</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>ThirtyMinuteTimer</name>
+                <script>if botDisabled then
 	return
 end
 
 ThirtyMinuteTimer()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:30:00.000</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>PlayerQueuedCommands</name>
-            <script>-- This script now lives in scripts/timers/player_queued_commands.lua
+                <command></command>
+                <packageName></packageName>
+                <time>00:30:00.000</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>PlayerQueuedCommands</name>
+                <script>-- This script now lives in scripts/timers/player_queued_commands.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 playerQueuedCommands()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:00:04.000</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>GimmeQueuedCommands</name>
-            <script>-- This script now lives in scripts/timers/gimme_queued_commands.lua
+                <command></command>
+                <packageName></packageName>
+                <time>00:00:04.000</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>GimmeQueuedCommands</name>
+                <script>-- This script now lives in scripts/timers/gimme_queued_commands.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
-gimmeQueuedCommands()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:00:00.500</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>ircQueue</name>
-            <script>-- This script now lives in scripts/timers/irc_queue_timer.lua
+gimmeQueuedCommandsFun()</script>
+                <command></command>
+                <packageName></packageName>
+                <time>00:00:00.500</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>ircQueue</name>
+                <script>-- This script now lives in scripts/timers/irc_queue_timer.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 ircQueueTimer()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:00:00.200</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>Every45Seconds</name>
-            <script>-- This script now lives in scripts/timers/45_second_timer.lua
+                <command></command>
+                <packageName></packageName>
+                <time>00:00:00.200</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>Every45Seconds</name>
+                <script>-- This script now lives in scripts/timers/45_second_timer.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 fortyfiveSecondTimer()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:01:00.000</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>TrackPlayer</name>
-            <script>-- This script now lives in scripts/timers/track_player_timer.lua
+                <command></command>
+                <packageName></packageName>
+                <time>00:01:00.000</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>TrackPlayer</name>
+                <script>-- This script now lives in scripts/timers/track_player_timer.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 trackPlayerTimer()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:00:01.000</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>messageQueue</name>
-            <script>-- This script now lives in scripts/timers/message_queue_timer.lua
+                <command></command>
+                <packageName></packageName>
+                <time>00:00:01.000</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>messageQueue</name>
+                <script>-- This script now lives in scripts/timers/message_queue_timer.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 messageQueueTimer()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:00:02.000</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>TwoMinuteTimer</name>
-            <script>-- This script now lives in scripts/timers/two_minute_timer.lua
+                <command></command>
+                <packageName></packageName>
+                <time>00:00:02.000</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>TwoMinuteTimer</name>
+                <script>-- This script now lives in scripts/timers/two_minute_timer.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 twoMinuteTimer()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:02:00.000</time>
-        </Timer>
-        <Timer isActive="no" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>ReloadScripts</name>
-            <script>--Mudlet can only successfully reload external Lua scripts if done from inside a timer. Since we only want it to run once each time, we disable the timer immediately after.
+                <command></command>
+                <packageName></packageName>
+                <time>00:02:00.000</time>
+            </Timer>
+            <Timer isActive="no" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>ReloadScripts</name>
+                <script>--Mudlet can only successfully reload external Lua scripts if done from inside a timer. Since we only want it to run once each time, we disable the timer immediately after.
 dofile(homedir .. &quot;/scripts/reload_bot_scripts.lua&quot;)
 reloadBotScripts()
 disableTimer(&quot;ReloadScripts&quot;)</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:00:00.100</time>
-        </Timer>
-        <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
-            <name>Every15Seconds</name>
-            <script>FifteenSecondTimer()</script>
-            <command></command>
-            <packageName></packageName>
-            <time>00:00:15.000</time>
-        </Timer>
+                <command></command>
+                <packageName></packageName>
+                <time>00:00:00.100</time>
+            </Timer>
+            <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+                <name>Every15Seconds</name>
+                <script>FifteenSecondTimer()</script>
+                <command></command>
+                <packageName></packageName>
+                <time>00:00:15.000</time>
+            </Timer>
+        </TimerGroup>
     </TimerPackage>
-    <AliasPackage/>
+    <AliasPackage>
+        <AliasGroup isActive="yes" isFolder="yes">
+            <name>deleteOldProfiles</name>
+            <script></script>
+            <command></command>
+            <packageName>deleteOldProfiles</packageName>
+            <regex></regex>
+            <Alias isActive="yes" isFolder="no">
+                <name>delete old profiles</name>
+                <script>deleteOldProfiles(matches[3], matches[2]==&quot;maps&quot;)
+
+--Syntax examples: &quot;delete old profiles&quot;  -&gt; deletes profiles older than 31 days
+--					&quot;delete old maps 10&quot;	-&gt; deletes maps older than 10 days</script>
+                <command></command>
+                <packageName></packageName>
+                <regex>^delete old (profiles|maps)(?: (\d+))?$</regex>
+            </Alias>
+        </AliasGroup>
+        <AliasGroup isActive="yes" isFolder="yes">
+            <name>echo</name>
+            <script></script>
+            <command></command>
+            <packageName>echo</packageName>
+            <regex></regex>
+            <Alias isActive="yes" isFolder="no">
+                <name>`echo</name>
+                <script>local s = matches[2]
+
+s = string.gsub(s, &quot;%$&quot;, &quot;\n&quot;)
+feedTriggers(&quot;\n&quot; .. s .. &quot;\n&quot;)
+echo(&quot;\n&quot;)</script>
+                <command></command>
+                <packageName></packageName>
+                <regex>`echo (.+)</regex>
+            </Alias>
+        </AliasGroup>
+        <AliasGroup isActive="yes" isFolder="yes">
+            <name>run-lua-code-v4</name>
+            <script></script>
+            <command></command>
+            <packageName>run-lua-code-v4</packageName>
+            <regex></regex>
+            <Alias isActive="yes" isFolder="no">
+                <name>run lua code</name>
+                <script>local f,e = loadstring(&quot;return &quot;..matches[2])
+if not f then
+	f,e = assert(loadstring(matches[2]))
+end
+
+local r = f()
+if r ~= nil then display(r) end</script>
+                <command></command>
+                <packageName></packageName>
+                <regex>^lua (.*)$</regex>
+            </Alias>
+        </AliasGroup>
+    </AliasPackage>
     <ActionPackage>
-        <ActionGroup isActive="yes" isFolder="yes" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
-            <name>menu</name>
-            <packageName></packageName>
+        <ActionGroup isActive="yes" isFolder="yes" isPushButton="yes" isFlatButton="yes" useCustomLayout="no">
+            <name>7days_profile</name>
+            <packageName>7days_profile</packageName>
             <script></script>
             <css></css>
             <commandButtonUp></commandButtonUp>
             <commandButtonDown></commandButtonDown>
             <icon></icon>
-            <orientation>1</orientation>
-            <location>3</location>
+            <orientation>-1</orientation>
+            <location>-1</location>
             <posX>0</posX>
             <posY>0</posY>
             <mButtonState>1</mButtonState>
-            <sizeX>79508376</sizeX>
-            <sizeY>0</sizeY>
+            <sizeX>6488169</sizeX>
+            <sizeY>7209071</sizeY>
             <buttonColumn>1</buttonColumn>
-            <buttonRotation>1</buttonRotation>
+            <buttonRotation>-1</buttonRotation>
             <buttonColor>#ffffff</buttonColor>
-            <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="no" useCustomLayout="no">
-                <name>Show Players</name>
+            <ActionGroup isActive="yes" isFolder="yes" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
+                <name>menu</name>
                 <packageName></packageName>
-                <script>clearUserWindow(server.windowPlayers)
-showPlayers = true</script>
+                <script></script>
                 <css></css>
                 <commandButtonUp></commandButtonUp>
                 <commandButtonDown></commandButtonDown>
                 <icon></icon>
                 <orientation>1</orientation>
-                <location>0</location>
+                <location>3</location>
                 <posX>0</posX>
                 <posY>0</posY>
-                <mButtonState>2</mButtonState>
-                <sizeX>0</sizeX>
+                <mButtonState>1</mButtonState>
+                <sizeX>79508376</sizeX>
                 <sizeY>0</sizeY>
                 <buttonColumn>1</buttonColumn>
-                <buttonRotation>0</buttonRotation>
+                <buttonRotation>1</buttonRotation>
                 <buttonColor>#ffffff</buttonColor>
-            </Action>
-            <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
-                <name>CLR Debug</name>
-                <packageName></packageName>
-                <script>clearUserWindow(server.windowDebug)</script>
-                <css></css>
-                <commandButtonUp></commandButtonUp>
-                <commandButtonDown></commandButtonDown>
-                <icon></icon>
-                <orientation>1</orientation>
-                <location>0</location>
-                <posX>0</posX>
-                <posY>0</posY>
-                <mButtonState>1</mButtonState>
-                <sizeX>3145776</sizeX>
-                <sizeY>3145776</sizeY>
-                <buttonColumn>1</buttonColumn>
-                <buttonRotation>-1</buttonRotation>
-                <buttonColor>#ffffff</buttonColor>
-            </Action>
-            <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
-                <name>CLR Lists</name>
-                <packageName></packageName>
-                <script>clearUserWindow(server.windowLists)</script>
-                <css></css>
-                <commandButtonUp></commandButtonUp>
-                <commandButtonDown></commandButtonDown>
-                <icon></icon>
-                <orientation>1</orientation>
-                <location>0</location>
-                <posX>0</posX>
-                <posY>0</posY>
-                <mButtonState>1</mButtonState>
-                <sizeX>75</sizeX>
-                <sizeY>41</sizeY>
-                <buttonColumn>1</buttonColumn>
-                <buttonRotation>0</buttonRotation>
-                <buttonColor>#ffffff</buttonColor>
-            </Action>
-            <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
-                <name>Show Tables</name>
-                <packageName></packageName>
-                <script>--display(serverFields)
+                <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="no" useCustomLayout="no">
+                    <name>Show Players</name>
+                    <packageName></packageName>
+                    <script>--clearUserWindow(server.windowPlayers)
+--clearUserWindow(&quot;Player&quot;)
+--showPlayers = true
+dumpPlayers(igplayers)</script>
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>1</mButtonState>
+                    <sizeX>0</sizeX>
+                    <sizeY>0</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>0</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="no" useCustomLayout="no">
+                    <name>Show All Players</name>
+                    <packageName></packageName>
+                    <script>dumpPlayers(players)</script>
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>1</mButtonState>
+                    <sizeX>0</sizeX>
+                    <sizeY>79675360</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>0</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="no" useCustomLayout="no">
+                    <name>Show Game Day/Time</name>
+                    <packageName></packageName>
+                    <script>echo(server.gameDate .. &quot;\n\n&quot;)</script>
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>2</mButtonState>
+                    <sizeX>0</sizeX>
+                    <sizeY>0</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>0</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
+                    <name>Show Tables</name>
+                    <packageName></packageName>
+                    <script>--display(serverFields)
 --display(playerFields)
 
 --echo(&quot;Players table\n&quot;)
@@ -1163,146 +1200,319 @@ showPlayers = true</script>
 --display(customCommands)
 
 display(botman)</script>
-                <css></css>
-                <commandButtonUp></commandButtonUp>
-                <commandButtonDown></commandButtonDown>
-                <icon></icon>
-                <orientation>1</orientation>
-                <location>0</location>
-                <posX>0</posX>
-                <posY>0</posY>
-                <mButtonState>1</mButtonState>
-                <sizeX>1756547332</sizeX>
-                <sizeY>59476856</sizeY>
-                <buttonColumn>1</buttonColumn>
-                <buttonRotation>0</buttonRotation>
-                <buttonColor>#ffffff</buttonColor>
-            </Action>
-            <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
-                <name>Trial Code</name>
-                <packageName></packageName>
-                <script>-- call trialCode in trialCode.lua in main scripts folder
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>2</mButtonState>
+                    <sizeX>1756547332</sizeX>
+                    <sizeY>59476856</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>0</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
+                    <name>CLR Debug</name>
+                    <packageName></packageName>
+                    <script>clearUserWindow(server.windowDebug)</script>
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>2</mButtonState>
+                    <sizeX>3145776</sizeX>
+                    <sizeY>3145776</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>-1</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
+                    <name>CLR Lists</name>
+                    <packageName></packageName>
+                    <script>clearUserWindow(server.windowLists)</script>
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>1</mButtonState>
+                    <sizeX>75</sizeX>
+                    <sizeY>41</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>0</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
+                    <name>Trial Code</name>
+                    <packageName></packageName>
+                    <script>-- call trialCode in trialCode.lua in main scripts folder
 -- put all your test code here so you don't need to edit this profile constantly when testing new code.
 trialCode()</script>
-                <css></css>
-                <commandButtonUp></commandButtonUp>
-                <commandButtonDown></commandButtonDown>
-                <icon></icon>
-                <orientation>1</orientation>
-                <location>0</location>
-                <posX>0</posX>
-                <posY>0</posY>
-                <mButtonState>1</mButtonState>
-                <sizeX>1631854633</sizeX>
-                <sizeY>808533369</sizeY>
-                <buttonColumn>1</buttonColumn>
-                <buttonRotation>-1</buttonRotation>
-                <buttonColor>#ffffff</buttonColor>
-            </Action>
-            <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
-                <name>temp test</name>
-                <packageName></packageName>
-                <script>--dbug(&quot;temp test start&quot;)
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>2</mButtonState>
+                    <sizeX>1631854633</sizeX>
+                    <sizeY>808533369</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>-1</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="no" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
+                    <name>temp test</name>
+                    <packageName></packageName>
+                    <script>--dbug(&quot;temp test start&quot;)
 
 --dbug(&quot;temp test end&quot;)
 
 --startLogging(true)
 
 botman.lagCheckRead = true</script>
-                <css></css>
-                <commandButtonUp></commandButtonUp>
-                <commandButtonDown></commandButtonDown>
-                <icon></icon>
-                <orientation>1</orientation>
-                <location>0</location>
-                <posX>0</posX>
-                <posY>0</posY>
-                <mButtonState>2</mButtonState>
-                <sizeX>2097272</sizeX>
-                <sizeY>6881382</sizeY>
-                <buttonColumn>1</buttonColumn>
-                <buttonRotation>-1</buttonRotation>
-                <buttonColor>#ffffff</buttonColor>
-            </Action>
-            <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
-                <name>CLR Alerts</name>
-                <packageName></packageName>
-                <script>clearUserWindow(server.windowAlerts)</script>
-                <css></css>
-                <commandButtonUp></commandButtonUp>
-                <commandButtonDown></commandButtonDown>
-                <icon></icon>
-                <orientation>1</orientation>
-                <location>0</location>
-                <posX>0</posX>
-                <posY>0</posY>
-                <mButtonState>2</mButtonState>
-                <sizeX>7340147</sizeX>
-                <sizeY>352329872</sizeY>
-                <buttonColumn>1</buttonColumn>
-                <buttonRotation>-1</buttonRotation>
-                <buttonColor>#ffffff</buttonColor>
-            </Action>
-            <Action isActive="no" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
-                <name>Load IP Blacklist</name>
-                <packageName></packageName>
-                <script>--readIPBlacklist()</script>
-                <css></css>
-                <commandButtonUp></commandButtonUp>
-                <commandButtonDown></commandButtonDown>
-                <icon></icon>
-                <orientation>1</orientation>
-                <location>0</location>
-                <posX>0</posX>
-                <posY>0</posY>
-                <mButtonState>1</mButtonState>
-                <sizeX>295772544</sizeX>
-                <sizeY>0</sizeY>
-                <buttonColumn>1</buttonColumn>
-                <buttonRotation>0</buttonRotation>
-                <buttonColor>#ffffff</buttonColor>
-            </Action>
-            <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="no" useCustomLayout="no">
-                <name>Reload Scripts</name>
-                <packageName></packageName>
-                <script>enableTimer(&quot;ReloadScripts&quot;)
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>2</mButtonState>
+                    <sizeX>2097272</sizeX>
+                    <sizeY>6881382</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>-1</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="no" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
+                    <name>CLR Alerts</name>
+                    <packageName></packageName>
+                    <script>clearUserWindow(server.windowAlerts)</script>
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>2</mButtonState>
+                    <sizeX>7340147</sizeX>
+                    <sizeY>352329872</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>-1</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="no" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
+                    <name>Load IP Blacklist</name>
+                    <packageName></packageName>
+                    <script>--readIPBlacklist()</script>
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>1</mButtonState>
+                    <sizeX>295772544</sizeX>
+                    <sizeY>0</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>0</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="no" useCustomLayout="no">
+                    <name>Show Next Restart</name>
+                    <packageName></packageName>
+                    <script>showNextRestart()</script>
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>1</mButtonState>
+                    <sizeX>0</sizeX>
+                    <sizeY>0</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>0</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
+                    <name>Reset Restart</name>
+                    <packageName></packageName>
+                    <script>resetRestart()</script>
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>1</mButtonState>
+                    <sizeX>-1</sizeX>
+                    <sizeY>33619968</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>0</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="no" useCustomLayout="no">
+                    <name>Reload Scripts</name>
+                    <packageName></packageName>
+                    <script>enableTimer(&quot;ReloadScripts&quot;)
 
 </script>
-                <css></css>
-                <commandButtonUp></commandButtonUp>
-                <commandButtonDown></commandButtonDown>
-                <icon></icon>
-                <orientation>1</orientation>
-                <location>0</location>
-                <posX>0</posX>
-                <posY>0</posY>
-                <mButtonState>2</mButtonState>
-                <sizeX>0</sizeX>
-                <sizeY>0</sizeY>
-                <buttonColumn>1</buttonColumn>
-                <buttonRotation>0</buttonRotation>
-                <buttonColor>#ffffff</buttonColor>
-            </Action>
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>1</mButtonState>
+                    <sizeX>0</sizeX>
+                    <sizeY>0</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>0</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+                <Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="yes" useCustomLayout="no">
+                    <name>test</name>
+                    <packageName></packageName>
+                    <script>--gimmeReset()
+alertAdmins(&quot;test&quot;)
+
+if(false) then
+id = LookupPlayer(&quot;drmille84&quot;)
+if(id) then
+	players[id].watchPlayer = true
+   players[id].watchPlayerTimer = os.time() + 259200
+   if(botman.dbConnected) then conn:execute(&quot;Update players SET watchPlayer = 1, watchPalyerTimer = &quot; .. players[id].watchPlayerTimer .. &quot; WHERE steam = &quot; .. id) end
+   echo(&quot;Player &quot; .. id .. &quot; will be watched.\n\n&quot;)
+end
+end</script>
+                    <css></css>
+                    <commandButtonUp></commandButtonUp>
+                    <commandButtonDown></commandButtonDown>
+                    <icon></icon>
+                    <orientation>1</orientation>
+                    <location>0</location>
+                    <posX>0</posX>
+                    <posY>0</posY>
+                    <mButtonState>2</mButtonState>
+                    <sizeX>875703344</sizeX>
+                    <sizeY>1866861105</sizeY>
+                    <buttonColumn>1</buttonColumn>
+                    <buttonRotation>-1</buttonRotation>
+                    <buttonColor>#ffffff</buttonColor>
+                </Action>
+            </ActionGroup>
         </ActionGroup>
     </ActionPackage>
     <ScriptPackage>
-        <Script isActive="yes" isFolder="no">
-            <name>IRCMessage</name>
-            <packageName></packageName>
-            <script>-- This script now lives in scripts/irc_message.lua
+        <ScriptGroup isActive="yes" isFolder="yes">
+            <name>deleteOldProfiles</name>
+            <packageName>deleteOldProfiles</packageName>
+            <script></script>
+            <eventHandlerList/>
+            <Script isActive="yes" isFolder="no">
+                <name>deleteOldProfiles</name>
+                <packageName></packageName>
+                <script>function deleteOldProfiles(keepdays_arg, delete_maps)
+
+--[[
+	Deletes old profiles/maps in the &quot;current&quot;/&quot;map&quot; folders of the Mudlet home directory.
+	The following files are NOT deleted:
+	- Files newer than the amount of days specified as an argument to deleteOldProfiles(), or 31 days if not specified.	
+	- One file for every month before that. Specifically: The first available file of every month prior to this.
+	Setting the second argument to true will delete maps instead of profiles. (e.g. deleteOldProfiles(10, true))
+--]]
+
+	local keepdays = tonumber(keepdays_arg) or 31
+	local profile_table = {}
+	local used_last_mod_months = {}
+	local slash = (string.char(getMudletHomeDir():byte()) == &quot;/&quot;) and &quot;/&quot; or &quot;\\&quot;
+	local dirpath = getMudletHomeDir()..slash..(delete_maps and &quot;map&quot; or &quot;current&quot;)
+	local delnum = 0
+
+	-- Traverse the profiles folder and create a table of files:
+	for filename in lfs.dir(dirpath) do
+		if filename~=&quot;.&quot; and filename~=&quot;..&quot; then
+			profile_table[#profile_table+1] = {name = filename, last_mod = lfs.attributes(dirpath..slash..filename, &quot;modification&quot;)}
+		end
+	end
+
+	-- Sort the table according to last modification date from old to new:
+	table.sort(profile_table, function (a,b) return a.last_mod &lt; b.last_mod end)
+
+	echo(string.format(&quot;\nDeleting old %s. Files newer than %d days and one profile for every month before that will be kept.&quot;, delete_maps and &quot;maps&quot; or &quot;profiles&quot;, keepdays))
+	for i,v in ipairs(profile_table) do
+		local days = math.floor(os.difftime(os.time(), v.last_mod)/86400)
+		local last_mod_month = os.date(&quot;%Y/%m&quot;, v.last_mod)
+		if days &gt; keepdays then
+			-- For profiles older than X days, check if we already kept a table for this month:
+			if not table.contains(used_last_mod_months, last_mod_month) then
+				-- If not, do nothing and mark this month as &quot;kept&quot;.
+				used_last_mod_months[#used_last_mod_months+1] = last_mod_month
+			else
+				-- Otherwise remove the file:
+				local success, errorstring = os.remove(dirpath..slash..v.name)
+				if success then
+					delnum = delnum + 1
+				else
+					cecho(&quot;\n&lt;red&gt;ERROR: &quot;..errorstring)
+				end
+			end
+		end
+	end
+	echo(string.format(&quot;\nDeletion complete. %d/%d files were removed successfully.&quot;, delnum, #profile_table))
+end
+</script>
+                <eventHandlerList/>
+            </Script>
+        </ScriptGroup>
+        <ScriptGroup isActive="yes" isFolder="yes">
+            <name>7days_profile</name>
+            <packageName>7days_profile</packageName>
+            <script></script>
+            <eventHandlerList/>
+            <Script isActive="yes" isFolder="no">
+                <name>IRCMessage</name>
+                <packageName></packageName>
+                <script>-- This script now lives in scripts/irc_message.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
 -- DO NOT delete this script or you will delete the IRC message handler and the bot will not use IRC.</script>
-            <eventHandlerList>
-                <string>sysIrcMessage</string>
-            </eventHandlerList>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>StartupBot</name>
-            <packageName></packageName>
-            <script>--[[
+                <eventHandlerList>
+                    <string>sysIrcMessage</string>
+                </eventHandlerList>
+            </Script>
+            <Script isActive="yes" isFolder="no">
+                <name>StartupBot</name>
+                <packageName></packageName>
+                <script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2015  Matthew Dwyer
 	          This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -1313,14 +1523,14 @@ homedir = getMudletHomeDir()
 dofile(homedir .. &quot;/scripts/startup_bot.lua&quot;)
 login()
 </script>
-            <eventHandlerList>
-                <string>sysConnectionEvent</string>
-            </eventHandlerList>
-        </Script>
-        <Script isActive="yes" isFolder="no">
-            <name>FirstRun</name>
-            <packageName></packageName>
-            <script>-- This script is run first when the bot starts up
+                <eventHandlerList>
+                    <string>sysConnectionEvent</string>
+                </eventHandlerList>
+            </Script>
+            <Script isActive="yes" isFolder="no">
+                <name>FirstRun</name>
+                <packageName></packageName>
+                <script>-- This script is run first when the bot starts up
 
 require &quot;lfs&quot;
 
@@ -1340,13 +1550,11 @@ botOffline = 0
 -- it may be possible for the bot to update itself.  So far Mudlet is not cooperating.
 registerAnonymousEventHandler(&quot;sysDownloadDone&quot;, &quot;downloadHandler&quot;)
 registerAnonymousEventHandler(&quot;sysDownloadError&quot;, &quot;downloadHandler&quot;)</script>
-            <eventHandlerList>
-                <string>sysLoadEvent</string>
-            </eventHandlerList>
-        </Script>
+                <eventHandlerList>
+                    <string>sysLoadEvent</string>
+                </eventHandlerList>
+            </Script>
+        </ScriptGroup>
     </ScriptPackage>
     <KeyPackage/>
-    <VariablePackage>
-        <HiddenVariables/>
-    </VariablePackage>
 </MudletPackage>

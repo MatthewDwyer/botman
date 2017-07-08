@@ -1,10 +1,11 @@
 -- This script now lives in scripts/functions.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
-local debug
+local debug = false
 
+require 'core_functions'
+require 'lfs'
 -- enable debug to see where the code is stopping. Any error will be after the last debug line.
-debug = false
 
 function updateBot(forced)
 	if isFile(homedir .. "/blockScripts.txt") then
@@ -150,8 +151,6 @@ end
 
 function reportReloadCode()
 	if server.reloadCodeSuccess then
-		alertAdmins("The bot's scripts have reloaded.")
-
 		if server.ircMain ~= nil then
 			irc_chat(server.ircMain, "The bot's scripts have reloaded.")
 		end
@@ -166,10 +165,14 @@ end
 
 
 function checkScript(script)
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
 	if not isFile(script) then
 		file = io.open(script, "a")
-		file:write("--This script is missing!\n")
-		file:close()
+		if( file ) then
+		   file:write("--This script is missing!\n")
+		   file:close()
+		end
 
 		irc_chat(server.ircMain, "Script missing " .. script)
 	end
@@ -179,8 +182,9 @@ end
 
 
 function refreshScripts()
-if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1, "nSl")) end
 
+--[[
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	-- scripts
@@ -587,8 +591,24 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 
 	server.nextCodeReload = "/scripts/triggers/list_entities.lua"
 	checkScript(homedir .. "/scripts/triggers/list_entities.lua")
+ --]]
+	if (debug) then dbugFull("D", "", debugger.getinfo(1, "nSl")) end
+ 
+        for filename, attr in dirtree(homedir .. "/scripts") do
+		if(attr.mode == "file" and filename:find '%S-.lua$') then
+			local prefixedFilename = filename
 
-if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+			server.nextCodeReload = prefixedFilename
+
+			if (debug) then 				
+				dbugFull("D", "", debugger.getinfo(1, "nSl"))
+			 end
+
+			checkScript(prefixedFilename)
+
+
+		end
+	end
 
 	-- enable triggers and timers.  No ability to enable scripts in code yet.
 	enableTrigger("End list players")
@@ -632,12 +652,13 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	enableTimer("Every45Seconds")
 	enableTimer("TrackPlayer")
 	enableTimer("messageQueue")
-if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	if (debug) then dbugFull("D", "", debugger.getinfo(1, "nSl")) end
 end
 
 
 function reloadBotScripts(skipTables)
-	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1, "nSl")) end
 
 	fixTables()
 
@@ -647,43 +668,42 @@ function reloadBotScripts(skipTables)
 	tempTimer( 3, [[ reportReloadCode() ]] )
 	disableTimer("ReloadScripts")
 
-	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
+	if (debug) then dbugFull("D", "", debugger.getinfo(1, "nSl")) end
 	if type(server) == "table" then
 		chatColour = server.chatColour
 	else
 		chatColour = "D4FFD4"
 	end
 
-	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1, "nSl")) end
 
 	refreshScripts()
 
-	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1, "nSl")) end
 
 	server.nextCodeReload = "finishing reload"
 	if type(server) == "table" then
 		if server.windowGMSG ~= nil then
 
-	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1, "nSl")) end
 			-- refresh some things to fix or avoid missing info that we rely on.
 			alterTables() -- make sure all new table changes are done.  The server table is the most important to get updated.
 			getPlayerFields() -- refresh player fields
 			getServerFields() -- refresh server fields
 
-	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+			if (debug) then dbugFull("D", "", debugger.getinfo(1, "nSl")) end
 
 			if skipTables ~= nil then
-	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+				if (debug) then dbugFull("D", "", debugger.getinfo(1, "nSl")) end
 				-- force a reload of the lua tables incase new fields have been added so they get initialised with default values.
 				loadTables(true) -- passing true tells loadTables to not reload the players table.
 			end
 
-	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
+			if (debug) then dbugFull("D", "", debugger.getinfo(1, "nSl")) end
 			openUserWindow(server.windowGMSG)
 			openUserWindow(server.windowDebug)
-			openUserWindow(server.windowLists)
+			-- openUserWindow(server.windowLists)
 
 			for k,v in pairs(igplayers) do
 				fixMissingIGPlayer(k)
@@ -701,10 +721,17 @@ function reloadBotScripts(skipTables)
 
 			botman.webdavFolderExists = true
 			botman.webdavFolderWriteable = true
+
 			if botman.chatlogPath == nil or botman.chatlogPath == "" then
-				botman.chatlogPath = webdavFolder
+				if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "fixing chatlogPath") end
+				if(webdavFolder ~= nil) then 
+					botman.chatlogPath = webdavFolder
+				else
+					botman.chatlogPath =  homedir .. "/chatlogs"
+				end
 				if botman.dbConnected then conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'") end
 			end
+			if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "chatlogPath = " .. botman.chatlogPath) end
 
 			send("gg")
 			send("teleh")
@@ -714,6 +741,30 @@ function reloadBotScripts(skipTables)
 
 	server.reloadCodeSuccess = true
 
-if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
+	echo(os.date("%c") .. " The Bot has been reloaded.\n\n")
+
+end
+
+function dirtree(dir)
+  assert(dir and dir ~= "", "directory parameter is missing or empty")
+  if string.sub(dir, -1) == "/" then
+    dir=string.sub(dir, 1, -2)
+  end
+
+  local function yieldtree(dir)
+    for entry in lfs.dir(dir) do
+      if entry ~= "." and entry ~= ".." then
+        entry=dir.."/"..entry
+	local attr=lfs.attributes(entry)
+	coroutine.yield(entry,attr)
+	if attr.mode == "directory" then
+	  yieldtree(entry)
+	end
+      end
+    end
+  end
+
+  return coroutine.wrap(function() yieldtree(dir) end)
 end

@@ -7,6 +7,8 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug = false
+
 function adminsOnline()
 	-- this function helps us choose different actions depending on if an admin is playing or not.
 	local k, v
@@ -241,7 +243,7 @@ function removeBadPlayerRecords()
 	local k,v
 
 	for k,v in pairs(players) do
-		if (tonumber(v.id) < 1) then
+		if (v.id ~= nil and not tonumber(v.id)) then
 			igplayers[k] = nil
 			players[k] = nil
 		end
@@ -456,6 +458,23 @@ function updateOtherEntities(entityID, entity)
 	end
 end
 
+function pruneZIndex(entityID)
+
+	if(gimmeZombiesIndex == nil or entityID == nil) then return end
+
+	if(type(entityID) == "string") then
+		entityID = tonumber(entityID)
+		if(entityID == nil) then return end
+	end
+
+	for i=0,table.getn(gimmeZombiesIndex), 1 do
+		if(gimmeZombiesIndex[i] == entityID) then
+			table.remove(gimmeZombiesIndex,i)
+			return
+		end
+	end
+
+end
 
 function removeZombies()
 	-- remove any zombies that are flagged for removal after updating the list
@@ -463,7 +482,8 @@ function removeZombies()
 	local maxCount = 0
 
 	for k,v in pairs(gimmeZombies) do
-		if v.remove then
+		if v.remove ~= nil then
+			pruneZIndex(k)
 			gimmeZombies[k] = nil
 		else
 			maxCount = maxCount + 1
@@ -477,20 +497,30 @@ end
 function updateGimmeZombies(entityID, zombie)
 	local k, v
 
-	if gimmeZombies[entityID] == nil then	
+
+	if(gimmeZombiesIndex == nil) then
+		gimmeZombiesIndex = {}
+	end
+
+	if gimmeZombies[entityID] == nil then
 		-- new zombie so add it to gimmeZombies
+		table.insert(gimmeZombiesIndex, entityID)
 		gimmeZombies[entityID] = {}
 		gimmeZombies[entityID].zombie = zombie
 		gimmeZombies[entityID].minPlayerLevel = 1
 		gimmeZombies[entityID].minArenaLevel = 1
-		gimmeZombies[entityID].bossZombie = false
-		gimmeZombies[entityID].doNotSpawn = false		
 
-		if string.find(zombie, "cop") or string.find(zombie, "Cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "Feral") or string.find(zombie, "Radiated") or string.find(zombie, "Behemoth") or string.find(zombie, "Template") then
-			gimmeZombies[entityID].doNotSpawn = true
-			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end		
+		if string.find(zombie, "cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "feral") then
+			if string.find(zombie, "cop") then
+				gimmeZombies[entityID].bossZombie = false
+				gimmeZombies[entityID].doNotSpawn = true
+			else
+				gimmeZombies[entityID].bossZombie = true
+				gimmeZombies[entityID].doNotSpawn = false
+			end
 		else
-			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end				
+			gimmeZombies[entityID].bossZombie = false
+			gimmeZombies[entityID].doNotSpawn = false
 		end
 
 		gimmeZombies[entityID].maxHealth = 0
@@ -508,14 +538,18 @@ function updateGimmeZombies(entityID, zombie)
 			gimmeZombies[entityID].zombie = zombie
 			gimmeZombies[entityID].minPlayerLevel = 1
 			gimmeZombies[entityID].minArenaLevel = 1
-			gimmeZombies[entityID].bossZombie = false
-			gimmeZombies[entityID].doNotSpawn = false					
 
-			if string.find(zombie, "cop") or string.find(zombie, "Cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "Feral") or string.find(zombie, "Radiated") or string.find(zombie, "Behemoth") or string.find(zombie, "Template") then
-				gimmeZombies[entityID].doNotSpawn = true
-				if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end							
+			if string.find(zombie, "cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "feral") then
+				if string.find(zombie, "cop") then
+					gimmeZombies[entityID].bossZombie = false
+					gimmeZombies[entityID].doNotSpawn = true
+				else
+					gimmeZombies[entityID].bossZombie = true
+					gimmeZombies[entityID].doNotSpawn = false
+				end
 			else
-				if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end				
+				gimmeZombies[entityID].bossZombie = false
+				gimmeZombies[entityID].doNotSpawn = false
 			end
 
 			gimmeZombies[entityID].maxHealth = 0
@@ -527,13 +561,10 @@ end
 function restrictedCommandMessage()
 	local r
 
-	chatvars.restrictedCommand = true
-
-	if not igplayers[chatvars.playerid].restrictedCommand then
-		igplayers[chatvars.playerid].restrictedCommand = true
+	if chatvars.command ~= players[chatvars.playerid].lastCommand then
 		return("This command is restricted")
 	else
-		r = rand(16)
+		r = math.random(1,16)
 		if r == 1 then return("It's still restricted") end
 		if r == 2 then return("This command is not happening") end
 		if r == 3 then return("Which part of NO are you having trouble with?") end
@@ -720,7 +751,7 @@ function atHome(steam)
 		time = os.time() - players[steam].lastAtHome
 
 		if time > 300 and time <= 900 then
-			r = rand(5)
+			r = math.random(1,5)
 			if r == 1 then message("pm " .. steam .. " [" .. server.chatColour .. "]Welcome home " .. players[steam].name .. "[-]") end
 			if r == 2 then message("pm " .. steam .. " [" .. server.chatColour .. "]Back so soon " .. players[steam].name .. "?[-]") end
 			if r == 3 then message("pm " .. steam .. " [" .. server.chatColour .. "]You're back![-]") end
@@ -733,7 +764,7 @@ function atHome(steam)
 		end
 
 		if time > 1800 and time <= 3600 then
-			r = rand(5)
+			r = math.random(1,5)
 			if r == 1 then message("pm " .. steam .. " [" .. server.chatColour .. "]Home at last " .. players[steam].name .. "![-]") end
 			if r == 2 then message("pm " .. steam .. " [" .. server.chatColour .. "]Home again, home again. Ziggity zig.[-]") end
 			if r == 3 then message("pm " .. steam .. " [" .. server.chatColour .. "]Look what the cat dragged in.  Hello " .. players[steam].name .. "[-]") end
@@ -744,7 +775,7 @@ function atHome(steam)
 		if time > 3600 then
 			message("pm " .. steam .. " [" .. server.chatColour .. "]So you decided to come home " .. players[steam].name .. "?[-]")
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Dinner's on the floor.[-]")
-			r = rand(5)
+			r = math.random(1,5)
 			if r == 1 then send("give " .. steam .. " canDogfood 1") end
 			if r == 2 then send("give " .. steam .. " canCatfood 1") end
 			if r == 3 then send("give " .. steam .. " femur 1") end
@@ -768,14 +799,6 @@ function calcTimestamp(str)
 
 	str = string.lower(str)
 	number = math.abs(math.floor(tonumber(string.match(str, "(-?%d+)"))))
-
-	if string.find(str, "minute") then
-		period = 60
-	end
-
-	if string.find(str, "hour") then
-		period = 60 * 60
-	end
 
 	if string.find(str, "day") then
 		period = 60 * 60 * 24
@@ -1015,10 +1038,6 @@ function seen(steam)
 		return "A new player on for the first time now."
 	end
 
-	if igplayers[steam] then
-		return players[steam].name .. " is on the server now."
-	end
-
 	words = {}
 	for word in botman.serverTime:gmatch("%w+") do table.insert(words, word) end
 
@@ -1097,7 +1116,6 @@ function kick(steam, reason)
 
 	send("kick " .. steam .. " " .. " \"" .. reason .. "\"")
 	botman.playersOnline = botman.playersOnline - 1
-	irc_chat(server.ircMain, "Player " .. players[steam].name .. " kicked. Reason: " .. reason)
 end
 
 
@@ -1136,6 +1154,8 @@ function banPlayer(steam, duration, reason, issuer, gblBan, localOnly)
 	end
 
 	send("ban add " .. steam .. " " .. duration .. " \"" .. reason .. "\"")
+
+	send("ban list")
 
 	-- grab their belt, pack and equipment
 	if players[steam] then
@@ -1272,11 +1292,13 @@ function arrest(steam, reason, bail, releaseTime)
 			randomTP(steam, "prison")
 		else
 			cmd = "tele " .. steam .. " " .. locations["prison"].x .. " " .. locations["prison"].y .. " " .. locations["prison"].z
-			teleport(cmd, steam)
+			prepareTeleport(steam, cmd)
+			teleport(cmd, true)
 		end
 	else
 		cmd = "tele " .. steam .. " " .. locations["prison"].x .. " " .. locations["prison"].y .. " " .. locations["prison"].z
-		teleport(cmd, steam)
+		prepareTeleport(steam, cmd)
+		teleport(cmd, true)
 	end
 
 	message("say [" .. server.warnColour .. "]" .. players[steam].name .. " has been sent to prison for " .. reason .. ".[-]")
@@ -1394,9 +1416,6 @@ function dailyMaintenance()
 	-- put something here to be run when the server date hits midnight
 	updateBot()
 
-	-- update the list of claims
-	send("llp")
-
 	-- purge old tracking data and set a flag so we can tell when the database maintenance is complete.
 	if tonumber(server.trackingKeepDays) > 0 then
 		conn:execute("UPDATE server set databaseMaintenanceFinished = 0")
@@ -1409,7 +1428,7 @@ end
 
 function startReboot()
 	-- add a random delay to mess with dupers
-	local rnd = rand(10)
+	local rnd = math.random(1,10)
 
 	send("sa")
 	botman.rebootTimerID = tempTimer( 5 + rnd, [[finishReboot()]] )
@@ -1419,7 +1438,7 @@ end
 function clearRebootFlags()
 	botman.nextRebootTest = os.time() + 60
 	botman.scheduledRestart = false
-	botman.scheduledRestartTimestamp = os.time()
+	botman.scheduledRestartTimestamp = getRestartOffset()
 	botman.scheduledRestartPaused = false
 	botman.scheduledRestartForced = false
 end
@@ -1501,7 +1520,7 @@ end
 
 
 function Translate(playerid, command, lang, override)
-	local words, word, oldCount, matches
+	local words, word, oldCount, matches, outputFile
 
 	os.remove(botman.userHome .. "/" .. server.botID .. "trans.txt")
 	os.execute(botman.userHome .. "/" .. server.botID .. "trans.txt")
@@ -1510,13 +1529,16 @@ function Translate(playerid, command, lang, override)
 	for word in command:gmatch("%S+") do table.insert(words, word) end
 	oldCount = table.maxn(words)
 
+	outputFile = botman.userHome .. "/" .. server.botID .. "trans.txt"
+
 	if lang == "" then
-		os.execute("trans -b -no-ansi \"" .. command .. "\" > " .. botman.userHome .. "/" .. server.botID .. "trans.txt")
+		os.execute("trans -b -no-ansi \"" .. command .. "\" > " .. outputFile)
 	else
-		os.execute("trans -b -no-ansi {en=" .. lang .."}  \"" .. command .. "\" > " .. botman.userHome .. "/" .. server.botID .. "trans.txt")
+		os.execute("trans -b -no-ansi {en=" .. lang .."}  \"" .. command .. "\" > " .. outputFile)
 	end
 
-	for ln in io.lines(botman.userHome .. "/" .. server.botID .. "trans.txt") do
+	if(lfs.attributes(outputFile,'mode')) then
+	  for ln in io.lines(outputFile) do
 		matches = 0
 		for word in ln:gmatch("%S+") do
 			if string.find(command, word, nil, true) then
@@ -1535,6 +1557,7 @@ function Translate(playerid, command, lang, override)
 				end
 			end
 		end
+ 	  end
 	end
 
 	io.close()
@@ -1546,7 +1569,7 @@ function CheckClaimsRemoved()
 
 	for k,v in pairs(igplayers) do
 		if players[k].alertRemovedClaims == true then
-			message("pm " .. k .. " [" .. server.chatColour .. "]You had expired claims or you placed claims in a restricted area and they have been automatically removed.  You can get them back by typing " .. server.commandPrefix .. "give claims.[-]")
+			message("pm " .. k .. " [" .. server.chatColour .. "]You placed claims in a restricted area and they have been automatically removed.  You can get them back by typing " .. server.commandPrefix .. "give lcb.[-]")
 			players[k].alertRemovedClaims = false
 		end
 	end
@@ -1586,18 +1609,18 @@ function CheckBlacklist(steam, ip)
 				-- alert players
 				for k, v in pairs(igplayers) do
 					if players[k].exiled~=1 and not players[k].prisoner then
-						message("pm " .. k .. " Chinese player " .. players[steam].name .. " detected and exiled.[-]")
+						message("pm " .. k .. " Chinese player " .. players[steam].name .. " detected and sent to exile.[-]")
 					end
 				end
 			end
 
 			if server.blacklistResponse == 'ban' then
-				irc_chat(server.ircMain, "Blacklisted player " .. players[steam].name .. " banned.")
-				irc_chat(server.ircAlerts, "Blacklisted player " .. players[steam].name .. " banned.")
+				irc_chat(server.ircMain, "Chinese player " .. players[steam].name .. " banned.")
+				irc_chat(server.ircAlerts, "Chinese player " .. players[steam].name .. " banned.")
 				banPlayer(steam, "10 years", "blacklisted", "")
 			end
 
-			connBots:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined and banned. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. ip  .. "'," .. steam .. ")")
+			connBots:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Chinese player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. ip  .. "'," .. steam .. ")")
 		else
 			reverseDNS(steam, ip)
 		end
@@ -1616,6 +1639,13 @@ function readDNS(steam)
 	local file, ln, split, ip1, ip2, exiled, country, proxy, ISP, iprange, IP
 
 	file = io.open(homedir .. "/dns/" .. steam .. ".txt", "r")
+
+	if(not file) then
+		if(debug) then  dbugFull("E", "", debugger.getinfo(1,"nSl"), "dns file wasn't opened for reading, re-trying in 60 sec") end
+		tempTimer( 60, [[readDNS("]] .. steam .. [[")]] )
+		return
+	end
+
 	exiled = false
 	proxy = false
 	country = ""
@@ -1627,7 +1657,7 @@ function readDNS(steam)
 			iprange = string.sub(ln, a, a+b)
 		end
 
-		if not whitelist[steam] and not players[steam].donor then
+		if not whitelist[steam] and not players[steam].donor and players[steam].newPlayer then
 			for k,v in pairs(proxies) do
 				if string.find(ln, string.upper(v.scanString), nil, true) then
 					v.hits = tonumber(v.hits) + 1
@@ -1721,11 +1751,13 @@ function readDNS(steam)
 
 			-- alert players
 			for k, v in pairs(igplayers) do
-				if players[k].exiled~=1 and not players[k].prisoner then
-					if exiled then
-						message("pm " .. k .. " Chinese player " .. players[steam].name .. " detected and sent to exile.[-]")
-					else
-						message("pm " .. k .. " Chinese player " .. players[steam].name .. " detected.[-]")
+				if(players[k]) then
+					if players[k].exiled~=1 and not players[k].prisoner then
+						if exiled then
+							message("pm " .. k .. " Chinese player " .. players[steam].name .. " detected and sent to exile.[-]")
+						else
+							message("pm " .. k .. " Chinese player " .. players[steam].name .. " detected.[-]")
+						end
 					end
 				end
 			end
@@ -1760,9 +1792,17 @@ end
 
 
 function initNewPlayer(steam, player, entityid, steamOwner)
+
+	if(not steamOwner) then
+		return
+	end
+
+	if(debug) then display("DEBUG initNewPlayer(" .. steam .. ", " .. player .. ", " .. entityid .. ", " .. steamOwner .. ")") end
+
 	if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, steamOwner) VALUES (" .. steam .. "," .. entityid .. ",'" .. escape(player) .. "'," .. steamOwner .. ")") end
 
 	players[steam] = {}
+	players[steam].deathZ = 0
 	players[steam].alertMapLimit = false
 	players[steam].alertPrison = true
 	players[steam].alertPVP = true
@@ -1803,6 +1843,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].lastLogout = os.time()
 	players[steam].mute = false
 	players[steam].name = player
+	players[steam].ircAlias = name
 	players[steam].names = player .. ","
 	players[steam].newPlayer = true
 	players[steam].overstack = false
@@ -1866,12 +1907,17 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 		players[steam].location = ""
 	end
 
+	-- players[entityid] = players[steam]
+
 	return true
 end
 
 
 function initNewIGPlayer(steam, player, entityid, steamOwner)
+	if(debug) then display("DEBUG initNewIGPlayer(" .. steam .. ", " .. player .. ", " .. entityid .. ", " .. steamOwner .. ")") end
+
 	igplayers[steam] = {}
+	igplayers[steam].deathZ = 0
 	igplayers[steam].afk = os.time() + 900
 	igplayers[steam].alertRemovedClaims = false
 	igplayers[steam].belt = ""
@@ -1884,7 +1930,6 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].flyCount = 0
 	igplayers[steam].flying = false
 	igplayers[steam].flyingX = 0
-	igplayers[steam].flyingY = 0
 	igplayers[steam].flyingZ = 0
 	igplayers[steam].greet = true
 	igplayers[steam].greetdelay = 4
@@ -1899,7 +1944,6 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].lastLP = os.time()
 	igplayers[steam].name = player
 	igplayers[steam].noclipX = 0
-	igplayers[steam].noclipY = 0
 	igplayers[steam].noclipZ = 0
 	igplayers[steam].pack = ""
 	igplayers[steam].ping = 0
@@ -1923,6 +1967,8 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].zPosLast = 0
 	igplayers[steam].zPosLastAlert = 0
 	igplayers[steam].zPosLastOK = 0
+
+	-- igplayers[entityid] = igplayers[steam]
 
 	return true
 end

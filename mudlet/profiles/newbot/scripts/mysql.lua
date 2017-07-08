@@ -42,7 +42,7 @@ function migratePlayers()
 	cursor,errorString = connBots:execute("SHOW COLUMNS FROM players LIKE 'steamOwner'")
 	rows = cursor:numrows()
 
-	if rows == 0 then
+	if (rows == 0) then
 		connBots:execute("CREATE TABLE players2 LIKE players")
 		connBots:execute("ALTER TABLE players2 DISABLE KEYS")
 		connBots:execute("ALTER TABLE  players2 DROP PRIMARY KEY , ADD PRIMARY KEY (steam,botID)")
@@ -103,11 +103,17 @@ if debug then display("registerBot start\n") end
 		-- delete any server records with a botID of zero
 		connBots:execute("DELETE FROM servers WHERE botID = 0")
 
-		id = rand(9999)
+		id = math.random(1,9999)
+
+		if(not id) then
+			dbugFull("E", debugger.traceback(),debugger.getinfo(1,"nSl"), "math.random(1,9999) returned 'nil', unable to regsiter bot!!")
+			return
+		end
+
 		cursor,errorString = connBots:execute("select botID from servers where botID = " .. id)
 
 		while tonumber(cursor:numrows()) > 0 do
-			id = rand(9999)
+			id = math.random(1,9999)
 			cursor,errorString = connBots:execute("select botID from servers where botID = " .. id)
 		end
 
@@ -137,13 +143,63 @@ end
 
 
 function insertBotsPlayer(steam)
-	if not botman.db2Connected then
+	if not botman.db2Connected or not steam or not players[steam] then
 		return
 	end
 
 	if tonumber(server.botID) > 0 then
 		-- insert or update player in bots db
-		connBots:execute("INSERT INTO players (botID, server, steam, ip, name, online, level, zombies, score, playerKills, deaths, timeOnServer, playtime, country, ping) VALUES (" .. server.botID .. ",'" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].IP .. "','" .. escape(players[steam].name) .. "', 1," .. players[steam].level .. "," .. players[steam].zombies .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].deaths .. "," .. players[steam].timeOnServer .. "," .. igplayers[steam].sessionPlaytime .. ",'" .. players[steam].country .. "'," .. players[steam].ping .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].IP .. "', name = '" .. escape(players[steam].name) .. "', online = 1, level = " .. players[steam].level .. ", zombies = " .. players[steam].zombies .. ", score = " .. players[steam].score .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. ", timeOnServer  = " .. players[steam].timeOnServer .. ", playtime = " .. igplayers[steam].sessionPlaytime .. ", country = '" .. players[steam].country .. "', ping = " .. players[steam].ping)
+		if(debug) then
+			if(not server.botID) then display("DEBUG: insertBotsPlayer - botID = nil") end
+			if(not server.serverName) then display("DEBUG: insertBotsPlayer - server = nil") end
+			if(not steam) then display("DEBUG: insertBotsPlayer - steam = nil") end
+			if(not players[steam].IP) then display("DEBUG: insertBotsPlayer - ip = nil") end
+			if(not players[steam].name) then display("DEBUG: insertBotsPlayer - name = nil") end
+			if(not players[steam].level) then display("DEBUG: insertBotsPlayer - level = nil") end
+			if(not players[steam].zombies) then display("DEBUG: insertBotsPlayer - zombies = nil") end
+			if(not players[steam].score) then display("DEBUG: insertBotsPlayer - score = nil") end
+			if(not players[steam].playerKills) then display("DEBUG: insertBotsPlayer - playerKills = nil") end
+			if(not players[steam].deaths) then display("DEBUG: insertBotsPlayer - deaths = nil") end
+			if(not players[steam].timeOnServer) then display("DEBUG: insertBotsPlayer - timeOnServer = nil") end
+			if(not players[steam].sessionPlaytime) then display("DEBUG: insertBotsPlayer - Playtime = nil") end
+			if(not players[steam].country) then display("DEBUG: insertBotsPlayer - country = nil") end
+			if(not players[steam].ping) then display("DEBUG: insertBotsPlayer - ping = nil") end
+		end
+
+		connBots:execute("INSERT INTO players " .. 
+		  "(botID, server, steam, ip, name, online, level, zombies, " ..
+		  "score, playerKills, deaths, timeOnServer, playtime, " ..
+		  "country, ping)" ..
+	 	 " VALUES (" .. 
+		  (server.botID or 0) .. ", " ..
+		  "'" .. escape((server.serverName or "None")) .. "', " ..
+                  (steam or 0) .. ", " ..
+                  "'" .. (players[steam].IP or "127.0.0.1") .. "', " ..
+		  "'" .. escape((players[steam].name or "none")) .. "', " ..
+		  "1, " ..
+		  (players[steam].level or 1) .. ", " ..
+		  (players[steam].zombies or 0) .. ", " ..
+		  (players[steam].score or 0) .. ", " ..
+		  (players[steam].playerKills or 0).. ", " ..
+		  (players[steam].deaths or 0) .. ", " ..
+		  (players[steam].timeOnServer or 0) .. ", " ..
+		  (igplayers[steam].sessionPlaytime or 0) .. ", " ..
+		  "'" .. (players[steam].country or "N/A") .. "', " ..
+		  (players[steam].ping or 0) .. ")" ..
+		 " ON DUPLICATE KEY UPDATE " ..
+		  "ip = '" .. (players[steam].IP or "127.0.0.1") .. "', " ..
+		  " name = '" .. escape((players[steam].name or "none")) .. "', " ..
+		  "online = 1, " ..
+		  "level = " .. (players[steam].level or 1) .. ", " ..
+		  "zombies = " .. (players[steam].zombies or 0) .. ", " ..
+		  "score = " .. (players[steam].score or 0) .. ", " ..
+		  "playerKills = " .. (players[steam].playerKills or 0) .. ", " ..
+		  "deaths = " .. (players[steam].deaths or 0) .. ", " ..
+		  "timeOnServer  = " .. (players[steam].timeOnServer or 0) .. ", " ..
+		  "playtime = " .. (igplayers[steam].sessionPlaytime or 0) .. ", " ..
+		  "country = '" .. (players[steam].country or "N/A") .. "', " ..
+		  "ping = " .. (players[steam].ping or 0)
+		)
 	end
 end
 
@@ -160,7 +216,30 @@ function updateBotsServerTable()
 	-- updated players on bots db
 	for k, v in pairs(igplayers) do
 		-- update player in bots db
-		connBots:execute("UPDATE players SET ip = '" .. players[k].IP .. "', name = '" .. escape(v.name) .. "', online = 1, level = " .. v.level .. ", zombies = " .. v.zombies .. ", score = " .. v.score .. ", playerKills = " .. v.playerKills .. ", deaths = " .. v.deaths .. ", timeOnServer  = " .. players[k].timeOnServer .. ", playtime = " .. v.sessionPlaytime .. ", country = '" .. players[k].country .. "', ping = " .. v.ping .. " WHERE steam = " .. k .. " AND botID = " .. server.botID)
+
+		if(v.playerKills == nil) then v.playerKills = 0 end
+
+		if(tonumber(k) < 1 or not players[k]) then
+			if(debug) then
+				dbugFull("D", "", debugger.getinfo(1,"nSl"), k .. " not found in players")
+			end
+		else
+
+			connBots:execute("UPDATE players SET " ..
+			"ip = '" .. (players[k].IP or "127.0.0.1") .. "', " ..
+			"name = '" .. escape((v.name or "none")) .. "', " ..
+			"online = 1, " ..
+			"level = " .. (v.level or 1) .. ", " ..
+			"zombies = " .. (v.zombies or 0) .. ", " ..
+			"score = " .. (v.score or 0) .. ", " ..
+			"playerKills = " .. (v.playerKills or 0) .. ", " ..
+			"deaths = " .. (v.deaths or 0) .. ", " ..
+			"timeOnServer  = " .. (players[k].timeOnServer or 0) .. ", " ..
+			"playtime = " .. (v.sessionPlaytime or 0) .. ", " ..
+			"country = '" .. (players[k].country or 0) .. "', " ..
+			"ping = " .. (v.ping or 0) .. 
+			" WHERE steam = " .. k .. " AND botID = " .. (server.botID or 0))
+		end
 	end
 end
 
@@ -227,22 +306,44 @@ function isDBConnected()
 	end
 end
 
-
+--[[
 function rand(high, low, real)
 	local cursor, errorString
+	local tmpHigh = tonumber(high)
+	local res
+
+	if(debug) then
+		dbugFull("D", debugger.traceback(), debugger.getinfo(1,"nSl"))
+	end
 
 	-- generate a random number using MySQL
 	if low == nil then low = 1 end
-	if real == nil then
-		cursor,errorString = conn:execute("select floor(RAND()*(" .. high + 1 .. "-" .. low .. ")+" .. low .. ") as rnum")
-	else
-		cursor,errorString = conn:execute("select RAND()*(" .. high + 1 .. "-" .. low .. ")+" .. low .. " as rnum")
+
+	if(not high or not tmpHigh) then
+ 		dbugFull("E", debugger.traceback(),debugger.getinfo(1,"nSl"), "invalid value for high: nil")
+		return
 	end
 
-	row = cursor:fetch({}, "a")
-	return tonumber(row.rnum)
-end
+	if(type(high) ~= "number") then
+		high=tmpHigh
+	end
 
+	if real == nil then
+		res = math.floor(math.random(low,high))
+
+		-- cursor,errorString = conn:execute("select floor(RAND()*(" .. high + 1 .. "-" .. low .. ")+" .. low .. ") as rnum")
+	else
+		res = math.random(low,high)
+
+		-- cursor,errorString = conn:execute("select RAND()*(" .. high + 1 .. "-" .. low .. ")+" .. low .. " as rnum")
+	end
+
+	return res
+
+	-- row = cursor:fetch({}, "a")
+	-- return tonumber(row.rnum)
+end
+--]]
 
 function nextID(table, idfield)
 	local cursor, row, errorString
@@ -273,7 +374,8 @@ function dbBaseDefend(steam, base)
 		row = cursor:fetch({}, "a")
 		while row do
 			cmd = ("tele " .. steam .. " " .. row.x .. " -1 " .. row.z)
-			teleport(cmd, steam)
+			prepareTeleport(steam, cmd)
+			teleport(cmd, true)
 
 			if true then
 				return
@@ -298,7 +400,7 @@ end
 
 function dbTrue(value)
 	-- translate db true false to Lua true false
-	if tonumber(value) == 0 then
+	if value == "0" then
 		return false
 	else
 		return true
@@ -308,7 +410,7 @@ end
 
 function dbYN(value)
 	-- translate db true false to Lua true false
-	if tonumber(value) == 0 then
+	if value == "0" then
 		return "No"
 	else
 		return "Yes"
@@ -675,9 +777,6 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` CHANGE `updateBot` `updateBot` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `botRestartHour` INT NOT NULL DEFAULT '25'")
 	doSQL("ALTER TABLE `server` ADD `trackingKeepDays` INT NOT NULL DEFAULT '28' , ADD `databaseMaintenanceFinished` TINYINT(1) NOT NULL DEFAULT '1'")
-	doSQL("ALTER TABLE `server` ADD `allowHomeTeleport` TINYINT(1) NOT NULL DEFAULT '1' , ADD `playerTeleportDelay` INT NOT NULL DEFAULT '0'")
-	doSQL("ALTER TABLE `server` ADD `allowPackTeleport` TINYINT(1) NOT NULL DEFAULT '1'")
-	doSQL("ALTER TABLE `server` ADD `gameVersion` VARCHAR(30) NOT NULL DEFAULT ''")
 
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
@@ -703,7 +802,6 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `alerts` ADD `status` VARCHAR(30) NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `IPBlacklist` ADD `DateAdded` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , ADD `botID` INT NOT NULL DEFAULT '0' , ADD `steam` BIGINT(17) NOT NULL DEFAULT '0' , ADD `playerName` VARCHAR(25) NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `miscQueue` ADD `timerDelay` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00'")
-	doSQL("ALTER TABLE `keystones` ADD `expired` TINYINT(1) NOT NULL DEFAULT '0'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)
@@ -721,15 +819,6 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	if rows == 0 then
 		doSQL("ALTER TABLE  `bans` DROP PRIMARY KEY , ADD `id` bigint(20) NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (  `id` )", true)
 	end
-	
-	-- change the primary key of table gimmeZombies from zombie to entityID if the remove field does not exist.
-	cursor,errorString = conn:execute("SHOW COLUMNS FROM `gimmeZombies` LIKE 'remove'")
-	rows = cursor:numrows()
-
-	if rows == 0 then
-		doSQL("DELETE FROM gimmeZombies")	
-		doSQL("ALTER TABLE `gimmeZombies` DROP PRIMARY KEY , ADD PRIMARY KEY (  `entityID` ), ADD `remove` TINYINT(1) NOT NULL DEFAULT '0'")
-	end	
 
 	statements = {}
 

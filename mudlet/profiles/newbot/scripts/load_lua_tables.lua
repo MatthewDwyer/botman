@@ -70,14 +70,8 @@ function loadServer()
 			server.ircServer = temp[1]
 			server.ircPort = temp[2]
 		else
-			server.ircServer = ircServer
-			server.ircPort = ircPort
-		end
-
-		if server.ircMain == "#new" or server.ircMain == "" then
-			server.ircMain = ircChannel
-			server.ircAlerts = ircChannel .. "_alerts"
-			server.ircWatch = ircChannel .. "_watch"
+			server.ircServer = ""
+			server.ircPort = ""
 		end
 
 		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -149,6 +143,14 @@ function loadPlayers(steam)
 
 		row = cursor:fetch(row, "a")
 	end
+
+	-- Add special player entry for Server
+	players[0] = {}
+	players[0].name = "Server"
+	players[0].ircAlias = players[0].name
+	players[0].steam = 0
+	players[0].steamOwner = 0
+	admins[0] = {}
 end
 
 
@@ -667,6 +669,7 @@ function loadGimmeZombies()
 
 	-- load gimmeZombies
 	gimmeZombies = {}
+	gimmeZombiesIndex = {}
 	getTableFields("gimmeZombies")
 
 	cursor,errorString = conn:execute("select * from gimmeZombies")
@@ -677,7 +680,8 @@ function loadGimmeZombies()
 	end
 
 	while row do
-		idx = row.entityID
+		idx = tonumber(row.entityID)
+		table.insert(gimmeZombiesIndex,idx) 
 		gimmeZombies[idx] = {}
 
 		for k,v in pairs(cols) do

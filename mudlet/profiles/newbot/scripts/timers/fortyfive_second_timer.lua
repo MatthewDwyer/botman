@@ -7,6 +7,8 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug = false
+
 function fortyfiveSecondTimer()
 	local k, v, x, z, row, cursor, errorString
 
@@ -17,9 +19,18 @@ function fortyfiveSecondTimer()
 	conn:execute("UPDATE keystones SET removed = 1")
 
 	for k, v in pairs(igplayers) do
+		local tmpAccess = accessLevel(k)
+
+		if(not tmpAccess) then
+			 if(debug) then
+				dbugFull("D", "",debugger.getinfo(1,"nSl"), "accessLevel(" .. k .. ") = nil")
+			end
+			tmpAccess = 0 
+		end
+
 		if v.claimPass == nil then v.claimPass = 1 end
 
-		if accessLevel(k) > 2 then
+		if tmpAccess > 2 then
 			cursor,errorString = conn:execute("SELECT count(remove) as deleted FROM keystones WHERE steam = " .. k .. " AND remove = 2")
 
 			if cursor then
@@ -38,14 +49,10 @@ function fortyfiveSecondTimer()
 
 					v.claimPass = 2
 				else
-					send("llp " .. k .. " parseable")
+					send("llp " .. k)
 					v.claimPass = 1
 				end
 			end
-		else
-			x = math.floor(v.xPos / 512)
-			z = math.floor(v.zPos / 512)
-			--checkRegionClaims(x, z)
 		end
 	end
 end

@@ -16,6 +16,8 @@ function fixShop()
 	-- automatically fix missing categories and check each category and shop item for bad data
 	local cursor, cursor2, errorString, row, k, v
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
 	-- refresh the categories from the database
 	loadShopCategories()
 
@@ -161,8 +163,70 @@ function drawLottery(steam)
 		cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE ticket = " .. prizeDraw)
 		rows = cursor:numrows()
 	else
+		local prizePick
+
+		if(debug) then 
+			dbugFull("D", "", debugger.getinfo(1,"nSl"), "Start random ticket pick")
+		end
+
+		cursor,errorString = conn:execute("SELECT DISTINCT ticket FROM memLottery")
+                rows = cursor:numrows()
+
+		if(not rows or rows == 0) then
+			winnersCount = 0
+
+			if(debug) then 
+				dbugFull("D", "", debugger.getinfo(1,"nSl"), "No tickets to pick from")
+			end
+		else
+			if(debug) then
+				dbugFull("D", "", debugger.getinfo(1,"nSl"), "We have " .. rows .. " tickets to pick from")
+			end
+
+			if(rows == 1) then
+				prizePick = 0
+			else
+				prizePick = math.random(0, rows - 1)
+			end
+
+			if(debug) then 
+				dbugFull("D", "", debugger.getinfo(1,"nSl"), "Selected row: " .. prizePick)
+			end
+
+			cursor,errorString = conn:execute("SELECT DISTINCT ticket FROM memLottery LIMIT " .. prizePick .. ",1")
+
+			if(not cursor:numrows()) then
+				dbugFull("E", "", debugger.getinfo(1,"nSl"), "Failed to select a ticket")
+				return
+			end
+
+			tmpTble = cursor:fetch({}, "a")
+
+			if(not tmpTble) then
+				dbugFull("E", "", debugger.getinfo(1,"nSl"), "Failed to fetch table of winning ticket")
+				return
+			end
+
+			prizeDraw = tmpTble.ticket
+
+			if(debug) then
+				dbugFull("D", "", debugger.getinfo(1,"nSl"), "Winning ticket #: " .. prizeDraw)
+			end
+
+			cursor:close()
+
+			cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE ticket = " .. prizeDraw)
+
+                	winnersCount = cursor:numrows()
+
+			if(debug) then
+				dbugFull("D", "", debugger.getinfo(1,"nSl"), "Total winners: " .. winnersCount)
+			end
+
+		end
+--[[
 		for x=1,100,1 do
-			prizeDraw = rand(100)
+			prizeDraw = math.random(1,100)
 
 			cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE ticket = " .. prizeDraw)
 			rows = cursor:numrows()
@@ -172,6 +236,7 @@ function drawLottery(steam)
 				break
 			end
 		end
+--]]
 	end
 
 	message("say [" .. server.chatColour .. "]It's time for the daily lottery draw for " .. server.lottery .. " " .. server.moneyPlural .. "![-]")
@@ -180,7 +245,19 @@ function drawLottery(steam)
 		prizeDraw = math.floor(server.lottery / winnersCount)
 
 		row = cursor:fetch({}, "a")
+
+		if(debug) then
+			for k, v in pairs(row) do
+				dbug("D", "", debugger.getinfo(1,"nSl"), "k: " .. (k or "nil") .. ", v: " .. (v or "nil"))
+			end
+		end
+
 		while row do
+			if(not players[row.steam]) then
+				dbugFull("E", "", debugger.getinfo(1,"nSl"), "Winning player: " .. (row.steam or "nil") .. " was not found in the players table!")
+				return
+			end
+
 			players[row.steam].cash = players[row.steam].cash + prizeDraw
 			conn:execute("UPDATE players SET cash = " .. players[row.steam].cash .. " WHERE steam = " .. row.steam)
 			message("say [" .. server.chatColour .. "]" .. players[row.steam].name .. " won " .. prizeDraw .. " " .. server.moneyPlural .. "![-]")
@@ -193,7 +270,7 @@ function drawLottery(steam)
 				end
 			end
 
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 		end
 
 		message("say [" .. server.chatColour .. "]$$$ Congratulation$ $$$   xD[-]")
@@ -208,12 +285,12 @@ function drawLottery(steam)
 			conn:execute("DELETE FROM lottery where steam = '" .. steam .. "'")
 		end
 	else
-		r = rand(7)
+		r = math.random(1,7)
 		if (r == 1) then message("say [" .. server.chatColour .. "]Nobody wins again![-]") end
 		if (r == 2) then
 			thing = PicknMix()
 			thing = PicknMix()
-			message("say [" .. server.chatColour .. "]Tonight's winner is.. " .. gimmeZimbies[thing].zombie .. "! Who gave that a ticket? O.o[-]")
+			message("say [" .. server.chatColour .. "]Tonight's winner is.. " .. gimmeZombies[thing].zombie .. "! Who gave that a ticket? O.o[-]")
 		end
 
 		if (r == 3) then
@@ -239,7 +316,7 @@ function drawLottery(steam)
 		end
 
 		if (r == 7) then
-			r = rand(6)
+			r = math.random(1,6)
 			if r == 1 then thing = "severed head" end
 			if r == 2 then thing = "severed hand" end
 			if r == 3 then thing = "severed foot" end
@@ -268,11 +345,15 @@ end
 function doShop(command, playerid, words)
 	local k, v, i, number, cmd, list, cursor, errorString
 
-if (debug) then
-dbug("debug shop line " .. debugger.getinfo(1).currentline)
-dbug(command)
-dbug(playerid)
-end
+	if (debug) then
+		local name = ""
+
+		if(players[playerid]) then
+			name = players[playerid].name
+		end
+
+		dbugFull("D", "", debugger.getinfo(1,"nSl"), command .. ", " .. playerid .. ", " .. name .. ", " .. accessLevel(playerid) .. ", " .. (words[1] or "") .. ", " .. (words[2] or "") .. ", " .. (words[3] or ""))
+	end
 
 	-- check for missing money :O
 	if server.moneyName == nil then server.moneyName = "Zenny" end
@@ -286,7 +367,7 @@ end
 	end
 	list = string.sub(list, 1, string.len(list) - 3)
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	shopState = "[OPEN]"
 
@@ -296,11 +377,11 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		end
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	number = tonumber(string.match(command, " (-?\%d+)"))
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if words[1] == "shop" and words[2] == nil then
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have " .. players[playerid].cash .. " " .. server.moneyPlural .. " in the bank. Shop is " .. shopState .. "[-]")
@@ -312,7 +393,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		return false
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (words[1] == "shop" and words[2] == "admin") and (accessLevel(playerid) < 3) then
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop price <code or item name> <whole number without $>[-]")
@@ -323,7 +404,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		return false
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (shopCategories[words[2]]) then
 		LookupShop(words[2],all)
@@ -350,7 +431,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		return false
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (words[2] == "list") then
 		list = ""
@@ -365,7 +446,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		return false
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (words[2] == "variation" and words[3] ~= nil) then
 		if (accessLevel(playerid) > 2) then
@@ -381,7 +462,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		return false
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (words[2] == "special" and words[3] ~= nil) then
 		if (accessLevel(playerid) > 2) then
@@ -398,7 +479,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		return false
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (words[2] == "price" and words[3] ~= nil) then
 		if (accessLevel(playerid) > 2) then
@@ -415,7 +496,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		return false
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (words[2] == "restock" and words[3] ~= nil) then
 		if (accessLevel(playerid) > 2) then
@@ -435,7 +516,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		return false
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (words[1] == "buy" and words[2] ~= nil) then
 		if server.shopOpenHour ~= server.shopCloseHour then
@@ -445,7 +526,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			end
 		end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		if server.shopLocation ~= nil then
 			if not locations[server.shopLocation] then
@@ -462,12 +543,18 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			end
 		end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		LookupShop(words[2], true)
 
 		if words[3] ~= nil then
 			number = tonumber(words[3])
+
+			if(number == nil) then
+				number = 1
+			elseif(number < 1) then
+				number = 1
+			end
 		else
 			number = 1
 		end
@@ -495,7 +582,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			return false
 		end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		if (tonumber(players[playerid].cash) > (tonumber(shopPrice) * number)) and ((number <= tonumber(shopStock) or (tonumber(shopStock) == -1))) then
 			players[playerid].cash = tonumber(players[playerid].cash) - (tonumber(shopPrice) * number)
@@ -519,7 +606,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		return false
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
 		cursor,errorString = conn:execute("SELECT * FROM shop")
@@ -530,7 +617,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		end
 	end
 
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
 		LookupShop(words[2], true)
@@ -555,5 +642,5 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		return false
 	end
 
-if debug then dbug("debug shop end") end
+	if debug then dbugFull("D", "", debugger.getinfo(1,"nSl"), "Shop end") end
 end

@@ -7,15 +7,14 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local debug
+local debug = false
 
 -- enable debug to see where the code is stopping. Any error will be after the last debug line.
-debug = false
 
 function playerDisconnected(line)
 	local steam, playerID, entityID, name, pos, temp
 
-if (debug) then dbug("debug playerDisconnected line " .. line) end
+	if (debug) then dbug("D", "", debugger.getinfo(1,"nSl")) end
 
 	botman.playersOnline = tonumber(botman.playersOnline) - 1
 
@@ -26,31 +25,35 @@ if (debug) then dbug("debug playerDisconnected line " .. line) end
 		return
 	end
 
-if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if string.find(line, "Player disconnected:") then
-if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 		temp = string.split(line, ",")
 		entityID = string.sub(temp[1], string.find(temp[1], "EntityID=") + 9)
 		steam = string.match(temp[2], "(%d+)")
 		name = stripQuotes(string.sub(temp[4], 13, string.len(temp[4])))
 
+		if(not steam) then
+			return
+		end
+
 		if players[steam] == nil then
 			initNewPlayer(steam, name, entityID, steam)
 		end
 
-if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		if igplayers[steam] == nil then
 			initNewIGPlayer(steam, name, entityID, steam)
 		end
 
-if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		fixMissingPlayer(steam)
 		fixMissingIGPlayer(steam)
 
-if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		-- 2016-09-11T04:14:28
 		botman.serverTime = string.sub(line, 1, 19)
@@ -59,11 +62,13 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 
 		newDay()
 
-if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
-		dbug("Saving disconnected player " .. igplayers[steam].name)
+		echo(os.date("%c") .. " Saving disconnected player " .. igplayers[steam].name .. "(")
+		echoLink(steam,  "openUrl(\"http://steamcommunity.com/profiles/" .. steam .. "\")", "Click to view players Steam profile.")
+		echo(")\n\n")
 
-if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		irc_chat(server.ircMain, server.gameDate .. " " .. steam .. " " .. players[steam].name .. " disconnected")
 		logChat(botman.serverTime, "Server", steam .. " " .. players[steam].name .. " disconnected")

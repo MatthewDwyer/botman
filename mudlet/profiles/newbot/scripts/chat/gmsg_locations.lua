@@ -619,7 +619,7 @@ function gmsg_locations()
 			-- if the player is ingame, send them to the lobby otherwise flag it to happen when they rejoin
 			if (igplayers[id]) then
 				cmd = "tele " .. id .. " " .. locations["spawnpoint1"].x .. " " .. locations["spawnpoint1"].y .. " " .. locations["spawnpoint1"].z
-				teleport(cmd, id)
+				teleport(cmd)
 
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " has been sent to the lobby.[-]")
@@ -2188,20 +2188,15 @@ function gmsg_locations()
 			randomTP(chatvars.playerid, loc)
 
 			if server.announceTeleports then
-				if tonumber(chatvars.accessLevel) > 2 then message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " is porting to " .. loc .. "[-]") end
+				if server.coppi and tonumber(chatvars.accessLevel) > 2 then message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " has moved to " .. loc .. "[-]") end
 			end
 		else
 			cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
-
-			if tonumber(server.playerTeleportDelay) == 0 or not igplayers[chatvars.playerid].currentLocationPVP or tonumber(players[chatvars.playerid].accessLevel) < 2 then
-				teleport(cmd, chatvars.playerid)
-			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. loc .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
-				if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
-			end
+			prepareTeleport(chatvars.playerid, cmd)
+			teleport(cmd)
 
 			if server.announceTeleports then
-				if tonumber(chatvars.accessLevel) > 2 then message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " is porting to " .. loc .. "[-]") end
+				if server.coppi and tonumber(chatvars.accessLevel) > 2 then message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " has moved to " .. loc .. "[-]") end
 			end
 		end
 

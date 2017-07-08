@@ -348,7 +348,7 @@ function gmsg_tracker()
 			return true
 		end
 
-		r = rand(50)
+		r = math.random(1,50)
 		if r == 49 then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HAMMER TIME![-]")
 		end

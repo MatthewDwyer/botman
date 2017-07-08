@@ -7,14 +7,18 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug = false
+
 function thirtySecondTimer()
 	local k, v, cmd
 
-	windowMessage(server.windowDebug, "30 second timer\n")
+	-- windowMessage(server.windowDebug, "30 second timer\n")
 
 	if botman.botDisabled or botman.botOffline then
 		return
 	end
+
+	if(debug) then dbugFull("I", "", "", "30 second timer.") end
 
 	if (botman.announceBot == true) then
 		fixMissingServer() -- test for missing values
@@ -47,10 +51,10 @@ function thirtySecondTimer()
 		for k, v in pairs(igplayers) do
 			if (igplayers[k].killTimer == nil) then igplayers[k].killTimer = 9 end
 
-			if tonumber(igplayers[k].killTimer) < 2 then
+			-- if tonumber(igplayers[k].killTimer) < 2 then
 				cmd = "si " .. k
 				if botman.dbConnected then conn:execute("INSERT into commandQueue (command, steam) VALUES ('" .. cmd .. "'," .. k .. ")") end
-			end
+			-- end
 		end
 
 		cmd = "DoneInventory"

@@ -23,7 +23,7 @@ function timedCommandsTimer()
 	row = cursor:fetch({}, "a")
 
 	if row then
-		windowMessage(server.windowDebug, os.date("%c") .. " Running timed command (" .. row.id .. ") " .. row.command .. "\n")
+		windowMessage(server.windowDebug, "running timed command (" .. row.id .. ") " .. row.command .. "\n")
 
 		if (row.command ~= "DoneInventory") then
 

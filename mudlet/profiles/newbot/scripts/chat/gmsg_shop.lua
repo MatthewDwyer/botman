@@ -11,6 +11,13 @@ local debug = false
 
 function gmsg_shop()
 	calledFunction = "gmsg_shop"
+	local tmp
+
+	if(server.allowShop) then
+		tmp = "Open"
+	else
+		tmp = "Closed"
+	end
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
@@ -19,26 +26,28 @@ function gmsg_shop()
 	end
 
 	-- ###################  do not allow remote commands beyond this point ################
-	if (chatvars.playerid == 0) then
+	if (tonumber(chatvars.playerid) < 1) then
 		botman.faultyChat = false
 		return false
 	end
 	-- ####################################################################################
 
-if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
+	if debug then dbugFull("D", "", debugger.getinfo(1,"nSl"), chatvars.command .. ", " .. (chatvars.words[1] or "") .. ", " .. (chatvars.words[2] or "") .. ", " .. (chatvars.words[3] or "") .. ", " .. (chatvars.accessLevel or "Undefined") .. ", " .. tmp) end
 
-	if (chatvars.words[1] == "shop"or chatvars.words[1] == "buy") and chatvars.words[2] ~= "ticket" then
+	if (chatvars.words[1] == "shop" or chatvars.words[1] == "buy") and chatvars.words[2] ~= "ticket" then
 		if (chatvars.accessLevel > 2) and (server.allowShop == false) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The shop is closed until further notice.[-]")
 			botman.faultyChat = false
 			return true
 		end
 
+		if debug then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
 		botman.faultyChat = doShop(chatvars.command, chatvars.playerid, chatvars.words)
 		return true
 	end
 
-if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
+	if debug then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (chatvars.words[1] == "cash" or chatvars.words[1] == server.moneyName or chatvars.words[1] == server.moneyPlural or chatvars.words[1] == "bank" or chatvars.words[1] == "wallet") then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have " .. players[chatvars.playerid].cash .. " " .. server.moneyPlural .. " in the bank.[-]")
@@ -46,7 +55,7 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 		return true
 	end
 
-if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
+	if debug then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (chatvars.words[1] == "pay" and chatvars.words[2] ~= nil) then
 		id = LookupPlayer(chatvars.words[2])
@@ -61,7 +70,7 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 		return true
 	end
 
-if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
+	if debug then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (chatvars.words[1] == "lottery" or chatvars.words[1] == "lotto" or chatvars.words[1] == "tickets") then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The lottery prize pool has reached " .. server.lottery .. " " .. server.moneyPlural .. "![-]")
@@ -76,7 +85,7 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 		return true
 	end
 
-if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
+	if debug then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (chatvars.words[1] == "buy" and chatvars.words[2] == "ticket") or chatvars.words[1] == "gamble" then
 		if chatvars.number == nil then chatvars.number = 1 end
@@ -94,7 +103,7 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 			gotTicket = false
 
 			while not gotTicket do
-				r = rand(100)
+				r = math.random(1,100)
 
 				cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE steam = " .. chatvars.playerid .. " AND ticket = " .. r)
 				rows = cursor:numrows()
@@ -120,18 +129,35 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 		end
 
 		conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid)
-		cursor,errorString = conn:execute("SELECT count(ticket) as tickets FROM lottery WHERE steam = " .. chatvars.playerid)
-		row = cursor:fetch(row, "a")
 
-		if tonumber(row.tickets) > 0 then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Good Luck!  You have " .. row.tickets .. " tickets in the next draw![-]")
+		cursor,errorString = conn:execute("SELECT count(ticket) as tickets FROM lottery WHERE steam = " .. chatvars.playerid)
+		-- row = cursor:fetch(row, "a")
+		row = cursor:fetch({}, "a")
+
+		if(row) then
+			if(row.tickets == nil) then
+				row = nil
+			end
+		else
+			dbugFull("E", "", debugger.getinfo(1,"nSl"), "No row returned from SELECT count(ticket) as tickets FROM lottery WHERE steam = " .. chatvars.playerid)
+		end
+
+		if(not row) then
+			dbugFull("E", "" , debugger.getinfo(1,"nSl"), "Unable to read lottory tickets for: " .. chatvars.playerid .. "(" .. (errorString or "") .. ")")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] Unable to verify ticket purchase, please contact an admin!")
+		else
+			if(row.tickets ~= nil) then
+				if(tonumber(row.tickets)) > 0 then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Good Luck!  You have " .. row.tickets .. " tickets in the next draw![-]")
+				end
+			end
 		end
 
 		botman.faultyChat = false
 		return true
 	end
 
-if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
+	if debug then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (chatvars.words[1] == "show" and chatvars.words[2] == "cash") then
 		players[chatvars.playerid].watchCash = true
@@ -142,7 +168,7 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 		return true
 	end
 
-if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
+	if debug then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (chatvars.words[1] == "hide" and chatvars.words[2] == "cash") then
 		players[chatvars.playerid].watchCash = nil
@@ -153,7 +179,7 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 		return true
 	end
 
-if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
+	if debug then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (chatvars.words[1] == "yes" and chatvars.words[2] == nil) then
 		if igplayers[chatvars.playerid].botQuestion == "pay player" then
@@ -164,6 +190,6 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 		end
 	end
 
-if debug then dbug("end debug gmsg_shop") end
+	if debug then dbugFull("D", "", debugger.getinfo(1,"nSl"), "End gmsg_shop") end
 
 end

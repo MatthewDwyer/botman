@@ -13,24 +13,27 @@ add /claims <distance> it will count all claims (using llp) within range.
 add /claim owners <distance> will list all the players with claims down in range
 --]]
 
+local debug = false
+
 function gmsg_admin()
 	calledFunction = "gmsg_admin"
 
-	local debug, tmp, str, pid
+	local tmp, str, pid
 	local shortHelp = false
 	local skipHelp = false
 
 	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
-	debug = false
 	tmp = {}
 
-if debug then dbug("debug admin") end
+	if debug then dbugFull("D", "", debugger.getinfo(1,"nSl"), chatvars.playername .. ", " .. chatvars.command .. ", " .. (chatvars.words[1] or "") .. ", " .. (chatvars.words[2] or "") .. ", " .. (chatvars.words[3] or "") .. ", " .. tostring(chatvars.showHelp)) end
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
 		botman.faultyChat = false
 		return false
 	end
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if chatvars.showHelp then
 		if chatvars.words[3] then
@@ -47,6 +50,8 @@ if debug then dbug("debug admin") end
 			shortHelp = true
 		end
 	end
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "showHelp = " .. tostring(chatvars.showHelp) .. " skipHelp = " .. tostring(skipHelp)) end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
 		irc_chat(players[chatvars.ircid].ircAlias, " ")
@@ -348,7 +353,8 @@ if debug then dbug("debug admin") end
 					return true
 				end
 
-				teleport(tmp.cmd, tmp.id)
+				prepareTeleport(tmp.id, tmp.cmd)
+				teleport(tmp.cmd, true)
 
 				players[tmp.id].xPosTimeout = 0
 				players[tmp.id].yPosTimeout = 0
@@ -376,7 +382,8 @@ if debug then dbug("debug admin") end
 					tmp.cmd = "tele " .. tmp.id .. " " .. players[tmp.id].xPosOld .. " " .. players[tmp.id].yPosOld .. " " .. players[tmp.id].zPosOld
 				end
 
-				teleport(tmp.cmd, tmp.id)
+				prepareTeleport(tmp.id, tmp.cmd)
+				teleport(tmp.cmd, true)
 
 				players[tmp.id].xPosOld = 0
 				players[tmp.id].yPosOld = 0
@@ -494,7 +501,8 @@ if debug then dbug("debug admin") end
 				if (players[prisonerid].prisonxPosOld) then
 					cmd = "tele " .. prisonerid .. " " .. players[prisonerid].prisonxPosOld .. " " .. players[prisonerid].prisonyPosOld .. " " .. players[prisonerid].prisonzPosOld
 					igplayers[prisonerid].lastTP = cmd
-					teleport(cmd, prisonerid)
+					prepareTeleport(prisonerid, cmd)
+					teleport(cmd, true)
 				end
 			else
 				message("pm " .. prisonerid .. " [" .. server.chatColour .. "]You are a free citizen, but you must find your own way back.[-]")
@@ -554,11 +562,14 @@ if debug then dbug("debug admin") end
 			return false
 		end
 	else
-		if tonumber(chatvars.ircid) > 0 then
+	-- dbugFull("D", "",  debugger.getinfo(1,"nSl"), ":" .. chatvars.ircid)  .. ":" .. tonumber(chatvars.ircid) .. ":")
+		if(chatvars.ircid) then
+		  if(tonumber(chatvars.ircid)) > 0 then
 			if (accessLevel(chatvars.ircid) > 2) then
 				botman.faultyChat = false
 				return false
 			end
+		  end
 		end
 	end
 	-- ##################################################################
@@ -1082,6 +1093,7 @@ if debug then dbug("debug admin") end
 			if botman.dbConnected then conn:execute("INSERT INTO whitelist (steam) VALUES (" .. tmp.id .. ")") end
 
 			send("ban remove " .. tmp.id)
+			banList[tmp.id] = nil
 
 			-- create or update the donor record on the shared database
 			if server.serverGroup ~= "" then
@@ -1297,6 +1309,8 @@ if debug then dbug("debug admin") end
 	end
 
 	if (chatvars.words[1] == "enable" and chatvars.words[2] == "waypoints" and chatvars.words[3] == nil) then
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "chatvars.playername = " .. chatvars.playername) end
+
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 0) then
 				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -1304,10 +1318,16 @@ if debug then dbug("debug admin") end
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) > 0) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
-				botman.faultyChat = false
-				return true
+			if(players[chatvars.ircid]) then
+				if (accessLevel(chatvars.ircid) > 0) then
+					irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			elseif(chatvars.accessLevel > 0) then
+					dbugFull("I", "", "", "The command: '/enable waypoints' is resticted.")
+					botman.faultyChat = false
+					return true
 			end
 		end
 
@@ -1325,7 +1345,7 @@ if debug then dbug("debug admin") end
 		return true
 	end
 
-	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "way"))) or chatvars.words[1] ~= "help" then
@@ -1701,6 +1721,7 @@ if debug then dbug("debug admin") end
 		if botman.dbConnected then conn:execute("INSERT INTO whitelist (steam) VALUES (" .. id .. ")") end
 
 		send("ban remove " .. id)
+		banList[id] = nil
 
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .. " has been added to the whitelist.[-]")
@@ -2203,7 +2224,7 @@ if debug then dbug("debug admin") end
 		end
 	end
 
-	if (chatvars.words[1] == "exclude" and chatvars.words[2] == "admins") then
+	if ((chatvars.words[1] == "include" or chatvars.words[1] == "exclude") and chatvars.words[2] == "admins") then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
 				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -2218,12 +2239,24 @@ if debug then dbug("debug admin") end
 			end
 		end
 
-		botman.ignoreAdmins = true
+		if(chatvars.words[1] == "include") then
+			botman.ignoreAdmins = false
+		else
+			botman.ignoreAdmins = true
+		end
 
 		if (chatvars.playername ~= "Server") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admins can ignore the server rules.[-]")
+			if(botman.ignoreAdmins) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admins can ignore the server rules.[-]")
+			else
+				 message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admins can no longer ignore the server rules.[-]")
+			end
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "Admins can ignore the server rules.")
+			if(botman.ignoreAdmins) then
+				irc_chat(players[chatvars.ircid].ircAlias, "Admins can ignore the server rules.")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "Admins can no longer ignore the server rules.")
+			end
 		end
 
 		botman.faultyChat = false
@@ -2422,7 +2455,7 @@ if debug then dbug("debug admin") end
 			if (igplayers[id]) then
 				cmd = "tele " .. id .. " " .. locations[loc].x .. " " .. locations[loc].y .. " " .. locations[loc].z
 				igplayers[id].lastTP = cmd
-				teleport(cmd, id)
+				teleport(cmd, true)
 
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " has been sent to " .. locations[loc].name .. "[-]")
@@ -2547,7 +2580,8 @@ if debug then dbug("debug admin") end
 				else
 					if (igplayers[id]) then
 						cmd = "tele " .. id .. " " .. players[id].homeX .. " " .. players[id].homeY .. " " .. players[id].homeZ
-						teleport(cmd, id)
+						prepareTeleport(id, cmd)
+						teleport(cmd, true)
 					end
 
 					if (chatvars.playername ~= "Server") then
@@ -2569,7 +2603,8 @@ if debug then dbug("debug admin") end
 				else
 					if (igplayers[id]) then
 						cmd = "tele " .. id .. " " .. players[id].home2X .. " " .. players[id].home2Y .. " " .. players[id].home2Z
-						teleport(cmd, id)
+						prepareTeleport(id, cmd)
+						teleport(cmd, true)
 					end
 
 					if (chatvars.playername ~= "Server") then
@@ -2599,7 +2634,11 @@ if debug then dbug("debug admin") end
 		end
 	end
 
+	if(debug) then dbugFull("D", "" , debugger.getinfo(1,"nSl") , line .. ", " .. chatvars.words[1] .. ", " .. chatvars.words[2]) end
+
 	if (chatvars.words[1] == "watch") then
+		if(debug) then dbugFull("D", "" , debugger.getinfo(1,"nSl")) end
+
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
 				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -2607,11 +2646,39 @@ if debug then dbug("debug admin") end
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) > 2) then
+			if (chatvars.accessLevel > 2) then
 				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
 				botman.faultyChat = false
 				return true
 			end
+		end
+
+		if(debug) then dbugFull("D", "" , debugger.getinfo(1,"nSl")) end
+
+		if(chatvars.words[2] == "list") then
+			if(debug) then dbugFull("D", "" , debugger.getinfo(1,"nSl")) end
+			local cMsg = "             Watched Player List"
+			echo(cMsg .. "\n")
+
+			if(chatvars.playerid ~= 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. cMsg) end
+
+			cMsg = "-------------------------------------"
+			echo(cMsg .. "\n")
+
+			if(chatvars.playerid ~= 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. cMsg) end
+
+			for k,v in pairs(players) do
+				if(banList[v.steam] == nil and v.steam ~= 0 and v.watchPlayer == true) then
+					echo(string.format("%25s", v.name) .. " (")
+					echoLink(v.steam,   "openUrl(\"http://steamcommunity.com/profiles/" .. v.steam .. "\")", "Click to view players Steam profile.")
+					echo(")\n")
+					if(chatvars.playerid ~= 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. string.format("%25s", v.name) .. "(" .. v.steam .. ")") end
+				end
+			end
+
+			echo("\n")
+			botman.faultyChat = false
+			return true
 		end
 
 		if (chatvars.words[2] == "new" and chatvars.words[3] == "players") then
@@ -2768,10 +2835,12 @@ if debug then dbug("debug admin") end
 
 			if (igplayers[id2]) then
 				cmd = "tele " .. id1 .. " " .. id2
-				teleport(cmd, id1)
+				prepareTeleport(id1, cmd)
+				teleport(cmd, true)
 			else
 				cmd = "tele " .. id1 .. " " .. math.floor(players[id2].xPos) .. " " .. math.ceil(players[id2].yPos) .. " " .. math.floor(players[id2].zPos)
-				teleport(cmd, id1)
+				prepareTeleport(id1, cmd)
+				teleport(cmd, true)
 			end
 		end
 
@@ -3218,7 +3287,56 @@ if debug then dbug("debug admin") end
 		return true
 	end
 
-	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+	 if(debug) then dbugFull("D", "" , debugger.getinfo(1,"nSl")) end
+
+	if(chatvars.words[1] == "ban" and chatvars.words[2] == "list") then
+		local bmsg = "                                          Ban List"
+
+		if(debug) then dbugFull("D", "" , debugger.getinfo(1,"nSl")) end
+
+		echo(bmsg .. "\n")
+
+		if(chatvars.playerid ~= 0) then
+			send("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. bmsg)
+		end
+
+		bmsg = "------------------------------------------------------------------------------------------"
+
+		echo(bmsg .. "\n")
+
+		if(chatvars.playerid ~= 0) then
+                        send("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. bmsg)
+                end
+
+		for k,v in pairs(banList) do
+			local name 
+
+			if(v.name == nil) then
+				if(players[k]) then
+					name = players[k].name
+				else
+					name = ""
+				end
+
+			else
+				name = v.name
+			end
+
+			echo(string.format("%25s", name) .. " (")
+
+			echoLink(k,  "openUrl(\"http://steamcommunity.com/profiles/" .. k .. "\")", "Click to view players Steam profile.")
+			echo(") " .. v.expireDate .. " " .. v.reason .. "\n")
+
+                	if(chatvars.playerid ~= 0) then
+                        	send("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. string.format("%25s", name) .. "(" .. k .. ") " .. v.expireDate .. " " .. v.reason )
+                	end
+		end
+
+		echo("\n")
+
+		botman.faultyChat = false
+		return true
+	end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "ban") or string.find(chatvars.command, "black"))) or chatvars.words[1] ~= "help" then
@@ -3262,6 +3380,7 @@ if debug then dbug("debug admin") end
 		end
 
 		send("ban remove " .. id)
+		banList[id] = nil
 
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has been unbanned.[-]")
@@ -3349,6 +3468,7 @@ if debug then dbug("debug admin") end
 
 		if chatvars.words[1] ~= "gblban" then
 			send("ban add " .. id .. " " .. duration .. " " .. reason)
+			send("ban list")
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has been banned " .. duration .. " for " .. reason .. ".[-]")
@@ -3374,6 +3494,8 @@ if debug then dbug("debug admin") end
 					connBots:execute("INSERT INTO bans (steam, reason, GBLBan, GBLBanReason, botID) VALUES (" .. pname .. ",'" .. escape(reason) .. "',1,'" .. escape(reason) .. "'," .. server.botID .. ")")
 					send("ban add " .. id .. " " .. duration .. " " .. reason)
 				end
+
+				send("ban list")
 			else
 				connBots:execute("UPDATE bans set GBLBan = 1, GBLBanReason = '" .. escape(reason) .. "' WHERE steam = " .. id .. " AND botID = " .. server.botID)
 			end
@@ -4312,14 +4434,20 @@ if debug then dbug("debug admin") end
 			-- add the steamid to the admins table
 			if tonumber(number) == 0 then
 				owners[id] = {}
+				admins[id] = nil
+				mods[id] = nil
 			end
 
 			if tonumber(number) == 1 then
 				admins[id] = {}
+				owners[id] = nil
+				mods[id] = nil
 			end
 
 			if tonumber(number) == 2 then
 				mods[id] = {}
+				owners[id] = nil
+				mods[id] = nil
 			end
 
 			players[id].newPlayer = false
@@ -4329,9 +4457,9 @@ if debug then dbug("debug admin") end
 			players[id].canTeleport = true
 			players[id].botHelp = true
 
-			if tonumber(players[id].accessLevel) > tonumber(number) then
-				players[id].accessLevel = number
-			end
+			-- if tonumber(players[id].accessLevel) > tonumber(number) then
+			players[id].accessLevel = number
+			-- end
 
 			message("say [" .. server.chatColour .. "]" .. players[id].name .. " has been given admin powers[-]")
 			send("admin add " .. id .. " " .. number)
@@ -4416,7 +4544,7 @@ if debug then dbug("debug admin") end
 		if not (id == nil) then
 			-- then teleport to the player
 			cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[id].xPos) + 1 .. " " .. math.ceil(players[id].yPos) .. " " .. math.floor(players[id].zPos)
-			teleport(cmd, chatvars.playerid)
+			teleport(cmd, true)
 		end
 
 		botman.faultyChat = false
@@ -4506,7 +4634,8 @@ if debug then dbug("debug admin") end
 
 			-- then teleport to the prisoners old coords
 			cmd = "tele " .. chatvars.playerid .. " " .. players[prisonerid].prisonxPosOld .. " " .. players[prisonerid].prisonyPosOld .. " " .. players[prisonerid].prisonzPosOld
-			teleport(cmd, chatvars.playerid)
+			prepareTeleport(chatvars.playerid, cmd)
+			teleport(cmd, true)
 		else
 			-- tp to their return coords if they are set
 			if tonumber(players[prisonerid].yPosTimeout) ~= 0 then
@@ -4517,7 +4646,8 @@ if debug then dbug("debug admin") end
 
 				-- then teleport to the prisoners old coords
 				cmd = "tele " .. chatvars.playerid .. " " .. players[prisonerid].xPosTimeout .. " " .. players[prisonerid].yPosTimeout .. " " .. players[prisonerid].zPosTimeout
-				teleport(cmd, chatvars.playerid)
+				prepareTeleport(chatvars.playerid, cmd)
+				teleport(cmd, true)
 			end
 		end
 
@@ -4533,7 +4663,7 @@ if debug then dbug("debug admin") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Teleport below and a short distance away from a player.  You must be flying for this or you will just fall all the time.")
-				irc_chat(players[chatvars.ircid].ircAlias, "You arrive 20 metres below the player and 30 metres to the south.  If you give a number after the player name you will be that number metres south of them.")
+				irc_chat(players[chatvars.ircid].ircAlias, "You arrive 20 metres below the player and 10 metres to the side.  If you give a number after the player name you will be that number metres off to the side.")
 				irc_chat(players[chatvars.ircid].ircAlias, "The bot will keep you near the player, teleporting you close to them if they get away from you.")
 				irc_chat(players[chatvars.ircid].ircAlias, "To stop following them type " .. server.commandPrefix .. "stop.")
 				irc_chat(players[chatvars.ircid].ircAlias, " ")
@@ -4561,8 +4691,6 @@ if debug then dbug("debug admin") end
 		if chatvars.words[1] == "near" then
 			pname = chatvars.words[2]
 		end
-		
-		igplayers[chatvars.playerid].followDistance = 30
 
 		if chatvars.words[3] ~= nil then
 			igplayers[chatvars.playerid].followDistance = tonumber(chatvars.words[3])
@@ -4580,12 +4708,7 @@ if debug then dbug("debug admin") end
 			igplayers[chatvars.playerid].following = id
 
 			-- then teleport close to the player
-			if not string.find(server.gameVersion, "Alpha 16 (b105)") then
-				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos) .. " " .. math.ceil(igplayers[id].yPos - 20) .. " " .. math.floor(igplayers[id].zPos - igplayers[chatvars.playerid].followDistance)
-			else
-				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos) .. " -1 " .. math.floor(igplayers[id].zPos - igplayers[chatvars.playerid].followDistance)
-			end
-				
+			cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos + 10) .. " " .. math.ceil(igplayers[id].yPos - 20) .. " " .. math.floor(igplayers[id].zPos + 10)
 			send(cmd)
 		end
 
@@ -4999,7 +5122,9 @@ if debug then dbug("debug admin") end
 		if (players[prisonerid].steam) then
 			message("pm " .. prisonerid .. " [" .. server.chatColour .. "]You are released from prison.  Be a good citizen if you wish to remain free.[-]")
 			cmd = "tele " .. prisonerid .. " " .. chatvars.playerid
-			teleport(cmd, prisonerid)
+			prepareTeleport(prisonerid, cmd)
+
+			teleport(cmd, true)
 			players[prisonerid].xPosOld = 0
 			players[prisonerid].yPosOld = 0
 			players[prisonerid].zPosOld = 0
@@ -5056,7 +5181,8 @@ if debug then dbug("debug admin") end
 					players[chatvars.playerid].zPosOld = math.floor(igplayers[chatvars.playerid].zPos)
 
 					cmd = "tele " .. chatvars.playerid .. " " .. players[id].homeX .. " " .. players[id].homeY .. " " .. players[id].homeZ
-					teleport(cmd, chatvars.playerid)
+					prepareTeleport(chatvars.playerid, cmd)
+					teleport(cmd, true)
 				end
 			else
 				if (players[id].home2X == 0 and players[id].home2Z == 0) then
@@ -5070,7 +5196,8 @@ if debug then dbug("debug admin") end
 					players[chatvars.playerid].zPosOld = math.floor(igplayers[chatvars.playerid].zPos)
 
 					cmd = "tele " .. chatvars.playerid .. " " .. players[id].home2X .. " " .. players[id].home2Y .. " " .. players[id].home2Z
-					teleport(cmd, chatvars.playerid)
+					prepareTeleport(chatvars.playerid, cmd)
+					teleport(cmd, true)
 				end
 			end
 		end

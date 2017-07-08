@@ -9,18 +9,16 @@
 
 --  weathersurvival on/off
 
+local debug = false
 function gmsg_server()
 	calledFunction = "gmsg_server"
 
-	local debug, tmp
+	local tmp
 	local shortHelp = false
 	local skipHelp = false
 	local tmp
 
-	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
-	debug = false
-
-if debug then dbug("debug server") end
+	if debug then dbug("debug server") end
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
@@ -131,9 +129,9 @@ if debug then dbug("debug server") end
 			return false
 		end
 	else
-		if tonumber(chatvars.ircid) > 0 then
-			if (accessLevel(chatvars.ircid) > 2) then
-				botman.faultyChat = false
+		if (chatvars.ircid) then
+			if(tonumber(chatvars.ircid) > 2) then
+					botman.faultyChat = false
 				return false
 			end
 		end
@@ -385,12 +383,12 @@ if debug then dbug("debug server") end
 				return true
 			end
 		else
-			if tonumber(chatvars.ircid) > 0 then
-			if (accessLevel(chatvars.ircid) > 1) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
-				botman.faultyChat = false
-				return true
-			end
+			if(chatvars.ircid) then
+				if(tonumber(chatvars.ircid) > 0 and chatvars.accessLevel > 1) then
+					irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
 			end
 		end
 
@@ -402,7 +400,7 @@ if debug then dbug("debug server") end
 			end
 		else
 			botman.scheduledRestart = false
-			botman.scheduledRestartTimestamp = os.time()
+			botman.scheduledRestartTimestamp = getRestartOffset()
 			botman.scheduledRestartPaused = false
 			botman.scheduledRestartForced = false
 
@@ -445,12 +443,13 @@ if debug then dbug("debug server") end
 
 		if (string.find(chatvars.command, "hour")) then
 			message("say [" .. server.chatColour .. "]A server reboot is happening in " .. restartDelay .. " hours time.[-]")
-			restartDelay = restartDelay * 60 * 60
+			echo("A server reboot is happening in " .. restartDelay .. " hours time.\n\n")
+			restartDelay = restartDelay * 3600
 		end
 
 		botman.scheduledRestartPaused = false
 		botman.scheduledRestart = true
-		botman.scheduledRestartTimestamp = os.time() + restartDelay
+		botman.scheduledRestartTimestamp = getRestartOffset() + restartDelay
 		botman.faultyChat = false
 		return true
 	end
@@ -587,36 +586,50 @@ if debug then dbug("debug server") end
 		end
 	end
 
-	if (chatvars.words[1] == "motd") or (chatvars.words[1] == "set" and chatvars.words[2] == "motd") then
-		if (chatvars.playername ~= "Server") then
-			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-				botman.faultyChat = false
-				return true
-			end
-		else
-			if (accessLevel(chatvars.ircid) > 0) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
-				botman.faultyChat = false
-				return true
-			end
-		end
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
 
+	if (chatvars.words[1] == "motd") or (chatvars.words[1] == "set" and chatvars.words[2] == "motd") then
 		if chatvars.words[2] == nil then
 			if server.MOTD == nil then
+				if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]There is no MOTD set.[-]")
 				else
 					irc_chat(players[chatvars.ircid].ircAlias, "There is no MOTD set.")
 				end
 			else
+				if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
 				if (chatvars.playername ~= "Server") then
+					if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "print motd for player: " .. chatvars.playerid .. "(" .. server.MOTD .. ")") end
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.MOTD .. "[-]")
 				else
 					irc_chat(players[chatvars.ircid].ircAlias, server.MOTD)
 				end
 			end
 		else
+
+		if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+                if (chatvars.playername ~= "Server") then
+                        if (chatvars.accessLevel > 0) then
+                                message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+                                botman.faultyChat = false
+                                return true
+                        end
+                else
+                        if (chatvars.accessLevel > 0) then
+                                if(players[chatvars.ircid]) then
+                                        irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+                                else
+                                        dbugFull("I", "", "", chatvars.command .. " is a restricted command.")
+                                end
+                                botman.faultyChat = false
+                                return true
+                        end
+                end
+
 			if chatvars.words[2] == "clear" then
 				server.MOTD = nil
 				conn:execute("UPDATE server SET MOTD = ''")
@@ -722,7 +735,7 @@ if debug then dbug("debug server") end
 --		scheduledReboot = false
 --		server.scheduledIdleRestart = false
 		botman.scheduledRestart = false
-		botman.scheduledRestartTimestamp = os.time()
+		botman.scheduledRestartTimestamp = getRestartOffset()
 		botman.scheduledRestartPaused = false
 		botman.scheduledRestartForced = false
 
@@ -756,6 +769,9 @@ if debug then dbug("debug server") end
 		if botman.scheduledRestart == true and botman.scheduledRestartPaused == false then
 			botman.scheduledRestartPaused = true
 			restartTimeRemaining = botman.scheduledRestartTimestamp - os.time()
+			if(restartTimeRemaining < 0) then
+				restartTimeRemaining = 0
+			end
 
 			message("say [" .. server.chatColour .. "]The reboot has been paused.[-]")
 		end
@@ -993,7 +1009,11 @@ if debug then dbug("debug server") end
 			end
 		else
 			if (accessLevel(chatvars.ircid) > 1) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				if(players[chatvars.ircid]) then
+					irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				else 
+					dbugFull("D", "", "", "set website is a restricted command.")
+				end
 				botman.faultyChat = false
 				return true
 			end
@@ -1188,7 +1208,11 @@ if debug then dbug("debug server") end
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New welcome message " .. msg .. "[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "New welcome message " .. msg)
+			if(chatvars.ircid) then
+				if(players[chatvars.ircid]) then
+					irc_chat(players[chatvars.ircid].ircAlias, "New welcome message " .. msg)
+				end
+			end
 		end
 
 		botman.faultyChat = false
@@ -1597,7 +1621,7 @@ if debug then dbug("debug server") end
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) > 0) then
+			if (chatvars.accessLevel > 0) then
 				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
 				botman.faultyChat = false
 				return true
@@ -1613,7 +1637,11 @@ if debug then dbug("debug server") end
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I will reboot the server when the server has been running " .. chatvars.number .. " hours.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "I will reboot the server when the server has been running " .. chatvars.number .. " hours.")
+				if(players[chatvars.ircid]) then
+					irc_chat(players[chatvars.ircid].ircAlias, "I will reboot the server when the server has been running " .. chatvars.number .. " hours.")
+				else
+					irc_chat("Server", "I will reboot the server when the server has been running " .. chatvars.number .. " hours.")
+				end
 			end
 		end
 
@@ -2033,7 +2061,7 @@ if debug then dbug("debug server") end
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) > 0) then
+			if (chatvars.accessLevel > 0) then
 				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
 				botman.faultyChat = false
 				return true
@@ -2044,7 +2072,11 @@ if debug then dbug("debug server") end
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Command expects pvp or pve as 2nd part eg " .. server.commandPrefix .. "northeast pvp.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Command expects pvp or pve as 2nd part eg " .. server.commandPrefix .. "northeast pvp.")
+				if(players[chatvars.ircid]) then
+					irc_chat(players[chatvars.ircid].ircAlias, "Command expects pvp or pve as 2nd part eg " .. server.commandPrefix .. "northeast pvp.")
+				else
+					irc_chat("Server", "Command expects pvp or pve as 2nd part eg " .. server.commandPrefix .. "northeast pvp.")
+				end
 			end
 
 			botman.faultyChat = false
@@ -3794,7 +3826,7 @@ if debug then dbug("debug server") end
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set default base size <number in metres or blocks>")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "The default base protection size is 32 blocks (64 diameter).  This default only applies to new players joining the server for the first time.")
+				irc_chat(players[chatvars.ircid].ircAlias, "The default base protection size is 41 blocks (64 diameter).  This default only applies to new players joining the server for the first time.")
 				irc_chat(players[chatvars.ircid].ircAlias, "Existing base sizes are not changed with this command.")
 				irc_chat(players[chatvars.ircid].ircAlias, "")
 			end
@@ -4456,7 +4488,7 @@ if debug then dbug("debug server") end
 		end
 	end
 
-	if chatvars.words[1] == "update" and (chatvars.words[2] == "code" or chatvars.words[2] == "scripts" or words[2] == "bot") and chatvars.words[3] == nil then
+	if chatvars.words[1] == "update" and (chatvars.words[2] == "code" or chatvars.words[2] == "scripts") and chatvars.words[3] == nil then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")

@@ -7,6 +7,8 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug  = true
+
 function miscCommandsTimer()
 	local cursor, errorString, row
 
@@ -19,24 +21,15 @@ function miscCommandsTimer()
 			if tonumber(row.steam) > 0 then
 				if igplayers[row.steam] == nil then
 					conn:execute("delete from miscQueue where steam = " .. row.steam)
+					if(debug) then
+						dbugFull("D", "", debugger.getinfo(1,"nSl"), "skiping command " .. row.command .. " for " .. row.steam .. " as they are not in the igplayers table")
+					end
+
 					return
 				end
 			end
 
 			send(row.command)
-
-			if string.find(row.command, "admin add") then
-				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been given admin.")
-			end
-
-			if string.find(row.command, "ban remove") then
-				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been unbanned.")
-			end
-
-			if string.find(row.command, "tele ") then
-				teleport(row.command, row.steam)
-			end
-
 			conn:execute("delete from miscQueue where id = " .. row.id)
 		end
 	end
@@ -56,10 +49,6 @@ function miscCommandsTimer()
 						send(row.command)
 					end
 
-					if string.find(row.command, "tele ") then
-						teleport(row.command, row.steam)
-					end
-
 					conn:execute("delete from miscQueue where id = " .. row.id)
 				end
 
@@ -70,11 +59,11 @@ function miscCommandsTimer()
 end
 
 
-function gimmeQueuedCommands()
+function gimmeQueuedCommandsFun()
 	local pid, dist1, dist2, cursor1, cursor1, errorString, row1, row2
 
 	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
-		return
+		return {}
 	end
 
 	cursor1,errorString = conn:execute("select distinct steam from gimmeQueue")
@@ -101,4 +90,6 @@ function gimmeQueuedCommands()
 	-- piggy back on this timer so we don't need to add more timers to the profile.
 	-- miscCommands are whatever we need done on a timer that isn't covered elsewhere
 	miscCommandsTimer()
+
+	return {} -- why are we needing to return something here?
 end

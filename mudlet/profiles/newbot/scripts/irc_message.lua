@@ -104,7 +104,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "update" and (words[2] == "code" or words[2] == "scripts" or words[2] == "bot") and words[3] == nil) then
+	if (words[1] == "update" and (words[2] == "code" or words[2] == "scripts") and words[3] == nil) then
 		updateBot(true)
 		return
 	end
@@ -628,7 +628,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		return
 	end
 
-	if players[ircid].denyRights then
+	if(not players[ircid]) then
+		if(chatvars.accessLevel > 0) then
+			return
+		end
+	elseif players[ircid].denyRights then
 		return
 	end
 
@@ -888,13 +892,24 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		pid = LookupPlayer(name1)
 
 		if pid ~= nil then
-			number = rand(10000)
+			local tmpArray
+			local count = 1
+
+			number = math.random(1,10000)
 			result = LookupPlayer(number, "code")
 
+			for k,v in pairs(igplayers) do
+				tmpArray[count] = k
+				count = count + 1
+			end
+
+			number = tonumber(tmpArray[math.random(1,table.getn(tmpArray))])
+--[[
 			while result ~= nil do
-				number = rand(10000)
+				number = math.random(1,10000)
 				result = LookupPlayer(number, "code")
 			end
+--]]
 
 			players[pid].ircInvite = number
 
@@ -1970,19 +1985,6 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 					irc_chat(name, " ")
 				end
 			end
-			
-			if string.lower(words[3]) == "gimmeZombies" then
-				for k, v in pairs(gimmeZombies) do
-					irc_chat(name, "Zombie " .. k)
-					irc_chat(name, " ")
-
-					for n,m in pairs(gimmeZombies[k]) do
-						irc_chat(name, n .. "," .. tostring(m))
-					end
-
-					irc_chat(name, " ")
-				end
-			end			
 
 			return
 		end
@@ -2789,7 +2791,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		    for k, v in ipairs(tmp.list) do
 				tmp.steam = LookupOfflinePlayer(v, "all")
 
-				diff = os.difftime(players[tmp.steam].donorExpiry, os.time()) -- diff = os.difftime(players[tmp.steam].donorExpiry, os.time(dateNow))
+				diff = os.difftime(players[tmp.steam].donorExpiry, os.time(dateNow))
 				days = math.floor(diff / 86400)
 
 				if (days > 0) then
@@ -2805,7 +2807,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				minutes = math.floor(diff / 60)
 
 				if tonumber(days) < 0 then
-					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " *** expired ***")
+					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " *** expired *** Donor status is still active!")
 				else
 					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " expires in " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
 				end

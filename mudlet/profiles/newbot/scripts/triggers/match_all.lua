@@ -7,6 +7,11 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug = false
+local deathMsg = { "a gruesome death.", ".. really?", " R.I.P" }
+
+scanningSlots = false
+
 function removeOldStaff()
 	local k,v
 
@@ -44,9 +49,7 @@ function matchAll(line)
 	end
 
 	if string.find(line, "WRN ") then -- what is this shit?  ignore it.
-		if not string.find(line, "DENSITYMISMATCH") then
-			return
-		end
+		return
 	end
 
 	if string.find(line, "NaN") then -- what is this shit?  ignore it.
@@ -85,32 +88,123 @@ function matchAll(line)
 
 	tmp = {}
 
+        if ircListItems ~= nil then
+                if string.sub(string.trim(line), 1, 5) == "Slot " then
+                        ircListItems = nil
+                end
+        end
+
+        if playerListItems ~= nil then
+                if string.find(line, "Listed ") then
+                        playerListItems = nil
+                        return true
+                end
+        end
+
+        if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
+        if ircListItems ~= nil then
+                if string.sub(line,1,4) == "    " and string.sub(line,5,5) ~= " " then
+                        irc_chat(players[ircListItems].ircAlias, string.trim(line))
+			return true
+                end
+        end
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
+        if playerListItems ~= nil then
+                if string.sub(line,1,4) == "    " and string.sub(line,5,5) ~= " " then
+                        message("pm " .. playerListItems .. " [" .. server.chatColour .. "]" .. string.trim(line) .. "[-]")
+                end
+        end
+
+
+	-- Handle tracking of when we stop seeing Slot entries.
+
+	if(string.sub(string.trim(line), 1, 5) == "Slot " and not scanningSlots) then
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "Set scanningSlots = true for: " .. invScan) end
+		scanningSlots = true
+		echo("Lists", line .. "\n")
+		return true
+	elseif(string.sub(string.trim(line), 1, 5) ~= "Slot " and scanningSlots) then
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "Clear scanningSlots for: " .. invScan) end
+		scanningSlots = false
+
+                if(invScan == "belt") then
+
+		    if(igplayers[invCheckID] ~= nil) then
+                        for k, v in pairs(beltSlots) do
+                                if(v == false) then
+                                        igplayers[invCheckID].inventory = igplayers[invCheckID].inventory .. "0,0,0,B-" .. k .. "|"
+                                end
+                        end
+
+                        resetBeltSlots()
+		    end
+                elseif(invScan == "bagpack") then
+
+		    if(igplayers[invCheckID] ~= nil) then
+                        for k, v in pairs(packSlots) do
+                                if(v == false) then
+                                        igplayers[invCheckID].inventory = igplayers[invCheckID].inventory .. "0,0,0,P-" .. k .. "|"
+                                end
+                        end
+
+                        resetPackSlots()
+		    end
+
+		elseif(invScan == "equipment") then
+
+		     if(igplayers[invCheckID] ~= nil) then
+			for k, v in pairs(equipmentSlots) do
+				if(v == false) then
+					igplayers[invCheckID].inventory = igplayers[invCheckID].inventory .. "0,0,0,E-" .. k .. "|"
+				end
+			end
+
+			resetEquipmentSlots()
+			if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "Call CheckInventory()") end
+			CheckInventory()
+		     end
+		else
+			dbugFull("E", "", debugger.getinfo(1,"nSl"), "Unknown settings for invScan: " .. (invScan or "nil"))
+		end
+
+	end
+	
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
 	if string.find(line, "INF Server shutting down!") then
 		saveLuaTables()
+		return true
 	end
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if string.find(line, "ERROR: unknown command 'pug'") then
 		server.scanNoclip = false
+		return true
 	end
-	
-	-- detect server version
-	-- Game version: Alpha 16 (b105) Compatibility Version: Alpha 16
-	if string.find(line, "Game version:") then
-		server.gameVersion = string.trim(string.sub(line, string.find(line, "Game version:") + 14, string.find(line, "Compatibility") - 2))
-		if botman.dbConnected then conn:execute("UPDATE server SET gameVersion = '" .. escape(server.gameVersion) .. "'") end
-	end	
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	-- detect server tools
 	if string.find(line, "Mod SDX:") or string.find(line, "SDX: ") and not server.SDXDetected then
 		server.SDXDetected = true
 		if botman.dbConnected then conn:execute("UPDATE server SET SDXDetected = 1") end
+		return true
 	end
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	-- detect SDX mods
 	if string.find(line, "Mod Server Tools:") or string.find(line, "mod 'Server Tools'") and not server.ServerToolsDetected then
 		server.ServerToolsDetected = true
 		if botman.dbConnected then conn:execute("UPDATE server SET ServerToolsDetected = 1") end
+		return true
 	end
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	-- detect CBSM
 	if string.find(line, "pm CBSM") and server.CBSMFriendly then
@@ -120,7 +214,11 @@ function matchAll(line)
 			server.commandPrefix = "!"
 			if botman.dbConnected then conn:execute("UPDATE server SET commandPrefix = '!'") end
 		end
+
+		return true
 	end
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if string.find(line, "type=EntityZombie") then
 		temp = string.split(line, " ")
@@ -141,7 +239,11 @@ function matchAll(line)
 				end
 			end
 		end
+
+		return true
 	end
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	-- check for lag
 	if string.find(line, "pm LagCheck " .. server.botID) and string.find(line, server.botsIP) then
@@ -156,10 +258,15 @@ function matchAll(line)
 		if server.lagged then
 			irc_chat(server.ircAlerts, "Server lag detected")
 		end
+
+		return true
 	end
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	-- look for general stuff
 	died = false
+--[[
 	if (string.find(line, "INF GMSG") and string.find(line, "eliminated")) then
 		nameStart = string.find(line, "eliminated ") + 11
 		pname = stripQuotes(string.trim(string.sub(line, nameStart)))
@@ -171,7 +278,7 @@ function matchAll(line)
 		pname = stripQuotes(string.trim(nameStart))
 		died = true
 	end
-
+--]]
 	if (string.find(line, "INF GMSG: Player") and string.find(line, " died")) then
 		pname = string.sub(line, string.find(line, "GMSG") + 14, string.len(line) - 6)
 		pname = stripQuotes(string.trim(pname))
@@ -180,7 +287,10 @@ function matchAll(line)
 
 	if (string.find(line, "Process chat error")) then
 		irc_chat(server.ircAlerts, "Server error detected. Re-validate to fix: " .. line)
+		return false
 	end
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if died then
 		pid = LookupPlayer(pname, "all")
@@ -202,19 +312,30 @@ function matchAll(line)
 			irc_chat(server.ircMain, "Player " .. pid .. " name: " .. pname .. "'s death recorded at " .. igplayers[pid].deadX .. " " .. igplayers[pid].deadY .. " " .. igplayers[pid].deadZ)
 			irc_chat(server.ircAlerts, "Player " .. pid .. " name: " .. pname .. "'s death recorded at " .. igplayers[pid].deadX .. " " .. igplayers[pid].deadY .. " " .. igplayers[pid].deadZ)
 
+			echo(os.date("%c").. " Player died " .. players[pid].name .. " id=" .. pid .. "(")
+			echoLink(pid,  "openUrl(\"http://steamcommunity.com/profiles/" .. pid .. "\")", "Click to view players Steam profile.")
+			echo(") @ x=" .. players[pid].deathX .. ", y=" .. players[pid].deathY .. ", z=" .. players[pid].deathZ .. "\n\n")
+
+			message("say [" .. server.chatColour .. "]" .. players[pid].name .. " has died " .. deathMsg[math.random(1,3)])
+
 			if tonumber(server.packCooldown) > 0 then
 				players[pid].packCooldown = os.time() + server.packCooldown
 			end
 		end
 
 		-- nuke their gimme queue of zeds
-		for k, v in pairs(gimmeQueuedCommands) do
-			if (v.steam == pid) and (string.find(v.cmd, "se " .. pid)) then
-				gimmeQueuedCommands[k] = nil
+		if(type(gimmeQueuedCommands) == "table") then
+			for k, v in pairs(gimmeQueuedCommands) do
+				if (v.steam == pid) and (string.find(v.cmd, "se " .. pid)) then
+					gimmeQueuedCommands[k] = nil
+				end
 			end
 		end
+
+		return true
 	end
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (string.find(line, "ServerMaxPlayerCount set to")) then
 		number = tonumber(string.match(line, " (%d+)"))
@@ -227,8 +348,12 @@ function matchAll(line)
 				send("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
 			end
 		end
+
+		return true
 	end
 
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if (string.sub(line, 1, 4) == os.date("%Y")) then
 		botman.readGG = false
@@ -419,50 +544,33 @@ function matchAll(line)
 			else
 				if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")") end
 			end
+
+			return true
 		end
+
 	end
 
-
-	if playerListItems ~= nil then
-		if string.find(line, "Listed ") then
-			playerListItems = nil
-		end
-	end
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 
-	if ircListItems ~= nil then
-		if string.sub(string.trim(line), 1, 5) == "Slot " then
-			ircListItems = nil
-		end
-	end
-
-
-	if ircListItems ~= nil then
-		if string.sub(line,1,4) == "    " and string.sub(line,5,5) ~= " " then
-			irc_chat(players[ircListItems].ircAlias, string.trim(line))
-		end
-	end
-
-
-	if playerListItems ~= nil then
-		if string.sub(line,1,4) == "    " and string.sub(line,5,5) ~= " " then
-			message("pm " .. playerListItems .. " [" .. server.chatColour .. "]" .. string.trim(line) .. "[-]")
-		end
-	end
-
-
+--[[
 	-- collect the ban list
 	if collectBans ~= nil then
 		if (string.find(line, " AM ")) or (string.find(line, " PM ")) and not string.find(line, "banned until") then
-			temp = string.split(line, "-")
-			steam = string.trim(temp[2])
+                        temp = string.split(line, "-")
+                        steam = string.trim(temp[2])
+
+			if(debug and not steam) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "steam = nil from " .. line) end
 
 			if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason) VALUES ('" .. string.trim(temp[1]) .. "'," .. steam .. ",'" .. string.trim(temp[3]) .. "')") end
 
 			-- also insert the steam owner (will only work if the steam id is different)
-			if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason) VALUES ('" .. string.trim(temp[1]) .. "'," .. players[steam].steamOwner .. ",'" .. string.trim(temp[3]) .. "')") end
+
+			-- if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason) VALUES ('" .. string.trim(temp[1]) .. "'," .. players[steam].steamOwner .. ",'" .. string.trim(temp[3]) .. "')") end
+			-- if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason) VALUES ('" .. string.trim(temp[1]) .. "'," .. steam .. ",'" .. string.trim(temp[3]) .. "')") end
 		end
 	end
+--]]
 
 
 	if (string.find(line, "Banned until")) then
@@ -470,6 +578,8 @@ function matchAll(line)
 		return
 	end
 
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	-- get zombies into table gimmeZombies
 	if getZombies ~= nil then
@@ -480,8 +590,9 @@ function matchAll(line)
 			tmp.entityID = string.trim(temp[1])
 			tmp.zombie = string.trim(temp[2])
 
-			if botman.dbConnected then conn:execute("INSERT INTO gimmeZombies (zombie, entityID) VALUES ('" .. tmp.zombie .. "'," .. tmp.entityID .. ") ON DUPLICATE KEY UPDATE remove = 0") end
+			if botman.dbConnected then conn:execute("INSERT INTO gimmeZombies (zombie, entityID) VALUES ('" .. tmp.zombie .. "'," .. tmp.entityID .. ")") end
 			updateGimmeZombies(tmp.entityID, tmp.zombie)
+			return true
 		else
 			if (string.sub(line, 1, 4) ~= os.date("%Y")) then
 				temp = string.split(line, "-")
@@ -490,36 +601,61 @@ function matchAll(line)
 				tmp.entityID = string.trim(temp[1])
 				tmp.entity = string.trim(temp[2])
 
-				if botman.dbConnected then conn:execute("INSERT INTO otherEntities (entity, entityID) VALUES ('" .. tmp.entity .. "'," .. tmp.entityID .. ")") end
-				updateOtherEntities(tmp.entityID, tmp.entity)
+
+				if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), (tmp.entityID or "nil") .. ", " .. (tmp.entity or "nil") .. ", " .. line) end
+				if(tmp.etntity ~= nil) then
+					if botman.dbConnected then conn:execute("INSERT INTO otherEntities (entity, entityID) VALUES ('" .. tmp.entity .. "'," .. tmp.entityID .. ")") end
+					updateOtherEntities(tmp.entityID, tmp.entity)
+					return true
+				end
 			end
 		end
 	end
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
-	if (string.find(line, "please specify one of the entities")) then
+	if (string.match(line, "please specify one of the entities")) then
 		-- flag all the zombies for removal so we can detect deleted zeds
-		if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET remove = 1") end		
-				
+		for k,v in pairs(gimmeZombies) do
+			gimmeZombies[k].remove = true
+		end
+
 		getZombies = true
 		return
 	end
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if string.find(line, "command 'rcd") and string.find(line, server.botsIP) then
 		fixChunkDensity = true
+		return true
 	end
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if string.find(line, "Executing command 'gg'") and string.find(line, server.botsIP) then
 		botman.readGG = true
+		return true
 	end
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
 		botman.listEntities = true
+		return true
 	end
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
+	if(not server) then
+		dbugFull("D", "", debugger.getinfo(1,"nSl"), "Fixing nil server")
+		server = {}
+	end
+
+	if(not server.botsIP) then
+		dbugFull("D", "", debugger.getinfo(1,"nSl"), "Fixing nil server.botsIP")
+		server.botsIP = "127.0.0.1"
+	end
 
 	if string.find(line, "Executing command 'version'") and string.find(line, server.botsIP) then
 		server.SDXDetected = false
@@ -529,8 +665,11 @@ function matchAll(line)
 			conn:execute("UPDATE server SET SDXDetected = 0")
 			conn:execute("UPDATE server SET ServerToolsDetected = 0")
 		end
+
+		return true
 	end
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if echoConsoleTo ~= nil then
 		if string.find(line, "Executing command 'help") and string.find(line, server.botsIP) then
@@ -538,45 +677,70 @@ function matchAll(line)
 			return
 		end
 
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
 		if string.find(line, "Executing command 'version'") and string.find(line, server.botsIP) then
 			echoConsole = true
 			return
 		end
+
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
 			echoConsole = true
 			return
 		end
 
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
 		if string.find(line, "Executing command 'li ") and string.find(line, server.botsIP) then
 			echoConsole = true
 			return
 		end
+
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		if string.find(line, "Executing command 'se'") and string.find(line, server.botsIP) then
 			echoConsole = true
 			return
 		end
 
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
 		if string.find(line, "Executing command 'si ") and string.find(line, server.botsIP) and string.find(line, echoConsoleTrigger) then
 			echoConsole = true
 			return
 		end
+
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		if string.find(line, "Executing command 'gg'") and string.find(line, server.botsIP) then
 			echoConsole = true
 			return
 		end
 
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
 		if string.find(line, "Executing command 'llp") and string.find(line, server.botsIP) then
 			echoConsole = true
 			return
 		end
 
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
 		if string.find(line, "Executing command 'ban list'") and string.find(line, server.botsIP) then
 			echoConsole = true
 			return
 		end
+
+		-- if (string.sub(line, 1, 4) == os.date("%Y")) then
+			-- botman.readGG = false
+
+			-- if (echoConsole ~= nil) then
+				-- echoConsole = nil
+				-- echoConsoleTo = l
+			-- end
+		-- end
 
 		if echoConsole == true then
 			line = line:gsub(",", "") -- strip out commas
@@ -590,9 +754,14 @@ function matchAll(line)
 
 		if getZombies then
 			getZombies = nil
-			
-			if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies WHERE remove = 1") end							
-			loadGimmeZombies()
+
+			-- remove any zombies that are still flagged for removal
+			for k,v in pairs(gimmeZombies) do
+				if gimmeZombies[k].remove then
+					pruneZIndex(k)
+					gimmeZombies[k] = nil
+				end
+			end
 
 			if botman.dbConnected then
 				cursor,errorString = conn:execute("SELECT Count(entityID) as maxZeds from gimmeZombies")
@@ -600,16 +769,19 @@ function matchAll(line)
 				botman.maxGimmeZombies = tonumber(row.maxZeds)
 			end
 		end
+		return true
 	end
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	--2015-08-23T15:08:25 87646.450 INF Executing command 'pm IPCHECK' by Telnet from 127.0.0.1:59765
 	if string.find(line, "IPCHECK") then
 		temp = string.sub(line, string.find(line, "from ") + 5)
 		server.botsIP = string.sub(temp, 1, string.find(temp, ":") - 1)
-		return
+		return true
 	end
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	-- detect Coppi's Mod
 	if string.find(line, "Mod Coppis command additions") then
@@ -619,16 +791,17 @@ function matchAll(line)
 			send("tcch " .. server.commandPrefix)
 		end
 
-		return
+		return true
 	end
 
-
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 	-- detect Alloc's Mod
 	if string.find(line, "Mod Allocs server fixes") then
 		server.allocs = true
-		return
+		return true
 	end
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if server.coppi and not server.playersCanFly then
 		if string.find(line, "PUG: entity_id") then
@@ -638,19 +811,32 @@ function matchAll(line)
 			end
 
 			pid = words[1]
+
+			if(pid == nil) then
+				dbugFull("E", "", debugger.getinfo(1,"nSl"), "pid == nil from (" .. line ..")")
+			end
+			local oldpid = pid
 			pid = LookupPlayer(pid)
+
+			if(pid == nil) then
+				dbugFull("E", "", debugger.getinfo(1,"nSl"), "pid == nil from LookupPlayer(" .. oldpid ..")(" .. line ..")")
+			end
+
+			-- if players[pid].newPlayer then
+				temp = 5
+			-- else
+				-- temp = 30
+			-- end
 
 			if string.find(line, "isUnderGround=True") and accessLevel(pid) > 2 then
 				igplayers[pid].noclip = true
 
 				if igplayers[pid].noclipX == 0 and igplayers[pid].noclipZ == 0 then
 					igplayers[pid].noclipX = math.floor(igplayers[pid].xPos)
-					igplayers[pid].noclipY = math.floor(igplayers[pid].yPos)
 					igplayers[pid].noclipZ = math.floor(igplayers[pid].zPos)
 				else
-					dist = distancexyz(igplayers[pid].noclipX,igplayers[pid].noclipY,igplayers[pid].noclipZ,math.floor(igplayers[pid].xPos),math.floor(igplayers[pid].yPos),math.floor(igplayers[pid].zPos))
+					dist = distancexz(igplayers[pid].noclipX,igplayers[pid].noclipZ,math.floor(igplayers[pid].xPos),math.floor(igplayers[pid].zPos))
 					igplayers[pid].noclipX = math.floor(igplayers[pid].xPos)
-					igplayers[pid].noclipY = math.floor(igplayers[pid].yPos)
 					igplayers[pid].noclipZ = math.floor(igplayers[pid].zPos)
 
 					if tonumber(dist) > 5 then
@@ -658,26 +844,37 @@ function matchAll(line)
 							if tonumber(players[pid].ping) > 150 then
 								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 40
 							else
-								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 25
+								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
 							end
 						else
-							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
+							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 15
 						end
 					end
 
-					if tonumber(dist) > 5 then
+					if dist > temp then
 						alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos) .. "[-]", "warn")
 						irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
 						irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
 					end
 				end
 			else
+				if(not pid) then
+					 dbugFull("E", debugger.traceback(),debugger.getinfo(1,"nSl"), "pid = nil " .. line)
+                                         return true
+				end
+
+				if(igplayers[pid] == nil) then
+                				dbugFull("E", debugger.traceback(),debugger.getinfo(1,"nSl"), "igplayers[pid] = nil " .. line)
+                				return true
+        			end
+
 				igplayers[pid].noclip = false
 				igplayers[pid].noclipCount = 0
 				igplayers[pid].noclipX = 0
-				igplayers[pid].noclipY = 0
 				igplayers[pid].noclipZ = 0
 			end
+
+			return true
 		end
 
 
@@ -688,17 +885,32 @@ function matchAll(line)
 			end
 
 			pid = words[1]
+
+			if(pid == nil) then
+				 dbugFull("E", debugger.traceback(),debugger.getinfo(1,"nSl"), "pid = nil " .. line)
+                                 return true
+			end
+
 			pid = LookupPlayer(pid)
+
+			if(pid == nil) then
+				dbugFull("E", debugger.traceback(),debugger.getinfo(1,"nSl"), "pid = nil " .. line)
+                               	return true
+			else
+				if(igplayers[pid] == nil) then
+ 					dbugFull("E", debugger.traceback(),debugger.getinfo(1,"nSl"), "igplayers[pid] = nil " .. line)
+                                        return true
+				end
+			end
 			igplayers[pid].flying = false
 			dist = tonumber(words[2])
 
-			if tonumber(dist) > 5 and accessLevel(pid) > 2 then
+			if dist > 5 and accessLevel(pid) > 2 then
 				if not players[pid].timeout and not players[pid].botTimeout and igplayers[pid].lastTP == nil and not players[pid].ignorePlayer then
 					igplayers[pid].flying = true
 
 					if igplayers[pid].flyingX == 0 then
 						igplayers[pid].flyingX = math.floor(igplayers[pid].xPos)
-						igplayers[pid].flyingY = math.floor(igplayers[pid].yPos)
 						igplayers[pid].flyingZ = math.floor(igplayers[pid].zPos)
 					else
 						dist = distancexz(igplayers[pid].flyingX,igplayers[pid].flyingZ,math.floor(igplayers[pid].xPos),math.floor(igplayers[pid].zPos))
@@ -708,18 +920,18 @@ function matchAll(line)
 								if tonumber(players[pid].ping) > 150 then
 									players[pid].hackerScore = tonumber(players[pid].hackerScore) + 40
 								else
-									players[pid].hackerScore = tonumber(players[pid].hackerScore) + 25
+									players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
 								end
 							else
-								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
+								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 15
 							end
 						end
 
 						igplayers[pid].flyingX = math.floor(igplayers[pid].xPos)
-						igplayers[pid].flyingY = math.floor(igplayers[pid].yPos)
 						igplayers[pid].flyingZ = math.floor(igplayers[pid].zPos)
 
-						if tonumber(dist) > 5 then
+						if dist > 5 then
+						--if dist > 15 and dist < 100 then
 							igplayers[pid].flyCount = igplayers[pid].flyCount + 1
 
 							if tonumber(igplayers[pid].flyCount) > 1 then
@@ -738,15 +950,21 @@ function matchAll(line)
 			if not igplayers[pid].flying then
 				igplayers[pid].flyCount = 0
 				igplayers[pid].flyingX = 0
-				igplayers[pid].flyingY = 0
 				igplayers[pid].flyingZ = 0
 			end
 
 			if not igplayers[pid].noclip and not igplayers[pid].flying then
-				if tonumber(players[pid].hackerScore) > 0 then
+
+				if(not players[pid]) then
+					if(debug) then
+						dbugFull("D", "",debugger.getinfo(1,"nSl"), "Unable to find name from: " .. line)
+					end
+				elseif tonumber(players[pid].hackerScore) > 0 then
 					players[pid].hackerScore = tonumber(players[pid].hackerScore) - 5
 				end
 			end
+
+			return true
 		end
 
 
@@ -761,6 +979,7 @@ function matchAll(line)
 
 			players[tmp.steam].chatColour = tmp.colour
 			if botman.dbConnected then conn:execute("UPDATE players SET chatColour = '" .. escape(tmp.colour) .. "' WHERE steam = " .. tmp.steam) end
+			return true
 		end
 
 
@@ -781,7 +1000,38 @@ function matchAll(line)
 				players[tmp.steam].bedZ = tmp.z
 				if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. tmp.x .. ", bedY = " .. tmp.y .. ", bedZ = " .. tmp.z .. " WHERE steam = " .. tmp.steam) end
 			end
+			return true
 		end
 	end
-end
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
+	if(string.match(line, "%d+. id=") or
+	   string.match(line, "Total of %d+ in the game") or
+           string.match(line, "Slot %d+:") or 
+	   string.match(line, " of player ") or
+ 	   string.match(line, "Day %d+, %d+:%d+") or 
+	   string.match(line, "%d+ - .*$") or
+	   string.match(line, "^GamePref.") or
+	   string.match(line, "Slot .*: ") or
+	   string.match(line, "FriendsOf id=") or
+	   string.trim(line) == "" or
+	   string.match(line, "- .* - .*: %d+$"))
+	then
+		echo("Lists", line .. "\n")
+		return true
+	end
+
+	if(string.match(line, "please specify one of the") or
+	   string.match(line, "Message to player ") or
+	   string.match(line, "^World saved$") or
+	   string.match(line, "chatColor=FFFFFF$") or
+	   string.match(line, "max chat length changed to $d+$") or
+	   string.match(line, "Usage: tel")) 
+	then
+		return true
+	end
+
+	echo("Lists", line .. "\n")
+	return false
+end

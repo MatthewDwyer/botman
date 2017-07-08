@@ -12,7 +12,7 @@ function help(command)
 	local list
 
 	if (command == "me") then
-		r = rand(6)
+		r = math.random(1,6)
 		if (r==1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry you're beyond help I'm afraid.[-]") end
 		if (r==2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Today I did 6 impossible things, but that ain't one.[-]") end
 		if (r==3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I can't fix that![-]") end
@@ -102,7 +102,7 @@ function help(command)
 	end
 
 
-	if command == "waypoints" then
+	if (command == "waypoints" or command == "wp") then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Waypoints are personal teleports that you can set and share with friends.[-]")
 
 		if server.waypointsPublic then

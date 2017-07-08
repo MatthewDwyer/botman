@@ -20,6 +20,7 @@ function inventoryOwner(line)
 	invCheckID = LookupPlayer(pname, "all")
 
 	if (string.find(line, "Belt of player")) then
+--[[
 		if (igplayers[invCheckID].inventoryLast ~= igplayers[invCheckID].inventory) then
 			igplayers[invCheckID].inventoryLast = igplayers[invCheckID].inventory
 		end
@@ -29,6 +30,7 @@ function inventoryOwner(line)
 		igplayers[invCheckID].belt = ""
 		igplayers[invCheckID].pack = ""
 		igplayers[invCheckID].equipment = ""
+--]]
 		invScan = "belt"
 	end
 

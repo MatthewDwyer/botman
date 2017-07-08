@@ -7,6 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug = false
 function FifteenSecondTimer()
 	-- run a quick test to prove or disprove that we are still connected to the database.
 	-- there is a rare instance where we lose the connection for unknown reasons.
@@ -41,10 +42,14 @@ function FifteenSecondTimer()
 
 		if server.coppi then
 			if server.scanNoclip then
-				if not string.find(server.gameVersion, "Alpha 16 (b105)") then
-					-- check for noclipped players
-					for k,v in pairs(igplayers) do
-						if tonumber(players[k].accessLevel) > 2 then
+				-- check for noclipped players
+				for k,v in pairs(igplayers) do
+					if(tonumber(k) > 0) then 
+						if(not players[k]) then
+							if(debug) then 
+								dbugFull("D", "",debugger.getinfo(1,"nSl"), k .. " is in igplayers but not players!")
+							end
+						elseif players[k].newPlayer or tonumber(players[k].ping) > 150 then
 							send("pug " .. k)
 						end
 					end
@@ -54,7 +59,11 @@ function FifteenSecondTimer()
 			if not server.playersCanFly then
 				-- check for flying players
 				for k,v in pairs(igplayers) do
-					if tonumber(players[k].accessLevel) > 2 then
+					if(not players[k]) then
+						if(debug) then 
+							dbugFull("D", "",debugger.getinfo(1,"nSl"), k .. " is in igplayers but not players!")
+						end
+				 	elseif players[k].newPlayer or tonumber(players[k].ping) > 150 then
 						send("pgd " .. k)
 					end
 				end

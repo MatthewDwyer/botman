@@ -18,6 +18,10 @@ function gameTickCountTrigger(line)
 	test = string.sub(line, string.find(line, ":") + 7, string.find(line, " INF"))
 	gameTick = tonumber(test)
 
+	if(not gameTick) then
+		gameTick = 0
+	end
+
 	if botman.nextRebootTest ~= nil and os.time() < botman.nextRebootTest then
 		return
 	end
@@ -43,9 +47,10 @@ function gameTickCountTrigger(line)
 	hours = math.floor(diff / 3600)
 
 	if (days * 24) + hours >= tonumber(server.maxServerUptime) and botman.scheduledRestart == false and server.allowReboot == true then
-		message("say [" .. server.chatColour .. "]The server will reboot in 15 minutes.[-]")
+		-- message("say [" .. server.chatColour .. "]The server will reboot in 15 minutes.[-]")
 		botman.scheduledRestartPaused = false
 		botman.scheduledRestart = true
-		botman.scheduledRestartTimestamp = os.time() + 900
+		-- botman.scheduledRestartTimestamp = os.time() + 900
+		botman.scheduledRestartTimestamp = getRestartOffset()
 	end
 end
