@@ -105,8 +105,8 @@ function ResetBot()
 		v.prisonzPosOld=0
 		v.protect = false
 		v.protect2 = false
-		v.protect2Size = 32
-		v.protectSize = 32
+		v.protect2Size = 41
+		v.protectSize = 41
 		v.pvpBounty = 0
 		v.pvpCount=0
 		v.pvpVictim=0
@@ -148,7 +148,6 @@ function ResetBot()
 	hotspots = {}
 	resetRegions = {}
 	lastHotspots = {}
-	stackLimits = {}
 	villagers = {}
 	locations = {}
 	waypoints = {}

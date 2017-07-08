@@ -7,6 +7,8 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug = false
+
 function unbanPlayer(line)
 	if botman.botDisabled then
 		return
@@ -18,6 +20,14 @@ function unbanPlayer(line)
 
 	temp = string.split(line, " ")
 	steam = string.sub(temp[8], 1, string.len(temp[8]) - 1)
+
+	if(not players[steam]) then
+		if(debug) then
+			dbugFull("D", "", debugger.getinfo(1,"nSl"), "steam id not found in players from: " .. line)
+		end
+
+		return
+	end
 	players[steam].hackerScore = 0
 	players[steam].timeout = false
 	players[steam].botTimeout = false
@@ -28,4 +38,5 @@ function unbanPlayer(line)
 
 	-- also remove the steam owner from the bans table
 	if botman.dbConnected then conn:execute("DELETE FROM bans WHERE steam = " .. steam .. " or steam = " .. players[steam].steamOwner) end
+	banLlist[steam] = nil
 end

@@ -390,7 +390,9 @@ function gmsg_hotspots()
 					savePosition(chatvars.playerid)
 
 					cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
-					teleport(cmd, chatvars.playerid)
+					prepareTeleport(chatvars.playerid, cmd)
+					dbug("hotspots line " .. debugger.getinfo(1).currentline)
+					teleport(cmd, true)
 				else
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no hotspot #" .. chatvars.number .. ".[-]")
 				end

@@ -22,6 +22,8 @@ function baseProtection(steam, posX, posY, posZ)
 	-- check for and record any non-friend who gets within protectSize meters of a players /setbase coord
 	for k, v in pairs(players) do
 
+  	    if(tonumber(v.homeX) ~= nil or tonumber(v.homeZ) ~= nil) then
+
 		if (math.abs(tonumber(v.homeX)) > 100 or math.abs(tonumber(v.homeZ)) > 100) then
 			dist = distancexz(posX, posZ, v.homeX, v.homeZ)
 			size = tonumber(v.protectSize)
@@ -70,8 +72,10 @@ function baseProtection(steam, posX, posY, posZ)
 									igplayers[steam].zPosLastAlert = posZ
 
 									if (dist < 20) then
-										alertAdmins("Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s base")
-										irc_chat(server.ircMain, server.gameDate .. " Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s base")
+										local Amsg = "Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s base"
+										alertAdmins(Amsg)
+										irc_chat(server.ircMain, server.gameDate .. " " .. Amsg)
+										echo(Amsg .. "\n\n")
 									end
 
 									players[steam].lastBaseRaid = os.time()
@@ -96,12 +100,14 @@ function baseProtection(steam, posX, posY, posZ)
 									cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " -1 " .. igplayers[steam].zPosLastOK
 
 --									dbug("base_protection line " .. debugger.getinfo(1).currentline)
-									teleport(cmd, steam)
+									prepareTeleport(steam, cmd)
+									teleport(cmd, true)
 								else
 									cmd = "tele " .. steam .. " " .. v.exitX .. " -1 " .. v.exitZ
 
+									prepareTeleport(steam, cmd)
 --									dbug("base_protection line " .. debugger.getinfo(1).currentline)
-									teleport(cmd, steam)
+									teleport(cmd, true)
 									message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to a protected player base.  The base owner needs to add you to their friends list by typing " .. server.commandPrefix .. "friend " .. igplayers[steam].name .. "[-]")
 								end
 
@@ -162,8 +168,10 @@ function baseProtection(steam, posX, posY, posZ)
 									igplayers[steam].zPosLastAlert = posZ
 
 									if (dist < 20) then
-										alertAdmins("Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s 2nd base teleport.")
-										irc_chat(server.ircMain, server.gameDate .. " Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s 2nd base teleport")
+										local Amsg = "Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s 2nd base teleport."
+										alertAdmins(Amsg)
+										irc_chat(server.ircMain, server.gameDate .. " " .. Amsg)
+										echo(Amsg .. "\n\n")
 									end
 
 									players[steam].lastBaseRaid = os.time()
@@ -196,13 +204,15 @@ function baseProtection(steam, posX, posY, posZ)
 									message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to a protected player base.  The base owner needs to add you to their friends list by typing " .. server.commandPrefix .. "friend " .. igplayers[steam].name .. "[-]")
 									cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " -1 " .. igplayers[steam].zPosLastOK
 
+									prepareTeleport(steam, cmd)
 --									dbug("base_protection line " .. debugger.getinfo(1).currentline)
-									teleport(cmd, steam)
+									teleport(cmd, true)
 								else
 									cmd = "tele " .. steam .. " " .. v.exit2X .. " -1 " .. v.exit2Z
+									prepareTeleport(steam, cmd)
 
 --									dbug("base_protection line " .. debugger.getinfo(1).currentline)
-									teleport(cmd, steam)
+									teleport(cmd, true)
 									message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to a protected player base.  The base owner needs to add you to their friends list by typing " .. server.commandPrefix .. "friend " .. igplayers[steam].name .. "[-]")
 								end
 
@@ -214,6 +224,7 @@ function baseProtection(steam, posX, posY, posZ)
 			end
 		end
 
+         end
 	end
 
 
@@ -240,13 +251,13 @@ function baseProtection(steam, posX, posY, posZ)
 							igplayers[steam].lastTP = cmd
 
 --							dbug("base_protection for village line " .. debugger.getinfo(1).currentline)
-							teleport(cmd, steam)
+							teleport(cmd, true)
 						else
 							cmd = "tele " .. steam .. " " .. v.exitX .. " -1 " .. v.exitZ
 							igplayers[steam].lastTP = cmd
 
 --							dbug("base_protection for village line " .. debugger.getinfo(1).currentline)
-							teleport(cmd, steam)
+							teleport(cmd, true)
 							message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to " .. k .. ".[-]")
 						end
 

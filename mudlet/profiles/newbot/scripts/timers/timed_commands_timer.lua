@@ -23,7 +23,7 @@ function timedCommandsTimer()
 	row = cursor:fetch({}, "a")
 
 	if row then
-		windowMessage(server.windowDebug, "running timed command (" .. row.id .. ") " .. row.command .. "\n")
+		windowMessage(server.windowDebug, os.date("%c") .. " Running timed command (" .. row.id .. ") " .. row.command .. "\n")
 
 		if (row.command ~= "DoneInventory") then
 
@@ -36,7 +36,7 @@ function timedCommandsTimer()
 			conn:execute("delete from commandQueue where id = " .. row.id)
 		else
 			conn:execute("delete from commandQueue where id = " .. row.id)
-			CheckInventory()
+			-- CheckInventory()
 			tempTimer( 2, [[CheckClaimsRemoved()]] )
 		end
 	end

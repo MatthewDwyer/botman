@@ -21,6 +21,8 @@ function joinIRCServer()
 		return
 	end
 
+	if(debug) then display("DEBUG: joinIRCServer(" .. server.ircServer .. ", " .. server.ircPort .. ")") end
+
 	ircSetHost(server.ircServer, server.ircPort)
 	ircSetChannel(server.ircMain)
 	tempTimer( 1, [[ircJoin("]] .. server.ircAlerts .. [[")]] )
@@ -35,6 +37,17 @@ function irc_chat(name, message)
 		return
 	end
 
+	
+	if(not name) then name = "botman" end
+
+	while (string.len(message) > 255) do
+		local tmpMsg = string.sub(message,1, 255)
+		
+		conn:execute("INSERT INTO ircQueue (name, command) VALUES ('" .. name .. "','" .. escape(tmpMsg) .. "')")
+
+		message = string.sub(message, 256, string.len(message))
+	end
+		
 	conn:execute("INSERT INTO ircQueue (name, command) VALUES ('" .. name .. "','" .. escape(message) .. "')")
 end
 

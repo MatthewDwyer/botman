@@ -7,16 +7,21 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug = true
+
 function gmsg_info()
 	calledFunction = "gmsg_info"
 
-	local xdir, zdir, dist, x, z, diff, days, hours, minutes, result, time	, werds, word, cmd, direction
+	local xdir, zdir, dist, x, z, diff, days, hours, minutes, result, time	, werds, word, cmd
 	local debug
 	local shortHelp = false
 	local skipHelp = false
 
 	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
-	debug = false
+
+	if(debug) then
+		dbugFull("D", "",debugger.getinfo(1,"nSl"), "end playerInfo", chatvars.command)
+	end
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
@@ -174,9 +179,6 @@ function gmsg_info()
 			if (server.ZombiesRun == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Zombies run at night[-]") end
 			if (server.ZombiesRun == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Zombies never run[-]") end
 			if (server.ZombiesRun == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Zombies always run[-]") end
-
-			-- zombie memory
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Zombie memory is " .. server.EnemySenseMemory .. " seconds[-]")
 
 			-- map limit
 			if players[chatvars.playerid].donor == true then
@@ -549,6 +551,12 @@ function gmsg_info()
 	end
 
 	if (chatvars.words[1] == "seen") then
+		if(not string.find(chatvars.command, "seen ")) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Invalid format to /seen.  To use /seen please enter the command in this format: /seen <playername>")
+			botman.faultyChat = false
+			return true
+		end
+
 		pname = string.sub(chatvars.command, string.find(chatvars.command, "seen ") + 5)
 		pname = string.trim(pname)
 
@@ -683,20 +691,6 @@ function gmsg_info()
 
 		if players[chatvars.playerid].inLocation ~= "" then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in the location " .. players[chatvars.playerid].inLocation .. "[-]")
-		end
-
-		if players[chatvars.playerid].atHome then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are at home.[-]")
-		else
-			if tonumber(players[chatvars.playerid].homeY) > 0 then
-				direction = getCompass(players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ, chatvars.intX, chatvars.intZ)
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are " .. string.format("%.2f", (distancexz(chatvars.intX, chatvars.intZ, players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ) / 1000)) .. " km to the " .. direction .. " of your first home.[-]")
-			end
-
-			if tonumber(players[chatvars.playerid].home2Y) > 0 then
-				direction = getCompass(players[chatvars.playerid].home2X, players[chatvars.playerid].home2Z, chatvars.intX, chatvars.intZ)
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are " .. string.format("%.2f", (distancexz(chatvars.intX, chatvars.intZ, players[chatvars.playerid].home2X, players[chatvars.playerid].home2Z) / 1000)) .. " km to the " .. direction .. " of your second home.[-]")
-			end
 		end
 
 		botman.faultyChat = false

@@ -135,7 +135,7 @@ end
 			return true
 		end
 
-		r = rand(10)
+		r = math.random(1,10)
 
 		if (r == 1) then message("say [" .. server.chatColour .. "]Look who's talking :P[-]") end
 		if (r == 2) then message("say [" .. server.chatColour .. "]Just ragequit! :)[-]") end
@@ -180,14 +180,14 @@ end
 
 	if (chatvars.words[1] == "bot" or chatvars.words[2] == "bot" or chatvars.words[3] == "bot" or chatvars.words[4] == "bot" or chatvars.words[5] == "bot" or chatvars.words[6] == "bot" or string.find(chatvars.command, string.lower(server.botName)) or string.find(chatvars.command, string.lower("bot!"))) and (chatvars.words[7] == nil) and (chatvars.playername ~= "Server") then
 		if (chatvars.words[1] == "thanks" or chatvars.words[1] == "ty" or string.find(chatvars.words[1], "thx")) then
-			l = rand(4)
+			l = math.random(1,4)
 			if l == 1 then message("say [" .. server.chatColour .. "]You're welcome " .. chatvars.playername .. " <3[-]") end
 			if l == 2 then message("say [" .. server.chatColour .. "]xD[-]") end
 			if l == 3 then message("say [" .. server.chatColour .. "]No problemo[-]") end
 			if l == 4 then message("say [" .. server.chatColour .. "]Glad to be of service[-]") end
 		else
 			if string.find(chatvars.words[1], "bad") then
-				l = rand(32)
+				l = math.random(1,32)
 				if l == 1 then message("say [" .. server.chatColour .. "]Don't hate me! D:[-]") end
 				if l == 2 then message("say [" .. server.chatColour .. "]The voices made me do it![-]") end
 				if l == 3 then message("say [" .. server.chatColour .. "]I'm a really cute bunny.  How can you hate me!? :O[-]") end
@@ -197,7 +197,7 @@ end
 
 				if l == 7 then
 					if tonumber(botman.playersOnline) > 1 then
-						r = rand(botman.playersOnline)
+						r = math.random(1, botman.playersOnline)
 
 						i = 0
 						for k,v in pairs(igplayers) do
@@ -241,7 +241,7 @@ end
 				return true
 			end
 
-			r = rand(19)
+			r = math.random(1,19)
 
 			if r < 6 and chatvars.words[3] == nil then
 				message("say [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]")
@@ -250,7 +250,7 @@ end
 			end
 
 			if string.find(chatvars.command, "love") then
-				l = rand(6)
+				l = math.random(1,6)
 				if l == 1 then message("say [" .. server.chatColour .. "]I know.[-]") end
 				if l == 2 then message("say [" .. server.chatColour .. "]Thanks =D[-]") end
 				if l == 3 then message("say [" .. server.chatColour .. "]I love you too :3[-]") end
@@ -263,7 +263,7 @@ end
 			end
 
 			if string.find(chatvars.command, "pretty") then
-				l = rand(6)
+				l = math.random(1,6)
 				if l == 1 then message("say [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]") end
 				if l == 2 then message("say [" .. server.chatColour .. "]I know[-]") end
 				if l == 3 then message("say [" .. server.chatColour .. "]Thanks :>[-]") end
@@ -276,7 +276,7 @@ end
 			end
 
 			if string.find(chatvars.command, "cool") or string.find(chatvars.command, "great")then
-				l = rand(3)
+				l = math.random(1,3)
 				if l == 1 then message("say [" .. server.chatColour .. "]Thanks " .. chatvars.playername .. "![-]") end
 				if l == 2 then message("say [" .. server.chatColour .. "]Indeed[-]") end
 				if l == 3 then message("say [" .. server.chatColour .. "]I know[-]") end
@@ -349,7 +349,7 @@ end
 	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
 	if players[chatvars.playerid].newPlayer == true and (string.find(chatvars.command, "where") or (string.find(chatvars.command, "any"))) and (string.find(chatvars.command, "zed") or string.find(chatvars.command, "zom")) then
-		r = rand(7)
+		r = math.random(1,7)
 		if (r == 2) then r = 3 end
 		if (r == 5) then r = 6 end
 

@@ -31,15 +31,19 @@ function gameTimeTrigger(line)
 
 		if not server.delayReboot and botman.scheduledRestart then
 			message("say [" .. server.chatColour .. "]Feral hordes run today so the server will reboot tomorrow.[-]")
+			echo("Feral hordes run today so the server will reboot tomorrow.\n\n")
 			server.delayReboot = true
 		end
 	else
 		if server.delayReboot and botman.scheduledRestart then
 			if tonumber(server.feralRebootDelay) == 0 then
 				botman.scheduledRestartTimestamp = os.time() + ((server.DayLightLength + server.DayNightLength) * 60)
+				echo("The server will reboot in 1 game day (" .. server.DayLightLength + server.DayNightLength .. " minutes)\n\n")
+
 				message("say [" .. server.chatColour .. "]The server will reboot in 1 game day (" .. server.DayLightLength + server.DayNightLength .. " minutes).[-]")
 			else
 				botman.scheduledRestartTimestamp = os.time() + (server.feralRebootDelay * 60)
+				echo("The server will reboot in " .. server.feralRebootDelay .. " minutes.\n\n")
 				message("say [" .. server.chatColour .. "]The server will reboot in " .. server.feralRebootDelay .. " minutes.[-]")
 			end
 		end

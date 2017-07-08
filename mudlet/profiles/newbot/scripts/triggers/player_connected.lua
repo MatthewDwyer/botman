@@ -9,6 +9,8 @@
 
 local nameTest
 
+local debug = false
+
 
 function freeReservedSlot(steam)
 	if tonumber(server.reservedSlots) == 0 then -- disable if reservedSlots is 0
@@ -41,10 +43,8 @@ end
 
 
 function playerConnected(line)
-	local entityid, player, steam, steamOwner, IP, temp_table, temp, debug, commas
+	local entityid, player, steam, steamOwner, IP, temp_table, temp, commas
 	local timestamp = os.time()
-
-	debug = false
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
@@ -101,6 +101,10 @@ function playerConnected(line)
 			IP = string.sub(temp_table[5], string.find(temp_table[5], "ip=") + 3)
 			IP = IP:gsub("::ffff:","")
 		end
+
+		if(not steamOwner) then
+			return
+		end
 	end
 
 	if IP == nil then IP = "" end
@@ -144,6 +148,15 @@ function playerConnected(line)
 		return
 	end
 
+	if(string.find(string.lower(player), "server")) then
+kick(steam, "That name is reserved.  You cannot play as " .. player .. " here.")
+                alertAdmins("A player was kicked using 'server' in their name! " .. entityid .. " " .. player, "alert")
+                if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','impersonated admin','Player joined posing as the server " .. escape(player) .. " " .. steam .. " Owner " .. steamOwner .. " " .. entityid .. " " .. IP .. "'," .. steamOwner .. ")") end
+                irc_chat(server.ircMain, "!!  Player joined with server's name but a different steam key !! " .. player .. " steam: " .. steam.. " owner: " .. steamOwner .. " id: " .. entityid)
+                irc_chat(server.ircAlerts, "!!  Player joined with server's name but a different steam key !! " .. player .. " steam: " .. steam.. " owner: " .. steamOwner .. " id: " .. entityid)
+                return
+	end
+
 	-- add to players table
 	if (players[steam] == nil) then
 		initNewPlayer(steam, player, entityid, steamOwner)
@@ -156,6 +169,12 @@ function playerConnected(line)
 		logChat(botman.serverTime, "Server", "New player joined " .. player .. " steam: " .. steam.. " owner: " .. steamOwner .. " id: " .. entityid)
 
 		alertAdmins("New player joined " .. entityid .. " " .. player, "warn")
+		if(debug) then dbugFull("I", "", "", "New player joined " .. entityid .. " " .. player .. "(" .. steam .. ")") end
+
+		 echo(os.date("%c").. " New Player joined " .. player .. " id=" .. entityid .. "(")
+                echoLink(steam,  "openUrl(\"http://steamcommunity.com/profiles/" .. steam .. "\")", "Click to view players Steam profile.")
+                echo(")\n\n")
+
 
 		if botman.dbConnected then conn:execute("INSERT INTO players (steam, steamOwner, id, name, protectSize, protect2Size, firstSeen) VALUES (" .. steam .. "," .. steamOwner .. "," .. entityid .. ",'" .. escape(player) .. "'," .. server.baseSize .. "," .. server.baseSize .. "," .. os.time() .. ")") end
 
@@ -178,6 +197,10 @@ function playerConnected(line)
 
 		cmd = "llp " .. steam
 		tempTimer( 5, [[send("]] .. cmd .. [[")]] )
+
+		echo(os.date("%c") .. " Player joined " .. player .. " id=" .. entityid .. "(")
+		echoLink(steam,  "openUrl(\"http://steamcommunity.com/profiles/" .. steam .. "\")", "Click to view players Steam profile.")
+		echo(")\n\n")
 	end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
@@ -217,7 +240,33 @@ function playerConnected(line)
 			if string.upper(players[steam].chatColour) ~= "FFFFFF" then
 				send("cpc " .. steam .. " " .. players[steam].chatColour)
 			else
-				setChatColour(steam)
+				if accessLevel(steam) > 3 and accessLevel(steam) < 11 then
+					send("cpc " .. steam .. " " .. server.chatColourDonor .. " 1")
+				end
+
+				if accessLevel(steam) == 0 then
+					send("cpc " .. steam .. " " .. server.chatColourOwner .. " 1")
+				end
+
+				if accessLevel(steam) == 1 then
+					send("cpc " .. steam .. " " .. server.chatColourAdmin .. " 1")
+				end
+
+				if accessLevel(steam) == 2 then
+					send("cpc " .. steam .. " " .. server.chatColourMod .. " 1")
+				end
+
+				if accessLevel(steam) == 90 then
+					send("cpc " .. steam .. " " .. server.chatColourPlayer .. " 1")
+				end
+
+				if accessLevel(steam) == 99 then
+					send("cpc " .. steam .. " " .. server.chatColourNewPlayer .. " 1")
+				end
+
+				if players[steam].prisoner then
+					send("cpc " .. steam .. " " .. server.chatColourPrisoner .. " 1")
+				end
 			end
 		end
 	end
@@ -248,7 +297,11 @@ function playerConnected(line)
 	players[steam].autoKicked = nil
 	invTemp[steam] = {}
 
-	if not string.find(players[steam].names, player, nil, true) then -- the last argument disables pattern matching.  We need to do this for player names with () in them.
+	if(not players[steam].names) then
+		players[steam].names = player
+	end
+
+	if(not string.find(players[steam].names, player, nil, true)) then -- the last argument disables pattern matching.  We need to do this for player names with () in them.
 		players[steam].names = players[steam].names .. "," .. player
 	end
 
@@ -347,8 +400,7 @@ function playerConnected(line)
 		rows = cursor:numrows()
 
 		if tonumber(rows) > 0 then
-			row = cursor:fetch({}, "a")
-			kick(steam, "You are on the global ban list. " .. row.GBLBanReason)
+			kick(steam, "You are on the global ban list. " .. rows.GBLBanReason)
 			banPlayer(steam, "10 years", "On global ban list", 0, 0, true)
 			return
 		else
@@ -356,8 +408,10 @@ function playerConnected(line)
 			cursor,errorString = connBots:execute("SELECT count(steam) as pendingBans FROM bans WHERE (Steam = " .. steam .. " or Steam = " .. steamOwner .. ") and GBLBan = 1 and GBLBanVetted = 0")
 			row = cursor:fetch({}, "a")
 			if tonumber(row.pendingBans) > 0 then
+
 				irc_chat(server.ircMain, "ALERT!  Player " .. steam ..  " " .. player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")
 				players[steam].pendingBans = row.pendingBans
+
 				alertAdmins("ALERT!  Player " .. steam ..  " " .. player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")
 			end
 		end

@@ -7,12 +7,12 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug = false
+
 function gmsg_friends()
 	calledFunction = "gmsg_friends"
 
-	local pid, pname, debug, max
-
-	debug = false
+	local pid, pname, max
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
@@ -298,7 +298,7 @@ if debug then dbug("debug friends") end
 		end
 
 		for k, v in pairs(friends) do
-			if (k == id) or chatvars.words[2] == "everyone" then
+			if (friends[k] ~= nil and (k == id or chatvars.words[2] == "everyone")) then
 				friendlist = string.split(friends[k].friends, ",")
 
 				-- now simply rebuild friend skipping over the one we are removing

@@ -7,9 +7,13 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug = false
+
 function alertAdmins(msg, alert)
 	-- pm all in-game admins with msg
 	local k, v, msgColour
+
+	if(debug) then dbugFull("D", "" , debugger.getinfo(1, "nSl"), (alert or "") .. ", " .. msg) end
 
 	if type(server) == "table" then
 		msgColour = server.chatColour
@@ -19,11 +23,21 @@ function alertAdmins(msg, alert)
 		msgColour = "D4FFD4"
 	end
 
+	if(debug) then dbugFull("D", "" , debugger.getinfo(1, "nSl")) end
+
+	echo(msg .. "\n\n") 
+	dbugFull("I", "", "", msg)
+
+	if(debug) then dbugFull("D", "" , debugger.getinfo(1, "nSl")) end
+
 	for k, v in pairs(igplayers) do
 		if (accessLevel(k) < 3) then
+			if(debug) then dbugFull("D", "" , debugger.getinfo(1, "nSl"), "pm sent to " .. v.name) end
 			message("pm " .. k .. " [" .. msgColour .. "]" .. msg .. "[-]")
 		end
 	end
+
+	if(debug) then dbugFull("D", "" , debugger.getinfo(1, "nSl")) end
 end
 
 
@@ -40,25 +54,24 @@ end
 
 function stripQuotes(name)
 	local oldName
-
-	name = string.trim(name)
 	oldName = name
 
+	name = string.gsub(name, "'", "")
+	name = string.gsub(name, '"', "")
+	name = string.trim(name)
+--[[
 	name = string.match(name, "^'(.*)'$")
 
-	if name == nil then
-		name = oldName
-	else
-		return name
+	if name == oldName then
+		name = string.match(name, "^\"(.*)\"$")
 	end
-
-	name = string.match(name, "^\"(.*)\"$")
 
 	if name == nil then name = oldName end
 
 	if string.sub(name, string.len(name)) == "'" then
 		name = string.sub(name, 1, string.len(name) - 1)
 	end
+--]]
 
 	return name
 end
@@ -135,25 +148,55 @@ function isFriend(testid, steamid)
 end
 
 
+local lastMsg
 function message(msg, irc)
 	-- parse msg and enclose the actual message in double quotes
-	local words, word
+	local words, word, msgToSend
+
+	if(msg == lastMsg) then
+		if(debug) then dbugFull("D", debugger.traceback(), debugger.getinfo(1,"nSl"), "duplicate message intercepted:" .. msg) end
+		return
+	else
+		lastMsg = msg
+	end
 
 	words = {}
+	msgToSend = string.sub(msg, 21)
+
 	for word in msg:gmatch("%S+") do table.insert(words, word) end
 
 	if words[1] == "say" then
 		-- say the message in public chat
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 		send("say \"" .. string.sub(msg, 5) .. "\"")
 	else
+	    if(not players[words[2]]) then
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+		echo(msgToSend .. "\n\n")
+	    else
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
 		if players[words[2]].exiled~=1 then
-			send("pm  " .. words[2] .. " \"" .. string.sub(msg, 21) .. "\"")
+			if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
+			if(string.find(msg, '"')) then
+				 if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "Message has quotes in it: (" .. msg .. ")") end
+				 msg = string.gsub(msg, '"', '')
+				 if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "Sending fixed message to player: " .. words[2] .. "(" .. msg .. ")") end
+			end
+
+			send("pm  " .. words[2] .. " \"" .. msgToSend .. "\"")
 		end
+
+		if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		if irc ~= nil then
 			-- send a copy of the pm to irc
-			irc_chat(irc, "pm to " .. words[2] .. " " .. string.sub(msg, 21))
+			if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
+			irc_chat(irc, "pm to " .. words[2] .. " " .. msgToSend)
 		end
+          end
 	end
 end
 
@@ -279,11 +322,16 @@ function LookupPlayer(search, match)
 	-- try to find the player amoung those who are playing right now
 	local id, k,v
 
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "LookupPlayer(" .. search ..")") end
+
 	if string.trim(search) == "" then
+		if(debug) then  dbugFull("D", "", debugger.getinfo(1,"nSl"), "trim(" .. search .. ") == empty string.") end
 		return nil
 	end
 
-	search = string.lower(search)
+	if(type(search) == "string") then
+		search = string.lower(search)
+	end
 
 	if string.starts(search, "\"") and string.ends(search,"\"") then
 		search = search:match("%w+")
@@ -296,6 +344,14 @@ function LookupPlayer(search, match)
 				return k
 			end
 		else
+			if(debug and v.id == nil) then  dbugFull("D", "", debugger.getinfo(1,"nSl"), "LookupPlayer(" .. search .. ") found nil id in igplayers for (" .. v.steam .. ", " .. v.name .. ")") end
+
+			if(debug and v.name == nil) then  dbugFull("D", "", debugger.getinfo(1,"nSl"), "LookupPlayer(" .. search .. ") found nil name in igplayers.") end
+
+			if(debug and v.steam == nil) then  dbugFull("D", "", debugger.getinfo(1,"nSl"), "LookupPlayer(" .. search .. ") found nil steam in igplayers.") end
+
+			if(debug and v.id ~= nil) then  dbugFull("D", "", debugger.getinfo(1,"nSl"), "LookupPlayer(" .. search .. ") vs " .. v.id .. "(" .. v.name .. ")") end
+
 			if search == v.id then
 				-- matched the player id
 				return k
@@ -322,7 +378,7 @@ function LookupPlayer(search, match)
 						return k
 					end
 
-					if (string.find(v.id, search)) then
+					if (v.id ~= nil and string.find(v.id, search)) then
 						return k
 					end
 				end
@@ -335,6 +391,12 @@ function LookupPlayer(search, match)
 
 	-- if id isn't nil we found a match
 	if id ~= nil then return id end
+
+	if(debug) then
+		dbugFull("D", debugger.traceback(), debugger.getinfo(1,"nSl"), "LookupPlayer failed for: " .. search)
+		dumpPlayers(players)
+		dumpPlayers(igplayers)
+	end
 end
 
 
@@ -609,6 +671,9 @@ end
 function tablelength(T)
 	-- helper function to count the members of a Lua table
 	local count = 0
+
+	if(not T) then return nil end
+
 	for _ in pairs(T) do count = count + 1 end
 	return count
 end
@@ -730,15 +795,15 @@ end
 
 
 function accessLevel(pid)
-	local debug
-
-	debug = false
+	if(not pid) then
+		return 99
+	end
 
 	-- determine the access level of the player
 
 	if debug then dbug("accesslevel pid " .. pid) end
 
-	if pid == 0 then
+	if(pid == 0) then
 		-- no pid?  return the worst possible access level.
 		return 99
 	end
@@ -773,6 +838,14 @@ function accessLevel(pid)
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
 	-- 3 is reserved for visiting admins
+
+	if(not players[pid]) then 
+		if(debug) then 
+			dbugFull("D", "", debugger.getinfo(1,"nSl"), "Accesslevel " .. pid .. " not found in players")
+		end
+
+		return 99
+	end
 
 	if players[pid].donor == true then
 --TODO: Add donor levels
@@ -813,9 +886,17 @@ end
 
 function fixMissingPlayer(steam)
 	-- if any fields are missing from the players player record, add them with default values
---dbug("fixMissingPlayer" .. steam .. " " .. players[steam].name)
+
+	if(debug) then 
+		dbugFull("D", debugger.traceback(),debugger.getinfo(1,"nSl"), steam .. " " .. players[steam].name) 
+	end
 
 	local k,v
+
+	if(not players[steam]) then
+		players[steam] = {}
+		players[steam].steam = steam
+	end
 
 	for k,v in pairs(playerFields) do
 		if players[steam][k] == nil then
@@ -835,6 +916,18 @@ function fixMissingPlayer(steam)
 				end
 			end
 		end
+	end
+
+        if (players[steam].sessionPlaytime == nil) then
+                players[steam].sessionPlaytime = 0
+        end
+
+	if(players[steam].deathZ == nil) then
+		players[steam].deathZ = 0
+	end
+
+	if(players[steam].ircAlias == nil) then
+		players[steam].ircAlias = players[steam].name
 	end
 
 	if (players[steam].steamOwner == nil) then
@@ -1226,6 +1319,30 @@ end
 function fixMissingIGPlayer(steam)
 	-- if any fields are missing from the players in-game player record, add them with default values
 
+        if(debug) then
+                dbugFull("D", debugger.traceback(),debugger.getinfo(1,"nSl"), steam .. " " .. igplayers[steam].name)
+        end
+
+
+	if(not igplayers[steam]) then
+		if(debug) then
+			 dbugFull("D", "", debugger.getinfo(1,"nSl"), "Unable to fix playerid " .. steam .. " they are not in the igplayers table!")
+		end
+		return
+	end
+
+        if (igplayers[steam].deaths == nil) then
+                igplayers[steam].deaths = 0
+        end
+
+	if(igplayers[steam].deathZ == nil) then
+		igplayers[steam].deathZ = 0
+	end
+
+        if players[steam].playerKills == nil then
+                players[steam].playerKills = 0
+        end
+
 	if (igplayers[steam].claimPass == nil) then
 		igplayers[steam].claimPass = 0
 	end
@@ -1327,7 +1444,7 @@ function fixMissingIGPlayer(steam)
 	end
 
 	if (igplayers[steam].ping == nil) then
-		igplayers[steam].ping = ping
+		igplayers[steam].ping = 0
 	end
 
 	if (igplayers[steam].xPos == nil) then
@@ -1350,6 +1467,10 @@ function fixMissingIGPlayer(steam)
 
 	if (igplayers[steam].afk == nil) then
 		igplayers[steam].afk = os.time() + 900
+	end
+
+	if igplayers[steam].lastCatchTimestamp == nil then
+		igplayers[steam].lastCatchTimestamp = os.time()
 	end
 
 	if igplayers[steam].alertLocation == nil then
@@ -1376,14 +1497,12 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].flying = false
 		igplayers[steam].flyCount = 0
 		igplayers[steam].flyingX = 0
-		igplayers[steam].flyingY = 0
 		igplayers[steam].flyingZ = 0
 	end
 
 	if igplayers[steam].noclip == nil then
 		igplayers[steam].noclip = false
 		igplayers[steam].noclipX = 0
-		igplayers[steam].noclipY = 0
 		igplayers[steam].noclipZ = 0
 	end
 
@@ -1419,4 +1538,119 @@ function fixMissingServer()
 			end
 		end
 	end
+end
+
+
+function dumpPlayers(dumpTable)
+	local k, v, tLabel
+	local count = 0
+
+	if(dumpTable == players) then
+		tLabel = "Players"
+	else
+		tLabel = "IGPlayers"
+	end
+
+	cecho("\n                                     " .. tLabel .. " Table Dump\n")
+	cecho("------------------------------------------------------------------------------------------------\n")
+
+	for k, v in pairs(dumpTable) do
+		count = count + 1
+	
+		if(v.name and v.steam and v.id) then
+			echo(string.format("%3d. %-26s id=%6d Steam=", count, v.name, v.id))
+			echoLink(v.steam,  "openUrl(\"http://steamcommunity.com/profiles/" .. v.steam .. "\")", "Click to view players Steam profile.")
+			if(dumpTable == igplayers) then
+				local PVP="PvE"
+				local S =  os.time() - v.firstSeen
+				local H, M
+
+				if(S >= 3600) then
+					H = math.floor(S/3600)
+
+					S = S - (H * 3600)
+				else
+					H = 0
+				end
+
+				if(S >= 60) then
+					M = math.floor(S/60)
+					S = S - (M * 60)
+				else
+					M = 0
+				end
+
+				if(v.currentLocationPVP) then
+					PVP="PvP"
+				end
+
+				
+				echo(" Online for: " .. string.format("%02d:%02d:%02d", H, M, S) .. " - " .. PVP .. " A" .. (players[v.steam].accessLevel or 99) .. "\n")
+			else 
+				if(banList[v.steam]) then
+					echo(" BANNED")
+				end
+				echo("\n")
+			end
+		else 
+			if(v.steam ~= 0) then
+				echo("skipping incomplete player: " .. k .. "\n")
+			end
+		end
+
+	end
+
+	echo("\n")
+end
+
+function getRestartOffset()
+	local time = os.time()
+	local tmpArray = os.date("*t", time)
+	local jmpForward
+
+	if(server.maxServerUptime == nil) then
+		dbugFull("E", "", debugger.getinfo(1, "nSl"), "Fixing server.maxServerUptime = nil")
+		server.maxServerUptime = 48
+	end
+
+	if(server.maxServerUptime <= 24) then
+		dbugFull("E", "", debugger.getinfo(1, "nSl"), "Fixing server.maxServerUptime = " .. server.maxServerUptime)
+		server.maxServerUptime = 48
+	end
+
+	jmpForward = server.maxServerUptime * 3600
+
+	if(debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "jmpForward = " .. jmpForward) end
+
+	if(tmpArray.hour >= 18) then
+		jmpForward = jmpForward + 86400
+	end
+
+        tmpArray = os.date("*t",  time + jmpForward)  
+
+        tmpArray.hour = 3
+        tmpArray.min = 0
+	tmpArray.sec = 0
+
+	return os.time(tmpArray)
+end
+
+
+function showNextRestart()
+	local standardRestart = getRestartOffset()
+	local nextRestart = botman.scheduledRestartTimestamp
+
+	if(standardRestart ~= nextRestart) then
+		cecho("Standard Restart would be @: " .. os.date("%c", standardRestart) .. "\n")
+		cecho("But the next restart will be @: " .. os.date("%c", nextRestart) .. "\n")
+	else
+		cecho("Next Restart will be @: " .. os.date("%c", nextRestart) .. "\n")
+	end
+end
+
+function resetRestart()
+	botman.scheduledRestartTimestamp = getRestartOffset()
+	botman.scheduledRestart = false
+        botman.scheduledRestartPaused = false
+        botman.scheduledRestartForced = false
 end

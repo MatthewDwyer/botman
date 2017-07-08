@@ -138,8 +138,6 @@ if debug then dbug("debug fun") end
 			irc_chat(players[chatvars.ircid].ircAlias, "The zombies have been reloaded.")
 		end
 
-		gimmeZombies = {}
-		if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies") end		
 		send("se")
 
 		botman.faultyChat = false
@@ -448,13 +446,13 @@ if debug then dbug("debug fun") end
 			send ("give " .. chatvars.playerid .. " pipeBomb 1")
 			send ("give " .. chatvars.playerid .. " splint 1")
 
-			r = rand(2)
+			r = math.random(1,2)
 			if r == 1 then send ("give " .. chatvars.playerid .. " firstAidBandage 1") end
 			if r == 2 then send ("give " .. chatvars.playerid .. " firstAidKit 1") end
 
 			players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) + 200
 
-			r = rand(26)
+			r = math.random(1,26)
 			if r == 1 then send ("give " .. chatvars.playerid .. " canBeef 1") end
 			if r == 2 then send ("give " .. chatvars.playerid .. " canBoiledWater 1") end
 			if r == 3 then send ("give " .. chatvars.playerid .. " canCatfood 1") end
@@ -496,6 +494,7 @@ if debug then dbug("debug fun") end
 	if (chatvars.words[1] == "gimmie" or chatvars.words[1] == "gimme") and chatvars.words[2] == nil then
 		if (server.allowGimme) then
 			if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
+				loadGimmeZombies()
 				send("se")
 			end
 
@@ -518,7 +517,7 @@ if debug then dbug("debug fun") end
 	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if string.find(chatvars.words[1], "poke") and chatvars.words[2] ==  nil then
-		r = rand(45)
+		r = math.random(1,45)
 		if r == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Hey![-]") end
 		if r == 3 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Stop that![-]") end
 		if r == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Ouch![-]") end
@@ -553,13 +552,13 @@ if debug then dbug("debug fun") end
 		if string.find(chatvars.words[1], "rage") and chatvars.words[2] ==  nil then
 			send("kick " .. chatvars.playerid .. " RAAAAGE! xD")
 		else
-			r = rand(3)
+			r = math.random(1,3)
 			if r == 1 then send("kick " .. chatvars.playerid .. " High Five! xD") end
 			if r == 2 then send("kick " .. chatvars.playerid .. " O.o  The Quit is strong in this one.") end
 			if r == 3 then send("kick " .. chatvars.playerid .. " Nice quit    *removes glasses*    YEEEEEEEEAH!") end
 		end
 
-		r = rand(4)
+		r = math.random(1,4)
 
 		if r == 1 then
 			message("say [" .. server.chatColour .. "]" .. players[chatvars.playerid].name .. " has left the building.[-]")
@@ -602,6 +601,7 @@ if debug then dbug("debug fun") end
 		-- abort if not in arena
 
 		if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
+			loadGimmeZombies()
 			send("se")
 		end
 

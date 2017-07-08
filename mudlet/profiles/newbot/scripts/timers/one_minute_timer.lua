@@ -7,6 +7,8 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug = false
+
 function oneMinuteTimer()
 	local k, v, days, hours, minutes
 
@@ -25,8 +27,14 @@ function oneMinuteTimer()
 
 	if server.coppi then
 		for k, v in pairs(igplayers) do
-			if players[k].autoFriend ~= "NA" then
-				send("lpf " .. k)
+			if(not players[k]) then
+                        	if(debug) then 
+					dbugFull("D", "",debugger.getinfo(1,"fSl"), k .. " is in igplayers but not players!")
+				end
+                        else
+				if players[k].autoFriend ~= "NA" then
+					send("lpf " .. k)
+				end
 			end
 		end
 	end

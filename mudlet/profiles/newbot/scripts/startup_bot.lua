@@ -7,30 +7,90 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+require "load_lua_tables"
+require "edit_me"
 debugger = require "debug"
 mysql = require "luasql.mysql"
-local debug
+local debug = false
 
 -- record start and end execution times of code and report it.  At the moment I'm sending the timing info to the bot's lists window.
 benchmarkBot = false
 
 function dbugi(text)
 	-- send text to the watch irc channel
-	if server ~= nil then
+	if (server and server.ircWatch) then
 		irc_chat(server.ircWatch, text)
+	else
+		display(text)
 	end
+end
+
+function dbugFull(ErrLvl, traceBack, dbugInfo, msg) 
+	local dInfo = ""
+	local msgOut
+
+	if(ErrLvl == "E") then ErrLvl="Error" 
+  	  elseif(ErrLvl == "D") then ErrLvl="Debug"
+	   elseif(ErrLvl == "I") then ErrLvl="Info"
+	end
+
+	if(type(dbugInfo) == "table") then
+		if(dbugInfo.source) then
+			dInfo = string.sub(dbugInfo.source, string.find(dbugInfo.source, "scripts/") + 8, string.len(dbugInfo.source))
+			if(dInfo == nil) then
+				dInfo = dbugInfo.source
+			end
+		end
+
+		if(dbugInfo.name) then
+			if(string.len(dInfo) > 0) then
+				dInfo = dInfo .. ", "
+			end
+
+			dInfo = dInfo .. dbugInfo.name
+		end
+
+		if(dbugInfo.currentline) then
+
+			if(string.len(dInfo) > 0) then
+                                dInfo = dInfo .. ", "
+                        end
+
+			dInfo = dInfo .. dbugInfo.currentline
+		end
+
+	else
+		dInfo = ""
+	end
+		
+	if(not msg) then 
+		msg = "" 
+	elseif(string.len(dInfo) > 0 ) then
+		msg = ", " .. msg
+	end
+
+	if(not traceBack or traceBack == "") then
+		traceBack = ""
+	else
+		traceBack = "\n" .. traceBack .. "\n"
+	end
+
+	msgOut = os.date("%c") .. " " .. ErrLvl .. ": " .. dInfo ..  msg .. traceBack
+	dbug(msgOut)
+
+	if(ErrLvl == "E") then
+		dbugi("'" .. msgOut .. "'")
+	end
+
 end
 
 
 function dbug(text)
 	-- send text to the debug window we created in Mudlet.
-	if server == nil then
-		display(text .. "\n")
-		return
-	end
-
-	if server.windowLists then
-		windowMessage(server.windowLists, text .. "\n")
+	if (server and server.windowDebug) then
+		cecho("Debug", text .. "\n")
+	else
+		display(text)
 	end
 end
 
@@ -40,6 +100,7 @@ function checkData()
 	if server.botName == nil then
 		loadServer()
 		botman.botStarted = nil
+		refreshScripts()
 		login()
 	end
 
@@ -122,66 +183,82 @@ function login()
 	local benchStart = os.clock()
 	local getAllPlayers = false
 
-	debug = false
-	debugdb = false
-
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	if type(botman) ~= "table" then
 		botman = {}
 	end
 
+	if(type(banList) ~= "table") then
+		banList = {}
+	end 
+
 	if type(server) ~= "table" then
 		server = {}
+		botman.startedAt = os.time()
 		getAllPlayers = true
 		botman.scheduledRestartPaused = false
 		botman.scheduledRestartForced = false
 		botman.scheduledRestart = false
-		botman.scheduledRestartTimestamp = os.time()
+		botman.scheduledRestartTimestamp = getRestartOffset()
+
+		if(debug) then 
+			local tmpArray = os.time("*t", botman.scheduledRestartTimestamp)
+			dbugFull("D", "", debugger.getinfo(1,"nSl"), "Time stamp set to: " .. tmpArray.day .. ":" .. tmpArray.hour .. ":" .. tmpArray.sec)
+		end
+
 		botman.lastBlockCommandOwner =	0
 		server.lagged = false
 	end
 
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
-	if reloadBotScripts == nil then
+	-- if reloadBotScripts == nil then
 		dofile(homedir .. "/scripts/reload_bot_scripts.lua")
 		reloadBotScripts()
-	end
+	-- end
 
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 	tempTimer( 120, [[checkData()]] )
 	stackLimits = {}
 
-	if (botman.botStarted == nil) then
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+	if(botman.botStarted ~= 0) then
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
+
 		botman.botStarted = os.time()
 		initBot()
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 		openDB()
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 		openBotsDB()
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 		initDB()
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 		botman.dbConnected = isDBConnected()
+		if(not botman.dbConnected) then
+			dbugFull("E", "", debugger.getinfo(1,"nSl"), "No connection for dbConnected")
+		end
 		botman.db2Connected = isDBBotsConnected()
+		if(not botman.db2Connected) then
+			dbugFull("E", "", debugger.getinfo(1,"nSl"), "No connection for db2Connected")
+		end
 		botman.initError = true
 		botman.serverTime = ""
 		botman.feralWarning = false
 		botman.playersOnline = -1
 		botman.userHome = string.sub(homedir, 1, string.find(homedir, ".config") - 2)
 		loadServer()
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 		botman.ignoreAdmins	= true
-		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		if server.botID == nil then
+			if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "botID = 0") end
 			server.botID = 0
 		end
 
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		botman.webdavFolderExists = true
 
@@ -198,21 +275,22 @@ function login()
 		openUserWindow(server.windowDebug)
 		openUserWindow(server.windowLists)
 
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		if closeMudlet ~= nil then
 			botman.customMudlet = true
 		 	--loadWindowLayout()
 		end
 
-		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		fixTables()
 
-		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		-- add your steam id here so you can debug using your name
-		Smegz0r = "76561197983251951"
+		-- this should have been in edit_me.lua
+		Smegz0r = "76561198024182120"
 
 		if (botman.ExceptionCount == nil) then
 			botman.ExceptionCount = 0
@@ -231,7 +309,8 @@ function login()
 
 		fixMissingStuff()
 
-		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		-- load tables
 		loadTables()
@@ -241,12 +320,13 @@ function login()
 			joinIRCServer()
 		end
 
-		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		-- set all players to offline in shared db
 		cleanupBotsData()
 
-		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 
 		botman.nextRebootTest = nil
 		botman.initError = false
@@ -258,12 +338,12 @@ function login()
 			connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID)
 		end
 
-		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl")) end
 	end
 
-	if debug then display("debug login end\n") end
+	if (debug) then dbugFull("D", "", debugger.getinfo(1,"nSl"), "login end") end
 
 	if benchmarkBot then
-		dbug("function login elapsed time: " .. string.format("%.2f", os.clock() - benchStart))
+		dbugFull("I", "", debugger.getinfo(1,"nSl"), "Elapsed time: " .. string.format("%.2f", os.clock() - benchStart))
 	end
 end

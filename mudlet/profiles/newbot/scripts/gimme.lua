@@ -12,7 +12,7 @@ local debug = false
 function arenaPicknMix(wave, counter, playerLevel)
 	local r
 
-	r = tostring(rand(botman.maxGimmeZombies))
+	r = tostring(math.random(1,botman.maxGimmeZombies))
 
 	if gimmeZombies[r] == nil then
 		r = arenaPicknMix(wave, counter, playerLevel)
@@ -44,15 +44,25 @@ function PicknMix(level)
 		level = 9001
 	end
 
-	r = tostring(rand(botman.maxGimmeZombies))
+	r = tostring(gimmeZombiesIndex[math.random(1,table.getn(gimmeZombiesIndex))])
+
+	if(not gimmeZombies[r]) then
+		pruneZIndex(r)
+		dbugFull("E", "", debugger.getinfo(1,"nSl"), "Zombie id: " .. r .. " needed to be pruned from the index.")
+		PicknMix(level)
+		return
+	end
+--[[
+	r = tostring(math.random(1,botman.maxGimmeZombies))
 
 	if gimmeZombies[r] == nil then
 		r = PicknMix(level)
 	else
+--]]
 		if gimmeZombies[r].doNotSpawn or tonumber(gimmeZombies[r].minPlayerLevel) > tonumber(level) then
 			r = PicknMix(level)
 		end
-	end
+	--end
 
 	return r
 end
@@ -75,7 +85,7 @@ function setupArenaPlayers(pid)
 			send("give " .. v.id .. " firstAidBandage 2")
   			send("give " .. v.id .. " meatStew 1")
 
-			r = rand(3)
+			r = math.random(1,3)
 			if (r == 1) then pointyStick = "boneShiv" end
 			if (r == 2) then pointyStick = "huntingKnife" end
 			if (r == 3) then pointyStick = "clubSpiked"	 end
@@ -166,7 +176,7 @@ end
 function queueGimmeHell(wave)
 	local multiplier, i, r, p, k, v, cmd
 
-	multiplier = rand(15, 7)
+	multiplier = math.random(7, 15)
 
 	if (wave == 4) then
 		multiplier = 2
@@ -174,7 +184,7 @@ function queueGimmeHell(wave)
 
 	for i = 1, botman.arenaCount * multiplier do
 		if tonumber(botman.arenaCount) > 1 then
-			p = rand(botman.arenaCount)
+			p = math.random(1,botman.arenaCount)
 		else
 			p = 1
 		end
@@ -275,7 +285,7 @@ function gimme(pid)
 	if server.gimmeZombies then
 		r = math.random(1, botman.maxGimmeZombies + 30)
 	else
-		r = rand(5)
+		r = math.random(1,5)
 
 		if r==1 then
 			if (not server.gimmePeace) then
@@ -354,15 +364,15 @@ function gimme(pid)
 
 	if r <= botman.maxGimmeZombies then
 		-- nasty zombies
-		descriptor = rand(6)
-		chanceOfMultiples = rand(50)
+		descriptor = math.random(1,6)
+		chanceOfMultiples = math.random(1,50)
 
 		if (chanceOfMultiples > 25) then
-			if (zombies > 99) and (zombies < 300) then spawnCount = rand(3) end
-			if (zombies > 299) and (zombies < 500) then spawnCount = rand(4) end
-			if (zombies > 499) and (zombies < 1000) then spawnCount = rand(5) end
-			if (zombies > 999) and (zombies < 5000) then spawnCount = rand(6) end
-			if (zombies > 4999) then spawnCount = rand(8) end
+			if (zombies > 99) and (zombies < 300) then spawnCount = math.random(1,3) end
+			if (zombies > 299) and (zombies < 500) then spawnCount = math.random(1,4) end
+			if (zombies > 499) and (zombies < 1000) then spawnCount = math.random(1,5) end
+			if (zombies > 999) and (zombies < 5000) then spawnCount = math.random(1,6) end
+			if (zombies > 4999) then spawnCount = math.random(1,8) end
 		end
 
 if entity == "zombieferal" then
@@ -483,16 +493,16 @@ end
 	if (r == botman.maxGimmeZombies + 1) then
 		cursor,errorString = conn:execute("select * from gimmePrizes")
 		rows = tonumber(cursor:numrows())
-		r = rand(rows)
+		r = math.random(1,rows)
 
 		cursor,errorString = conn:execute("select * from gimmePrizes limit " .. r - 1 .. ",1")
 		row = cursor:fetch({}, "a")
 
-		qty = rand(tonumber(row.prizeLimit))
+		qty = math.random(1,tonumber(row.prizeLimit))
 		category = row.category
 		prize = row.name
 		qual = row.quality
-		quality = (10 * players[pid].level) + rand(50, -50)
+		quality = (10 * players[pid].level) + math.random(-50, 50)
 		if quality < 50 then quality = 50 end
 		if quality > 600 then quality = 600 end
 
@@ -500,7 +510,7 @@ end
 		if (qty == 1) then description = "a " end
 
 		if (category == "weapon") then
-			descr = rand(12)
+			descr = math.random(1,12)
 
 			if (descr==1) then
 				description = description .. "shiny new "
@@ -558,7 +568,7 @@ end
 		end
 
 		if (category == "book") then
-			descr = rand(12)
+			descr = math.random(1,12)
 
 			if (descr==1) then description = description .. "rare " end
 			if (descr==2) then description = description .. "wordy " end
@@ -575,7 +585,7 @@ end
 		end
 
 		if (category == "misc") then
-			descr = rand(12)
+			descr = math.random(1,12)
 
 			if (descr==1) then description = description .. "common " end
 			if (descr==2) then description = description .. "boring " end
@@ -592,7 +602,7 @@ end
 		end
 
 		if (category == "health") then
-			descr = rand(10)
+			descr = math.random(1,10)
 
 			if (descr==1) then description = description .. "dodgy " end
 			if (descr==2) then description = description .. "sterile " end
@@ -607,7 +617,7 @@ end
 		end
 
 		if (category == "food") then
-			descr = rand(12)
+			descr = math.random(1,12)
 
 			if (descr==1) then description = description .. "delicious " end
 			if (descr==2) then description = description .. "yummy " end
@@ -624,7 +634,7 @@ end
 		end
 
 		if (category == "tools") then
-			descr = rand(10)
+			descr = math.random(1,10)
 
 			if (descr==1) then description = description .. "handy " end
 			if (descr==2) then description = description .. "utilitarian " end
@@ -639,7 +649,7 @@ end
 		end
 
 		if (category == "clothes") then
-			descr = rand(10)
+			descr = math.random(1,10)
 
 			if (descr==1) then
 				description = description .. "shitty "
@@ -732,13 +742,13 @@ end
 	if (r == botman.maxGimmeZombies + 3) then
 		tmp = {}
 		for k,v in pairs(otherEntities) do
-			if string.find(v.entity, "abbit") then
+			if string.find(string.lower(v.entity), "abbit") then
 				tmp.entityid = k
 			end
 		end
 
 		if tmp.entityid ~= nil then
-			spawnCount = rand(7,2)
+			spawnCount = math.random(2,7)
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " won " .. spawnCount .. " BUNNIES![-]")
 			else
@@ -764,7 +774,7 @@ end
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if (r == botman.maxGimmeZombies + 4) then
-		r = rand(100)
+		r = math.random(1,100)
 		if (r < 70) then
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " almost won an epic prize![-]")
@@ -784,7 +794,7 @@ end
 
 		t = os.time()
 		for i = 1, 100 do
-			r = rand(7)
+			r = math.random(1,7)
 
 			if (r == 1) then litter = "canEmpty" end
 			if (r == 2) then litter = "candyTin" end
@@ -806,7 +816,7 @@ end
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if (r == botman.maxGimmeZombies + 5) then
-		item = rand(12)
+		item = math.random(1,12)
 		if (item == 1) then prize = "canBeef" end
 		if (item == 2) then prize = "canChili" end
 		if (item == 3) then prize = "canPasta" end
@@ -833,7 +843,7 @@ end
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if (r == botman.maxGimmeZombies + 6) then
-		descr = rand(9)
+		descr = math.random(1,9)
 
 		if (descr == 1) then cmd = "Nothing!" end
 		if (descr == 2) then cmd = "Nothing!" end
@@ -845,14 +855,14 @@ end
 		end
 
 		if (descr == 5) then
-			i = rand(4)
+			i = math.random(1,4)
 
 			cmd = i .. " extra gimmies! =D"
 			players[pid].gimmeCount = players[pid].gimmeCount - i
 		end
 
 		if (descr > 5 and descr < 10) then
-			r = rand(10)
+			r = math.random(1,10)
 			 if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " Ruh Roh! Gimmies short circuited!  You win..[-]")
 				cmd = "say Every panels lit up! They're coming out of the walls! RUN !![-]"
@@ -891,7 +901,7 @@ end
 	if (r == botman.maxGimmeZombies + 7) then
 		tmp = {}
 		for k,v in pairs(gimmeZombies) do
-			if string.find(v.zombie, "zombiedog") then
+			if string.find(string.lower(v.zombie), "zombiedog") then
 				tmp.entityid = k
 			end
 		end
@@ -922,7 +932,7 @@ end
 	if (r == botman.maxGimmeZombies + 8) then
 		tmp = {}
 		for k,v in pairs(gimmeZombies) do
-			if string.find(v.zombie, "snow") then
+			if string.find(string.lower(v.zombie), "snow") then
 				tmp.entityid = k
 			end
 		end
@@ -964,7 +974,7 @@ end
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if (r == botman.maxGimmeZombies + 10) then
-		spawnCount = rand(30,10)
+		spawnCount = math.random(10,30)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " ate a bad potato and is shitting potatoes everywhere![-]")
 		else
@@ -1038,7 +1048,7 @@ end
 
 		tmp = {}
 		for k,v in pairs(otherEntities) do
-			if string.find(v.entity, "eneral") then
+			if string.find(string.lower(v.entity), "eneral") then
 				tmp.entityid = k
 			end
 		end
@@ -1048,7 +1058,7 @@ end
 
 		tmp = {}
 		for k,v in pairs(gimmeZombies) do
-			if string.find(v.zombie, "zombiedog") then
+			if string.find(string.lower(v.zombie), "zombiedog") then
 				tmp.entityid = k
 			end
 		end
@@ -1076,7 +1086,7 @@ end
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if (r == botman.maxGimmeZombies + 21) then
-		spawnCount = rand(30,10)
+		spawnCount = math.random(10, 30)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " won some shit.[-]")
 		else
@@ -1158,7 +1168,7 @@ end
 		conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 
 		if (specialDay == "valentine") then
-			z = rand(4)
+			z = math.random(1,4)
 			if z == 1 then send("give " .. playerid .. " yellowflower 1") end
 			if z == 2 then send("give " .. playerid .. " plantChrysanthemum 1") end
 			if z == 3 then send("give " .. playerid .. " goldenrod 1") end
@@ -1176,7 +1186,7 @@ end
 				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 
 				if (specialDay == "valentine") then
-					z = rand(4)
+					z = math.random(1,4)
 					if z == 1 then cmd = "give " .. playerid .. " yellowflower 1" end
 					if z == 2 then cmd = "give " .. playerid .. " plantChrysanthemum 1" end
 					if z == 3 then cmd = "give " .. playerid .. " goldenrod 1" end

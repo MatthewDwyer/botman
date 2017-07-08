@@ -10,6 +10,8 @@
 
 local sql
 
+local debug = false
+
 function updateTable(table, key, condition)
 	local k,v,value,temp, tbl
 
@@ -27,9 +29,7 @@ function updateTable(table, key, condition)
 		end
 	end
 
---debugdb = true
 	saveTable(table, condition)
-debugdb = false
 end
 
 
@@ -37,40 +37,40 @@ function updatePlayer(steam)
 	local k,v,value,temp
 
 	if tonumber(steam) == nil or (string.len(steam) < 17) then
-		dbug("skipping player " .. v.name .. " for invalid steam id")
+		if(debug) then
+			dbugFull("D", "", debugger.getinfo(1,"lSn"), "skipping player " .. (steam or "nil") .. " for invalid steam id")
+		end
 
 		-- don't process if steam is invalid
-		return
-	end
+	else
 
-	fixMissingPlayer(steam)
+		fixMissingPlayer(steam)
 
-	-- update the db
-	sql = {}
---dbug("update player " .. steam)
+		-- update the db
+		sql = {}
+		if(debug) then dbug("update player " .. steam) end
 
-	for k,v in pairs(playerFields) do
-		if players[steam][v.field] then
-			value = players[steam][v.field]
+		for k,v in pairs(playerFields) do
+			if players[steam][v.field] then
+				value = players[steam][v.field]
 
-			sql[v.field] = {}
-			sql[v.field].field = v.field
+				sql[v.field] = {}
+				sql[v.field].field = v.field
 
-			if v.type == "var" then
-				sql[v.field].value = stripCommas(value)
-			else
-				sql[v.field].value = value
-			end
+				if v.type == "var" then
+					sql[v.field].value = stripCommas(value)
+				else
+					sql[v.field].value = value
+				end
 
-			if v.type == "tim" then
-				sql[v.field].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", value) .. "'"
+				if v.type == "tim" then
+					sql[v.field].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", value) .. "'"
+				end
 			end
 		end
-	end
 
---debugdb = true
-	savePlayer(steam)
-debugdb = false
+		savePlayer(steam)
+	end
 end
 
 
@@ -106,7 +106,7 @@ end
 function saveServer(fields, values)
 	local i, sqlString, max
 
-	if debugdb then
+	if debug then
 		dbug("saving to server table")
 	end
 
@@ -136,7 +136,7 @@ function saveServer(fields, values)
 
 	sqlString = string.sub(sqlString, 1, string.len(sqlString) - 1)
 
-	if debugdb then
+	if debug then
 		dbug("save server " .. sqlString)
 	end
 
@@ -145,14 +145,14 @@ function saveServer(fields, values)
 	print(status,errorString )
 
 	if status == 0 then
-		if debugdb then
+		if debug then
 			dbug("save server failed")
 		end
 
 		getServerFields()
 		return false -- update failed
 	else
-		if debugdb then
+		if debug then
 			dbug("save server success")
 		end
 
@@ -194,7 +194,7 @@ end
 function savePlayer(steam, action)
 	local k, v, i, sqlString, sqlValues, status, errorString, max
 
-	if debugdb then
+	if debug then
 		dbug("saving player " .. steam .. " " .. players[steam].name)
 	end
 
@@ -264,14 +264,14 @@ function savePlayer(steam, action)
 		sqlString = sqlString .. sqlValues
 	end
 
-	if debugdb then
+	if debug then
 		dbug("save player sqlString " .. sqlString)
 	end
 
 	status, errorString = conn:execute(sqlString)
 
 	if status == 0 then
-		if debugdb then
+		if debug then
 			dbug("save player failed")
 			dbug(status .. " " .. errorString )
 		end
@@ -279,7 +279,7 @@ function savePlayer(steam, action)
 		getPlayerFields()
 		return false -- no record changed
 	else
-		if debugdb then
+		if debug then
 			dbug("save player success")
 			dbug("save player sqlString " .. sqlString)
 		end
@@ -326,7 +326,7 @@ function saveTable(table, condition)
 --This function does updates only, no inserts
 	-- local i, sqlString, max
 
-	-- if debugdb then
+	-- if debug then
 		-- dbug("saving to table " .. table)
 	-- end
 
@@ -360,21 +360,21 @@ function saveTable(table, condition)
 		-- sqlString = sqlString .. " where " .. condition
 	-- end
 
-	-- if debugdb then
+	-- if debug then
 		-- dbug("save " .. table .. " " .. sqlString)
 	-- end
 
 	-- status, errorString = conn:execute(sqlString)
 
 	-- if status == 0 then
-		-- if debugdb then
+		-- if debug then
 			-- dbug("save " .. table .. " failed")
 		-- end
 
 		-- getTableFields(table)
 		-- return false -- update failed
 	-- else
-		-- if debugdb then
+		-- if debug then
 			-- dbug("save " .. table .. " success")
 		-- end
 

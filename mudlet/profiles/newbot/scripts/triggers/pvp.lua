@@ -25,7 +25,7 @@ function pvpPolice(line)
 
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
 
-	r = rand(15)
+	r = math.random(1,15)
 	score = string.format("%.1f", math.random() * 10)
 
 	nameStart = string.find(line, "INF GMSG") + 10
@@ -108,7 +108,7 @@ function pvpPolice(line)
 			end
 
 			if tonumber(players[killerID].playerKills) == 0 then
-				r = rand(4)
+				r = math.random(1,4)
 				if r == 1 then message("say [" .. server.chatColour .. "]" .. killerName .. " makes their first kill and is now a hit.. sorry has a hit on themselves.[-]") end
 				if r == 2 then message("say [" .. server.chatColour .. "]" .. killerName .. " finally scores their first kill! Woo Hoo![-]") end
 				if r == 3 then message("say [" .. server.chatColour .. "]" .. killerName .. " finally scores their first kill! About time you showed up kid.[-]") end
@@ -116,7 +116,7 @@ function pvpPolice(line)
 
 				players[killerID].pvpBounty = 200
 			else
-				r = rand(29)
+				r = math.random(1,29)
 				if r == 1 then message("say [" .. server.chatColour .. "]" .. killerName .. " once again asserts their dominance in the world.[-]") end
 				if r == 2 then message("say [" .. server.chatColour .. "]" .. killerName .. " strikes a mighty blow against " .. victimName .. "![-]") end
 				if r == 3 then message("say [" .. server.chatColour .. "]" .. killerName .. " fluked that one! " .. victimName .. " will be pissed.[-]") end

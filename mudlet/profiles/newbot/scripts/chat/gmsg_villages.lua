@@ -86,7 +86,7 @@ function gmsg_villages()
 					locations[villageName].village = true
 					message("say [" .. server.chatColour .. "]Congratulations " .. players[pid].name .. " on becoming the new mayor of " .. villageName .. "[-]")
 
-					r = rand(5)
+					r = math.random(1,5)
 
 					if r == 1 then message("say [" .. server.chatColour .. "]The best village in all the land.[-]") end
 					if r == 2 then message("say [" .. server.chatColour .. "]Now you can show those home owner associations how it's really done![-]") end

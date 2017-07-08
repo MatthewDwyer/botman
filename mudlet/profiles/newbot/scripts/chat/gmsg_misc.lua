@@ -8,18 +8,21 @@
 --]]
 
 
+local debug = false
+
 function gmsg_misc()
 	calledFunction = "gmsg_misc"
 
-	local note, pname, pid, debug, result
-
-	debug = false
+	local note, pname, pid, result
 
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
 		botman.faultyChat = false
+		if(debug) then
+			dbugFull("D", "",debugger.getinfo(1,"nSl"), "returning false, :" .. string.sub(chatvars.command, 1, 1) .. ": does not equal server.commandPrefix of: " .. server.commandPrefix .. " from: " .. chatvars.command)
+		end
 		return false
 	end
 
@@ -193,7 +196,7 @@ function gmsg_misc()
 		pid = LookupPlayer(pname)
 
 		if pid ~= nil then
-			players[pid].ircInvite = rand(10000)
+			players[pid].ircInvite = math.random(1,10000)
 
 			if igplayers[pid] then
 				message("pm " .. pid .. " HEY " .. players[pid].name .. "! You have an invite code for IRC! Reply with " .. server.commandPrefix .. "accept " .. players[pid].ircInvite .. " or ignore it.")
@@ -217,16 +220,6 @@ function gmsg_misc()
 	-- ####################################################################################
 
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
-	
-	if (chatvars.words[1] == "fetch" and chatvars.words[2] == "claims") then
-		send("llp " .. chatvars.playerid .. " parseable")
-		
-
-		botman.faultyChat = false
-		return true
-	end
-
-	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end	
 
 	if (chatvars.words[1] == "bookmark" and chatvars.words[2] ~= nil) then
 
@@ -265,7 +258,8 @@ function gmsg_misc()
 				savePosition(chatvars.playerid)
 
 				cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
-				teleport(cmd, chatvars.playerid)
+				prepareTeleport(chatvars.playerid, cmd)
+				teleport(cmd, true)
 			end
 		end
 

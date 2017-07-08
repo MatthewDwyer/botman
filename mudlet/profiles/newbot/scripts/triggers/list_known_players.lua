@@ -7,12 +7,16 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug = false
+
 function listKnownPlayers(line)
 	if botman.botDisabled then
 		return
 	end
 
 	local name, id, steam, playtime, seen, result
+
+	if(debug) then display("DEBUG listKownPlayers: " .. line) end
 
 	data = string.split(line, ",")
 
@@ -26,31 +30,36 @@ function listKnownPlayers(line)
 	local runyear, runmonth, runday, runhour, runminute, runseconds = seen:match(pattern)
 	local seenTimestamp = os.time({year = runyear, month = runmonth, day = runday, hour = runhour, min = runminute, sec = runseconds})
 
-	if (not players[steam] and (playtime ~= "0")) then
-		players[steam] = {}
-
-		if id ~= "-1" then
-			players[steam].id = id
-		end
-
-		players[steam].name = name
-		players[steam].steam = steam
-		players[steam].playtime = playtime
-		players[steam].seen = seen
-
-		if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steam .. "," .. id .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "'") end
-	else
-		if id ~= "-1" then
-			players[steam].id = id
-		end
-
-		players[steam].name = name
-		players[steam].playtime = playtime
-		players[steam].seen = seen
-
-		if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steam .. "," .. id .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "', name = '" .. escape(name) .. "', id = " .. id) end
+	if(playtime == "0" or id == "-1") then
+		return
 	end
+
+	if (not players[steam]) then
+		players[steam] = {}
+	end
+
+	if(debug) then display("DEBUG lkp make/update: " .. id .. ", " .. name .. ", " .. steam .. ", " .. playtime .. ", " .. seen) end
+
+	players[steam].id = id
+	players[steam].name = name
+	players[steam].steam = steam
+	players[steam].playtime = playtime
+	players[steam].seen = seen
+
+	if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steam .. "," .. id .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "'") end
 
 	-- add missing fields and give them default values
 	fixMissingPlayer(steam)
+
+        if(not igplayers[steam]) then return end
+
+        igplayers[steam].id = id
+        igplayers[steam].name = name
+        igplayers[steam].steam = steam
+        igplayers[steam].playtime = playtime
+        igplayers[steam].seen = seen
+
+
+	-- add missing fields and give them default values
+	fixMissingIGPlayer(steam)
 end
