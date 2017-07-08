@@ -1,7 +1,9 @@
 # README #
 
 The main component of this project is a Mudlet profile (Lua script).  You need to install Mudlet to use it.
-The bot also uses IRC to provide a means to monitor the server remotely as well as command the bot and talk to players.  Mudlet requires editing with a hex editor before you can do that as it is hardcoded to connect to the official Mudlet support channel and the bot is coded to not work with irc if that has not been changed.  
+The bot also uses IRC to provide a means to monitor the server remotely as well as command the bot and talk to players.  Mudlet requires editing with a hex editor before you can do that as it is hardcoded to connect to the official Mudlet support channel and the bot is coded to not work with irc if that has not been changed.
+
+I have a Discord channel for bot discussions here https://discord.gg/uektKXT
 
 
 ### What is this repository for? ###
