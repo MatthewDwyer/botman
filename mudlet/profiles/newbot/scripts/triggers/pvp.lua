@@ -253,7 +253,9 @@ function pvpPolice(line)
 			players[killerID].prisonReason = "PVP against " .. players[victimID].name
 			players[killerID].prisonxPosOld = math.floor(igplayers[killerID].xPos)
 			players[killerID].prisonyPosOld = math.ceil(igplayers[killerID].yPos)
-			players[killerID].prisonzPosOld = math.floor(igplayers[killerID].zPos)
+			players[killerID].prisonzPosOld = math.floor(igplayers[killerID].zPos)			
+			players[killerID].prisonReleaseTime = os.time() + (server.maxPrisonTime * 60)
+			players[steam].bail = server.bailCost
 
 			message("pm " .. victimID  .. " [" .. server.chatColour .. "]You may release " .. killerName .. ". Do so at your own risk by typing[-]")
 			message("pm " .. victimID  .. " " .. server.commandPrefix .. "release " .. players[killerID].id .. " or " .. server.commandPrefix .. "release " .. killerName .. "[-]")

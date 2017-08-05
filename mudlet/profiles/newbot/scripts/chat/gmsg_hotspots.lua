@@ -80,10 +80,10 @@ function gmsg_hotspots()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 		irc_chat(players[chatvars.ircid].ircAlias, "Hotspot Commands (in-game only):")
 		irc_chat(players[chatvars.ircid].ircAlias, "================================")
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 	end
 
 	if chatvars.showHelpSections then
@@ -96,13 +96,13 @@ function gmsg_hotspots()
 	if (debug) then dbug("debug hotspots line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "hots") or string.find(chatvars.command, "size"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "hots") or string.find(chatvars.command, "size") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "resize hotspot <hotspot number from list> size <size>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Change a hotspot's radius to a max of 10 (no max size for admins).")
 				irc_chat(players[chatvars.ircid].ircAlias, "eg. " .. server.commandPrefix .. "resize hotspot 3 size 5.  See " .. server.commandPrefix .. "hotspots to get the list of hotspots.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -162,12 +162,12 @@ function gmsg_hotspots()
 	if (debug) then dbug("debug hotspots line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "hots") or string.find(chatvars.command, "move"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "hots") or string.find(chatvars.command, "move") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "move hotspot <hotspot number from list>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Move a hotspot to your current position.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -241,12 +241,12 @@ function gmsg_hotspots()
 	if (debug) then dbug("debug hotspots line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "hots") or string.find(chatvars.command, "del"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "hots") or string.find(chatvars.command, "del") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delete hotspots <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Players can only delete their own hotspots but admins can add a player name or id to delete their hotspots.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -291,12 +291,12 @@ function gmsg_hotspots()
 	if (debug) then dbug("debug hotspots line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "hots") or string.find(chatvars.command, "del"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "hots") or string.find(chatvars.command, "del") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delete hotspot <hotspot number from list>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Delete a hotspot by its number.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -355,12 +355,12 @@ function gmsg_hotspots()
 	if (debug) then dbug("debug hotspots line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "hots"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "hots") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "hotspot <message>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Create a hotspot at your current position with a message.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -444,12 +444,12 @@ function gmsg_hotspots()
 	if (debug) then dbug("debug hotspots line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "hots"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "hots") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "hotspots <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "List your own hotspots.  Admins can list another player's hotspots.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -524,14 +524,14 @@ function gmsg_hotspots()
 	if (debug) then dbug("debug hotspots line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "hots") or string.find(chatvars.command, "action"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "hots") or string.find(chatvars.command, "action") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "resize hotspot <hotspot number from list> size <size>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Change a hotspot's action.  The deafault is to just pm the player but it can also teleport them somewhere, spawn something or buff/debuff the player.")
 				irc_chat(players[chatvars.ircid].ircAlias, "eg. " .. server.commandPrefix .. "hotspot <number of hotspot> action <pm/tele/drop/spawn> <location name/spawn list>")
 				irc_chat(players[chatvars.ircid].ircAlias, "If spawning items or entities use the format item name,quantity|item name,quantity|etc or entity id, entity id, entity id, etc")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end

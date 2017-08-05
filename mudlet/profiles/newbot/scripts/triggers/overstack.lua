@@ -19,8 +19,10 @@ function overstackTrigger(line)
 	item = string.sub(line, string.find(line, "stack for ") + 11, string.find(line, "greater") - 3)
 	limit = string.sub(line, string.find(line, " > ") + 3, string.len(line) - 1)
 
-	stackLimits[item] = {}
-	stackLimits[item].limit = tonumber(limit)
+	if tonumber(limit) > 1 then	
+		stackLimits[item] = {}
+		stackLimits[item].limit = tonumber(limit)
+	end
 
 	id = LookupPlayer(id)
 	if id ~= nil then

@@ -61,10 +61,10 @@ function gmsg_locations()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 		irc_chat(players[chatvars.ircid].ircAlias, "Location Commands:")
 		irc_chat(players[chatvars.ircid].ircAlias, "================")
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 	end
 
 	if chatvars.showHelpSections then
@@ -84,12 +84,12 @@ function gmsg_locations()
 	end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "clear") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "clear") or string.find(chatvars.command, "set") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location clear reset <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Remove the reset zone flag.  Unless otherwise restricted, players will be allowed to place claims and setbase.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -139,12 +139,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "clear"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "clear") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> clear")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Delete all random spawns for the location.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -192,12 +192,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "remove"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "remove") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location remove <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Delete the location and all of its spawnpoints.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -255,12 +255,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "pvp") or string.find(chatvars.command, "pve"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "pvp") or string.find(chatvars.command, "pve") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> pvp (or pve)")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Mark the location as a pvp or pve zone.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -318,12 +318,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "able"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "able") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location enable <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Flag the location as enabled. Currently this flag isn't used and you can ignore this command.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -371,12 +371,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "able"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "able") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location disable <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Flag the location as disabled. Currently this flag isn't used and you can ignore this command.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -424,12 +424,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "priv"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "priv") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location private <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Flag the location as private.  Only staff will see it and be able to freely teleport to it.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -477,12 +477,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "pub"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "pub") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location public <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Flag the location as public.  Everyone will see it with " .. server.commandPrefix .. "locations. Other restrictions may prevent them going there.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -531,12 +531,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "set") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location set reset <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Flag the location as a reset zone.  The bot will warn players not to build in it and will block " .. server.commandPrefix .. "setbase and will remove placed claims of non-staff.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -586,12 +586,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "lobby") or string.find(chatvars.command, "spawn") or string.find(chatvars.command, "player"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "lobby") or string.find(chatvars.command, "spawn") or string.find(chatvars.command, "player") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "lobby <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "If the lobby location exists, send the player to it. You can also do this to offline players, they will be moved to the lobby when they rejoin.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -651,12 +651,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "own"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "own") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location owner <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Assign ownership of a location to a player.  They will be able to set protect on it and players not friended to them won't be able to teleport there.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -715,12 +715,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "allow") or string.find(chatvars.command, "base"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "allow") or string.find(chatvars.command, "base") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location allow base <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Allow players to " .. server.commandPrefix .. "setbase in the location.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -768,12 +768,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "allow") or string.find(chatvars.command, "base"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "allow") or string.find(chatvars.command, "base") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location disallow base <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Block " .. server.commandPrefix .. "setbase in the location.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -821,12 +821,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "acc"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "acc") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> access <minimum access level>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set the minimum access level required to teleport to the location.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -876,12 +876,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "size"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "size") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> size <number>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set the size of the location measured from its centre.  To make a 200 metre location set it to 100.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -936,13 +936,13 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "safe"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "safe") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location safe <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Flag the location as a safe zone.  The bot will automatically kill zombies in the location if players are in it.")
 				irc_chat(players[chatvars.ircid].ircAlias, "To prevent this feature spamming the server it is triggered every 30 seconds. When there are more than 10 players it changes to every minute.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -991,12 +991,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "safe"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "safe") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location unsafe <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "The bot will no longer kill zombies in the location.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1044,12 +1044,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "game"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "game") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> minigame <game type>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Flag the location as part of a minigame such as capture the flag.  The minigame is an unfinished idea so this command doesn't do much yet.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1109,12 +1109,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "cost"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "cost") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> cost <number>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Require the player to have <number> " .. server.moneyPlural .. " to teleport there.  The " .. server.moneyPlural .. " are removed from the player afterwards.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1169,12 +1169,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "close"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "close") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> day closed <0-7>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Block and remove players from the location on a set day. 7 = day 7")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1247,12 +1247,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "open"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "open") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> open <0-23>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Allow players inside the location from a set hour.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1325,12 +1325,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "close"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "close") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> close <0-23>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Block and remove players from the location from a set hour.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1403,14 +1403,14 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "lev"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "lev") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> min level <minimum player level>")
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> max level <maximum player level>")
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> min level <minimum player level> max level <maximum player level>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set a player level requirement to teleport to a location.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1529,21 +1529,21 @@ function gmsg_locations()
 	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 		irc_chat(players[chatvars.ircid].ircAlias, "Location In-Game Only:")
 		irc_chat(players[chatvars.ircid].ircAlias, "========================")
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 	end
 
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "prot"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "prot") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "protect location")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot to protect the location that you are in. It will instruct you what to do and will tell you when the location is protected.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1563,12 +1563,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "prot"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "prot") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "unprotect location <optional name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Remove bot protection from the location. You can leave out the location name if you are in the location.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1602,12 +1602,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "add"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "add") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location add <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Create a location where you are standing.  Unless you add random spawns, any player teleporting to the location will arrive at your current position.  If you are not on the ground, make sure the players can survive the landing.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1652,14 +1652,14 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "move"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "move") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location move <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Move an existing location to where you are standing.  Unless you add random spawns, any player teleporting to the location will arrive at your current position.")
 				irc_chat(players[chatvars.ircid].ircAlias, "If you are not on the ground, make sure the players can survive the landing.  If there are existing random spawns for the location, moving it will not move them.")
 				irc_chat(players[chatvars.ircid].ircAlias, "You should clear them and redo them using " .. server.commandPrefix .. "location <name> clear and " .. server.commandPrefix .. "location <name> random.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1696,12 +1696,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "locations")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "List the locations and basic info about them.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1771,12 +1771,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "size"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "size") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> ends here")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set the size of the location as the difference between your position and the centre of the location. Handy for setting it visually.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1815,7 +1815,7 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "rand"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "rand") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name> random")
 
 			if not shortHelp then
@@ -1823,7 +1823,7 @@ function gmsg_locations()
 				irc_chat(players[chatvars.ircid].ircAlias, "Unless you intend players to fall, do not fly or clip through objects while recording.  To stop recording just type stop.")
 				irc_chat(players[chatvars.ircid].ircAlias, "You can record random spawns anywhere and more than once but remember to type stop after each recording or the bot will continue recording your movement and making spawn points from them.")
 				irc_chat(players[chatvars.ircid].ircAlias, "The spawns do not have to be inside the location and you can make groups of spawns anywhere in the world for the location.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1855,13 +1855,13 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "set") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set tp <optional location>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Create a single random teleport for the location you are in or if you are recording random teleports, it will set for that location.")
 				irc_chat(players[chatvars.ircid].ircAlias, "If you provide a location name you will create 1 random TP for that location where you are standing.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1906,12 +1906,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "location <name>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "See detailed information about a location including a list of players currently in it.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1989,12 +1989,12 @@ function gmsg_locations()
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "locat") or string.find(chatvars.command, "show"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "locat") or string.find(chatvars.command, "show") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "show locations")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "When you enter and leave a location you will see a private message informing you of this.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -2015,7 +2015,7 @@ function gmsg_locations()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "The bot will say nothing when you enter or leave a location except for pvp and pve zone changes.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -2041,6 +2041,13 @@ function gmsg_locations()
 	loc = LookupLocation(chatvars.command)
 
 	if (loc ~= nil) then
+		-- reject if not an admin and server is in hardcore mode
+		if isServerHardcore(chatvars.playerid) then
+			message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is disabled.[-]")
+			botman.faultyChat = false
+			return true
+		end
+
 		if (players[chatvars.playerid].prisoner or not players[chatvars.playerid].canTeleport or not server.allowTeleporting) and tonumber(chatvars.accessLevel) > 2 then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not allowed to use teleports.[-]")
 			botman.faultyChat = false
@@ -2087,7 +2094,7 @@ function gmsg_locations()
 						randomTP(chatvars.playerid, loc)
 					else
 						cmd = "tele " .. chatvars.playerid .. " " .. locations[loc].x .. " " .. locations[loc].y .. " " .. locations[loc].z
-						teleport(cmd)
+						teleport(cmd, chatvars.playerid)
 					end
 
 					botman.faultyChat = false

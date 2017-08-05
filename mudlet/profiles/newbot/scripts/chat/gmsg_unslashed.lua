@@ -11,6 +11,56 @@ function gmsg_unslashed()
 	calledFunction = "gmsg_unslashed"
 
 	local debug, r, l
+	local shortHelp = false
+	local skipHelp = false
+
+	if chatvars.showHelp then
+		if chatvars.words[3] then
+			if not string.find(chatvars.words[3], "unslashed") then
+				skipHelp = true
+			end
+		end
+
+		if chatvars.words[1] == "help" then
+			skipHelp = false
+		end
+
+		if chatvars.words[1] == "list" then
+			shortHelp = true
+		end
+	end
+
+	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(players[chatvars.ircid].ircAlias, "Unslashed Commands:")
+		irc_chat(players[chatvars.ircid].ircAlias, "===================")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(players[chatvars.ircid].ircAlias, "Unslashed commands are simply words in normal chat that trigger a response from the bot.")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(players[chatvars.ircid].ircAlias, "Your bot will react to any player using the words hack, cheat, grief or flying.  That triggers a special scan for hackers.")
+		irc_chat(players[chatvars.ircid].ircAlias, "Any players with a non-zero hacker score found near the player will be immediately exiled.  If you don't have the exile location set up, nothing will happen.")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(players[chatvars.ircid].ircAlias, "When feral.  Like " .. server.commandPrefix .. "day7, the bot will report how many days remain until a horde night.")
+		irc_chat(players[chatvars.ircid].ircAlias, "When reboot.  The bot will report how long until the next reboot.")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
+	end
+
+	if chatvars.showHelpSections then
+		irc_chat(players[chatvars.ircid].ircAlias, "unslashed")
+	end
+
+	if chatvars.showHelp and not skipHelp then
+		if string.find(chatvars.command, "bot") or string.find(chatvars.command, "start") or string.find(chatvars.command, "stop") or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, "restart bot")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "If your bot is launched from a custom script with the ability to restart itself, you can command your bot to restart.")
+				irc_chat(players[chatvars.ircid].ircAlias, "All of Smegz0r's hosted bots have this feature.  Contact Smeg if you need help adding it to your bot.")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
+			end
+		end
+	end
+
 
 	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
 	debug = false
@@ -24,9 +74,9 @@ function gmsg_unslashed()
 	end
 	-- ####################################################################################
 
-if debug then
-	dbug(chatvars.playername)
-end
+	if debug then
+		dbug(chatvars.playername)
+	end
 
 	-- ###################  do not allow the bot to respond to itself ################
 	if string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and chatvars.playername == "Server" then

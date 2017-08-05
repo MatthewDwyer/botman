@@ -187,7 +187,6 @@ function playerInfo(faultyInfo)
 	-- check for invalid or missing steamid.  kick if not passed
 	steamtest = tonumber(steam)
 	if (steamtest == nil) and (steam ~= "") or (string.len(steam) < 17) then
-		message(string.format("say [%s]Kicking player %s for invalid steam ID.[-]", server.chatColour, name))
 		send ("kick " .. id)
 
 		faultyPlayerinfo = false
@@ -435,11 +434,11 @@ function playerInfo(faultyInfo)
 
 	if igplayers[steam].deaths ~= nil then
 		if tonumber(igplayers[steam].deaths) < tonumber(deaths) then
-			if server.SDXDetected then
+			if server.SDXDetected and tonumber(igplayers[steam].yPosLast) > 0 then
 				players[steam].deathX = math.floor(igplayers[steam].xPosLast)
 				players[steam].deathY = math.ceil(igplayers[steam].yPosLast)
 				players[steam].deathZ = math.floor(igplayers[steam].zPosLast)
-				
+
 				igplayers[steam].deadX = math.floor(igplayers[steam].xPosLast)
 				igplayers[steam].deadY = math.ceil(igplayers[steam].yPosLast)
 				igplayers[steam].deadZ = math.floor(igplayers[steam].zPosLast)
@@ -447,7 +446,7 @@ function playerInfo(faultyInfo)
 
 				irc_chat(server.ircMain, "Player " .. steam .. " name: " .. name .. "'s death recorded at " .. igplayers[steam].deadX .. " " .. igplayers[steam].deadY .. " " .. igplayers[steam].deadZ)
 				irc_chat(server.ircAlerts, "Player " .. steam .. " name: " .. name .. "'s death recorded at " .. igplayers[steam].deadX .. " " .. igplayers[steam].deadY .. " " .. igplayers[steam].deadZ)
-				
+
 				message("say [" .. server.chatColour .. "]" .. name .. " has died.[-]")
 
 				r = rand(14)
@@ -472,7 +471,7 @@ function playerInfo(faultyInfo)
 
 				if tonumber(server.packCooldown) > 0 then
 					players[steam].packCooldown = os.time() + server.packCooldown
-				end				
+				end
 			end
 		end
 	end
@@ -776,7 +775,7 @@ function playerInfo(faultyInfo)
 		players[steam].newPlayer = false
 		players[steam].watchPlayer = false
 		players[steam].watchPlayerTimer = 0
-		message("pm " .. steam .. " [" .. server.chatColour .. "]Your new player status has been lifted.  You may now use the base command to teleport home. :D[-]")
+		message("pm " .. steam .. " [" .. server.chatColour .. "]Your new player status has been lifted. :D[-]")
 		if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. steam) end
 
 		if string.upper(players[steam].chatColour) == "FFFFFF" then

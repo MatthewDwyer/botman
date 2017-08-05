@@ -31,9 +31,9 @@ function gmsg_info()
 			end
 		end
 
-		if chatvars.words[1] == "help" then
-			skipHelp = false
-		end
+		-- if chatvars.words[1] == "help" then
+			-- skipHelp = false
+		-- end
 
 		if chatvars.words[1] == "list" then
 			shortHelp = true
@@ -41,10 +41,10 @@ function gmsg_info()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 		irc_chat(players[chatvars.ircid].ircAlias, "Info Commands:")
 		irc_chat(players[chatvars.ircid].ircAlias, "==============")
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 	end
 
 	if chatvars.showHelpSections then
@@ -56,12 +56,12 @@ function gmsg_info()
 	result = false
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "time") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "uptime")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Reports the bot and server's running times.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -124,12 +124,12 @@ function gmsg_info()
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "server") or string.find(chatvars.command, "info"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "server") or string.find(chatvars.command, "info") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "server or " .. server.commandPrefix .. "info")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Displays info mostly from the server config.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -250,12 +250,12 @@ function gmsg_info()
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "next") or string.find(chatvars.command, "boot"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "next") or string.find(chatvars.command, "boot") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "next reboot")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Reports the time remaining before the next scheduled reboot.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -299,12 +299,12 @@ function gmsg_info()
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "fps") or string.find(chatvars.command, "perf"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "fps") or string.find(chatvars.command, "perf") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fps")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Displays the most recent output from the server mem command.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -330,12 +330,12 @@ function gmsg_info()
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "date") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "date") or string.find(chatvars.command, "time") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "server date")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Displays the system clock of the game server.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -354,13 +354,13 @@ function gmsg_info()
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "server") or string.find(chatvars.command, "stat"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "server") or string.find(chatvars.command, "stat") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "server stats")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Displays various server totals for the last 24 hours or more days if you add a number.")
 				irc_chat(players[chatvars.ircid].ircAlias, "eg. " .. server.commandPrefix .. "server stats 5 (gives you the last 5 days cummulative stats)")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -449,12 +449,12 @@ function gmsg_info()
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "new") or string.find(chatvars.command, "play"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "new") or string.find(chatvars.command, "play") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "new players <optional number (days)")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "List the new players and basic info about them in the last day or more.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -538,12 +538,12 @@ function gmsg_info()
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "see") or string.find(chatvars.command, "play"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "see") or string.find(chatvars.command, "play") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "seen <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Reports when the player was last on the server.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -627,12 +627,12 @@ function gmsg_info()
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "rule") or string.find(chatvars.command, "server"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "rule") or string.find(chatvars.command, "server") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "rules")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Reports the server rules.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -654,19 +654,19 @@ function gmsg_info()
 	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 		irc_chat(players[chatvars.ircid].ircAlias, "Info Commands (In-Game Only):")
 		irc_chat(players[chatvars.ircid].ircAlias, "=============================")
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 	end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "where"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "where") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "where")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Gives info about where you are in the world and the rules that apply there.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -756,13 +756,13 @@ function gmsg_info()
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "who") or string.find(chatvars.command, "info"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "who") or string.find(chatvars.command, "info") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "who <optional number distance>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Reports who is around you.  Donors and staff can see distances.")
 				irc_chat(players[chatvars.ircid].ircAlias, "Donors can see 300 metres and other players can see 200.  New and watched players can't see staff near them.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -827,13 +827,13 @@ function gmsg_info()
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "alert") or string.find(chatvars.command, "info"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "alert") or string.find(chatvars.command, "info") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "alert <message>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Whatever is typed after " .. server.commandPrefix .. "alert is recorded to the database and displayed on irc.")
 				irc_chat(players[chatvars.ircid].ircAlias, "You can recall the alerts with the irc command view alerts <optional days>")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -858,12 +858,12 @@ function gmsg_info()
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "info") or string.find(chatvars.command, "play"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "info") or string.find(chatvars.command, "play") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "info <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Displays info about a player.  Only staff can specify a player.  Players just see their own info.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end

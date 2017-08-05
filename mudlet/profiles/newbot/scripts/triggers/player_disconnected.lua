@@ -35,6 +35,8 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 		steam = string.match(temp[2], "(%d+)")
 		name = stripQuotes(string.sub(temp[4], 13, string.len(temp[4])))
 
+		conn:execute("delete from reservedSlots where steam = " .. steam)
+
 		if players[steam] == nil then
 			initNewPlayer(steam, name, entityID, steam)
 		end

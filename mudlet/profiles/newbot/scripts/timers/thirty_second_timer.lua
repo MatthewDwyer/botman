@@ -40,7 +40,6 @@ function thirtySecondTimer()
 	end
 
 	if not server.lagged then
-		send("gt")
 		newDay()
 
 		-- scan player inventories

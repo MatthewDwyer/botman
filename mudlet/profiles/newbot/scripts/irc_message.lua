@@ -9,7 +9,7 @@
 
 --/mode #haven2 +f [5000t#b]:1
 
-local ircid, pid, login, name1, name2, words, wordsOld, words2, wordCount, result, msgLower, number, counter, xpos, zpos, debug, tmp, k, v
+local ircid, pid, login, name1, name2, words, wordsOld, words2, wordCount, word2Count, result, msgLower, number, counter, xpos, zpos, debug, tmp, k, v
 
 debug = false
 
@@ -52,6 +52,10 @@ IRCMessage = function (event, name, channel, msg)
 		server.ircBotName = ircGetNick()
 	end
 
+	if getIrcNick ~= nil then
+		server.ircBotName = getIrcNick()
+	end
+
 	-- block Mudlet from messaging the official Mudlet support channel
 	if (channel == "#mudlet") then
 		return
@@ -79,6 +83,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	for word in msg:gmatch("%S+") do table.insert(wordsOld, word) end
 
 	words2 = string.split(msg, " ")
+	word2Count = table.maxn(words2)
 	msgLower = string.lower(msg)
 
 	irc_params.name = name
@@ -88,6 +93,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	number = tonumber(string.match(msg, " (-?\%d+)"))
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if customIRC ~= nil then
+		if customIRC(name, words, wordsOld, msgLower) then
+			return
+		end
+	end
 
 	if (words[1] == "fix" and words[2] == "bot") and words[3] == nil then
 		fixBot()
@@ -434,6 +445,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if ircid then
+		if players[ircid].ircMute then
+			return
+		end
+
 		if players[ircid].ircAuthenticated == false then
 			requireLogin(name, true)
 		else
@@ -713,8 +728,13 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 		end
 
-		msg = string.trim(string.sub(msg, 5))
-		message("say " .. players[ircid].name .. "-irc: [i]" .. msg .. "[/i][-]")
+		if not players[ircid].ircMute then
+			msg = string.trim(string.sub(msg, 5))
+			message("say " .. players[ircid].name .. "-irc: [i]" .. msg .. "[/i][-]")
+		else
+			irc_chat(name, "Sorry you have been muted")
+		end
+
 		return
 	end
 
@@ -928,6 +948,36 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
+		if (words[1] == "unmute" and words[2] == "irc" and words[3] ~= nil) then
+			name1 = words[3]
+			name1 = string.trim(name1)
+			pid = LookupPlayer(name1)
+
+			players[pid].ircMute = true
+			conn:execute("UPDATE players SET ircMute = 0 WHERE steam = " .. pid)
+
+			msg = players[pid].name .. " can command the bot and can speak to ingame players."
+			irc_chat(name, msg)
+			return
+		end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+		if (words[1] == "mute" and words[2] == "irc" and words[3] ~= nil) then
+			name1 = words[3]
+			name1 = string.trim(name1)
+			pid = LookupPlayer(name1)
+
+			players[pid].ircMute = true
+			conn:execute("UPDATE players SET ircMute = 1 WHERE steam = " .. pid)
+
+			msg = players[pid].name .. " will not be able to command the bot beyond basic info and can't speak to ingame players."
+			irc_chat(name, msg)
+			return
+		end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
 	if (words[1] == "sql" and words[2] == "select") and accessLevel(ircid) == 0 then
 		tmp = {}
 		tmp.sql = string.sub(msg, 4)
@@ -994,39 +1044,30 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "set" and words[2] == "server" and words[3] == "ip") and string.find(msg, "pass") and accessLevel(ircid) == 0 then
--- TODO:  Finish this.
-		tmp = {}
-		tmp.serverIP = string.sub(msg, string.find(msg, " ip ") + 4, string.find(msg, " pass ") - 1)
-		tmp.split = string.split(tmp.serverIP, ":")
---		server.IP = tmp.split[1]
---		server.telnetPort = tmp.split[2]
+		local sIP, sPort, sPass
 
--- dbug(tmp.serverIP)
--- dbug(tmp.split[1])
--- dbug(tmp.split[2])
+		for i=3,word2Count,1 do
+			if words2[i] == "ip" then
+				sIP = words2[i+1]
+			end
 
-		-- irc_chat(name, "The bot will now connect to the irc server at " .. server.ircServer .. ":" .. server.ircPort)
-		-- irc_chat(name, " ")
-		-- conn:execute("UPDATE server SET ircServer = '" .. escape(server.ircServer) .. "', ircPort = '" .. escape(server.ircPort) .. "'")
+			if words2[i] == "port" then
+				sPort = words2[i+1]
+			end
 
-		-- tmp = chatvars.words[4]
+			if words2[i] == "pass" then
+				sPass = words2[i+1]
+			end
+		end
 
-		-- if tmp == nil then
-			-- if (chatvars.playername ~= "Server") then
-				-- message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]The server ip is required.[-]")
-			-- else
-				-- irc_chat(players[chatvars.ircid].ircAlias, "The server ip is required.")
-			-- end
-		-- else
-			-- server.IP = tmp
-			-- conn:execute("UPDATE server SET IP = '" .. escape(tmp) .. "'")
+		server.telnetPass = sPass
+		conn:execute("UPDATE server SET telnetPass = '" .. escape(sPass) .. "', telnetPort = " .. sPort)
 
-			-- if (chatvars.playername ~= "Server") then
-				-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The server ip is now " .. tmp .. ".[-]")
-			-- else
-				-- irc_chat(players[chatvars.ircid].ircAlias, "The server ip is now " .. tmp)
-			-- end
-		-- end
+		--disconnect()
+		connectToServer(sIP, sPort, true)
+
+		irc_chat(server.ircMain, "Connecting to new 7 Days to Die server " .. sIP .. " port " .. sPort)
+		irc_chat(players[chatvars.ircid].ircAlias, "Connecting to new 7 Days to Die server " .. sIP .. " port " .. sPort .. " with pass " .. sPass)
 
 		return
 	end
@@ -1789,7 +1830,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 -- ************************************************************************************************8
 		if (words[1] == "con") and accessLevel(ircid) == 0 then
-			msg = string.lower(string.trim(string.sub(msg, string.find(msgLower, "con") + 4)))
+			msg = string.trim(string.sub(msg, string.find(msgLower, "con") + 4))
 			send(msg)
 
 			if string.sub(msg, 1, 4) == "help" then
@@ -1970,7 +2011,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 					irc_chat(name, " ")
 				end
 			end
-			
+
 			if string.lower(words[3]) == "gimmeZombies" then
 				for k, v in pairs(gimmeZombies) do
 					irc_chat(name, "Zombie " .. k)
@@ -1982,7 +2023,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 					irc_chat(name, " ")
 				end
-			end			
+			end
 
 			return
 		end

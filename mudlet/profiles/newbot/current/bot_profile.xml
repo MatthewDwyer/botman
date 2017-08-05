@@ -3,7 +3,7 @@
 <MudletPackage version="1.0">
     <HostPackage>
         <Host autoClearCommandLineAfterSend="no" disableAutoCompletion="no" printCommand="no" USE_IRE_DRIVER_BUGFIX="yes" mUSE_FORCE_LF_AFTER_PROMPT="no" mUSE_UNIX_EOL="no" mNoAntiAlias="no" mRawStreamDump="no" mAlertOnNewData="yes" mFORCE_NO_COMPRESSION="no" mFORCE_GA_OFF="no" mFORCE_SAVE_ON_EXIT="no" mEnableGMCP="no" mMapStrongHighlight="no" mLogStatus="yes" mEnableSpellCheck="no" mShowInfo="no" mAcceptServerGUI="yes" mMapperUseAntiAlias="no" mFORCE_MXP_NEGOTIATION_OFF="no" mRoomSize="0.5" mLineSize="5" mBubbleMode="no" mShowRoomIDs="no" mShowPanel="no" mHaveMapperScript="no">
-            <name>7days Server</name>
+            <name>bot profile name</name>
             <mInstalledPackages/>
             <url>127.0.0.1</url>
             <serverPackageName>nothing</serverPackageName>

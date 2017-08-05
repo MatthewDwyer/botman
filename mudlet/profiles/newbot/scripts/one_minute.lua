@@ -31,6 +31,8 @@ function savePlayerData(steam)
 	updatePlayer(steam)
 
 	dbug("savePlayerData " .. steam .. " saved")
+
+	initReservedSlots()
 end
 
 

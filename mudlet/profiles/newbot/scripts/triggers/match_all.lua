@@ -31,6 +31,8 @@ end
 
 
 function matchAll(line)
+	-- locals defined lower down
+
 	if botman.botDisabled then
 		return
 	end
@@ -65,9 +67,10 @@ function matchAll(line)
 		return
 	end
 
+	-- locals defined here
 	local pname, pid, number, died, coords, words, temp, msg
 	local dy, mth, yr, hr, min, sec, pm, reason, timestamp, banDate
-	local fields, values, x, z, id, loc, reset, steam, k, v, tmp
+	local fields, values, x, y, z, id, loc, reset, steam, k, v, rows
 
 	if fixChunkDensity and string.find(line, "WRN DENSITYMISMATCH") then
 		fixChunkDensity = nil
@@ -83,8 +86,6 @@ function matchAll(line)
 	botman.botOfflineCount = 2
 	botman.botOffline = false
 
-	tmp = {}
-
 	if string.find(line, "INF Server shutting down!") then
 		saveLuaTables()
 	end
@@ -92,13 +93,36 @@ function matchAll(line)
 	if string.find(line, "ERROR: unknown command 'pug'") then
 		server.scanNoclip = false
 	end
-	
+
+	-- grab steam ID of player joining server if the server is using reserved slots
+	if tonumber(server.reservedSlots) > 0 then
+		if string.find(line, "INF Steam auth") then
+			temp = string.split(line, ",")
+			pid = string.sub(temp[3], 12, string.len(temp[3]) -1)
+
+			-- check the slots and how full the server is try to kick a player from a reserved slot
+			if players[pid].reserveSlot == true or players[pid].accessLevel < 11 then
+				if (botman.dbReservedSlotsUsed >= server.reservedSlots) then
+					freeReservedSlot()
+				end
+			end
+		end
+	end
+
+
 	-- detect server version
 	-- Game version: Alpha 16 (b105) Compatibility Version: Alpha 16
 	if string.find(line, "Game version:") then
 		server.gameVersion = string.trim(string.sub(line, string.find(line, "Game version:") + 14, string.find(line, "Compatibility") - 2))
 		if botman.dbConnected then conn:execute("UPDATE server SET gameVersion = '" .. escape(server.gameVersion) .. "'") end
-	end	
+	end
+
+	-- detect Stompy's API mod
+	if string.find(line, "Mod Bad Company Manager:") then
+		server.stompy = true
+		temp = string.split(line, ":")
+		server.stompyVersion = temp[2]
+	end
 
 	-- detect server tools
 	if string.find(line, "Mod SDX:") or string.find(line, "SDX: ") and not server.SDXDetected then
@@ -147,9 +171,9 @@ function matchAll(line)
 	if string.find(line, "pm LagCheck " .. server.botID) and string.find(line, server.botsIP) then
 		botman.lagCheckRead = true
 		server.lagged = false
-		tmp.lag = os.time() - botman.lagCheckTime
+		local lag = os.time() - botman.lagCheckTime
 
-		if tonumber(tmp.lag) > 10 then
+		if tonumber(lag) > 5 then
 			server.lagged = true
 		end
 
@@ -225,6 +249,14 @@ function matchAll(line)
 
 			if tonumber(server.reservedSlots) > 0 then
 				send("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+			end
+		else
+			if tonumber(server.maxPlayers) ~= tonumber(server.ServerMaxPlayerCount) - 1 then
+				server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
+
+				if tonumber(server.reservedSlots) > 0 then
+					send("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+				end
 			end
 		end
 	end
@@ -317,6 +349,7 @@ function matchAll(line)
 		end
 
 		if (string.find(line, "ServerMaxPlayerCount =")) then
+			number = tonumber(string.match(line, " (%d+)"))
 			server.ServerMaxPlayerCount = number
 
 			if server.maxPlayers == 0 then
@@ -324,6 +357,14 @@ function matchAll(line)
 
 				if server.reservedSlots > 0 then
 					send("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+				end
+			else
+				if tonumber(server.maxPlayers) ~= tonumber(server.ServerMaxPlayerCount) - 1 then
+					server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
+
+					if tonumber(server.reservedSlots) > 0 then
+						send("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+					end
 				end
 			end
 		end
@@ -476,22 +517,20 @@ function matchAll(line)
 		if string.find(line, "ombie") then
 			temp = string.split(line, "-")
 
-			tmp = {}
-			tmp.entityID = string.trim(temp[1])
-			tmp.zombie = string.trim(temp[2])
+			local entityID = string.trim(temp[1])
+			local zombie = string.trim(temp[2])
 
-			if botman.dbConnected then conn:execute("INSERT INTO gimmeZombies (zombie, entityID) VALUES ('" .. tmp.zombie .. "'," .. tmp.entityID .. ") ON DUPLICATE KEY UPDATE remove = 0") end
-			updateGimmeZombies(tmp.entityID, tmp.zombie)
+			if botman.dbConnected then conn:execute("INSERT INTO gimmeZombies (zombie, entityID) VALUES ('" .. zombie .. "'," .. entityID .. ") ON DUPLICATE KEY UPDATE remove = 0") end
+			updateGimmeZombies(entityID, zombie)
 		else
 			if (string.sub(line, 1, 4) ~= os.date("%Y")) then
 				temp = string.split(line, "-")
 
-				tmp = {}
-				tmp.entityID = string.trim(temp[1])
-				tmp.entity = string.trim(temp[2])
+				local entityID = string.trim(temp[1])
+				local entity = string.trim(temp[2])
 
-				if botman.dbConnected then conn:execute("INSERT INTO otherEntities (entity, entityID) VALUES ('" .. tmp.entity .. "'," .. tmp.entityID .. ")") end
-				updateOtherEntities(tmp.entityID, tmp.entity)
+				if botman.dbConnected then conn:execute("INSERT INTO otherEntities (entity, entityID) VALUES ('" .. entity .. "'," .. entityID .. ")") end
+				updateOtherEntities(entityID, entity)
 			end
 		end
 	end
@@ -499,25 +538,50 @@ function matchAll(line)
 
 	if (string.find(line, "please specify one of the entities")) then
 		-- flag all the zombies for removal so we can detect deleted zeds
-		if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET remove = 1") end		
-				
+		if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET remove = 1") end
+
 		getZombies = true
 		return
 	end
 
 
-	if string.find(line, "command 'rcd") and string.find(line, server.botsIP) then
-		fixChunkDensity = true
+	if string.find(line, "command 'rcd") then
+		if string.find(line, server.botsIP) then
+			fixChunkDensity = true
+		end
 	end
 
 
-	if string.find(line, "Executing command 'gg'") and string.find(line, server.botsIP) then
-		botman.readGG = true
+	if string.find(line, "Executing command 'gg'") then
+		if string.find(line, server.botsIP) then
+			botman.readGG = true
+		end
 	end
 
 
-	if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
-		botman.listEntities = true
+	if string.find(line, "Executing command 'le'") then
+		if string.find(line, server.botsIP) then
+			botman.listEntities = true
+		end
+	end
+
+
+	if botman.listItems and playerListItems == nil then
+		if string.find(line, " matching items.") then
+			botman.listItems = false
+		else
+			if botman.dbConnected then
+				temp = string.trim(line)
+				conn:execute("INSERT INTO spawnableItems (itemName) VALUES ('" .. escape(temp) .. "') ON DUPLICATE KEY UPDATE deleteItem = 0")
+			end
+		end
+	end
+
+
+	if string.find(line, "Executing command 'li ") then
+		if string.find(line, server.botsIP) and playerListItems == nil then
+			botman.listItems = true
+		end
 	end
 
 
@@ -526,8 +590,7 @@ function matchAll(line)
 		server.ServerToolsDetected = false
 
 		if botman.dbConnected then
-			conn:execute("UPDATE server SET SDXDetected = 0")
-			conn:execute("UPDATE server SET ServerToolsDetected = 0")
+			conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
 		end
 	end
 
@@ -590,8 +653,8 @@ function matchAll(line)
 
 		if getZombies then
 			getZombies = nil
-			
-			if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies WHERE remove = 1") end							
+
+			if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies WHERE remove = 1") end
 			loadGimmeZombies()
 
 			if botman.dbConnected then
@@ -615,6 +678,9 @@ function matchAll(line)
 	if string.find(line, "Mod Coppis command additions") then
 		server.coppi = true
 
+		temp = string.split(line, ":")
+		server.coppiVersion = temp[2]
+
 		if server.hideCommands then
 			send("tcch " .. server.commandPrefix)
 		end
@@ -626,6 +692,10 @@ function matchAll(line)
 	-- detect Alloc's Mod
 	if string.find(line, "Mod Allocs server fixes") then
 		server.allocs = true
+
+		temp = string.split(line, ":")
+		server.allocsVersion = temp[2]
+
 		return
 	end
 
@@ -752,34 +822,32 @@ function matchAll(line)
 
 		-- player chat colour
 		if string.find(line, "command 'cpc", nil, true) then
-			tmp = {}
-			tmp.line = string.sub(line, string.find(line, "command ") + 9, string.find(line, " from") - 2)
-			tmp.parts = string.split(tmp.line, " ")
-			tmp.colour = tmp.parts[3]
-			tmp.name = tmp.parts[2]
-			tmp.steam = LookupPlayer(tmp.name, "all")
+			line = string.sub(line, string.find(line, "command ") + 9, string.find(line, " from") - 2)
+			local parts = string.split(line, " ")
+			local colour = parts[3]
+			local name = parts[2]
+			steam = LookupPlayer(name, "all")
 
-			players[tmp.steam].chatColour = tmp.colour
-			if botman.dbConnected then conn:execute("UPDATE players SET chatColour = '" .. escape(tmp.colour) .. "' WHERE steam = " .. tmp.steam) end
+			players[steam].chatColour = colour
+			if botman.dbConnected then conn:execute("UPDATE players SET chatColour = '" .. escape(colour) .. "' WHERE steam = " .. steam) end
 		end
 
 
 		-- player bed
 		if string.sub(line, 1, 11) == "PlayerBed: " then
-			tmp = {}
-			tmp.name = string.sub(line, 12, string.find(line, " at ") - 1)
-			tmp.steam = LookupPlayer(tmp.name)
+			local name = string.sub(line, 12, string.find(line, " at ") - 1)
+			steam = LookupPlayer(name)
 
-			if tmp.steam then
-				tmp.split = string.split(string.sub(line, string.find(line, " at ") + 4), ",")
-				tmp.x = string.trim(tmp.split[1])
-				tmp.y = string.trim(tmp.split[2])
-				tmp.z = string.trim(tmp.split[3])
+			if steam then
+				local split = string.split(string.sub(line, string.find(line, " at ") + 4), ",")
+				x = string.trim(split[1])
+				y = string.trim(split[2])
+				z = string.trim(split[3])
 
-				players[tmp.steam].bedX = tmp.x
-				players[tmp.steam].bedY = tmp.y
-				players[tmp.steam].bedZ = tmp.z
-				if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. tmp.x .. ", bedY = " .. tmp.y .. ", bedZ = " .. tmp.z .. " WHERE steam = " .. tmp.steam) end
+				players[steam].bedX = x
+				players[steam].bedY = y
+				players[steam].bedZ = z
+				if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. x .. ", bedY = " .. y .. ", bedZ = " .. z .. " WHERE steam = " .. steam) end
 			end
 		end
 	end

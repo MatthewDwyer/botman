@@ -40,8 +40,8 @@ end
 
 function stripQuotes(name)
 	local oldName
-
-	name = string.trim(name)
+	
+	name = string.trim(name)	
 	oldName = name
 
 	name = string.match(name, "^'(.*)'$")
@@ -51,7 +51,7 @@ function stripQuotes(name)
 	else
 		return name
 	end
-
+	
 	name = string.match(name, "^\"(.*)\"$")
 
 	if name == nil then name = oldName end
@@ -1376,14 +1376,14 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].flying = false
 		igplayers[steam].flyCount = 0
 		igplayers[steam].flyingX = 0
-		igplayers[steam].flyingY = 0
+		igplayers[steam].flyingY = 0		
 		igplayers[steam].flyingZ = 0
 	end
 
 	if igplayers[steam].noclip == nil then
 		igplayers[steam].noclip = false
 		igplayers[steam].noclipX = 0
-		igplayers[steam].noclipY = 0
+		igplayers[steam].noclipY = 0		
 		igplayers[steam].noclipZ = 0
 	end
 

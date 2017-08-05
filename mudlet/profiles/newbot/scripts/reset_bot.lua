@@ -47,7 +47,7 @@ function QuickBotReset()
 end
 
 
-function ResetBot()
+function ResetBot(keepTheMoney)
 	dbug("Archiving data")
 	saveLuaTables(os.date("%Y%m%d_%H%M%S"))
 
@@ -58,89 +58,6 @@ function ResetBot()
 	dumpTable("alerts")
 
 	dbug("Running ResetBot")
-
-	for k,v in pairs(players) do
-		v.alertMapLimit = false
-		v.alertPrison = true
-		v.alertRemovedClaims = false
-		v.alertReset = true
-		v.allowBadInventory=false
-		v.bail=0
-		v.baseCooldown = 0
-		v.bed=""
-		v.bedX=0
-		v.bedY=0
-		v.bedZ=0
-		v.botTimeout=false
-		v.canTeleport=true
-		v.cash = 0
-		v.deaths = 0
-		v.exiled=false
-		v.exit2X = 0
-		v.exit2Y = 0
-		v.exit2Z = 0
-		v.exitX = 0
-		v.exitY = 0
-		v.exitZ = 0
-		v.gimmeCount = 0
-		v.home2X = 0
-		v.home2Y = 0
-		v.home2Z = 0
-		v.homeX = 0
-		v.homeY = 0
-		v.homeZ = 0
-		v.keystones = 0
-		v.lastBaseRaid = 0
-		v.location = "lobby"
-		v.overstack = false
-		v.overstackItems = ""
-		v.overstackScore = 0
-		v.overstackTimeout = false
-		v.playerKills = 0
-		v.prisoner=false
-		v.prisonReason=""
-		v.prisonReleaseTime=0
-		v.prisonxPosOld=0
-		v.prisonyPosOld=0
-		v.prisonzPosOld=0
-		v.protect = false
-		v.protect2 = false
-		v.protect2Size = 32
-		v.protectSize = 32
-		v.pvpBounty = 0
-		v.pvpCount=0
-		v.pvpVictim=0
-		v.raiding = false
-		v.removedClaims = 0
-		v.score = 0
-		v.sessionCount = 0
-		v.silentBob=false
-		v.timeout = false
-		v.tokens = 0
-		v.walkies=false
-		v.watchCash=false
-		v.watchPlayer = false
-		v.xPos = 0
-		v.xPosOld = 0
-		v.yPos = 0
-		v.yPosOld = 0
-		v.zombies = 0
-		v.zPos = 0
-		v.zPosOld = 0
-
-		-- remove some fields
-		v.santa = nil
-		v.protection = nil
-		v.protectionSize = nil
-		v.lobby = nil
-		v.waypointY = nil
-		v.waypointX = nil
-		v.waypointZ = nil
-		v.shareWaypoint = nil
-		v.baseprotection = nil
-
-		updatePlayer(k)
-	end
 
 	-- clean up other tables
 	teleports = {}
@@ -180,6 +97,7 @@ function ResetBot()
 	conn:execute("TRUNCATE TABLE playerQueue")
 	conn:execute("TRUNCATE TABLE polls")
 	conn:execute("TRUNCATE TABLE pollVotes")
+	conn:execute("TRUNCATE TABLE reservedSlots")
 	conn:execute("TRUNCATE TABLE resetZones")
 	conn:execute("TRUNCATE TABLE teleports")
 	conn:execute("TRUNCATE TABLE tracker")
@@ -188,6 +106,17 @@ function ResetBot()
 	conn:execute("TRUNCATE TABLE inventoryChanges")
 	conn:execute("TRUNCATE TABLE inventoryTracker")
 	conn:execute("TRUNCATE TABLE waypoints")
+
+	-- reset some data in the players table
+	sql = "UPDATE players SET bail=0, bed='', bedX=0, bedY=0, bedZ=0, deaths=0, xPos=0, xPosOld=0, yPos=0, yPosOld=0, zPos=0, zPosOld=0, homeX=0, home2X=0, homeY=0, home2Y=0, homeZ=0, home2Z=0, exitX=0, exit2X=0, exitY=0, exit2Y=0, exitZ=0, exit2Z=0, exiled=0, keystones=0, location='lobby', canTeleport=1, botTimeout=0, allowBadInventory=0, baseCooldown=0, overstackTimeout=0, playerKills=0, prisoner=0, prisonReason='', prisonReleaseTime=0, prisonxPosOld=0, prisonyPosOld=0, prisonzPosOld=0, protect=0, protect2=0, protectSize=" .. server.LandClaimSize .. ", protect2Size=" .. server.LandClaimSize .. ", pvpBounty=0, pvpCount=0, pvpVictim=0, score=0, sessionCount=0, silentBob=0, walkies=0, zombies=0, timeout=0"
+
+	if keepTheMoney == nil then
+		sql = sql .. ", cash=0"
+	end
+
+	conn:execute(sql)
+
+	loadPlayers()
 
 	dbug("Reading server, players, bans and admin data")
 

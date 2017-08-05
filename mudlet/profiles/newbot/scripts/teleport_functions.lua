@@ -43,9 +43,11 @@ function teleport(cmd, steam)
 	coords = string.sub(cmd, 24)
 	coords = string.split(coords, " ")
 
+	display(coords)
+
 	-- don't teleport the player if the coords are 0 0 0
-	if tonumber(coords[1]) == 0 and tonumber(coords[2]) == 0 and tonumber(coords[3]) == 0 then
-		return
+	if tonumber(coords[1]) == 0 and tonumber(coords[2]) < 1 and tonumber(coords[3]) == 0 then
+		return false
 	end
 
 	-- if an admin is following a player (using the /near command) and they teleport away, stop following the player

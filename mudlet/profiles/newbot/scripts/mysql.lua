@@ -514,54 +514,7 @@ function alterTables()
 
 if debug then display("alterTables start\n") end
 
--- These are here to make it easier to update other bots while the bot is in development.
--- If you think you are missing a table or field, try uncommenting these.
-
---	conn:execute("ALTER TABLE `hotspots` CHANGE `size` `size` INT(11) NOT NULL DEFAULT '2'")
---	conn:execute("ALTER TABLE `hotspots` ADD `idx` INT NOT NULL DEFAULT '0'")
-	--conn:execute("ALTER TABLE `keystones` ADD `removed` int(11) NOT NULL DEFAULT '1'")
---	conn:execute("DROP TABLE `languages`")
-	--conn:execute("ALTER TABLE `locations` ADD `resetZone` tinyint(1) NOT NULL DEFAULT '0'")
---	conn:execute("ALTER TABLE `server` ADD `gameType` VARCHAR(3) NOT NULL DEFAULT 'pve'")
---	conn:execute("ALTER TABLE `players` ADD `donorLevel` INT NOT NULL DEFAULT '0' , ADD `donorExpiry` TIMESTAMP NOT NULL")
---	conn:execute("ALTER TABLE `locations` ADD `other` VARCHAR(10) NULL DEFAULT NULL")
---	conn:execute("ALTER TABLE `server` ADD `hideCommands` BOOLEAN NOT NULL DEFAULT TRUE")
---	conn:execute("ALTER TABLE `locations` ADD `killZombies` BOOLEAN NOT NULL DEFAULT FALSE")
---	conn:execute("ALTER TABLE `players` ADD `autoFriend` VARCHAR(2) NOT NULL COMMENT 'NA/AF/AD'")
---	conn:execute("ALTER TABLE `server` ADD `botTick` INT NOT NULL DEFAULT '0'")
---	conn:execute("ALTER TABLE `players` ADD `ircOtherNames` VARCHAR(50) NULL")
---	conn:execute("ALTER TABLE `performance` ADD `heapMax` FLOAT NOT NULL AFTER `heap`")
---	conn:execute("ALTER TABLE `proxies` DROP `id`")
---	conn:execute("ALTER TABLE `players` ADD `steamOwner` BIGINT(17) NOT NULL")
---	conn:execute("ALTER TABLE `server` ADD `serverGroup` VARCHAR(20) NULL DEFAULT NULL")
---	conn:execute("ALTER TABLE `server` ADD `botID` INT NOT NULL DEFAULT '0'")
---	conn:execute("ALTER TABLE `server` ADD `allowOverstacking` BOOLEAN NOT NULL DEFAULT FALSE")
---	conn:execute("ALTER TABLE `list` ADD UNIQUE KEY `thing` (`thing`)")
---	conn:execute("ALTER TABLE `server` ADD `announceTeleports` BOOLEAN NOT NULL")
---	conn:execute("ALTER TABLE `server` ADD `blockCountries` VARCHAR(60) NOT NULL DEFAULT 'CN'")
---	conn:execute("ALTER TABLE `server` ADD `northeastZone` VARCHAR(5) NOT NULL DEFAULT 'pve', ADD `northwestZone` VARCHAR(5) NOT NULL DEFAULT 'pve' , ADD `southeastZone` VARCHAR(5) NOT NULL DEFAULT 'pve' , ADD `southwestZone` VARCHAR(5) NOT NULL DEFAULT 'pve'")
---	conn:execute("ALTER TABLE `server` ADD `allowPhysics` BOOLEAN NOT NULL DEFAULT TRUE")
---	conn:execute("ALTER TABLE `server` ADD `playersCanFly` BOOLEAN NOT NULL DEFAULT FALSE")
---	conn:execute("ALTER TABLE `server` ADD `accessLevelOverride` INT NOT NULL DEFAULT '99'")
---	conn:execute("ALTER TABLE `server` ADD `disableBaseProtection` BOOLEAN NOT NULL DEFAULT FALSE")
---	conn:execute("ALTER TABLE `players` ADD `bedX` INT NOT NULL DEFAULT '0' , ADD `bedY` INT NOT NULL DEFAULT '0' , ADD `bedZ` INT NOT NULL DEFAULT '0'")
---	conn:execute("ALTER TABLE `server` ADD `packCooldown` INT NOT NULL DEFAULT '0'")
---	conn:execute("ALTER TABLE `server` ADD `moneyName` VARCHAR(20) NOT NULL DEFAULT 'Zenny|Zennies'")
---	conn:execute("ALTER TABLE `server` ADD `allowBank` BOOLEAN NOT NULL DEFAULT TRUE")
---	conn:execute("ALTER TABLE `server` ADD `overstackThreshold` INT NOT NULL DEFAULT '1000'")
---	conn:execute("ALTER TABLE `server` ADD `enableRegionPM` BOOLEAN NOT NULL DEFAULT TRUE")
---	conn:execute("ALTER TABLE `players` ADD `showLocationMessages` BOOLEAN NOT NULL DEFAULT TRUE")
---	conn:execute("ALTER TABLE `server` ADD `allowRapidRelogging` TINYINT NOT NULL DEFAULT '1'")
---	conn:execute("ALTER TABLE `players` ADD `mute` TINYINT NOT NULL DEFAULT '0'")
---	conn:execute("ALTER TABLE `server` ADD `allowLottery` TINYINT NOT NULL DEFAULT '1', ADD `lotteryMultiplier` INT NOT NULL DEFAULT '2', ADD `zombieKillReward` INT NOT NULL DEFAULT '3'")
---	conn:execute("ALTER TABLE `players` ADD `xPosOld2` INT NOT NULL DEFAULT '0' , ADD `yPosOld2` INT NOT NULL DEFAULT '0' , ADD `zPosOld2` INT NOT NULL DEFAULT '0'")
---	conn:execute("ALTER TABLE `server` ADD `ircTracker` VARCHAR(15) NOT NULL DEFAULT '#new_tracker'")
---	conn:execute("ALTER TABLE `server` ADD `allowTeleporting` BOOLEAN NOT NULL DEFAULT TRUE")
---	conn:execute("ALTER TABLE `server` ADD `hardcore` BOOLEAN NOT NULL DEFAULT FALSE")
---	conn:execute("ALTER TABLE `players` ADD `ISP` VARCHAR(25) NULL DEFAULT NULL")
---	conn:execute("ALTER TABLE `server` ADD `swearJar` TINYINT(1) NOT NULL DEFAULT '0', ADD `swearCash` INT NOT NULL DEFAULT '0' ")
---	conn:execute("ALTER TABLE `players` ADD `ignorePlayer` TINYINT(1) NOT NULL DEFAULT '0'")
---	conn:execute("ALTER TABLE `server` ADD `idleKick` TINYINT(1) NOT NULL DEFAULT '0'")
+	-- These are here to make it easier to update other bots while the bot is in development.
 
 	-- new tables
 	conn:execute("CREATE TABLE `altertables` (`id` int(11) NOT NULL,`statement` varchar(1000) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=latin1")
@@ -593,6 +546,13 @@ if debug then display("alterTables start\n") end
 	doSQL("CREATE TABLE IF NOT EXISTS `helpTopicCommands` (`topicID` int(11) NOT NULL,`commandID` int(11) NOT NULL, PRIMARY KEY (`topicID`, `commandID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE IF NOT EXISTS `helpTopics` (`topicID` int(11) NOT NULL AUTO_INCREMENT,`topic` varchar(20) NOT NULL,`description` varchar(200) NOT NULL, PRIMARY KEY (`topicID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE `staff` (`steam` bigint(17) NOT NULL DEFAULT '0',`adminLevel` int(11) NOT NULL DEFAULT '2',`blockDelete` tinyint(1) NOT NULL DEFAULT '0', PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE IF NOT EXISTS `spawnableItems` (`itemName` varchar(100) NOT NULL, `deleteItem` tinyint(1) NOT NULL DEFAULT '0', `accessLevelRestriction` int(11) NOT NULL DEFAULT '99', `category` varchar(20) NOT NULL DEFAULT 'None', `price` int(11) NOT NULL DEFAULT '10000', `stock` int(11) NOT NULL DEFAULT '5000', `idx` int(11) NOT NULL DEFAULT '0', `maxStock` int(11) NOT NULL DEFAULT '5000', `inventoryResponse` varchar(10) NOT NULL DEFAULT 'none', `StackLimit` int(11) NOT NULL DEFAULT '1000', `newPlayerMaxInventory` int(11) NOT NULL DEFAULT '-1', `units` int(11) NOT NULL DEFAULT '1', PRIMARY KEY (`itemName`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE IF NOT EXISTS `reservedSlots` (`steam` varchar(17) NOT NULL,`timeAdded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`reserved` tinyint(1) NOT NULL DEFAULT '0',`staff` tinyint(1) NOT NULL DEFAULT '0',`totalPlayTime` int(11) NOT NULL DEFAULT '0',`deleteRow` TINYINT(1) NOT NULL DEFAULT '0',PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE IF NOT EXISTS `botCommands` (`cmdCode` varchar(5) NOT NULL,`cmdIndex` int(11) NOT NULL,`accessLevel` int(11) NOT NULL DEFAULT '0',`enabled` tinyint(1) NOT NULL DEFAULT '1',`keywords` varchar(150) NOT NULL DEFAULT '',`shortDescription` varchar(255) NOT NULL DEFAULT '',`longDescription` varchar(1000) NOT NULL DEFAULT '',`sortOrder` int(11) NOT NULL DEFAULT '0',PRIMARY KEY (`cmdCode`,`cmdIndex`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE IF NOT EXISTS `timedEvents` (`timer` varchar(20) NOT NULL DEFAULT '',`delayMinutes` int(11) NOT NULL DEFAULT '10',`nextTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`disabled` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`timer`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE IF NOT EXISTS `botChat` (`botChatID` int(11) NOT NULL,`triggerWords` varchar(255) NOT NULL DEFAULT '',`triggerPhrase` varchar(255) NOT NULL DEFAULT '',`accessLevelRestriction` int(11) NOT NULL DEFAULT '99',`mustAddressBot` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`botChatID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE IF NOT EXISTS `botChatResponses` (`botChatResponseID` int(11) NOT NULL,`botChatID` int(11) NOT NULL DEFAULT '0',`response` varchar(300) NOT NULL DEFAULT '',PRIMARY KEY (`botChatResponseID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+
 
 	-- changes to players table
 	doSQL("ALTER TABLE `players` ADD COLUMN `waypoint2X` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Y` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Z` INT NOT NULL DEFAULT '0', ADD COLUMN `waypointsLinked` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -609,6 +569,7 @@ if debug then display("alterTables start\n") end
 	doSQL("ALTER TABLE `players` ADD `watchPlayerTimer` INT(11) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `hackerScore` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `pvpTeleportCooldown` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `players` ADD `block` TINYINT(1) NOT NULL DEFAULT '0'")
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	-- changes to server table
@@ -642,7 +603,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD COLUMN disableTPinPVP TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD COLUMN `ServerToolsDetected` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` CHANGE `moneyName` `moneyName` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'Zenny|Zennies'")
-	doSQL("ALTER TABLE `server` CHANGE rules VARCHAR(500) NOT NULL DEFAULT 'A zombie ate the server rules! Tell an admin.'")
+	doSQL("ALTER TABLE `server` CHANGE rules VARCHAR(1000) NOT NULL DEFAULT 'A zombie ate the server rules! Tell an admin.'")
 	doSQL("ALTER TABLE `server` ADD `updateBot` INT(1) NOT NULL DEFAULT '0' COMMENT '0 do not update, 1 stable branch, 2 testing branch'")
 	doSQL("ALTER TABLE `server` ADD `alertSpending` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `GBLBanThreshold` INT NOT NULL DEFAULT '0'")
@@ -678,6 +639,10 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `allowHomeTeleport` TINYINT(1) NOT NULL DEFAULT '1' , ADD `playerTeleportDelay` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `allowPackTeleport` TINYINT(1) NOT NULL DEFAULT '1'")
 	doSQL("ALTER TABLE `server` ADD `gameVersion` VARCHAR(30) NOT NULL DEFAULT ''")
+	doSQL("ALTER TABLE `server` ADD `pvpIgnoreFriendlyKills` TINYINT(1) NOT NULL DEFAULT '0', ADD `allowStuckTeleport` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `server` ADD `restrictIRC` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `nextAnnouncement` INT NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `server` ADD `pvpAllowProtect` INT NOT NULL DEFAULT '0'")
 
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
@@ -704,6 +669,9 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `IPBlacklist` ADD `DateAdded` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , ADD `botID` INT NOT NULL DEFAULT '0' , ADD `steam` BIGINT(17) NOT NULL DEFAULT '0' , ADD `playerName` VARCHAR(25) NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `miscQueue` ADD `timerDelay` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00'")
 	doSQL("ALTER TABLE `keystones` ADD `expired` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `spawnableItems` ADD `craftable` TINYINT(1) NOT NULL DEFAULT '1' , ADD `devBlock` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('announcements', '60', CURRENT_TIMESTAMP, '0')")
+	doSQL("ALTER TABLE `locations` ADD `hidden` TINYINT(1) NOT NULL DEFAULT '0'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)
@@ -721,15 +689,15 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	if rows == 0 then
 		doSQL("ALTER TABLE  `bans` DROP PRIMARY KEY , ADD `id` bigint(20) NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (  `id` )", true)
 	end
-	
+
 	-- change the primary key of table gimmeZombies from zombie to entityID if the remove field does not exist.
 	cursor,errorString = conn:execute("SHOW COLUMNS FROM `gimmeZombies` LIKE 'remove'")
 	rows = cursor:numrows()
 
 	if rows == 0 then
-		doSQL("DELETE FROM gimmeZombies")	
+		doSQL("DELETE FROM gimmeZombies")
 		doSQL("ALTER TABLE `gimmeZombies` DROP PRIMARY KEY , ADD PRIMARY KEY (  `entityID` ), ADD `remove` TINYINT(1) NOT NULL DEFAULT '0'")
-	end	
+	end
 
 	statements = {}
 

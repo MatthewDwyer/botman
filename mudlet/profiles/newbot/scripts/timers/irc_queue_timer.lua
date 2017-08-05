@@ -32,7 +32,10 @@ function ircQueueTimer()
 			row2 = cursor2:fetch({}, "a")
 
 			if row2 then
-				sendIrc(row2.name, row2.command)
+				if row2.name ~= "#mudlet" then
+					sendIrc(row2.name, row2.command)
+				end
+
 				conn:execute("delete from ircQueue where id = " .. row2.id)
 			end
 		end

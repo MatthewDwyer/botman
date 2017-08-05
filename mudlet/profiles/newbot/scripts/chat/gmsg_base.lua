@@ -41,10 +41,10 @@ if debug then dbug("debug base") end
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 		irc_chat(players[chatvars.ircid].ircAlias, "Base Commands:")
 		irc_chat(players[chatvars.ircid].ircAlias, "==============")
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 	end
 
 	if chatvars.showHelpSections then
@@ -58,7 +58,7 @@ if debug then dbug("debug base") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set the base protection size for a player's first or second base.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -139,7 +139,7 @@ if debug then dbug("debug base") end
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "When you die, the bot can automatically return you to your first or second base.")
 				irc_chat(players[chatvars.ircid].ircAlias, "Set within 50 metres of your base.  The closest base will become your new spawn point after death.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -188,7 +188,7 @@ if debug then dbug("debug base") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot where your first or second base is for base protection, raid alerting and the ability to teleport home.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -303,7 +303,7 @@ if debug then dbug("debug base") end
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set up the bot's base protection.  The bot will tell the player to move towards or away from their base and will")
 				irc_chat(players[chatvars.ircid].ircAlias, "automatically set protection outside of their base protected area.  Players should not set traps in this area.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -552,7 +552,7 @@ if debug then dbug("debug base") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot to forget about a tbase.  Players can only remove their own bases.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -616,7 +616,7 @@ if debug then dbug("debug base") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot to forget about a base.  Players can only remove their own bases.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -680,7 +680,7 @@ if debug then dbug("debug base") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Disable base protection for a player.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -754,7 +754,7 @@ if debug then dbug("debug base") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Enable or disable the home or base teleport command (except for staff).")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -801,10 +801,10 @@ if debug then dbug("debug base") end
 	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 		irc_chat(players[chatvars.ircid].ircAlias, "Base In-Game Only:")
 		irc_chat(players[chatvars.ircid].ircAlias, "===================")
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 	end
 
 	if chatvars.showHelp and not skipHelp then
@@ -814,19 +814,25 @@ if debug then dbug("debug base") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Teleport back to your first or second base. A timer and/or a cost may apply.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
 
 	if (chatvars.words[1] == "base" or chatvars.words[1] == "home" or chatvars.words[1] == "base2" or chatvars.words[1] == "home2") and chatvars.words[2] == nil and (chatvars.playerid ~= 0) then
+		if isServerHardcore(chatvars.playerid) then
+			message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is disabled.[-]")
+			botman.faultyChat = false
+			return true
+		end
+
 		if server.coppi then
 			-- update the coordinates of the players bedroll
 			send("lpb " .. chatvars.playerid)
 		end
 
-		if (chatvars.accessLevel > 2) and not server.allowHomeTeleport then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleporting home is disabled on this server.  Walking is good for you!  Running even more so. :D[-]")
+		if (chatvars.accessLevel > 2) and (not server.allowHomeTeleport or not server.allowTeleporting) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleporting home is disabled on this server.  Walking is good for you!  Running even more so :D[-]")
 			botman.faultyChat = false
 			return true
 		end
@@ -977,7 +983,7 @@ if debug then dbug("debug base") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set a player's first base for them where you are standing.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1035,7 +1041,7 @@ if debug then dbug("debug base") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set a player's second base for them where you are standing.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1092,7 +1098,7 @@ if debug then dbug("debug base") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Turn your own base protection against you for 30 seconds to test that it works.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1123,7 +1129,7 @@ if debug then dbug("debug base") end
 				irc_chat(players[chatvars.ircid].ircAlias, "Pause your base protection.")
 				irc_chat(players[chatvars.ircid].ircAlias, "Only works on your base(s) if you are within 100 metres of them and automatically resumes if you move away or leave the server.")
 				irc_chat(players[chatvars.ircid].ircAlias, "This allows players who you haven't friended access to your base with you present.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1158,7 +1164,7 @@ if debug then dbug("debug base") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Re-activate your base protection.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end

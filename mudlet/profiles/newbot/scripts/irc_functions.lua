@@ -17,16 +17,32 @@ function getNick()
 end
 
 function joinIRCServer()
+	local channels = {}
+
 	if server.ircPort == "" then
 		return
 	end
 
-	ircSetHost(server.ircServer, server.ircPort)
-	ircSetChannel(server.ircMain)
-	tempTimer( 1, [[ircJoin("]] .. server.ircAlerts .. [[")]] )
-	tempTimer( 2, [[ircJoin("]] .. server.ircWatch .. [[")]] )
-	tempTimer( 3, [[ircReconnect()]] )
-	server.ircBotName = getNick()
+	if setIrcServer ~= nil then
+		table.insert(channels, server.ircMain)
+		table.insert(channels, server.ircAlerts)
+		table.insert(channels, server.ircWatch)
+
+		setIrcServer(server.ircServer, server.ircPort)
+		setIrcChannels( channels )
+		restartIrc()		
+	else
+		ircSetHost(server.ircServer, server.ircPort)
+
+		tempTimer( 1, [[ircJoin("]] .. server.ircAlerts .. [[")]] )
+		tempTimer( 2, [[ircJoin("]] .. server.ircWatch .. [[")]] )
+		tempTimer( 3, [[ircReconnect()]] )
+		server.ircBotName = getNick()
+		ircSetChannel(server.ircMain)		
+	end
+
+
+
 end
 
 function irc_chat(name, message)

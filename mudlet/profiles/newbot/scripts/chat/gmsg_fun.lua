@@ -39,10 +39,10 @@ if debug then dbug("debug fun") end
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 		irc_chat(players[chatvars.ircid].ircAlias, "Fun Commands:")
 		irc_chat(players[chatvars.ircid].ircAlias, "================")
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 	end
 
 	if chatvars.showHelpSections then
@@ -57,7 +57,7 @@ if debug then dbug("debug fun") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "See the player kills and current bounty on a player's head.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -103,7 +103,7 @@ if debug then dbug("debug fun") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "All gimme messages will be private messages.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -126,7 +126,7 @@ if debug then dbug("debug fun") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Force the bot to rescan the list of zombies and animals.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -154,7 +154,7 @@ if debug then dbug("debug fun") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Cancel a gimmehell game in progress.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -185,7 +185,7 @@ if debug then dbug("debug fun") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Reset gimme counters for everyone so they can play gimme again.  The bot does this every 2 hours automatically.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -213,7 +213,7 @@ if debug then dbug("debug fun") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "All gimme messages will be in public chat.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -244,7 +244,7 @@ if debug then dbug("debug fun") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Disable the gimme game.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -275,7 +275,7 @@ if debug then dbug("debug fun") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Enable the gimme game.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -306,7 +306,7 @@ if debug then dbug("debug fun") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Players can win zombies.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -337,7 +337,7 @@ if debug then dbug("debug fun") end
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Gimme prizes will not include zombies.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end

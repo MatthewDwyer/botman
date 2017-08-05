@@ -7,6 +7,164 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+function isServerHardcore(playerid)
+	if server.hardcore and players[playerid] > 2  then
+		return true
+	else
+		return false
+	end
+end
+
+
+function makeINI()
+	local file
+
+	-- first delete the file
+	os.remove(homedir .. "/botman.ini")
+
+	-- now build a new one
+	file = io.open(homedir .. "/botman.ini", "a")
+	file:write("iniReadOnly=false\n")
+	file:write("botOwner=\"0\"\n")
+	if telnetPassword then file:write("telnetPassword=\"" .. telnetPassword .. "\"\n") end
+	if botman.chatlogPath then file:write("webdavFolder=\"" .. botman.chatlogPath .. "\"\n") end
+	file:write("ircPrivate=false\n")
+	file:write("ircRestricted=false\n")
+	if server.ircServer then file:write("ircServer=\"" .. server.ircServer .. "\"\n") end
+	if server.ircPort then file:write("ircPort=" .. server.ircPort .. "\n") end
+	if server.ircMain then file:write("ircChannel=\"" .. server.ircMain .. "\"\n") end
+	if botDB then file:write("botDB=\"" .. botDB .. "\"\n") end
+	if botDBUser then file:write("botDBUser=\"" .. botDBUser .. "\"\n") end
+	if botDBPass then file:write("botDBPass=\"" .. botDBPass .. "\"\n") end
+	if botsDB then file:write("botsDB=\"" .. botsDB .. "\"\n") end
+	if botsDBUser then file:write("botsDBUser=\"" .. botsDBUser .. "\"\n") end
+	if botsDBPass then file:write("botsDBPass=\"" .. botsDBPass .. "\"\n") end
+	file:close()
+end
+
+
+function readItemsXML(xmlFile)
+	local file, ln
+
+	file = io.open(xmlFile, "rb")
+
+	for ln in io.lines(file) do
+		lines[#lines + 1] = line
+	end
+
+	-- if isFile(homedir .. "/temp/version.txt") then
+		-- file = io.open(homedir .. "/temp/version.txt", "r")
+		-- codeVersion = file:read "*a"
+		-- codeBranch = file:read "*a"
+		-- file:close()
+end
+
+
+function runTimedEvents()
+	local cursor, errorString, rows
+
+	if botman.dbConnected then
+		cursor,errorString = conn:execute("SELECT * FROM timedEvents WHERE nextTime < NOW() AND disabled = 0")
+
+		row = cursor:fetch({}, "a")
+		while row do
+			if row.timer == "announcements" then
+				conn:execute("UPDATE timedEvents SET nextTime = NOW() + " .. row.delayMinutes * 60 .. " WHERE timer = 'announcements'")
+				sendNextAnnouncement()
+			end
+
+			row = cursor:fetch(row, "a")
+		end
+	end
+end
+
+
+function sendNextAnnouncement()
+	local counter, cursor, errorString, rows
+
+	if (tonumber(botman.playersOnline) == 0) then -- don't bother if nobody is there to see it
+		return
+	end
+
+	counter = 1
+
+	if botman.dbConnected then
+		cursor,errorString = conn:execute("SELECT * FROM announcements")
+		rows = cursor:numrows()
+		row = cursor:fetch({}, "a")
+		while row do
+			if tonumber(server.nextAnnouncement) == counter then
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape(row.message) .. "')")
+			end
+
+			counter = counter + 1
+			row = cursor:fetch(row, "a")
+		end
+	end
+
+	server.nextAnnouncement = server.nextAnnouncement + 1
+	if (server.nextAnnouncement > rows) then server.nextAnnouncement = 1 end
+	conn:execute("UPDATE server set nextAnnouncement = " .. server.nextAnnouncement)
+end
+
+
+function getLastCommandIndex(code)
+	local cursor,errorString,row
+
+	cursor,errorString = conn:execute("SELECT max(cmdIndex) as lastIndex FROM botCommands WHERE cmdCode = '" .. escape(code) .. "'")
+	row = cursor:fetch({}, "a")
+
+	return tonumber(row.lastIndex) + 1
+end
+
+
+function canSetHere(steam, x, z)
+	local k, v, dist
+
+	-- check for nearby bases that are not friendly
+	for k, v in pairs(players) do
+		if (v.homeX ~= nil) and k ~= steam then
+				if (v.homeX ~= 0 and v.homeZ ~= 0) then
+				dist = distancexz(x, z, v.homeX, v.homeZ)
+
+				if (tonumber(dist) < tonumber(v.protectSize) + 10) then
+					if not isFriend(k, steam) then
+						return false
+					end
+				end
+			end
+		end
+
+		if (v.home2X ~= nil) then
+				if (v.home2X ~= 0 and v.home2Z ~= 0) then
+				dist = distancexz(x, z, v.home2X, v.home2Z)
+
+				if (dist < tonumber(v.protectSize) + 10) then
+					if not isFriend(k, steam) then
+						return false
+					end
+				end
+			end
+		end
+	end
+
+	return true
+end
+
+
+function collectSpawnableItemsList()
+	if botman.dbConnected then
+		conn:execute("UPDATE spawnableItems SET deleteItem = 1")
+	end
+
+	send("li a")
+	send("li e")
+	send("li i")
+	send("li o")
+	send("li u")
+end
+
+
 function adminsOnline()
 	-- this function helps us choose different actions depending on if an admin is playing or not.
 	local k, v
@@ -285,6 +443,11 @@ function fixBot()
 	fixShop()
 	enableTimer("ReloadScripts")
 	getServerData()
+
+	-- join the irc server
+	if botman.customMudlet then
+		joinIRCServer()
+	end
 end
 
 
@@ -477,20 +640,20 @@ end
 function updateGimmeZombies(entityID, zombie)
 	local k, v
 
-	if gimmeZombies[entityID] == nil then	
+	if gimmeZombies[entityID] == nil then
 		-- new zombie so add it to gimmeZombies
 		gimmeZombies[entityID] = {}
 		gimmeZombies[entityID].zombie = zombie
 		gimmeZombies[entityID].minPlayerLevel = 1
 		gimmeZombies[entityID].minArenaLevel = 1
 		gimmeZombies[entityID].bossZombie = false
-		gimmeZombies[entityID].doNotSpawn = false		
+		gimmeZombies[entityID].doNotSpawn = false
 
 		if string.find(zombie, "cop") or string.find(zombie, "Cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "Feral") or string.find(zombie, "Radiated") or string.find(zombie, "Behemoth") or string.find(zombie, "Template") then
 			gimmeZombies[entityID].doNotSpawn = true
-			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end		
+			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
 		else
-			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end				
+			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end
 		end
 
 		gimmeZombies[entityID].maxHealth = 0
@@ -509,13 +672,13 @@ function updateGimmeZombies(entityID, zombie)
 			gimmeZombies[entityID].minPlayerLevel = 1
 			gimmeZombies[entityID].minArenaLevel = 1
 			gimmeZombies[entityID].bossZombie = false
-			gimmeZombies[entityID].doNotSpawn = false					
+			gimmeZombies[entityID].doNotSpawn = false
 
 			if string.find(zombie, "cop") or string.find(zombie, "Cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "Feral") or string.find(zombie, "Radiated") or string.find(zombie, "Behemoth") or string.find(zombie, "Template") then
 				gimmeZombies[entityID].doNotSpawn = true
-				if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end							
+				if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
 			else
-				if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end				
+				if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end
 			end
 
 			gimmeZombies[entityID].maxHealth = 0
@@ -555,51 +718,6 @@ function restrictedCommandMessage()
 		if r == 14 then return("[DENIED]  [DENI[DEN[DENIED]ENIED]NIED]  [DENIED]") end
 		if r == 15 then return("A bit slow are we? Noooooooooooooooo.") end
 		if r == 16 then return("Yyyyyyeeee No.") end
-	end
-end
-
-
-function updateReservedSlots()
-	local slotsUsed = 0
-	local reservedCount = 0
-	local count
-
-	for k,v in pairs(igplayers) do
-		if v.reservedSlot then
-			reservedCount = reservedCount + 1
-		end
-	end
-
-	slotsUsed = tonumber(botman.playersOnline) - (tonumber(server.maxPlayers) - tonumber(server.reservedSlots))
-
-	if reservedCount > slotsUsed then
-		count = reservedCount - slotsUsed
-
-		-- first try to move staff using a reserved slot to unreserved slotsUsed
-		for k,v in pairs(igplayers) do
-			if v.reservedSlot and accessLevel(k) < 3 then
-				v.reservedSlot = false
-				count = count - 1
-				message("pm " .. k .. " [" .. server.chatColour .. "]You are no longer using a reserved slot. :D[-]")
-			end
-
-			if count < 1 then
-				return
-			end
-		end
-
-		-- now try to move unauthorised players out of their reserved slot
-		for k,v in pairs(igplayers) do
-			if v.reservedSlot then
-				v.reservedSlot = false
-				count = count - 1
-				message("pm " .. k .. " [" .. server.chatColour .. "]You are no longer using a reserved slot. :D[-]")
-			end
-
-			if count < 1 then
-				return
-			end
-		end
 	end
 end
 

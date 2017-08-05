@@ -167,7 +167,7 @@ if debug then dbug("check inventory 3") end
 
 						-- instant ban for a full stack of any of these if a new player
 						if tonumber(table2[1]) >= tonumber(stackLimits[table2[2]].limit) and newPlayer == true then
-							if (table2[2] == "tnt" or table2[2] == "keystoneBlock" or table2[2] == "mineAirFilter" or table2[2] == "mineHubcap" or table2[2] == "rScrapIronPlateMine") then
+							if (table2[2] == "tnt" or table2[2] == "mineAirFilter" or table2[2] == "mineHubcap" or table2[2] == "rScrapIronPlateMine") then
 								ban = true
 								banReason = "Banned for excessive amounts of " .. table2[2] .. "(" .. table2[1] .. ")."
 							end
@@ -368,23 +368,6 @@ if debug then dbug("check inventory 8") end
 							end
 						end
 					end
-				end
-			end
-
-if debug then dbug("check inventory 9") end
-
-			if (items["keystoneBlock"] and players[k].newPlayer == true and tonumber(items["keystoneBlock"].quantity) > 4 and accessLevel(k) > 2) and (server.gameType ~= "cre") and (players[k].ignorePlayer ~= true) then
-				conn:execute("INSERT INTO inventoryTracker (steam, x, y, z, session, belt, pack, equipment) VALUES (" .. k .. "," .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. "," .. players[k].sessionCount .. ",'" .. escape(v.belt) .. "','" .. escape(v.pack) .. "','" .. escape(v.equipment) .. "')")
-				banPlayer(k, "1 week", "Too many keystones (" .. items["keystoneBlock"].quantity .. ")", "")
-				message("say [" .. server.chatColour .. "]Banning new player " .. igplayers[k].name .. " 1 week for too many keystones (" .. items["keystoneBlock"].quantity .. ") in inventory.  Cheating suspected.[-]")
-				irc_chat(server.ircMain, "[BANNED] New player " .. k .. " " .. igplayers[k].name .. " has " .. items["keystoneBlock"].quantity .. " keystones and has been banned for 1 week")
-				irc_chat(server.ircAlerts, "[BANNED] New player " .. k .. " " .. igplayers[k].name .. " has " .. items["keystoneBlock"].quantity .. " keystones and has been banned for 1 week")
-
-				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. ",'" .. botman.serverTime .. "','ban','[BANNED] New player " .. k .. " " .. escape(igplayers[k].name) .. " has " .. items["keystoneBlock"].quantity .. " keystones and has been banned for 1 week'," .. k .. ")")
-
-				if botman.db2Connected then
-					-- copy in bots db
-					connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','ban','[BANNED] New player " .. k .. " " .. escape(igplayers[k].name) .. " has " .. items["keystoneBlock"].quantity .. " keystones and has been banned for 1 week'," .. k .. ")")
 				end
 			end
 

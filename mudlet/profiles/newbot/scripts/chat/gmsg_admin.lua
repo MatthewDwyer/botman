@@ -13,6 +13,8 @@ add /claims <distance> it will count all claims (using llp) within range.
 add /claim owners <distance> will list all the players with claims down in range
 --]]
 
+
+
 function gmsg_admin()
 	calledFunction = "gmsg_admin"
 
@@ -154,7 +156,29 @@ if debug then dbug("debug admin") end
 
 		botman.faultyChat = false
 		return true
+	end
 
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if string.find(chatvars.command, "irc") or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "rejoin irc")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Sometimes the bot can fall off IRC and fail to reconnect.  This command forces it to reconnect.")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "rejoin" or chatvars.words[1] == "reconnect") and chatvars.words[2] == "irc" then
+		-- join (or rejoin) the irc server incase the bot has fallen off and failed to reconnect
+		if botman.customMudlet then
+			joinIRCServer()
+		end
+
+		botman.faultyChat = false
+		return true
 	end
 
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
@@ -525,13 +549,6 @@ if debug then dbug("debug admin") end
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.words[1] == "give" and (string.find(chatvars.words[2], "claim") or string.find(chatvars.words[2], "key") or string.find(chatvars.words[2], "lcb")) then
-		if players[chatvars.playerid].removedClaims > 20 then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I am holding a lot of claims. Due to bugs with the count I can't release them to you.  Please talk to an admin to get them back so we can verify the count.[-]")
-
-			botman.faultyChat = false
-			return true
-		end
-
 		if players[chatvars.playerid].removedClaims > 0 then
 			send("give " .. chatvars.playerid .. " keystoneBlock " .. players[chatvars.playerid].removedClaims)
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I was holding " .. players[chatvars.playerid].removedClaims .. " keystones for you and have dropped them at your feet.  Press e to collect them now.[-]")
@@ -2131,7 +2148,7 @@ if debug then dbug("debug admin") end
 			return true
 		end
 
-		arrest(prisonerid, "Arrested by admin", 10000, 44640)
+		arrest(prisonerid, "Arrested by admin", server.bailCost, server.maxPrisonTime)
 
 		botman.faultyChat = false
 		return true
@@ -3360,24 +3377,19 @@ if debug then dbug("debug admin") end
 				cursor,errorString = connBots:execute("SELECT * FROM bans where steam = " .. id .. " AND botID = " .. server.botID)
 			else
 				-- pname must be a steam id
+				id = pname
 				cursor,errorString = connBots:execute("SELECT * FROM bans where steam = " .. pname .. " AND botID = " .. server.botID)
 			end
 
 			rows = cursor:numrows()
 
 			if rows == 0 then
-				if id ~= nil then
-					connBots:execute("INSERT INTO bans (steam, reason, GBLBan, GBLBanReason, botID) VALUES (" .. id .. ",'" .. escape(reason) .. "',1,'" .. escape(reason) .. "'," .. server.botID .. ")")
-					send("ban add " .. id .. " " .. duration .. " " .. reason)
-				else
-					-- pname must be a steam id to work
-					connBots:execute("INSERT INTO bans (steam, reason, GBLBan, GBLBanReason, botID) VALUES (" .. pname .. ",'" .. escape(reason) .. "',1,'" .. escape(reason) .. "'," .. server.botID .. ")")
-					send("ban add " .. id .. " " .. duration .. " " .. reason)
-				end
+				connBots:execute("INSERT INTO bans (steam, reason, GBLBan, GBLBanReason, botID) VALUES (" .. id .. ",'" .. escape(reason) .. "',1,'" .. escape(reason) .. "'," .. server.botID .. ")")
+				send("ban add " .. id .. " " .. duration .. " " .. reason)
 			else
 				connBots:execute("UPDATE bans set GBLBan = 1, GBLBanReason = '" .. escape(reason) .. "' WHERE steam = " .. id .. " AND botID = " .. server.botID)
 			end
-
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 			if (chatvars.playername ~= "Server") then
 				if players[id] then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has been submitted to the global ban list for approval.[-]")
@@ -3387,6 +3399,7 @@ if debug then dbug("debug admin") end
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Until approved, it will only raise an alert when the player joins another server.[-]")
 			else
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 				if players[id] then
 					irc_chat(players[chatvars.ircid].ircAlias, players[id].name .. " has been submitted to the global ban list for approval.")
 				else
@@ -4027,6 +4040,128 @@ if debug then dbug("debug admin") end
 
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "block") or string.find(chatvars.command, "play"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "block <name>")
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "unblock <name>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Block/Unblock a player from using any bot commands or command the bot from IRC.")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "block" or chatvars.words[1] == "unblock") and chatvars.words[2] ~= nil then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 0) then
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 0) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		pname = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1], nil, true) + string.len(chatvars.words[1]))
+		pname = string.trim(pname)
+		id = LookupPlayer(pname)
+
+		if (pname == "") then
+			if (chatvars.playername ~= "Server") then
+				message(string.format("pm %s [%s]A player name is required or could not be found for this command.", chatvars.playerid, server.chatColour))
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "A player name is required or could not be found for this command.")
+			end
+
+			botman.faultyChat = false
+			return true
+		else
+			if (chatvars.words[1] == "block") then
+				players[id].block = true
+				if botman.dbConnected then conn:execute("UPDATE players SET block=1 WHERE steam = " .. id) end
+
+				if (chatvars.playername ~= "Server") then
+					message(string.format("pm %s [%s]Player " .. players[id].name .. " is blocked from talking to the bot.", chatvars.playerid, server.chatColour))
+				else
+					irc_chat(players[chatvars.ircid].ircAlias, "Player " .. players[id].name .. " is blocked from talking to the bot.")
+				end
+			else
+				players[id].block = false
+				if botman.dbConnected then conn:execute("UPDATE players SET block=0 WHERE steam = " .. id) end
+
+				if (chatvars.playername ~= "Server") then
+					message(string.format("pm %s [%s]Player " .. players[id].name .. " can talk to the bot.", chatvars.playerid, server.chatColour))
+				else
+					irc_chat(players[chatvars.ircid].ircAlias, "Player " .. players[id].name .. " can talk to the bot.")
+				end
+
+			end
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "stuck") or string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "enable stuck")
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "disable stuck")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Enable or disable the " .. server.commandPrefix .. "stuck command.")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "stuck" then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 0) then
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 0) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		if (chatvars.words[1] == "enable") then
+			server.allowStuckTeleport = true
+			if botman.dbConnected then conn:execute("UPDATE server SET allowStuckTeleport=1") end
+
+			if (chatvars.playername ~= "Server") then
+				message(string.format("pm %s [%s]Players can use the %sstuck command.", chatvars.playerid, server.chatColour, server.commandPrefix))
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "Players can use the " .. server.commandPrefix .. "stuck command.")
+			end
+		else
+			server.allowStuckTeleport = false
+			if botman.dbConnected then conn:execute("UPDATE server SET allowStuckTeleport=0") end
+
+			if (chatvars.playername ~= "Server") then
+				message(string.format("pm %s [%s]Players cannot use the %sstuck command.", chatvars.playerid, server.chatColour, server.commandPrefix))
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "Players cannot use the " .. server.commandPrefix .. "stuck command.")
+			end
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
 -- ###################  do not allow remote commands beyond this point ################
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
@@ -4561,7 +4696,7 @@ if debug then dbug("debug admin") end
 		if chatvars.words[1] == "near" then
 			pname = chatvars.words[2]
 		end
-		
+
 		igplayers[chatvars.playerid].followDistance = 30
 
 		if chatvars.words[3] ~= nil then
@@ -4585,7 +4720,7 @@ if debug then dbug("debug admin") end
 			else
 				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos) .. " -1 " .. math.floor(igplayers[id].zPos - igplayers[chatvars.playerid].followDistance)
 			end
-				
+
 			send(cmd)
 		end
 

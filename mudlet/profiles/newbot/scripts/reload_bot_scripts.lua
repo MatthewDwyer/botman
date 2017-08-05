@@ -122,10 +122,6 @@ function fixTables()
 		customMessages = {}
 	end
 
-	if type(reservedSlots) ~= "table" then
-		reservedSlots = {}
-	end
-
 	if type(proxies) ~= "table" then
 		proxies = {}
 	end
@@ -195,6 +191,11 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	fixMissingStuff()
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	if isFile(homedir .. "/custom/customIRC.lua") then
+		server.nextCodeReload = "/custom/customIRC.lua"
+		dofile(homedir .. "/custom/customIRC.lua")
+	end
 
 	server.nextCodeReload = "/scripts/debug.lua"
 	checkScript(homedir .. "/scripts/debug.lua")

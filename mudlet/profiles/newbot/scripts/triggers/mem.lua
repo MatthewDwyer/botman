@@ -28,5 +28,8 @@ function memTrigger(line)
 
 		server.fps = fps
 		if botman.dbConnected then conn:execute("INSERT INTO performance (serverdate, gametime, fps, heap, heapMax, chunks, cgo, players, zombies, entities, items) VALUES ('" .. botman.serverTime .. "'," .. time .. "," .. fps .. "," .. heap .. "," .. heapMax .. "," .. chunks .. "," .. cgo .. "," .. ply .. "," .. zom .. ",'" .. ent .. "'," .. items .. ")") end
+
+		-- some servers don't show the gt command in telnet, only the game time. We read the tick count here as well so we always have that info.
+		gameTickCountTrigger(line)
 	end
 end

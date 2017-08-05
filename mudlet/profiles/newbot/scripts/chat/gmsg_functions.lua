@@ -357,6 +357,24 @@ function gmsg_who(playerid, number)
 end
 
 
+function logCommand(commandTime, commandOwner, commandLine)
+	if botman.webdavFolderWriteable == false or string.find(commandLine, " INF ") or string.find(commandLine, "' from client") then
+		return
+	end
+
+	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
+	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
+	botman.webdavFolderWriteable = false
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_commandlog.txt", "a")
+	file:write(commandTime .. "; " .. commandOwner .. "; " .. string.trim(commandLine) .. "\n")
+	file:close()
+
+	botman.webdavFolderWriteable = true
+end
+
+
 function logChat(chatTime, chatOwner, chatLine)
 	if botman.webdavFolderWriteable == false or string.find(chatLine, " INF ") or string.find(chatLine, "' from client") then
 		return
@@ -368,7 +386,7 @@ function logChat(chatTime, chatOwner, chatLine)
 
 	-- log the chat
 	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_chatlog.txt", "a")
-	file:write(chatTime .. " " .. string.trim(chatLine) .. "\n")
+	file:write(chatTime .. "; " .. chatOwner .. "; " .. string.trim(chatLine) .. "\n")
 	file:close()
 
 	botman.webdavFolderWriteable = true
@@ -377,21 +395,25 @@ end
 
 function gmsg(line, ircid)
 	local result, x, z, id, pname, noWaypoint, temp, chatStringStart, cmd, msg, test, ircMsg
-	
+
 	function messageIRC()
 		if ircMsg ~= nil then
 			-- ignore game messages
 			if (chatvars.playername ~= "Server" and chatvars.playerid == nil) or string.find(ircMsg, " INF ") then
 				return
-			end		
-		
+			end
+
 			irc_chat(server.ircMain, ircMsg)
 
-			if players[chatvars.playerid] or chatvars.playername == "Server" then
+--			if players[chatvars.playerid] or chatvars.playername == "Server" then
 				windowMessage(server.windowGMSG, chatvars.playername .. ": " .. chatvars.command .. "\n", true)
 				logChat(botman.serverTime, chatvars.playername, ircMsg)
-			end
-		end	
+
+				if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) then
+					logCommand(botman.serverTime, chatvars.playername, ircMsg)
+				end
+--			end
+		end
 	end
 
 	if debug then
@@ -553,7 +575,6 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			ircMsg = server.gameDate .. " " .. temp
-
 		else
 			if not string.find(chatvars.command, server.commandPrefix .. "accept") and not string.find(chatvars.command, server.commandPrefix .. "poke") then
 if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -591,6 +612,8 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		end
 	end
 
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
 	if (chatvars.playername ~= "Server") then
 		if igplayers[chatvars.playerid] then
 			igplayers[chatvars.playerid].afk = os.time() + 900
@@ -617,6 +640,13 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 					tempTimer( 60, [[unmutePlayer("]] .. chatvars.playerid .. [[")]] )
 				end
 			end
+		end
+
+		if players[chatvars.playerid].lockout then
+			botman.faultyChat = false
+			result = true
+
+			return
 		end
 	end
 
@@ -659,21 +689,21 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		messageIRC()
 	end
 
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end		
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	-- don't process any chat coming from irc or death messages
 	if string.find(chatvars.gmsg, "-irc:", nil, true) or (chatvars.playername == "Server" and (string.find(chatvars.gmsg, "died") or string.find(chatvars.gmsg, "eliminated"))) then
 		botman.faultyChat = false
 		return
 	end
-	
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end	
-	
+
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
 	if not result then
 		if not result and debug then dbug("debug entering gmsg_custom") end
 		result = gmsg_custom()
 		if result and debug then dbug("debug ran command in gmsg_custom") end
-	end	
+	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
@@ -732,22 +762,22 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if not result then
 		if chatvars.showHelp and not skipHelp then
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "reload"))) or chatvars.words[1] ~= "help" then
+			if (string.find(chatvars.command, "reload")) or chatvars.words[1] ~= "help" and chatvars.words[3] == nil then
 				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "reload code")
 
 				if not shortHelp then
 					irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot to reload all external Lua scripts.  This also happens shortly after restarting the bot and it can automatically detect if the scripts are not loaded and reload them.")
 					irc_chat(players[chatvars.ircid].ircAlias, "Once the script have loaded, if you make any changes to them you need to run this command or restart the bot for your changes to take effect.")
-					irc_chat(players[chatvars.ircid].ircAlias, "")
+					irc_chat(players[chatvars.ircid].ircAlias, " ")
 				end
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pause") or string.find(chatvars.command, "bot"))) or chatvars.words[1] ~= "help" then
+			if (string.find(chatvars.command, "pause") or string.find(chatvars.command, "bot")) or chatvars.words[1] ~= "help" and chatvars.words[3] == nil then
 				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "pause (or disable or stop) bot")
 
 				if not shortHelp then
 					irc_chat(players[chatvars.ircid].ircAlias, "Temporarily disable the bot.  It will still read the chat and can be enabled again.")
-					irc_chat(players[chatvars.ircid].ircAlias, "")
+					irc_chat(players[chatvars.ircid].ircAlias, " ")
 				end
 			end
 		end
@@ -825,6 +855,18 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 			botman.faultyChat = false
 		end
+
+		if chatvars.words[1] == "register" and chatvars.words[2] == "commands" then
+			botman.registerCommands	= true
+
+			if tonumber(chatvars.playerid) > 0 then
+				players[chatvars.playerid].lastCommand = chatvars.command
+				players[chatvars.playerid].lastChatLine = chatvars.oldLine -- used for storing the telnet line from the last command
+				players[chatvars.playerid].lastCommandTimestamp = os.time()
+			end
+
+			botman.faultyChat = false
+		end
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -878,10 +920,9 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-		if players[chatvars.playerid].silentBob == true or (server.hardcore == true and tonumber(chatvars.accessLevel) > 2) then
+		if players[chatvars.playerid].silentBob == true then
 			result = true
 			botman.faultyChat = false
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			return
 		end
 	end
@@ -1055,6 +1096,12 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
+	if result then
+		-- a command matched and was executed so stop processing it
+		botman.faultyChat = false
+		botman.faultyChat2 = false
+		return
+	end
 
 	if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) and (chatvars.playername ~= "Server") and not result then  -- THIS COMMAND MUST BE LAST OR IT STOPS SLASH COMMANDS BELOW IT WORKING.
 		pname = nil
@@ -1071,6 +1118,13 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 		if (id ~= nil) then
 	if (debug) then dbug("id = " .. id) end
+
+			-- reject if not an admin and server is in hardcore mode
+			if isServerHardcore(chatvars.playerid) then
+				message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is disabled.[-]")
+				botman.faultyChat = false
+				return true
+			end
 
 			-- reject if not an admin and player teleporting has been disabled
 			if tonumber(chatvars.accessLevel) > 2 and not server.allowTeleporting then
@@ -1111,6 +1165,12 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 				return
 			end
 
+			if math.floor(players[id].xPos) == 0 and math.floor(players[id].yPos) == 0 and math.floor(players[id].zPos) == 0 then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has not played here since the last map wipe.[-]")
+				botman.faultyChat = false
+				return
+			end
+
 			-- teleport to a friend if sufficient zennies
 			if tonumber(server.teleportCost) > 0 and (chatvars.accessLevel > 2) then
 				if tonumber(players[chatvars.playerid].cash) < tonumber(server.teleportCost) then
@@ -1129,13 +1189,14 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			igplayers[chatvars.playerid].lastLocation = ""
 
 			-- then teleport to the friend
-			cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[id].xPos-1) .. " " .. math.ceil(players[id].yPos) .. " " .. math.floor(players[id].zPos)
+			cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[id].xPos) .. " " .. math.ceil(players[id].yPos) .. " " .. math.floor(players[id].zPos)
 
 			players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.teleportCost
 
 			if tonumber(server.playerTeleportDelay) == 0 or not igplayers[chatvars.playerid].currentLocationPVP or tonumber(players[chatvars.playerid].accessLevel) < 2 then
-				teleport(cmd, chatvars.playerid)
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have teleported to " .. players[id].name .. "'s location.[-]")
+				if teleport(cmd, chatvars.playerid) then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have teleported to " .. players[id].name .. "'s location.[-]")
+				end
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. players[id].name .. "'s location in " .. server.playerTeleportDelay .. " seconds.[-]")
 				if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
@@ -1152,6 +1213,11 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.words[1] == "register" and chatvars.words[2] == "help" then
 		botman.registerHelp	= false
+		result = true
+	end
+
+	if chatvars.words[1] == "register" and chatvars.words[2] == "commands" then
+		botman.registerCommands	= false
 		result = true
 	end
 

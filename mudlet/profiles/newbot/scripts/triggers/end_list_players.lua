@@ -8,6 +8,8 @@
 --]]
 
 function endListPlayers(line)
+	local cursor, errorString, row
+
 	if botman.botDisabled then
 		return
 	end
@@ -16,17 +18,8 @@ function endListPlayers(line)
 		botman.playersOnline = tonumber(string.match(line, "%d+"))
 		playerConnectCounter = botman.playersOnline
 
-		server.reservedSlotsUsed = tonumber(botman.playersOnline) - (tonumber(server.maxPlayers) - tonumber(server.reservedSlots))
-		if server.reservedSlotsUsed < 0 then
-			server.reservedSlotsUsed = 0
-		end
-
 		if (botman.playersOnline == 0) then
 			-- we could schedule something to happen when no players are online
-		else
-			if tonumber(server.reservedSlotsUsed) == 0 and tonumber(server.reservedSlots) > 0 then
-				updateReservedSlots()
-			end
 		end
 
 		if tonumber(server.botID) > 0 then
@@ -44,4 +37,25 @@ function endListPlayers(line)
 
 	-- reset relogCount as we have established that the server is talking to us
 	relogCount = 0
+
+	if tonumber(server.reservedSlots) > 0 then
+ 		server.reservedSlotsUsed = tonumber(botman.playersOnline) - (tonumber(server.maxPlayers) - tonumber(server.reservedSlots))
+		if server.reservedSlotsUsed < 0 then
+			server.reservedSlotsUsed = 0
+		end
+
+		if botman.initReservedSlots then
+			initReservedSlots()
+		end
+
+		if botman.dbReservedSlotsUsed == nil then
+			cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
+			row = cursor:fetch({}, "a")
+			botman.dbReservedSlotsUsed = tonumber(row.totalRows)
+		end
+
+		while botman.dbReservedSlotsUsed > tonumber(server.reservedSlotsUsed) do
+			updateReservedSlots()
+		end
+	end
 end

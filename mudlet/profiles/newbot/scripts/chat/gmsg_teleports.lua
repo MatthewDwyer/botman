@@ -41,10 +41,10 @@ function gmsg_teleports()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 		irc_chat(players[chatvars.ircid].ircAlias, "Teleport Commands:")
 		irc_chat(players[chatvars.ircid].ircAlias, "==================")
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 	end
 
 	if chatvars.showHelpSections then
@@ -54,12 +54,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "dele"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "dele") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> delete")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Delete a teleport.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -114,12 +114,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "priv"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "priv") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <teleport name> private")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Make the teleport private.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -174,12 +174,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "public"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "public") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> public")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Make a teleport public so anyone can use it.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -234,12 +234,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "able"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "able") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> enable")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Enable a teleport that was disabled.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -294,12 +294,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "able"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "able") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> disable")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Disable a teleport to stop it triggering.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -354,12 +354,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "way"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> one way")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Make a teleport work in one direction only. Teleports are a pair of coordinates and the second coordinate placed is the destination.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -402,12 +402,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "way"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> two way")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Make a teleport work in both directions. After a short delay the player is teleported back if they don't move away.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -450,12 +450,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "own"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "own") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> owner <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Assign ownership of a teleport to a player.  Only they and their friends can use it (and staff)")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -505,12 +505,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "enabletp <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Allows a player to use teleport commands.  Only staff can specify a player, otherwise it defaults to whoever issued the command.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -547,12 +547,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "disabletp <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Prevent a player using teleport commands. They can type " .. server.commandPrefix .. "enabletp any time. Only staff can specify a player, otherwise it defaults to whoever issued the command.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -589,12 +589,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set teleport cost <number>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set a price for all private teleporting (excludes public locations).  Players must have sufficient " .. server.moneyPlural .. " to teleport.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -632,12 +632,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "delay") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "delay") or string.find(chatvars.command, "time") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set teleport delay <number>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Set a time delay for player initiated teleport commands.  The player will see a PM informing them that their teleport will happen in x seconds.  The default is 0 and no PM will be sent.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -684,26 +684,29 @@ function gmsg_teleports()
 	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 		irc_chat(players[chatvars.ircid].ircAlias, "Teleport In-Game Only:")
 		irc_chat(players[chatvars.ircid].ircAlias, "========================")
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 	end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "fetch") or string.find(chatvars.command, "player"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "fetch") or string.find(chatvars.command, "player") then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fetch <player>")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Move a player to your current location.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
 
 	if (chatvars.words[1] == "fetch") and (chatvars.playerid ~= 0) then
-		if (chatvars.words[1] == "fetch") then
-			pname = string.sub(chatvars.command, string.find(chatvars.command, "fetch ") + 6)
+		-- reject if not an admin and server is in hardcore mode
+		if isServerHardcore(chatvars.playerid) then
+			message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is disabled.[-]")
+			botman.faultyChat = false
+			return true
 		end
 
 		if (chatvars.accessLevel > 2) and players[chatvars.playerid].cash < server.teleportCost then
@@ -712,8 +715,12 @@ function gmsg_teleports()
 			return true
 		end
 
-		pname = string.trim(pname)
-		id = LookupPlayer(pname)
+		pname = string.sub(chatvars.command, string.find(chatvars.command, "fetch ") + 6)
+
+		if pname ~= "" then
+			pname = string.trim(pname)
+			id = LookupPlayer(pname)
+		end
 
 		if id == nil then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
@@ -775,17 +782,24 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "pack"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "pack") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "pack")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Teleport close to where you last died.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
 
 	if (chatvars.words[1] == "pack" or chatvars.words[1] == "revive") and chatvars.words[2] == nil and (chatvars.playerid ~= 0) then
+		-- reject if not an admin and server is in hardcore mode
+		if isServerHardcore(chatvars.playerid) then
+			message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is disabled.[-]")
+			botman.faultyChat = false
+			return true
+		end
+
 		if tonumber(players[chatvars.playerid].deathX) ~= 0 then
 			if players[chatvars.playerid].packCooldown > os.time() then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can " .. server.commandPrefix .. "pack in " .. os.date("%M minutes %S seconds", players[chatvars.playerid].packCooldown - os.time()) .. " seconds.[-]")
@@ -834,17 +848,24 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "stuck") or string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "stuck") or string.find(chatvars.command, "tele") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "stuck")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Teleport 2 metres up.  If " .. server.commandPrefix .. "stuck is repeated the bot will try to teleport you nearby.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
 
 	if (chatvars.words[1] == "stuck" and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
+		if not server.allowStuckTeleport then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The stuck command has been disabled on this server.[-]")
+			botman.faultyChat = false
+			result = true
+			return
+		end
+
 		cmd = "tele " .. chatvars.playerid .. " " .. chatvars.intX .. " -1 " .. chatvars.intZ
 
 		if tonumber(server.playerTeleportDelay) == 0 then
@@ -861,12 +882,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "return") or string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "return") or string.find(chatvars.command, "tele") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "return")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Teleport back to where you came from before your last teleport command.  Locations support a 2nd return if you teleport within the location more than once without leaving it.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -939,12 +960,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "teleports")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "List the teleports.  Players can only see public teleports.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1068,12 +1089,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "start"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "start") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> start")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Create a teleport starting at your location or move an existing teleport's start to you.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1135,12 +1156,12 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "end"))) or chatvars.words[1] ~= "help" then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "end") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> end")
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Complete a teleport ending at your location or move an existing teleport's end to you.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1202,13 +1223,13 @@ function gmsg_teleports()
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <player name>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <X coord> <Y coord> <Z coord>")
+		if string.find(chatvars.command, "tele") or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tp <player name>")
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tp <X coord> <Y coord> <Z coord>")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, "Teleport yourself to a player or to an coordinate.")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end

@@ -149,10 +149,10 @@ function gmsg_coppi()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 		irc_chat(players[chatvars.ircid].ircAlias, "Coppi's Mod Commands:")
 		irc_chat(players[chatvars.ircid].ircAlias, "=====================")
-		irc_chat(players[chatvars.ircid].ircAlias, "")
+		irc_chat(players[chatvars.ircid].ircAlias, " ")
 	end
 
 	if chatvars.showHelpSections then
@@ -168,7 +168,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Prevent a player using text chat or allow them to chat.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -215,7 +215,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Spawn a horde around a player or location or at a marked coordinate.  See " .. server.commandPrefix .. "set horde.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -258,7 +258,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Hide commands from ingame chat which makes them all PM's or show them which makes them public.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -299,7 +299,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Enable or disable physics on the server.  The state of physics is persistent across reboots.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -342,7 +342,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Enable or disable physics on the server.  The state of physics is persistent across reboots.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -525,7 +525,7 @@ function gmsg_coppi()
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Generate and build a random maze. ")
 				irc_chat(players[chatvars.ircid].ircAlias, "It is very slow and someone must stay with it or it won't work.  Cancel it with " .. server.commandPrefix .. "stop maze")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -602,7 +602,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Aborts any maze(s) that you have told the bot to create.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -629,7 +629,7 @@ function gmsg_coppi()
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Marks your current position to spawn a horde ther with " .. server.commandPrefix .. "spawn horde.")
 				irc_chat(players[chatvars.ircid].ircAlias, "Clear horde doesn't remove the horde. It only clears the saved coordinate.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -658,14 +658,14 @@ function gmsg_coppi()
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "You can copy an area of blocks to later recall them or to fill the area with a block.")
 				irc_chat(players[chatvars.ircid].ircAlias, "This requires the latest Coppi's Additions and are not currently in Alloc's Mod.  You can give it any name but you can't reuse a name that is already defined by you.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
 
 	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
 
-	-- ###################  Block copy and paste commands ################
+	-- ###################  Block commands ################
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "undo") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "block"))) or chatvars.words[1] ~= "help" then
@@ -674,7 +674,7 @@ function gmsg_coppi()
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "The block commands prender, pdup and pblock allow for the last command to be undone, however since more than one person can command the bot to do block commands")
 				irc_chat(players[chatvars.ircid].ircAlias, "it is possible that other block commands have been done by the bot since your last block command.  If the last block command came from you, the bot will undo it.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -714,7 +714,7 @@ function gmsg_coppi()
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "List all your saved prefabs or those of someone else.  This list is coordinate pairs of places in the world that you have marked for some block command.")
 				irc_chat(players[chatvars.ircid].ircAlias, "You can use a named save with the block commands.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -768,7 +768,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Mark two opposite corners of the area you wish to copy.  Move up or down between corners to add volume.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -840,7 +840,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Now that you have marked out the area you want to copy, you can save it.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -878,7 +878,7 @@ function gmsg_coppi()
 				irc_chat(players[chatvars.ircid].ircAlias, "If you instead add here, it will load on your current position with optional rotation.")
 				irc_chat(players[chatvars.ircid].ircAlias, "If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy.")
 				irc_chat(players[chatvars.ircid].ircAlias, "For perfect placement, start from a south corner.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -948,7 +948,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "List all items containing the text you are searching for.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -979,7 +979,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Fills a saved block with air then renders it at the new position and updates the block's coordinates.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1038,7 +1038,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Renders a saved block at your position or the coordinates you specify")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1070,7 +1070,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Spins a block around its first XYZ")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1102,7 +1102,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Spins a block around its first XYZ")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1135,7 +1135,7 @@ function gmsg_coppi()
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Temp store your current position for use in block commands which you use later. It is only stored in memory.")
 				irc_chat(players[chatvars.ircid].ircAlias, "If you add a player name it will record their current position instead.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1182,7 +1182,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Temp store your current position for use in block commands which you use later. It is only stored in memory.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1206,7 +1206,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Temp store your current position for use in block commands which you use later. It is only stored in memory.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1230,7 +1230,7 @@ function gmsg_coppi()
 
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Replace an area around you with air blocks.  Add a number to change the size.  Default is 5.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1285,9 +1285,9 @@ function gmsg_coppi()
 				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig up (or room) wide 5 tall 10 (makes a 10x10 room)")
 				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fill east base 70 wide 2 tall 10 long 50 block steelBlock")
 				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fill bedrock wide 2 block 1")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 				irc_chat(players[chatvars.ircid].ircAlias, "You can repeat the last command with /again and change direction with /again west")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1556,7 +1556,7 @@ function gmsg_coppi()
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "You can replace the bedrock layer below you up to <distance> away from your position.")
 				irc_chat(players[chatvars.ircid].ircAlias, "You only need to be over the area to be fixed.  No other layers are touched.")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end
@@ -1597,7 +1597,7 @@ function gmsg_coppi()
 			if not shortHelp then
 				irc_chat(players[chatvars.ircid].ircAlias, "Now that you have marked out the area you replace every block with 1 type of block.")
 				irc_chat(players[chatvars.ircid].ircAlias, "eg. " .. server.commandPrefix .. "fill wall 8 south (default facing is north.  8 is the block id for sand.)")
-				irc_chat(players[chatvars.ircid].ircAlias, "")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
 	end

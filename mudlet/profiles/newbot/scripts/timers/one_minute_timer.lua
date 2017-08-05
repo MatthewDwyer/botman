@@ -48,4 +48,7 @@ function oneMinuteTimer()
 	end
 
 	botHeartbeat()
+	
+	-- check for timed events due to run
+	runTimedEvents()
 end

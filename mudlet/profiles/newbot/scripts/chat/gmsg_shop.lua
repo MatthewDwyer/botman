@@ -53,8 +53,8 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 		if (id ~= nil) then
 			igplayers[chatvars.playerid].botQuestion = "pay player"
 			igplayers[chatvars.playerid].botQuestionID = id
-			igplayers[chatvars.playerid].botQuestionValue = math.abs(chatvars.number)
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You want to pay " .. math.abs(chatvars.number) .. " " .. server.moneyPlural .. " to " .. players[id].name .. "? Type " .. server.commandPrefix .. "yes to complete the transaction or start over.[-]")
+			igplayers[chatvars.playerid].botQuestionValue = math.abs(chatvars.words[3])
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You want to pay " .. math.abs(chatvars.words[3]) .. " " .. server.moneyPlural .. " to " .. players[id].name .. "? Type " .. server.commandPrefix .. "yes to complete the transaction or start over.[-]")
 		end
 
 		botman.faultyChat = false

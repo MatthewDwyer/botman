@@ -74,10 +74,14 @@ function loadServer()
 			server.ircPort = ircPort
 		end
 
-		if server.ircMain == "#new" or server.ircMain == "" then
+		if server.ircMain == "#new" then
 			server.ircMain = ircChannel
 			server.ircAlerts = ircChannel .. "_alerts"
 			server.ircWatch = ircChannel .. "_watch"
+		end
+
+		if server.telnetPass ~= "" then
+			telnetPassword = server.telnetPass
 		end
 
 		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end

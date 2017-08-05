@@ -139,6 +139,7 @@ function login()
 		botman.scheduledRestart = false
 		botman.scheduledRestartTimestamp = os.time()
 		botman.lastBlockCommandOwner =	0
+		botman.initReservedSlots = true
 		server.lagged = false
 	end
 
@@ -149,22 +150,26 @@ function login()
 		reloadBotScripts()
 	end
 
+	if isFile(homedir .. "/botman.ini") then
+		dofile(homedir .. "/botman.ini")
+	end
+
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	tempTimer( 120, [[checkData()]] )
 	stackLimits = {}
 
 	if (botman.botStarted == nil) then
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		botman.botStarted = os.time()
 		initBot()
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		openDB()
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		openBotsDB()
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		initDB()
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		botman.dbConnected = isDBConnected()
 		botman.db2Connected = isDBBotsConnected()
 		botman.initError = true
@@ -173,7 +178,7 @@ function login()
 		botman.playersOnline = -1
 		botman.userHome = string.sub(homedir, 1, string.find(homedir, ".config") - 2)
 		loadServer()
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		botman.ignoreAdmins	= true
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -181,7 +186,7 @@ function login()
 			server.botID = 0
 		end
 
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 		botman.webdavFolderExists = true
 
@@ -198,7 +203,7 @@ function login()
 		openUserWindow(server.windowDebug)
 		openUserWindow(server.windowLists)
 
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 		if closeMudlet ~= nil then
 			botman.customMudlet = true
@@ -259,6 +264,10 @@ function login()
 		end
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+	end
+
+	if not isFile(homedir .. "/botman.ini") then
+		makeINI()
 	end
 
 	if debug then display("debug login end\n") end
