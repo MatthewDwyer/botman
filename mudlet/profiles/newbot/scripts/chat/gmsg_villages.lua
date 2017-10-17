@@ -69,7 +69,14 @@ function gmsg_villages()
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
 				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-				botman.faultyChat = false				return true
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
 			end
 		end
 
@@ -150,6 +157,12 @@ function gmsg_villages()
 					botman.faultyChat = false
 					return true
 				end
+			else
+				if (accessLevel(chatvars.ircid) > 2) and (locations[villageName].mayor ~= chatvars.ircid) then
+					irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
 			end
 
 			vid = LookupLocation(villageName)
@@ -221,11 +234,22 @@ function gmsg_villages()
 					botman.faultyChat = false
 					return true
 				end
+			else
+				if (accessLevel(chatvars.ircid) > 2) and (locations[villageName].mayor ~= chatvars.ircid) then
+					irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
 			end
 
 			vid = LookupLocation(villageName)
 			if vid == nil then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no village called " .. villageName .. "[-]")
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no village called " .. villageName .. "[-]")
+				else
+					irc_chat(players[chatvars.ircid].ircAlias, "There is no village called " .. villageName)
+				end
+
 				botman.faultyChat = false
 				return true
 			end
@@ -234,6 +258,10 @@ function gmsg_villages()
 				conn:execute("DELETE FROM villagers WHERE village = '" .. escape(vid) .. "' and steam = " .. pid)
 				villagers[pid .. vid] = nil
 				message("say [" .. server.chatColour .. "]" .. players[pid].name .. " has been cast out of village " .. vid .. "[-]")
+
+				if (chatvars.playername ~= "Server") then
+					irc_chat(players[chatvars.ircid].ircAlias, players[pid].name .. " has been cast out of village " .. vid)
+				end
 			end
 		end
 
@@ -258,6 +286,12 @@ function gmsg_villages()
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
 				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
 				botman.faultyChat = false
 				return true
 			end
@@ -288,10 +322,9 @@ function gmsg_villages()
 			end
 		end
 
+		message("say [" .. server.chatColour .. "]A village called " .. vid .. " has been removed.[-]")
+
 		if (chatvars.playername ~= "Server") then
-			message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " has removed a village portal called " .. vid .. "[-]")
-		else
-			message("say [" .. server.chatColour .. "]A village called " .. vid .. " has been removed.[-]")
 			irc_chat(players[chatvars.ircid].ircAlias, "A village called " .. vid .. " has been removed.")
 		end
 
@@ -319,28 +352,47 @@ function gmsg_villages()
 				botman.faultyChat = false
 				return true
 			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
 		end
 
 		villageName = string.trim(string.sub(chatvars.command, string.find(chatvars.command, "village ") + 8, string.find(chatvars.command, "size") - 1))
-
 		vid = LookupLocation(villageName)
+
 		if vid == nil then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no village called " .. villageName .. "[-]")
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no village called " .. villageName .. "[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "There is no village called " .. villageName)
+			end
+
 			botman.faultyChat = false
 			return true
 		end
 
-		baseprotection = tonumber(string.sub(chatvars.command, string.find(chatvars.command, "size ") + 5))
-		if (baseprotection == nil) then
-			baseprotection = 50
-		end
-
 		if (locations[vid]) then
-			locations[vid].size = baseprotection
-			locations[vid].protect = false
-			message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " has resized village " .. vid .. " to " .. baseprotection .. " meters.[-]")
-			conn:execute("UPDATE locations SET size = " .. baseprotection .. ", protect=0 WHERE name = '" .. escape(vid) .. "'")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You must re-set protection for " .. villageName .. " as resizing it disables protection.[-]")
+			locations[vid].size = math.floor(tonumber(chatvars.number))
+			conn:execute("UPDATE locations set size = " .. locations[vid].size .. ", protected=0, protectSize = " .. locations[vid].size .. " WHERE name = '" .. escape(vid) .. "'")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. vid .. " is now " .. locations[vid].size .. " meters wide from its centre.[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, vid .. " is now " .. locations[vid].size .. " meters wide from its centre.")
+			end
+
+			if locations[vid].protected then
+				locations[vid].protected = false
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You must re-protect " .. vid .. " as its protection has been disabled due to the size change.[-]")
+				else
+					irc_chat(players[chatvars.ircid].ircAlias, "You must re-protect " .. vid .. " ingame as its protection has been disabled due to the size change.")
+				end
+			end
 		end
 
 		botman.faultyChat = false
@@ -367,7 +419,7 @@ function gmsg_villages()
 			if (v.village == true) then
 				pid = nil
 
-				if v.mayor ~= nil then
+				if v.mayor ~= 0 then
 					pid = LookupOfflinePlayer(v.mayor)
 				end
 
@@ -427,6 +479,9 @@ function gmsg_villages()
 
 	if (debug) then dbug("debug villages line " .. debugger.getinfo(1).currentline) end
 
+	-- ###################  do not allow remote commands beyond this point ################
+	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
+
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "add") or string.find(chatvars.command, "vill") or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "add village <village name>")
@@ -437,9 +492,6 @@ function gmsg_villages()
 			end
 		end
 	end
-
-	-- ###################  do not allow remote commands beyond this point ################
-	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
 
 	if (chatvars.words[1] == "add" and chatvars.words[2] == "village") and (chatvars.playerid ~= 0) then
 		if (chatvars.accessLevel > 2) then
@@ -543,8 +595,8 @@ function gmsg_villages()
 			pname = string.trim(pname)
 
 			if locations[pname] then
-				locations[pname].protect = false
-				conn:execute("UPDATE locations SET protect = 0 WHERE name = '" .. escape(pname) .. "'")
+				locations[pname].protected = false
+				conn:execute("UPDATE locations SET protected = 0 WHERE name = '" .. escape(pname) .. "'")
 				message("say [" .. server.chatColour .. "]Protection has been removed from " .. pname .. ".[-]")
 			end
 		else

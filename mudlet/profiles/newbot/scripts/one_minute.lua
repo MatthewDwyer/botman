@@ -8,7 +8,7 @@
 --]]
 
 function savePlayerData(steam)
-	dbug("savePlayerData " .. steam)
+	--dbug("savePlayerData " .. steam)
 
 	fixMissingPlayer(steam)
 	fixMissingIGPlayer(steam)
@@ -30,9 +30,9 @@ function savePlayerData(steam)
 	-- update the player record in the database
 	updatePlayer(steam)
 
-	dbug("savePlayerData " .. steam .. " saved")
+	--dbug("savePlayerData " .. steam .. " saved")
 
-	initReservedSlots()
+--	initReservedSlots()
 end
 
 
@@ -44,6 +44,10 @@ function everyMinute()
 
 	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
 	debug = false
+
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+	writeBotmanINI()
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
@@ -78,74 +82,78 @@ function everyMinute()
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	for k, v in pairs(igplayers) do
-		if v.stayConnected ~= true then
-			if tonumber(v.afk - os.time()) < 300 and tonumber(v.afk - os.time()) > 60 and (botman.playersOnline >= server.ServerMaxPlayerCount) and (accessLevel(steam) > 2) and server.idleKick then
-				message("pm " .. v.steam .. " [" .. server.warnColour .. "]You appear to be away from your keyboard.  You will be kicked in " .. os.date("%M minutes %S seconds",v.afk - os.time()) .. " for being afk.  If you move, talk or do things you will not be kicked.[-]")
+		if not players[k].newPlayer then
+			players[k].cash = players[k].cash + server.perMinutePayRate
+		end
+
+		if tonumber(v.afk - os.time()) < 300 and tonumber(v.afk - os.time()) > 60 and (botman.playersOnline >= server.ServerMaxPlayerCount) and (accessLevel(steam) > 2) and server.idleKick then
+			message("pm " .. v.steam .. " [" .. server.warnColour .. "]You appear to be away from your keyboard.  You will be kicked in " .. os.date("%M minutes %S seconds",v.afk - os.time()) .. " for being afk.  If you move, talk or do things you will not be kicked.[-]")
+		end
+
+		if debug then
+			dbug("steam " .. k .. " name " .. v.name)
+		end
+
+		-- save the igplayer to players
+		savePlayerData(k)
+
+		if (v.killTimer == nil) then
+			v.killTimer = 0
+		end
+
+		v.killTimer = v.killTimer + 1
+
+		if (v.killTimer > 1) then
+			-- clean up some tables, removing the player from them
+			invTemp[k] = nil
+
+			if (v.timeOnServer) then players[k].timeOnServer = players[k].timeOnServer + v.sessionPlaytime end
+
+			if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+			if (os.time() - players[k].lastLogout) > 300 then
+				players[k].relogCount = 0
 			end
 
-			if debug then
-				dbug("steam " .. k .. " name " .. v.name)
+			if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+			if (os.time() - players[k].lastLogout) < 60 then
+				players[k].relogCount = tonumber(players[k].relogCount) + 1
+			else
+				players[k].relogCount = tonumber(players[k].relogCount) - 1
+				if tonumber(players[k].relogCount) < 0 then players[k].relogCount = 0 end
 			end
 
-			if (v.killTimer == nil) then
-				v.killTimer = 0
+			lastHotspots[k] = nil
+			players[k].lastLogout = os.time()
+
+			if botman.dbConnected then
+				conn:execute("DELETE FROM messageQueue WHERE recipient = " .. k)
+				conn:execute("DELETE FROM gimmeQueue WHERE steam = " .. k)
+				conn:execute("DELETE FROM commandQueue WHERE steam = " .. k)
+				conn:execute("DELETE FROM playerQueue WHERE steam = " .. k)
+
+				if accessLevel(k) < 3 then
+					conn:execute("DELETE FROM memTracker WHERE steam = " .. k)
+				end
 			end
 
-			v.killTimer = v.killTimer + 1
+			-- check how many claims they have placed
+			send("llp " .. k .. " parseable")
 
-			if (v.killTimer > 1) then
-				-- save the igplayer to players
-				savePlayerData(k)
+			-- flag this ingame player record for deletion
+			zombiePlayers[k] = {}
 
-				-- clean up some tables, removing the player from them
-				invTemp[k] = nil
-
-				if (v.timeOnServer) then players[k].timeOnServer = players[k].timeOnServer + v.sessionPlaytime end
-
-		if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
-
-				if (os.time() - players[k].lastLogout) > 300 then
-					players[k].relogCount = 0
-				end
-
-		if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
-
-				if (os.time() - players[k].lastLogout) < 60 then
-					players[k].relogCount = tonumber(players[k].relogCount) + 1
-				else
-					players[k].relogCount = tonumber(players[k].relogCount) - 1
-					if tonumber(players[k].relogCount) < 0 then players[k].relogCount = 0 end
-				end
-
-				lastHotspots[k] = nil
-				players[k].lastLogout = os.time()
-
-				if botman.dbConnected then
-					conn:execute("DELETE FROM messageQueue WHERE recipient = " .. k)
-					conn:execute("DELETE FROM gimmeQueue WHERE steam = " .. k)
-					conn:execute("DELETE FROM commandQueue WHERE steam = " .. k)
-					conn:execute("DELETE FROM playerQueue WHERE steam = " .. k)
-
-					if accessLevel(k) < 3 then
-						conn:execute("DELETE FROM memTracker WHERE steam = " .. k)
-					end
-				end
-
-				-- check how many claims they have placed
-				send("llp " .. k .. " parseable")
-
-				-- flag this ingame player record for deletion
-				zombiePlayers[k] = {}
-
-				if botman.db2Connected then
-					-- update player in bots db
-					connBots:execute("UPDATE players SET ip = '" .. players[k].IP .. "', name = '" .. escape(stripCommas(players[k].name)) .. "', online = 0 WHERE steam = " .. k .. " AND botID = " .. server.botID)
-				end
-
-		if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+			if botman.db2Connected then
+				-- update player in bots db
+				connBots:execute("UPDATE players SET ip = '" .. players[k].IP .. "', name = '" .. escape(stripCommas(players[k].name)) .. "', online = 0 WHERE steam = " .. k .. " AND botID = " .. server.botID)
 			end
+
+			if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 		end
 	end
+
+	initReservedSlots()
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 

@@ -10,7 +10,7 @@ SET time_zone = "+00:00";
 --
 -- Database: `bots`
 --
-CREATE DATABASE IF NOT EXISTS `bots` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci;
+CREATE DATABASE IF NOT EXISTS `bots` DEFAULT CHARACTER SET utf8 COLLATE utf8mb4_general_ci;
 USE `bots`;
 
 -- --------------------------------------------------------
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `bans` (
   `botID` varchar(7) DEFAULT NULL,
   `admin` varchar(17) DEFAULT NULL,
   `GBLBan` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS `guides` (
   `Title` varchar(100) NOT NULL,
   `Summary` varchar(255) NOT NULL,
   `guide` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS `helpCommands` (
   `lastUpdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `accessLevel` int(11) NOT NULL DEFAULT '99',
   `ingameOnly` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS `helpCommands` (
 CREATE TABLE IF NOT EXISTS `helpTopicCommands` (
   `topicID` int(11) NOT NULL,
   `commandID` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS `helpTopics` (
 `topicID` int(11) NOT NULL,
   `topic` varchar(20) NOT NULL,
   `description` varchar(150) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -200,7 +200,7 @@ CREATE TABLE IF NOT EXISTS `proxies` (
   `scanString` varchar(100) NOT NULL,
   `action` varchar(20) NOT NULL DEFAULT 'nothing',
   `hits` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -6191,7 +6191,9 @@ INSERT INTO `IPBlacklist` (`StartIP`, `EndIP`, `Country`) VALUES
 
 INSERT INTO `proxies` (`scanString`, `action`, `hits`) VALUES
 ('ALIBABA.COM', 'ban', 0),
+('AMAZON TECHNOLOGIES', 'ban', 0),
 ('AOYOUHOST', 'ban', 0),
+('AZURE TECHNOLOGY', 'ban', 0),
 ('BANK OF AMERICA ', 'ban', 0),
 ('CHOOPA', 'ban', 0),
 ('DCSMANAGE.COM', 'ban', 0),
@@ -6203,12 +6205,16 @@ INSERT INTO `proxies` (`scanString`, `action`, `hits`) VALUES
 ('GLOBAL-FRAG-SERVERS', 'ban', 0),
 ('HUGESERVER', 'ban', 0),
 ('KRYPT TECHNOLOGIES ', 'ban', 0),
+('LONGLING', 'ban', 0),
+('LONLIFE.CN', 'ban', 0),
 ('MULTACOM', 'ban', 0),
 ('PCCWGLOBAL.COM', 'ban', 0),
 ('PSYCHZ-NETWORKS', 'ban', 0),
 ('QUADRANET', 'ban', 0),
 ('TATA COMMUNICATIONS', 'ban', 0),
+('VELIA.NET', 'ban', 0),
 ('WEB2OBJECTS', 'ban', 0),
+('WEBNX.COM', 'ban', 0),
 ('WIRELESS-ALARM.COM ', 'ban', 0),
 ('YPSOLUTIONS ', 'ban', 0),
 ('ZENLAYER', 'ban', 0);

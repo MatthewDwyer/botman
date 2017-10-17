@@ -8,6 +8,8 @@
 --]]
 
 function lpTrigger(line)
+	local uptime
+
 	if botman.botDisabled then
 		return
 	end
@@ -25,11 +27,13 @@ function lpTrigger(line)
 		if (string.find(botman.serverTime, "12-25", 5, 10)) then specialDay = "christmas" end
 	end
 
-	if tonumber(botman.serverHour) == tonumber(server.botRestartHour) then
-		if botman.customMudlet then
+	if tonumber(botman.serverHour) == tonumber(server.botRestartHour) and server.allowBotRestarts then
+		uptime = math.floor((os.difftime(os.time(), botman.botStarted) / 3600))
+
+		if botman.customMudlet and (uptime > 1) then
 			-- Mudlet will only automatically restart if you compiled TheFae's latest Mudlet and launched it from run-mudlet.sh with -r
-			savePlayers()
-			closeMudlet()
+			-- if the bot has been running less than 1 hour it won't restart itself.
+			restartBot()
 			return
 		end
 	end

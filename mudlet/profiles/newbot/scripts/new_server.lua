@@ -12,10 +12,10 @@ function gatherServerData()
 	-- read a bunch of info from the server.  The bot will capture it elsewhere.
 
 	send("lkp -online")
-	tempTimer( 4, [[send("pm IPCHECK")]] )
-	tempTimer( 5, [[send("admin list")]] )
-	tempTimer( 7, [[send("ban list")]] )
-	tempTimer( 9, [[send("gg")]] )
+	tempTimer( 4, [[send("gg")]] )
+	tempTimer( 6, [[send("pm IPCHECK")]] )
+	tempTimer( 8, [[send("admin list")]] )
+	tempTimer( 10, [[send("ban list")]] )
 --	tempTimer( 11, [[send("llp")]] )
 end
 
@@ -28,7 +28,7 @@ function initServer()
 	server.allowBank = true
 	server.allowGarbageNames = true
 	server.allowGimme = false
-	server.allowLottery = true
+	server.allowLottery = false
 	server.allowNumericNames = true
 	server.allowOverstacking = false
 	server.allowPhysics = true
@@ -52,7 +52,7 @@ function initServer()
 	botman.chatlogPath = homedir .. "/chatlogs"
 	server.commandPrefix = "/"
 	server.disableBaseProtection = false
-	server.enableRegionPM = true
+	server.enableRegionPM = false
 	server.gameType = "pve"
 	server.gimmePeace = false
 	server.hardcore = false
@@ -92,7 +92,8 @@ function initServer()
 	server.rebootHour = -1
 	server.rebootMinute = 0
 	server.reservedSlots = 0
-	server.rules = "No rules yet!"
+	server.returnCooldown = 0
+	server.rules = ""
 	server.serverName = "New Server"
 	server.ServerPort = "0"
 	server.shopCountdown = 3
@@ -101,7 +102,7 @@ function initServer()
 	server.swearCash = 0
 	server.swearFine = 5
 	server.swearJar = false
-	server.teleportCost = 200
+	server.teleportCost = 0
 	server.teleportPublicCooldown = 0
 	server.teleportPublicCost = 0
 	server.warnColour = "FFA500"
@@ -110,11 +111,9 @@ function initServer()
 	server.waypointsPublic = false
 	server.website = ""
 	server.welcome = ""
-	server.windowAlerts = "Alerts"
 	server.windowDebug = "Debug"
 	server.windowGMSG = "Chat"
 	server.windowLists = "Lists"
-	server.windowPlayers = "Players"
 	server.zombieKillReward = 1
 	server.reservedSlotsUsed = 0
 

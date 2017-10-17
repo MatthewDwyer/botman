@@ -30,7 +30,7 @@ function joinIRCServer()
 
 		setIrcServer(server.ircServer, server.ircPort)
 		setIrcChannels( channels )
-		restartIrc()		
+		restartIrc()
 	else
 		ircSetHost(server.ircServer, server.ircPort)
 
@@ -38,7 +38,7 @@ function joinIRCServer()
 		tempTimer( 2, [[ircJoin("]] .. server.ircWatch .. [[")]] )
 		tempTimer( 3, [[ircReconnect()]] )
 		server.ircBotName = getNick()
-		ircSetChannel(server.ircMain)		
+		ircSetChannel(server.ircMain)
 	end
 
 
@@ -818,28 +818,21 @@ function irc_who_played(name)
 
 	id = LookupPlayer(name, "all")
 
-	irc_chat(name, "The following players are in-game right now:")
+	irc_chat(name, "The following players joined the server over the last 24 hours:")
 
-	for k, v in pairs(igplayers) do
-		x = math.floor(v.xPos / 512)
-		z = math.floor(v.zPos / 512)
+	cursor,errorString = conn:execute("SELECT steam, serverTime FROM events WHERE type = 'player joined' AND timestamp >= DATE_SUB(now(), INTERVAL 1 DAY) ORDER BY timestamp desc")
 
-		flags = " "
-		if players[k].newPlayer == true then flags = flags .. "[NEW]" end
-		if players[k].timeout == true then flags = flags .. "[TIMEOUT]" end
-
+	row = cursor:fetch({}, "a")
+	while row do
 		if (accessLevel(id) > 3) then
-			irc_chat(name, v.name .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " " .. flags)
+			irc_chat(name, row.serverTime .. " " .. players[row.steam].name)
 		else
-			if players[id].ircAuthenticated == true then
-				irc_chat(name, "steam: " .. k .. " id: " .. string.format("%-7d", v.id) .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " level " .. v.level.. " region r." .. x .. "." .. z .. ".7   name: " .. v.name  .. flags .. " [ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos) .. " ] " .. players[k].country .. " " .. v.ping)
-			else
-				irc_chat(name, v.name .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " " .. flags)
-			end
+			irc_chat(name, row.serverTime .. " " .. row.steam .. " " .. players[row.steam].name)
 		end
+
+		row = cursor:fetch(row, "a")
 	end
 
-	irc_chat(irc_params.name, "There are " .. botman.playersOnline .. " players online.")
 	irc_chat(name, " ")
 end
 

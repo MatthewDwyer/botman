@@ -738,8 +738,7 @@ function gmsg_teleports()
 		if tonumber(chatvars.accessLevel) > 2 and not server.allowPlayerToPlayerTeleporting then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Fetching friends has been disabled on this server.[-]")
 			botman.faultyChat = false
-			result = true
-			return
+			return true
 		end
 
 		if (accessLevel(id) < 3) then
@@ -754,8 +753,7 @@ function gmsg_teleports()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only friends of " .. players[id].name .. " and staff can do this.")
 
 				botman.faultyChat = false
-				result = true
-				return
+				return true
 			end
 		end
 
@@ -862,8 +860,7 @@ function gmsg_teleports()
 		if not server.allowStuckTeleport then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The stuck command has been disabled on this server.[-]")
 			botman.faultyChat = false
-			result = true
-			return
+			return true
 		end
 
 		cmd = "tele " .. chatvars.playerid .. " " .. chatvars.intX .. " -1 " .. chatvars.intZ
@@ -899,12 +896,19 @@ function gmsg_teleports()
 			return true
 		end
 
-		-- reject if not an admin and pvpTeleportCooldown is > zero
-		if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
-			message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
-			botman.faultyChat = false
-			result = true
-			return
+		-- reject if not an admin and pvpTeleportCooldown or returnCooldown is > zero
+		if tonumber(chatvars.accessLevel) > 2 then
+			if (players[chatvars.playerid].returnCooldown - os.time() > 0) then
+				message(string.format("pm %s [%s]You must wait %s before you are allowed to use return.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].returnCooldown - os.time())))
+				botman.faultyChat = false
+				return true
+			end
+
+			if (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
+				message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
+				botman.faultyChat = false
+				return true
+			end
 		end
 
 		-- return to previously recorded x y z
@@ -1040,6 +1044,7 @@ function gmsg_teleports()
 			teleports[teleName].x = chatvars.intX
 			teleports[teleName].y = chatvars.intY
 			teleports[teleName].z = chatvars.intZ
+			teleports[teleName].size = 1.5
 		end
 
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have " .. action .. " a teleport called " .. teleName .. "[-]")
@@ -1074,6 +1079,7 @@ function gmsg_teleports()
 				teleports[tp].dx = chatvars.intX
 				teleports[tp].dy = chatvars.intY
 				teleports[tp].dz = chatvars.intZ
+				teleports[tp].dsize = 1.5
 
 				if (teleports[tp].x ~= nil) then teleports[tp].active = true end
 			end
@@ -1081,6 +1087,112 @@ function gmsg_teleports()
 
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have activated a teleport called " .. teleName .. "[-]")
 		conn:execute("UPDATE teleports SET dx = " .. chatvars.intX .. ", dy = " .. chatvars.intY .. ", dz = " .. chatvars.intZ .. " WHERE name = '" .. escape(tp) .. "'")
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "start") or string.find(chatvars.command, "size") or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> start size <radius in blocks>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Set the size of the starting point of a pair of teleports.  The default is 3 wide (1.5 radius)")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
+			end
+		end
+	end
+
+	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "start") and string.find(chatvars.command, "size")) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		teleName = ""
+		teleName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1]) + string.len(chatvars.words[1]) + 1, string.find(chatvars.command, " start"))
+		teleName = string.trim(teleName)
+		teleSize = math.abs(chatvars.number)
+
+		if (teleName == "") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A name is required for the teleport[-]")
+			botman.faultyChat = false
+			return true
+		else
+			tp = ""
+			tp = LookupTeleportByName(teleName)
+		end
+
+		if (tp ~= nil) then
+			conn:execute("UPDATE teleports SET size = " .. teleSize .. " WHERE name = '" .. escape(tp) .. "'")
+			teleports[tp].size = teleSize
+		end
+
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport " .. teleName .. "'s start width is " .. teleSize * 2 .. "[-]")
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if string.find(chatvars.command, "tele") or string.find(chatvars.command, "end") or string.find(chatvars.command, "size") or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "tele <name> end size <radius in blocks>")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Set the size of the exit point of a pair of teleports.  The default is 3 wide (1.5 radius)")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
+			end
+		end
+	end
+
+	if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "end") and string.find(chatvars.command, "size")) then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		teleName = ""
+		teleName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[1]) + string.len(chatvars.words[1]) + 1, string.find(chatvars.command, " end"))
+		teleName = string.trim(teleName)
+		teleSize = math.abs(chatvars.number)
+
+		if (teleName == "") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A name is required for the teleport[-]")
+			botman.faultyChat = false
+			return true
+		else
+			tp = ""
+			tp = LookupTeleportByName(teleName)
+		end
+
+		if (tp ~= nil) then
+			conn:execute("UPDATE teleports SET dsize = " .. teleSize .. " WHERE name = '" .. escape(tp) .. "'")
+			teleports[tp].dsize = teleSize
+		end
+
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport " .. teleName .. "'s end width is " .. teleSize * 2 .. "[-]")
 
 		botman.faultyChat = false
 		return true
@@ -1130,7 +1242,7 @@ function gmsg_teleports()
 		if (tp == nil) then
 			teleports[teleName] = {}
 			teleports[teleName].public = false
-			teleports[teleName].active = false
+			teleports[teleName].active = true
 			teleports[teleName].friends = false
 			teleports[teleName].name = teleName
 			teleports[teleName].owner = igplayers[chatvars.playerid].steam
@@ -1138,6 +1250,7 @@ function gmsg_teleports()
 			teleports[teleName].x = chatvars.intX
 			teleports[teleName].y = chatvars.intY
 			teleports[teleName].z = chatvars.intZ
+			teleports[teleName].size = 1.5
 
 			conn:execute("INSERT INTO teleports (name, owner, x, y, z) VALUES ('" .. teleName .. "'," .. chatvars.playerid .. "," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ")")
 		else
@@ -1145,6 +1258,7 @@ function gmsg_teleports()
 			teleports[teleName].x = chatvars.intX
 			teleports[teleName].y = chatvars.intY
 			teleports[teleName].z = chatvars.intZ
+			teleports[teleName].active = true
 		end
 
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport " .. teleName .. " starts here[-]")
@@ -1197,7 +1311,7 @@ function gmsg_teleports()
 		if (tp == nil) then
 			teleports[teleName] = {}
 			teleports[teleName].public = false
-			teleports[teleName].active = false
+			teleports[teleName].active = true
 			teleports[teleName].friends = false
 			teleports[teleName].name = teleName
 			teleports[teleName].owner = igplayers[chatvars.playerid].steam
@@ -1205,6 +1319,7 @@ function gmsg_teleports()
 			teleports[teleName].dx = chatvars.intX
 			teleports[teleName].dy = chatvars.intY
 			teleports[teleName].dz = chatvars.intZ
+			teleports[teleName].dsize = 1.5
 
 			conn:execute("INSERT INTO teleports (name, owner, dx, dy, dz) VALUES ('" .. teleName .. "'," .. chatvars.playerid .. "," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ")")
 		else
@@ -1212,6 +1327,7 @@ function gmsg_teleports()
 			teleports[teleName].dx = chatvars.intX
 			teleports[teleName].dy = chatvars.intY
 			teleports[teleName].dz = chatvars.intZ
+			teleports[teleName].active = true
 		end
 
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport " .. teleName .. " ends here[-]")
@@ -1325,6 +1441,7 @@ function gmsg_teleports()
 
 				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
 				teleport(cmd, chatvars.playerid)
+				igplayers[chatvars.playerid].teleCooldown = 3
 
 				botman.faultyChat = false
 				return true

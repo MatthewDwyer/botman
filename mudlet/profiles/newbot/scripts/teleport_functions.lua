@@ -30,8 +30,8 @@ function prepareTeleport(steam, cmd)
 end
 
 
-function teleport(cmd, steam)
-	local coords, temp, dist
+function teleport(cmd, steam, justTeleport)
+	local coords, delay, dist
 	dist = nil
 
 	prepareTeleport(steam, cmd)
@@ -42,8 +42,6 @@ function teleport(cmd, steam)
 
 	coords = string.sub(cmd, 24)
 	coords = string.split(coords, " ")
-
-	display(coords)
 
 	-- don't teleport the player if the coords are 0 0 0
 	if tonumber(coords[1]) == 0 and tonumber(coords[2]) < 1 and tonumber(coords[3]) == 0 then
@@ -61,21 +59,30 @@ function teleport(cmd, steam)
 	players[steam].tp = 1
 	players[steam].hackerTPScore = 0
 
+	if not justTeleport then
+		if tonumber(server.returnCooldown) > 0 and accessLevel(steam) > 2 then
+			delay = os.time() + server.returnCooldown
+			players[steam].returnCooldown = delay
+			if botman.dbConnected then conn:execute("UPDATE players SET returnCooldown = " .. delay .. " WHERE steam = " .. steam) end
+		end
+	end
+
 	return true
 end
 
 
 function fallCatcher(steam, x, y, z)
+-- this code is redundant :(
 	local coords, temp, dist, cmd
 
-	if players[steam].timeout == true or players[steam].botTimeout == true or igplayers[steam].following ~= nil or accessLevel(steam) < 3 then
-		-- don't catch players in timeout or staff
+	if accessLevel(steam) < 3 then
+		-- don't catch staff
 		return
 	end
 
-	if (tonumber(y) < 0 and players[steam].timeout == false and players[steam].botTimeout == false and igplayers[steam].sessionPlaytime > 5)  then
+	if (y < 0 and igplayers[steam].sessionPlaytime > 5)  then
 		cmd = "tele " .. steam .. " " .. x .. " -1 " .. z
-		teleport(cmd, steam)
+		teleport(cmd, steam, true)
 	end
 end
 

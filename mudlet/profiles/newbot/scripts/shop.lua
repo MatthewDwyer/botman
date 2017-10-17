@@ -39,26 +39,26 @@ end
 
 function payPlayer()
 	if (string.find(chatvars.command, "yes")) then
-		if (players[chatvars.playerid].cash >= igplayers[chatvars.playerid].botQuestionValue) or chatvars.accessLevel == 0 then
-			players[igplayers[chatvars.playerid].botQuestionID].cash = players[igplayers[chatvars.playerid].botQuestionID].cash + igplayers[chatvars.playerid].botQuestionValue
+		if (players[chatvars.playerid].cash >= players[chatvars.playerid].botQuestionValue) or chatvars.accessLevel == 0 then
+			players[players[chatvars.playerid].botQuestionID].cash = players[players[chatvars.playerid].botQuestionID].cash + players[chatvars.playerid].botQuestionValue
 
 			if chatvars.accessLevel > 0 then
-				players[chatvars.playerid].cash = players[chatvars.playerid].cash - igplayers[chatvars.playerid].botQuestionValue
+				players[chatvars.playerid].cash = players[chatvars.playerid].cash - players[chatvars.playerid].botQuestionValue
 			end
 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. igplayers[chatvars.playerid].botQuestionValue .. " has been paid to " .. players[igplayers[chatvars.playerid].botQuestionID].name .. "[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[chatvars.playerid].botQuestionValue .. " has been paid to " .. players[players[chatvars.playerid].botQuestionID].name .. "[-]")
 
-			if (igplayers[igplayers[chatvars.playerid].botQuestionID]) then
-				message("pm " .. igplayers[chatvars.playerid].botQuestionID .. " [" .. server.chatColour .. "]Payday! " .. players[chatvars.playerid].name .. " has paid you " .. igplayers[chatvars.playerid].botQuestionValue .. " " .. server.moneyPlural .. "![-]")
+			if (igplayers[players[chatvars.playerid].botQuestionID]) then
+				message("pm " .. players[chatvars.playerid].botQuestionID .. " [" .. server.chatColour .. "]Payday! " .. players[chatvars.playerid].name .. " has paid you " .. players[chatvars.playerid].botQuestionValue .. " " .. server.moneyPlural .. "![-]")
 			end
 		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I regret to inform you that you do not have sufficient funds to pay " .. players[igplayers[chatvars.playerid].botQuestionID].name .. "[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I regret to inform you that you do not have sufficient funds to pay " .. players[players[chatvars.playerid].botQuestionID].name .. "[-]")
 		end
 	end
 
-	igplayers[chatvars.playerid].botQuestion = ""
-	igplayers[chatvars.playerid].botQuestionID = nil
-	igplayers[chatvars.playerid].botQuestionValue = nil
+	players[chatvars.playerid].botQuestion = ""
+	players[chatvars.playerid].botQuestionID = nil
+	players[chatvars.playerid].botQuestionValue = nil
 end
 
 
@@ -266,7 +266,7 @@ end
 
 
 function doShop(command, playerid, words)
-	local k, v, i, number, cmd, list, cursor, errorString
+	local k, v, i, number, cmd, list, cursor, errorString, example
 
 if (debug) then
 dbug("debug shop line " .. debugger.getinfo(1).currentline)
@@ -281,6 +281,7 @@ end
 	list = ""
 	for k, v in pairs(shopCategories) do
 		if k ~= "misc" then
+			example = k
 			list = list .. k .. ",  "
 		end
 	end
@@ -305,8 +306,8 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 	if words[1] == "shop" and words[2] == nil then
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have " .. players[playerid].cash .. " " .. server.moneyPlural .. " in the bank. Shop is " .. shopState .. "[-]")
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]Shop categories are " .. list .. ".[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]Type shop food (to browse our fine collection of food).[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]Stock arrives every 3 days from other zones.[-]")
+		message("pm " .. playerid .. " [" .. server.chatColour .. "]Type shop " .. example .. " (to browse our fine collection).[-]")
+		message("pm " .. playerid .. " [" .. server.chatColour .. "]New stock arrives every 3 days.[-]")
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]Type help shop for more info.[-]")
 		if (accessLevel(playerid) < 3) then message("pm " .. playerid .. " [" .. server.chatColour .. "]shop admin (for admin commands)[-]") end
 		return false
@@ -502,14 +503,14 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. players[playerid].cash .. " " .. server.moneyPlural .. " remaining.[-]")
 			send("give " .. playerid .. " " .. shopItem .. " " .. number)
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]Press e now to pick up your purchase.[-]")
+			message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase is at your feet.  Look down and grab it before a zombie eats it.[-]")
 
 			conn:execute("UPDATE players SET cash = " .. players[playerid].cash .. " WHERE steam = " .. playerid)
 			conn:execute("UPDATE shop SET stock = " .. shopStock - tonumber(number) .. " WHERE item = '" .. escape(shopItem) .. "'")
 
 			return false
 		else
-			if (number > tonumber(shopStock)) and (tonumber(shopStock) > 0)  then
+			if (number > tonumber(shopStock)) and (tonumber(shopStock) >= 0)  then
 				message("pm " .. playerid .. " [" .. server.chatColour .. "]I do not have that many " .. shopItem .. " in stock.[-]")
 			else
 				message("pm " .. playerid .. " [" .. server.chatColour .. "]I am sorry but you have insufficient " .. server.moneyPlural .. ".[-]")
@@ -524,7 +525,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
 		cursor,errorString = conn:execute("SELECT * FROM shop")
 
-		if cursor == 0 then
+		if cursor:numrows() == 0 then
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]CALL THE POLICE!  The shop is empty![-]")
 			return false
 		end
@@ -533,7 +534,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
-		LookupShop(words[2], true)
+		LookupShop(words[2])
 
 		cursor,errorString = conn:execute("SELECT * FROM memShop ORDER BY category, item")
 		row = cursor:fetch({}, "a")

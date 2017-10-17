@@ -80,7 +80,7 @@ end
 
 function importServer()
 	dbug("Importing Server")
-	message("say [" .. server.chatColour .. "]Importing server[-]")
+--	message("say [" .. server.chatColour .. "]Importing server[-]")
 	conn:execute("DELETE FROM server)")
 	conn:execute("INSERT INTO server (ircMain, ircAlerts, ircWatch, rules, shopCountdown, gimmePeace, allowGimme, mapSize, baseCooldown, MOTD, allowShop, chatColour, botName, lottery, allowWaypoints, prisonSize, baseSize) VALUES ('" .. escape(server.ircMain) .. "','" .. escape(server.ircAlerts) .. "','" .. escape(server.ircWatch) .. "','" .. escape(server.rules) .. "',0," .. dbBool(server.gimmePeace) .. "," .. dbBool(server.allowGimme) .. "," .. server.mapSize .. "," .. server.baseCooldown .. ",'" .. escape(server.MOTD) .. "'," .. dbBool(server.allowShop) .. ",'" .. server.chatColour .. "','" .. escape(server.botName) .. "'," .. server.lottery .. "," .. dbBool(server.allowWaypoints) .. "," .. server.prisonSize .. "," .. server.baseSize .. ")")
 
@@ -95,7 +95,7 @@ end
 
 function importShopCategories()
 	dbug("Importing Shop Categories")
-	message("say [" .. server.chatColour .. "]Importing shop categories[-]")
+--	message("say [" .. server.chatColour .. "]Importing shop categories[-]")
 
 	for k,v in pairs(shopCategories) do
 		conn:execute("INSERT INTO shopCategories (category, idx, code) VALUES ('" .. escape(k) .. "'," .. v.idx .. ",'" .. v.code .. "')")
@@ -107,7 +107,7 @@ end
 
 function importPlayers()
 	dbug("Importing Players")
-	message("say [" .. server.chatColour .. "]Importing players[-]")
+--	message("say [" .. server.chatColour .. "]Importing players[-]")
 
 	for k,v in pairs(players) do
 		conn:execute("INSERT INTO players (steam, id, name) VALUES (" .. k .. "," .. v.id .. ",'" .. escape(v.name) .. "')")
@@ -121,7 +121,7 @@ end
 
 function importTeleports()
 	dbug("Importing Teleports")
-	message("say [" .. server.chatColour .. "]Importing teleports[-]")
+--	message("say [" .. server.chatColour .. "]Importing teleports[-]")
 
 	for k,v in pairs(teleports) do
 		conn:execute("INSERT INTO teleports (name, active, public, oneway, friends, x, y, z, dx, dy, dz, owner) VALUES ('" .. escape(v.name) .. "'," .. dbBool(v.active) .. "," .. dbBool(v.public) .. "," .. dbBool(v.oneway) .. "," .. dbBool(v.friends) .. "," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. v.dx .. "," .. v.dy .. "," .. v.owner .. ")")
@@ -133,7 +133,7 @@ function importLocations()
 	local sql, fields, values
 
 	dbug("Importing Locations")
-	message("say [" .. server.chatColour .. "]Importing locations[-]")
+--	message("say [" .. server.chatColour .. "]Importing locations[-]")
 
 	for k,v in pairs(locations) do
 		fields = "name, x, y, z, public, active"
@@ -197,7 +197,7 @@ function importFriends()
 	local friendlist, i, max
 
 	dbug("Importing Friends")
-	message("say [" .. server.chatColour .. "]Importing friends[-]")
+--	message("say [" .. server.chatColour .. "]Importing friends[-]")
 
 	for k,v in pairs(friends) do
 		friendlist = string.split(v.friends, ",")
@@ -216,7 +216,7 @@ end
 
 function importVillagers()
 	dbug("Importing Villagers")
-	message("say [" .. server.chatColour .. "]Importing villagers[-]")
+--	message("say [" .. server.chatColour .. "]Importing villagers[-]")
 
 	for k,v in pairs(villagers) do
 		conn:execute("INSERT INTO villagers (steam, village) VALUES (" .. k .. ",'" .. escape(v.village) .. "')")
@@ -228,7 +228,7 @@ end
 
 function importHotspots()
 	dbug("Importing Hotspots")
-	message("say [" .. server.chatColour .. "]Importing hotspots[-]")
+--	message("say [" .. server.chatColour .. "]Importing hotspots[-]")
 
 	for k,v in pairs(hotspots) do
 		if v.radius then
@@ -244,7 +244,7 @@ end
 
 function importResets()
 	dbug("Importing Reset Zones")
-	message("say [" .. server.chatColour .. "]Importing reset zones[-]")
+--	message("say [" .. server.chatColour .. "]Importing reset zones[-]")
 
 	for k,v in pairs(resetRegions) do
 		conn:execute("INSERT INTO resetZones (region) VALUES ('" .. escape(k) .. "')")
@@ -256,7 +256,7 @@ end
 
 function importBaditems()
 	dbug("Importing Bad Items")
-	message("say [" .. server.chatColour .. "]Importing bad items list[-]")
+--	message("say [" .. server.chatColour .. "]Importing bad items list[-]")
 
 	for k,v in pairs(badItems) do
 		conn:execute("INSERT INTO badItems (item) VALUES ('" .. escape(k) .. "')")
@@ -268,7 +268,7 @@ end
 
 function importWaypoints()
 	dbug("Importing Waypoints")
-	message("say [" .. server.chatColour .. "]Importing waypoints[-]")
+--	message("say [" .. server.chatColour .. "]Importing waypoints[-]")
 
 	for k,v in pairs(waypoints) do
 		conn:execute("INSERT INTO waypoints (steam, name, x, y, z, linked, shared) VALUES (" .. v.steam .. ",'" .. escape(v.name) .. "'," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. dbBool(v.linked) .. "," .. dbBool(v.shared) .. ")")
@@ -281,7 +281,7 @@ end
 
 function importLuaData()
 	dbug("Importing Lua Tables")
-	message("say [" .. server.chatColour .. "]Restoring bot data from backup..[-]")
+	message("say Restoring bot data from backup..")
 
 dbug("import 1")
 	dbug("Loading server")
@@ -344,5 +344,5 @@ dbug("import 15")
 	importShopCategories()
 
 	dbug("Import of Lua tables Complete")
-	message("say [" .. server.chatColour .. "]Bot restore complete.[-]")
+	message("say Bot restore complete. It is now safe to turn off your modem. xD")
 end

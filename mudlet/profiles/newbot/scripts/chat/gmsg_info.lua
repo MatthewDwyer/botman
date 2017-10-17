@@ -289,7 +289,7 @@ function gmsg_info()
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "when" and chatvars.words[2] == "feral") or chatvars.words[1] == "day7" then
+	if (chatvars.words[1] == "when" and chatvars.words[2] == "feral") or chatvars.words[1] == "day7" or chatvars.words[1] == "bloodmoon" then
 		day7(chatvars.playerid)
 
 		botman.faultyChat = false

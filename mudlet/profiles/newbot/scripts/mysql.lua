@@ -570,6 +570,8 @@ if debug then display("alterTables start\n") end
 	doSQL("ALTER TABLE `players` ADD `hackerScore` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `pvpTeleportCooldown` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `block` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `players` ADD `removedClaims` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `players` ADD `returnCooldown` INT NOT NULL DEFAULT '0'")
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 	-- changes to server table
@@ -643,6 +645,12 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `restrictIRC` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `nextAnnouncement` INT NOT NULL DEFAULT '1'")
 	doSQL("ALTER TABLE `server` ADD `pvpAllowProtect` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `hackerTPDetection` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `server` CHANGE `updateBranch` `updateBranch` VARCHAR(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'stable'")
+	doSQL("ALTER TABLE `server` CHANGE `moneyName` `moneyName` VARCHAR(40) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'Zenny|Zennies'")
+	doSQL("ALTER TABLE `server` ADD `whitelistCountries` VARCHAR(50) NOT NULL DEFAULT '' , ADD `perMinutePayRate` INT NOT NULL DEFAULT '0' , ADD `disableWatchAlerts` TINYINT NOT NULL DEFAULT '0' , ADD `masterPassword` VARCHAR(50) NOT NULL DEFAULT '', ADD `allowBotRestarts` TINYINT NOT NULL DEFAULT '0', ADD `botOwner` VARCHAR(17) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` CHANGE `pvpAllowProtect` `pvpAllowProtect` TINYINT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `returnCooldown` INT NOT NULL DEFAULT '0'")
 
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
@@ -672,6 +680,20 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `spawnableItems` ADD `craftable` TINYINT(1) NOT NULL DEFAULT '1' , ADD `devBlock` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('announcements', '60', CURRENT_TIMESTAMP, '0')")
 	doSQL("ALTER TABLE `locations` ADD `hidden` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `locations` CHANGE `currency` `currency` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL")
+	doSQL("ALTER TABLE `teleports` ADD `size` FLOAT(11) NOT NULL DEFAULT '1.5' COMMENT 'size of start tp' , ADD `dsize` FLOAT(11) NOT NULL DEFAULT '1.5' COMMENT 'size of dest tp'")
+
+	-- fix zero default tp sizes
+	doSQL("UPDATE `teleports` SET size = 1.5 WHERE size = 0")
+	doSQL("UPDATE `teleports` SET dsize = 1.5 WHERE dsize = 0")
+
+	doSQL("ALTER TABLE `waypoints` CHANGE `steam` `steam` BIGINT(17) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `events` CHANGE `steam` `steam` BIGINT(17) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `lottery` CHANGE `steam` `steam` BIGINT(17) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `memLottery` CHANGE `steam` `steam` BIGINT(17) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `playerNotes` CHANGE `steam` `steam` BIGINT(17) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `playerNotes` CHANGE `createdBy` `createdBy` BIGINT(17) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `whitelist` CHANGE `steam` `steam` BIGINT(17) NOT NULL DEFAULT '0'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)

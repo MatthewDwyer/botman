@@ -358,7 +358,7 @@ end
 
 
 function logCommand(commandTime, commandOwner, commandLine)
-	if botman.webdavFolderWriteable == false or string.find(commandLine, " INF ") or string.find(commandLine, "' from client") then
+	if botman.webdavFolderWriteable == false or string.find(commandLine, " INF ") or string.find(commandLine, "' from client") or string.find(commandLine, "password") or string.find(string.lower(commandLine), " api ") then
 		return
 	end
 
@@ -376,7 +376,7 @@ end
 
 
 function logChat(chatTime, chatOwner, chatLine)
-	if botman.webdavFolderWriteable == false or string.find(chatLine, " INF ") or string.find(chatLine, "' from client") then
+	if botman.webdavFolderWriteable == false or string.find(chatLine, " INF ") or string.find(chatLine, "' from client") or string.find(chatLine, "password") or string.find(string.lower(chatLine), " api ") then
 		return
 	end
 
@@ -399,20 +399,17 @@ function gmsg(line, ircid)
 	function messageIRC()
 		if ircMsg ~= nil then
 			-- ignore game messages
-			if (chatvars.playername ~= "Server" and chatvars.playerid == nil) or string.find(ircMsg, " INF ") then
+			if (chatvars.playername ~= "Server" and chatvars.playerid == nil) or string.find(ircMsg, " INF ") or string.find(ircMsg, "password") or string.find(string.lower(ircMsg), " api ") then
 				return
 			end
 
 			irc_chat(server.ircMain, ircMsg)
+			windowMessage(server.windowGMSG, chatvars.playername .. ": " .. chatvars.command .. "\n", true)
+			logChat(botman.serverTime, chatvars.playername, ircMsg)
 
---			if players[chatvars.playerid] or chatvars.playername == "Server" then
-				windowMessage(server.windowGMSG, chatvars.playername .. ": " .. chatvars.command .. "\n", true)
-				logChat(botman.serverTime, chatvars.playername, ircMsg)
-
-				if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) then
-					logCommand(botman.serverTime, chatvars.playername, ircMsg)
-				end
---			end
+			if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) then
+				logCommand(botman.serverTime, chatvars.playername, ircMsg)
+			end
 		end
 	end
 
@@ -436,7 +433,6 @@ function gmsg(line, ircid)
 	chatvars.playerid = 0
 	chatvars.accessLevel = 99
 	chatvars.command = line
-	chatvars.time = string.sub(line, 1, 20)
 
 	if debug then dbug("gmsg chatvars.accessLevel " .. chatvars.accessLevel) end
 
@@ -562,23 +558,25 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			botman.faultyChat = false
 		end
 
-		if string.len(chatvars.command) > 200 then
-			temp = string.gsub(chatvars.playername, "%[[%/%!]-[^%[%]]-]", "") .. ": " .. string.sub(chatvars.command, 1, 200)
-			temp = string.gsub(temp, "%[[%/%!]-[^%[%]]-]", "")
+		if chatvars.command then
+			if string.len(chatvars.command) > 200 then
+				temp = string.gsub(chatvars.playername, "%[[%/%!]-[^%[%]]-]", "") .. ": " .. string.sub(chatvars.command, 1, 200)
+				temp = string.gsub(temp, "%[[%/%!]-[^%[%]]-]", "")
 
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-			ircMsg = server.gameDate .. " " .. temp
-			messageIRC()
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+				ircMsg = server.gameDate .. " " .. temp
+				messageIRC()
 
-			temp = string.sub(chatvars.command, 201)
-			temp = string.gsub(temp, "%[[%/%!]-[^%[%]]-]", "")
+				temp = string.sub(chatvars.command, 201)
+				temp = string.gsub(temp, "%[[%/%!]-[^%[%]]-]", "")
 
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-			ircMsg = server.gameDate .. " " .. temp
-		else
-			if not string.find(chatvars.command, server.commandPrefix .. "accept") and not string.find(chatvars.command, server.commandPrefix .. "poke") then
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-				ircMsg = server.gameDate .. " " .. string.gsub(chatvars.playername, "%[[%/%!]-[^%[%]]-]", "") .. ": " .. string.gsub(chatvars.command, "%[[%/%!]-[^%[%]]-]", "")
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+				ircMsg = server.gameDate .. " " .. temp
+			else
+				if not string.find(chatvars.command, server.commandPrefix .. "accept") and not string.find(chatvars.command, server.commandPrefix .. "poke") then
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+					ircMsg = server.gameDate .. " " .. string.gsub(chatvars.playername, "%[[%/%!]-[^%[%]]-]", "") .. ": " .. string.gsub(chatvars.command, "%[[%/%!]-[^%[%]]-]", "")
+				end
 			end
 		end
 	end
@@ -773,7 +771,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			end
 
 			if (string.find(chatvars.command, "pause") or string.find(chatvars.command, "bot")) or chatvars.words[1] ~= "help" and chatvars.words[3] == nil then
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "pause (or disable or stop) bot")
+				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "pause bot")
 
 				if not shortHelp then
 					irc_chat(players[chatvars.ircid].ircAlias, "Temporarily disable the bot.  It will still read the chat and can be enabled again.")
@@ -782,7 +780,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			end
 		end
 
-		if (chatvars.words[1] == "pause" or chatvars.words[1] == "stop" or chatvars.words[1] == "disable") and chatvars.words[2] == "bot" and chatvars.accessLevel == 0 then
+		if (chatvars.words[1] == "pause" or chatvars.words[1] == "paws") and chatvars.words[2] == "bot" and chatvars.accessLevel == 0 then
 			message("say [" .. server.warnColour .. "] " .. server.botName .. " is now running in safe mode.  Most commands are disabled.[-]")
 			irc_chat(server.ircMain, "The bot is running in safe mode.  To exit safe mode type " .. server.commandPrefix .. "start bot")
 			botman.botDisabled = true
@@ -797,7 +795,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			result = true
 		end
 
-		if (chatvars.words[1] == "unpause" or chatvars.words[1] == "resume" or chatvars.words[1] == "start" or chatvars.words[1] == "enable") and chatvars.words[2] == "bot" and chatvars.accessLevel == 0 then
+		if (chatvars.words[1] == "unpause" or chatvars.words[1] == "unpaws") and chatvars.words[2] == "bot" and chatvars.accessLevel == 0 then
 			message("say [" .. server.warnColour .. "]The bot has exited safe mode.[-]")
 			botman.botDisabled = false
 
@@ -929,14 +927,17 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-	if chatvars.words[1] == "fix" and chatvars.words[2] == "bot" and chatvars.words[3] == nil then
+	if (chatvars.words[1] == "fix" and chatvars.words[2] == "bot" and chatvars.words[3] == nil) or string.find(chatvars.command, "fix all the things") then
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Fixing bot.  Please wait.. If this doesn't fix it, doing this again probably won't either.[-]")
 		else
 			irc_chat(players[chatvars.ircid].ircAlias, "Fixing bot.  Please wait.. If this doesn't fix it, doing this again probably won't either.")
 		end
 
-		fixBot()
+		if not botman.fixingBot then
+			botman.fixingBot = true
+			fixBot()
+		end
 
 		if tonumber(chatvars.playerid) > 0 then
 			players[chatvars.playerid].lastCommand = chatvars.command

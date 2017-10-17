@@ -8,6 +8,11 @@
 --]]
 
 function removeOldStaff()
+	if getAdminList then
+		-- abort if getAdminList is true as that means there's been a fault in the telnet data
+		return
+	end
+
 	local k,v
 
 	for k,v in pairs(owners) do
@@ -37,35 +42,42 @@ function matchAll(line)
 		return
 	end
 
-	if string.find(line, "StackTrace:") then -- what is this shit?  ignore it.
+	if string.find(line, "StackTrace:") then -- ignore lines containing this.
 		return
 	end
 
-	if string.find(line, "ERR ") then -- what is this shit?  ignore it.
+	if string.find(line, "ERR ") then -- ignore lines containing this.
 		return
 	end
 
-	if string.find(line, "WRN ") then -- what is this shit?  ignore it.
+	if string.find(line, "WRN ") then -- ignore lines containing this.
 		if not string.find(line, "DENSITYMISMATCH") then
 			return
 		end
 	end
 
-	if string.find(line, "NaN") then -- what is this shit?  ignore it.
+	if string.find(line, "NaN") then -- ignore lines containing this.
 		return
 	end
 
-	if string.find(line, "Unbalanced") then -- what is this shit?  ignore it.
+	if string.find(line, "Unbalanced") then -- ignore lines containing this.
 		return
 	end
 
-	if string.find(line, "->") then -- what is this shit?  ignore it.
+	if string.find(line, "->") then -- ignore lines containing this.
 		return
 	end
 
-	if string.find(line, "NullReferenceException:") then -- what is this shit?  ignore it.
+	if string.find(line, "NullReferenceException:") then -- ignore lines containing this.
 		return
 	end
+
+	if string.find(line, "*** ERROR: Executing command 'admin'") then -- abort processing the admin list
+		-- abort reading admin list
+		getAdminList = nil
+		return
+	end
+
 
 	-- locals defined here
 	local pname, pid, number, died, coords, words, temp, msg
@@ -127,13 +139,15 @@ function matchAll(line)
 	-- detect server tools
 	if string.find(line, "Mod SDX:") or string.find(line, "SDX: ") and not server.SDXDetected then
 		server.SDXDetected = true
-		if botman.dbConnected then conn:execute("UPDATE server SET SDXDetected = 1") end
+		server.hackerTPDetection = false
+		if botman.dbConnected then conn:execute("UPDATE server SET SDXDetected = 1, hackerTPDetection = 0") end
 	end
 
 	-- detect SDX mods
 	if string.find(line, "Mod Server Tools:") or string.find(line, "mod 'Server Tools'") and not server.ServerToolsDetected then
 		server.ServerToolsDetected = true
-		if botman.dbConnected then conn:execute("UPDATE server SET ServerToolsDetected = 1") end
+		server.hackerTPDetection = false
+		if botman.dbConnected then conn:execute("UPDATE server SET ServerToolsDetected = 1, hackerTPDetection = 0") end
 	end
 
 	-- detect CBSM
@@ -206,6 +220,7 @@ function matchAll(line)
 		irc_chat(server.ircAlerts, "Server error detected. Re-validate to fix: " .. line)
 	end
 
+
 	if died then
 		pid = LookupPlayer(pname, "all")
 
@@ -265,10 +280,16 @@ function matchAll(line)
 	if (string.sub(line, 1, 4) == os.date("%Y")) then
 		botman.readGG = false
 
-		if (echoConsole ~= nil) then
-			echoConsole = nil
-			echoConsoleTo = l
+		if (echoConsole) then
+			echoConsole = false
+			echoConsoleTo = nil
 		end
+	end
+
+
+	if string.find(line, "DropOnDeath =") and not botman.readGG then
+		irc_chat(server.ircMain, "ALERT! It appears that the server config setting HideCommandExecutionLog is not set to 0")
+		irc_chat(server.ircMain, "If any telnet traffic is hidden from the bot, important features will not work.  Please set it to 0")
 	end
 
 
@@ -377,16 +398,15 @@ function matchAll(line)
 	end
 
 
-	if getAdminList ~= nil then
-		if string.sub(line, 1, 4) ~= "    " then
+	if getAdminList then
+		if string.sub(line, 1, 3) ~= "   " or string.find(line, "Total of") then
 			getAdminList = nil
+			removeOldStaff()
 		end
-
-		removeOldStaff()
 	end
 
 
-	if getAdminList ~= nil then
+	if getAdminList then
 		temp = string.split(line, ":")
 		temp[1] = string.trim(temp[1])
 		temp[2] = string.trim(string.sub(temp[2], 1, 18))
@@ -491,23 +511,30 @@ function matchAll(line)
 		end
 	end
 
+	if collectBans and (string.sub(line, 1, 4) ~= os.date("%Y")) then
+		collectBans = false
+	end
+
 
 	-- collect the ban list
-	if collectBans ~= nil then
-		if (string.find(line, " AM ")) or (string.find(line, " PM ")) and not string.find(line, "banned until") then
+	if collectBans then
+		if not string.find(line, "banned until") then
 			temp = string.split(line, "-")
-			steam = string.trim(temp[2])
+			bannedTo = string.trim(temp[1] .. "-" .. temp[2] .. "-" .. temp[3])
+			steam = string.trim(temp[4])
+			reason = string.trim(temp[5])
 
-			if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason) VALUES ('" .. string.trim(temp[1]) .. "'," .. steam .. ",'" .. string.trim(temp[3]) .. "')") end
+			if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "','" .. bannedTo .. "')") end
 
 			-- also insert the steam owner (will only work if the steam id is different)
-			if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason) VALUES ('" .. string.trim(temp[1]) .. "'," .. players[steam].steamOwner .. ",'" .. string.trim(temp[3]) .. "')") end
+			if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. players[steam].steamOwner .. ",'" .. reason(reason) .. "','" .. bannedTo .. "')") end
 		end
 	end
 
 
 	if (string.find(line, "Banned until")) then
 		collectBans = true
+		conn:execute("DELETE FROM bans")
 		return
 	end
 
@@ -601,7 +628,7 @@ function matchAll(line)
 			return
 		end
 
-		if string.find(line, "Executing command 'version'") and string.find(line, server.botsIP) then
+		if string.find(line, "Executing command 'version") and string.find(line, server.botsIP) then
 			echoConsole = true
 			return
 		end
@@ -641,7 +668,7 @@ function matchAll(line)
 			return
 		end
 
-		if echoConsole == true then
+		if echoConsole then
 			line = line:gsub(",", "") -- strip out commas
 			irc_chat(echoConsoleTo, line)
 		end
@@ -649,8 +676,6 @@ function matchAll(line)
 
 
 	if (string.sub(line, 1, 4) == os.date("%Y")) then
-		collectBans = nil
-
 		if getZombies then
 			getZombies = nil
 
@@ -824,7 +849,7 @@ function matchAll(line)
 		if string.find(line, "command 'cpc", nil, true) then
 			line = string.sub(line, string.find(line, "command ") + 9, string.find(line, " from") - 2)
 			local parts = string.split(line, " ")
-			local colour = parts[3]
+			local colour = stripAllQuotes(parts[3])
 			local name = parts[2]
 			steam = LookupPlayer(name, "all")
 

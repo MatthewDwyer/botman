@@ -54,8 +54,11 @@ function endListPlayers(line)
 			botman.dbReservedSlotsUsed = tonumber(row.totalRows)
 		end
 
-		while botman.dbReservedSlotsUsed > tonumber(server.reservedSlotsUsed) do
+		if tonumber(botman.dbReservedSlotsUsed) > tonumber(server.reservedSlotsUsed) then
 			updateReservedSlots()
 		end
+	else
+		server.reservedSlotsUsed = 0
+		botman.dbReservedSlotsUsed = 0
 	end
 end

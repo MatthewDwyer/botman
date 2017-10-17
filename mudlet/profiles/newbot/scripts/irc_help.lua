@@ -372,6 +372,7 @@ function irc_HelpShop()
 
 	irc_chat(irc_params.name, "Shop Manglement")
 	irc_chat(irc_params.name, "===============")
+	irc_chat(irc_params.name, "empty shop (Everything must go! Deletes everything except the misc category which is a catchall)")
 	irc_chat(irc_params.name, "shop categories (list categories)")
 	irc_chat(irc_params.name, "shop <category> (list items in a category)")
 	irc_chat(irc_params.name, "shop <item> (list all items that partially match what you type)")

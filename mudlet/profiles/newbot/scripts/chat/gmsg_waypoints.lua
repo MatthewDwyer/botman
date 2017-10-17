@@ -201,18 +201,35 @@ function gmsg_waypoints()
 					end
 				end
 			else
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players can set a maximum of " .. chatvars.number .. " waypoints unless individually set to something else.[-]")
+				if chatvars.words[5] == nil then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players can set a maximum of " .. chatvars.number .. " waypoints unless individually set to something else.[-]")
+					else
+						irc_chat(players[chatvars.ircid].ircAlias, "Players can set a maximum of " .. chatvars.number .. " waypoints unless individually set to something else.")
+					end
+
+					conn:execute("UPDATE server SET maxWaypoints = " .. chatvars.number)
+					conn:execute("UPDATE players SET maxWaypoints = " .. chatvars.number)
+					server.maxWaypoints = chatvars.number
+
+					for k,v in pairs(players) do
+						v.maxWaypoints = chatvars.number
+					end
 				else
-					irc_chat(players[chatvars.ircid].ircAlias, "Players can set a maximum of " .. chatvars.number .. " waypoints unless individually set to something else.")
-				end
-
-				conn:execute("UPDATE server SET maxWaypoints = " .. chatvars.number)
-				conn:execute("UPDATE players SET maxWaypoints = " .. chatvars.number)
-				server.maxWaypoints = chatvars.number
-
-				for k,v in pairs(players) do
-					v.maxWaypoints = chatvars.number
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There was something wrong with your command, a typo?[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Valid options are..[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints <number>[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints <player> number <number>[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints donors <number>[-]")
+					else
+						irc_chat(players[chatvars.ircid].ircAlias, "There was something wrong with your command, a typo?")
+						irc_chat(players[chatvars.ircid].ircAlias, " ")
+						irc_chat(players[chatvars.ircid].ircAlias, "Valid options are..")
+						irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set max waypoints <number>")
+						irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set max waypoints <player> number <number>")
+						irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set max waypoints donors <number>")
+					end
 				end
 			end
 		end

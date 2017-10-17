@@ -857,7 +857,7 @@ oneMinuteTimer()</script>
 listPlayers()</script>
             <command></command>
             <packageName></packageName>
-            <time>00:00:03.000</time>
+            <time>00:00:04.000</time>
         </Timer>
         <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
             <name>OneHourTimer</name>
@@ -929,7 +929,7 @@ playerQueuedCommands()</script>
 gimmeQueuedCommands()</script>
             <command></command>
             <packageName></packageName>
-            <time>00:00:00.500</time>
+            <time>00:00:01.000</time>
         </Timer>
         <Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
             <name>ircQueue</name>

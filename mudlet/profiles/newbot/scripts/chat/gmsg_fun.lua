@@ -139,7 +139,7 @@ if debug then dbug("debug fun") end
 		end
 
 		gimmeZombies = {}
-		if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies") end		
+		if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies") end
 		send("se")
 
 		botman.faultyChat = false
@@ -551,15 +551,16 @@ if debug then dbug("debug fun") end
 
 	if string.find(chatvars.words[1], "quit") and chatvars.words[2] ==  nil then
 		if string.find(chatvars.words[1], "rage") and chatvars.words[2] ==  nil then
-			send("kick " .. chatvars.playerid .. " RAAAAGE! xD")
+			kick(chatvars.playerid, "RAAAAGE! xD")
 		else
-			r = rand(3)
-			if r == 1 then send("kick " .. chatvars.playerid .. " High Five! xD") end
-			if r == 2 then send("kick " .. chatvars.playerid .. " O.o  The Quit is strong in this one.") end
-			if r == 3 then send("kick " .. chatvars.playerid .. " Nice quit    *removes glasses*    YEEEEEEEEAH!") end
+			r = rand(4)
+			if r == 1 then kick(chatvars.playerid, "You'll be back :P") end
+			if r == 2 then kick(chatvars.playerid, "Quitter! :V") end
+			if r == 3 then kick(chatvars.playerid, "Nice quit    *removes glasses*    YEEEEEEEEAH!") end
+			if r == 4 then kick(chatvars.playerid, "You'll never quit xD") end
 		end
 
-		r = rand(4)
+		r = rand(10)
 
 		if r == 1 then
 			message("say [" .. server.chatColour .. "]" .. players[chatvars.playerid].name .. " has left the building.[-]")
@@ -577,6 +578,30 @@ if debug then dbug("debug fun") end
 			message("say [" .. server.chatColour .. "]" .. players[chatvars.playerid].name .. " quit like a BOSS![-]")
 		end
 
+		if r == 5 then
+			message("say [" .. server.chatColour .. "]" .. players[chatvars.playerid].name .. " tripped on the power cord.[-]")
+		end
+
+		if r == 6 then
+			message("say [" .. server.chatColour .. "]" .. players[chatvars.playerid].name .. " has stepped out to flip tables.[-]")
+		end
+
+		if r == 7 then
+			message("say [" .. server.chatColour .. "][MISSING] " .. players[chatvars.playerid].name .. " Last seen ragequitting.[-]")
+		end
+
+		if r == 8 then
+			message("say [" .. server.chatColour .. "]" .. players[chatvars.playerid].name .. " chose the nuclear option.[-]")
+		end
+
+		if r == 9 then
+			message("say [" .. server.chatColour .. "]" .. players[chatvars.playerid].name .. " +1 XP Ragequitter.[-]")
+		end
+
+		if r == 10 then
+			message("say [" .. server.chatColour .. "]" .. players[chatvars.playerid].name .. " pressed the Any key.[-]")
+		end
+
 		botman.faultyChat = false
 		return true
 	end
@@ -590,7 +615,7 @@ if debug then dbug("debug fun") end
 			message("say [" .. server.chatColour .. "]" .. players[chatvars.playerid].name .. " quit with this parting shot.. " .. msg .."[-]")
 		end
 
-		send("kick " .. chatvars.playerid .. "\"That'll learn em! xD\"")
+		kick(chatvars.playerid, "That'll learn em! xD")
 
 		botman.faultyChat = false
 		return true

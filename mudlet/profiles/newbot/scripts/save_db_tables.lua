@@ -43,8 +43,6 @@ function updatePlayer(steam)
 		return
 	end
 
-	fixMissingPlayer(steam)
-
 	-- update the db
 	sql = {}
 --dbug("update player " .. steam)
@@ -62,7 +60,7 @@ function updatePlayer(steam)
 				sql[v.field].value = value
 			end
 
-			if v.type == "tim" then
+			if v.type == "tim" and value ~= nil then
 				sql[v.field].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", value) .. "'"
 			end
 		end
@@ -127,7 +125,7 @@ function saveServer(fields, values)
 			if values[i] == false then values[i] = 0 end
 		end
 
-		if serverFields[fields[i]].type == "tim" then
+		if serverFields[fields[i]].type == "tim" and values[i] ~= nil then
 			values[i] = "'" .. os.date("%Y-%m-%d %H:%M:%S", values[i]) .. "'"
 		end
 
@@ -222,7 +220,7 @@ function savePlayer(steam, action)
 					if sql[k].value == false then sql[k].value = 0 end
 				end
 
-				if v.type == "tim" then
+				if v.type == "tim" and sql[k].value ~= nil then
 --dbug("tim")
 				--dbug("tim " .. sql[k].value)
 					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"

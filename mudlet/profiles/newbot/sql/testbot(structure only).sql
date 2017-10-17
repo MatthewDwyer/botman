@@ -10,14 +10,10 @@ SET time_zone = "+00:00";
 --
 -- Database: `testbot`
 --
-CREATE DATABASE IF NOT EXISTS `testbot` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci;
+CREATE DATABASE IF NOT EXISTS `testbot` DEFAULT CHARACTER SET utf8 COLLATE utf8mb4_general_ci;
 USE `testbot`;
 
 -- --------------------------------------------------------
-
---
--- Table structure for table `alerts`
---
 
 CREATE TABLE IF NOT EXISTS `alerts` (
 `alertID` bigint(20) NOT NULL,
@@ -27,7 +23,8 @@ CREATE TABLE IF NOT EXISTS `alerts` (
   `z` int(11) NOT NULL,
   `message` varchar(255) NOT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `sent` tinyint(1) NOT NULL DEFAULT '0'
+  `sent` tinyint(1) NOT NULL DEFAULT '0',
+  `status` varchar(30) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -39,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `alerts` (
 CREATE TABLE IF NOT EXISTS `altertables` (
 `id` int(11) NOT NULL,
   `statement` varchar(1000) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -75,7 +72,7 @@ CREATE TABLE IF NOT EXISTS `badWords` (
   `badWord` varchar(15) NOT NULL,
   `cost` int(11) NOT NULL DEFAULT '10',
   `counter` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -108,12 +105,55 @@ CREATE TABLE IF NOT EXISTS `bookmarks` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `botChat`
+--
+
+CREATE TABLE IF NOT EXISTS `botChat` (
+`botChatID` int(11) NOT NULL,
+  `triggerWords` varchar(255) NOT NULL DEFAULT '',
+  `triggerPhrase` varchar(255) NOT NULL DEFAULT '',
+  `accessLevelRestriction` int(11) NOT NULL DEFAULT '99',
+  `mustAddressBot` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `botChatResponses`
+--
+
+CREATE TABLE IF NOT EXISTS `botChatResponses` (
+`botChatResponseID` int(11) NOT NULL,
+  `botChatID` int(11) NOT NULL DEFAULT '0',
+  `response` varchar(300) NOT NULL DEFAULT ''
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `botCommands`
+--
+
+CREATE TABLE IF NOT EXISTS `botCommands` (
+  `cmdCode` varchar(5) NOT NULL,
+  `cmdIndex` int(11) NOT NULL,
+  `accessLevel` int(11) NOT NULL DEFAULT '0',
+  `enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `keywords` varchar(150) NOT NULL DEFAULT '',
+  `shortDescription` varchar(255) NOT NULL DEFAULT '',
+  `longDescription` varchar(1000) NOT NULL DEFAULT '',
+  `sortOrder` int(11) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `chatHistory`
 --
 
 CREATE TABLE IF NOT EXISTS `chatHistory` (
   `steam` bigint(17) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -126,7 +166,7 @@ CREATE TABLE IF NOT EXISTS `chatHistoryLines` (
   `steam` bigint(17) NOT NULL,
   `serverTime` varchar(19) NOT NULL,
   `chatLine` varchar(200) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -151,7 +191,7 @@ CREATE TABLE IF NOT EXISTS `customCommands` (
   `command` varchar(50) NOT NULL,
   `accessLevel` int(11) NOT NULL DEFAULT '2',
   `help` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -164,7 +204,7 @@ CREATE TABLE IF NOT EXISTS `customCommands_Detail` (
   `commandID` int(11) NOT NULL,
   `action` varchar(5) NOT NULL DEFAULT '' COMMENT 'say,give,tele,spawn,buff,cmd',
   `thing` varchar(50) NOT NULL DEFAULT ''
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -176,7 +216,7 @@ CREATE TABLE IF NOT EXISTS `customMessages` (
   `command` varchar(30) NOT NULL,
   `message` varchar(255) NOT NULL,
   `accessLevel` int(11) NOT NULL DEFAULT '99'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -193,7 +233,7 @@ CREATE TABLE IF NOT EXISTS `events` (
   `serverTime` varchar(19) NOT NULL,
   `type` varchar(15) NOT NULL,
   `event` varchar(255) NOT NULL,
-  `steam` varchar(17) NOT NULL
+  `steam` bigint(17) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -206,7 +246,7 @@ CREATE TABLE IF NOT EXISTS `friends` (
   `steam` bigint(17) NOT NULL,
   `friend` bigint(17) NOT NULL DEFAULT '0',
   `autoAdded` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -219,7 +259,7 @@ CREATE TABLE IF NOT EXISTS `gimmePrizes` (
   `category` varchar(15) NOT NULL,
   `prizeLimit` int(11) NOT NULL DEFAULT '1',
   `quality` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -246,8 +286,9 @@ CREATE TABLE IF NOT EXISTS `gimmeZombies` (
   `entityID` int(11) NOT NULL DEFAULT '0',
   `bossZombie` tinyint(1) NOT NULL DEFAULT '0',
   `doNotSpawn` tinyint(4) NOT NULL DEFAULT '0',
-  `maxHealth` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `maxHealth` int(11) NOT NULL DEFAULT '0',
+  `remove` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -264,7 +305,7 @@ CREATE TABLE IF NOT EXISTS `helpCommands` (
   `lastUpdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `accessLevel` int(11) NOT NULL DEFAULT '99',
   `ingameOnly` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -275,7 +316,7 @@ CREATE TABLE IF NOT EXISTS `helpCommands` (
 CREATE TABLE IF NOT EXISTS `helpTopicCommands` (
   `topicID` int(11) NOT NULL,
   `commandID` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -287,7 +328,7 @@ CREATE TABLE IF NOT EXISTS `helpTopics` (
 `topicID` int(11) NOT NULL,
   `topic` varchar(20) NOT NULL,
   `description` varchar(200) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -355,7 +396,11 @@ CREATE TABLE IF NOT EXISTS `inventoryTracker` (
 CREATE TABLE IF NOT EXISTS `IPBlacklist` (
   `StartIP` bigint(15) NOT NULL,
   `EndIP` bigint(15) NOT NULL,
-  `Country` varchar(2) DEFAULT NULL
+  `Country` varchar(2) DEFAULT NULL,
+  `DateAdded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `botID` int(11) NOT NULL DEFAULT '0',
+  `steam` bigint(17) NOT NULL DEFAULT '0',
+  `playerName` varchar(25) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -382,7 +427,8 @@ CREATE TABLE IF NOT EXISTS `keystones` (
   `y` int(11) NOT NULL,
   `z` int(11) NOT NULL,
   `remove` tinyint(1) NOT NULL DEFAULT '0',
-  `removed` int(11) NOT NULL DEFAULT '1'
+  `removed` int(11) NOT NULL DEFAULT '1',
+  `expired` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -393,7 +439,7 @@ CREATE TABLE IF NOT EXISTS `keystones` (
 
 CREATE TABLE IF NOT EXISTS `list` (
   `thing` varchar(255) NOT NULL
-) ENGINE=MEMORY DEFAULT CHARSET=latin1 COMMENT='For sorting a list';
+) ENGINE=MEMORY DEFAULT CHARSET=utf8 COMMENT='For sorting a list';
 
 -- --------------------------------------------------------
 
@@ -416,7 +462,7 @@ CREATE TABLE IF NOT EXISTS `locations` (
   `exitY` int(11) NOT NULL,
   `exitZ` int(11) NOT NULL,
   `cost` int(11) NOT NULL DEFAULT '0',
-  `currency` varchar(10) DEFAULT NULL,
+  `currency` varchar(20) DEFAULT NULL,
   `allowBase` tinyint(1) NOT NULL DEFAULT '0',
   `protected` tinyint(1) NOT NULL DEFAULT '0',
   `accessLevel` int(11) NOT NULL DEFAULT '99',
@@ -434,7 +480,13 @@ CREATE TABLE IF NOT EXISTS `locations` (
   `newPlayersOnly` tinyint(1) NOT NULL DEFAULT '0',
   `minimumLevel` int(11) NOT NULL DEFAULT '0',
   `maximumLevel` int(11) NOT NULL DEFAULT '0',
-  `dayClosed` int(11) NOT NULL DEFAULT '0'
+  `dayClosed` int(11) NOT NULL DEFAULT '0',
+  `dailyTaxRate` int(11) NOT NULL DEFAULT '0',
+  `prisonX` int(11) NOT NULL DEFAULT '0',
+  `prisonY` int(11) NOT NULL DEFAULT '0',
+  `prisonZ` int(11) NOT NULL DEFAULT '0',
+  `bank` int(11) NOT NULL DEFAULT '0',
+  `hidden` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -457,9 +509,9 @@ CREATE TABLE IF NOT EXISTS `locationSpawns` (
 --
 
 CREATE TABLE IF NOT EXISTS `lottery` (
-  `steam` varchar(17) NOT NULL,
+  `steam` bigint(17) NOT NULL DEFAULT '0',
   `ticket` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -491,7 +543,7 @@ CREATE TABLE IF NOT EXISTS `memEntities` (
   `z` int(11) DEFAULT '0',
   `dead` tinyint(1) NOT NULL DEFAULT '0',
   `health` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -502,7 +554,7 @@ CREATE TABLE IF NOT EXISTS `memEntities` (
 CREATE TABLE IF NOT EXISTS `memIgnoredItems` (
   `item` varchar(50) NOT NULL,
   `qty` int(11) NOT NULL DEFAULT '65'
-) ENGINE=MEMORY DEFAULT CHARSET=latin1;
+) ENGINE=MEMORY DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -511,9 +563,9 @@ CREATE TABLE IF NOT EXISTS `memIgnoredItems` (
 --
 
 CREATE TABLE IF NOT EXISTS `memLottery` (
-  `steam` varchar(17) NOT NULL,
+  `steam` bigint(17) NOT NULL DEFAULT '0',
   `ticket` int(11) NOT NULL DEFAULT '0'
-) ENGINE=MEMORY DEFAULT CHARSET=latin1;
+) ENGINE=MEMORY DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -526,7 +578,7 @@ CREATE TABLE IF NOT EXISTS `memRestrictedItems` (
   `qty` int(11) NOT NULL DEFAULT '65',
   `accessLevel` int(11) NOT NULL DEFAULT '90',
   `action` varchar(30) NOT NULL
-) ENGINE=MEMORY DEFAULT CHARSET=latin1;
+) ENGINE=MEMORY DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -585,7 +637,8 @@ CREATE TABLE IF NOT EXISTS `miscQueue` (
   `steam` bigint(17) NOT NULL,
   `command` varchar(255) NOT NULL,
   `action` varchar(15) NOT NULL,
-  `value` int(11) NOT NULL DEFAULT '0'
+  `value` int(11) NOT NULL DEFAULT '0',
+  `timerDelay` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
 ) ENGINE=MEMORY DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -598,7 +651,7 @@ CREATE TABLE IF NOT EXISTS `otherEntities` (
   `entity` varchar(50) NOT NULL,
   `entityID` int(11) NOT NULL DEFAULT '0',
   `doNotSpawn` tinyint(4) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -629,10 +682,10 @@ CREATE TABLE IF NOT EXISTS `performance` (
 
 CREATE TABLE IF NOT EXISTS `playerNotes` (
 `id` int(11) NOT NULL,
-  `steam` varchar(17) NOT NULL,
-  `createdBy` varchar(17) NOT NULL,
+  `steam` bigint(17) NOT NULL DEFAULT '0',
+  `createdBy` bigint(17) NOT NULL DEFAULT '0',
   `note` varchar(400) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -766,7 +819,12 @@ CREATE TABLE IF NOT EXISTS `players` (
   `waypointCooldown` int(11) NOT NULL DEFAULT '0',
   `bail` int(11) NOT NULL DEFAULT '0',
   `watchPlayerTimer` int(11) NOT NULL DEFAULT '0',
-  `hackerScore` int(11) NOT NULL DEFAULT '0'
+  `hackerScore` int(11) NOT NULL DEFAULT '0',
+  `commandCooldown` int(11) NOT NULL DEFAULT '0',
+  `pvpTeleportCooldown` int(11) NOT NULL DEFAULT '0',
+  `block` tinyint(1) NOT NULL DEFAULT '0',
+  `removedClaims` int(11) NOT NULL DEFAULT '0',
+  `returnCooldown` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -789,7 +847,7 @@ CREATE TABLE IF NOT EXISTS `polls` (
   `option5` varchar(100) NOT NULL,
   `option6` varchar(100) NOT NULL,
   `accessLevel` int(11) NOT NULL DEFAULT '90'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -802,7 +860,7 @@ CREATE TABLE IF NOT EXISTS `pollVotes` (
   `steam` bigint(17) NOT NULL,
   `vote` int(11) NOT NULL DEFAULT '0',
   `weight` float NOT NULL DEFAULT '1'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -821,7 +879,7 @@ CREATE TABLE IF NOT EXISTS `prefabCopies` (
   `z2` int(11) NOT NULL DEFAULT '0',
   `blockName` varchar(50) NOT NULL DEFAULT '',
   `rotation` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -833,7 +891,22 @@ CREATE TABLE IF NOT EXISTS `proxies` (
   `scanString` varchar(100) NOT NULL,
   `action` varchar(20) NOT NULL DEFAULT 'nothing',
   `hits` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `reservedSlots`
+--
+
+CREATE TABLE IF NOT EXISTS `reservedSlots` (
+  `steam` bigint(17) NOT NULL,
+  `timeAdded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reserved` tinyint(1) NOT NULL DEFAULT '0',
+  `staff` tinyint(1) NOT NULL DEFAULT '0',
+  `totalPlayTime` int(11) NOT NULL DEFAULT '0',
+  `deleteRow` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -860,7 +933,7 @@ CREATE TABLE IF NOT EXISTS `restrictedItems` (
   `qty` int(11) NOT NULL DEFAULT '65',
   `accessLevel` int(11) NOT NULL DEFAULT '90',
   `action` varchar(30) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -887,7 +960,7 @@ CREATE TABLE IF NOT EXISTS `searchResults` (
 --
 
 CREATE TABLE IF NOT EXISTS `server` (
-  `rules` varchar(255) DEFAULT 'No rules',
+  `rules` varchar(1000) DEFAULT '',
   `shopCountdown` int(11) NOT NULL DEFAULT '0',
   `gimmePeace` tinyint(1) NOT NULL DEFAULT '0',
   `date` varchar(10) DEFAULT NULL,
@@ -895,19 +968,19 @@ CREATE TABLE IF NOT EXISTS `server` (
   `ServerPort` int(11) NOT NULL DEFAULT '0',
   `windowAlerts` varchar(15) NOT NULL DEFAULT 'Alerts',
   `allowGimme` tinyint(1) NOT NULL DEFAULT '0',
-  `mapSize` int(11) NOT NULL DEFAULT '20000',
-  `ircAlerts` varchar(15) NOT NULL DEFAULT '#new_alerts',
-  `ircWatch` varchar(15) NOT NULL DEFAULT '#new_watch',
+  `mapSize` int(11) NOT NULL DEFAULT '10000',
+  `ircAlerts` varchar(50) NOT NULL DEFAULT '#new_alerts',
+  `ircWatch` varchar(50) NOT NULL DEFAULT '#new_watch',
   `prisonSize` int(11) NOT NULL DEFAULT '30',
   `MOTD` varchar(255) DEFAULT 'We have a new server bot!',
   `IP` varchar(15) DEFAULT '0.0.0.0',
   `lottery` int(11) NOT NULL DEFAULT '0',
   `allowShop` tinyint(1) NOT NULL DEFAULT '0',
   `windowGMSG` varchar(15) NOT NULL DEFAULT 'GMSG',
-  `botName` varchar(15) NOT NULL DEFAULT 'Bot',
+  `botName` varchar(30) NOT NULL DEFAULT 'Bot',
   `allowWaypoints` tinyint(1) NOT NULL DEFAULT '0',
   `windowLists` varchar(15) NOT NULL DEFAULT 'Lists',
-  `ircMain` varchar(15) NOT NULL DEFAULT '#new',
+  `ircMain` varchar(50) NOT NULL DEFAULT '#new',
   `chatColour` varchar(6) NOT NULL DEFAULT 'D4FFD4',
   `maxPlayers` int(11) NOT NULL DEFAULT '24',
   `maxServerUptime` int(11) NOT NULL DEFAULT '12',
@@ -915,7 +988,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `baseSize` int(11) NOT NULL DEFAULT '32',
   `baseCooldown` int(11) NOT NULL DEFAULT '2400',
   `protectionMaxDays` int(11) NOT NULL DEFAULT '40',
-  `ircBotName` varchar(15) NOT NULL DEFAULT 'Bot',
+  `ircBotName` varchar(30) NOT NULL DEFAULT 'Bot',
   `serverName` varchar(50) NOT NULL DEFAULT 'New Server',
   `lastDailyReboot` int(11) NOT NULL DEFAULT '0',
   `allowNumericNames` tinyint(1) NOT NULL DEFAULT '1',
@@ -923,14 +996,14 @@ CREATE TABLE IF NOT EXISTS `server` (
 `id` int(11) NOT NULL,
   `allowReboot` tinyint(1) NOT NULL DEFAULT '1',
   `newPlayerTimer` int(11) NOT NULL DEFAULT '120',
-  `blacklistResponse` varchar(20) NOT NULL DEFAULT 'exile',
+  `blacklistResponse` varchar(20) NOT NULL DEFAULT 'ban',
   `gameDay` int(11) NOT NULL DEFAULT '0',
   `welcome` varchar(255) DEFAULT NULL,
   `allowVoting` tinyint(1) NOT NULL DEFAULT '0',
   `allowPlayerVoteTopics` tinyint(1) NOT NULL DEFAULT '0',
   `shopOpenHour` int(11) NOT NULL DEFAULT '0',
   `shopCloseHour` int(11) NOT NULL DEFAULT '0',
-  `shopLocation` varchar(20) DEFAULT NULL,
+  `shopLocation` varchar(30) DEFAULT NULL,
   `website` varchar(100) DEFAULT NULL,
   `ircServer` varchar(100) DEFAULT NULL,
   `pingKick` int(11) NOT NULL DEFAULT '-1',
@@ -942,7 +1015,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `botID` int(11) NOT NULL DEFAULT '0',
   `allowOverstacking` tinyint(1) NOT NULL DEFAULT '0',
   `announceTeleports` tinyint(1) NOT NULL,
-  `blockCountries` varchar(60) NOT NULL DEFAULT 'CN',
+  `blockCountries` varchar(100) NOT NULL DEFAULT 'CN',
   `northeastZone` varchar(5) DEFAULT NULL,
   `northwestZone` varchar(5) DEFAULT NULL,
   `southeastZone` varchar(5) DEFAULT NULL,
@@ -952,7 +1025,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `accessLevelOverride` int(11) NOT NULL DEFAULT '99',
   `disableBaseProtection` tinyint(1) NOT NULL DEFAULT '0',
   `packCooldown` int(11) NOT NULL DEFAULT '0',
-  `moneyName` varchar(20) NOT NULL DEFAULT 'Zenny|Zennies',
+  `moneyName` varchar(40) NOT NULL DEFAULT 'Zenny|Zennies',
   `allowBank` tinyint(1) NOT NULL DEFAULT '1',
   `overstackThreshold` int(11) NOT NULL DEFAULT '1000',
   `enableRegionPM` tinyint(1) NOT NULL DEFAULT '1',
@@ -960,7 +1033,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `allowLottery` tinyint(4) NOT NULL DEFAULT '1',
   `lotteryMultiplier` int(11) NOT NULL DEFAULT '4',
   `zombieKillReward` int(11) NOT NULL DEFAULT '3',
-  `ircTracker` varchar(15) NOT NULL DEFAULT '#new_tracker',
+  `ircTracker` varchar(50) NOT NULL DEFAULT '#new_tracker',
   `allowTeleporting` tinyint(1) NOT NULL DEFAULT '1',
   `hardcore` tinyint(1) NOT NULL DEFAULT '0',
   `swearJar` tinyint(1) NOT NULL DEFAULT '0',
@@ -976,7 +1049,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `teleportCost` int(11) NOT NULL DEFAULT '200',
   `commandPrefix` varchar(1) NOT NULL DEFAULT '/',
   `chatlogPath` varchar(200) NOT NULL DEFAULT '',
-  `botVersion` varchar(11) NOT NULL DEFAULT '',
+  `botVersion` varchar(20) NOT NULL DEFAULT '',
   `packCost` int(11) NOT NULL DEFAULT '0',
   `baseCost` int(11) NOT NULL DEFAULT '0',
   `rebootHour` int(11) NOT NULL DEFAULT '-1',
@@ -993,7 +1066,7 @@ CREATE TABLE IF NOT EXISTS `server` (
   `CBSMFriendly` tinyint(1) NOT NULL DEFAULT '1',
   `ServerToolsDetected` tinyint(1) NOT NULL DEFAULT '0',
   `disableTPinPVP` tinyint(1) NOT NULL DEFAULT '0',
-  `updateBot` int(1) NOT NULL DEFAULT '0' COMMENT '0 do not update, 1 stable branch, 2 testing branch',
+  `updateBot` tinyint(1) NOT NULL DEFAULT '0',
   `waypointCreateCost` int(11) NOT NULL DEFAULT '0',
   `scanErrors` tinyint(1) NOT NULL DEFAULT '0',
   `alertSpending` tinyint(1) NOT NULL DEFAULT '0',
@@ -1004,14 +1077,41 @@ CREATE TABLE IF NOT EXISTS `server` (
   `allowProxies` tinyint(1) NOT NULL DEFAULT '0',
   `SDXDetected` tinyint(1) NOT NULL DEFAULT '0',
   `enableWindowMessages` tinyint(1) NOT NULL DEFAULT '0',
-  `updateBranch` varchar(7) NOT NULL DEFAULT 'stable',
+  `updateBranch` varchar(30) NOT NULL DEFAULT 'stable',
   `chatColourNewPlayer` varchar(6) NOT NULL DEFAULT 'FFFFFF',
   `chatColourPlayer` varchar(6) NOT NULL DEFAULT 'FFFFFF',
   `chatColourDonor` varchar(6) NOT NULL DEFAULT 'FFFFFF',
   `chatColourPrisoner` varchar(6) NOT NULL DEFAULT 'FFFFFF',
   `chatColourMod` varchar(6) NOT NULL DEFAULT 'FFFFFF',
   `chatColourAdmin` varchar(6) NOT NULL DEFAULT 'FFFFFF',
-  `chatColourOwner` varchar(6) NOT NULL DEFAULT 'FFFFFF'
+  `chatColourOwner` varchar(6) NOT NULL DEFAULT 'FFFFFF',
+  `commandCooldown` int(11) NOT NULL DEFAULT '0',
+  `telnetPass` varchar(50) NOT NULL,
+  `telnetPort` int(11) NOT NULL DEFAULT '0',
+  `feralRebootDelay` int(11) NOT NULL DEFAULT '68',
+  `pvpTeleportCooldown` int(11) NOT NULL DEFAULT '0',
+  `allowPlayerToPlayerTeleporting` tinyint(1) NOT NULL DEFAULT '1',
+  `ircPort` int(11) NOT NULL DEFAULT '6667',
+  `botRestartHour` int(11) NOT NULL DEFAULT '5',
+  `trackingKeepDays` int(11) NOT NULL DEFAULT '28',
+  `databaseMaintenanceFinished` tinyint(1) NOT NULL DEFAULT '1',
+  `allowHomeTeleport` tinyint(1) NOT NULL DEFAULT '1',
+  `playerTeleportDelay` int(11) NOT NULL DEFAULT '0',
+  `allowPackTeleport` tinyint(1) NOT NULL DEFAULT '1',
+  `gameVersion` varchar(30) NOT NULL DEFAULT '',
+  `pvpIgnoreFriendlyKills` tinyint(1) NOT NULL DEFAULT '0',
+  `allowStuckTeleport` tinyint(1) NOT NULL DEFAULT '1',
+  `restrictIRC` tinyint(1) NOT NULL DEFAULT '0',
+  `nextAnnouncement` int(11) NOT NULL DEFAULT '1',
+  `pvpAllowProtect` tinyint(4) NOT NULL DEFAULT '0',
+  `hackerTPDetection` tinyint(1) NOT NULL DEFAULT '1',
+  `whitelistCountries` varchar(50) NOT NULL DEFAULT '',
+  `perMinutePayRate` int(11) NOT NULL DEFAULT '0',
+  `disableWatchAlerts` tinyint(4) NOT NULL DEFAULT '0',
+  `masterPassword` varchar(50) NOT NULL DEFAULT '',
+  `allowBotRestarts` tinyint(4) NOT NULL DEFAULT '0',
+  `botOwner` varchar(17) NOT NULL DEFAULT '0',
+  `returnCooldown` int(11) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -1046,6 +1146,41 @@ CREATE TABLE IF NOT EXISTS `shopCategories` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `spawnableItems`
+--
+
+CREATE TABLE IF NOT EXISTS `spawnableItems` (
+  `itemName` varchar(100) NOT NULL,
+  `deleteItem` tinyint(1) NOT NULL DEFAULT '0',
+  `accessLevelRestriction` int(11) NOT NULL DEFAULT '99',
+  `category` varchar(20) NOT NULL DEFAULT 'None',
+  `price` int(11) NOT NULL DEFAULT '10000',
+  `stock` int(11) NOT NULL DEFAULT '5000',
+  `idx` int(11) NOT NULL DEFAULT '0',
+  `maxStock` int(11) NOT NULL DEFAULT '5000',
+  `inventoryResponse` varchar(10) NOT NULL DEFAULT 'none',
+  `StackLimit` int(11) NOT NULL DEFAULT '1000',
+  `newPlayerMaxInventory` int(11) NOT NULL DEFAULT '-1',
+  `units` int(11) NOT NULL DEFAULT '1',
+  `craftable` tinyint(1) NOT NULL DEFAULT '1',
+  `devBlock` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `staff`
+--
+
+CREATE TABLE IF NOT EXISTS `staff` (
+  `steam` bigint(17) NOT NULL DEFAULT '0',
+  `adminLevel` int(11) NOT NULL DEFAULT '2',
+  `blockDelete` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `teleports`
 --
 
@@ -1061,8 +1196,23 @@ CREATE TABLE IF NOT EXISTS `teleports` (
   `dz` int(11) NOT NULL DEFAULT '0',
   `name` varchar(15) NOT NULL,
   `friends` tinyint(1) NOT NULL DEFAULT '0',
-  `public` tinyint(1) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `public` tinyint(1) NOT NULL DEFAULT '0',
+  `size` float NOT NULL DEFAULT '1.5' COMMENT 'size of start tp',
+  `dsize` float NOT NULL DEFAULT '1.5' COMMENT 'size of dest tp'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `timedEvents`
+--
+
+CREATE TABLE IF NOT EXISTS `timedEvents` (
+  `timer` varchar(20) NOT NULL DEFAULT '',
+  `delayMinutes` int(11) NOT NULL DEFAULT '10',
+  `nextTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `disabled` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -1100,14 +1250,14 @@ CREATE TABLE IF NOT EXISTS `villagers` (
 
 CREATE TABLE IF NOT EXISTS `waypoints` (
 `id` int(11) NOT NULL,
-  `steam` varchar(17) NOT NULL,
+  `steam` bigint(17) NOT NULL DEFAULT '0',
   `name` varchar(30) NOT NULL,
   `x` int(11) NOT NULL,
   `y` int(11) NOT NULL,
   `z` int(11) NOT NULL,
   `linked` int(11) NOT NULL DEFAULT '0',
   `shared` tinyint(4) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -1116,8 +1266,8 @@ CREATE TABLE IF NOT EXISTS `waypoints` (
 --
 
 CREATE TABLE IF NOT EXISTS `whitelist` (
-  `steam` varchar(17) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `steam` bigint(17) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Indexes for dumped tables
@@ -1164,6 +1314,24 @@ ALTER TABLE `bans`
 --
 ALTER TABLE `bookmarks`
  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `botChat`
+--
+ALTER TABLE `botChat`
+ ADD PRIMARY KEY (`botChatID`);
+
+--
+-- Indexes for table `botChatResponses`
+--
+ALTER TABLE `botChatResponses`
+ ADD PRIMARY KEY (`botChatResponseID`);
+
+--
+-- Indexes for table `botCommands`
+--
+ALTER TABLE `botCommands`
+ ADD PRIMARY KEY (`cmdCode`,`cmdIndex`);
 
 --
 -- Indexes for table `chatHistory`
@@ -1229,7 +1397,7 @@ ALTER TABLE `gimmeQueue`
 -- Indexes for table `gimmeZombies`
 --
 ALTER TABLE `gimmeZombies`
- ADD PRIMARY KEY (`zombie`);
+ ADD PRIMARY KEY (`entityID`);
 
 --
 -- Indexes for table `helpCommands`
@@ -1412,6 +1580,12 @@ ALTER TABLE `proxies`
  ADD PRIMARY KEY (`scanString`);
 
 --
+-- Indexes for table `reservedSlots`
+--
+ALTER TABLE `reservedSlots`
+ ADD PRIMARY KEY (`steam`);
+
+--
 -- Indexes for table `resetZones`
 --
 ALTER TABLE `resetZones`
@@ -1448,10 +1622,28 @@ ALTER TABLE `shopCategories`
  ADD PRIMARY KEY (`category`);
 
 --
+-- Indexes for table `spawnableItems`
+--
+ALTER TABLE `spawnableItems`
+ ADD PRIMARY KEY (`itemName`);
+
+--
+-- Indexes for table `staff`
+--
+ALTER TABLE `staff`
+ ADD PRIMARY KEY (`steam`);
+
+--
 -- Indexes for table `teleports`
 --
 ALTER TABLE `teleports`
  ADD PRIMARY KEY (`name`);
+
+--
+-- Indexes for table `timedEvents`
+--
+ALTER TABLE `timedEvents`
+ ADD PRIMARY KEY (`timer`);
 
 --
 -- Indexes for table `tracker`
@@ -1501,6 +1693,16 @@ MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 --
 ALTER TABLE `bookmarks`
 MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `botChat`
+--
+ALTER TABLE `botChat`
+MODIFY `botChatID` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT for table `botChatResponses`
+--
+ALTER TABLE `botChatResponses`
+MODIFY `botChatResponseID` int(11) NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT for table `chatHistoryLines`
 --

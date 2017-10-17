@@ -583,6 +583,161 @@ if debug then dbug("debug admin") end
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "return") or string.find(chatvars.command, "cool") or string.find(chatvars.command, "delay") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set return cooldown <seconds> (default 0)")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "You can add a delay to the return command.  Does not affect staff.")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
+			end
+		end
+	end
+
+	if chatvars.words[1] == "set" and chatvars.words[2] == "return" and (chatvars.words[3] == "cooldown" or chatvars.words[3] == "delay" or chatvars.words[3] == "timer") then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 1) then
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 1) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		if chatvars.number == nil then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Number required eg. " .. server.commandPrefix .. "set return cooldown 10[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "Number required  eg. " .. server.commandPrefix .. "set return cooldown 10")
+			end
+		else
+			chatvars.number = math.abs(chatvars.number)
+
+			server.returnCooldown = chatvars.number
+			if botman.dbConnected then conn:execute("UPDATE server SET returnCooldown = " .. server.returnCooldown) end
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players must wait " .. server.returnCooldown .. " seconds after teleporting before they can use the " .. server.commandPrefix .. "return command.[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "Players must wait " .. server.returnCooldown .. " seconds after teleporting before they can use the " .. server.commandPrefix .. "return command.")
+			end
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	if (chatvars.words[1] == "password") and (chatvars.words[2] ~= nil) and (chatvars.accessLevel < 3) then
+		local r, response, ID
+
+		if chatvars.ircid ~= nil then
+			ID = chatvars.ircid
+		else
+			ID = chatvars.playerid
+		end
+
+		if string.sub(chatvars.command, string.find(chatvars.command, "password") + 9) ~= server.masterPassword then
+			response = "password attempt failed."
+
+			r = rand(10)
+			if (r == 1) then response = "Your weak " .. response end
+			if (r == 2) then response = "That pathetic " .. response end
+			if (r == 3) then response = "Oh please. " .. firstToUpper(response) end
+			if (r == 4) then response = "So close! " .. firstToUpper(response) end
+			if (r == 5) then response = "Stop guessing. " .. firstToUpper(response) end
+			if (r == 6) then response = "Uh uh uh! You forgot to say the magic word."end
+			if (r == 7) then response = "Stop it! " .. firstToUpper(response) end
+			if (r == 8) then response = "BZZT! " .. firstToUpper(response) end
+			if (r == 9) then response = "Ruh roh! " .. firstToUpper(response) end
+			if (r == 10) then response = "That's the wrongest password I've ever seen!" end
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. response .. "[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, response)
+			end
+
+			botman.faultyChat = false
+			return true
+		else
+			-- password accepted (or a great guess)
+			dbug(players[ID].botQuestion)
+
+			if players[ID].botQuestion == "reset server" and chatvars.accessLevel == 0 then
+				ResetServer()
+
+				botman.faultyChat = false
+				return true
+			end
+
+			 if players[ID].botQuestion == "restart bot" and (chatvars.accessLevel < 3) then
+				players[ID].botQuestion = ""
+				players[ID].botQuestionID = nil
+				players[ID].botQuestionValue = nil
+
+				restartBot()
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if players[ID].botQuestion == "reset bot keep money" and chatvars.accessLevel == 0 then
+				ResetBot(true)
+
+				message("say [" .. server.chatColour .. "]The bot has been reset.  All bases, inventories etc are forgotten, but not the players or their money.[-]")
+
+				players[ID].botQuestion = ""
+				players[ID].botQuestionID = nil
+				players[ID].botQuestionValue = nil
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if players[ID].botQuestion == "reset bot" and chatvars.accessLevel == 0 then
+				ResetBot()
+
+				message("say [" .. server.chatColour .. "]The bot has been reset.  All bases, inventories etc are forgotten, but not the players.[-]")
+
+				players[ID].botQuestion = ""
+				players[ID].botQuestionID = nil
+				players[ID].botQuestionValue = nil
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if players[ID].botQuestion == "quick reset bot" and chatvars.accessLevel == 0 then
+				QuickBotReset()
+
+				message("say [" .. server.chatColour .. "]The bot has been reset except for players, locations and reset zones.[-]")
+
+				players[ID].botQuestion = ""
+				players[ID].botQuestionID = nil
+				players[ID].botQuestionValue = nil
+
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		players[ID].botQuestion = ""
+		players[ID].botQuestionID = nil
+		players[ID].botQuestionValue = nil
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "test") or string.find(chatvars.command, "admin") or string.find(chatvars.command, "remo"))) or chatvars.words[1] ~= "help" then
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "test as player")
 
@@ -654,7 +809,7 @@ if debug then dbug("debug admin") end
 		end
 
 		server.feralRebootDelay = math.abs(math.floor(chatvars.number))
-		if botman.dbConnected then conn:execute("UPDATE server SET feralRebootDelay = 0") end
+		if botman.dbConnected then conn:execute("UPDATE server SET feralRebootDelay = " .. server.feralRebootDelay) end
 
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reboots that fall on a feral day will happen " .. server.feralRebootDelay .. " minutes into the next day.[-]")
@@ -669,11 +824,41 @@ if debug then dbug("debug admin") end
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "restart") and (chatvars.words[2] == "bot") and (chatvars.accessLevel < 3) then
+		if not server.allowBotRestarts then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is disabled.  Enable it with /enable bot restart[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]If you do not have a script or other process monitoring the bot, it will not restart automatically.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Scripts can be downloaded at http://botman.nz/shellscripts.zip and may require some editing for paths.[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is disabled.  Enable it with /enable bot restart")
+				irc_chat(players[chatvars.ircid].ircAlias, "If you do not have a script or other process monitoring the bot, it will not restart automatically.")
+				irc_chat(players[chatvars.ircid].ircAlias, "Scripts can be downloaded at http://botman.nz/shellscripts.zip and may require some editing for paths.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
 		if botman.customMudlet then
-			savePlayers()
-			closeMudlet()
+			if server.masterPassword ~= "" then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]This command requires a password to complete. Don't use this command unless you know what it does and why you need to do it.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Type " .. server.commandPrefix .. "password <the password> (Do not type the <>).[-]")
+					players[chatvars.playerid].botQuestion = "restart bot"
+				else
+					irc_chat(players[chatvars.ircid].ircAlias, "This command requires a password to complete. Don't use this command unless you know what it does and why you need to do it.")
+					irc_chat(players[chatvars.ircid].ircAlias, "Type " .. server.commandPrefix .. "password <the password> (Do not type the <>).")
+					players[chatvars.ircid].botQuestion = "restart bot"
+				end
+			else
+				restartBot()
+			end
 		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is not supported in your Mudlet.  You need the latest custom Mudlet by TheFae.[-]")
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is not supported in your Mudlet.  You need the latest custom Mudlet by TheFae or Mudlet 3.4[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is not supported in your Mudlet.  You need the latest custom Mudlet by TheFae or Mudlet 3.4")
+			end
 		end
 
 		botman.faultyChat = false
@@ -1794,7 +1979,7 @@ if debug then dbug("debug admin") end
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "ignore player <player>")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Allowed the player to have uncraftable inventory and ignore hacker like activity such as teleporting and flying.")
+				irc_chat(players[chatvars.ircid].ircAlias, "Allow the player to have uncraftable inventory and ignore hacker like activity such as teleporting and flying.")
 				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
@@ -4162,6 +4347,62 @@ if debug then dbug("debug admin") end
 
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "hack") or string.find(chatvars.command, "tele") or string.find(chatvars.command, "able"))) or chatvars.words[1] ~= "help" then
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "disable hacker tp detection")
+			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "enable hacker tp detection")
+
+			if not shortHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Some mods or managers don't report legit teleports to telnet which breaks the bot's hacker teleport detection.")
+				irc_chat(players[chatvars.ircid].ircAlias, "If the bot doesn't automatically disable/enable hacker tp detection, you can manually change it.")
+				irc_chat(players[chatvars.ircid].ircAlias, " ")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "hacker" then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 0) then
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (accessLevel(chatvars.ircid) > 0) then
+				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		if chatvars.words[1] == "disable" then
+			server.hackerTPDetection = false
+			if botman.dbConnected then conn:execute("UPDATE server SET hackerTPDetection = 0") end
+
+			if (chatvars.playername ~= "Server") then
+				message(string.format("pm %s [%s]Hacker teleport detection is disabled.", chatvars.playerid, server.chatColour))
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "Hacker teleport detection is disabled.")
+			end
+		end
+
+		if chatvars.words[1] == "enable" then
+			server.hackerTPDetection = true
+			if botman.dbConnected then conn:execute("UPDATE server SET hackerTPDetection = 1") end
+
+			if (chatvars.playername ~= "Server") then
+				message(string.format("pm %s [%s]Hacker teleport detection is enabled.", chatvars.playerid, server.chatColour))
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "Hacker teleport detection is enabled.")
+			end
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
 -- ###################  do not allow remote commands beyond this point ################
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
@@ -4797,17 +5038,17 @@ if debug then dbug("debug admin") end
 		tmp.equipment = igplayers[chatvars.playerid].equipment
 
 
-		if not string.find(tmp.inventory .. tmp.equipment, "ironBoots") then
-			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironBoots 1 600', " .. chatvars.playerid .. ")") end
+		if not string.find(tmp.inventory .. tmp.equipment, "militaryBoots") then
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " militaryBoots 1 600', " .. chatvars.playerid .. ")") end
 		else
-			tmp.found, tmp.quality = getEquipment(tmp.equipment, "ironBoots")
+			tmp.found, tmp.quality = getEquipment(tmp.equipment, "militaryBoots")
 
 			if not tmp.found then
-				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "ironBoots")
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "militaryBoots")
 			end
 
 			if tmp.found and tonumber(tmp.quality) < 300 then
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironBoots 1 600', " .. chatvars.playerid .. ")") end
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " militaryBoots 1 600', " .. chatvars.playerid .. ")") end
 			end
 		end
 
@@ -4850,39 +5091,39 @@ if debug then dbug("debug admin") end
 		end
 
 
-		if not string.find(tmp.inventory .. tmp.equipment, "ironChestArmor") then
-			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironChestArmor 1 600', " .. chatvars.playerid .. ")") end
+		if not string.find(tmp.inventory .. tmp.equipment, "militaryVest") then
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " militaryVest 1 600', " .. chatvars.playerid .. ")") end
 		else
-			tmp.found, tmp.quality = getEquipment(tmp.equipment, "ironChestArmor")
+			tmp.found, tmp.quality = getEquipment(tmp.equipment, "militaryVest")
 
 			if not tmp.found then
-				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "ironChestArmor")
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "militaryVest")
 			end
 
 			if tmp.found and tmp.quality < 300 then
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironChestArmor 1 600', " .. chatvars.playerid .. ")") end
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " militaryVest 1 600', " .. chatvars.playerid .. ")") end
 			end
 		end
 
 
-		if not string.find(tmp.inventory .. tmp.equipment, "ironLegArmor") then
-			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironLegArmor 1 600', " .. chatvars.playerid .. ")") end
+		if not string.find(tmp.inventory .. tmp.equipment, "militaryLegArmor") then
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " militaryLegArmor 1 600', " .. chatvars.playerid .. ")") end
 		else
-			tmp.found, tmp.quality = getEquipment(tmp.equipment, "ironLegArmor")
+			tmp.found, tmp.quality = getEquipment(tmp.equipment, "militaryLegArmor")
 
 			if not tmp.found then
-				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "ironLegArmor")
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "militaryLegArmor")
 			end
 		end
 
 
-		if not string.find(tmp.inventory .. tmp.equipment, "ironGloves") then
-			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " ironGloves 1 600', " .. chatvars.playerid .. ")") end
+		if not string.find(tmp.inventory .. tmp.equipment, "militaryGloves") then
+			if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('give " .. chatvars.playerid .. " militaryGloves 1 600', " .. chatvars.playerid .. ")") end
 		else
-			tmp.found, tmp.quality = getEquipment(tmp.equipment, "ironGloves")
+			tmp.found, tmp.quality = getEquipment(tmp.equipment, "militaryGloves")
 
 			if not tmp.found then
-				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "ironGloves")
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "militaryGloves")
 			end
 		end
 

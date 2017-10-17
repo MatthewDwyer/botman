@@ -253,7 +253,7 @@ function pvpPolice(line)
 			players[killerID].prisonReason = "PVP against " .. players[victimID].name
 			players[killerID].prisonxPosOld = math.floor(igplayers[killerID].xPos)
 			players[killerID].prisonyPosOld = math.ceil(igplayers[killerID].yPos)
-			players[killerID].prisonzPosOld = math.floor(igplayers[killerID].zPos)			
+			players[killerID].prisonzPosOld = math.floor(igplayers[killerID].zPos)
 			players[killerID].prisonReleaseTime = os.time() + (server.maxPrisonTime * 60)
 			players[steam].bail = server.bailCost
 
@@ -267,6 +267,7 @@ function pvpPolice(line)
 				connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " sent to prison for killing " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")")
 			end
 
+			fixMissingPlayer(killerID)
 			updatePlayer(killerID)
 		else
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end

@@ -59,8 +59,6 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 		botman.serverHour = string.sub(line, 12, 13)
 		botman.serverMinute = string.sub(line, 15, 16)
 
-		newDay()
-
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
 
 		dbug("Saving disconnected player " .. igplayers[steam].name)

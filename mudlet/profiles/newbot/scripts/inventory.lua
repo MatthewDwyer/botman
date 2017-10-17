@@ -344,7 +344,7 @@ if debug then dbug("check inventory 6") end
 
 if debug then dbug("check inventory 7") end
 
-			if (players[k].watchPlayer == true) then
+			if (players[k].watchPlayer == true) and not server.disableWatchAlerts then
 				if newItems ~= "" then
 					alertAdmins("Watched player " .. players[k].id .. " " .. players[k].name .. " " .. newItems)
 				end
@@ -496,6 +496,9 @@ end
 function readInventorySlot()
 	local timestamp, slot, item, quantity, quality, pos, words, dupeTest
 
+	if not string.find(line, "Slot") then
+		return
+	end
 
 	timestamp = os.time()
 	item = ""

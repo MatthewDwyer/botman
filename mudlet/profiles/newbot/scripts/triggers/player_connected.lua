@@ -114,9 +114,12 @@ function updateReservedSlots()
 
 		if rows > 0 then
 			row = cursor:fetch({}, "a")
-			message("pm " .. row.steam .. " [" .. server.chatColour .. "]You are no longer using a reserved slot. :D[-]")
+			--message("pm " .. row.steam .. " [" .. server.chatColour .. "]You are no longer using a reserved slot. :D[-]")
 			conn:execute("delete * from reservedSlots where steam = " .. row.steam)
 			botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
+			conn:execute("delete from reservedSlots where deleteRow = 1")
+
+			return
 		end
 	end
 
@@ -127,7 +130,7 @@ function updateReservedSlots()
 
 		if rows > 0 then
 			row = cursor:fetch({}, "a")
-			message("pm " .. row.steam .. " [" .. server.chatColour .. "]You are no longer using a reserved slot. :D[-]")
+			--message("pm " .. row.steam .. " [" .. server.chatColour .. "]You are no longer using a reserved slot. :D[-]")
 			conn:execute("delete * from reservedSlots where steam = " .. row.steam)
 			botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
 		end
@@ -148,7 +151,7 @@ function freeReservedSlot()
 	cursor,errorString = conn:execute("select * from reservedSlots where staff = 0 and reserved = 0 order by timeAdded desc")
 	row = cursor:fetch({}, "a")
 
-	while row do
+	if row then
 		if igplayers[row.steam] then
 			kick(k, "Sorry, you have been kicked to make room for a reserved slot :(")
 			irc_chat(server.ircAlerts, "Player " .. v.name ..  " was kicked from a reserved slot.")
@@ -366,7 +369,7 @@ function playerConnected(line)
 
 		if players[steam].chatColour ~= "" then
 			if string.upper(players[steam].chatColour) ~= "FFFFFF" then
-				send("cpc " .. steam .. " " .. players[steam].chatColour)
+				send("cpc " .. steam .. " " .. stripAllQuotes(players[steam].chatColour) .. " 1")
 			else
 				setChatColour(steam)
 			end
@@ -440,6 +443,13 @@ function playerConnected(line)
 			if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. steam) end
 			message("pm " .. steam .. " [" .. server.alertColour .. "]ALERT! Your second base is no longer bot protected![-]")
 		end
+
+		-- remove the player's waypoints
+		conn:execute("delete from waypoints where steam = " .. steam)
+		message("pm " .. steam .. " [" .. server.chatColour .. "]Also your waypoints have been cleared.  You will need to create new ones. :([-]")
+
+		-- reload the player's waypoints
+		loadWaypoints(steam)
 	end
 
 	if players[steam].watchPlayer and tonumber(players[steam].watchPlayerTimer) < os.time() then

@@ -185,7 +185,7 @@ function help(command)
 
 	if (command == "gimme" or command == "gimmie") then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Gimme is a fun game where you can win prizes![-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]To play, place casino coins in the last slot of your belt. Gimmies are played automatically once per minute until you remove the coins or run out of gimmies to play.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]To play type " .. server.commandPrefix .. "gimme[-]")
 		if (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "gimme on - enables gimme[-]") end
 		if (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "gimme off - disables gimme[-]") end
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "gimme peace - gimme messages stay out of public chat[-]")
@@ -240,6 +240,7 @@ function help(command)
 
 	if 	(command == "manual") and (chatvars.accessLevel < 3) then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]More detailed help is available to admins on the IRC server.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is also botman.nz/docs/commands/all-bot-commands[-]")
 		return
 	end
 

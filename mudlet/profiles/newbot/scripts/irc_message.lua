@@ -101,7 +101,39 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "fix" and words[2] == "bot") and words[3] == nil then
-		fixBot()
+		if not botman.fixingBot then
+			botman.fixingBot = true
+			fixBot()
+		end
+
+		return
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if (words[1] == "load" or words[1] == "read" or words[1] == "reload") and words[2] == "ini" and words[3] ~= nil then
+		readINITable(wordsOld[3])
+		return
+	end
+
+-- if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	-- if words[1] == "save" and words[2] == "ini" and words[3] ~= nil then
+		-- writeINITable(wordsOld[3])
+		-- return
+	-- end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if (words[1] == "load" or words[1] == "read" or words[1] == "reload") and words[2] == "botman" and words[3] == "ini" then
+		readBotmanINI()
+		return
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if words[1] == "save" and words[2] == "botman" and words[3] == "ini" then
+		writeBotmanINI()
 		return
 	end
 
@@ -126,6 +158,21 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if words[2] == nil then
 			irc_chat(name, "Server name is " .. server.serverName)
 			irc_chat(name, "Address is " .. server.IP .. ":" .. server.ServerPort)
+
+			if server.updateBranch ~= '' then
+				irc_chat(name, "The bot is running code from the " .. server.updateBranch .. " branch")
+			end
+
+			if server.updateBot then
+				irc_chat(name, "The bot checks for new code daily")
+			else
+				irc_chat(name, "Bot updates are set to happen manually using the 'update code' command")
+			end
+
+			if server.botVersion ~= '' then
+				irc_chat(name, "The bot version is " .. server.botVersion)
+			end
+
 			irc_chat(name, "There are  " .. botman.playersOnline .. " players online.")
 			irc_chat(name, " ")
 			return
@@ -150,7 +197,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "shop" and shopCategories[words[2]] then
-		LookupShop(words[2], true)
+		LookupShop(words[2])
 
 		cursor,errorString = conn:execute("SELECT * FROM memShop ORDER BY idx")
 		row = cursor:fetch({}, "a")
@@ -186,7 +233,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
-		LookupShop(wordsOld[2], true)
+		LookupShop(wordsOld[2])
 
 		cursor,errorString = conn:execute("SELECT * FROM memShop ORDER BY category, idx")
 		row = cursor:fetch({}, "a")
@@ -213,12 +260,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, "List of villages on the server:")
 		for k, v in pairs(locations) do
 			if v.village == true then
-				pid = LookupOfflinePlayer(v.mayor)
+				if v.mayor ~= 0 then
+					pid = LookupOfflinePlayer(v.mayor)
+				end
 
 				if pid ~= nil then
-					irc_chat(name, v.name .. " the Mayor is " .. players[pid].name)
+					irc_chat(name, v.name .. " the mayor is " .. players[pid].name)
 				else
-					irc_chat(name, v.name)
+					irc_chat(name, v.name .. " has no mayor")
 				end
 			end
 		end
@@ -293,10 +342,18 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			temp = ""
 			if tonumber(row.mayor) > 0 then
 				temp = LookupPlayer(row.mayor)
-				temp = players[temp].name
+
+				if temp ~= nil then
+					temp = players[temp].name
+				end
 			end
 
-			irc_chat(name, "Mayor: " .. temp)
+			if temp ~= nil then
+				irc_chat(name, "Mayor: " .. temp)
+			else
+				irc_chat(name, "Mayor: Nobody is the mayor")
+			end
+
 			irc_chat(name, "Protected: " .. dbYN(row.protected))
 			irc_chat(name, "PVP: " .. dbYN(row.pvp))
 			irc_chat(name, "Access Level: " .. row.accessLevel)
@@ -347,7 +404,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if words[1] == "who" and (words[2] == "today" or words[2] == "last") then
+	if words[1] == "who" and words[2] == "played" and words[3] == "today" then
 		irc_who_played(name)
 		return
 	end
@@ -868,7 +925,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if ircListItems == ircid then ircListItems = nil end
 
 		if echoConsoleTo == name then
-			echoConsole = nil
+			echoConsole = false
 			echoConsoleTo = nil
 		end
 	end
@@ -880,7 +937,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(channel, "IRC spam nuked for everyone")
 
 		ircListItems = nil
-		echoConsole = nil
+		echoConsole = false
 		echoConsoleTo = nil
 	end
 
@@ -1075,15 +1132,27 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "restart" and words[2] == "bot") then
-		if botman.customMudlet then
-			-- Mudlet will only automatically restart if you compiled TheFae's latest Mudlet and launched it from run-mudlet.sh with -r
-			savePlayers()
-			closeMudlet()
-			return
-		else
-			irc_chat(name, "This command is not supported without the custom Mudlet which you can get here https://github.com/itsTheFae/FaesMudlet2")
+		if not server.allowBotRestarts then
+			irc_chat(name, "This command is disabled.  Enable it with /enable bot restart")
+			irc_chat(name, "If you do not have a script or other process monitoring the bot, it will not restart automatically.")
+			irc_chat(name, "Scripts can be downloaded at http://botman.nz/shellscripts.zip and may require some editing for paths.")
+
 			return
 		end
+
+		if botman.customMudlet then
+			if server.masterPassword ~= "" then
+				irc_chat(name, "This command requires a password to complete.")
+				irc_chat(name, "Type " .. server.commandPrefix .. "password <the password> (Do not type the <>).")
+				players[ircid].botQuestion = "restart bot"
+			else
+				restartBot()
+			end
+		else
+			irc_chat(name, "This command is not supported in your Mudlet.  You need the latest custom Mudlet by TheFae or Mudlet 3.4")
+		end
+
+		return
 	end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
@@ -1136,11 +1205,24 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if words[1] == "server" and words[2] == "settings" and words[3] == nil then
 		irc_chat(name, "The bot's server settings are:")
 		irc_chat(name, "Access level override: " .. server.accessLevelOverride)
+		irc_chat(name, "Server alert chat colour is " .. server.alertColour)
+
+		if server.alertSpending then
+			irc_chat(name, "Players will be notified when a command costs them " .. server.moneyPlural)
+		else
+			irc_chat(name, "Players will be silently charged when a command costs them " .. server.moneyPlural)
+		end
 
 		if server.allowBank then
 			irc_chat(name, "Players can earn " .. server.moneyPlural)
 		else
 			irc_chat(name, "In-game money is disabled")
+		end
+
+		if server.allowBotRestarts then
+			irc_chat(name, "The bot can be commanded to restart itself with " .. server.commandPrefix .. "restart bot")
+		else
+			irc_chat(name, "The bot can only be restarted manually and will not automatically restart if something causes it to quit.")
 		end
 
 		if server.allowGarbageNames then
@@ -1153,6 +1235,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "Gimme can be played")
 		else
 			irc_chat(name, "Gimme is disabled")
+		end
+
+		if server.allowHomeTeleport then
+			irc_chat(name, "Players can teleport home.")
+		else
+			irc_chat(name, "Players are not able to teleport home.")
 		end
 
 		if server.allowLottery then
@@ -1173,10 +1261,34 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "Punish inventory overstacking")
 		end
 
+		if server.allowPackTeleport then
+			irc_chat(name, "Players can teleport to their pack after dying.")
+		else
+			irc_chat(name, "Players cannot teleport to their pack after dying.")
+		end
+
 		if server.allowPhysics then
 			irc_chat(name, "Physics is on")
 		else
 			irc_chat(name, "Physics is off")
+		end
+
+		if server.allowPlayerToPlayerTeleporting then
+			irc_chat(name, "Players can teleport to friends.")
+		else
+			irc_chat(name, "Players cannot teleport to other players.")
+		end
+
+		if server.allowPlayerVoteTopics then
+			irc_chat(name, "Players can create a voting topic.")
+		else
+			irc_chat(name, "Only admins can create voting topics.")
+		end
+
+		if server.allowProxies then
+			irc_chat(name, "Players can connect using proxy servers.")
+		else
+			irc_chat(name, "Using a proxy will get a player banned.")
 		end
 
 		if server.allowRapidRelogging then
@@ -1191,16 +1303,34 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "Bot never reboots the server")
 		end
 
+		if server.allowReturns then
+			irc_chat(name, "Players can use the " .. server.commandPrefix .. "return command.")
+		else
+			irc_chat(name, "Players cannot use the " .. server.commandPrefix .. "return command.")
+		end
+
 		if server.allowShop then
 			irc_chat(name, "Shop is open")
 		else
 			irc_chat(name, "Shop is closed")
 		end
 
+		if server.allowStuckTeleport then
+			irc_chat(name, "Players can use the " .. server.commandPrefix .. "stuck command.")
+		else
+			irc_chat(name, "Players cannot use the " .. server.commandPrefix .. "stuck command.")
+		end
+
 		if server.allowTeleporting then
 			irc_chat(name, "Players can teleport")
 		else
 			irc_chat(name, "Player teleports are disabled")
+		end
+
+		if server.allowVoting then
+			irc_chat(name, "Players can vote.")
+		else
+			irc_chat(name, "Voting is disabled.")
 		end
 
 		if server.allowWaypoints then
@@ -1215,23 +1345,62 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "Player teleports are silent")
 		end
 
+		if server.bailCost > 0 then
+			irc_chat(name, "Players can be bailed out of prison.")
+		else
+			irc_chat(name, "Players cannot be bailed from prison")
+		end
+
 		irc_chat(name, "Base cooldown timer is " .. server.baseCooldown .. " seconds")
+
+		if server.baseCost > 0 then
+			irc_chat(name, "The base command costs " .. server.baseCost)
+		else
+			irc_chat(name, "Players can use the base command free of cost.")
+		end
+
 		irc_chat(name, "Default base protection size is " .. server.baseSize)
 		irc_chat(name, "Blacklist response is " .. server.blacklistResponse)
 		irc_chat(name, "Blocked countries: " .. server.blockCountries)
 		irc_chat(name, "Bot is called " .. server.botName)
-		irc_chat(name, "Server chat colour is " .. server.chatColour)
 
-		if server.coppi then
-			irc_chat(name, "Using Coppi's additions")
-		else
-			irc_chat(name, "Not using Coppi's additions")
+		if server.botRestartHour ~= 25 then
+			irc_chat(name, "The bot will automatically restart itself daily when the server hour is " .. server.botRestartHour .. " and bot restarts are enabled and the bot has been up more than 1 hour.")
 		end
+
+		if server.CBSMFriendly then
+			irc_chat(name, "If the bot detects CBSM, it will automatically switch bot commands from using /  to using !")
+		else
+			irc_chat(name, "The bot will not change the bot command prefix to let CBSM use / commands.")
+		end
+
+		irc_chat(name, "Server chat colour is " .. server.chatColour)
+		irc_chat(name, "Admin chat colour is " .. server.chatColourAdmin)
+		irc_chat(name, "Donor chat colour is " .. server.chatColourDonor)
+		irc_chat(name, "Moderator chat colour is " .. server.chatColourMod)
+		irc_chat(name, "New player chat colour is " .. server.chatColourNewPlayer)
+		irc_chat(name, "Server owner chat colour is " .. server.chatColourOwner)
+		irc_chat(name, "Regular player chat colour is " .. server.chatColourPlayer)
+		irc_chat(name, "Prisoner chat colour is " .. server.chatColourPrisoner)
+		irc_chat(name, "Daily chat and command logs are stored at " .. server.chatlogPath .. " on the bot's host")
+		irc_chat(name, "Bot commands ingame use the " .. server.commandPrefix .. " prefix")
 
 		if server.disableBaseProtection then
 			irc_chat(name, "Base protection is disabled")
 		else
 			irc_chat(name, "Players can set base protection")
+		end
+
+		if server.disableTPinPVP then
+			irc_chat(name, "Players are not able to teleport when in areas governed by PVP rules.")
+		else
+			irc_chat(name, "Unless otherwise disabled, players can teleport in PVP areas.")
+		end
+
+		if server.disableWatchAlerts then
+			irc_chat(name, "The bot will not PM ingame alerts about watched players.")
+		else
+			irc_chat(name, "The bot PM's ingame alerts about watched players.")
 		end
 
 		if server.enableRegionPM then
@@ -1240,14 +1409,30 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "Region names are not shown")
 		end
 
+		irc_chat(name, "Scheduled server reboots that fall on horde days will be delayed by " .. server.feralRebootDelay .. " minutes.")
+		irc_chat(name, "This is a " .. server.gameType .. " server")
+		irc_chat(name, "Players with more than " .. server.GBLBanThreshold .. " global bans are automatically banned.")
+
 		if server.gimmePeace then
 			irc_chat(name, "Gimme messages are PM's")
 		else
 			irc_chat(name, "Gimme messages are public")
 		end
 
+		if server.gimmeZombies then
+			irc_chat(name, "The gimme game includes zombie prizes.")
+		else
+			irc_chat(name, "The gimme game will not award zombies as prizes.")
+		end
+
+		if server.hackerTPDetection then
+			irc_chat(name, "Players detected teleporting long distances with no detectable command may be temp banned.")
+		else
+			irc_chat(name, "Teleporting players will not be temp banned. The presence of Server Tools and some other mods make detecting hacker teleporting impossible.")
+		end
+
 		if server.hardcore then
-			irc_chat(name, "Players cannot use bot commands except for info commands and bot chats.")
+			irc_chat(name, "Players cannot use bot commands with some exceptions.")
 		else
 			irc_chat(name, "Players can command the bot, limited only by access level.")
 		end
@@ -1264,26 +1449,43 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "Idle players are never kicked")
 		end
 
-		if botman.ignoreAdmins then
-			irc_chat(name, "Admins are exempt from normal restrictions on players")
+		irc_chat(name, "The IP of the server is " .. server.IP)
+		irc_chat(name, "The IRC alerts channel is " .. server.ircAlerts)
+		irc_chat(name, "The bot's name on IRC is " .. server.ircBotName)
+		irc_chat(name, "The IRC main channel is " .. server.ircMain)
+		irc_chat(name, "The IRC port is " .. server.ircPort)
+
+		if server.ircPrivate then
+			irc_chat(name, "The IRC IP is not shared ingame with players.")
 		else
-			irc_chat(name, "Admins are treated like normal players for testing purposes")
+			irc_chat(name, "Players can discover the IRC IP.")
 		end
 
-		irc_chat(name, "The bot's name on IRC is " .. server.ircBotName)
 		irc_chat(name, "The IRC server's address is " .. server.ircServer)
+		irc_chat(name, "The IRC watch channel is " .. server.ircWatch)
+		irc_chat(name, "The daily lottery is at " .. server.lottery .. " " .. server.moneyPlural)
 		irc_chat(name, "Zombie kills are multiplied by " .. server.lotteryMultiplier .. " and added to the daily lottery")
 		irc_chat(name, "The bot restricts player movement to " .. server.mapSize .. " from 0,0")
+
+		if server.maxPrisonTime > 0 then
+			irc_chat(name, "Prisoners are automatically released from prison after " .. server.maxPrisonTime .. " minutes")
+		else
+			irc_chat(name, "Prisoners are kept in prison forever or until released.")
+		end
+
 		irc_chat(name, "Max players is " .. server.maxPlayers)
 		irc_chat(name, "Max server uptime before a reboot is " .. server.maxServerUptime .. " hours")
+		irc_chat(name, "If waypoints are enabled, players can have " .. server.maxWaypoints .. " waypoints")
 		irc_chat(name, "Max spawned zombies is " .. server.MaxSpawnedZombies)
-		irc_chat(name, "The in-game money is called the " .. server.moneyName)
+		irc_chat(name, "The in-game money is called the " .. server.moneyName .. " or " .. server.moneyPlural)
 		irc_chat(name, "The message of the day is " .. server.MOTD)
 		irc_chat(name, "New players are upgraded to regular players after " .. server.newPlayerTimer .. " minutes total playtime")
 		irc_chat(name, "Northeast of 0,0 is " .. server.northeastZone)
 		irc_chat(name, "Northwest of 0,0 is " .. server.northwestZone)
 		irc_chat(name, "Minimum stack size to be considered overstacking is " .. server.overstackThreshold)
 		irc_chat(name, "Players must wait " .. server.packCooldown .. " seconds after death before " .. server.commandPrefix .. "pack is available")
+		irc_chat(name, "The pack command costs players  " .. server.packCost .. " " .. server.moneyPlural)
+		irc_chat(name, "Players are awarded " .. server.perMinutePayRate .. " " .. server.moneyPlural .. " per minute (except for new players)")
 
 		if tonumber(server.pingKick) > 0 then
 			irc_chat(name, "New players with a ping over " .. server.pingKick .. " are kicked from the server")
@@ -1297,10 +1499,79 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "Players detected flying will be reported and may be temp banned")
 		end
 
+		if server.playerTeleportDelay > 0 then
+			irc_chat(name, "Player teleports are delayed by " .. server.playerTeleportDelay .. " seconds.")
+		else
+			irc_chat(name, "Player teleports are not delayed.")
+		end
+
 		irc_chat(name, "Base protection auto-expires " .. server.protectionMaxDays .. " real days after a players last play")
+
+		if server.pvpAllowProtect then
+			irc_chat(name, "Players are allowed to set base protection in PVP areas.")
+		else
+			irc_chat(name, "Base protection is disabled in PVP areas.")
+		end
+
+		if server.pvpIgnoreFriendlyKills then
+			irc_chat(name, "Players are never arrested for killing friends.")
+		else
+			irc_chat(name, "Players killing their friends can be arrested.")
+		end
+
+		if server.pvpTeleportCooldown > 0 then
+			irc_chat(name, "Player teleport commands in PVP areas are delayed " .. server.pvpTeleportCooldown .. " after they PVP someone.")
+		else
+			irc_chat(name, "Player teleport commands are not delayed in PVP areas.")
+		end
+
+		if server.rebootHour > 0 then
+			irc_chat(name, "The bot will reboot the server daily when the server time is " .. server.rebootHour .. ":" .. server.rebootMinute)
+		else
+			irc_chat(name, "The bot does not reboot the server daily at a set time.")
+		end
+
+		irc_chat(name, "The bot reserves " .. server.reservedSlots .. " slots for staff, donors and other players selected by admins.")
+
+
+	-- if server.restrictIRC ~= nil then file:write("restrictIRC=" .. trueFalse(server.restrictIRC) .. "\n") end
+
+
 		irc_chat(name, "The server rules are " .. server.rules)
+
+		if server.scanEntities then
+			irc_chat(name, "The bot will read all the active entities every 15-30 seconds.")
+		else
+			irc_chat(name, "The bot will not do timed entity scans.")
+		end
+
+		if server.scanErrors then
+			irc_chat(name, "The bot will scan for and fix map errors.")
+		else
+			irc_chat(name, "The bot will not fix map errors.")
+		end
+
+		if server.scanNoclip then
+			irc_chat(name, "The bot will scan for noclipped players")
+		else
+			irc_chat(name, "The bot will not scan for noclipped players")
+		end
+
+		if server.scanZombies then
+			irc_chat(name, "The bot will read all the active zombies every 15-30 seconds for features such as safe zones.")
+		else
+			irc_chat(name, "The bot will not scan for zombies.")
+		end
+
 		irc_chat(name, "The server group is " .. server.serverGroup)
 		irc_chat(name, "The shop will reset in " .. server.shopCountdown .. " real days")
+
+		if server.shopCloseHour ~= server.shopOpenHour then
+			irc_chat(name, "The shop closes at " .. shopCloseHour .. " and opens at " .. shopOpenHour)
+		else
+			irc_chat(name, "The shop does not close at certain times of the day.")
+		end
+
 		irc_chat(name, "Southeast of 0,0 is " .. server.southeastZone)
 		irc_chat(name, "Southwest of 0,0 is " .. server.southwestZone)
 		irc_chat(name, "The swear jar has " .. server.swearCash .. " " .. server.moneyPlural .. " in it")
@@ -1312,14 +1583,52 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "Players can swear without penalty")
 		end
 
-		if server.coppi then
-			irc_chat(name, "Using Coppi's Additions")
+		irc_chat(name, "Private teleporting costs " .. server.teleportCost .. " " .. server.moneyPlural)
+		irc_chat(name, "Players must wait " .. server.teleportPublicCooldown .. " seconds between teleport commands.")
+		irc_chat(name, "Public teleports cost " .. server.teleportPublicCost .. " " .. server.moneyPlural)
+		irc_chat(name, "Tracking data is kept for " .. server.trackingKeepDays .. " days.")
+
+		if server.updateBot then
+			irc_chat(name, "The bot will check daily for updates from the " .. updateBranch .. " branch.")
+		else
+			irc_chat(name, "The bot will not automatically update itself.")
+		end
+
+		irc_chat(name, "Warning messages in chat are coloured " .. server.warnColour)
+		irc_chat(name, "Players must wait " .. server.waypointCooldown .. " seconds between waypoint teleports.")
+		irc_chat(name, "Waypoints cost " .. server.waypointCost .. " " .. server.moneyPlural .. " to use.")
+		irc_chat(name, "Waypoints cost " .. server.waypointCreateCost .. " " .. server.moneyPlural .. " to make.")
+
+		if server.waypointsPublic then
+			irc_chat(name, "Everyone can use waypoints.")
+		else
+			irc_chat(name, "Only donors and staff can use waypoints.")
+		end
+
+		if server.whitelistCountries ~= '' then
+			irc_chat(name, "The server is restricted to players from " .. server.whitelistCountries .. " except for staff.")
+		else
+			irc_chat(name, "There are no whitelisted countries set.")
 		end
 
 		irc_chat(name, "Killing a zombie earns a player " .. server.zombieKillReward .. " " .. server.moneyPlural)
+
+		if botman.ignoreAdmins then
+			irc_chat(name, "Admins are exempt from normal restrictions on players")
+		else
+			irc_chat(name, "Admins are treated like normal players for testing purposes")
+		end
+
+		if server.coppi then
+			irc_chat(name, "Using Coppi's additions")
+		else
+			irc_chat(name, "Not using Coppi's additions")
+		end
+
 		irc_chat(name, " ")
 		return
 	end
+
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
@@ -1736,11 +2045,36 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			name1 = string.trim(name1)
 			pid = LookupPlayer(name1)
 
-			players[pid].cash = players[pid].cash + number
-			message("pm " .. pid .. " " .. players[ircid].name .. " just paid you " .. number .. " " .. server.moneyPlural .. "!  You now have " .. players[pid].cash .. " " .. server.moneyPlural .. "!  KA-CHING!!")
+			if pid ~= nil then
+				players[pid].cash = players[pid].cash + number
+				conn:execute("UPDATE players set cash = " .. players[pid].cash .. " WHERE steam = " .. pid)
+				message("pm " .. pid .. " " .. players[ircid].name .. " just paid you " .. number .. " " .. server.moneyPlural .. "!  You now have " .. players[pid].cash .. " " .. server.moneyPlural .. "!  KA-CHING!!")
 
-			msg = "You just paid " .. number .. " " .. server.moneyPlural .. " to " .. players[pid].name .. " giving them a total of " .. players[pid].cash .. " " .. server.moneyPlural .. "."
-			irc_chat(name, msg)
+				msg = "You just paid " .. number .. " " .. server.moneyPlural .. " to " .. players[pid].name .. " giving them a total of " .. players[pid].cash .. " " .. server.moneyPlural .. "."
+				irc_chat(name, msg)
+			else
+				irc_chat(name, "No player found called " .. name1)
+			end
+
+			return
+		end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+		if words[1] == "set" and words[2] == "player" and (string.find(msg, "cash") or string.find(msg, "money") or string.find(msg, server.moneyPlural)) then
+			name1 = words[3]
+			name1 = string.trim(name1)
+			pid = LookupPlayer(name1)
+
+			if pid ~= nil then
+				players[pid].cash = number
+				conn:execute("UPDATE players set cash = " .. players[pid].cash .. " WHERE steam = " .. pid)
+				msg = "You altered " .. players[pid].name .. "'s " .. server.moneyPlural .. " to " .. number
+				irc_chat(name, msg)
+			else
+				irc_chat(name, "No player found called " .. name1)
+			end
+
 			return
 		end
 
@@ -1835,8 +2169,6 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			if string.sub(msg, 1, 4) == "help" then
 				echoConsoleTo = name
-				tempTimer( 2, [[ echoConsoleTo = nil ]] )
-				tempTimer( 2, [[ echoConsole = nil ]] )
 			end
 
 			if msg == "se" or msg == "le" or msg == "ban list" or msg == "gg" or msg == "version" or string.sub(msg, 1, 3) == "li " or string.sub(msg, 1, 3) == "si " or string.sub(msg, 1, 3) == "llp" then
@@ -1846,9 +2178,6 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				if string.sub(msg, 1, 3) == "si " then
 					echoConsoleTrigger = string.sub(msg, 4)
 				end
-
-				tempTimer( 2, [[ echoConsoleTo = nil ]] )
-				tempTimer( 2, [[ echoConsole = nil ]] )
 			end
 
 			return
@@ -1953,26 +2282,6 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if (words[1] == "show") and (words[2] == "table") and (words[3] ~= nil) and (accessLevel(ircid) == 0) then
 			irc_chat(name, "The " .. words[3] .." table: ")
 
-			if string.lower(words[3]) == "server" then
-				for k, v in pairs(server) do
-					if not string.find(string.lower(k),"pass") then
-						irc_chat(name, k .. "," .. tostring(v))
-					end
-				end
-
-				irc_chat(name, " ")
-				return
-			end
-
-			if string.lower(words[3]) == "botman" then
-				for k, v in pairs(botman) do
-					irc_chat(name, k .. "," .. tostring(v))
-				end
-
-				irc_chat(name, " ")
-				return
-			end
-
 			if string.lower(words[3]) == "locations" then
 				for k, v in pairs(locations) do
 					irc_chat(name, "Location " .. k)
@@ -1984,6 +2293,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 					irc_chat(name, " ")
 				end
+
+				irc_chat(name, " ")
+				return
 			end
 
 			if string.lower(words[3]) == "hotspots" then
@@ -1997,6 +2309,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 					irc_chat(name, " ")
 				end
+
+				irc_chat(name, " ")
+				return
 			end
 
 			if string.lower(words[3]) == "teleports" then
@@ -2010,9 +2325,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 					irc_chat(name, " ")
 				end
+
+				irc_chat(name, " ")
+				return
 			end
 
-			if string.lower(words[3]) == "gimmeZombies" then
+			if string.lower(words[3]) == "gimmezombies" then
 				for k, v in pairs(gimmeZombies) do
 					irc_chat(name, "Zombie " .. k)
 					irc_chat(name, " ")
@@ -2023,12 +2341,42 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 					irc_chat(name, " ")
 				end
+
+				irc_chat(name, " ")
+				return
 			end
 
+			-- other tables
+			for k, v in pairs(_G[words[3]]) do
+				if not string.find(string.lower(k),"pass") then
+					irc_chat(name, k .. "," .. tostring(v))
+				end
+			end
+
+			irc_chat(name, " ")
 			return
 		end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+		if words[1] == "reset" and words[2] == "bot" and words[3] == "keep" and words[4] == "money" and (accessLevel(ircid) == 0) then
+			if resetbotCount == nil then resetbotCount = 0 end
+
+			if tonumber(resetbotCount) < 1 then
+				resetbotCount = tonumber(resetbotCount) + 1
+				irc_chat(name, "ALERT! Only do this after a server wipe!  To reset me repeat the reset bot command again.")
+				irc_chat(name, " ")
+			end
+
+			ResetBot(true)
+			resetbotCount = 0
+
+			irc_chat(name, "I have been reset.  All bases, inventories etc are forgotten, but not the players.")
+			irc_chat(name, " ")
+			return
+		else
+			resetbotCount = 0
+		end
 
 		if (words[1] == "reset") and (words[2] == "bot") and (accessLevel(ircid) == 0) then
 			if resetbotCount == nil then resetbotCount = 0 end
@@ -2973,6 +3321,18 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 				reindexShop(class)
 			end
+
+			return
+		end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+		if (words[1] == "empty" and words[2] == "shop") then
+			conn:execute("DELETE FROM shop")
+			conn:execute("DELETE FROM shopCategories WHERE category <> 'misc'")
+			loadShopCategories()
+
+			irc_chat(name, "You emptied the shop.  Only the misc category remains.")
 
 			return
 		end

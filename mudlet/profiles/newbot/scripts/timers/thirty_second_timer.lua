@@ -54,6 +54,34 @@ function thirtySecondTimer()
 
 		cmd = "DoneInventory"
 		if botman.dbConnected then conn:execute("INSERT into commandQueue (command) VALUES ('" .. cmd .. "')") end
+
+		if tonumber(botman.playersOnline) > 15 then
+			if server.scanZombies or server.scanEntities then
+				send("le")
+			end
+
+			if server.coppi then
+				if server.scanNoclip then
+					if not string.find(server.gameVersion, "Alpha 16 (b105)") then
+						-- check for noclipped players
+						for k,v in pairs(igplayers) do
+							if tonumber(players[k].accessLevel) > 2 then
+								send("pug " .. k)
+							end
+						end
+					end
+				end
+
+				if not server.playersCanFly then
+					-- check for flying players
+					for k,v in pairs(igplayers) do
+						if tonumber(players[k].accessLevel) > 2 then
+							send("pgd " .. k)
+						end
+					end
+				end
+			end
+		end
 	end
 
 	-- update the shared database (bots) server table (mainly for players online and a timestamp so others can see we're still online

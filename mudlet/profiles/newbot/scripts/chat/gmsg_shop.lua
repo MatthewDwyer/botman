@@ -51,9 +51,9 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 	if (chatvars.words[1] == "pay" and chatvars.words[2] ~= nil) then
 		id = LookupPlayer(chatvars.words[2])
 		if (id ~= nil) then
-			igplayers[chatvars.playerid].botQuestion = "pay player"
-			igplayers[chatvars.playerid].botQuestionID = id
-			igplayers[chatvars.playerid].botQuestionValue = math.abs(chatvars.words[3])
+			players[chatvars.playerid].botQuestion = "pay player"
+			players[chatvars.playerid].botQuestionID = id
+			players[chatvars.playerid].botQuestionValue = math.abs(chatvars.words[3])
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You want to pay " .. math.abs(chatvars.words[3]) .. " " .. server.moneyPlural .. " to " .. players[id].name .. "? Type " .. server.commandPrefix .. "yes to complete the transaction or start over.[-]")
 		end
 
@@ -156,7 +156,7 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "yes" and chatvars.words[2] == nil) then
-		if igplayers[chatvars.playerid].botQuestion == "pay player" then
+		if players[chatvars.playerid].botQuestion == "pay player" then
 			payPlayer()
 
 			botman.faultyChat = false

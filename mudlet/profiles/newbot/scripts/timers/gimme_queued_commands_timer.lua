@@ -27,6 +27,7 @@ function miscCommandsTimer()
 
 			if string.find(row.command, "admin add") then
 				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been given admin.")
+				setChatColour(row.steam)
 			end
 
 			if string.find(row.command, "ban remove") then

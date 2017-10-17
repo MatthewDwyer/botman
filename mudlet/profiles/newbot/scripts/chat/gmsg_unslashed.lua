@@ -97,11 +97,25 @@ function gmsg_unslashed()
 	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.command == "restart bot") and (chatvars.accessLevel < 3) then
+		if not server.allowBotRestarts then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is disabled.  Enable it with /enable bot restart[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]If you do not have a script or other process monitoring the bot, it will not restart automatically.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Scripts can be downloaded at http://botman.nz/shellscripts.zip and may require some editing for paths.[-]")
+
+			botman.faultyChat = false
+			return true
+		end
+
 		if botman.customMudlet then
-			savePlayers()
-			closeMudlet()
+			if server.masterPassword ~= "" then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]This command requires a password to complete. Don't use this command unless you know what it does and why you need to do it.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Type " .. server.commandPrefix .. "password <the password> (Do not type the <>).[-]")
+				players[chatvars.playerid].botQuestion = "restart bot"
+			else
+				restartBot()
+			end
 		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is not supported in your Mudlet.  You need the latest custom Mudlet by TheFae.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is not supported in your Mudlet.  You need the latest custom Mudlet by TheFae or Mudlet 3.4[-]")
 		end
 
 		botman.faultyChat = false
@@ -110,7 +124,7 @@ function gmsg_unslashed()
 
 	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
-	if igplayers[chatvars.playerid].botQuestion == "pay player" then
+	if players[chatvars.playerid].botQuestion == "pay player" then
 		payPlayer()
 
 		botman.faultyChat = false
@@ -120,13 +134,13 @@ function gmsg_unslashed()
 	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.playername ~= "Server") then
-		if igplayers[chatvars.playerid].botQuestion == "reset server" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
+		if players[chatvars.playerid].botQuestion == "reset server" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Deleting all bot data and restarting it..[-]")
 			ResetServer()
 
-			igplayers[chatvars.playerid].botQuestion = ""
-			igplayers[chatvars.playerid].botQuestionID = nil
-			igplayers[chatvars.playerid].botQuestionValue = nil
+			players[chatvars.playerid].botQuestion = ""
+			players[chatvars.playerid].botQuestionID = nil
+			players[chatvars.playerid].botQuestionValue = nil
 			botman.faultyChat = false
 			return true
 		end
@@ -134,13 +148,24 @@ function gmsg_unslashed()
 
 
 	if (chatvars.playername ~= "Server") then
-		if igplayers[chatvars.playerid].botQuestion == "reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
+		if players[chatvars.playerid].botQuestion == "reset bot keep money" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
+			ResetBot(true)
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I have been reset.  All bases, inventories etc are forgotten, but not the players or their money.[-]")
+
+			players[chatvars.playerid].botQuestion = ""
+			players[chatvars.playerid].botQuestionID = nil
+			players[chatvars.playerid].botQuestionValue = nil
+			botman.faultyChat = false
+			return true
+		end
+
+		if players[chatvars.playerid].botQuestion == "reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 			ResetBot()
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I have been reset.  All bases, inventories etc are forgotten, but not the players.[-]")
 
-			igplayers[chatvars.playerid].botQuestion = ""
-			igplayers[chatvars.playerid].botQuestionID = nil
-			igplayers[chatvars.playerid].botQuestionValue = nil
+			players[chatvars.playerid].botQuestion = ""
+			players[chatvars.playerid].botQuestionID = nil
+			players[chatvars.playerid].botQuestionValue = nil
 			botman.faultyChat = false
 			return true
 		end
@@ -148,13 +173,13 @@ function gmsg_unslashed()
 
 
 	if (chatvars.playername ~= "Server") then
-		if igplayers[chatvars.playerid].botQuestion == "quick reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
+		if players[chatvars.playerid].botQuestion == "quick reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 			QuickBotReset()
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I have been reset except for players, locations and reset zones.[-]")
 
-			igplayers[chatvars.playerid].botQuestion = ""
-			igplayers[chatvars.playerid].botQuestionID = nil
-			igplayers[chatvars.playerid].botQuestionValue = nil
+			players[chatvars.playerid].botQuestion = ""
+			players[chatvars.playerid].botQuestionID = nil
+			players[chatvars.playerid].botQuestionValue = nil
 			botman.faultyChat = false
 			return true
 		end

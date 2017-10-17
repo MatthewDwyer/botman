@@ -7,6 +7,153 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+-- function readINIFile(tbl)
+-- -- TODO: finish this (or not)
+-- end
+
+
+-- function writeINITable(tbl)
+	-- local file
+
+	-- if tbl == "server" then
+		-- return false
+	-- end
+
+	-- -- first delete the file
+	-- os.remove(homedir .. "/" .. tbl .. ".ini")
+
+	-- -- now build a new one
+	-- file = io.open(homedir .. "/" .. tbl .. ".ini", "a")
+
+	-- file:write("table=\"" .. tbl .. "\"\n")
+
+	-- for k, v in pairs(_G[tbl]) do
+		-- if type(_G[tbl][k]) ~= "table" then
+			-- if type(v) == "number" then
+				-- file:write(k .. "=" .. v .. "\n")
+			-- elseif type(v) == "boolean" then
+				-- file:write(k .. "=\"" .. trueFalse(v) .. "\"\n")
+			-- else
+				-- file:write(k .. "=\"" .. v .. "\"\n")
+			-- end
+		-- else
+			-- if tbl=="locations" then
+				-- file:write("record=\"" .. _G[tbl][k].name .. "\"\n")
+			-- end
+
+			-- if tbl=="waypoints" then
+				-- file:write("record=\"" .. _G[tbl][k].name .. "\"\n")
+			-- end
+
+			-- if tbl=="teleports" then
+				-- file:write("record=\"" .. _G[tbl][k].name .. "\"\n")
+			-- end
+
+			-- if tbl=="shop" then
+				-- file:write("record=\"" .. _G[tbl][k].item .. "\"\n")
+			-- end
+
+			-- if tbl=="restrictedItems" then
+				-- file:write("record=\"" .. _G[tbl][k].item .. "\"\n")
+			-- end
+
+			-- if tbl=="badItems" then
+				-- file:write("record=\"" .. _G[tbl][k].item .. "\"\n")
+			-- end
+
+			-- if tbl=="gimmeZombies" then
+				-- file:write("record=\"" .. _G[tbl][k].zombie .. "\"\n")
+			-- end
+
+			-- if tbl=="otherEntities" then
+				-- file:write("record=\"" .. _G[tbl][k].entity .. "\"\n")
+			-- end
+
+			-- if tbl=="hotspots" then
+				-- file:write("record=\"" .. _G[tbl][k].hotspot .. "\"\n")
+			-- end
+
+			-- if tbl=="alerts" then
+				-- file:write("record=\"" .. _G[tbl][k].alertID .. "\"\n")
+			-- end
+
+			-- if tbl=="customMessages" then
+				-- file:write("record=\"" .. _G[tbl][k].command .. "\"\n")
+			-- end
+
+			-- if tbl=="proxies" then
+				-- file:write("record=\"" .. _G[tbl][k].scanString .. "\"\n")
+			-- end
+
+			-- for n,m in pairs(_G[tbl][k]) do
+				-- if type(m) == "number" then
+					-- file:write(n .. "=" .. m .. "\n")
+				-- elseif type(m) == "boolean" then
+					-- file:write(n .. "=\"" .. trueFalse(m) .. "\"\n")
+				-- else
+					-- file:write(n .. "=\"" .. m .. "\"\n")
+				-- end
+			-- end
+		-- end
+	-- end
+
+	-- file:close()
+-- end
+
+
+function readAPI()
+	if isFile(homedir .. "/api.ini") then
+		dofile(homedir .. "/api.ini")
+	end
+end
+
+
+function writeAPI()
+	local file
+
+	-- first delete the file
+	os.remove(homedir .. "/api.ini")
+
+	-- now build a new one
+	file = io.open(homedir .. "/api.ini", "a")
+
+	if serverAPI ~= nil then
+		file:write("serverAPI=\"" .. serverAPI .. "\"\n")
+	end
+
+	if botmanAPI ~= nil then
+		file:write("botmanAPI=\"" .. botmanAPI .. "\"\n")
+	end
+
+	file:close()
+end
+
+
+function checkServerVote(steam)
+	local url
+
+	if serverAPI ~= nil then
+		url = "https://7daystodie-servers.com/api/?object=votes&element=claim&key=" .. serverAPI .. "&steamid=" .. steam
+
+		os.remove(homedir .. "/temp/voteCheck.txt")
+		downloadFile(homedir .. "/temp/voteCheck.txt", url)
+
+		tempTimer( 5, [[ readServerVote("]] .. steam .. [[") ]] )
+	end
+end
+
+
+function firstToUpper(str)
+    return (str:gsub("^%l", string.upper))
+end
+
+
+function restartBot()
+	savePlayers()
+	closeMudlet()
+end
+
+
 function isServerHardcore(playerid)
 	if server.hardcore and players[playerid] > 2  then
 		return true
@@ -16,47 +163,149 @@ function isServerHardcore(playerid)
 end
 
 
-function makeINI()
+function readBotmanINI()
+	if isFile(homedir .. "/botman.ini") then
+		dofile(homedir .. "/botman.ini")
+	end
+end
+
+
+function writeBotmanINI()
 	local file
 
 	-- first delete the file
 	os.remove(homedir .. "/botman.ini")
 
-	-- now build a new one
+	-- then build it
 	file = io.open(homedir .. "/botman.ini", "a")
-	file:write("iniReadOnly=false\n")
-	file:write("botOwner=\"0\"\n")
-	if telnetPassword then file:write("telnetPassword=\"" .. telnetPassword .. "\"\n") end
-	if botman.chatlogPath then file:write("webdavFolder=\"" .. botman.chatlogPath .. "\"\n") end
-	file:write("ircPrivate=false\n")
-	file:write("ircRestricted=false\n")
-	if server.ircServer then file:write("ircServer=\"" .. server.ircServer .. "\"\n") end
-	if server.ircPort then file:write("ircPort=" .. server.ircPort .. "\n") end
-	if server.ircMain then file:write("ircChannel=\"" .. server.ircMain .. "\"\n") end
-	if botDB then file:write("botDB=\"" .. botDB .. "\"\n") end
-	if botDBUser then file:write("botDBUser=\"" .. botDBUser .. "\"\n") end
-	if botDBPass then file:write("botDBPass=\"" .. botDBPass .. "\"\n") end
-	if botsDB then file:write("botsDB=\"" .. botsDB .. "\"\n") end
-	if botsDBUser then file:write("botsDBUser=\"" .. botsDBUser .. "\"\n") end
-	if botsDBPass then file:write("botsDBPass=\"" .. botsDBPass .. "\"\n") end
+
+	-- server data
+	if server.botOwner then file:write("botOwner=\"" .. server.botOwner .. "\"\n") end
+	if server.serverName then file:write("botOwner=\"" .. server.serverName .. "\"\n") end
+	if server.accessLevelOverride then file:write("server.accessLevelOverride=" .. server.accessLevelOverride .. "\n") end
+	if server.alertColour then file:write("server.alertColour=\"" .. server.alertColour .. "\"\n") end
+	if server.alertSpending ~= nil then file:write("server.alertSpending=\"" .. trueFalse(server.alertSpending) .. "\"\n") end
+	if server.allowBank ~= nil then file:write("server.allowBank=\"" .. trueFalse(server.allowBank) .. "\"\n") end
+	if server.allowBotRestarts ~= nil then file:write("server.allowBotRestarts=\"" .. trueFalse(server.allowBotRestarts) .. "\"\n") end
+	if server.allowGarbageNames ~= nil then file:write("server.allowGarbageNames=\"" .. trueFalse(server.allowGarbageNames) .. "\"\n") end
+	if server.allowGimme ~= nil then file:write("server.allowGimme=\"" .. trueFalse(server.allowGimme) .. "\"\n") end
+	if server.allowHomeTeleport ~= nil then file:write("server.allowHomeTeleport=\"" .. trueFalse(server.allowHomeTeleport) .. "\"\n") end
+	if server.allowLottery ~= nil then file:write("server.allowLottery=\"" .. trueFalse(server.allowLottery) .. "\"\n") end
+	if server.allowNumericNames ~= nil then file:write("server.allowNumericNames=\"" .. trueFalse(server.allowNumericNames) .. "\"\n") end
+	if server.allowOverstacking ~= nil then file:write("server.allowOverstacking=\"" .. trueFalse(server.allowOverstacking) .. "\"\n") end
+	if server.allowPackTeleport ~= nil then file:write("server.allowPackTeleport=\"" .. trueFalse(server.allowPackTeleport) .. "\"\n") end
+	if server.allowPhysics ~= nil then file:write("server.allowPhysics=\"" .. trueFalse(server.allowPhysics) .. "\"\n") end
+	if server.allowPlayerToPlayerTeleporting ~= nil then file:write("server.allowPlayerToPlayerTeleporting=\"" .. trueFalse(server.allowPlayerToPlayerTeleporting) .. "\"\n") end
+	if server.allowPlayerVoteTopics ~= nil then file:write("server.allowPlayerVoteTopics=\"" .. trueFalse(server.allowPlayerVoteTopics) .. "\"\n") end
+	if server.allowProxies ~= nil then file:write("server.allowProxies=\"" .. trueFalse(server.allowProxies) .. "\"\n") end
+	if server.allowRapidRelogging ~= nil then file:write("server.allowRapidRelogging=\"" .. trueFalse(server.allowRapidRelogging) .. "\"\n") end
+	if server.allowReboot ~= nil then file:write("server.allowReboot=\"" .. trueFalse(server.allowReboot) .. "\"\n") end
+	if server.allowReturns ~= nil then file:write("server.allowReturns=\"" .. trueFalse(server.allowReturns) .. "\"\n") end
+	if server.allowShop ~= nil then file:write("server.allowShop=\"" .. trueFalse(server.allowShop) .. "\"\n") end
+	if server.allowStuckTeleport ~= nil then file:write("server.allowStuckTeleport=\"" .. trueFalse(server.allowStuckTeleport) .. "\"\n") end
+	if server.allowTeleporting ~= nil then file:write("server.allowTeleporting=\"" .. trueFalse(server.allowTeleporting) .. "\"\n") end
+	if server.allowVoting ~= nil then file:write("server.allowVoting=\"" .. trueFalse(server.allowVoting) .. "\"\n") end
+	if server.allowWaypoints ~= nil then file:write("server.allowWaypoints=\"" .. trueFalse(server.allowWaypoints) .. "\"\n") end
+	if server.announceTeleports ~= nil then file:write("server.announceTeleports=\"" .. trueFalse(server.announceTeleports) .. "\"\n") end
+	if server.bailCost then file:write("server.bailCost=" .. server.bailCost .. "\n") end
+	if server.baseCooldown then file:write("server.baseCooldown=" .. server.baseCooldown .. "\n") end
+	if server.baseCost then file:write("server.baseCost=" .. server.baseCost .. "\n") end
+	if server.baseSize then file:write("server.baseSize=" .. server.baseSize .. "\n") end
+	if server.blacklistResponse then file:write("server.blacklistResponse=\"" .. server.blacklistResponse .. "\"\n") end
+	if server.blockCountries then file:write("server.blockCountries=\"" .. server.blockCountries .. "\"\n") end
+	if server.botName then file:write("server.botName=\"" .. server.botName .. "\"\n") end
+	if server.botRestartHour then file:write("server.botRestartHour=" .. server.botRestartHour .. "\n") end
+	if server.botsIP then file:write("server.botsIP=\"" .. server.botsIP .. "\"\n") end
+	if server.CBSMFriendly ~= nil then file:write("server.CBSMFriendly=\"" .. trueFalse(server.CBSMFriendly) .. "\"\n") end
+	if server.chatColour then file:write("server.chatColour=\"" .. server.chatColour .. "\"\n") end
+	if server.chatColourAdmin then file:write("server.chatColourAdmin=\"" .. server.chatColourAdmin .. "\"\n") end
+	if server.chatColourDonor then file:write("server.chatColourDonor=\"" .. server.chatColourDonor .. "\"\n") end
+	if server.chatColourMod then file:write("server.chatColourMod=\"" .. server.chatColourMod .. "\"\n") end
+	if server.chatColourNewPlayer then file:write("server.chatColourNewPlayer=\"" .. server.chatColourNewPlayer .. "\"\n") end
+	if server.chatColourOwner then file:write("server.chatColourOwner=\"" .. server.chatColourOwner .. "\"\n") end
+	if server.chatColourPlayer then file:write("server.chatColourPlayer=\"" .. server.chatColourPlayer .. "\"\n") end
+	if server.chatColourPrisoner then file:write("server.chatColourPrisoner=\"" .. server.chatColourPrisoner .. "\"\n") end
+	if server.chatlogPath then file:write("server.chatlogPath=\"" .. server.chatlogPath .. "\"\n") end
+	if server.commandPrefix then file:write("server.commandPrefix=\"" .. server.commandPrefix .. "\"\n") end
+	if server.disableBaseProtection ~= nil then file:write("server.disableBaseProtection=\"" .. trueFalse(server.disableBaseProtection) .. "\"\n") end
+	if server.disableTPinPVP ~= nil then file:write("server.disableTPinPVP=\"" .. trueFalse(server.disableTPinPVP) .. "\"\n") end
+	if server.disableWatchAlerts ~= nil then file:write("server.disableWatchAlerts=\"" .. trueFalse(server.disableWatchAlerts) .. "\"\n") end
+	if server.enableRegionPM then file:write("server.enableRegionPM=\"" .. trueFalse(server.enableRegionPM) .. "\"\n") end
+	if server.feralRebootDelay then file:write("server.feralRebootDelay=" .. server.feralRebootDelay .. "\n") end
+	if server.gameType then file:write("server.gameType=\"" .. server.gameType .. "\"\n") end
+	if server.GBLBanThreshold then file:write("server.GBLBanThreshold=" .. server.GBLBanThreshold .. "\n") end
+	if server.gimmePeace ~= nil then file:write("server.gimmePeace=\"" .. trueFalse(server.gimmePeace) .. "\"\n") end
+	if server.gimmeZombies ~= nil then file:write("server.gimmeZombies=\"" .. trueFalse(server.gimmeZombies) .. "\"\n") end
+	if server.hackerTPDetection ~= nil then file:write("server.hackerTPDetection=\"" .. trueFalse(server.hackerTPDetection) .. "\"\n") end
+	if server.hardcore ~= nil then file:write("server.hardcore=\"" .. trueFalse(server.hardcore) .. "\"\n") end
+	if server.hideCommands ~= nil then file:write("server.hideCommands=\"" .. trueFalse(server.hideCommands) .. "\"\n") end
+	if server.idleKick ~= nil then file:write("server.idleKick=\"" .. trueFalse(server.idleKick) .. "\"\n") end
+	if server.IP then file:write("server.IP=\"" .. server.IP .. "\"\n") end
+	if server.ircAlerts then file:write("server.ircAlerts=\"" .. server.ircAlerts .. "\"\n") end
+	if server.ircBotName then file:write("server.ircBotName=\"" .. server.ircBotName .. "\"\n") end
+	if server.ircMain then file:write("server.ircChannel=\"" .. server.ircMain .. "\"\n") end
+	if server.ircPort then file:write("server.ircPort=" .. server.ircPort .. "\n") end
+	if server.ircPrivate ~= nil then file:write("server.ircPrivate=\"" .. trueFalse(server.ircPrivate) .. "\"\n") end
+	if server.ircServer then file:write("server.ircServer=\"" .. server.ircServer .. "\"\n") end
+	if server.ircTracker then file:write("server.ircTracker=\"" .. server.ircTracker .. "\"\n") end
+	if server.ircWatch then file:write("server.ircWatch=\"" .. server.ircWatch .. "\"\n") end
+	if server.lottery then file:write("server.lottery=" .. server.lottery .. "\n") end
+	if server.lotteryMultiplier then file:write("server.lotteryMultiplier=" .. server.lotteryMultiplier .. "\n") end
+	if server.mapSize then file:write("server.mapSize=" .. server.mapSize .. "\n") end
+	if server.maxPrisonTime then file:write("server.maxPrisonTime=" .. server.maxPrisonTime .. "\n") end
+	if server.maxServerUptime then file:write("server.maxServerUptime=" .. server.maxServerUptime .. "\n") end
+	if server.maxWaypoints then file:write("server.maxWaypoints=" .. server.maxWaypoints .. "\n") end
+	if server.moneyName then file:write("server.moneyName=\"" .. server.moneyName .. "\"\n") end
+	if server.moneyPlural then file:write("server.moneyPlural=\"" .. server.moneyPlural .. "\"\n") end
+	if server.MOTD then file:write("server.MOTD=\"" .. server.MOTD .. "\"\n") end
+	if server.newPlayerTimer then file:write("server.newPlayerTimer=" .. server.newPlayerTimer .. "\n") end
+	if server.northeastZone then file:write("server.northeastZone=\"" .. server.northeastZone .. "\"\n") end
+	if server.northwestZone then file:write("server.northwestZone=\"" .. server.northwestZone .. "\"\n") end
+	if server.overstackThreshold then file:write("server.overstackThreshold=" .. server.overstackThreshold .. "\n") end
+	if server.packCooldown then file:write("server.packCooldown=" .. server.packCooldown .. "\n") end
+	if server.packCost then file:write("server.packCost=" .. server.packCost .. "\n") end
+	if server.perMinutePayRate then file:write("server.perMinutePayRate=" .. server.perMinutePayRate .. "\n") end
+	if server.pingKick then file:write("server.pingKick=" .. server.pingKick .. "\n") end
+	if server.playersCanFly ~= nil then file:write("server.playersCanFly=\"" .. trueFalse(server.playersCanFly) .. "\"\n") end
+	if server.playerTeleportDelay then file:write("server.playerTeleportDelay=" .. server.playerTeleportDelay .. "\n") end
+	if server.protectionMaxDays then file:write("server.protectionMaxDays=" .. server.protectionMaxDays .. "\n") end
+	if server.pvpAllowProtect ~= nil then file:write("server.pvpAllowProtect=\"" .. trueFalse(server.pvpAllowProtect) .. "\"\n") end
+	if server.pvpIgnoreFriendlyKills ~= nil then file:write("server.pvpIgnoreFriendlyKills=\"" .. trueFalse(server.pvpIgnoreFriendlyKills) .. "\"\n") end
+	if server.pvpTeleportCooldown then file:write("server.pvpTeleportCooldown=" .. server.pvpTeleportCooldown .. "\n") end
+	if server.rebootHour then file:write("server.rebootHour=" .. server.rebootHour .. "\n") end
+	if server.rebootMinute then file:write("server.rebootMinute=" .. server.rebootMinute .. "\n") end
+	if server.reservedSlots then file:write("server.reservedSlots=" .. server.reservedSlots .. "\n") end
+	if server.restrictIRC ~= nil then file:write("server.restrictIRC=\"" .. trueFalse(server.restrictIRC) .. "\"\n") end
+	if server.rules then file:write("server.rules=\"" .. server.rules .. "\"\n") end
+	if server.scanEntities ~= nil then file:write("server.scanEntities=\"" .. trueFalse(server.scanEntities) .. "\"\n") end
+	if server.scanErrors ~= nil then file:write("server.scanErrors=\"" .. trueFalse(server.scanErrors) .. "\"\n") end
+	if server.scanNoclip ~= nil then file:write("server.scanNoclip=\"" .. trueFalse(server.scanNoclip) .. "\"\n") end
+	if server.scanZombies ~= nil then file:write("server.scanZombies=\"" .. trueFalse(server.scanZombies) .. "\"\n") end
+	if server.serverGroup then file:write("server.serverGroup=\"" .. server.serverGroup .. "\"\n") end
+	if server.shopCloseHour then file:write("server.shopCloseHour=" .. server.shopCloseHour .. "\n") end
+	if server.shopCountdown then file:write("server.shopCountdown=" .. server.shopCountdown .. "\n") end
+	if server.shopOpenHour then file:write("server.shopOpenHour=" .. server.shopOpenHour .. "\n") end
+	if server.southeastZone then file:write("server.southeastZone=\"" .. server.southeastZone .. "\"\n") end
+	if server.southwestZone then file:write("server.southwestZone=\"" .. server.southwestZone .. "\"\n") end
+	if server.swearCash then file:write("server.swearCash=" .. server.swearCash .. "\n") end
+	if server.swearFine then file:write("server.swearFine=" .. server.swearFine .. "\n") end
+	if server.swearJar ~= nil then file:write("server.swearJar=\"" .. trueFalse(server.swearJar) .. "\"\n") end
+	if server.teleportCost then file:write("server.teleportCost=" .. server.teleportCost .. "\n") end
+	if server.teleportPublicCooldown then file:write("server.teleportPublicCooldown=" .. server.teleportPublicCooldown .. "\n") end
+	if server.teleportPublicCost then file:write("server.teleportPublicCost=" .. server.teleportPublicCost .. "\n") end
+	if server.telnetPort then file:write("server.telnetPort=" .. server.telnetPort .. "\n") end
+	if server.trackingKeepDays then file:write("server.trackingKeepDays=" .. server.trackingKeepDays .. "\n") end
+	if server.updateBot ~= nil then file:write("server.updateBot=\"" .. trueFalse(server.updateBot) .. "\"\n") end
+	if server.updateBranch then file:write("server.updateBranch=\"" .. server.updateBranch .. "\"\n") end
+	if server.warnColour then file:write("server.warnColour=\"" .. server.warnColour .. "\"\n") end
+	if server.waypointCooldown then file:write("server.waypointCooldown=" .. server.waypointCooldown .. "\n") end
+	if server.waypointCost then file:write("server.waypointCost=" .. server.waypointCost .. "\n") end
+	if server.waypointCreateCost then file:write("server.waypointCreateCost=" .. server.waypointCreateCost .. "\n") end
+	if server.waypointsPublic ~= nil then file:write("server.waypointsPublic=\"" .. trueFalse(server.waypointsPublic) .. "\"\n") end
+	if server.whitelistCountries then file:write("server.whitelistCountries=\"" .. server.whitelistCountries .. "\"\n") end
+	if server.zombieKillReward then file:write("server.zombieKillReward=" .. server.zombieKillReward .. "\n") end
+
 	file:close()
-end
-
-
-function readItemsXML(xmlFile)
-	local file, ln
-
-	file = io.open(xmlFile, "rb")
-
-	for ln in io.lines(file) do
-		lines[#lines + 1] = line
-	end
-
-	-- if isFile(homedir .. "/temp/version.txt") then
-		-- file = io.open(homedir .. "/temp/version.txt", "r")
-		-- codeVersion = file:read "*a"
-		-- codeBranch = file:read "*a"
-		-- file:close()
 end
 
 
@@ -69,7 +318,7 @@ function runTimedEvents()
 		row = cursor:fetch({}, "a")
 		while row do
 			if row.timer == "announcements" then
-				conn:execute("UPDATE timedEvents SET nextTime = NOW() + " .. row.delayMinutes * 60 .. " WHERE timer = 'announcements'")
+				conn:execute("UPDATE timedEvents SET nextTime = NOW() + INTERVAL " .. row.delayMinutes .. " MINUTE WHERE timer = 'announcements'")
 				sendNextAnnouncement()
 			end
 
@@ -442,12 +691,14 @@ function fixBot()
 	fixMissingStuff()
 	fixShop()
 	enableTimer("ReloadScripts")
-	getServerData()
+	getServerData(true)
 
 	-- join the irc server
 	if botman.customMudlet then
 		joinIRCServer()
 	end
+
+	botman.fixingBot = false
 end
 
 
@@ -703,7 +954,7 @@ function restrictedCommandMessage()
 		if r == 4 then return("You again?") end
 		if r == 5 then return("We've been over this. N. O.") end
 		if r == 6 then return("no No NO!") end
-		if r == 7 then return("Have this command you shall not.") end
+		if r == 7 then return("Have this command, you shall not.") end
 		if r == 8 then return("Seriously?") end
 		if r == 9 then return("This command is not for you.") end
 		if r == 10 then return("Denied!") end
@@ -1527,10 +1778,10 @@ end
 
 function startReboot()
 	-- add a random delay to mess with dupers
-	local rnd = rand(10)
+	local rnd = rand(5)
 
 	send("sa")
-	botman.rebootTimerID = tempTimer( 5 + rnd, [[finishReboot()]] )
+	botman.rebootTimerID = tempTimer( 10 + rnd, [[finishReboot()]] )
 end
 
 
@@ -1892,6 +2143,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].bedY = 0
 	players[steam].bedZ = 0
 	players[steam].botTimeout = false
+	players[steam].botQuestion = "" -- used for storing the last question the bot asked the player.
 	players[steam].cash = 0
 	players[steam].chatColour = "FFFFFF 1"
 	players[steam].commandCooldown = 0
@@ -1993,7 +2245,7 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].afk = os.time() + 900
 	igplayers[steam].alertRemovedClaims = false
 	igplayers[steam].belt = ""
-	igplayers[steam].botQuestion = "" -- used for storing the last question the bot asked the player.
+	--igplayers[steam].botQuestion = "" -- used for storing the last question the bot asked the player.
 	igplayers[steam].checkNewPlayer = true
 	igplayers[steam].connected = true
 	igplayers[steam].equipment = ""
@@ -2147,6 +2399,8 @@ function saveDisconnectedPlayer(steam)
 		-- insert or update player in bots db
 		connBots:execute("INSERT INTO players (server, steam, ip, name, online, botid) VALUES ('" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].IP .. "','" .. escape(players[steam].name) .. "',0," .. server.botID .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].IP .. "', name = '" .. escape(players[steam].name) .. "', online = 0")
 	end
+
+	initReservedSlots()
 end
 
 

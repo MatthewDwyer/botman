@@ -98,7 +98,7 @@ if debug then dbug("debug base") end
 
 		if (pname == "") then
 			botman.faultyChat = false
-			return
+			return true
 		end
 
 		if (chatvars.words[2] == "base") then
@@ -341,7 +341,7 @@ if debug then dbug("debug base") end
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
 		if players[chatvars.playerid].inLocation ~= "" then
-			if locations[players[chatvars.playerid].inLocation].pvp then
+			if locations[players[chatvars.playerid].inLocation].pvp and not server.pvpAllowProtect then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base protection is not allowed where PVP rules are in effect.[-]")
 				botman.faultyChat = false
 				return true
@@ -350,7 +350,7 @@ if debug then dbug("debug base") end
 
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
-		if igplayers[chatvars.playerid].currentLocationPVP then
+		if igplayers[chatvars.playerid].currentLocationPVP and not server.pvpAllowProtect then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base protection is not allowed where PVP rules are in effect.[-]")
 			botman.faultyChat = false
 			return true
@@ -551,7 +551,7 @@ if debug then dbug("debug base") end
 			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delbase <player>")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot to forget about a tbase.  Players can only remove their own bases.")
+				irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot to forget about a base.  Players can only remove their own bases.")
 				irc_chat(players[chatvars.ircid].ircAlias, " ")
 			end
 		end
@@ -916,8 +916,7 @@ if debug then dbug("debug base") end
 			if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
 				message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
 				botman.faultyChat = false
-				result = true
-				return
+				return true
 			end
 		end
 
@@ -1169,7 +1168,7 @@ if debug then dbug("debug base") end
 		end
 	end
 
-	if chatvars.words[1] == "resume" or chatvars.words[1] == "unpaws" or chatvars.words[1] == "unpause" and chatvars.words[2] == nil and (chatvars.playerid ~= 0) then
+	if (chatvars.words[1] == "resume" or chatvars.words[1] == "unpaws" or chatvars.words[1] == "unpause") and chatvars.words[2] == nil and (chatvars.playerid ~= 0) then
 		pname = igplayers[chatvars.playerid].name
 		players[chatvars.playerid].protectPaused = nil
 		players[chatvars.playerid].protect2Paused = nil

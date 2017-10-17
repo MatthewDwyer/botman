@@ -17,10 +17,10 @@ function loadServer()
 	calledFunction = "loadServer"
 
 	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
 	-- load server
-	if serverFields == nil then
-		getServerFields()
-	end
+	getServerFields()
+
 	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	if type(server) ~= "table" then
@@ -45,6 +45,10 @@ function loadServer()
 
 			if v.type == "int" then
 				server[k] = tonumber(row[k])
+			end
+
+			if v.type == "flo" then
+				server[row.name][n] = tonumber(row[k])
 			end
 
 			if v.type == "tin" then
@@ -93,9 +97,7 @@ function loadPlayers(steam)
 	local word, words, rdate, ryear, rmonth, rday, rhour, rmin, rsec, k, v
 
 	-- load players table)
-	if playerFields == nil then
-		getPlayerFields()
-	end
+	getPlayerFields()
 
 	if steam == nil then
 		players = {}
@@ -115,6 +117,10 @@ function loadPlayers(steam)
 
 			if v.type == "int" then
 				players[row.steam][k] = tonumber(row[k])
+			end
+
+			if v.type == "flo" then
+				players[row.name][n] = tonumber(row[k])
 			end
 
 			if v.type == "tin" then
@@ -219,31 +225,27 @@ function loadTeleports(tp)
 	cursor,errorString = conn:execute("select * from teleports")
 	row = cursor:fetch({}, "a")
 
-	if row then
-		cols = cursor:getcolnames()
-	end
-
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	while row do
 		if tp == row.name or tp == nil then
 			teleports[row.name] = {}
 
-			for k,v in pairs(cols) do
-				for n,m in pairs(row) do
-					if n == _G["teleportsFields"][v].field then
-						if _G["teleportsFields"][v].type == "var" or _G["teleportsFields"][v].type == "big" then
-							teleports[row.name][n] = m
-						end
+			for k,v in pairs(teleportsFields) do
+				if v.type == "var" or v.type == "big" then
+					teleports[row.name][k] = row[k]
+				end
 
-						if _G["teleportsFields"][v].type == "int" then
-							teleports[row.name][n] = tonumber(m)
-						end
+				if v.type == "int" then
+					teleports[row.name][k] = tonumber(row[k])
+				end
 
-						if _G["teleportsFields"][v].type == "tin" then
-							teleports[row.name][n] = dbTrue(m)
-						end
-					end
+				if v.type == "flo" then
+					teleports[row.name][k] = tonumber(row[k])
+				end
+
+				if v.type == "tin" then
+					teleports[row.name][k] = dbTrue(row[k])
 				end
 			end
 		end
@@ -273,30 +275,27 @@ function loadLocations(loc)
 	cursor,errorString = conn:execute("select * from locations")
 	row = cursor:fetch({}, "a")
 
-	if row then
-		cols = cursor:getcolnames()
-	end
-
 	while row do
 		if (debug) then dbug("debug loadLocation " .. row.name) end
+
 		if loc == row.name or loc == nil then
 			locations[row.name] = {}
 
-			for k,v in pairs(cols) do
-				for n,m in pairs(row) do
-					if n == _G["locationsFields"][v].field then
-						if _G["locationsFields"][v].type == "var" or _G["locationsFields"][v].type == "big" then
-							locations[row.name][n] = m
-						end
+			for k,v in pairs(locationsFields) do
+				if v.type == "var" or v.type == "big" then
+					locations[row.name][k] = row[k]
+				end
 
-						if _G["locationsFields"][v].type == "int" then
-							locations[row.name][n] = tonumber(m)
-						end
+				if v.type == "int" then
+					locations[row.name][k] = tonumber(row[k])
+				end
 
-						if _G["locationsFields"][v].type == "tin" then
-							locations[row.name][n] = dbTrue(m)
-						end
-					end
+				if v.type == "flo" then
+					locations[row.name][k] = tonumber(row[k])
+				end
+
+				if v.type == "tin" then
+					locations[row.name][k] = dbTrue(row[k])
 				end
 			end
 		end
@@ -326,28 +325,26 @@ function loadBadItems()
 	cursor,errorString = conn:execute("select * from badItems")
 	row = cursor:fetch({}, "a")
 
-	if row then
-		cols = cursor:getcolnames()
-	end
-
 	while row do
+		if (debug) then dbug("debug loadBadItem " .. row.item) end
+
 		badItems[row.item] = {}
 
-		for k,v in pairs(cols) do
-			for n,m in pairs(row) do
-				if n == _G["badItemsFields"][v].field then
-					if _G["badItemsFields"][v].type == "var" or _G["badItemsFields"][v].type == "big" then
-						badItems[row.item][n] = m
-					end
+		for k,v in pairs(badItemsFields) do
+			if v.type == "var" or v.type == "big" then
+				badItems[row.item][k] = row[k]
+			end
 
-					if _G["badItemsFields"][v].type == "int" then
-						badItems[row.item][n] = tonumber(m)
-					end
+			if v.type == "int" then
+				badItems[row.item][k] = tonumber(row[k])
+			end
 
-					if _G["badItemsFields"][v].type == "tin" then
-						badItems[row.item][n] = dbTrue(m)
-					end
-				end
+			if v.type == "flo" then
+				badItems[row.item][k] = tonumber(row[k])
+			end
+
+			if v.type == "tin" then
+				badItems[row.item][k] = dbTrue(row[k])
 			end
 		end
 
@@ -375,28 +372,26 @@ function loadRestrictedItems()
 	cursor,errorString = conn:execute("select * from restrictedItems")
 	row = cursor:fetch({}, "a")
 
-	if row then
-		cols = cursor:getcolnames()
-	end
-
 	while row do
+		if (debug) then dbug("debug loadBadItem " .. row.item) end
+
 		restrictedItems[row.item] = {}
 
-		for k,v in pairs(cols) do
-			for n,m in pairs(row) do
-				if n == _G["restrictedItemsFields"][v].field then
-					if _G["restrictedItemsFields"][v].type == "var" or _G["restrictedItemsFields"][v].type == "big" then
-						restrictedItems[row.item][n] = m
-					end
+		for k,v in pairs(restrictedItemsFields) do
+			if v.type == "var" or v.type == "big" then
+				restrictedItems[row.item][k] = row[k]
+			end
 
-					if _G["restrictedItemsFields"][v].type == "int" then
-						restrictedItems[row.item][n] = tonumber(m)
-					end
+			if v.type == "int" then
+				restrictedItems[row.item][k] = tonumber(row[k])
+			end
 
-					if _G["restrictedItemsFields"][v].type == "tin" then
-						restrictedItems[row.item][n] = dbTrue(m)
-					end
-				end
+			if v.type == "flo" then
+				restrictedItems[row.item][k] = tonumber(row[k])
+			end
+
+			if v.type == "tin" then
+				restrictedItems[row.item][k] = dbTrue(row[k])
 			end
 		end
 

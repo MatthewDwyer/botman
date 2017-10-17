@@ -34,7 +34,7 @@ function FifteenSecondTimer()
 
 	send("gt")
 
-	if tonumber(botman.playersOnline) > 0 then
+	if tonumber(botman.playersOnline) < 16 then
 		if server.scanZombies or server.scanEntities then
 			send("le")
 		end

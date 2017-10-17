@@ -217,16 +217,16 @@ function gmsg_misc()
 	-- ####################################################################################
 
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
-	
+
 	if (chatvars.words[1] == "fetch" and chatvars.words[2] == "claims") then
 		send("llp " .. chatvars.playerid .. " parseable")
-		
+
 
 		botman.faultyChat = false
 		return true
 	end
 
-	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end	
+	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "bookmark" and chatvars.words[2] ~= nil) then
 
@@ -276,13 +276,13 @@ function gmsg_misc()
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.playername ~= "Server") then
-		if igplayers[chatvars.playerid].botQuestion == "reset server" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
+		if players[chatvars.playerid].botQuestion == "reset server" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 			message("say [" .. server.chatColour .. "]Deleting all bot data and starting fresh..[-]")
 			ResetServer()
 
-			igplayers[chatvars.playerid].botQuestion = ""
-			igplayers[chatvars.playerid].botQuestionID = nil
-			igplayers[chatvars.playerid].botQuestionValue = nil
+			players[chatvars.playerid].botQuestion = ""
+			players[chatvars.playerid].botQuestionID = nil
+			players[chatvars.playerid].botQuestionValue = nil
 			botman.faultyChat = false
 			return true
 		end
@@ -291,13 +291,24 @@ function gmsg_misc()
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.playername ~= "Server") then
-		if igplayers[chatvars.playerid].botQuestion == "reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
+		if players[chatvars.playerid].botQuestion == "reset bot keep money" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
+			ResetBot(true)
+			message("say [" .. server.chatColour .. "]I have been reset.  All bases, inventories etc are forgotten, but not the players or their money.[-]")
+
+			players[chatvars.playerid].botQuestion = ""
+			players[chatvars.playerid].botQuestionID = nil
+			players[chatvars.playerid].botQuestionValue = nil
+			botman.faultyChat = false
+			return true
+		end
+
+		if players[chatvars.playerid].botQuestion == "reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 			ResetBot()
 			message("say [" .. server.chatColour .. "]I have been reset.  All bases, inventories etc are forgotten, but not the players.[-]")
 
-			igplayers[chatvars.playerid].botQuestion = ""
-			igplayers[chatvars.playerid].botQuestionID = nil
-			igplayers[chatvars.playerid].botQuestionValue = nil
+			players[chatvars.playerid].botQuestion = ""
+			players[chatvars.playerid].botQuestionID = nil
+			players[chatvars.playerid].botQuestionValue = nil
 			botman.faultyChat = false
 			return true
 		end
@@ -306,13 +317,13 @@ function gmsg_misc()
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.playername ~= "Server") then
-		if igplayers[chatvars.playerid].botQuestion == "quick reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
+		if players[chatvars.playerid].botQuestion == "quick reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 			QuickBotReset()
 			message("say [" .. server.chatColour .. "]I have been reset except for players, locations and reset zones.[-]")
 
-			igplayers[chatvars.playerid].botQuestion = ""
-			igplayers[chatvars.playerid].botQuestionID = nil
-			igplayers[chatvars.playerid].botQuestionValue = nil
+			players[chatvars.playerid].botQuestion = ""
+			players[chatvars.playerid].botQuestionID = nil
+			players[chatvars.playerid].botQuestionValue = nil
 			botman.faultyChat = false
 			return true
 		end

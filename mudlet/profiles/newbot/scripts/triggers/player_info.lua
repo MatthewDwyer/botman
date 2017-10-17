@@ -335,8 +335,8 @@ function playerInfo(faultyInfo)
 
 	if tonumber(players[steam].hackerScore) >= 10000 then
 		players[steam].hackerScore = 0
-		message(string.format("say [%s]Banning %s. Detected evidence of hacking.[-]", server.chatColour, players[steam].name))
-		banPlayer(steam, "1 year", "Automatic ban by server manager", "")
+		message(string.format("say [%s]Banning %s. Detected possible evidence of hacking.[-]", server.chatColour, players[steam].name))
+		banPlayer(steam, "1 year", "Automatic ban for suspected hacking. Admins have been alerted.", "")
 
 		-- if the player has any pending global bans, activate them
 		connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. steam)
@@ -344,7 +344,7 @@ function playerInfo(faultyInfo)
 		if tonumber(players[steam].hackerScore) >= 49  then
 			if tonumber(players[steam].pendingBans) > 0 then
 				players[steam].hackerScore = 0
-				message(string.format("say [%s]Temp banning %s 1 week for suspected hacking. Admins have been alerted.[-]", server.chatColour, players[steam].name))
+				message(string.format("say [%s]Temp banning %s 1 week. Detected clipping or flying too much. Admins have been alerted.[-]", server.chatColour, players[steam].name))
 				banPlayer(steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
 
 				-- activate the pending bans
@@ -354,7 +354,7 @@ function playerInfo(faultyInfo)
 
 		if tonumber(players[steam].hackerScore) >= 100 then
 			players[steam].hackerScore = 0
-			message(string.format("say [%s]Temp banning %s 1 week for suspected hacking. Admins have been alerted.[-]", server.chatColour, players[steam].name))
+			message(string.format("say [%s]Temp banning %s 1 week for suspected hacking.[-]", server.chatColour, players[steam].name))
 			banPlayer(steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
 
 			-- if the player has any pending global bans, activate them
@@ -363,9 +363,9 @@ function playerInfo(faultyInfo)
 	end
 
 	-- test for hackers teleporting
-	if (os.time() - players[steam].lastCommandTimestamp > 60) and not server.ServerToolsDetected and not server.SDXDetected then
+	if (os.time() - players[steam].lastCommandTimestamp > 60) and server.hackerTPDetection then
 		if not (players[steam].timeout or players[steam].botTimeout) and not players[steam].ignorePlayer then
-			if tonumber(intY) > -5000 and tonumber(intX) ~= 0 and tonumber(intZ) ~= 0 and tonumber(igplayers[steam].xPos) ~= 0 and tonumber(igplayers[steam].zPos) ~= 0 and tonumber(os.time() - igplayers[steam].lastLP) < 4 then
+			if tonumber(intY) > -5000 and tonumber(intX) ~= 0 and tonumber(intZ) ~= 0 and tonumber(igplayers[steam].xPos) ~= 0 and tonumber(igplayers[steam].zPos) ~= 0 and tonumber(os.time() - igplayers[steam].lastLP) < 6 then
 				dist = 0
 
 				if igplayers[steam].deadX == nil then
@@ -535,14 +535,18 @@ function playerInfo(faultyInfo)
 
 	if players[steam].showLocationMessages then
 		if igplayers[steam].alertLocation ~= currentLocation and currentLocation ~= false then
-			message(string.format("pm %s [%s]Welcome to %s[-]", steam, server.chatColour, currentLocation))
+			if locations[currentLocation].public or accessLevel(steam) < 3 then
+				message(string.format("pm %s [%s]Welcome to %s[-]", steam, server.chatColour, currentLocation))
+			end
 		end
 	end
 
 	if currentLocation == false then
 		if players[steam].showLocationMessages then
 			if igplayers[steam].alertLocation ~= "" then
-				message(string.format("pm %s [%s]You have left %s[-]", steam, server.chatColour, igplayers[steam].alertLocation))
+				if locations[igplayers[steam].alertLocation].public or accessLevel(steam) < 3 then
+					message(string.format("pm %s [%s]You have left %s[-]", steam, server.chatColour, igplayers[steam].alertLocation))
+				end
 			end
 		end
 
@@ -820,7 +824,7 @@ function playerInfo(faultyInfo)
 			locations[igplayers[steam].alertLocationExit].exitZ = intZ
 			locations[igplayers[steam].alertLocationExit].protected = true
 
-			if botman.dbConnected then conn:execute("UPDATE locations SET exitX = " .. intX .. ", exitY = " .. intY .. ", exitZ = " .. intZ .. ", protected = 1 WHERE name = '" .. igplayers[steam].alertLocationExit .. "'") end
+			if botman.dbConnected then conn:execute("UPDATE locations SET exitX = " .. intX .. ", exitY = " .. intY .. ", exitZ = " .. intZ .. ", protected = 1 WHERE name = '" .. escape(igplayers[steam].alertLocationExit) .. "'") end
 			message("pm " .. steam .. " [" .. server.chatColour .. "]You have enabled protection for " .. igplayers[steam].alertLocationExit .. ".[-]")
 
 			igplayers[steam].alertLocationExit = nil
@@ -847,8 +851,9 @@ function playerInfo(faultyInfo)
 			locations[igplayers[steam].alertVillageExit].exitX = intX
 			locations[igplayers[steam].alertVillageExit].exitY = intY
 			locations[igplayers[steam].alertVillageExit].exitZ = intZ
-			locations[igplayers[steam].alertVillageExit].protect = true
+			locations[igplayers[steam].alertVillageExit].protected = true
 
+			if botman.dbConnected then conn:execute("UPDATE locations SET exitX = " .. intX .. ", exitY = " .. intY .. ", exitZ = " .. intZ .. ", protected = 1 WHERE name = '" .. escape(igplayers[steam].alertVillageExit) .. "'") end
 			message("pm " .. steam .. " [" .. server.chatColour .. "]You have enabled protection for " .. igplayers[steam].alertVillageExit .. "[-]")
 
 			igplayers[steam].alertVillageExit = nil
@@ -1019,8 +1024,8 @@ function playerInfo(faultyInfo)
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	-- world fall catcher
-	fallCatcher(steam, intX, intY, intZ)
+	-- world fall catcher (redundant)
+	--fallCatcher(steam, intX, intY, intZ)
 
 	-- prevent player exceeding the map limit unless they are an admin except when ignoreadmins is false
 	if not isDestinationAllowed(steam, intX, intZ) then
@@ -1058,9 +1063,9 @@ function playerInfo(faultyInfo)
 	if (locations["prison"]) then
 		if (distancexz( intX, intZ, locations["prison"].x, locations["prison"].z ) > tonumber(locations["prison"].size)) then
 			if (players[steam].alertPrison == false) then
-				if (not players[steam].prisoner) and 	players[steam].showLocationMessages then
-					message("pm " .. steam .. " [" .. server.chatColour .. "]You have left the prison.[-]")
-				end
+				--if (not players[steam].prisoner) and 	players[steam].showLocationMessages then
+					--message("pm " .. steam .. " [" .. server.chatColour .. "]You have left the prison.[-]")
+				--end
 
 				players[steam].alertPrison = true
 			end
@@ -1410,19 +1415,20 @@ function playerInfoTrigger(line)
 	end
 
 	if string.find(line, ", health=") then
-		if faultyPlayerinfo == true and tonumber(faultyPlayerinfoID) > -1 then
-			dbug("debug playerinfo faulty player " .. faultyPlayerinfoID, true)
+		if faultyPlayerinfo == true and tonumber(faultyPlayerinfoID) > 0 then
 
-			windowMessage(server.windowDebug, "!! Fault detected in playerinfo trigger\n")
-			windowMessage(server.windowDebug, faultyPlayerinfoLine .. "\n")
-
-			if tonumber(faultyPlayerinfoID) > 0 and players[faultyPlayerinfoID] then
+			--if tonumber(faultyPlayerinfoID) > 0 then --  and players[faultyPlayerinfoID]
 				fixMissingPlayer(faultyPlayerinfoID)
 
 				if igplayers[faultyPlayerinfoID] then
 					fixMissingIGPlayer(faultyPlayerinfoID)
 				end
-			end
+			--end
+
+			dbug("debug playerinfo faulty player " .. faultyPlayerinfoID, true)
+
+			windowMessage(server.windowDebug, "!! Fault detected in playerinfo trigger\n")
+			windowMessage(server.windowDebug, faultyPlayerinfoLine .. "\n")
 		end
 
 		playerInfo(faultyPlayerinfoID)
