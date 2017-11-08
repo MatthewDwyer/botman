@@ -149,26 +149,26 @@ function gmsg_coppi()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Coppi's Mod Commands:")
-		irc_chat(players[chatvars.ircid].ircAlias, "=====================")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Coppi's Mod Commands:")
+		irc_chat(chatvars.ircAlias, "=====================")
+		irc_chat(chatvars.ircAlias, ".")
 	end
 
 	if chatvars.showHelpSections then
-		irc_chat(players[chatvars.ircid].ircAlias, "coppi")
+		irc_chat(chatvars.ircAlias, "coppi")
 	end
 
 	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "mute")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "mute <player name>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "unmute <player name>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "mute {player name}")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "unmute {player name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Prevent a player using text chat or allow them to chat.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Prevent a player using text chat or allow them to chat.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -211,11 +211,11 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "horde")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "spawn horde <optional player or location name> <number of zombies>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "spawn horde {optional player or location name} {number of zombies}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Spawn a horde around a player or location or at a marked coordinate.  See " .. server.commandPrefix .. "set horde.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Spawn a horde around a player or location or at a marked coordinate.  See " .. server.commandPrefix .. "set horde.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -253,12 +253,12 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "comm")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "hide commands")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "show commands")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "hide commands")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "show commands")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Hide commands from ingame chat which makes them all PM's or show them which makes them public.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Hide commands from ingame chat which makes them all PM's or show them which makes them public.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -294,12 +294,12 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "phy")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "physics on")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "physics off")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "physics on")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "physics off")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Enable or disable physics on the server.  The state of physics is persistent across reboots.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Enable or disable physics on the server.  The state of physics is persistent across reboots.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -337,12 +337,13 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "chat") or string.find(chatvars.command, "colo")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set new player/player/donor/prisoner/mod/admin/owner chat colour FFFFFF")
-			irc_chat(players[chatvars.ircid].ircAlias, "To disable automatic chat colouring, set it to white which is FFFFFF")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set new player/player/donor/prisoner/mod/admin/owner chat colour FFFFFF")
+			irc_chat(chatvars.ircAlias, "To disable automatic chat colouring, set it to white which is FFFFFF")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Enable or disable physics on the server.  The state of physics is persistent across reboots.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Set the default chat colour for a class of player.  You can also set chat colour for a named player.")
+				irc_chat(chatvars.ircAlias, "eg. " .. server.commandPrefix .. "set chat colour player joe B0E0E6")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -351,17 +352,22 @@ function gmsg_coppi()
 		tmp = {}
 		tmp.target = chatvars.words[2]
 
-		if chatvars.words[2] == "new" then
-			tmp.colour = chatvars.words[6]
-		else
-			tmp.colour = chatvars.words[5]
+		for i=4,chatvars.wordCount,1 do
+			if chatvars.words[i] == "colour" or chatvars.words[i] == "color" then
+				tmp.colour = chatvars.words[i] + 1
+			end
+		end
+
+		-- special case setting chat colour for a named player
+		if chatvars.words[2] == "player" and chatvars.words[3] ~= "chat" then
+			tmp.namedPlayer = true
 		end
 
 		if tmp.target ~= "new" and tmp.target ~= "player" and tmp.target ~= "donor" and tmp.target ~= "prisoner" and tmp.target ~= "mod" and tmp.target ~= "admin" and tmp.target ~= "owner" then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Missing target for chat colour.  Expected new player or player or donor or prisoner or mod or admin or owner.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Missing target for chat colour.  Expected new player or player or donor or prisoner or mod or admin or owner.")
+				irc_chat(chatvars.ircAlias, "Missing target for chat colour.  Expected new player or player or donor or prisoner or mod or admin or owner.")
 			end
 
 			botman.faultyChat = false
@@ -372,7 +378,7 @@ function gmsg_coppi()
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]6 character hex colour code required eg. FFFFFF for white.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "6 character hex colour code required eg. FFFFFF for white.")
+				irc_chat(chatvars.ircAlias, "6 character hex colour code required eg. FFFFFF for white.")
 			end
 
 			botman.faultyChat = false
@@ -387,31 +393,60 @@ function gmsg_coppi()
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourNewPlayer = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New player names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "New player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
+				irc_chat(chatvars.ircAlias, "New player names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 99 then
+				if accessLevel(k) == 99 and v.chatColour == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end
 		end
 
 		if tmp.target == "player" then
-			server.chatColourPlayer = tmp.colour
-			if botman.dbConnected then conn:execute("UPDATE server SET chatColourPlayer = '" .. escape(tmp.colour) .. "'") end
+			if tmp.namedPlayer ~= nil then
+				tmp.name = string.sub(chatvars.command, string.find(chatvars.command, " player ") + 8, string.find(chatvars.command, " chat ") - 1)
+				tmp.pid = LookupPlayer(tmp.name)
 
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Non-new player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				if tmp.pid ~= nil then
+					send("cpc " .. tmp.pid .. " " .. tmp.colour .. " 1")
+					if botman.dbConnected then conn:execute("UPDATE players SET chatColour = '" .. escape(tmp.colour) .. "' WHERE steam = " .. pid) end
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.pid].name ..  "'s name is now coloured " .. tmp.colour .. "[-]")
+					else
+						irc_chat(chatvars.ircAlias, players[tmp.pid].name ..  "'s name is now coloured " .. tmp.colour)
+					end
+
+					botman.faultyChat = false
+					return true
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. tmp.name .. "[-]")
+					else
+						irc_chat(chatvars.ircAlias, "No player found called " .. tmp.name)
+					end
+
+					botman.faultyChat = false
+					return true
+				end
+
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Non-new player chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
-			end
+				server.chatColourPlayer = tmp.colour
+				if botman.dbConnected then conn:execute("UPDATE server SET chatColourPlayer = '" .. escape(tmp.colour) .. "'") end
 
-			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 90 then
-					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Non-new player names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Non-new player names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
+				end
+
+				for k,v in pairs(igplayers) do
+					if accessLevel(k) == 90 and v.chatColour == "FFFFFF" then
+						send("cpc " .. k .. " " .. tmp.colour .. " 1")
+					end
 				end
 			end
 		end
@@ -421,13 +456,13 @@ function gmsg_coppi()
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourDonor = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor's names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Donor chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
+				irc_chat(chatvars.ircAlias, "Donor's names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) > 3 and accessLevel(k) < 11 then
+				if (accessLevel(k) > 3 and accessLevel(k) < 11) and v.chatColour == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end
@@ -438,9 +473,9 @@ function gmsg_coppi()
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourPrisoner = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Prisoner chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Prisoner's names will be coloured " .. tmp.colour .. "[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Prisoner chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
+				irc_chat(chatvars.ircAlias, "Prisoner's names will be coloured " .. tmp.colour)
 			end
 
 			for k,v in pairs(igplayers) do
@@ -455,13 +490,13 @@ function gmsg_coppi()
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourMod = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Moderator chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Mod names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Moderator chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
+				irc_chat(chatvars.ircAlias, "Mod names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 2 then
+				if accessLevel(k) == 2 and v.chatColour == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end
@@ -472,13 +507,13 @@ function gmsg_coppi()
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourAdmin = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admin chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admin names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Admin chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
+				irc_chat(chatvars.ircAlias, "Admin names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 1 then
+				if accessLevel(k) == 1 and v.chatColour == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end
@@ -489,13 +524,13 @@ function gmsg_coppi()
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourOwner = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Owner chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Owner names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Owner chat will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
+				irc_chat(chatvars.ircAlias, "Owner names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 0 then
+				if accessLevel(k) == 0 and v.chatColour == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 				end
 			end
@@ -518,14 +553,14 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "maze")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "make maze")
-			irc_chat(players[chatvars.ircid].ircAlias, "Optional parts: wall <block name> fill <air block> width <number> length <number> height <number> x <x coord> y <y coord> z <z coord>")
-			irc_chat(players[chatvars.ircid].ircAlias, "Default values: wall steelBlock fill air width 20 length 20 height 3. It uses your current position for x, y and z if not given.")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "make maze")
+			irc_chat(chatvars.ircAlias, "Optional parts: wall {block name} fill {air block} width {number} length {number} height {number} x {x coord} y {y coord} z {z coord}")
+			irc_chat(chatvars.ircAlias, "Default values: wall steelBlock fill air width 20 length 20 height 3. It uses your current position for x, y and z if not given.")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Generate and build a random maze. ")
-				irc_chat(players[chatvars.ircid].ircAlias, "It is very slow and someone must stay with it or it won't work.  Cancel it with " .. server.commandPrefix .. "stop maze")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Generate and build a random maze. ")
+				irc_chat(chatvars.ircAlias, "It is very slow and someone must stay with it or it won't work.  Cancel it with " .. server.commandPrefix .. "stop maze")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -533,7 +568,7 @@ function gmsg_coppi()
 	if chatvars.words[1] == "make" and chatvars.words[2] == "maze" and (chatvars.playerid ~= 0) then
 
 		if (chatvars.playername == "Server") then
-			irc_chat(players[chatvars.ircid].ircAlias, "You can only use this command ingame.")
+			irc_chat(chatvars.ircAlias, "You can only use this command ingame.")
 			botman.faultyChat = false
 			return true
 		end
@@ -598,11 +633,11 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "maze")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "stop maze")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "stop maze")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Aborts any maze(s) that you have told the bot to create.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Aborts any maze(s) that you have told the bot to create.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -613,7 +648,7 @@ function gmsg_coppi()
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Maze generation has been aborted.  You will need to clean up the mess yourself :)[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "Maze generation has been aborted.  You will need to clean up the mess yourself :)")
+			irc_chat(chatvars.ircAlias, "Maze generation has been aborted.  You will need to clean up the mess yourself :)")
 		end
 
 		botman.faultyChat = false
@@ -624,12 +659,12 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "horde")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set/clear horde")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set/clear horde")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Marks your current position to spawn a horde ther with " .. server.commandPrefix .. "spawn horde.")
-				irc_chat(players[chatvars.ircid].ircAlias, "Clear horde doesn't remove the horde. It only clears the saved coordinate.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Marks your current position to spawn a horde ther with " .. server.commandPrefix .. "spawn horde.")
+				irc_chat(chatvars.ircAlias, "Clear horde doesn't remove the horde. It only clears the saved coordinate.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -653,12 +688,12 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "add") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "copy"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "add prefab <name>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "add prefab {name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "You can copy an area of blocks to later recall them or to fill the area with a block.")
-				irc_chat(players[chatvars.ircid].ircAlias, "This requires the latest Coppi's Additions and are not currently in Alloc's Mod.  You can give it any name but you can't reuse a name that is already defined by you.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "You can copy an area of blocks to later recall them or to fill the area with a block.")
+				irc_chat(chatvars.ircAlias, "This requires the latest Coppi's Additions and are not currently in Alloc's Mod.  You can give it any name but you can't reuse a name that is already defined by you.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -669,12 +704,12 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "undo") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "block"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "undo")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "undo")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "The block commands prender, pdup and pblock allow for the last command to be undone, however since more than one person can command the bot to do block commands")
-				irc_chat(players[chatvars.ircid].ircAlias, "it is possible that other block commands have been done by the bot since your last block command.  If the last block command came from you, the bot will undo it.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "The block commands prender, pdup and pblock allow for the last command to be undone, however since more than one person can command the bot to do block commands")
+				irc_chat(chatvars.ircAlias, "it is possible that other block commands have been done by the bot since your last block command.  If the last block command came from you, the bot will undo it.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -709,12 +744,12 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "save") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "list"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "list saves <optional player name>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "list saves {optional player name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "List all your saved prefabs or those of someone else.  This list is coordinate pairs of places in the world that you have marked for some block command.")
-				irc_chat(players[chatvars.ircid].ircAlias, "You can use a named save with the block commands.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "List all your saved prefabs or those of someone else.  This list is coordinate pairs of places in the world that you have marked for some block command.")
+				irc_chat(chatvars.ircAlias, "You can use a named save with the block commands.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -763,12 +798,12 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "mark") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "copy"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "mark <name> start")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "mark <name> end")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "mark {name} start")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "mark {name} end")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Mark two opposite corners of the area you wish to copy.  Move up or down between corners to add volume.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Mark two opposite corners of the area you wish to copy.  Move up or down between corners to add volume.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -836,11 +871,11 @@ function gmsg_coppi()
 
 		if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "save") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "copy"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "save <name>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "save {name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Now that you have marked out the area you want to copy, you can save it.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Now that you have marked out the area you want to copy, you can save it.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -869,16 +904,16 @@ function gmsg_coppi()
 
 		if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "load") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "paste"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "load prefab <name> at <x> <y> <z> face <0-3>")
-			irc_chat(players[chatvars.ircid].ircAlias, "Everything after the prefab name is optional and if not given, the stored coords and rotation will be used.")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "load prefab {name} at {x} {y} {z} face {0-3}")
+			irc_chat(chatvars.ircAlias, "Everything after the prefab name is optional and if not given, the stored coords and rotation will be used.")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Restore a saved prefab in place or place it somewhere else.")
-				irc_chat(players[chatvars.ircid].ircAlias, "If you provide coords and an optional rotation (default is 0 - north), you will make a new copy of the prefab at those coords.")
-				irc_chat(players[chatvars.ircid].ircAlias, "If you instead add here, it will load on your current position with optional rotation.")
-				irc_chat(players[chatvars.ircid].ircAlias, "If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy.")
-				irc_chat(players[chatvars.ircid].ircAlias, "For perfect placement, start from a south corner.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Restore a saved prefab in place or place it somewhere else.")
+				irc_chat(chatvars.ircAlias, "If you provide coords and an optional rotation (default is 0 - north), you will make a new copy of the prefab at those coords.")
+				irc_chat(chatvars.ircAlias, "If you instead add here, it will load on your current position with optional rotation.")
+				irc_chat(chatvars.ircAlias, "If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy.")
+				irc_chat(chatvars.ircAlias, "For perfect placement, start from a south corner.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -893,7 +928,7 @@ function gmsg_coppi()
 		end
 
 		if (chatvars.words[3] == nil) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "load prefab <name> at <x> <y> <z> face <0-3>[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "load prefab {name} at {x} {y} {z} face {0-3}[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Everything after the prefab name is optional and if not given, the stored coords and rotation will be used.[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]add coords and optional rotation to copy of the prefab or type here to place it at your feet.[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]To restore the prefab in place, just give the prefab name. Stock prefabs will always spawn at your feet if no coord is given.[-]")
@@ -944,11 +979,11 @@ function gmsg_coppi()
 
 		if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "list") or string.find(chatvars.command, "item"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "list (or " .. server.commandPrefix .. "li) <partial name of an item or block>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "list (or " .. server.commandPrefix .. "li) {partial name of an item or block}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "List all items containing the text you are searching for.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "List all items containing the text you are searching for.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -973,13 +1008,13 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "move") or string.find(chatvars.command, "block") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "prefab"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "move block <name of saved prefab> here")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "move block <name of saved prefab> <x> <y> <z>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "move block <name of saved prefab> up (or down) <number>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "move block {name of saved prefab} here")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "move block {name of saved prefab} {x} {y} {z}")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "move block {name of saved prefab} up (or down) {number}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Fills a saved block with air then renders it at the new position and updates the block's coordinates.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Fills a saved block with air then renders it at the new position and updates the block's coordinates.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1033,12 +1068,12 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "copy") or string.find(chatvars.command, "block") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "prefab"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "copy block <name of saved prefab> here")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "copy block <name of saved prefab> <x> <y> <z>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "copy block {name of saved prefab} here")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "copy block {name of saved prefab} {x} {y} {z}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Renders a saved block at your position or the coordinates you specify")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Renders a saved block at your position or the coordinates you specify")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1066,11 +1101,11 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "rot") or (string.find(chatvars.command, "spin") or string.find(chatvars.command, "block") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "prefab")))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "rotate (or " .. server.commandPrefix .. "spin) block <name of saved prefab>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "rotate (or " .. server.commandPrefix .. "spin) block {name of saved prefab}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Spins a block around its first XYZ")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Spins a block around its first XYZ")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1098,11 +1133,11 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "rot") or (string.find(chatvars.command, "spin") or string.find(chatvars.command, "block")))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "rotate (or " .. server.commandPrefix .. "spin) block <name of saved prefab>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "rotate (or " .. server.commandPrefix .. "spin) block {name of saved prefab}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Spins a block around its first XYZ")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Spins a block around its first XYZ")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1130,12 +1165,12 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "mark") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set mark <optional player>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set mark {optional player}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Temp store your current position for use in block commands which you use later. It is only stored in memory.")
-				irc_chat(players[chatvars.ircid].ircAlias, "If you add a player name it will record their current position instead.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Temp store your current position for use in block commands which you use later. It is only stored in memory.")
+				irc_chat(chatvars.ircAlias, "If you add a player name it will record their current position instead.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1178,11 +1213,11 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set p1")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set p1")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Temp store your current position for use in block commands which you use later. It is only stored in memory.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Temp store your current position for use in block commands which you use later. It is only stored in memory.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1202,11 +1237,11 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set p2")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set p2")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Temp store your current position for use in block commands which you use later. It is only stored in memory.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Temp store your current position for use in block commands which you use later. It is only stored in memory.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1226,11 +1261,11 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "erase") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "erase <optional number> (default 5)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "erase {optional number} (default 5)")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Replace an area around you with air blocks.  Add a number to change the size.  Default is 5.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Replace an area around you with air blocks.  Add a number to change the size.  Default is 5.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1270,24 +1305,24 @@ function gmsg_coppi()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "dig") or string.find(chatvars.command, "fill") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig (or fill) <optional number> (default 5)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "dig (or fill) {optional number} (default 5)")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Dig a hole or fill a hole.  Default is 5.")
-				irc_chat(players[chatvars.ircid].ircAlias, "This can also be used to make tunnels and walls.")
-				irc_chat(players[chatvars.ircid].ircAlias, "When not digging or filling up or down, a compass direction is needed (north, south, east, west)")
-				irc_chat(players[chatvars.ircid].ircAlias, "There are several optional parts, wide, block, tall, base and long.")
-				irc_chat(players[chatvars.ircid].ircAlias, "Default block is air, base is at your feet and the others default to 5.")
-				irc_chat(players[chatvars.ircid].ircAlias, "Examples:")
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig north wide 3 tall 3 long 100")
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig bedrock wide 1")
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig up (makes a 5x5 room)")
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "dig up (or room) wide 5 tall 10 (makes a 10x10 room)")
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fill east base 70 wide 2 tall 10 long 50 block steelBlock")
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fill bedrock wide 2 block 1")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
-				irc_chat(players[chatvars.ircid].ircAlias, "You can repeat the last command with /again and change direction with /again west")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Dig a hole or fill a hole.  Default is 5.")
+				irc_chat(chatvars.ircAlias, "This can also be used to make tunnels and walls.")
+				irc_chat(chatvars.ircAlias, "When not digging or filling up or down, a compass direction is needed (north, south, east, west)")
+				irc_chat(chatvars.ircAlias, "There are several optional parts, wide, block, tall, base and long.")
+				irc_chat(chatvars.ircAlias, "Default block is air, base is at your feet and the others default to 5.")
+				irc_chat(chatvars.ircAlias, "Examples:")
+				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "dig north wide 3 tall 3 long 100")
+				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "dig bedrock wide 1")
+				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "dig up (makes a 5x5 room)")
+				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "dig up (or room) wide 5 tall 10 (makes a 10x10 room)")
+				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "fill east base 70 wide 2 tall 10 long 50 block steelBlock")
+				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "fill bedrock wide 2 block 1")
+				irc_chat(chatvars.ircAlias, ".")
+				irc_chat(chatvars.ircAlias, "You can repeat the last command with /again and change direction with /again west")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1551,12 +1586,12 @@ function gmsg_coppi()
 
 		if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "fix") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "bed"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fix bedrock <distance>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "fix bedrock {distance}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "You can replace the bedrock layer below you up to <distance> away from your position.")
-				irc_chat(players[chatvars.ircid].ircAlias, "You only need to be over the area to be fixed.  No other layers are touched.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "You can replace the bedrock layer below you up to {distance} away from your position.")
+				irc_chat(chatvars.ircAlias, "You only need to be over the area to be fixed.  No other layers are touched.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1592,12 +1627,12 @@ function gmsg_coppi()
 
 		if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "block") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "copy"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fill <name of saved prefab> <block ID> face <north, south, east, west or n, s, e, w>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "fill {name of saved prefab} {block ID} face {north, south, east, west or n, s, e, w}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Now that you have marked out the area you replace every block with 1 type of block.")
-				irc_chat(players[chatvars.ircid].ircAlias, "eg. " .. server.commandPrefix .. "fill wall 8 south (default facing is north.  8 is the block id for sand.)")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Now that you have marked out the area you replace every block with 1 type of block.")
+				irc_chat(chatvars.ircAlias, "eg. " .. server.commandPrefix .. "fill wall 8 south (default facing is north.  8 is the block id for sand.)")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end

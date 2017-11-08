@@ -62,8 +62,6 @@ function playerInfo(faultyInfo)
 		return
 	end
 
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
-
 	temp = string.split(name_table[1], "=")
 	id = temp[2]
 
@@ -122,72 +120,43 @@ function playerInfo(faultyInfo)
 	temp = string.split(name_table[18], "=")
 	ping = temp[2]
 
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
-
---dbug("debug playerinfo steam " .. steam)
---dbug("debug debugplayerinfo  " .. debugPlayerInfo)
-
 	if badData then
 		dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true)
 		dbug("Bad lp line: " .. line .. "\n", true)
 		return
 	end
 
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
-
 	rawPosition = posX .. posY .. posZ
 	rawRotation = rotY
-
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
 
 	intX = math.floor(posX)
 	intY = math.ceil(posY)
 	intZ = math.floor(posZ)
 
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
-
 	region = getRegion(intX, intZ)
 	regionX, regionZ, chunkX, chunkZ = getRegionChunkXZ(intX, intZ)
 
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
-
 	if (resetRegions[region]) then
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
 		resetZone = true
 	else
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
 		resetZone = false
-	end
-
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
-
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
---dbug("debug playerinfo line " .. debugger.getinfo(1).currentline)
-
-	-- check for crazy server crash
-	if (string.find(line, "type=EntityZombie")) then
-		if botman.nextRebootTest == nil or (botman.nextRebootTest ~= nil and os.time() > botman.nextRebootTest) then
-			if (botman.scheduledRestart == true) and botman.scheduledRestartForced == false then
-				gmsg(server.commandPrefix .. "cancel reboot")
-			end
-
-			if botman.scheduledRestartForced == false then
-				message("say [" .. server.chatColour .. "]Zombies have been detected in the player data and an urgent reboot has been initiated to fix it.[-]")
-				message("say [" .. server.chatColour .. "]You have 2 minutes to stop what you are doing and clear your crafting, forges and campfires.[-]")
-				gmsg(server.commandPrefix .. "reboot server 2 minutes forced")
-			end
-		end
-
-		return
 	end
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- check for invalid or missing steamid.  kick if not passed
 	steamtest = tonumber(steam)
-	if (steamtest == nil) and (steam ~= "") or (string.len(steam) < 17) then
+	if (steamtest == nil) then
 		send ("kick " .. id)
+		irc_chat(server.ircMain, "Player " .. name .. " kicked for invalid Steam ID: " .. steam)
+
+		faultyPlayerinfo = false
+		return
+	end
+
+	if (string.len(steam) < 17) then
+		send ("kick " .. id)
+		irc_chat(server.ircMain, "Player " .. name .. " kicked for invalid Steam ID: " .. steam)
 
 		faultyPlayerinfo = false
 		return
@@ -476,6 +445,8 @@ function playerInfo(faultyInfo)
 		end
 	end
 
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
 	igplayers[steam].xPosLast = igplayers[steam].xPos
 	igplayers[steam].yPosLast = igplayers[steam].yPos
 	igplayers[steam].zPosLast = igplayers[steam].zPos
@@ -517,6 +488,8 @@ function playerInfo(faultyInfo)
 		igplayers[steam].zPosLastOK = intZ
 	end
 
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
 	atHome(steam)
 
 	currentLocation = inLocation(intX, intZ)
@@ -533,6 +506,8 @@ function playerInfo(faultyInfo)
 		end
 	end
 
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
 	if players[steam].showLocationMessages then
 		if igplayers[steam].alertLocation ~= currentLocation and currentLocation ~= false then
 			if locations[currentLocation].public or accessLevel(steam) < 3 then
@@ -541,14 +516,24 @@ function playerInfo(faultyInfo)
 		end
 	end
 
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
 	if currentLocation == false then
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 		if players[steam].showLocationMessages then
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 			if igplayers[steam].alertLocation ~= "" then
-				if locations[igplayers[steam].alertLocation].public or accessLevel(steam) < 3 then
-					message(string.format("pm %s [%s]You have left %s[-]", steam, server.chatColour, igplayers[steam].alertLocation))
+				if not locations[igplayers[steam].alertLocation] then
+					igplayers[steam].alertLocation = ""
+				else
+					if locations[igplayers[steam].alertLocation].public or accessLevel(steam) < 3 then
+						message(string.format("pm %s [%s]You have left %s[-]", steam, server.chatColour, igplayers[steam].alertLocation))
+					end
 				end
 			end
 		end
+
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 		igplayers[steam].alertLocation = ""
 		players[steam].inLocation = ""
@@ -556,6 +541,8 @@ function playerInfo(faultyInfo)
 		igplayers[steam].alertLocation = currentLocation
 		players[steam].inLocation = currentLocation
 	end
+
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if igplayers[steam].checkNewPlayer == true then
 		igplayers[steam].checkNewPlayer = false
@@ -572,6 +559,8 @@ function playerInfo(faultyInfo)
 			end
 		end
 	end
+
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- fix weird cash bug
 	if tonumber(players[steam].cash) < 0 then
@@ -658,6 +647,8 @@ function playerInfo(faultyInfo)
 		end
 	end
 
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
 	-- update player record of zombies
 	players[steam].zombies = igplayers[steam].zombies
 
@@ -695,7 +686,6 @@ function playerInfo(faultyInfo)
 			message(string.format("pm %s [%s]%s[-]", steam, server.chatColour, server.welcome))
 		else
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Welcome to " .. server.serverName .. "!  Type " .. server.commandPrefix .. "info, " .. server.commandPrefix .. "rules or " .. server.commandPrefix .. "help for commands.[-]")
-			--message(string.format("pm %s [%s]Welcome to %s! Type %sinfo, %srules, or %shelp for commands[-]", steam, server.chatColour, server.name, server.commandPrefix, server.commandPrefix, server.commandPrefix))
 			message(string.format("pm %s [%s]We have a server manager bot called %s[-]", steam, server.chatColour, server.botName))
 		end
 
@@ -706,7 +696,7 @@ function playerInfo(faultyInfo)
 				welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Welcome back " .. name .. "![-]"
 			end
 
-			if (string.find(botman.serverTime, "02-14", 5, 10)) then welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Happy Valentines Day " .. name .. "![-]" end
+			if (string.find(botman.serverTime, "02-14", 5, 10)) then welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Happy Valentines Day " .. name .. "! ^^[-]" end
 
 			message(welcome)
 		else
@@ -813,7 +803,7 @@ function playerInfo(faultyInfo)
 		if (dist > tonumber(locations[igplayers[steam].alertLocationExit].size) + 100) then
 			igplayers[steam].alertLocationExit = nil
 
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Your have moved too far away from the location. If you still wish to do " .. server.commandPrefix .. "protect location, please start again.[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]You have moved too far away from the location. If you still wish to do " .. server.commandPrefix .. "protect location, please start again.[-]")
 			faultyPlayerinfo = false
 			return
 		end
@@ -842,7 +832,7 @@ function playerInfo(faultyInfo)
 		if (dist > tonumber(locations[igplayers[steam].alertVillageExit].size) + 100) then
 			igplayers[steam].alertVillageExit = nil
 
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Your have moved too far away from " .. igplayers[steam].alertVillageExit .. ". Return to " .. igplayers[steam].alertVillageExit .. " and type " .. server.commandPrefix .. "protect village " .. igplayers[steam].alertVillageExit .. " again.[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]You have moved too far away from " .. igplayers[steam].alertVillageExit .. ". Return to " .. igplayers[steam].alertVillageExit .. " and type " .. server.commandPrefix .. "protect village " .. igplayers[steam].alertVillageExit .. " again.[-]")
 			faultyPlayerinfo = false
 			return
 		end
@@ -879,7 +869,7 @@ function playerInfo(faultyInfo)
 			igplayers[steam].alertBaseID = nil
 			igplayers[steam].alertBase = nil
 
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Your have moved too far away from the base. If you still wish to do " .. server.commandPrefix .. "protect, please start again.[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]You have moved too far away from the base. If you still wish to do " .. server.commandPrefix .. "protect, please start again.[-]")
 			faultyPlayerinfo = false
 			return
 		end
@@ -1063,10 +1053,6 @@ function playerInfo(faultyInfo)
 	if (locations["prison"]) then
 		if (distancexz( intX, intZ, locations["prison"].x, locations["prison"].z ) > tonumber(locations["prison"].size)) then
 			if (players[steam].alertPrison == false) then
-				--if (not players[steam].prisoner) and 	players[steam].showLocationMessages then
-					--message("pm " .. steam .. " [" .. server.chatColour .. "]You have left the prison.[-]")
-				--end
-
 				players[steam].alertPrison = true
 			end
 		end
@@ -1416,14 +1402,11 @@ function playerInfoTrigger(line)
 
 	if string.find(line, ", health=") then
 		if faultyPlayerinfo == true and tonumber(faultyPlayerinfoID) > 0 then
+			fixMissingPlayer(faultyPlayerinfoID)
 
-			--if tonumber(faultyPlayerinfoID) > 0 then --  and players[faultyPlayerinfoID]
-				fixMissingPlayer(faultyPlayerinfoID)
-
-				if igplayers[faultyPlayerinfoID] then
-					fixMissingIGPlayer(faultyPlayerinfoID)
-				end
-			--end
+			if igplayers[faultyPlayerinfoID] then
+				fixMissingIGPlayer(faultyPlayerinfoID)
+			end
 
 			dbug("debug playerinfo faulty player " .. faultyPlayerinfoID, true)
 

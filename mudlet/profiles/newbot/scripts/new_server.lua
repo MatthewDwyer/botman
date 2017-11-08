@@ -45,7 +45,7 @@ function initServer()
 	server.baseCost = 0
 	server.baseSize = 32
 	server.blacklistResponse = "ban"
-	server.blockCountries = "CN,HK"
+	server.blacklistCountries = "CN,HK"
 	server.botID = 0
 	server.botName = "Bot"
 	server.chatColour = "D4FFD4"

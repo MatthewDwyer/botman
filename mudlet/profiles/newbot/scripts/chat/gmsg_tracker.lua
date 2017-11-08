@@ -40,14 +40,14 @@ function gmsg_tracker()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Tracker Commands:")
-		irc_chat(players[chatvars.ircid].ircAlias, "=================")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Tracker Commands:")
+		irc_chat(chatvars.ircAlias, "=================")
+		irc_chat(chatvars.ircAlias, ".")
 	end
 
 	if chatvars.showHelpSections then
-		irc_chat(players[chatvars.ircid].ircAlias, "tracker")
+		irc_chat(chatvars.ircAlias, "tracker")
 	end
 
 
@@ -68,13 +68,13 @@ function gmsg_tracker()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "track <player> session <number> (session is optional and defaults to the latest)")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "next (track the next session)")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "last (track the previous session)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "track {player name} session {number} (session is optional and defaults to the latest)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "next (track the next session)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "last (track the previous session)")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Track the movements of a player.  If a session is given, you will track their movements from that session.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Track the movements of a player.  If a session is given, you will track their movements from that session.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -184,11 +184,11 @@ function gmsg_tracker()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "skip <number>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "skip {number}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Skip <number> of steps.  Instead of tracking each recorded step, you will skip <number> steps for faster but less precise tracking.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Skip {number} of steps.  Instead of tracking each recorded step, you will skip {number} steps for faster but less precise tracking.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -209,11 +209,11 @@ function gmsg_tracker()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "speed <number>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "speed {number>")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "The default pause between each tracked step is 3 seconds. Change it to any number of seconds from 1 to whatever.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "The default pause between each tracked step is 3 seconds. Change it to any number of seconds from 1 to whatever.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -234,11 +234,11 @@ function gmsg_tracker()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "jump <number>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "jump {number}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Jump forward <number> steps or backwards if given a negative number.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Jump forward {number} steps or backwards if given a negative number.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -261,11 +261,11 @@ function gmsg_tracker()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "goto start")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "goto start")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Move to the start of the current track.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Move to the start of the current track.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -287,11 +287,11 @@ function gmsg_tracker()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "goto end")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "goto end")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Move to the end of the current track.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Move to the end of the current track.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -333,11 +333,11 @@ function gmsg_tracker()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "stop")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "stop")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Stop tracking.  Resume it with " .. server.commandPrefix .. "go")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Stop tracking.  Resume it with " .. server.commandPrefix .. "go")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -353,6 +353,18 @@ function gmsg_tracker()
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HAMMER TIME![-]")
 		end
 
+		if not igplayers[chatvars.playerid].trackerStopped then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Tracking stopped.[-]")
+		end
+
+		if igplayers[chatvars.playerid].following ~= nil then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have stopped following " .. players[igplayers[chatvars.playerid].following].name .. ".[-]")
+		end
+
+		if igplayers[chatvars.playerid].location ~= nil then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have stopped recording random spawn points.[-]")
+		end
+
 		igplayers[chatvars.playerid].trackerStopped = true
 		igplayers[chatvars.playerid].following = nil
 		igplayers[chatvars.playerid].location = nil
@@ -364,11 +376,11 @@ function gmsg_tracker()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "go")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "go")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Resume tracking.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Resume tracking.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -388,11 +400,11 @@ function gmsg_tracker()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "stop tracking")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "stop tracking")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Stops tracking and clears the tracking data from memory.  This happens when you exit the server anyway so you don't have to do this.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Stops tracking and clears the tracking data from memory.  This happens when you exit the server anyway so you don't have to do this.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end

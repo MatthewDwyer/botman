@@ -53,6 +53,10 @@ function miscCommandsTimer()
 				if row.delay - os.time() <= 0 then
 					if string.sub(row.command, 1, 3) == "pm " or string.sub(row.command, 1, 3) == "say" then
 						message(row.command)
+
+						if string.find(row.command, "admin status") then
+							irc_chat(server.ircMain, "OH GOD NOOOO! " .. players[row.steam].name .. "'s admin status has been restored.")
+						end
 					else
 						send(row.command)
 					end

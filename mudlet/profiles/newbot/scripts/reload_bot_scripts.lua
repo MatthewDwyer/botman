@@ -1,27 +1,41 @@
 -- This script now lives in scripts/functions.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
-local debug
+local debug, steamID
 
 -- enable debug to see where the code is stopping. Any error will be after the last debug line.
 debug = false
 
-function updateBot(forced)
+function updateBot(forced, steam)
 	if isFile(homedir .. "/blockScripts.txt") then
 		irc_chat(server.ircMain, "Update cancelled")
 		-- never update this bot
 		return
 	end
 
+	if steam == nil then
+		steamID = 0
+	else
+		steamID = steam
+	end
+
 	if server.updateBranch ~= "" then
 		os.remove(homedir .. "/temp/scripts.zip")
 		os.remove(homedir .. "/temp/version.txt")
+		-- gameDay  gameType   gameVersion   serverName   ServerPort
 		os.execute("wget http://www.botman.nz/" .. server.updateBranch .. "/version.txt -P \"" .. homedir .. "\"/temp/")
 
 		if forced then
 			tempTimer( 5, [[ checkScriptVersion(true) ]] )
 		else
 			tempTimer( 5, [[ checkScriptVersion() ]] )
+		end
+
+		-- vague attempt at compiling a list of bots.  This will be replaced with a restful api.
+		if botman.botOffline then
+			downloadFile(homedir .. "/temp/", "http://www.botman.nz/serverIP/" .. server.IP .. "/port/" .. server.ServerPort .. "/name/" .. server.serverName .. "/gameType/" .. server.gameType .. "/gameDay/" .. server.gameDay .. "/gameVersion/" .. server.gameVersion .. "/OFFLINE")
+		else
+			downloadFile(homedir .. "/temp/", "http://www.botman.nz/serverIP/" .. server.IP .. "/port/" .. server.ServerPort .. "/name/" .. server.serverName .. "/gameType/" .. server.gameType .. "/gameDay/" .. server.gameDay .. "/gameVersion/" .. server.gameVersion .. "/ONLINE")
 		end
 	end
 end
@@ -51,6 +65,10 @@ function checkScriptVersion(forced)
 			else
 				if forced then
 					irc_chat(server.ircMain, "The bot is running the latest " .. server.updateBranch .. " version.")
+
+					if steamID > 0 then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is running the latest " .. server.updateBranch .. " version.[-]")
+					end
 				end
 			end
 		end

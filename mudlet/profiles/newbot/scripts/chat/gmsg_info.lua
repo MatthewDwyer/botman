@@ -41,14 +41,14 @@ function gmsg_info()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Info Commands:")
-		irc_chat(players[chatvars.ircid].ircAlias, "==============")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Info Commands:")
+		irc_chat(chatvars.ircAlias, "==============")
+		irc_chat(chatvars.ircAlias, ".")
 	end
 
 	if chatvars.showHelpSections then
-		irc_chat(players[chatvars.ircid].ircAlias, "info")
+		irc_chat(chatvars.ircAlias, "info")
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -57,11 +57,11 @@ function gmsg_info()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "time") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "uptime")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "uptime")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Reports the bot and server's running times.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Reports the bot and server's running times.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -85,14 +85,14 @@ function gmsg_info()
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.botName .. " has been online " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, server.botName .. " has been online " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.")
+				irc_chat(chatvars.ircAlias, server.botName .. " has been online " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.")
 			end
 
 			if gameTick < 0 then
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server uptime is unknown due to a server fault. Ask and admin to reboot the server.[-]")
 				else
-					irc_chat(players[chatvars.ircid].ircAlias, "Server uptime is unknown due to a server fault. Ask and admin to reboot the server.")
+					irc_chat(chatvars.ircAlias, "Server uptime is unknown due to a server fault. Ask and admin to reboot the server.")
 				end
 			else
 				diff = gameTick
@@ -113,7 +113,7 @@ function gmsg_info()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server uptime is " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.[-]")
 				else
-					irc_chat(players[chatvars.ircid].ircAlias, "Server uptime is " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.")
+					irc_chat(chatvars.ircAlias, "Server uptime is " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.")
 				end
 			end
 
@@ -125,11 +125,11 @@ function gmsg_info()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "server") or string.find(chatvars.command, "info") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "server or " .. server.commandPrefix .. "info")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "server or " .. server.commandPrefix .. "info")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Displays info mostly from the server config.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Displays info mostly from the server config.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -159,7 +159,7 @@ function gmsg_info()
 			if (server.DropOnQuit == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop backpack only on quit[-]") end
 
 			-- land claim size
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Land claim size is " .. server.LandClaimSize .. " meters. Expiry 30 days[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Land claim size is " .. server.LandClaimSize .. " meters. Expiry " .. server.LandClaimExpiryTime .. " days[-]")
 
 			-- block durability
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Block durability is " .. server.BlockDurabilityModifier .. "%[-]")
@@ -190,56 +190,56 @@ function gmsg_info()
 			end
 		else
 			-- Server name
-			irc_chat(players[chatvars.ircid].ircAlias, "This server is " .. server.serverName .. " " .. server.IP .. ":" .. server.ServerPort)
+			irc_chat(chatvars.ircAlias, "This server is " .. server.serverName .. " " .. server.IP .. ":" .. server.ServerPort)
 
-			if (server.gameType == "pve") then irc_chat(players[chatvars.ircid].ircAlias, "This is a PVE server.") end
-			if (server.gameType == "pvp") then irc_chat(players[chatvars.ircid].ircAlias, "This is a PVP server.") end
-			if (server.gameType == "cre") then irc_chat(players[chatvars.ircid].ircAlias, "This is a creative mode server.") end
+			if (server.gameType == "pve") then irc_chat(chatvars.ircAlias, "This is a PVE server.") end
+			if (server.gameType == "pvp") then irc_chat(chatvars.ircAlias, "This is a PVP server.") end
+			if (server.gameType == "cre") then irc_chat(chatvars.ircAlias, "This is a creative mode server.") end
 
 			-- day/night length
-			irc_chat(players[chatvars.ircid].ircAlias, "A full day runs " .. server.DayNightLength .. " minutes.")
+			irc_chat(chatvars.ircAlias, "A full day runs " .. server.DayNightLength .. " minutes.")
 
 			-- drop on death
-			if (server.DropOnDeath == 0) then irc_chat(players[chatvars.ircid].ircAlias, "You drop everything on death.") end
-			if (server.DropOnDeath == 1) then irc_chat(players[chatvars.ircid].ircAlias, "You drop toolbelt on death.") end
-			if (server.DropOnDeath == 2) then irc_chat(players[chatvars.ircid].ircAlias, "You drop backpack on death.") end
-			if (server.DropOnDeath == 3) then irc_chat(players[chatvars.ircid].ircAlias, "You permanently lose everything on death.") end
+			if (server.DropOnDeath == 0) then irc_chat(chatvars.ircAlias, "You drop everything on death.") end
+			if (server.DropOnDeath == 1) then irc_chat(chatvars.ircAlias, "You drop toolbelt on death.") end
+			if (server.DropOnDeath == 2) then irc_chat(chatvars.ircAlias, "You drop backpack on death.") end
+			if (server.DropOnDeath == 3) then irc_chat(chatvars.ircAlias, "You permanently lose everything on death.") end
 
 			-- drop on quit
-			if (server.DropOnQuit == 0) then irc_chat(players[chatvars.ircid].ircAlias, "You keep everything on quit.") end
-			if (server.DropOnQuit == 1) then irc_chat(players[chatvars.ircid].ircAlias, "You drop everything on quit.") end
-			if (server.DropOnQuit == 2) then irc_chat(players[chatvars.ircid].ircAlias, "You drop toolbelt only on quit.") end
-			if (server.DropOnQuit == 3) then irc_chat(players[chatvars.ircid].ircAlias, "You drop backpack only on quit.") end
+			if (server.DropOnQuit == 0) then irc_chat(chatvars.ircAlias, "You keep everything on quit.") end
+			if (server.DropOnQuit == 1) then irc_chat(chatvars.ircAlias, "You drop everything on quit.") end
+			if (server.DropOnQuit == 2) then irc_chat(chatvars.ircAlias, "You drop toolbelt only on quit.") end
+			if (server.DropOnQuit == 3) then irc_chat(chatvars.ircAlias, "You drop backpack only on quit.") end
 
 			-- land claim size
-			irc_chat(players[chatvars.ircid].ircAlias, "Land claim size is " .. server.LandClaimSize .. " meters. Expiry 30 days.")
+			irc_chat(chatvars.ircAlias, "Land claim size is " .. server.LandClaimSize .. " meters. Expiry 30 days.")
 
 			-- block durability
-			irc_chat(players[chatvars.ircid].ircAlias, "Block durability is " .. server.BlockDurabilityModifier .. "%")
+			irc_chat(chatvars.ircAlias, "Block durability is " .. server.BlockDurabilityModifier .. "%")
 
 			-- loot abundance
-			irc_chat(players[chatvars.ircid].ircAlias, "Loot abundance is " .. server.LootAbundance .. "%")
+			irc_chat(chatvars.ircAlias, "Loot abundance is " .. server.LootAbundance .. "%")
 
 			-- loot respawn
-			irc_chat(players[chatvars.ircid].ircAlias, "Loot respawns after " .. server.LootRespawnDays .. " days.")
+			irc_chat(chatvars.ircAlias, "Loot respawns after " .. server.LootRespawnDays .. " days.")
 
 			-- zombies run
-			if (server.ZombiesRun == 0) then irc_chat(players[chatvars.ircid].ircAlias, "Zombies run at night.") end
-			if (server.ZombiesRun == 1) then irc_chat(players[chatvars.ircid].ircAlias, "Zombies never run.") end
-			if (server.ZombiesRun == 2) then irc_chat(players[chatvars.ircid].ircAlias, "Zombies always run.") end
+			if (server.ZombiesRun == 0) then irc_chat(chatvars.ircAlias, "Zombies run at night.") end
+			if (server.ZombiesRun == 1) then irc_chat(chatvars.ircAlias, "Zombies never run.") end
+			if (server.ZombiesRun == 2) then irc_chat(chatvars.ircAlias, "Zombies always run.") end
 
 			-- zombie memory
-			irc_chat(players[chatvars.ircid].ircAlias, "Zombie memory is " .. server.EnemySenseMemory .. " seconds.")
+			irc_chat(chatvars.ircAlias, "Zombie memory is " .. server.EnemySenseMemory .. " seconds.")
 
 			-- map limit
-			if players[chatvars.ircid].donor or accessLevel(chatvars.ircid) < 2 then
-				irc_chat(players[chatvars.ircid].ircAlias, "The world is limited to  " .. (server.mapSize + 10000) / 1000 .. " km from map center.")
+			if players[chatvars.ircid].donor or chatvars.accessLevel < 2 then
+				irc_chat(chatvars.ircAlias, "The world is limited to  " .. (server.mapSize + 10000) / 1000 .. " km from map center.")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "The world is limited to  " .. server.mapSize / 1000 .. " km from map center.")
+				irc_chat(chatvars.ircAlias, "The world is limited to  " .. server.mapSize / 1000 .. " km from map center.")
 			end
 
 			if server.idleKick then
-				irc_chat(players[chatvars.ircid].ircAlias, "When the server is full, idle players are kicked after 15 minutes.")
+				irc_chat(chatvars.ircAlias, "When the server is full, idle players are kicked after 15 minutes.")
 			end
 		end
 
@@ -251,11 +251,11 @@ function gmsg_info()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "next") or string.find(chatvars.command, "boot") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "next reboot")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "next reboot")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Reports the time remaining before the next scheduled reboot.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Reports the time remaining before the next scheduled reboot.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -266,7 +266,7 @@ function gmsg_info()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.[-]")
 				else
-					irc_chat(players[chatvars.ircid].ircAlias, "The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.")
+					irc_chat(chatvars.ircAlias, "The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.")
 				end
 			end
 
@@ -300,11 +300,11 @@ function gmsg_info()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "fps") or string.find(chatvars.command, "perf") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fps")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "fps")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Displays the most recent output from the server mem command.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Displays the most recent output from the server mem command.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -318,7 +318,7 @@ function gmsg_info()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server FPS: " .. server.fps .. " Players: " .. row.players .. " Zombies: " .. row.zombies .. " Entities: " .. row.entities .. " Heap: " .. row.heap .. " HeapMax: " .. row.heapMax .. "[-]")
 				else
-					irc_chat(players[chatvars.ircid].ircAlias, "Server FPS: " .. server.fps .. " Players: " .. row.players .. " Zombies: " .. row.zombies .. " Entities: " .. row.entities .. " Heap: " .. row.heap .. " HeapMax: " .. row.heapMax)
+					irc_chat(chatvars.ircAlias, "Server FPS: " .. server.fps .. " Players: " .. row.players .. " Zombies: " .. row.zombies .. " Entities: " .. row.entities .. " Heap: " .. row.heap .. " HeapMax: " .. row.heapMax)
 				end
 			end
 		end
@@ -331,11 +331,11 @@ function gmsg_info()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "date") or string.find(chatvars.command, "time") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "server date")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "server date")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Displays the system clock of the game server.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Displays the system clock of the game server.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -344,7 +344,7 @@ function gmsg_info()
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The server date is " .. botman.serverTime .. "[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "The server date is " .. botman.serverTime)
+			irc_chat(chatvars.ircAlias, "The server date is " .. botman.serverTime)
 		end
 
 		botman.faultyChat = false
@@ -355,12 +355,12 @@ function gmsg_info()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "server") or string.find(chatvars.command, "stat") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "server stats")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "server stats")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Displays various server totals for the last 24 hours or more days if you add a number.")
-				irc_chat(players[chatvars.ircid].ircAlias, "eg. " .. server.commandPrefix .. "server stats 5 (gives you the last 5 days cummulative stats)")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Displays various server totals for the last 24 hours or more days if you add a number.")
+				irc_chat(chatvars.ircAlias, "eg. " .. server.commandPrefix .. "server stats 5 (gives you the last 5 days cummulative stats)")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -378,13 +378,13 @@ function gmsg_info()
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]24 hour stats to now:[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "24 hour stats to now:")
+				irc_chat(chatvars.ircAlias, "24 hour stats to now:")
 			end
 		else
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. chatvars.number .. " day stats to now:[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, chatvars.number .. " day stats to now:")
+				irc_chat(chatvars.ircAlias, chatvars.number .. " day stats to now:")
 			end
 		end
 
@@ -394,7 +394,7 @@ function gmsg_info()
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]PVPs: " .. row.number .. "[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "PVPs: " .. row.number)
+			irc_chat(chatvars.ircAlias, "PVPs: " .. row.number)
 		end
 
 		cursor,errorString = conn:execute("SELECT COUNT(id) as number FROM events WHERE event LIKE '%timeout%' AND timestamp > DATE_SUB(now(), INTERVAL " .. chatvars.number .. " DAY)")
@@ -403,7 +403,7 @@ function gmsg_info()
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Timeouts: " .. row.number .. "[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "Timeouts: " .. row.number)
+			irc_chat(chatvars.ircAlias, "Timeouts: " .. row.number)
 		end
 
 		cursor,errorString = conn:execute("SELECT COUNT(id) as number FROM events WHERE event LIKE '%arrest%' AND timestamp > DATE_SUB(now(), INTERVAL " .. chatvars.number .. " DAY)")
@@ -412,7 +412,7 @@ function gmsg_info()
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Arrests: " .. row.number .. "[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "Arrests: " .. row.number)
+			irc_chat(chatvars.ircAlias, "Arrests: " .. row.number)
 		end
 
 		cursor,errorString = conn:execute("SELECT COUNT(id) as number FROM events WHERE event LIKE '%new%' AND timestamp > DATE_SUB(now(), INTERVAL " .. chatvars.number .. " DAY)")
@@ -421,7 +421,7 @@ function gmsg_info()
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New players: " .. row.number .. "[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "New players: " .. row.number)
+			irc_chat(chatvars.ircAlias, "New players: " .. row.number)
 		end
 
 		cursor,errorString = conn:execute("SELECT COUNT(id) as number FROM events WHERE event LIKE '%ban%' AND timestamp > DATE_SUB(now(), INTERVAL " .. chatvars.number .. " DAY)")
@@ -430,7 +430,7 @@ function gmsg_info()
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bans: " .. row.number .. "[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "Bans: " .. row.number)
+			irc_chat(chatvars.ircAlias, "Bans: " .. row.number)
 		end
 
 		cursor,errorString = conn:execute("SELECT MAX(players) as number FROM performance WHERE timestamp > DATE_SUB(now(), INTERVAL " .. chatvars.number .. " DAY)")
@@ -439,7 +439,7 @@ function gmsg_info()
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Most players online: " .. row.number .. "[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "Most players online: " .. row.number)
+			irc_chat(chatvars.ircAlias, "Most players online: " .. row.number)
 		end
 
 		botman.faultyChat = false
@@ -450,11 +450,11 @@ function gmsg_info()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "new") or string.find(chatvars.command, "play") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "new players <optional number (days)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "new players {optional number (days)")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "List the new players and basic info about them in the last day or more.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "List the new players and basic info about them in the last day or more.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -467,8 +467,8 @@ function gmsg_info()
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) > 2) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+			if (chatvars.accessLevel > 2) then
+				irc_chat(chatvars.ircAlias, "This command is restricted.")
 				botman.faultyChat = false
 				return true
 			end
@@ -483,7 +483,7 @@ function gmsg_info()
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New players in the last " .. math.floor(number / 86400) .. " days:[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "New players in the last " .. math.floor(number / 86400) .. " days:")
+			irc_chat(chatvars.ircAlias, "New players in the last " .. math.floor(number / 86400) .. " days:")
 		end
 
 		cursor,errorString = conn:execute("SELECT * FROM events where timestamp >= '" .. os.date('%Y-%m-%d %H:%M:%S', os.time() - number).. "' and type = 'new player' order by timestamp desc")
@@ -525,7 +525,7 @@ function gmsg_info()
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. msg .. "[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, msg)
+				irc_chat(chatvars.ircAlias, msg)
 			end
 
 			row = cursor:fetch(row, "a")
@@ -539,11 +539,11 @@ function gmsg_info()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "see") or string.find(chatvars.command, "play") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "seen <player>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "seen {player name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Reports when the player was last on the server.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Reports when the player was last on the server.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -558,7 +558,7 @@ function gmsg_info()
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]player " .. players[id].name .. " is playing right now.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "player " .. players[id].name .. " is playing right now.")
+				irc_chat(chatvars.ircAlias, "player " .. players[id].name .. " is playing right now.")
 			end
 
 			botman.faultyChat = false
@@ -610,13 +610,13 @@ function gmsg_info()
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" ..players[id].name .. " was last seen " .. days .. " days " .. hours .. " hours " .. minutes .." minutes ago.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, players[id].name .. " was last seen " .. days .. " days " .. hours .. " hours " .. minutes .." minutes ago.")
+				irc_chat(chatvars.ircAlias, players[id].name .. " was last seen " .. days .. " days " .. hours .. " hours " .. minutes .." minutes ago.")
 			end
 		else
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry I don't know a player called " .. pname .. ". Check your spelling.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Sorry I don't know a player called " .. pname .. ". Check your spelling.")
+				irc_chat(chatvars.ircAlias, "Sorry I don't know a player called " .. pname .. ". Check your spelling.")
 			end
 		end
 
@@ -628,11 +628,11 @@ function gmsg_info()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "rule") or string.find(chatvars.command, "server") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "rules")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "rules")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Reports the server rules.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Reports the server rules.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -641,7 +641,7 @@ function gmsg_info()
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.rules .."[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, server.rules)
+			irc_chat(chatvars.ircAlias, server.rules)
 		end
 
 		botman.faultyChat = false
@@ -654,19 +654,19 @@ function gmsg_info()
 	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Info Commands (In-Game Only):")
-		irc_chat(players[chatvars.ircid].ircAlias, "=============================")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Info Commands (In-Game Only):")
+		irc_chat(chatvars.ircAlias, "=============================")
+		irc_chat(chatvars.ircAlias, ".")
 	end
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "where") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "where")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "where")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Gives info about where you are in the world and the rules that apply there.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Gives info about where you are in the world and the rules that apply there.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -757,12 +757,12 @@ function gmsg_info()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "who") or string.find(chatvars.command, "info") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "who <optional number distance>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "who {optional number distance}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Reports who is around you.  Donors and staff can see distances.")
-				irc_chat(players[chatvars.ircid].ircAlias, "Donors can see 300 metres and other players can see 200.  New and watched players can't see staff near them.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Reports who is around you.  Donors and staff can see distances.")
+				irc_chat(chatvars.ircAlias, "Donors can see 300 metres and other players can see 200.  New and watched players can't see staff near them.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -785,6 +785,7 @@ function gmsg_info()
 
 		if (tonumber(chatvars.intX) < 0) then xdir = " west " else xdir = " east " end
 		if (tonumber(chatvars.intZ) < 0) then zdir = " south" else zdir = " north" end
+
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are at " .. chatvars.intX .. xdir .. chatvars.intZ .. zdir .. " at a height of " .. chatvars.intY .. "[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in region r." .. x .. "." .. z .. ".7[-]")
 
@@ -828,12 +829,12 @@ function gmsg_info()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "alert") or string.find(chatvars.command, "info") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "alert <message>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "alert {message>")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Whatever is typed after " .. server.commandPrefix .. "alert is recorded to the database and displayed on irc.")
-				irc_chat(players[chatvars.ircid].ircAlias, "You can recall the alerts with the irc command view alerts <optional days>")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Whatever is typed after " .. server.commandPrefix .. "alert is recorded to the database and displayed on irc.")
+				irc_chat(chatvars.ircAlias, "You can recall the alerts with the irc command view alerts {optional days>")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -859,11 +860,11 @@ function gmsg_info()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "info") or string.find(chatvars.command, "play") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "info <player>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "info {player>")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Displays info about a player.  Only staff can specify a player.  Players just see their own info.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Displays info about a player.  Only staff can specify a player.  Players just see their own info.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end

@@ -48,7 +48,7 @@ function loadServer()
 			end
 
 			if v.type == "flo" then
-				server[row.name][n] = tonumber(row[k])
+				server[k] = tonumber(row[k])
 			end
 
 			if v.type == "tin" then
@@ -56,9 +56,13 @@ function loadServer()
 			end
 		end
 
+if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
 		if row.chatlogPath == "" or row.chatlogPath == nil then
 			botman.chatlogPath = homedir .. "/chatlogs"
 		end
+
+if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 
 		botman.chatlogPath = row.chatlogPath
 
@@ -86,6 +90,22 @@ function loadServer()
 
 		if server.telnetPass ~= "" then
 			telnetPassword = server.telnetPass
+		end
+
+		whitelistedCountries = {}
+		temp = string.split(row.whitelistCountries, ",")
+
+		max = table.maxn(temp)
+		for i=1,max,1 do
+			whitelistedCountries[temp[i]] = {}
+		end
+
+		blacklistedCountries = {}
+		temp = string.split(row.blacklistCountries, ",")
+
+		max = table.maxn(temp)
+		for i=1,max,1 do
+			blacklistedCountries[temp[i]] = {}
 		end
 
 		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -120,7 +140,7 @@ function loadPlayers(steam)
 			end
 
 			if v.type == "flo" then
-				players[row.name][n] = tonumber(row[k])
+				players[row.steam][k] = tonumber(row[k])
 			end
 
 			if v.type == "tin" then
@@ -212,41 +232,41 @@ function loadTeleports(tp)
 
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	if tp == nil then teleports = {} end
-
-	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
-
 	if type(teleports) ~= "table" then
 		teleports = {}
 	end
 
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
-	cursor,errorString = conn:execute("select * from teleports")
+	if tp == nil then
+		teleports = {}
+		cursor,errorString = conn:execute("select * from teleports")
+	else
+		cursor,errorString = conn:execute("select * from teleports where name = '" .. escape(tp) .. "'")
+	end
+
 	row = cursor:fetch({}, "a")
 
 	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
 
 	while row do
-		if tp == row.name or tp == nil then
-			teleports[row.name] = {}
+		teleports[row.name] = {}
 
-			for k,v in pairs(teleportsFields) do
-				if v.type == "var" or v.type == "big" then
-					teleports[row.name][k] = row[k]
-				end
+		for k,v in pairs(teleportsFields) do
+			if v.type == "var" or v.type == "big" then
+				teleports[row.name][k] = row[k]
+			end
 
-				if v.type == "int" then
-					teleports[row.name][k] = tonumber(row[k])
-				end
+			if v.type == "int" then
+				teleports[row.name][k] = tonumber(row[k])
+			end
 
-				if v.type == "flo" then
-					teleports[row.name][k] = tonumber(row[k])
-				end
+			if v.type == "flo" then
+				teleports[row.name][k] = tonumber(row[k])
+			end
 
-				if v.type == "tin" then
-					teleports[row.name][k] = dbTrue(row[k])
-				end
+			if v.type == "tin" then
+				teleports[row.name][k] = dbTrue(row[k])
 			end
 		end
 
@@ -270,33 +290,35 @@ function loadLocations(loc)
 		locations = {}
 	end
 
-	if loc == nil then locations = {} end
+	if loc == nil then
+		locations = {}
+		cursor,errorString = conn:execute("select * from locations")
+	else
+		cursor,errorString = conn:execute("select * from locations where name = '" .. escape(loc) .. "'")
+	end
 
-	cursor,errorString = conn:execute("select * from locations")
 	row = cursor:fetch({}, "a")
 
 	while row do
 		if (debug) then dbug("debug loadLocation " .. row.name) end
 
-		if loc == row.name or loc == nil then
-			locations[row.name] = {}
+		locations[row.name] = {}
 
-			for k,v in pairs(locationsFields) do
-				if v.type == "var" or v.type == "big" then
-					locations[row.name][k] = row[k]
-				end
+		for k,v in pairs(locationsFields) do
+			if v.type == "var" or v.type == "big" then
+				locations[row.name][k] = row[k]
+			end
 
-				if v.type == "int" then
-					locations[row.name][k] = tonumber(row[k])
-				end
+			if v.type == "int" then
+				locations[row.name][k] = tonumber(row[k])
+			end
 
-				if v.type == "flo" then
-					locations[row.name][k] = tonumber(row[k])
-				end
+			if v.type == "flo" then
+				locations[row.name][k] = tonumber(row[k])
+			end
 
-				if v.type == "tin" then
-					locations[row.name][k] = dbTrue(row[k])
-				end
+			if v.type == "tin" then
+				locations[row.name][k] = dbTrue(row[k])
 			end
 		end
 
@@ -305,6 +327,22 @@ function loadLocations(loc)
 	end
 
 	if (debug) then dbug("debug loadLocations end") end
+end
+
+
+function loadLocationCategories()
+	-- load locationCategories
+	getTableFields("locationCategories")
+
+	locationCategories = {}
+	cursor,errorString = conn:execute("select * from locationCategories")
+	row = cursor:fetch({}, "a")
+	while row do
+		villagers[row.categoryName] = {}
+		villagers[row.categoryName].minAccessLevel = row.minAccessLevel
+		villagers[row.categoryName].maxAccessLevel = row.maxAccessLevel
+		row = cursor:fetch(row, "a")
+	end
 end
 
 
@@ -494,7 +532,7 @@ function loadVillagers()
 	-- load villagers
 	getTableFields("villagers")
 
-   villagers = {}
+	villagers = {}
 	cursor,errorString = conn:execute("select * from villagers")
 	row = cursor:fetch({}, "a")
 	while row do
@@ -510,7 +548,7 @@ function loadCustomMessages()
 	-- load customMessages
 	getTableFields("customMessages")
 
-   customMessages = {}
+	customMessages = {}
 	cursor,errorString = conn:execute("select * from customMessages")
 	row = cursor:fetch({}, "a")
 	while row do
@@ -528,7 +566,7 @@ function loadProxies()
 	-- load proxies
 	getTableFields("proxies")
 
-   proxies = {}
+	proxies = {}
 	cursor,errorString = conn:execute("select * from proxies")
 	row = cursor:fetch({}, "a")
 	while row do
@@ -719,6 +757,7 @@ function loadOtherEntities()
 		otherEntities[idx] = {}
 		otherEntities[idx].entity = row.entity
 		otherEntities[idx].doNotSpawn = dbTrue(row.doNotSpawn)
+		otherEntities[idx].doNotDespawn = dbTrue(row.doNotDespawn)
 		row = cursor:fetch(row, "a")
 	end
 end
@@ -744,6 +783,10 @@ if (debug) then display("debug loaded teleports\n") end
 if (debug) then display("debug loading locations\n") end
 	loadLocations()
 if (debug) then display("debug loaded locations\n") end
+
+if (debug) then display("debug loading locationCategories\n") end
+	loadLocationCategories()
+if (debug) then display("debug loaded locationCategories\n") end
 
 if (debug) then display("debug loading badItems\n") end
 	loadBadItems()

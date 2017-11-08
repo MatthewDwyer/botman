@@ -35,6 +35,7 @@ function requireLogin(name, silent)
 				players[steam].ircAuthenticated = true
 				players[steam].ircAlias = name
 				ircid = steam
+				players[ircid].accessLevel = players[ircid].accessLevel
 				return false
 			end
 		end
@@ -80,6 +81,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	words = {}
 	wordsOld = {}
+	numbers = {}
 	for word in msg:gmatch("%S+") do table.insert(wordsOld, word) end
 
 	words2 = string.split(msg, " ")
@@ -89,6 +91,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	irc_params.name = name
 	for word in msgLower:gmatch("%w+") do table.insert(words, word) end
 	wordCount = table.maxn(words)
+
+	for word in string.gmatch (msg, " (-?\%d+)") do
+		table.insert(numbers, word)
+	end
 
 	number = tonumber(string.match(msg, " (-?\%d+)"))
 
@@ -158,6 +164,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if words[2] == nil then
 			irc_chat(name, "Server name is " .. server.serverName)
 			irc_chat(name, "Address is " .. server.IP .. ":" .. server.ServerPort)
+			irc_chat(name, "Game version is " .. server.gameVersion)
+			irc_chat(name, "The server time is " .. botman.serverTime)
+			irc_chat(name, "The game time is " .. server.gameDate)
 
 			if server.updateBranch ~= '' then
 				irc_chat(name, "The bot is running code from the " .. server.updateBranch .. " branch")
@@ -173,8 +182,28 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, "The bot version is " .. server.botVersion)
 			end
 
+			irc_chat(name, "Command prefix is " .. server.commandPrefix)
+
+			if server.allocs then
+				irc_chat(name, "Allocs mod is " .. server.allocsVersion)
+			else
+				irc_chat(name, "Allocs mod is not installed")
+			end
+
+			if server.coppi then
+				irc_chat(name, "Coppis mod is " .. server.coppiVersion)
+			else
+				irc_chat(name, "Coppis mod is not installed")
+			end
+
 			irc_chat(name, "There are  " .. botman.playersOnline .. " players online.")
-			irc_chat(name, " ")
+
+			cursor,errorString = conn:execute("SELECT * FROM performance  ORDER BY serverdate DESC Limit 0, 1")
+			row = cursor:fetch({}, "a")
+			irc_chat(name, "Server FPS: " .. server.fps .. " Players: " .. row.players .. " Zombies: " .. row.zombies .. " Entities: " .. row.entities .. " Heap: " .. row.heap .. " HeapMax: " .. row.heapMax)
+
+			irc_uptime(name)
+			irc_chat(name, ".")
 			return
 		end
 	end
@@ -213,7 +242,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			row = cursor:fetch(row, "a")
 		end
 
-		irc_chat(name, " ")
+		irc_chat(name, ".")
 		return
 	end
 
@@ -226,7 +255,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, k)
 		end
 
-		irc_chat(name, " ")
+		irc_chat(name, ".")
 		return
 	end
 
@@ -250,7 +279,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			row = cursor:fetch(row, "a")
 		end
 
-		irc_chat(name, " ")
+		irc_chat(name, ".")
 		return
 	end
 
@@ -272,7 +301,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 		end
 
-		irc_chat(name, " ")
+		irc_chat(name, ".")
 		return
 	end
 
@@ -332,6 +361,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "Safe Zone: " .. dbYN(row.killZombies))
 			irc_chat(name, "Public: " .. dbYN(row.public))
 			irc_chat(name, "Allow Bases: " .. dbYN(row.allowBase))
+			irc_chat(name, "Allow Waypoints: " .. dbYN(row.allowWaypoints))
+			irc_chat(name, "Allow Returns: " .. dbYN(row.allowReturns))
 
 			if row.miniGame ~= nil then
 				irc_chat(name, "Mini Game: " .. row.miniGame)
@@ -381,6 +412,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, "Maximum level: " .. row.maximumLevel)
 			end
 
+			irc_chat(name, "Hidden: " .. dbYN(row.hidden))
+
 			irc_chat(name, "Players in " .. loc)
 
 			for k,v in pairs(igplayers) do
@@ -389,7 +422,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				end
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 		end
 
 		return
@@ -454,7 +487,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 		end
 
-		irc_chat(name, " ")
+		irc_chat(name, ".")
 		return
 	end
 
@@ -510,7 +543,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			requireLogin(name, true)
 		else
 			-- keep login session alive
-			if accessLevel(ircid) < 4 then
+			if players[ircid].accessLevel < 4 then
 				players[ircid].ircSessionExpiry = os.time() + 3600
 			else
 				players[ircid].ircSessionExpiry = os.time() + 10800
@@ -519,7 +552,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			connBots:execute("UPDATE players SET ircAuthenticated = 1 WHERE steam = " .. ircid)
 		end
 
-		if debug then dbug("IRC: " .. name .. " access " .. accessLevel(ircid) .. " said " .. msg) end
+		if debug then dbug("IRC: " .. name .. " access " .. players[ircid].accessLevel .. " said " .. msg) end
 	end
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
@@ -564,9 +597,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		if words[2] ~= nil then
 			if not string.find(msg, " pass ") then
-				irc_chat(name, "Logins have changed.  The new format is login <name> pass <password>")
-				irc_chat(name, "Your login will need to be updated to the new format.  You can do this yourself by typing invite <your ingame name> then join the server and type /read mail and follow the instructions there.")
-				irc_chat(name, " ")
+				irc_chat(name, "Logins have changed.  The new format is login {name} pass {password}")
+				irc_chat(name, "Your login will need to be updated to the new format.  You can do this yourself by typing invite {your ingame name} then join the server and type /read mail and follow the instructions there.")
+				irc_chat(name, ".")
 				return
 			else
 				tmp.login = string.sub(msg, string.find(msgLower, "login") + 6, string.find(msg, " pass ") - 1)
@@ -598,26 +631,26 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				players[ircid].ircSessionExpiry = os.time() + 10800 -- 3 hours!
 
 				irc_chat(name, "You have logged in " .. name)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				return
 			else
 				irc_chat(name, "Name or password not recognised. :{")
 				irc_chat(name, "Note: You must have joined the server at least once to be recognised.  Also a password must have been set for you.")
-				irc_chat(name, "You can get yourself recognised and give yourself a password by typing invite <your ingame name>. Join the server and /read mail then follow the bot's instructions.")
-				irc_chat(name, " ")
+				irc_chat(name, "You can get yourself recognised and give yourself a password by typing invite {your ingame name}. Join the server and /read mail then follow the bot's instructions.")
+				irc_chat(name, ".")
 				return
 			end
 
 			if (players[ircid].ircPass == nil) then
 				irc_chat(name, "You don't currently have a password.  Ask us to set one for you.")
 				irc_chat(name, "Note: You must have joined the server at least once to be recognised as then you will have a player record.")
-				irc_chat(name, "You can get yourself recognised and give yourself a password by typing invite <your ingame name>. Join the server and /read mail then follow the bot's instructions.")
-				irc_chat(name, " ")
+				irc_chat(name, "You can get yourself recognised and give yourself a password by typing invite {your ingame name}. Join the server and /read mail then follow the bot's instructions.")
+				irc_chat(name, ".")
 			end
 		else
-			irc_chat(name, "You didn't give me the password.  Type login <password> or login <name> pass <password>")
+			irc_chat(name, "You didn't give me the password.  Type login {password} or login {name} pass {password}")
 			irc_chat(name, "Note: You must have joined the server at least once to be recognised as then you will have a player record.")
-			irc_chat(name, "You can get yourself recognised and give yourself a password by typing invite <your ingame name>. Join the server and /read mail then follow the bot's instructions.")
+			irc_chat(name, "You can get yourself recognised and give yourself a password by typing invite {your ingame name}. Join the server and /read mail then follow the bot's instructions.")
 		end
 
 		return
@@ -641,7 +674,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if words[1] == "bow" and (words[2] == "before" or words[2] == "to") and words[3] == "me" then
 		ircid = LookupPlayer(name, "all")
 
-		if accessLevel(ircid) < 3 then
+		if players[ircid].accessLevel < 3 then
 			players[ircid].ircSessionExpiry = os.time() + 10800 -- 3 hours!
 			players[ircid].ircAuthenticated = true
 			players[ircid].ircAlias = name
@@ -652,7 +685,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			connBots:execute("UPDATE players SET ircAlias = '" .. escape(name) .. "', ircAuthenticated = 1 WHERE steam = " .. ircid)
 		else
 			irc_chat(name, "Did you drop your contact lense?")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 		end
 
 		return
@@ -670,29 +703,29 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			players[ircid].ircInvite = nil
 			irc_chat(name, "Welcome to our IRC server " .. name .. "!")
 			irc_chat(name, "Your current IRC nickname is now recorded in your player record.  To prevent others from impersonating you on IRC, you need to give me a password.")
-			irc_chat(name, "Please just use numbers and letters and no symbols.  To set or change your password type new login <name> pass <password>.  eg. new login joe pass catsrul3")
-			irc_chat(name, " ")
+			irc_chat(name, "Please just use numbers and letters and no symbols.  To set or change your password type new login {name} pass {password}.  eg. new login joe pass catsrul3")
+			irc_chat(name, ".")
 			irc_chat(name, "To use your password, never type it in " .. server.ircMain .. " or anywhere other than here in this private chat between us or others may see your password.")
 			irc_chat(name, "If you accidentally login in " .. server.ircMain .. " I will wipe your password and you will need to set a new one.  If that happens type invite followed by your in-game name and I will send you a new IRC invite code.")
 
-			if accessLevel(ircid) < 3 then
+			if players[ircid].accessLevel < 3 then
 				irc_chat(name, "As an admin of " .. server.serverName .. " you have a lot of commands available.  Type help and you can start exploring all of the commands available to you.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				irc_chat(name, "Some common IRC bot commands are:")
-				irc_chat(name, "help, staff, who, uptime, server, server stats, info <player>, inv <player>, near player <player>, new players")
+				irc_chat(name, "help, staff, who, uptime, server, server stats, info {player name}, inv {player name}, near player {player name}, new players")
 			else
 				irc_chat(name, "As a player you have some commands you can give me.  To see them all type help.  You can also chat to in-game players from here but ideally in " .. server.ircMain .. ". To speak to them type say followed by a message.")
 				irc_chat(name, "Anything after the word say is repeated in-game with your name infront of it and -irc to show that you are speaking from here.")
 				irc_chat(name, "Note that on IRC, bot commands do not use a /.  This is because the IRC server uses / for server its IRC commands.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				irc_chat(name, "Some common IRC bot commands are:")
 				irc_chat(name, "help, staff, who, uptime, server, server stats, day, rules")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				irc_chat(name, "Never login in " .. server.ircMain .. " or any channel that begins with a #.  Always type hi bot and use the private chat channel.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			conn:execute("UPDATE players SET ircAlias = '" .. escape(name) .. "' WHERE steam = " .. ircid)
 			connBots:execute("UPDATE players SET ircAlias = '" .. escape(name) .. "', ircAuthenticated = 1 WHERE steam = " .. ircid)
 		end
@@ -723,7 +756,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			if (string.trim(words[3]) ~= "") then
 				server.IP = string.sub(msg, string.find(msg, words[3]), string.len(msg))
 				irc_chat(name, "The server address is now " .. server.IP .. ":" .. server.ServerPort)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				conn:execute("UPDATE server SET IP = '" .. server.IP .. "'")
 				return
 			end
@@ -752,8 +785,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		end
 
 		if tmp.login == nil then
-			irc_chat(name, "The format of this command has changed.  It is, new login <name> pass <password>")
-			irc_chat(name, " ")
+			irc_chat(name, "The format of this command has changed.  It is, new login {name} pass {password}")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -770,7 +803,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			conn:execute("UPDATE players SET ircLogin = '" .. escape(tmp.login) .. "', ircPass = '" .. escape(tmp.pass) .. "' WHERE steam = " .. ircid)
 			connBots:execute("UPDATE players SET ircAlias = '" .. escape(name) .. "', ircAuthenticated = 1 WHERE steam = " .. ircid)
 			irc_chat(name, "You have set your new login. Test it now by typing login " .. tmp.login .. " pass " .. tmp.pass)
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 		end
 
 		return
@@ -816,7 +849,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "command" and words[2] == "help") and (accessLevel(ircid) < 3) then
+	if (words[1] == "command" and words[2] == "help") and (players[ircid].accessLevel < 3) then
 		if words[3] == nil then
 			gmsg(server.commandPrefix .. "command help", ircid)
 		else
@@ -828,7 +861,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "list" and words[2] == "help") and (accessLevel(ircid) < 3) then
+	if (words[1] == "list" and words[2] == "help") and (players[ircid].accessLevel < 3) then
 		if words[3] == nil then
 			gmsg(server.commandPrefix .. "list help", ircid)
 		else
@@ -840,7 +873,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "help" and words[2] == nil) then --  and (accessLevel(ircid) < 3)
+	if (words[1] == "help" and words[2] == nil) then --  and (players[ircid].accessLevel < 3)
 		irc_commands()
 		gmsg(server.commandPrefix .. "help sections", ircid)
 		return
@@ -848,56 +881,56 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "help" and words[2] == "server") and (accessLevel(ircid) < 3) then
+	if (words[1] == "help" and words[2] == "server") and (players[ircid].accessLevel < 3) then
 		irc_HelpServer()
 		return
 	end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "help" and words[2] == "donors") and (accessLevel(ircid) < 3) then
+	if (words[1] == "help" and words[2] == "donors") and (players[ircid].accessLevel < 3) then
 		irc_HelpDonors()
 		return
 	end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "help" and words[2] == "csi") and (accessLevel(ircid) < 3) then
+	if (words[1] == "help" and words[2] == "csi") and (players[ircid].accessLevel < 3) then
 		irc_HelpCSI()
 		return
 	end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "help" and words[2] == "watchlist") and (accessLevel(ircid) < 3) then
+	if (words[1] == "help" and words[2] == "watchlist") and (players[ircid].accessLevel < 3) then
 		irc_HelpWatchlist()
 		return
 	end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "help" and words[2] == "bad" and words[3] == "items") and (accessLevel(ircid) < 3) then
+	if (words[1] == "help" and words[2] == "bad" and words[3] == "items") and (players[ircid].accessLevel < 3) then
 		irc_HelpBadItems()
 		return
 	end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "help" and words[2] == "announcements") and (accessLevel(ircid) < 3) then
+	if (words[1] == "help" and words[2] == "announcements") and (players[ircid].accessLevel < 3) then
 		irc_HelpAnnouncements()
 		return
 	end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "help" and words[2] == "commands") and (accessLevel(ircid) < 3) then
+	if (words[1] == "help" and words[2] == "commands") and (players[ircid].accessLevel < 3) then
 		irc_HelpCommands()
 		return
 	end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "help" and words[2] == "motd") and (accessLevel(ircid) < 3) then
+	if (words[1] == "help" and words[2] == "motd") and (players[ircid].accessLevel < 3) then
 		irc_HelpMOTD()
 		return
 	end
@@ -911,7 +944,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "reset" and words[2] == "zones" and words[3] == nil) and (accessLevel(ircid) < 3) then
+	if (words[1] == "reset" and words[2] == "zones" and words[3] == nil) and (players[ircid].accessLevel < 3) then
 		irc_listResetZones(name)
 		return
 	end
@@ -946,12 +979,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (words[1] == "rules") then
 		if words[2] == nil then
 			irc_chat(name, "The server rules are " .. server.rules)
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		else
-			if (accessLevel(ircid) < 3) then
-				irc_chat(name, "To change the rules type set rules <new rules>")
-				irc_chat(name, " ")
+			if (players[ircid].accessLevel < 3) then
+				irc_chat(name, "To change the rules type set rules {new rules}")
+				irc_chat(name, ".")
 			end
 
 			return
@@ -960,7 +993,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "invite" and words[2] ~= nil) and (not server.ircPrivate or accessLevel(ircid) < 3) then
+	if (words[1] == "invite" and words[2] ~= nil) and (not server.ircPrivate or players[ircid].accessLevel < 3) then
 		name1 = string.trim(string.sub(msgLower, string.find(msgLower, "invite") + 7))
 		pid = LookupPlayer(name1)
 
@@ -981,7 +1014,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. pid .. ", '" .. escape("You have an invite code for IRC! Reply with " .. server.commandPrefix .. "accept " .. number .. " or ignore it.") .. "')")
 			irc_chat(name, "An IRC invite code has been sent to " .. players[pid].name)
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 	end
@@ -993,7 +1026,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		return
 	end
 
-	if (accessLevel(ircid) > 3) then
+	if (players[ircid].accessLevel > 3) then
 		return
 	end
 
@@ -1035,7 +1068,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "sql" and words[2] == "select") and accessLevel(ircid) == 0 then
+	if (words[1] == "sql" and words[2] == "select") and players[ircid].accessLevel == 0 then
 		tmp = {}
 		tmp.sql = string.sub(msg, 4)
 
@@ -1072,12 +1105,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			row = cursor:fetch(row, "a")
 		end
 
-		irc_chat(name, " ")
+		irc_chat(name, ".")
 	end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "set" and words[2] == "irc" and words[3] == "server") and accessLevel(ircid) == 0 then
+	if (words[1] == "set" and words[2] == "irc" and words[3] == "server") and players[ircid].accessLevel == 0 then
 		server.ircServer = string.sub(msg, string.find(msg, " server ") + 8)
 		temp = string.split(server.ircServer, ":")
 		server.ircServer = temp[1]
@@ -1087,12 +1120,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		if botman.customMudlet then
 			irc_chat(name, "The bot will now connect to the irc server at " .. server.ircServer .. ":" .. server.ircPort)
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			joinIRCServer()
 			ircSaveSessionConfigs()
 		else
 			irc_chat(name, "You have set the irc server to " .. server.ircServer .. ":" .. server.ircPort)
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 		end
 
 		return
@@ -1100,7 +1133,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "set" and words[2] == "server" and words[3] == "ip") and string.find(msg, "pass") and accessLevel(ircid) == 0 then
+	if (words[1] == "set" and words[2] == "server" and words[3] == "ip") and string.find(msg, "pass") and players[ircid].accessLevel == 0 then
 		local sIP, sPort, sPass
 
 		for i=3,word2Count,1 do
@@ -1124,7 +1157,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		connectToServer(sIP, sPort, true)
 
 		irc_chat(server.ircMain, "Connecting to new 7 Days to Die server " .. sIP .. " port " .. sPort)
-		irc_chat(players[chatvars.ircid].ircAlias, "Connecting to new 7 Days to Die server " .. sIP .. " port " .. sPort .. " with pass " .. sPass)
+		irc_chat(chatvars.ircAlias, "Connecting to new 7 Days to Die server " .. sIP .. " port " .. sPort .. " with pass " .. sPass)
 
 		return
 	end
@@ -1143,7 +1176,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if botman.customMudlet then
 			if server.masterPassword ~= "" then
 				irc_chat(name, "This command requires a password to complete.")
-				irc_chat(name, "Type " .. server.commandPrefix .. "password <the password> (Do not type the <>).")
+				irc_chat(name, "Type " .. server.commandPrefix .. "password {the password} (Do not type the {}).")
 				players[ircid].botQuestion = "restart bot"
 			else
 				restartBot()
@@ -1361,7 +1394,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		irc_chat(name, "Default base protection size is " .. server.baseSize)
 		irc_chat(name, "Blacklist response is " .. server.blacklistResponse)
-		irc_chat(name, "Blocked countries: " .. server.blockCountries)
+		irc_chat(name, "Blocked countries: " .. server.blacklistCountries)
 		irc_chat(name, "Bot is called " .. server.botName)
 
 		if server.botRestartHour ~= 25 then
@@ -1625,7 +1658,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "Not using Coppi's additions")
 		end
 
-		irc_chat(name, " ")
+		irc_chat(name, ".")
 		return
 	end
 
@@ -1688,7 +1721,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			row = cursor:fetch(row, "a")
 		end
 
-		irc_chat(name, " ")
+		irc_chat(name, ".")
 		return
 	end
 
@@ -1714,7 +1747,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			CheckBlacklist(pid, number)
 		end
 
-		irc_chat(name, " ")
+		irc_chat(name, ".")
 		return
 	end
 
@@ -1737,7 +1770,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				end
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -1749,7 +1782,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, "You can grab the coords from any player by adding, near joe")
 				irc_chat(name, "Defaults: days = 1, range = 100km, xpos = 0, zpos = 0")
 				irc_chat(name, "Optional: player (or near) joe, days 1, hours 1, range 50, item tin, qty 10, xpos 0, zpos 0, session 1")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				return
 			end
 
@@ -1864,7 +1897,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				end
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -1887,7 +1920,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				end
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -1900,7 +1933,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			conn:execute("INSERT INTO announcements (message, startdate, enddate) VALUES ('" .. escape(msg) .. "'," .. os.date("%Y-%m-%d", os.time()) .. ",'2020-01-01')")
 
 			irc_chat(name, "New announcement added.")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -1920,7 +1953,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 
 			irc_chat(name, "Announcement " .. number .. " deleted.")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -1935,7 +1968,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, "Another example:  who visited bed smeg")
 				irc_chat(name, "Setting hours will reset days to zero")
 				irc_chat(name, "Defaults: days = 1 or hours = 0, range = 10")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				return
 			end
 
@@ -2010,7 +2043,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				end
 
 				if players[tmp.steam].home2X ~= 0 and players[tmp.steam].home2Z ~= 0 then
-					irc_chat(name, " ")
+					irc_chat(name, ".")
 					irc_chat(name, "Players who visited within " .. tmp.range .. " metres of base 2 of " .. players[tmp.steam].name .. " at " .. players[tmp.steam].home2X .. " " .. players[tmp.steam].home2Y .. " " .. players[tmp.steam].home2Z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height)
 					dbWho(name, players[tmp.steam].home2X, players[tmp.steam].home2Y, players[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height)
 				end
@@ -2033,7 +2066,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				dbWho(name, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height)
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 
 			return
 		end
@@ -2066,7 +2099,22 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			name1 = string.trim(name1)
 			pid = LookupPlayer(name1)
 
+			display(numbers)
+
 			if pid ~= nil then
+				if numbers[2] ~= nil then
+					number = numbers[2]
+					players[pid].cash = number
+				else
+					if numbers[1] ~= nil then
+						number = numbers[1]
+						players[pid].cash = number
+					else
+						irc_chat(name, "Expected a number for cash but no cash found. Check under your seat, might be some cash there. xD")
+						return
+					end
+				end
+
 				players[pid].cash = number
 				conn:execute("UPDATE players set cash = " .. players[pid].cash .. " WHERE steam = " .. pid)
 				msg = "You altered " .. players[pid].name .. "'s " .. server.moneyPlural .. " to " .. number
@@ -2125,7 +2173,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				end
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -2163,7 +2211,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 -- ************************************************************************************************8
-		if (words[1] == "con") and accessLevel(ircid) == 0 then
+		if (words[1] == "con") and players[ircid].accessLevel == 0 then
 			msg = string.trim(string.sub(msg, string.find(msgLower, "con") + 4))
 			send(msg)
 
@@ -2198,7 +2246,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, tmp)
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -2207,14 +2255,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if (words[1] == "base") and (words[2] == "cooldown" or words[2] == "timer") then
 			if words[3] == nil then
 				irc_chat(name, server.commandPrefix .. "base can only be used once every " .. (server.baseCooldown / 60) .. " minutes for players and " .. math.floor((server.baseCooldown / 60) / 2) .. " minutes for donors.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				return
 			end
 
 			if words[3] ~= nil then
 				server.baseCooldown = tonumber(words[3])
 				irc_chat(name, "The base cooldown timer is now " .. (server.baseCooldown / 60) .. " minutes for players and " .. math.floor((server.baseCooldown / 60) / 2) .. " minutes for donors.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				conn:execute("UPDATE server SET baseCooldown = 0")
 				return
@@ -2227,7 +2275,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			if words[3] ~= nil then
 				server.rules = string.sub(msg, string.find(msgLower, "set rules") + 9)
 				irc_chat(name, "New server rules recorded: " .. server.rules)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				conn:execute("UPDATE server SET rules = '" .. escape(server.rules) .. "'")
 				return
@@ -2239,21 +2287,21 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if (words[1] == "motd") then
 			if words[2] == nil then
 				irc_chat(name, "MOTD is " .. server.MOTD)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				return
 			end
 
 			if words[2] == "delete" or words[2] == "clear" then
 				server.MOTD = nil
 				irc_chat(name, "Message of the day has been deleted.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				conn:execute("UPDATE server SET MOTD = ''")
 				return
 			end
 
 			irc_chat(name, "To change the MOTD type set motd <new message of the day>")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -2263,7 +2311,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			if words[3] ~= nil then
 				server.MOTD = string.sub(msg, string.find(msgLower, "set motd") + 9)
 				irc_chat(name, "New message of the day recorded. " .. server.MOTD)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				conn:execute("UPDATE server SET MOTD = '" .. escape(server.MOTD) .. "'")
 				return
@@ -2272,77 +2320,77 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if (words[1] == "list") and (words[2] == "tables") and (words[3] == nil) and (accessLevel(ircid) == 0) then
+		if (words[1] == "list") and (words[2] == "tables") and (words[3] == nil) and (players[ircid].accessLevel == 0) then
 			irc_ListTables()
 			return
 		end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if (words[1] == "show") and (words[2] == "table") and (words[3] ~= nil) and (accessLevel(ircid) == 0) then
+		if (words[1] == "show") and (words[2] == "table") and (words[3] ~= nil) and (players[ircid].accessLevel == 0) then
 			irc_chat(name, "The " .. words[3] .." table: ")
 
 			if string.lower(words[3]) == "locations" then
 				for k, v in pairs(locations) do
 					irc_chat(name, "Location " .. k)
-					irc_chat(name, " ")
+					irc_chat(name, ".")
 
 					for n,m in pairs(locations[k]) do
 						irc_chat(name, n .. "," .. tostring(m))
 					end
 
-					irc_chat(name, " ")
+					irc_chat(name, ".")
 				end
 
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				return
 			end
 
 			if string.lower(words[3]) == "hotspots" then
 				for k, v in pairs(hotspots) do
 					irc_chat(name, "Hotspot " .. k)
-					irc_chat(name, " ")
+					irc_chat(name, ".")
 
 					for n,m in pairs(hotspots[k]) do
 						irc_chat(name, n .. "," .. tostring(m))
 					end
 
-					irc_chat(name, " ")
+					irc_chat(name, ".")
 				end
 
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				return
 			end
 
 			if string.lower(words[3]) == "teleports" then
 				for k, v in pairs(teleports) do
 					irc_chat(name, "Teleport " .. k)
-					irc_chat(name, " ")
+					irc_chat(name, ".")
 
 					for n,m in pairs(teleports[k]) do
 						irc_chat(name, n .. "," .. tostring(m))
 					end
 
-					irc_chat(name, " ")
+					irc_chat(name, ".")
 				end
 
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				return
 			end
 
 			if string.lower(words[3]) == "gimmezombies" then
 				for k, v in pairs(gimmeZombies) do
 					irc_chat(name, "Zombie " .. k)
-					irc_chat(name, " ")
+					irc_chat(name, ".")
 
 					for n,m in pairs(gimmeZombies[k]) do
 						irc_chat(name, n .. "," .. tostring(m))
 					end
 
-					irc_chat(name, " ")
+					irc_chat(name, ".")
 				end
 
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				return
 			end
 
@@ -2353,45 +2401,45 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				end
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if words[1] == "reset" and words[2] == "bot" and words[3] == "keep" and words[4] == "money" and (accessLevel(ircid) == 0) then
+		if words[1] == "reset" and words[2] == "bot" and words[3] == "keep" and words[4] == "money" and (players[ircid].accessLevel == 0) then
 			if resetbotCount == nil then resetbotCount = 0 end
 
 			if tonumber(resetbotCount) < 1 then
 				resetbotCount = tonumber(resetbotCount) + 1
 				irc_chat(name, "ALERT! Only do this after a server wipe!  To reset me repeat the reset bot command again.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			ResetBot(true)
 			resetbotCount = 0
 
 			irc_chat(name, "I have been reset.  All bases, inventories etc are forgotten, but not the players.")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		else
 			resetbotCount = 0
 		end
 
-		if (words[1] == "reset") and (words[2] == "bot") and (accessLevel(ircid) == 0) then
+		if (words[1] == "reset") and (words[2] == "bot") and (players[ircid].accessLevel == 0) then
 			if resetbotCount == nil then resetbotCount = 0 end
 
 			if tonumber(resetbotCount) < 1 then
 				resetbotCount = tonumber(resetbotCount) + 1
 				irc_chat(name, "ALERT! Only do this after a server wipe!  To reset me repeat the reset bot command again.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			ResetBot()
 			resetbotCount = 0
 
 			irc_chat(name, "I have been reset.  All bases, inventories etc are forgotten, but not the players.")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		else
 			resetbotCount = 0
@@ -2408,12 +2456,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				players[pid].ircTranslate = nil
 				players[pid].translate = nil
 				irc_chat(name, "Chat from " .. players[pid].name .. " will not be translated")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				conn:execute("UPDATE players SET translate = 0, ircTranslate = 0 WHERE steam = " .. pid)
 			else
 				irc_chat(name, "No player found matching " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			return
@@ -2429,12 +2477,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			if (pid ~= nil) then
 				players[pid].translate = true
 				irc_chat(name, "Chat from " .. players[pid].name .. " will be translated in-game")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				conn:execute("UPDATE players SET translate = 1 WHERE steam = " .. pid)
 			else
 				irc_chat(name, "No player found matching " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			return
@@ -2450,12 +2498,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			if (pid ~= nil) then
 				players[pid].ircTranslate = true
 				irc_chat(name, "Chat from " .. players[pid].name .. " will be translated to irc only")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				conn:execute("UPDATE players SET ircTranslate = 1 WHERE steam = " .. pid)
 			else
 				irc_chat(name, "No player found matching " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			return
@@ -2467,7 +2515,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			server.allowShop = true
 
 			irc_chat(name, "Players can use the shop and play in the lottery.")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 
 			conn:execute("UPDATE server SET allowShop = 1")
 			return
@@ -2479,7 +2527,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			server.allowShop = false
 
 			irc_chat(name, "Only staff can use the shop.")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 
 			conn:execute("UPDATE server SET allowShop = 0")
 			return
@@ -2491,7 +2539,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			LookupShop(words[3])
 
 			irc_chat(name, "You have changed the price variation for " .. shopItem .. " to " .. words2[4])
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 
 			conn:execute("UPDATE shop SET variation = " .. tonumber(words2[4]) .. " WHERE item = '" .. escape(shopItem) .. "'")
 			return
@@ -2508,7 +2556,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 
 			irc_chat(name, "You have changed the special for " .. shopItem .. " to " .. words2[4])
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 
 			conn:execute("UPDATE shop SET special = " .. tonumber(words2[4]) .. " WHERE item = '" .. escape(shopItem) .. "'")
 			return
@@ -2525,7 +2573,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 
 			irc_chat(name, "You have changed the price for " .. shopItem .. " to " .. words2[4])
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 
 			conn:execute("UPDATE shop SET price = " .. tonumber(words2[4]) .. " WHERE item = '" .. escape(shopItem) .. "'")
 			return
@@ -2542,7 +2590,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 
 			irc_chat(name, "You have changed the max stock level for " .. shopItem .. " to " .. words[4])
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 
 			conn:execute("UPDATE shop SET maxStock = " .. tonumber(words2[4]) .. " WHERE item = '" .. escape(shopItem) .. "'")
 			return
@@ -2669,7 +2717,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_ListVillagers()
 			else
 				irc_chat(name, "No village found matching " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			return
@@ -2702,7 +2750,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if (words[1] == "add" and words[2] == "bad" and words[3] == "item" and words[4] ~= nil and accessLevel(ircid) == 0) then
+		if (words[1] == "add" and words[2] == "bad" and words[3] == "item" and words[4] ~= nil and players[ircid].accessLevel == 0) then
 			name1 = wordsOld[4]
 
 			-- add the bad item to badItems table
@@ -2711,14 +2759,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			conn:execute("INSERT INTO badItems (item) VALUES ('" .. escape(name1) .. "')")
 
 			irc_chat(name, name1 .. " has been added to the bad items list.")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 
 			return
 		end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if (words[1] == "remove" and words[2] == "bad" and words[3] == "item" and words[4] ~= nil and accessLevel(ircid) == 0) then
+		if (words[1] == "remove" and words[2] == "bad" and words[3] == "item" and words[4] ~= nil and players[ircid].accessLevel == 0) then
 			name1 = wordsOld[4]
 
 			-- remove the bad item from the badItems table
@@ -2727,7 +2775,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			conn:execute("DELETE FROM badItems WHERE item = '" .. escape(name1) .. "'")
 
 			irc_chat(name, name1 .. " has been removed from the bad items list.")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 
 			return
 		end
@@ -2737,9 +2785,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if (words[1] == "near") then
 			if words[2] == nil then
 				irc_chat(name, "Lists players, bases and locations near a player or coordinate.")
-				irc_chat(name, "Usage: near player <name>")
-				irc_chat(name, "optional: range <number>")
-				irc_chat(name, "optional: Instead of player use xpos <number> zpos <number>")
+				irc_chat(name, "Usage: near player {name}")
+				irc_chat(name, "optional: range {number}")
+				irc_chat(name, "optional: Instead of player use xpos {number} zpos {number}")
 
 			end
 
@@ -2812,7 +2860,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_friends()
 			else
 				irc_chat(name, "No player found matching " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			return
@@ -2829,7 +2877,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				-- update the player record
 				players[pid].donor = true
 				irc_chat(name, players[pid].name .. " is now a donor.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				conn:execute("UPDATE players SET donor = 1 WHERE steam = " .. pid)
 			end
@@ -2848,7 +2896,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				-- update the player record
 				players[pid].donor = false
 				irc_chat(name, players[pid].name .. " is no longer a donor.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				conn:execute("UPDATE players SET donor = 0 WHERE steam = " .. pid)
 			end
@@ -2867,7 +2915,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				-- add the steamid to the owners table
 				owners[pid] = {}
 				irc_chat(name, players[pid].name .. " has been added as a server owner.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				send("admin add " .. pid .. " 0")
 			end
@@ -2886,7 +2934,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				-- remove the steamid from the owners table
 				owners[pid] = nil
 				irc_chat(name, players[pid].name .. " is no longer a server owner.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				send("admin remove " .. pid)
 			end
@@ -2905,7 +2953,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				-- add the steamid to the admins table
 				admins[pid] = {}
 				irc_chat(name, players[pid].name .. " has been added as a server admin.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				send("admin add " .. pid .. " 1")
 			end
@@ -2915,7 +2963,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if (words[1] == "remove" and words[2] == "admin" and words[3] ~= nil and accessLevel(ircid) == 0) then
+		if (words[1] == "remove" and words[2] == "admin" and words[3] ~= nil and players[ircid].accessLevel == 0) then
 			name1 = string.sub(msg, string.find(msgLower, "admin") + 6)
 			name1 = string.trim(name1)
 
@@ -2925,7 +2973,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				-- remove the steamid from the admins table
 				admins[pid] = nil
 				irc_chat(name, players[pid].name .. " is no longer a server admin.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				send("admin remove " .. pid)
 			end
@@ -2943,13 +2991,13 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				banPlayer(pid, "10 years", "Permanent ban", ircid)
 
 				irc_chat(name, name1 .. " has been banned for 10 years.")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				conn:execute("UPDATE players SET permanentBan = 1 WHERE steam = " .. pid)
 				players[pid].permanentBan = true
 			else
 				irc_chat(name, "No player found matching " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			return
@@ -2967,10 +3015,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				players[pid].permanentBan = false
 
 				irc_chat(name, "Ban lifted for player " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			else
 				irc_chat(name, "No player found matching " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			return
@@ -2998,7 +3046,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				players[pid].ircPass = tmp.pass
 
 				irc_chat(name, players[pid].name .. " is now authorised to talk to ingame players")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				conn:execute("UPDATE players SET ircLogin = '" .. escape(tmp.login) .. "', ircPass = '" .. escape(tmp.pass) .. "' WHERE steam = " .. pid)
 			end
@@ -3021,11 +3069,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 					irc_unfriend()
 				else
 					irc_chat(name, "No player found matching " .. name2)
-					irc_chat(name, " ")
+					irc_chat(name, ".")
 				end
 			else
 				irc_chat(name, "No player found matching " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			return
@@ -3046,11 +3094,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 					irc_friend()
 				else
 					irc_chat(name, "No player found matching " .. name2)
-					irc_chat(name, " ")
+					irc_chat(name, ".")
 				end
 			else
 				irc_chat(name, "No player found matching " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			return
@@ -3068,14 +3116,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_friends()
 			else
 				irc_chat(name, "No player found matching " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 			return
 		end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if (words[1] == "players" and words[2] == nil) and accessLevel(ircid) == 0 then
+		if (words[1] == "players" and words[2] == nil) and players[ircid].accessLevel == 0 then
 			irc_listAllPlayers(name)
 			return
 		end
@@ -3096,11 +3144,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 						end
 					end
 				else
-					irc_chat(name, " ")
+					irc_chat(name, ".")
 					irc_chat(name, "I do not know a player called " .. name1)
 				end
 
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			return
@@ -3132,7 +3180,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				conn:execute("UPDATE players SET watchPlayer = 1 WHERE steam = " .. pid)
 
 				irc_chat(name, "Now watching player " .. players[pid].name)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 			return
 		end
@@ -3149,10 +3197,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				conn:execute("UPDATE players SET watchPlayer = 0 WHERE steam = " .. pid)
 
 				irc_chat(name, "No longer watching player " .. players[pid].name)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			else
 				irc_chat(name, "No player matched " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 			return
 		end
@@ -3201,7 +3249,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 
 			irc_chat(name, tmp.count .. " current donors")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -3217,10 +3265,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 					public = "private"
 				end
 
-				irc_chat(name, v.name .. " " .. public)
+				irc_chat(name, v.name .. "." .. public)
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -3233,7 +3281,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, k)
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -3260,7 +3308,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				end
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -3283,7 +3331,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_playerStatus()
 			else
 				irc_chat(name, "No player found matching " .. name1)
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 			end
 
 			return
@@ -3355,7 +3403,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if (words[1] == "add" and words[2] == "command" and accessLevel(ircid) < 3) then
+		if (words[1] == "add" and words[2] == "command" and players[ircid].accessLevel < 3) then
 			cmd = words[3]
 
 			if words[4] == "access" then
@@ -3370,7 +3418,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, "Bad command.  This is used to create commands that send a private message to the player. You can add an optional access level.  99 is the default.")
 				irc_chat(name, "Valid access levels are 99 (everyone), 90 (regulars), 4 (donors), 2 (mods), 1 (admins) 0 (owners)")
 				irc_chat(name, "These commands are searched after all other commands. If an identical command exists, it will be used instead. Test the commands you add.")
-				irc_chat(name, "Correct syntax is: add command <command> access <99 to 0> message <private message>")
+				irc_chat(name, "Correct syntax is: add command {command} access {99 to 0} message {private message}")
 			end
 
 			-- add the custom message to table customMessages
@@ -3380,14 +3428,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			loadCustomMessages()
 
 			irc_chat(name, cmd .. " has been added to custom commands.")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 
 			return
 		end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if (words[1] == "remove" and words[2] == "command" and accessLevel(ircid) < 3) then
+		if (words[1] == "remove" and words[2] == "command" and players[ircid].accessLevel < 3) then
 			cmd = words[3]
 
 			-- remove the custom message from table customMessages
@@ -3397,14 +3445,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			customMessages[cmd] = nil
 
 			irc_chat(name, cmd .. " has been removed from custom commands.")
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 
 			return
 		end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if (words[1] == "blacklist" and words[2] == "add" and accessLevel(ircid) < 3) then
+		if (words[1] == "blacklist" and words[2] == "add" and players[ircid].accessLevel < 3) then
 			pid = LookupPlayer(words[3])
 
 			if pid ~= nil then
@@ -3420,7 +3468,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if (words[1] == "blacklist" or words[1] == "ban" and words[2] == "remove" and accessLevel(ircid) < 3) then
+		if (words[1] == "blacklist" or words[1] == "ban" and words[2] == "remove" and players[ircid].accessLevel < 3) then
 			pid = LookupPlayer(words[3])
 			if pid ~= nil then
 				send("ban remove " .. pid)
@@ -3436,7 +3484,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				-- display command help
 				irc_chat(name, "Several events are logged and can be searched with list event. Select from any of the following or add a player name or steam ID.")
 				irc_chat(name, "eg. list event ban. Matching events in the last day are displayed.  To see more days add a number eg. list event ban 5")
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 
 				cursor,errorString = conn:execute("SELECT DISTINCT type from events order by type")
 				row = cursor:fetch({}, "a")
@@ -3445,7 +3493,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 					row = cursor:fetch(row, "a")
 				end
 
-				irc_chat(name, " ")
+				irc_chat(name, ".")
 				return
 			end
 
@@ -3480,7 +3528,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				row = cursor:fetch(row, "a")
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 		end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
@@ -3583,7 +3631,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				end
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -3615,7 +3663,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			conn:execute("DELETE FROM list")
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			irc_chat(name, "The following regions have locations in them.")
 
 			for k,v in pairs(locations) do
@@ -3632,7 +3680,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			conn:execute("DELETE FROM list")
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
 			return
 		end
 
@@ -3645,7 +3693,75 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, k)
 			end
 
-			irc_chat(name, " ")
+			irc_chat(name, ".")
+			return
+		end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+		if (words[1] == "list" and words[2] == "entities") then
+			if botman.lastListEntities == nil then
+				irc_chat(name, "Entities have not yet been scanned.  A scan has been actioned now. Repeat your command for the list.")
+				send("le")
+				return
+			end
+
+			diff = os.difftime(os.time(), botman.lastListEntities)
+			days = math.floor(diff / 86400)
+
+			if (days > 0) then
+				diff = diff - (days * 86400)
+			end
+
+			hours = math.floor(diff / 3600)
+
+			if (hours > 0) then
+				diff = diff - (hours * 3600)
+			end
+
+			minutes = math.floor(diff / 60)
+			seconds = diff - (minutes * 60)
+
+			if minutes > 1 then
+				irc_chat(name, "It has been more than two minutes since the last entity scan.  A scan has been actioned now. Repeat your command for the list.")
+				send("le")
+				return
+			end
+
+			if days==0 and hours==0 and minutes==0 and seconds==0 then
+				irc_chat(name, "Entities have not yet been scanned.  A scan has been actioned now. Repeat your command for the list.")
+				send("le")
+				return
+			else
+				irc_chat(name, "Entities last scanned " .. minutes .." minutes " .. seconds .. " seconds ago")
+			end
+
+			irc_chat(name, "These are the following non-player entities in the game:")
+
+			cursor,errorString = conn:execute("SELECT * FROM memEntities order by name")
+			row = cursor:fetch({}, "a")
+			while row do
+				irc_chat(name, "id= " .. row.entityID .. ", " .. row.name .. ", xyz= " .. row.x .. " " .. row.y .. " " .. row.z .. ", health= " .. row.health)
+				row = cursor:fetch(row, "a")
+			end
+
+			irc_chat(name, ".")
+			return
+		end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+		if (words[1] == "near" and words[2] == "entity" and words[3] ~= nil) then
+			pid = words[3]
+
+			cursor,errorString = conn:execute("SELECT * FROM memEntities WHERE entityID = " .. pid)
+			row = cursor:fetch({}, "a")
+
+			if row then
+
+			end
+
+			irc_chat(name, ".")
 			return
 		end
 

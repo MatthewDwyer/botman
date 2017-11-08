@@ -316,10 +316,10 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "shop" and words[2] == "admin") and (accessLevel(playerid) < 3) then
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop price <code or item name> <whole number without $>[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop restock <code or item name> <quantity> or -1 (add quantity to stock)[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop special <code or item name> <number from 0 to 100>[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop variation <code or item name> <number> (can be negative)[-]")
+		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop price {code or item name} {whole number without $}[-]")
+		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop restock {code or item name} {quantity} or -1 (add quantity to stock)[-]")
+		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop special {code or item name} {number from 0 to 100}[-]")
+		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop variation {code or item name} {number} (can be negative)[-]")
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]You can manage categories and items for sale via IRC.[-]")
 		return false
 	end
@@ -329,7 +329,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 	if (shopCategories[words[2]]) then
 		LookupShop(words[2],all)
 
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]To buy type buy <code> <quantity>[-]")
+		message("pm " .. playerid .. " [" .. server.chatColour .. "]To buy type buy {code} {quantity}[-]")
 
 		cursor,errorString = conn:execute("SELECT * FROM memShop ORDER BY category, item")
 		row = cursor:fetch({}, "a")
@@ -361,7 +361,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		end
 		list = string.sub(list, 1, string.len(list) - 3)
 
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]To browse my wares type shop <category>.  The categories are " .. list .. ".[-]")
+		message("pm " .. playerid .. " [" .. server.chatColour .. "]To browse my wares type shop {category}.  The categories are " .. list .. ".[-]")
 
 		return false
 	end

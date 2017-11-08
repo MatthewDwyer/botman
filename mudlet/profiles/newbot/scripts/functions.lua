@@ -101,6 +101,26 @@
 -- end
 
 
+function url_encode(str)
+  if (str) then
+    str = string.gsub (str, "\n", "\r\n")
+    str = string.gsub (str, "([^%w %-%_%.%~])",
+        function (c) return string.format ("%%%02X", string.byte(c)) end)
+    str = string.gsub (str, " ", "+")
+  end
+  return str
+end
+
+
+function url_decode(str)
+  str = string.gsub (str, "+", " ")
+  str = string.gsub (str, "%%(%x%x)",
+      function(h) return string.char(tonumber(h,16)) end)
+  str = string.gsub (str, "\r\n", "\n")
+  return str
+end
+
+
 function readAPI()
 	if isFile(homedir .. "/api.ini") then
 		dofile(homedir .. "/api.ini")
@@ -126,6 +146,11 @@ function writeAPI()
 	end
 
 	file:close()
+end
+
+
+function readServerVote()
+	-- TODO:  FINISH HIM!
 end
 
 
@@ -155,7 +180,7 @@ end
 
 
 function isServerHardcore(playerid)
-	if server.hardcore and players[playerid] > 2  then
+	if server.hardcore and accessLevel(playerid) > 2 then
 		return true
 	else
 		return false
@@ -212,7 +237,7 @@ function writeBotmanINI()
 	if server.baseCost then file:write("server.baseCost=" .. server.baseCost .. "\n") end
 	if server.baseSize then file:write("server.baseSize=" .. server.baseSize .. "\n") end
 	if server.blacklistResponse then file:write("server.blacklistResponse=\"" .. server.blacklistResponse .. "\"\n") end
-	if server.blockCountries then file:write("server.blockCountries=\"" .. server.blockCountries .. "\"\n") end
+	if server.blacklistCountries then file:write("server.blacklistCountries=\"" .. server.blacklistCountries .. "\"\n") end
 	if server.botName then file:write("server.botName=\"" .. server.botName .. "\"\n") end
 	if server.botRestartHour then file:write("server.botRestartHour=" .. server.botRestartHour .. "\n") end
 	if server.botsIP then file:write("server.botsIP=\"" .. server.botsIP .. "\"\n") end
@@ -367,7 +392,7 @@ function getLastCommandIndex(code)
 end
 
 
-function canSetHere(steam, x, z)
+function canSetWaypointHere(steam, x, z)
 	local k, v, dist
 
 	-- check for nearby bases that are not friendly
@@ -393,6 +418,15 @@ function canSetHere(steam, x, z)
 						return false
 					end
 				end
+			end
+		end
+	end
+
+	-- also check locations
+	for k, v in pairs(locations) do
+		if players[steam].inLocation == v.name then
+			if not v.allowWaypoints then
+				return false
 			end
 		end
 	end
@@ -841,7 +875,9 @@ end
 
 
 function updateOtherEntities(entityID, entity)
-	local k, v
+	local k, v, entityLower
+
+	entityLower = string.lower(entity)
 
 	if otherEntities == nil then
 		otherEntities = {}
@@ -852,8 +888,14 @@ function updateOtherEntities(entityID, entity)
 		otherEntities[entityID] = {}
 		otherEntities[entityID].entity = entity
 		otherEntities[entityID].doNotSpawn = false
+		otherEntities[entityID].doNotDespawn = false
+
+		-- don't despawn if it's cute or delicious
+		if string.find(entityLower, "pig") or string.find(entityLower, "boar") or string.find(entityLower, "stag") or string.find(entityLower, "chicken") or string.find(entityLower, "rabbit") then
+			otherEntities[entityID].doNotDespawn = true
+		end
 	else
-		-- not new eneity but entityID for this entity has changed so look for and remove the old entity and add it with the new entityID
+		-- not new entity but entityID for this entity has changed so look for and remove the old entity and add it with the new entityID
 		if otherEntities[entityID].entity ~= entity then
 			for k,v in pairs(otherEntities) do
 				if v.entity == entity then
@@ -865,7 +907,13 @@ function updateOtherEntities(entityID, entity)
 			otherEntities[entityID] = {}
 			otherEntities[entityID].entity = entity
 			otherEntities[entityID].doNotSpawn = false
+			otherEntities[entityID].doNotDespawn = false
 			otherEntities[entityID].remove = nil
+
+			-- don't despawn if it's cute or delicious
+			if string.find(entityLower, "pig") or string.find(entityLower, "boar") or string.find(entityLower, "stag") or string.find(entityLower, "chicken") or string.find(entityLower, "rabbit") then
+				otherEntities[entityID].doNotDespawn = true
+			end
 		end
 	end
 end
@@ -889,7 +937,9 @@ end
 
 
 function updateGimmeZombies(entityID, zombie)
-	local k, v
+	local k, v, zombieLower
+
+	zombieLower = string.lower(zombie)
 
 	if gimmeZombies[entityID] == nil then
 		-- new zombie so add it to gimmeZombies
@@ -900,7 +950,7 @@ function updateGimmeZombies(entityID, zombie)
 		gimmeZombies[entityID].bossZombie = false
 		gimmeZombies[entityID].doNotSpawn = false
 
-		if string.find(zombie, "cop") or string.find(zombie, "Cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "Feral") or string.find(zombie, "Radiated") or string.find(zombie, "Behemoth") or string.find(zombie, "Template") then
+		if string.find(zombieLower, "cop") or string.find(zombieLower, "dog") or string.find(zombieLower, "bear") or string.find(zombieLower, "feral") or string.find(zombieLower, "radiated") or string.find(zombieLower, "behemoth") or string.find(zombieLower, "template") then
 			gimmeZombies[entityID].doNotSpawn = true
 			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
 		else
@@ -925,7 +975,7 @@ function updateGimmeZombies(entityID, zombie)
 			gimmeZombies[entityID].bossZombie = false
 			gimmeZombies[entityID].doNotSpawn = false
 
-			if string.find(zombie, "cop") or string.find(zombie, "Cop") or string.find(zombie, "dog") or string.find(zombie, "Bear") or string.find(zombie, "Feral") or string.find(zombie, "Radiated") or string.find(zombie, "Behemoth") or string.find(zombie, "Template") then
+			if string.find(zombieLower, "cop") or string.find(zombieLower, "dog") or string.find(zombieLower, "bear") or string.find(zombieLower, "feral") or string.find(zombieLower, "radiated") or string.find(zombieLower, "behemoth") or string.find(zombieLower, "template") then
 				gimmeZombies[entityID].doNotSpawn = true
 				if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
 			else
@@ -1476,8 +1526,8 @@ function banPlayer(steam, duration, reason, issuer, gblBan, localOnly)
 	--TODO: Add GBL ban save
 
 	if accessLevel(steam) < 3 then
-		irc_chat(server.ircAlerts, "Request to ban admin " .. players[steam].name .. " rejected.  I will not ban admins.")
-		message("pm " .. issuer .. " [" .. server.chatColour .. "]Request to ban admin " .. players[steam].name .. " rejected.  I will not ban admins.[-]")
+		irc_chat(server.ircAlerts, "Request to ban admin " .. players[steam].name .. "  [DENIED]")
+		message("pm " .. issuer .. " [" .. server.chatColour .. "]Request to ban admin " .. players[steam].name .. "  [DENIED][-]")
 		return
 	end
 
@@ -1822,8 +1872,12 @@ end
 
 
 function newDay()
-	if (string.sub(botman.serverTime, 1, 10) ~= server.date) then
-		server.date = string.sub(botman.serverTime, 1, 10)
+	local diff, days, restarting
+
+	restarting = false
+
+	if (string.sub(botman.serverTime, 1, 10) ~= server.dateTest) then
+		server.dateTest = string.sub(botman.serverTime, 1, 10)
 
 		-- force logging to start a new file
 		startLogging(false)
@@ -1832,8 +1886,26 @@ function newDay()
 		dailyMaintenance()
 		resetShop()
 
-		if tonumber(botman.playersOnline) == 0 then
+		if tonumber(botman.playersOnline) < 16 then
 			saveLuaTables()
+		end
+
+		-- if bot can restart itself and botRestartDay isn't zero, check how many days the bot has been running.
+		-- if bot uptime is greater than botRestartDay, restart the bot.
+		if server.allowBotRestarts and server.botRestartDay > 0 then
+			diff = os.difftime(os.time(), botman.botStarted)
+			days = math.floor(diff / 86400)
+
+			if days >= server.botRestartDay then
+				restarting = true
+				tempTimer( 30, [[restartBot()]] )
+			end
+		end
+
+		if not restarting then
+			-- reload the bot's code.  This may help fix a few issues with slow performance but its more likely due to other stuff the reload does.
+			dofile(homedir .. "/scripts/reload_bot_scripts.lua")
+			reloadBotScripts(true)
 		end
 	end
 end
@@ -1923,6 +1995,7 @@ end
 
 
 function CheckBlacklist(steam, ip)
+	-- if blacklist action is not exile or ban, nothing happens to the player.
 	ip = ip:gsub("::ffff:", "")
 
 	local o1,o2,o3,o4 = ip:match("(%d%d?%d?)%.(%d%d?%d?)%.(%d%d?%d?)%.(%d%d?%d?)" )
@@ -1933,43 +2006,45 @@ function CheckBlacklist(steam, ip)
 		return
 	end
 
-	if not whitelist[steam] then
-		-- test for China IP
-		ipint = tonumber(ipint)
+	-- test for China IP
+	ipint = tonumber(ipint)
 
-		cursor,errorString = connBots:execute("SELECT * FROM IPBlacklist WHERE StartIP <=  " .. ipint .. " AND EndIP >= " .. ipint)
-		if cursor:numrows() > 0 then
+	cursor,errorString = connBots:execute("SELECT * FROM IPBlacklist WHERE StartIP <=  " .. ipint .. " AND EndIP >= " .. ipint)
+	if cursor:numrows() > 0 then
 
-			irc_chat(server.ircMain, "Chinese IP detected. " .. players[steam].name)
-			irc_chat(server.ircAlerts, "Chinese IP detected. " .. players[steam].name)
-			players[steam].china = true
-			players[steam].country = "CN"
-			players[steam].ircTranslate = true
-
-			if server.blacklistResponse == 'exile' then
-				if tonumber(players[steam].exiled) == 0 then
-					players[steam].exiled = 1
-					if botman.dbConnected then conn:execute("UPDATE players SET country = 'CN', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam) end
-				end
-
-				-- alert players
-				for k, v in pairs(igplayers) do
-					if players[k].exiled~=1 and not players[k].prisoner then
-						message("pm " .. k .. " Chinese player " .. players[steam].name .. " detected and exiled.[-]")
-					end
-				end
-			end
-
-			if server.blacklistResponse == 'ban' then
-				irc_chat(server.ircMain, "Blacklisted player " .. players[steam].name .. " banned.")
-				irc_chat(server.ircAlerts, "Blacklisted player " .. players[steam].name .. " banned.")
-				banPlayer(steam, "10 years", "blacklisted", "")
-			end
-
-			connBots:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined and banned. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. ip  .. "'," .. steam .. ")")
-		else
-			reverseDNS(steam, ip)
+		if not whitelist[steam] and accessLevel(steam) > 2 then
+			irc_chat(server.ircMain, "Blacklisted IP detected. " .. players[steam].name)
+			irc_chat(server.ircAlerts, "Blacklisted IP detected. " .. players[steam].name)
 		end
+
+		players[steam].china = true
+		players[steam].country = "CN"
+		players[steam].ircTranslate = true
+
+		if server.blacklistResponse ~= "ban" and not whitelist[steam] and accessLevel(steam) > 2 then
+			-- alert players
+			for k, v in pairs(igplayers) do
+				if players[k].exiled~=1 and not players[k].prisoner then
+					message("pm " .. k .. " Player " .. players[steam].name .. " from a blacklisted country has joined.[-]")
+				end
+			end
+		end
+
+		if server.blacklistResponse == 'exile' and not whitelist[steam] and accessLevel(steam) > 2 then
+			if tonumber(players[steam].exiled) == 0 then
+				players[steam].exiled = 1
+				if botman.dbConnected then conn:execute("UPDATE players SET country = 'CN', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam) end
+			end
+		end
+
+		if server.blacklistResponse == 'ban' and not whitelist[steam] and accessLevel(steam) > 2 then
+			irc_chat(server.ircMain, "Blacklisted player " .. players[steam].name .. " banned.")
+			irc_chat(server.ircAlerts, "Blacklisted player " .. players[steam].name .. " banned.")
+			banPlayer(steam, "10 years", "blacklisted", "")
+			connBots:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined and banned. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. ip  .. "'," .. steam .. ")")
+		end
+	else
+		reverseDNS(steam, ip)
 	end
 end
 
@@ -1982,12 +2057,17 @@ end
 
 
 function readDNS(steam)
-	local file, ln, split, ip1, ip2, exiled, country, proxy, ISP, iprange, IP
+	-- if blacklist action is not exile or ban, nothing happens to the player.
+	-- NOTE: If blacklist action is nothing, proxies won't trigger a ban or exile response either.
+
+	local file, ln, split, ip1, ip2, exiled, banned, country, proxy, ISP, iprange, IP
 
 	file = io.open(homedir .. "/dns/" .. steam .. ".txt", "r")
 	exiled = false
+	banned = false
 	proxy = false
 	country = ""
+
 	for ln in file:lines() do
 		ln = string.upper(ln)
 
@@ -1996,34 +2076,36 @@ function readDNS(steam)
 			iprange = string.sub(ln, a, a+b)
 		end
 
-		if not whitelist[steam] and not players[steam].donor then
+		if not whitelist[steam] and not players[steam].donor and accessLevel(steam) > 2 then
 			for k,v in pairs(proxies) do
 				if string.find(ln, string.upper(v.scanString), nil, true) then
 					v.hits = tonumber(v.hits) + 1
+					proxy = true
 
 					if botman.db2Connected then
 						connBots:execute("UPDATE proxies SET hits = hits + 1 WHERE scanString = '" .. escape(k) .. "'")
 					end
 
-					if v.action == "ban" or v.action == "" then
-						irc_chat(server.ircMain, "Player " .. players[steam].name .. " banned. Detected proxy " .. v.scanString)
-						irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " banned. Detected proxy " .. v.scanString)
-						banPlayer(steam, "10 years", "Banned proxy. Contact us to get unbanned and whitelisted.", "")
-						proxy = true
-					else
-						if players[steam].exiled == 0 then
-							players[steam].exiled = 1
-							irc_chat(server.ircMain, "Player " .. players[steam].name .. " exiled. Detected proxy " .. v.scanString)
-							irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " exiled. Detected proxy " .. v.scanString)
-							exiled = true
-							proxy = true
+					if server.blacklistResponse ~= 'nothing' and accessLevel(steam) > 2 then
+						if v.action == "ban" or v.action == "" then
+							irc_chat(server.ircMain, "Player " .. players[steam].name .. " banned. Detected proxy " .. v.scanString)
+							irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " banned. Detected proxy " .. v.scanString)
+							banPlayer(steam, "10 years", "Banned proxy. Contact us to get unbanned and whitelisted.", "")
+							banned = true
+						else
+							if players[steam].exiled == 0 then
+								players[steam].exiled = 1
+								irc_chat(server.ircMain, "Player " .. players[steam].name .. " exiled. Detected proxy " .. v.scanString)
+								irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " exiled. Detected proxy " .. v.scanString)
+								exiled = true
+							end
 						end
 					end
 				end
 			end
 		end
 
-		if proxy then break end
+		--if proxy then break end
 
 		if string.find(ln, "ABUSE@") then
 			-- record the domain after the @ and store as the player's ISP
@@ -2040,7 +2122,7 @@ function readDNS(steam)
 			-- only report country change if CN or HK are involved. For once, don't blame Canada.
 			a,b = string.find(ln, "%s(%w+)")
 			country = string.sub(ln, a + 1)
-			if players[steam].country ~= "" and players[steam].country ~= country and (players[steam].country == "CN" or players[steam].country == "HK" or country == "CN" or country == "HK") and not whitelist[steam] then
+			if players[steam].country ~= "" and players[steam].country ~= country and (players[steam].country == "CN" or players[steam].country == "HK" or country == "CN" or country == "HK") and not whitelist[steam] and accessLevel(steam) > 2 then
 				irc_chat(server.ircAlerts, "Possible proxy detected! Country changed! " .. steam .. " " .. players[steam].name .. " " .. players[steam].IP .. " old country " .. players[steam].country .. " new " .. country)
 				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (0,0,0'" .. botman.serverTime .. "','proxy','Suspected proxy used by " .. escape(players[steam].name) .. " " .. players[steam].IP .. " old country " .. players[steam].country .. " new " .. country .. "," .. steam .. ")") end
 				proxy = true
@@ -2050,14 +2132,14 @@ function readDNS(steam)
 		end
 
 		-- We consider HongKong to be China since Chinese players connect from there too.
-		if (country == "CN" or country == "HK") and not whitelist[steam] then
+		if (country == "CN" or country == "HK") and not whitelist[steam] and accessLevel(steam) > 2 then
 			-- China detected. Add ip range to IPBlacklist table
 			irc_chat(server.ircMain, "Chinese IP detected. " .. players[steam].name .. " " .. players[steam].IP)
 			irc_chat(server.ircAlerts, "Chinese IP detected. " .. players[steam].name .. " " .. players[steam].IP)
 			players[steam].china = true
 			players[steam].ircTranslate = true
 
-			if server.blacklistResponse == 'exile' then
+			if server.blacklistResponse == 'exile' and not exiled and accessLevel(steam) > 2 then
 				if players[steam].exiled == 0 then
 					players[steam].exiled = 1
 					irc_chat(server.ircMain, "Chinese player " .. players[steam].name .. " exiled.")
@@ -2066,10 +2148,11 @@ function readDNS(steam)
 				end
 			end
 
-			if server.blacklistResponse == 'ban' then
+			if server.blacklistResponse == 'ban' and not banned and accessLevel(steam) > 2 then
 				irc_chat(server.ircMain, "Chinese player " .. players[steam].name .. " banned.")
 				irc_chat(server.ircAlerts, "Chinese player " .. players[steam].name .. " banned.")
 				banPlayer(steam, "10 years", "blacklisted", "")
+				banned = true
 			end
 
 			if botman.db2Connected then
@@ -2088,27 +2171,53 @@ function readDNS(steam)
 				end
 			end
 
-			-- alert players
-			for k, v in pairs(igplayers) do
-				if players[k].exiled~=1 and not players[k].prisoner then
-					if exiled then
-						message("pm " .. k .. " Chinese player " .. players[steam].name .. " detected and sent to exile.[-]")
-					else
-						message("pm " .. k .. " Chinese player " .. players[steam].name .. " detected.[-]")
-					end
-				end
-			end
-
-			if botman.dbConnected then
-				conn:execute("UPDATE players SET country = '" .. escape(country) .. "', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam)
-				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Chinese player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. players[steam].IP  .. "'," .. steam .. ")")
-			end
-
 			file:close()
 
 			-- got country so stop processing the dns record
 			break
 		end
+	end
+
+	-- alert players
+	if blacklistedCountries[country] and server.blacklistResponse ~= 'ban' and accessLevel(steam) > 2 then
+		for k, v in pairs(igplayers) do
+			if players[k].exiled~=1 and not players[k].prisoner then
+				message("pm " .. k .. " Player " .. players[steam].name .. " from blacklisted country " .. country .. " has joined.[-]")
+			end
+		end
+	end
+
+	if blacklistedCountries[country] and accessLevel(steam) > 2 then
+		if server.blacklistResponse == 'ban' and not banned then
+			irc_chat(server.ircMain, "Player " .. players[steam].name .. " banned. Blacklisted country " .. country)
+			irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " banned. Blacklisted country " .. country)
+			banPlayer(steam, "10 years", "Sorry, your country has been blacklisted :(", "")
+			banned = true
+		end
+
+		if server.blacklistResponse == 'exile' and not exiled then
+			if players[steam].exiled == 0 then
+				players[steam].exiled = 1
+				irc_chat(server.ircMain, "Player " .. players[steam].name .. " exiled. Blacklisted country " .. country)
+				irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " exiled. Blacklisted country " .. country)
+				exiled = true
+			end
+		end
+	end
+
+	if server.whitelistCountries ~= '' and not whitelistedCountries[country] and not banned and accessLevel(steam) > 2 then
+		irc_chat(server.ircMain, "Player " .. players[steam].name .. " temp banned 1 month. Country not on whitelist " .. country)
+		irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " temp banned 1 month. Country not on whitelist " .. country)
+		banPlayer(steam, "1 month", "Sorry, this server uses a whitelist.", "")
+		banned = true
+	end
+
+	if botman.dbConnected then
+		if server.blacklistResponse ~= 'nothing' and exiled then
+			conn:execute("UPDATE players SET country = '" .. escape(country) .. "', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam)
+		end
+
+		conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. players[steam].IP  .. "'," .. steam .. ")")
 	end
 
 	if proxy then

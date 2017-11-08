@@ -80,7 +80,7 @@ if debug then dbug("check inventory 3") end
 				if table1[i] ~= "" then
 					table2 = string.split(table1[i], ",")
 
-					if (badItems[table2[2]]) and (accessLevel(k) > 2 or botman.ignoreAdmins == false) and (not players[k].ignorePlayer) then
+					if (badItems[table2[2]]) and (accessLevel(k) > 2 or botman.ignoreAdmins == false) and (not players[k].ignorePlayer) and (server.gameType ~= "cre") then
 						dbFlag = dbFlag .. "B"
 
 						igplayers[k].illegalInventory = true
@@ -200,7 +200,7 @@ if debug then dbug("check inventory 4") end
 					end
 				end
 
-				if (players[k].newPlayer == true and igplayers[k].skipExcessInventory ~= true) then
+				if (players[k].newPlayer == true and igplayers[k].skipExcessInventory ~= true) and (server.gameType ~= "cre") then
 
 					cursor,errorString = conn:execute("SELECT * FROM memRestrictedItems where item = '" .. escape(b.item) .. "' and accessLevel < " .. players[k].accessLevel)
 					rows = cursor:numrows()
@@ -383,7 +383,7 @@ if debug then dbug("check inventory 10") end
 			players[k].overstackScore = 0
 		end
 
-		if not server.allowOverstacking then
+		if not server.allowOverstacking and (server.gameType ~= "cre") then
 			if (players[k].overstack == true) and (accessLevel(k) > 2 or botman.ignoreAdmins == false) then
 				message("pm " .. k .. " [" .. server.chatColour .. "]You are overstacking items in your inventory - " .. players[k].overstackItems .. "[-]")
 				irc_chat(server.ircWatch, igplayers[k].name .. " is overstacking " .. players[k].overstackItems)
@@ -408,7 +408,7 @@ if debug then dbug("check inventory 10") end
 			end
 		end
 
-		if (ban == true) then
+		if (ban == true) and (server.gameType ~= "cre") then
 			if accessLevel(k) > 2 then
 				banPlayer(k, "1 year", banReason, "")
 
@@ -424,13 +424,13 @@ if debug then dbug("check inventory 10") end
 			end
 		end
 
-		if (timeout == true) then
+		if (timeout == true) and (server.gameType ~= "cre") then
 			v.illegalInventory = true
 			conn:execute("INSERT INTO inventoryTracker (steam, x, y, z, session, belt, pack, equipment) VALUES (" .. k .. "," .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. "," .. players[k].sessionCount .. ",'" .. escape(v.belt) .. "','" .. escape(v.pack) .. "','" .. escape(v.equipment) .. "')")
 			timeoutPlayer(k, timeoutReason, true)
 		end
 
-		if (move == true and players[k].exiled ~= 1) then
+		if (move == true and players[k].exiled ~= 1) and (server.gameType ~= "cre") then
 			message("say [" .. server.chatColour .. "]Sending player " .. igplayers[k].name .. " to " .. moveTo .. " for " .. moveReason .. ".[-]")
 
 			teleport("tele " .. k .. " " .. locations[moveTo].x .. " " .. locations[moveTo].y + 1 .. " " .. locations[moveTo].z, k)
@@ -444,7 +444,7 @@ if debug then dbug("check inventory 10") end
 
 if debug then dbug("check inventory 11") end
 
-		if (not players[k].ignorePlayer) then
+		if (not players[k].ignorePlayer) and (server.gameType ~= "cre") then
 			if badItemsFound ~= "" then
 				igplayers[k].illegalInventory = true
 

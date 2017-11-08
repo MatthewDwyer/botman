@@ -466,6 +466,9 @@ function listOwners(steam)
 	local pid
 	local online = ""
 
+	-- players do not see steam ID's of staff unless they are staff too.
+
+	-- steam can be passed an irc nick so we need to do a lookup
 	pid = LookupPlayer(steam)
 
 	if igplayers[steam] then
@@ -619,11 +622,11 @@ end
 
 
 function listStaff(steam)
-	listOwners(steam)
+	listOwners(steam, true)
 	message("pm " .. steam .. " ")
-	listAdmins(steam)
+	listAdmins(steam, true)
 	message("pm " .. steam .. " ")
-	listMods(steam)
+	listMods(steam, true)
 end
 
 

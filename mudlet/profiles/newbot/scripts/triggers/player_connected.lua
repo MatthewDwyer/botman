@@ -11,7 +11,7 @@ local nameTest
 
 
 function initReservedSlots()
-	local k, v, cursor,errorString, row
+	local k, v, cursor,errorString, row, isStaff, canReserve
 
 	if server.reservedSlotsUsed == 0 then
 		conn:execute("DELETE FROM reservedSlots")
@@ -19,52 +19,49 @@ function initReservedSlots()
 		return
 	end
 
+	if botman.dbReservedSlotsUsed == nil then
+		cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
+		row = cursor:fetch({}, "a")
+		botman.dbReservedSlotsUsed = tonumber(row.totalRows)
+	end
+
 	conn:execute("UPDATE reservedSlots set deleteRow = 1")
 
 	-- add playing reserved slotters
 	for k,v in pairs(igplayers) do
+		isStaff = 0
+		canReserve = 0
+
 		if (botman.dbReservedSlotsUsed < server.reservedSlots) then
-			if players[k].accessLevel < 11 then
-				if players[k].accessLevel < 3 then
-					isStaff = 1
-					canReserve = 1
-				else
-					isStaff = 0
-				end
-
-				if players[k].donor or players[k].reserveSlot then
-					canReserve = 1
-				else
-					canReserve = 0
-				end
-
-				conn:execute("INSERT INTO reservedSlots(steam, reserved, staff) VALUES (" .. k .. "," .. canReserve .. "," .. isStaff .. ")")
-
-				cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
-				row = cursor:fetch({}, "a")
-				botman.dbReservedSlotsUsed = tonumber(row.totalRows)
+			if players[k].accessLevel < 3 then
+				isStaff = 1
+				canReserve = 1
 			end
+
+			if players[k].donor or players[k].reserveSlot then
+				canReserve = 1
+			end
+
+			conn:execute("INSERT INTO reservedSlots(steam, reserved, staff) VALUES (" .. k .. "," .. canReserve .. "," .. isStaff .. ")")
+
+			-- update botman.dbReservedSlotsUsed
+			cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
+			row = cursor:fetch({}, "a")
+			botman.dbReservedSlotsUsed = tonumber(row.totalRows)
 		end
 
 		conn:execute("UPDATE reservedSlots set deleteRow = 0 WHERE steam = " .. k)
 	end
 
-	-- add other players
-	for k,v in pairs(igplayers) do
-		if (botman.dbReservedSlotsUsed < server.reservedSlots) then
-			if players[k].accessLevel > 10 then
-				conn:execute("INSERT INTO reservedSlots(steam, reserved, staff) VALUES (" .. k .. ",0,0)")
-
-				cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
-				row = cursor:fetch({}, "a")
-				botman.dbReservedSlotsUsed = tonumber(row.totalRows)
-			end
-		end
-	end
-
-
+	-- remove players from reservedSlots that we have flagged for removal
 	conn:execute("DELETE FROM reservedSlots WHERE deleteRow = 1")
 
+	-- update botman.dbReservedSlotsUsed again
+	cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
+	row = cursor:fetch({}, "a")
+	botman.dbReservedSlotsUsed = tonumber(row.totalRows)
+
+	-- reset flag so we don't call this function again until needed
 	botman.initReservedSlots = false
 end
 
@@ -72,71 +69,88 @@ end
 function fillReservedSlot(steam)
 	local cursor, errorString, row, canReserve, isStaff
 
+	isStaff = 0
+	canReserve = 0
+
 	cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
 	row = cursor:fetch({}, "a")
 	botman.dbReservedSlotsUsed = tonumber(row.totalRows)
 
 	if (botman.dbReservedSlotsUsed < server.reservedSlots) then
+		if players[steam].donor or players[steam].reserveSlot then
+			canReserve = 1
+		end
+
 		if players[steam].accessLevel < 3 then
 			isStaff = 1
 			canReserve = 1
-		else
-			isStaff = 0
-		end
-
-		if players[steam].donor or players[steam].reserveSlot then
-			canReserve = 1
-		else
-			canReserve = 0
 		end
 
 		conn:execute("INSERT INTO reservedSlots(steam, reserved, staff) VALUES (" .. steam .. "," .. canReserve .. "," .. isStaff .. ")")
 		botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed + 1
 
 		if canReserve == 0 then
-			message("pm " .. steam .. " [" .. server.warnColour .. "]You are using a reserved slot. You may be kicked to make room for another player if the server becomes full.[-]")
+			message("pm " .. steam .. " [" .. server.warnColour .. "]You are using a reserved slot and may be kicked to make room for another player.[-]")
 		end
+
+		-- update botman.dbReservedSlotsUsed
+		cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
+		row = cursor:fetch({}, "a")
+		botman.dbReservedSlotsUsed = tonumber(row.totalRows)
 	end
 end
 
 
 function updateReservedSlots()
-	local cursor, errorString, row, rows
+	local cursor, errorString, row, rows, playerRemoved
 
+	-- update botman.dbReservedSlotsUsed
 	cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
 	row = cursor:fetch({}, "a")
 	botman.dbReservedSlotsUsed = tonumber(row.totalRows)
 
-	-- try to remove staff from reserved slots
-	if botman.dbReservedSlotsUsed > server.reservedSlotsUsed then
+	while botman.dbReservedSlotsUsed > server.reservedSlotsUsed do
+		playerRemoved = false
+
+		-- try to remove staff from reserved slots first
 		cursor,errorString = conn:execute("select * from reservedSlots where staff = 1 limit " .. botman.dbReservedSlotsUsed - server.reservedSlotsUsed)
 		rows = cursor:numrows()
 
 		if rows > 0 then
 			row = cursor:fetch({}, "a")
-			--message("pm " .. row.steam .. " [" .. server.chatColour .. "]You are no longer using a reserved slot. :D[-]")
 			conn:execute("delete * from reservedSlots where steam = " .. row.steam)
 			botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
-			conn:execute("delete from reservedSlots where deleteRow = 1")
+			playerRemoved = true
+		end
 
+		-- try to remove other players from reserved slots
+		if botman.dbReservedSlotsUsed > server.reservedSlotsUsed then
+			cursor,errorString = conn:execute("select * from reservedSlots where staff = 0 and reserved = 0 limit " .. botman.dbReservedSlotsUsed - server.reservedSlotsUsed)
+			rows = cursor:numrows()
+
+			if rows > 0 then
+				row = cursor:fetch({}, "a")
+				conn:execute("delete * from reservedSlots where steam = " .. row.steam)
+				botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
+				playerRemoved = true
+			end
+		end
+
+		if not playerRemoved then
+			-- update botman.dbReservedSlotsUsed from the db
+			cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
+			row = cursor:fetch({}, "a")
+			botman.dbReservedSlotsUsed = tonumber(row.totalRows)
+
+			-- nobody left to remove so break the loop
 			return
 		end
 	end
 
-	-- try to remove other players from reserved slots
-	if botman.dbReservedSlotsUsed > server.reservedSlotsUsed then
-		cursor,errorString = conn:execute("select * from reservedSlots where staff = 0 and reserved = 0 limit " .. botman.dbReservedSlotsUsed - server.reservedSlotsUsed)
-		rows = cursor:numrows()
-
-		if rows > 0 then
-			row = cursor:fetch({}, "a")
-			--message("pm " .. row.steam .. " [" .. server.chatColour .. "]You are no longer using a reserved slot. :D[-]")
-			conn:execute("delete * from reservedSlots where steam = " .. row.steam)
-			botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
-		end
-	end
-
-	conn:execute("delete from reservedSlots where deleteRow = 1")
+	-- update botman.dbReservedSlotsUsed from the db
+	cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
+	row = cursor:fetch({}, "a")
+	botman.dbReservedSlotsUsed = tonumber(row.totalRows)
 end
 
 
@@ -153,8 +167,8 @@ function freeReservedSlot()
 
 	if row then
 		if igplayers[row.steam] then
-			kick(k, "Sorry, you have been kicked to make room for a reserved slot :(")
-			irc_chat(server.ircAlerts, "Player " .. v.name ..  " was kicked from a reserved slot.")
+			kick(row.steam, "Sorry, you have been kicked to make room for a reserved slot :(")
+			irc_chat(server.ircAlerts, "Player " .. players[row.steam].name ..  " was kicked from a reserved slot.")
 			conn:execute("DELETE FROM reservedSlots WHERE steam = " .. row.steam)
 			botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
 
@@ -192,6 +206,7 @@ function playerConnected(line)
 		dbug("botman.playersOnline " .. botman.playersOnline)
 		dbug("server.maxPlayers " .. server.maxPlayers)
 		dbug("server.reservedSlots " .. server.reservedSlots)
+		dbug("server.ServerMaxPlayerCount " .. server.ServerMaxPlayerCount)
 	end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
@@ -214,6 +229,12 @@ function playerConnected(line)
 	end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
+
+	if server.reservedSlots == server.maxPlayers then
+		server.reservedSlots = server.reservedSlots - 1
+		conn:execute("UPDATE server SET reservedSlots = " .. server.reservedSlots)
+		irc_chat(chatvars.ircMain, "Auto-adjusted reserved slots to one less than max players. Reserved slots can't equal max players.")
+	end
 
 	botman.playersOnline = botman.playersOnline + 1
 	server.reservedSlotsUsed = tonumber(botman.playersOnline) - (tonumber(server.maxPlayers) - tonumber(server.reservedSlots))
@@ -341,7 +362,7 @@ function playerConnected(line)
 
 	if tonumber(botman.playersOnline) == tonumber(server.ServerMaxPlayerCount) and tonumber(server.reservedSlots) > 0 then
 		-- any player that is staff or a donor can take a reserved slot from a regular joe
-		if players[steam].reserveSlot or players[steam].accessLevel < 11 then
+		if players[steam].reserveSlot or players[steam].accessLevel < 11 or players[steam].donor then
 			if (botman.dbReservedSlotsUsed >= server.reservedSlots) then
 				if not freeReservedSlot(steam) then
 					kick(steam, "Server is full :(")

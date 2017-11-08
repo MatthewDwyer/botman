@@ -39,29 +39,29 @@ function gmsg_resets()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Reset Zone Commands:")
-		irc_chat(players[chatvars.ircid].ircAlias, "====================")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Regions can be marked as reset zones to warn players not to build in them.")
-		irc_chat(players[chatvars.ircid].ircAlias, "It will block setbase and sethome and any claims placed by players are removed.")
-		irc_chat(players[chatvars.ircid].ircAlias, "Currently the bot does not have the ability to physically delete region files but it can provide a list of reset zones for manual deletion.")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Reset Zone Commands:")
+		irc_chat(chatvars.ircAlias, "====================")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Regions can be marked as reset zones to warn players not to build in them.")
+		irc_chat(chatvars.ircAlias, "It will block setbase and sethome and any claims placed by players are removed.")
+		irc_chat(chatvars.ircAlias, "Currently the bot does not have the ability to physically delete region files but it can provide a list of reset zones for manual deletion.")
+		irc_chat(chatvars.ircAlias, ".")
 	end
 
 	if chatvars.showHelpSections then
-		irc_chat(players[chatvars.ircid].ircAlias, "resets")
+		irc_chat(chatvars.ircAlias, "resets")
 	end
 
 	if (debug) then dbug("debug resets line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "clear" or chatvars.words[1] == "reset" or chatvars.words[1] == "delete") and chatvars.words[2] == "reset" and chatvars.words[3] == "zones"  or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "clear reset zones")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "clear reset zones")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "The bot will forget all the reset zones so you can start over marking new ones.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "The bot will forget all the reset zones so you can start over marking new ones.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -74,8 +74,8 @@ function gmsg_resets()
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) > 2) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+			if (chatvars.accessLevel > 2) then
+				irc_chat(chatvars.ircAlias, "This command is restricted.")
 				botman.faultyChat = false
 				return true
 			end
@@ -88,7 +88,7 @@ function gmsg_resets()
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]All reset zones have been forgotten.[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "All reset zones have been forgotten.")
+			irc_chat(chatvars.ircAlias, "All reset zones have been forgotten.")
 		end
 
 		botman.faultyChat = false
@@ -104,12 +104,12 @@ function gmsg_resets()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "add") or string.find(chatvars.command, "remo") or string.find(chatvars.command, "dele") or string.find(chatvars.command, "reset") or string.find(chatvars.command, "regi") or string.find(chatvars.command, "zone") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "add reset zone")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "remove reset zone")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "add reset zone")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "remove reset zone")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Flag or unflag an entire region as a reset zone.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Flag or unflag an entire region as a reset zone.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -144,11 +144,11 @@ function gmsg_resets()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "reset") or string.find(chatvars.command, "zone") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "reset zones")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "reset zones")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "List all of the regions that are reset zones.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "List all of the regions that are reset zones.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end

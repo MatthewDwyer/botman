@@ -51,7 +51,7 @@ function reconnectTimer()
 	end
 
 	-- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
-	if botman.lagCheckRead and not botman.botOffline then
+	if not botman.botOffline then
 		botman.lagCheckRead = false
 		botman.lagCheckTime = os.time()
 		send("pm LagCheck " .. server.botID)

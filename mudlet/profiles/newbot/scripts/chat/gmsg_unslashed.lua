@@ -31,32 +31,32 @@ function gmsg_unslashed()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Unslashed Commands:")
-		irc_chat(players[chatvars.ircid].ircAlias, "===================")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Unslashed commands are simply words in normal chat that trigger a response from the bot.")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Your bot will react to any player using the words hack, cheat, grief or flying.  That triggers a special scan for hackers.")
-		irc_chat(players[chatvars.ircid].ircAlias, "Any players with a non-zero hacker score found near the player will be immediately exiled.  If you don't have the exile location set up, nothing will happen.")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "When feral.  Like " .. server.commandPrefix .. "day7, the bot will report how many days remain until a horde night.")
-		irc_chat(players[chatvars.ircid].ircAlias, "When reboot.  The bot will report how long until the next reboot.")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Unslashed Commands:")
+		irc_chat(chatvars.ircAlias, "===================")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Unslashed commands are simply words in normal chat that trigger a response from the bot.")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Your bot will react to any player using the words hack, cheat, grief or flying.  That triggers a special scan for hackers.")
+		irc_chat(chatvars.ircAlias, "Any players with a non-zero hacker score found near the player will be immediately exiled.  If you don't have the exile location set up, nothing will happen.")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "When feral.  Like " .. server.commandPrefix .. "day7, the bot will report how many days remain until a horde night.")
+		irc_chat(chatvars.ircAlias, "When reboot.  The bot will report how long until the next reboot.")
+		irc_chat(chatvars.ircAlias, ".")
 	end
 
 	if chatvars.showHelpSections then
-		irc_chat(players[chatvars.ircid].ircAlias, "unslashed")
+		irc_chat(chatvars.ircAlias, "unslashed")
 	end
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "bot") or string.find(chatvars.command, "start") or string.find(chatvars.command, "stop") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, "restart bot")
+			irc_chat(chatvars.ircAlias, "restart bot")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "If your bot is launched from a custom script with the ability to restart itself, you can command your bot to restart.")
-				irc_chat(players[chatvars.ircid].ircAlias, "All of Smegz0r's hosted bots have this feature.  Contact Smeg if you need help adding it to your bot.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "If your bot is launched from a custom script with the ability to restart itself, you can command your bot to restart.")
+				irc_chat(chatvars.ircAlias, "All of Smegz0r's hosted bots have this feature.  Contact Smeg if you need help adding it to your bot.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -109,7 +109,7 @@ function gmsg_unslashed()
 		if botman.customMudlet then
 			if server.masterPassword ~= "" then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]This command requires a password to complete. Don't use this command unless you know what it does and why you need to do it.[-]")
-				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Type " .. server.commandPrefix .. "password <the password> (Do not type the <>).[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Type " .. server.commandPrefix .. "password {the password} (Do not type the {}).[-]")
 				players[chatvars.playerid].botQuestion = "restart bot"
 			else
 				restartBot()
@@ -262,7 +262,8 @@ function gmsg_unslashed()
 			if l == 4 then message("say [" .. server.chatColour .. "]Glad to be of service[-]") end
 		else
 			if string.find(chatvars.words[1], "bad") then
-				l = rand(32)
+				l = rand(41)
+
 				if l == 1 then message("say [" .. server.chatColour .. "]Don't hate me! D:[-]") end
 				if l == 2 then message("say [" .. server.chatColour .. "]The voices made me do it![-]") end
 				if l == 3 then message("say [" .. server.chatColour .. "]I'm a really cute bunny.  How can you hate me!? :O[-]") end
@@ -297,20 +298,30 @@ function gmsg_unslashed()
 				if l == 16 then message("say [" .. server.chatColour .. "]That'll buff right out[-]") end
 				if l == 17 then message("say [" .. server.chatColour .. "]Doh![-]") end
 				if l == 18 then message("say [" .. server.chatColour .. "]I need a hug D:[-]") end
-				if l == 19 then message("say [" .. server.chatColour .. "]Can haz cheeseburger?[-]") end
+				if l == 19 then message("say [" .. server.chatColour .. "]Relax, it'll stop burning any minute now.[-]") end
 				if l == 20 then message("say [" .. server.chatColour .. "]I didn't eat it! Those crumbs were already there! *brushes off crumbs*[-]") end
 				if l == 21 then message("say [" .. server.chatColour .. "]Not sorry :P[-]") end
 				if l == 22 then message("say [" .. server.chatColour .. "]OOPS I did it again >.<[-]") end
 				if l == 23 then message("say [" .. server.chatColour .. "]Killjoy :x[-]") end
 				if l == 24 then message("say [" .. server.chatColour .. "]Aww poor " .. chatvars.playername .. "[-]") end
 				if l == 25 then message("say [" .. server.chatColour .. "]You know it :)[-]") end
-				if l == 26 then message("say [" .. server.chatColour .. "]This is fine[-]") end
+				if l == 26 then message("say [" .. server.chatColour .. "]^flames^  This is fine  ^more flames^[-]") end
 				if l == 27 then message("say [" .. server.chatColour .. "]Bite me[-]") end
 				if l == 28 then message("say [" .. server.chatColour .. "]It's fine.  It's just.. Some assembly required.. And maybe a new door.[-]") end
 				if l == 29 then message("say [" .. server.chatColour .. "][BUSTED][-]") end
 				if l == 30 then message("say [" .. server.chatColour .. "]*hides matches*[-]") end
 				if l == 31 then message("say [" .. server.chatColour .. "]It'll be fine with a lick of paint.. and a total rebuild.[-]") end
 				if l == 32 then message("say [" .. server.chatColour .. "]YEEEEEEEAH!!![-]") end
+
+				if l == 33 then message("say [" .. server.chatColour .. "]Oh.. it wasn't a flatpack?  Well now it is.[-]") end
+				if l == 34 then message("say [" .. server.chatColour .. "]Curses!  It it hadn't been for that meddling " .. chatvars.playername .. " I'd have gotten away with it![-]") end
+				if l == 35 then message("say [" .. server.chatColour .. "]I didn't touch it! *edges away from it*[-]") end
+				if l == 36 then message("say [" .. server.chatColour .. "]It was just a prank bro[-]") end
+				if l == 37 then message("say [" .. server.chatColour .. "]Oh.. that was yours?[-]") end
+				if l == 38 then message("say [" .. server.chatColour .. "]The front fell off.[-]") end
+				if l == 39 then message("say [" .. server.chatColour .. "]GRR GRR GRR[-]") end
+				if l == 40 then message("say [" .. server.chatColour .. "]Mine.[-]") end
+				if l == 41 then message("say [" .. server.chatColour .. "]Uh..  SQUIRREL![-]") end
 
 				botman.faultyChat = false
 				return true

@@ -39,25 +39,25 @@ if debug then dbug("debug fun") end
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Fun Commands:")
-		irc_chat(players[chatvars.ircid].ircAlias, "================")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Fun Commands:")
+		irc_chat(chatvars.ircAlias, "================")
+		irc_chat(chatvars.ircAlias, ".")
 	end
 
 	if chatvars.showHelpSections then
-		irc_chat(players[chatvars.ircid].ircAlias, "fun")
+		irc_chat(chatvars.ircAlias, "fun")
 	end
 
 	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "bounty") or string.find(chatvars.command, "pvp"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "bounty <player>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "bounty {player name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "See the player kills and current bounty on a player's head.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "See the player kills and current bounty on a player's head.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -75,7 +75,7 @@ if debug then dbug("debug fun") end
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has " .. players[id].playerKills .. " kills. Kill them for " .. players[id].pvpBounty .. " " .. server.moneyPlural .. ".[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, players[id].name .. " has " .. players[id].playerKills .. " kills. Kill them for " .. players[id].pvpBounty .. " " .. server.moneyPlural .. ".")
+			irc_chat(chatvars.ircAlias, players[id].name .. " has " .. players[id].playerKills .. " kills. Kill them for " .. players[id].pvpBounty .. " " .. server.moneyPlural .. ".")
 		end
 
 		botman.faultyChat = false
@@ -99,11 +99,11 @@ if debug then dbug("debug fun") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "gimme peace")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "gimme peace")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "All gimme messages will be private messages.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "All gimme messages will be private messages.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -122,11 +122,11 @@ if debug then dbug("debug fun") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "fix gimme")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "fix gimme")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Force the bot to rescan the list of zombies and animals.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Force the bot to rescan the list of zombies and animals.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -135,7 +135,7 @@ if debug then dbug("debug fun") end
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The zombies have been reloaded.[-]")
 		else
-			irc_chat(players[chatvars.ircid].ircAlias, "The zombies have been reloaded.")
+			irc_chat(chatvars.ircAlias, "The zombies have been reloaded.")
 		end
 
 		gimmeZombies = {}
@@ -150,11 +150,11 @@ if debug then dbug("debug fun") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "reset gimmehell")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "reset gimmehell")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Cancel a gimmehell game in progress.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Cancel a gimmehell game in progress.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -181,11 +181,11 @@ if debug then dbug("debug fun") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "gimme reset")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "gimme reset")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Reset gimme counters for everyone so they can play gimme again.  The bot does this every 2 hours automatically.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Reset gimme counters for everyone so they can play gimme again.  The bot does this every 2 hours automatically.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -209,11 +209,11 @@ if debug then dbug("debug fun") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "gimme gimme")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "gimme gimme")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "All gimme messages will be in public chat.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "All gimme messages will be in public chat.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -240,11 +240,11 @@ if debug then dbug("debug fun") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "gimme off")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "gimme off")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Disable the gimme game.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Disable the gimme game.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -271,11 +271,11 @@ if debug then dbug("debug fun") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "gimme on")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "gimme on")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Enable the gimme game.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Enable the gimme game.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -302,11 +302,11 @@ if debug then dbug("debug fun") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "gimme zombies")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "gimme zombies")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Players can win zombies.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Players can win zombies.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -333,11 +333,11 @@ if debug then dbug("debug fun") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "gimme no zombies")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "gimme no zombies")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Gimme prizes will not include zombies.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Gimme prizes will not include zombies.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -587,7 +587,7 @@ if debug then dbug("debug fun") end
 		end
 
 		if r == 7 then
-			message("say [" .. server.chatColour .. "][MISSING] " .. players[chatvars.playerid].name .. " Last seen ragequitting.[-]")
+			message("say [" .. server.chatColour .. "][MISSING] " .. players[chatvars.playerid].name .. " last seen ragequitting.[-]")
 		end
 
 		if r == 8 then

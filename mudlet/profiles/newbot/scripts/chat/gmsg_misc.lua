@@ -43,7 +43,7 @@ function gmsg_misc()
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found with that name.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "No player found with that name.")
+				irc_chat(chatvars.ircAlias, "No player found with that name.")
 			end
 
 			botman.faultyChat = false
@@ -56,7 +56,7 @@ function gmsg_misc()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]#" .. row.id .. " " .. row.x .. " " .. row.y .. " " .. row.z .. " " .. row.note .. "[-]")
 				else
-					irc_chat(players[chatvars.ircid].ircAlias, "#" .. row.id .. " " .. row.x .. " " .. row.y .. " " .. row.z .. " " .. row.note)
+					irc_chat(chatvars.ircAlias, "#" .. row.id .. " " .. row.x .. " " .. row.y .. " " .. row.z .. " " .. row.note)
 				end
 
 				row = cursor:fetch(row, "a")

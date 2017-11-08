@@ -39,13 +39,13 @@ function help(command)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Send private messages to your friends. They have to have friended you with " .. server.commandPrefix .. "friend " .. players[chatvars.playerid].name .. " before you can message them.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can only send mail from your console, which you access from the tild key which is above TAB and left of your 1 key.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]To send a message to your friend Dave type pm @dave Hi Dave!  If he is on, he will get it now.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can message the admins with pm @admin <your message here>.  Every admin will see it.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can message the admins with pm @admin {your message here}.  Every admin will see it.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Ignore the command denied message.[-]")
 		message("pm " .. chatvars.playerid .. "")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "list mail (see a numbered list of all your messages)[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "read mail <optional number> (reads all unread by default)[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "save mail <number> (read mail is deleted unless saved)[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "delete mail <number> (delete the numbered message)[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "read mail {optional number} (reads all unread by default)[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "save mail {number} (read mail is deleted unless saved)[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "delete mail {number} (delete the numbered message)[-]")
 		return
 	end
 
@@ -55,11 +55,11 @@ function help(command)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]If you add too many or stupid bookmarks we will not use them.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]These are not teleports like waypoints.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "][-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "bookmark <short description> (add a bookmark where you are standing)[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "bookmark {short description} (add a bookmark where you are standing)[-]")
 
 		if (chatvars.accessLevel < 3) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "list bookmarks <player> (view a players bookmarks)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "bk <bookmark number> (tp to the coords of a bookmark)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "list bookmarks {player name} (view a players bookmarks)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "bk {bookmark number} (tp to the coords of a bookmark)[-]")
 		else
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "list bookmarks (view your own bookmarks)[-]")
 		end
@@ -87,16 +87,16 @@ function help(command)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "cash (see what you have in the bank)[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]To browse type " .. server.commandPrefix .. "shop followed by a category. Categories are..[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. list .. "[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]For a general search type " .. server.commandPrefix .. "shop <item> eg. " .. server.commandPrefix .. "shop shirt[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "buy <item number> <quantity>  Buy all the things![-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "pay <player> <amount>  You can't put a price on love so send money instead.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]For a general search type " .. server.commandPrefix .. "shop {item} eg. " .. server.commandPrefix .. "shop shirt[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "buy {item number} {quantity}  Buy all the things![-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "pay {player name} {amount}  You can't put a price on love so send money instead.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "gamble (gamble in our daily lottery) 25 " .. server.moneyPlural .. " per ticket[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Buy multiple tickets at once with " .. server.commandPrefix .. "gamble 5 (or any number). The winning number is picked from ticket number 1 to 100.[-]")
 		if (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "open shop - allow players access to the shop.[-]") end
 		if (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "close shop - block player access to the shop.[-]") end
 		if (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set shop open - set a time (0 - 23) when the shop opens.[-]") end
 		if (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set shop close - set a time (0 - 23) when the shop closes.[-]") end
-		if (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set shop location <location> - tie the shop to a location.[-]") end
+		if (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set shop location {location} - tie the shop to a location.[-]") end
 		if (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "clear shop location - the shop can be used anywhere.[-]") end
 		return
 	end
@@ -116,23 +116,23 @@ function help(command)
 		end
 
 		if chatvars.accessLevel < 3 then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints <number> (default 2).[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints donors <number>.[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints <player> number <number>.[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set waypoint create cost <number> (default 0).[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set waypoint cost <number>. (Cost to use, default 0)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set waypoint cooldown <number>. (Timer in seconds between uses, default 0)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints {number} (default 2).[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints donors {number}.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints {player name} number {number}.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set waypoint create cost {number} (default 0).[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set waypoint cost {number}. (Cost to use, default 0)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set waypoint cooldown {number}. (Timer in seconds between uses, default 0)[-]")
 		end
 
 
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set wp <name of waypoint> to set or re-set them.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "wp <name of waypoint>.  Teleport to the named waypoint. eg. " .. server.commandPrefix .. "wp wp1[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "share wp <name of waypoint>.  Allow your friends to tele to it with " .. server.commandPrefix .. "wp <your name> <name of waypoint>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "close (or unshare) wp <name of waypoint>.  Make it private again.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "clear wp <name of waypoint>.  Deletes the waypoint.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "link <wp1> to <wp2>. Convert two waypoints to a portal. In this mode nobody can tp to them, instead you step into them.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "unlink <wp1> (or <wp2>).  Unlinking either end of a portal unlinks both.  They revert to waypoints again.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "waypoints <optional name of friend>.  List your waypoints or the shared ones of a friend.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set wp {name of waypoint} to set or re-set them.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "wp {name of waypoint}.  Teleport to the named waypoint. eg. " .. server.commandPrefix .. "wp wp1[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "share wp {name of waypoint}.  Allow your friends to tele to it with " .. server.commandPrefix .. "wp {your name} {name of waypoint}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "close (or unshare) wp {name of waypoint}.  Make it private again.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "clear wp {name of waypoint}.  Deletes the waypoint.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "link {wp1} to {wp2}. Convert two waypoints to a portal. In this mode nobody can tp to them, instead you step into them.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "unlink {wp1} (or {wp2}).  Unlinking either end of a portal unlinks both.  They revert to waypoints again.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "waypoints {optional name of friend}.  List your waypoints or the shared ones of a friend.[-]")
 		return
 	end
 
@@ -140,7 +140,7 @@ function help(command)
 	if command == "irc" then
 		if not server.ircPrivate or (chatvars.accessLevel < 3) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Our irc server is located at " .. server.ircServer .. ":" .. server.ircPort .. "[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Send an irc invite to anyone with " .. server.commandPrefix .. "invite <player name>[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Send an irc invite to anyone with " .. server.commandPrefix .. "invite {player name}[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Once there type /join " .. server.ircMain .. "[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Hexchat is a good free irc client which works on Windows.[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Or visit https://kiwiirc.com/client/" .. server.ircServer .. ":" .. server.ircPort .. "/" .. server.ircMain .. "[-]")
@@ -152,8 +152,8 @@ function help(command)
 
 	if command == "friends" then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can tell me who your friends are. This gives them access to private teleports etc.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "friend <friend's name> - add someone as a friend[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "unfriend <friend's name>[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "friend {friend's name} - add someone as a friend[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "unfriend {friend's name}[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "friends - see who you have friended[-]")
 		return
 	end
@@ -164,7 +164,7 @@ function help(command)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 0 server owners[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 1 admins[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 2 mods[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 3 <reserved>[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 3 {reserved}[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 4-10 Donors[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 90 Regular players[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 99 New players[-]")
@@ -175,8 +175,8 @@ function help(command)
 	if command == "custom commands" and (chatvars.accessLevel < 3) then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can create commands that send a private message.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "custom commands (list them)[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "add command <command> level <access level> message <message>.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "remove command <command>.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "add command {command} level {access level} message {message}.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "remove command {command}.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Access level is optional and defaults to 99.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]See " .. server.commandPrefix .. "help access for the list of access levels.[-]")
 		return
@@ -197,16 +197,16 @@ function help(command)
 
 	if (command == "hotspots") then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Hotspots are pm's that are triggered by proximity to a hotspot. They are 3 dimensional spheres and can be stacked vertically.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "hotspots <optional number> Lists all hotspots within 20 meters of you or type a number for a different distance[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "delete hotspot <optional number>. Deletes the nearest or numbered hotspot.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "hotspot <private message>  Adds hotspot where you are with a default radius of 3 meters[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "move hotspot <numbr>. The numbered hotspot will move to you.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "hotspots {optional number} Lists all hotspots within 20 meters of you or type a number for a different distance[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "delete hotspot {optional number}. Deletes the nearest or numbered hotspot.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "hotspot {private message}  Adds hotspot where you are with a default radius of 3 meters[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "move hotspot {numbr}. The numbered hotspot will move to you.[-]")
 
 		if (chatvars.accessLevel < 3) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "resize hotspot <number> size 5. Change the radius of the numbered hotspot to 5 metres.[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "delete hotspots <optional player>. Deletes all of a players hotspots or your own if no player given.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "resize hotspot {number} size 5. Change the radius of the numbered hotspot to 5 metres.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "delete hotspots {optional player}. Deletes all of a players hotspots or your own if no player given.[-]")
 		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "resize hotspot <number> size 5 (max 10). Change the radius of the numbered hotspot to 5 metres.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "resize hotspot {number} size 5 (max 10). Change the radius of the numbered hotspot to 5 metres.[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "delete hotspots. Deletes all of your hotspots.[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]If you move your base, any hotspots that are outside of your base are deleted. An admin may remove hotspots deemed to be offensive.[-]")
 		end
@@ -218,21 +218,21 @@ function help(command)
 	if (command == "setup") and (chatvars.accessLevel < 3) then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Please set the following for smooth operation of the bot..[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "reset bot (only do this after a wipe and as soon after as possible)[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "name bot <short name for me>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set map size <number> (how far in meters players can explore away from 0,0 Donors can go 5000 further out).[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set base cooldown <seconds> (how long to wait between " .. server.commandPrefix .. "base teleporting. Donors wait half as long)[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set chat color <bbcode color without the brackets>[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "name bot {short name for me}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set map size {number} (how far in meters players can explore away from 0,0 Donors can go 5000 further out).[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set base cooldown {seconds} (how long to wait between " .. server.commandPrefix .. "base teleporting. Donors wait half as long)[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set chat color {bbcode color without the brackets}[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location add prison[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location add exile[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "max animals <number>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "max players <number>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "max zombies <number>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set website <url or steam group>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set irc server <ip:port>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set (or clear) max ping <100+>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set (or clear) welcome message <your welcome message>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]For prison and exile also type " .. server.commandPrefix .. "set location size <prison/exile> <distance in metres>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Also for each type " .. server.commandPrefix .. "location <prison/exile> pvp[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "max animals {number}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "max players {number}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "max zombies {number}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set website {url or steam group}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set irc server {ip:port}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set (or clear) max ping {100+}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set (or clear) welcome message {your welcome message}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]For prison and exile also type " .. server.commandPrefix .. "set location size {prison/exile} {distance in metres}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Also for each type " .. server.commandPrefix .. "location {prison/exile} pvp[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set server pvp/pve/creative (tells me what type of server this is)[-]")
 		return
 	end
@@ -247,15 +247,15 @@ function help(command)
 
 	if (command == "tracker" and chatvars.accessLevel < 3) then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can walk the path taken by a player at any point in their history.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "track <player> session <number> Defaults to the most recent or current session.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "track {player name} session {number} Defaults to the most recent or current session.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Once the tracker is running:[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "goto start/end[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "go or " .. server.commandPrefix .. "stop[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "go back (change direction)[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "skip <number>.  Skips every (n) steps[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "speed <number>.  Default is 3. Add 1 for each second you want to wait between steps.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "forward (or " .. server.commandPrefix .. "advance) <number> Jump forward n steps.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "back <number> Jump backwards n steps.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "skip {number}.  Skips every (n) steps[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "speed {number}.  Default is 3. Add 1 for each second you want to wait between steps.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "forward (or " .. server.commandPrefix .. "advance) {number} Jump forward n steps.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "back {number} Jump backwards n steps.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "next (track the next session)[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "last (track the previous session)[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "stop tracking[-]")
@@ -265,9 +265,9 @@ function help(command)
 
 	if command == "donors" then
 		if chatvars.accessLevel < 3 then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Type player status <player> to check their donor status[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "add donor <player> level <level> expires <number> <week or month or year>[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "remove donor <player>[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Type player status {player name} to check their donor status[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "add donor {player name} level {level} expires {number} {week or month or year}[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "remove donor {player name}[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Later you will be able to set a time limit like you do with bans.[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Also I will add the ability to give a player a free trial for a settable time limit.[-]")
 		else
@@ -287,18 +287,18 @@ function help(command)
 
 	if (command == "admin") and chatvars.accessLevel < 3 then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This help is limited.  For better help visit the IRC server and type help in your bot's channel.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "arrest <playername / player id>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "release <playername / player id>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "release here <playername / player id>[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "arrest {playername / player id}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "release {playername / player id}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "release here {playername / player id}[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "prison takes you to the prison[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "near <playername / player id> Be in god mode before using this.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "goto <playername / player id>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "fetch <playername / player id>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "rescue <playername> - like fetch but just works[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "return <playername / player id>[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "sendhome <playername / player id>[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "near {playername / player id} Be in god mode before using this.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "goto {playername / player id}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "fetch {playername / player id}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "rescue {playername} - like fetch but just works[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "return {playername / player id}[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "sendhome {playername / player id}[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "return - to return to where you came from[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited <optional player> range <number default is 10>[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited {optional player} range {number default is 10}[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]See also:[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help donors[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "help tracker[-]")
@@ -317,22 +317,22 @@ function help(command)
 
 		if (chatvars.accessLevel < 3) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "prison takes you to the prison[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location add/remove <location>[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location move <location> (move it to where you are standing)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location private/public <location> (default is private)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location <location> pvp/pve[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location set/clear reset <some name> (set as reset zone or clear)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location <some name> cost <number> (" .. server.moneyPlural .. " or quantity of an item)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location <some name> currency <item name> (require an item in inventory)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location <location> owner <player>[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location allow/disallow base <location> (allow or block setbase)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location <location> access <level> (no tp for players below acccess level)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location <location> size <number>[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location <location> ends here (where you are standing)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location safe/unsafe <location> (set safe to auto-kill zombies)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location add/remove {location}[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location move {location} (move it to where you are standing)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location private/public {location} (default is private)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location {location} pvp/pve[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location set/clear reset {some name} (set as reset zone or clear)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location {some name} cost {number} (" .. server.moneyPlural .. " or quantity of an item)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location {some name} currency {item name} (require an item in inventory)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location {location} owner {player name}[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location allow/disallow base {location} (allow or block setbase)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location {location} access {level} (no tp for players below acccess level)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location {location} size {number}[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location {location} ends here (where you are standing)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location safe/unsafe {location} (set safe to auto-kill zombies)[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "protect/unprotect location (like setting base protect. you must be in the location first).[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location <location> random (set random spawn points by simply walking around. type " .. server.commandPrefix .. "stop when finished.)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location <location> (detailed info about the location)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location {location} random (set random spawn points by simply walking around. type " .. server.commandPrefix .. "stop when finished.)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location {location} (detailed info about the location)[-]")
 		end
 
 		return
@@ -344,16 +344,16 @@ function help(command)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A player can belong to many villages and each village can have only 1 mayor.  Villagers can vote for a new mayor once per 7 game days.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The village teleport works exactly like a base teleport including the 30 minute delay.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "villages (list of villages)[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "villagers <optional village> (list of villagers)[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "villagers {optional village} (list of villagers)[-]")
 
 		if (chatvars.accessLevel < 3) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "add village <name>[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "remove village <name>[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "village <name> size <size> (of village protection)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "protect village <name>[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "add member <player> village <village>[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "remove member <player> village <village>[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "elect <player> village <village> (assign the first mayor)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "add village {name}[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "remove village {name}[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "village {name} size {size} (of village protection)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "protect village {name}[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "add member {player name} village {village}[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "remove member {player name} village {village}[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "elect {player name} village {village} (assign the first mayor)[-]")
 		end
 
 		return
@@ -382,13 +382,13 @@ function help(command)
 		if (chatvars.accessLevel < 3) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "opentp tpname[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "closetp tpname (must match opentp name)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "tele <tpname> delete[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "tele <tpname> owner <player>[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "tele <tpname> private[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "tele <tpname> public[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "tele {tpname} delete[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "tele {tpname} owner {player name}[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "tele {tpname} private[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "tele {tpname} public[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "teleports (list them all)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "tp <tpname> (tp to a teleport)[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "lobby <player name> (send a player to the lobby if it exists)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "tp {tpname} (tp to a teleport)[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "lobby {player name} (send a player to the lobby if it exists)[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleports are private by default.[-]")
 		end
 
@@ -404,8 +404,8 @@ function help(command)
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reset zones can only be managed ingame as they reference your current position.[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]To make the region you are in a reset zone type " .. server.commandPrefix .. "add reset zone (regions are large)[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Remove it with " .. server.commandPrefix .. "delete reset zone[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location set reset <location>[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location clear reset <location>[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location set reset {location}[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "location clear reset {location}[-]")
 		end
 
 		return
@@ -414,7 +414,7 @@ function help(command)
 
 	if (command == "commands") then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This list is just a summary.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "alert <your message to admins> Bot adds your coords too.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "alert {your message to admins} Bot adds your coords too.[-]")
 		if (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "enable gimme, " .. server.commandPrefix .. "disable gimme, " .. server.commandPrefix .. "gimme gimme[-]") end
 		if not (server.hardcore) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "setbase, " .. server.commandPrefix .. "base, " .. server.commandPrefix .. "delbase, " .. server.commandPrefix .. "pause, " .. server.commandPrefix .. "resume, " .. server.commandPrefix .. "status[-]") end
 		if not (server.hardcore) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "enabletp, " .. server.commandPrefix .. "disabletp (for teleporting)[-]") end

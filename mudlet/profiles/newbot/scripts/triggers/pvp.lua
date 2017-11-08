@@ -158,6 +158,7 @@ function pvpPolice(line)
 				if tonumber(players[victimID].pvpBounty) > 0 then
 					players[killerID].cash = players[killerID].cash + players[victimID].pvpBounty
 					players[victimID].pvpBounty = 0
+					if botman.dbConnected then conn:execute("UPDATE players SET pvpBounty = 0 WHERE steam = " .. victimID) end
 					message("pm " .. killerID .. " [" .. server.chatColour .. "]You got the bounty on " .. victimName .. "![-]")
 				else
 					if tonumber(players[killerID].pvpBounty) > 0 then
@@ -199,6 +200,23 @@ function pvpPolice(line)
 			if ((math.abs(math.abs(igplayers[killerID].xPos) - math.abs(locations["prison"].x)) < locations["prison"].size) or (math.abs(math.abs(igplayers[killerID].zPos) - math.abs(locations["prison"].z)) < locations["prison"].size)) then
 				return
 			end
+		end
+
+		-- don't react if server.pvpIgnoreFriendlyKills is true and the killer is friends with the victim
+		if server.pvpIgnoreFriendlyKills and isFriend(victimID, killerID) then
+			r = rand(10)
+			if r == 1 then message("say [" .. server.chatColour .. "]OOPS! " .. killerName .. " accidentally ended the life of " .. victimName .. ".  It was just a prank bro.[-]") end
+			if r == 2 then message("say [" .. server.chatColour .. "]" .. victimName .. " slipped on " .. killerName .. "'s banana.[-]") end
+			if r == 3 then message("say [" .. server.chatColour .. "]" .. killerName .. " is a terrible person.[-]") end
+			if r == 4 then message("say [" .. server.chatColour .. "]Public service announcement. DO NOT invite " .. killerName .. " to be your wingman.[-]") end
+			if r == 5 then message("say [" .. server.chatColour .. "]Let's have a minute of silence as we remember" .. victimName .. ". Tragically cut down by " .. killerName .. ".[-]") end
+			if r == 6 then message("say [" .. server.chatColour .. "]Today " .. victimName .. "'s life was cut short in a horrible workplace accident.  Stay safe people.[-]") end
+			if r == 7 then message("say [" .. server.chatColour .. "]Breaking news! " .. victimName .. " has died.[-]") end
+			if r == 8 then message("say [" .. server.chatColour .. "]Gun safety continues to elude " .. killerName .. ".[-]") end
+			if r == 9 then message("say [" .. server.chatColour .. "]" .. killerName .. " is not very good at this.[-]") end
+			if r == 10 then message("say [" .. server.chatColour .. "]" .. killerName .. " didn't mean to kill " .. victimName .. ". Probably.[-]") end
+
+			return
 		end
 
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end

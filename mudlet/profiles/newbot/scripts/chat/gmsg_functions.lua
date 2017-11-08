@@ -186,23 +186,23 @@ function nextReboot(steam)
 
 				if steam == nil then
 					if days > 0 then
-						message("say [" .. server.chatColour .. "]The next reboot is in " .. days .. " " .. strDays .. " " .. hours .. " " .. strHours .. " and " .. minutes .." " .. strMinutes .. "[-]")
+						message("say [" .. server.chatColour .. "]The next reboot is in " .. days .. " " .. strDays .. " " .. hours .. " " .. strHours .. " and " .. minutes .. " " .. strMinutes .. "[-]")
 					else
 						if hours > 0 then
-							message("say [" .. server.chatColour .. "]The next reboot is in " .. hours .. " " .. strHours .. " and " .. minutes .." " .. strMinutes .. "[-]")
+							message("say [" .. server.chatColour .. "]The next reboot is in " .. hours .. " " .. strHours .. " and " .. minutes .. " " .. strMinutes .. "[-]")
 						else
-							message("say [" .. server.chatColour .. "]The next reboot is in " .. minutes .." " .. strMinutes .. "[-]")
+							message("say [" .. server.chatColour .. "]The next reboot is in " .. minutes .. " " .. strMinutes .. "[-]")
 						end
 					end
 				else
 					if igplayers[steam] then
 						if days > 0 then
-							message("pm " .. steam .. " [" .. server.chatColour .. "]The next reboot is in " .. days .. " " .. strDays .. " " .. hours .. " " .. strHours .. " and " .. minutes .." " .. strMinutes .. "[-]")
+							message("pm " .. steam .. " [" .. server.chatColour .. "]The next reboot is in " .. days .. " " .. strDays .. " " .. hours .. " " .. strHours .. " and " .. minutes .. " " .. strMinutes .. "[-]")
 						else
 							if hours > 0 then
-								message("pm " .. steam .. " [" .. server.chatColour .. "]The next reboot is in " .. hours .. " " .. strHours .. " and " .. minutes .." " .. strMinutes .. "[-]")
+								message("pm " .. steam .. " [" .. server.chatColour .. "]The next reboot is in " .. hours .. " " .. strHours .. " and " .. minutes .. " " .. strMinutes .. "[-]")
 							else
-								message("pm " .. steam .. " [" .. server.chatColour .. "]The next reboot is in " .. minutes .." " .. strMinutes .. "[-]")
+								message("pm " .. steam .. " [" .. server.chatColour .. "]The next reboot is in " .. minutes .. " " .. strMinutes .. "[-]")
 							end
 						end
 					end
@@ -318,8 +318,9 @@ function gmsg_who(playerid, number)
 
 	if (tonumber(intX) < 0) then xdir = " west " else xdir = " east " end
 	if (tonumber(intZ) < 0) then zdir = " south" else zdir = " north" end
+
 	message("pm " .. playerid .. " [" .. server.chatColour .. "]You are at " .. intX .. xdir .. intZ .. zdir .. " at a height of " .. intY .. "[-]")
-	message("pm " .. playerid .. " [" .. server.chatColour .. "]You are in region r." .. x .. "." .. z .. ".7[-]")
+	message("pm " .. playerid .. " [" .. server.chatColour .. "]You are in region r." .. x .. " " .. z .. ".7[-]")
 
 	if (pvpZone(igplayers[playerid].xPos, igplayers[playerid].zPos) ~= false) and chatvars.accessLevel > 2 then
 		return
@@ -394,21 +395,75 @@ end
 
 
 function gmsg(line, ircid)
+	-- Hi there! ^^  Welcome to the function that parses player chat.  It builds a lua table called chatvars filled with lots of info
+	-- about the current line of player chat.  This fuction essentially pre-processes the line so that later code that chatvars is passed to
+	-- doesn't have to do much more to it other than try to match trigger words.  Player chat gets the bot triggered. xD
+
+	-- here is an example of a chat line and the resulting chatvars table:
+
+	-- 2017-10-26T06:14:38 5760.786 INF Chat: 'Smegz0r': /tp 5000 -1 5000"line 2017-10-26T06:14:38 5760.786 INF Chat: 'Smegz0r': /tp 5000 -1 5000"
+
+	-- {
+	  -- number = 5000,
+	  -- intY = 17,
+	  -- commandOld = "/tp 5000 -1 5000",
+	  -- numberCount = 3,
+	  -- intZ = 1988,
+	  -- restrictedCommand = false,
+	  -- wordsOld = {
+		-- "/tp",
+		-- "5000",
+		-- "-1",
+		-- "5000"
+	  -- },
+	  -- command = "/tp 5000 -1 5000",
+	  -- playername = "Smegz0r",
+	  -- oldLine = "2017-10-26T06:14:38 5760.786 INF Chat: 'Smegz0r': /tp 5000 -1 5000",
+	  -- words = {
+		-- "tp",
+		-- "5000",
+		-- "-1",
+		-- "5000"
+	  -- },
+	  -- region = "r.0.3.7",
+	  -- wordCount = 4,
+	  -- accessLevel = 0,
+	  -- gmsg = "2017-10-26T06:14:38 5760.786 INF Chat: 'Smegz0r': /tp 5000 -1 5000",
+	  -- intX = 197,
+	  -- numbers = {
+		-- "5000",
+		-- "-1",
+		-- "5000"
+	  -- },
+	  -- timestamp = 1509016769,
+	  -- zombies = 0,
+	  -- playerid = "76561197983251951"
+	-- }
+
+	-- The table wordsOld contains the original words from the player, the table words are the same words but lowercase.
+	-- It is the same with commandOld and command.
+	-- If the player said any numbers (surrounded by a space and not part of a word), they are recorded in the table numbers.
+
+
 	local result, x, z, id, pname, noWaypoint, temp, chatStringStart, cmd, msg, test, ircMsg
 
 	function messageIRC()
 		if ircMsg ~= nil then
 			-- ignore game messages
-			if (chatvars.playername ~= "Server" and chatvars.playerid == nil) or string.find(ircMsg, " INF ") or string.find(ircMsg, "password") or string.find(string.lower(ircMsg), " api ") then
+			if (chatvars.playername ~= "Server" and chatvars.playerid == nil) or string.find(ircMsg, " INF ") or string.find(ircMsg, "password") or string.find(ircMsg, "pass ") or string.find(string.lower(ircMsg), " api ") then
 				return
 			end
 
 			irc_chat(server.ircMain, ircMsg)
 			windowMessage(server.windowGMSG, chatvars.playername .. ": " .. chatvars.command .. "\n", true)
-			logChat(botman.serverTime, chatvars.playername, ircMsg)
 
-			if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) then
-				logCommand(botman.serverTime, chatvars.playername, ircMsg)
+			-- botman.webdavFolderWriteable is set to true every hour. We skip it if false the rest of the time as it causes some code to stop early if it doesn't have write permissions.
+			if botman.webdavFolderWriteable then
+				logChat(botman.serverTime, chatvars.playername, ircMsg)
+
+				if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) then
+					logCommand(botman.serverTime, chatvars.playername, ircMsg)
+				end
 			end
 		end
 	end
@@ -433,6 +488,8 @@ function gmsg(line, ircid)
 	chatvars.playerid = 0
 	chatvars.accessLevel = 99
 	chatvars.command = line
+	chatvars.ircid = 0
+	chatvars.ircAlias = ""
 
 	if debug then dbug("gmsg chatvars.accessLevel " .. chatvars.accessLevel) end
 
@@ -480,6 +537,7 @@ function gmsg(line, ircid)
 
 	if ircid ~= nil then
 		chatvars.ircid = ircid
+		chatvars.ircAlias = players[ircid].ircAlias
 
 		if tonumber(ircid) > 0 then
 			chatvars.accessLevel = accessLevel(ircid)
@@ -625,19 +683,19 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			zombies = tonumber(igplayers[chatvars.playerid].zombies)
 			chatvars.zombies = zombies
 
-			if string.len(chatvars.command) > 150 and server.coppi then
-				if igplayers[chatvars.playerid].longLineCount == nil then
-					igplayers[chatvars.playerid].longLineCount = 0
-					igplayers[chatvars.playerid].longLineTimer = os.time()
-				end
+			-- if string.len(chatvars.command) > 150 and server.coppi then
+				-- if igplayers[chatvars.playerid].longLineCount == nil then
+					-- igplayers[chatvars.playerid].longLineCount = 0
+					-- igplayers[chatvars.playerid].longLineTimer = os.time()
+				-- end
 
-				if tonumber(igplayers[chatvars.playerid].longLineCount) > 3 then
-					igplayers[chatvars.playerid].longLineTimer = os.time() + 10
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have been muted for 1 minute for too many excessively long chat lines.[-]")
-					send("mpc " .. chatvars.playerid .. " true")
-					tempTimer( 60, [[unmutePlayer("]] .. chatvars.playerid .. [[")]] )
-				end
-			end
+				-- if tonumber(igplayers[chatvars.playerid].longLineCount) > 3 then
+					-- igplayers[chatvars.playerid].longLineTimer = os.time() + 10
+					-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have been muted for 1 minute for too many excessively long chat lines.[-]")
+					-- send("mpc " .. chatvars.playerid .. " true")
+					-- tempTimer( 60, [[unmutePlayer("]] .. chatvars.playerid .. [[")]] )
+				-- end
+			-- end
 		end
 
 		if players[chatvars.playerid].lockout then
@@ -650,15 +708,23 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
+	chatvars.numbers = {}
 	chatvars.words = {}
 	chatvars.wordsOld = {}
 
+	-- break the chat line into words
 	for word in chatvars.command:gmatch("%S+") do
 		table.insert(chatvars.words, string.lower(word))
 		table.insert(chatvars.wordsOld, word)
 	end
 
+	-- break the chat line into numbers
+	for word in string.gmatch (chatvars.command, " (-?\%d+)") do
+		table.insert(chatvars.numbers, tonumber(word))
+	end
+
 	chatvars.wordCount = table.maxn(chatvars.words)
+	chatvars.numberCount = table.maxn(chatvars.numbers)
 	chatvars.commandOld = chatvars.command
 	chatvars.command = string.lower(string.trim(chatvars.command))
 
@@ -666,6 +732,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		chatvars.words[1] = string.sub(chatvars.words[1], 2, string.len(chatvars.words[1]))
 	end
 
+	-- todo: stop using chatvars.number and use the new chatvars.numbers table
 	chatvars.number = tonumber(string.match(chatvars.command, " (-?%d+)")) -- (-?\%d+)
 	result = false
 
@@ -683,9 +750,13 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
+	display("ircMsg1 " .. ircMsg)
+
 	if ircMsg ~= nil then
 		messageIRC()
 	end
+
+	display("ircMsg2 " .. ircMsg)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
@@ -761,21 +832,21 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 	if not result then
 		if chatvars.showHelp and not skipHelp then
 			if (string.find(chatvars.command, "reload")) or chatvars.words[1] ~= "help" and chatvars.words[3] == nil then
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "reload code")
+				irc_chat(players[chatvars.ircid].ircAlias, " " .. server.commandPrefix .. "reload code")
 
 				if not shortHelp then
 					irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot to reload all external Lua scripts.  This also happens shortly after restarting the bot and it can automatically detect if the scripts are not loaded and reload them.")
 					irc_chat(players[chatvars.ircid].ircAlias, "Once the script have loaded, if you make any changes to them you need to run this command or restart the bot for your changes to take effect.")
-					irc_chat(players[chatvars.ircid].ircAlias, " ")
+					irc_chat(players[chatvars.ircid].ircAlias, ".")
 				end
 			end
 
 			if (string.find(chatvars.command, "pause") or string.find(chatvars.command, "bot")) or chatvars.words[1] ~= "help" and chatvars.words[3] == nil then
-				irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "pause bot")
+				irc_chat(players[chatvars.ircid].ircAlias, " " .. server.commandPrefix .. "pause bot")
 
 				if not shortHelp then
 					irc_chat(players[chatvars.ircid].ircAlias, "Temporarily disable the bot.  It will still read the chat and can be enabled again.")
-					irc_chat(players[chatvars.ircid].ircAlias, " ")
+					irc_chat(players[chatvars.ircid].ircAlias, ".")
 				end
 			end
 		end
@@ -977,7 +1048,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			return true
 		else
-			if (accessLevel(chatvars.ircid) > 2) then
+			if (chatvars.accessLevel > 2) then
 				irc_chat(players[chatvars.ircid].ircAlias, "The bot is running in safe mode.  To exit safe mode type " .. server.commandPrefix .. "start bot")
 				botman.faultyChat = false
 if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end

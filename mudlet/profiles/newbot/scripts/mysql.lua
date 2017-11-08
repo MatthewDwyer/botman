@@ -515,6 +515,7 @@ function alterTables()
 if debug then display("alterTables start\n") end
 
 	-- These are here to make it easier to update other bots while the bot is in development.
+	-- After each sql statement is processed, they are stored in the table altertables which is checked so that each statement is only ever run once.
 
 	-- new tables
 	conn:execute("CREATE TABLE `altertables` (`id` int(11) NOT NULL,`statement` varchar(1000) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=latin1")
@@ -524,6 +525,7 @@ if debug then display("alterTables start\n") end
 	-- the altertables table is used to store statements that we've already executed so we don't keep trying to modify the db with the same stuff
 	-- every time the bot is started or refreshed.
 
+	-- load the previously executed statements from altertables into the Lua statements table for checking by doSQL
 	statements = {}
 	cursor,errorString = conn:execute("select * from altertables")
 	row = cursor:fetch({}, "a")
@@ -532,6 +534,7 @@ if debug then display("alterTables start\n") end
 		row = cursor:fetch(row, "a")
 	end
 
+	-- new tables continued
 	doSQL("CREATE TABLE `badWords` (`badWord` varchar(15) NOT NULL,`cost` int(11) NOT NULL DEFAULT '10',`counter` int(11) NOT NULL DEFAULT '0') ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE `list` (`thing` varchar(255) NOT NULL) ENGINE=MEMORY DEFAULT CHARSET=latin1 COMMENT='For sorting a list'")
 	doSQL("CREATE TABLE `prefabCopies` (`owner` bigint(17) NOT NULL DEFAULT '0',`name` varchar(50) NOT NULL DEFAULT '',`x1` int(11) NOT NULL DEFAULT '0',`x2` int(11) NOT NULL DEFAULT '0',`y1` int(11) NOT NULL DEFAULT '0',`y2` int(11) NOT NULL DEFAULT '0',`z1` int(11) NOT NULL DEFAULT '0',`z2` int(11) NOT NULL DEFAULT '0',`blockName` VARCHAR(50) NOT NULL DEFAULT '',`rotation` INT NOT NULL DEFAULT '0', PRIMARY KEY (`owner`,`name`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
@@ -550,8 +553,10 @@ if debug then display("alterTables start\n") end
 	doSQL("CREATE TABLE IF NOT EXISTS `reservedSlots` (`steam` varchar(17) NOT NULL,`timeAdded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`reserved` tinyint(1) NOT NULL DEFAULT '0',`staff` tinyint(1) NOT NULL DEFAULT '0',`totalPlayTime` int(11) NOT NULL DEFAULT '0',`deleteRow` TINYINT(1) NOT NULL DEFAULT '0',PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE IF NOT EXISTS `botCommands` (`cmdCode` varchar(5) NOT NULL,`cmdIndex` int(11) NOT NULL,`accessLevel` int(11) NOT NULL DEFAULT '0',`enabled` tinyint(1) NOT NULL DEFAULT '1',`keywords` varchar(150) NOT NULL DEFAULT '',`shortDescription` varchar(255) NOT NULL DEFAULT '',`longDescription` varchar(1000) NOT NULL DEFAULT '',`sortOrder` int(11) NOT NULL DEFAULT '0',PRIMARY KEY (`cmdCode`,`cmdIndex`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE IF NOT EXISTS `timedEvents` (`timer` varchar(20) NOT NULL DEFAULT '',`delayMinutes` int(11) NOT NULL DEFAULT '10',`nextTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`disabled` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`timer`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `botChat` (`botChatID` int(11) NOT NULL,`triggerWords` varchar(255) NOT NULL DEFAULT '',`triggerPhrase` varchar(255) NOT NULL DEFAULT '',`accessLevelRestriction` int(11) NOT NULL DEFAULT '99',`mustAddressBot` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`botChatID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `botChatResponses` (`botChatResponseID` int(11) NOT NULL,`botChatID` int(11) NOT NULL DEFAULT '0',`response` varchar(300) NOT NULL DEFAULT '',PRIMARY KEY (`botChatResponseID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE IF NOT EXISTS `botChat` (`botChatID` int(11) NOT NULL AUTO_INCREMENT,`triggerWords` varchar(255) NOT NULL DEFAULT '',`triggerPhrase` varchar(255) NOT NULL DEFAULT '',`accessLevelRestriction` int(11) NOT NULL DEFAULT '99',`mustAddressBot` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`botChatID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE IF NOT EXISTS `botChatResponses` (`botChatResponseID` int(11) NOT NULL AUTO_INCREMENT,`botChatID` int(11) NOT NULL DEFAULT '0',`response` varchar(300) NOT NULL DEFAULT '',PRIMARY KEY (`botChatResponseID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE IF NOT EXISTS `webInterfaceQueue` (`id` int(11) NOT NULL AUTO_INCREMENT,`action` varchar(10) NOT NULL DEFAULT '',`actionTable` varchar(50) NOT NULL DEFAULT '',`actionQuery` text NOT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE IF NOT EXISTS `locationCategories` (`categoryName` varchar(20) NOT NULL,`minAccessLevel` int(11) NOT NULL DEFAULT '99',`maxAccessLevel` int(11) NOT NULL DEFAULT '0',PRIMARY KEY (`categoryName`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 
 
 	-- changes to players table
@@ -572,8 +577,11 @@ if debug then display("alterTables start\n") end
 	doSQL("ALTER TABLE `players` ADD `block` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `removedClaims` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `returnCooldown` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `players` CHANGE `cash` `cash` FLOAT(11) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `players` CHANGE `chatColour` `chatColour` VARCHAR(8) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'FFFFFF'")
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
+
 	-- changes to server table
 	doSQL("ALTER TABLE `server` ADD COLUMN `teleportCost` INT NOT NULL DEFAULT '200'")
 	doSQL("ALTER TABLE `server` ADD COLUMN `ircPrivate` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -624,7 +632,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` CHANGE `ircMain` `ircMain` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '#new'")
 	doSQL("ALTER TABLE `server` CHANGE `ircBotName` `ircBotName` VARCHAR(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'Bot'")
 	doSQL("ALTER TABLE `server` CHANGE `shopLocation` `shopLocation` VARCHAR(30) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL")
-	doSQL("ALTER TABLE `server` CHANGE `blockCountries` `blockCountries` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'CN'")
+	doSQL("ALTER TABLE `server` CHANGE `blacklistCountries` `blacklistCountries` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'CN'")
 	doSQL("ALTER TABLE `server` CHANGE `moneyName` `moneyName` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'Zenny|Zennies'")
 	doSQL("ALTER TABLE `server` CHANGE `ircTracker` `ircTracker` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '#new_tracker'")
 	doSQL("ALTER TABLE `server` CHANGE `mapSize` `mapSize` INT(11) NOT NULL DEFAULT '10000'")
@@ -651,9 +659,13 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `whitelistCountries` VARCHAR(50) NOT NULL DEFAULT '' , ADD `perMinutePayRate` INT NOT NULL DEFAULT '0' , ADD `disableWatchAlerts` TINYINT NOT NULL DEFAULT '0' , ADD `masterPassword` VARCHAR(50) NOT NULL DEFAULT '', ADD `allowBotRestarts` TINYINT NOT NULL DEFAULT '0', ADD `botOwner` VARCHAR(17) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` CHANGE `pvpAllowProtect` `pvpAllowProtect` TINYINT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `returnCooldown` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` CHANGE `blockCountries` `blacklistCountries` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'CN,HK'")
+	doSQL("ALTER TABLE `server` ADD `botRestartDay` INT NOT NULL DEFAULT '7'")
+	doSQL("ALTER TABLE `server` CHANGE `perMinutePayRate` `perMinutePayRate` FLOAT(11) NOT NULL DEFAULT '0'")
 
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
+
 	-- misc table changes
 	doSQL("ALTER TABLE `friends` ADD `autoAdded` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `hotspots` ADD `action` VARCHAR(10) NOT NULL DEFAULT ''")
@@ -682,6 +694,8 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `locations` ADD `hidden` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `locations` CHANGE `currency` `currency` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL")
 	doSQL("ALTER TABLE `teleports` ADD `size` FLOAT(11) NOT NULL DEFAULT '1.5' COMMENT 'size of start tp' , ADD `dsize` FLOAT(11) NOT NULL DEFAULT '1.5' COMMENT 'size of dest tp'")
+	doSQL("ALTER TABLE `botChat` MODIFY `botChatID` int(11) NOT NULL AUTO_INCREMENT")
+	doSQL("ALTER TABLE `botChatResponses` MODIFY `botChatResponseID` int(11) NOT NULL AUTO_INCREMENT")
 
 	-- fix zero default tp sizes
 	doSQL("UPDATE `teleports` SET size = 1.5 WHERE size = 0")
@@ -694,6 +708,9 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `playerNotes` CHANGE `steam` `steam` BIGINT(17) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `playerNotes` CHANGE `createdBy` `createdBy` BIGINT(17) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `whitelist` CHANGE `steam` `steam` BIGINT(17) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `memEntities` ENGINE = MEMORY")
+	doSQL("ALTER TABLE `locations` ADD `locationCategory` VARCHAR(20) NOT NULL DEFAULT ''")
+	doSQL("ALTER TABLE `otherEntities` ADD `doNotDespawn` TINYINT NOT NULL DEFAULT '0'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)

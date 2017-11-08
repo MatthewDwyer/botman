@@ -41,24 +41,24 @@ if debug then dbug("debug base") end
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Base Commands:")
-		irc_chat(players[chatvars.ircid].ircAlias, "==============")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Base Commands:")
+		irc_chat(chatvars.ircAlias, "==============")
+		irc_chat(chatvars.ircAlias, ".")
 	end
 
 	if chatvars.showHelpSections then
-		irc_chat(players[chatvars.ircid].ircAlias, "base")
+		irc_chat(chatvars.ircAlias, "base")
 	end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "base") or string.find(chatvars.command, "set")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set base size <number> <player>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set base2 size <number> <player>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set base size {number} {player name}")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set base2 size {number} {player name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Set the base protection size for a player's first or second base.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Set the base protection size for a player's first or second base.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -133,13 +133,13 @@ if debug then dbug("debug base") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "bed") or string.find(chatvars.command, "set") or string.find(chatvars.command, "clear")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "setbed")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "clearbed")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "setbed")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "clearbed")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "When you die, the bot can automatically return you to your first or second base.")
-				irc_chat(players[chatvars.ircid].ircAlias, "Set within 50 metres of your base.  The closest base will become your new spawn point after death.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "When you die, the bot can automatically return you to your first or second base.")
+				irc_chat(chatvars.ircAlias, "Set within 50 metres of your base.  The closest base will become your new spawn point after death.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -183,17 +183,17 @@ if debug then dbug("debug base") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base") or string.find(chatvars.command, "set")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "sethome (or sethome2)")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "setbase (or setbase2)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "sethome (or sethome2)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "setbase (or setbase2)")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot where your first or second base is for base protection, raid alerting and the ability to teleport home.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Tell the bot where your first or second base is for base protection, raid alerting and the ability to teleport home.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
 
-	if (chatvars.words[1] == "sethome" or chatvars.words[1] == "setbase" or chatvars.words[1] == "sethome2" or chatvars.words[1] == "setbase2") and chatvars.words[2] == nil then
+	if ((chatvars.words[1] == "sethome" or chatvars.words[1] == "setbase" or chatvars.words[1] == "sethome2" or chatvars.words[1] == "setbase2") or (chatvars.words[1] == "set" and (chatvars.words[2] == "base" or chatvars.words[2] == "base2" or chatvars.words[2] == "home" or chatvars.words[2] == "home2"))) and chatvars.words[3] == nil then
 		if (players[chatvars.playerid].timeout == true) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in timeout. Trust me, you don't want your base here.[-]")
 			botman.faultyChat = false
@@ -243,7 +243,7 @@ if debug then dbug("debug base") end
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
 		-- set the players home coords
-		if (chatvars.words[1] == "sethome" or chatvars.words[1] == "setbase") then
+		if (chatvars.words[1] == "sethome" or chatvars.words[1] == "setbase" or chatvars.words[2] == "home" or chatvars.words[2] == "base") then
 			players[chatvars.playerid].homeX = chatvars.intX
 			players[chatvars.playerid].homeY = chatvars.intY
 			players[chatvars.playerid].homeZ = chatvars.intZ
@@ -298,12 +298,12 @@ if debug then dbug("debug base") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "protect") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "protect (or protect2)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "protect (or protect2)")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Set up the bot's base protection.  The bot will tell the player to move towards or away from their base and will")
-				irc_chat(players[chatvars.ircid].ircAlias, "automatically set protection outside of their base protected area.  Players should not set traps in this area.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Set up the bot's base protection.  The bot will tell the player to move towards or away from their base and will")
+				irc_chat(chatvars.ircAlias, "automatically set protection outside of their base protected area.  Players should not set traps in this area.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -547,12 +547,12 @@ if debug then dbug("debug base") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delbase")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delbase <player>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "delbase")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "delbase {player name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot to forget about a base.  Players can only remove their own bases.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Tell the bot to forget about a base.  Players can only remove their own bases.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -560,7 +560,7 @@ if debug then dbug("debug base") end
 	if (chatvars.words[1] == "delbase") then
 		id = chatvars.playerid
 
-		if (chatvars.playername == "Server") or (chatvars.accessLevel < 3) then
+		if (chatvars.accessLevel < 3) then
 			if (chatvars.words[2] ~= nil) then
 				pname = string.sub(chatvars.command, string.find(chatvars.command, "delbase") + 8)
 				pname = string.trim(pname)
@@ -611,20 +611,20 @@ if debug then dbug("debug base") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delbase2")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "delbase2 <player>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "delbase2")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "delbase2 {player name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Tell the bot to forget about a base.  Players can only remove their own bases.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Tell the bot to forget about a base.  Players can only remove their own bases.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
 
-	if chatvars.words[1] == "delbase2" and (chatvars.accessLevel < 4) then
+	if chatvars.words[1] == "delbase2" then
 		id = chatvars.playerid
 
-		if (chatvars.playername == "Server") or (chatvars.accessLevel < 3) then
+		if (chatvars.accessLevel < 3) then
 			if (chatvars.words[2] ~= nil) then
 				pname = string.sub(chatvars.command, string.find(chatvars.command, "delbase2") + 9)
 				pname = string.trim(pname)
@@ -675,12 +675,12 @@ if debug then dbug("debug base") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "unprotectbase <player>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "unprotectbase2 <player>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "unprotectbase {player name}")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "unprotectbase2 {player name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Disable base protection for a player.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Disable base protection for a player.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -749,12 +749,12 @@ if debug then dbug("debug base") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "enable base (or home) teleport")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "disable base (or home) teleport")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable base (or home) teleport")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "disable base (or home) teleport")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Enable or disable the home or base teleport command (except for staff).")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Enable or disable the home or base teleport command (except for staff).")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -777,7 +777,7 @@ if debug then dbug("debug base") end
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Players can teleport home.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Players can teleport home.")
+				irc_chat(chatvars.ircAlias, "Players can teleport home.")
 			end
 		else
 			server.allowHomeTeleport = false
@@ -787,7 +787,7 @@ if debug then dbug("debug base") end
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Players are not allowed to teleport home.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Players are not allowed to teleport home.")
+				irc_chat(chatvars.ircAlias, "Players are not allowed to teleport home.")
 			end
 		end
 
@@ -801,27 +801,27 @@ if debug then dbug("debug base") end
 	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Base In-Game Only:")
-		irc_chat(players[chatvars.ircid].ircAlias, "===================")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Base In-Game Only:")
+		irc_chat(chatvars.ircAlias, "===================")
+		irc_chat(chatvars.ircAlias, ".")
 	end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "home (or base)")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "home2 (or base2)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "home (or base)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "home2 (or base2)")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Teleport back to your first or second base. A timer and/or a cost may apply.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Teleport back to your first or second base. A timer and/or a cost may apply.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
 
 	if (chatvars.words[1] == "base" or chatvars.words[1] == "home" or chatvars.words[1] == "base2" or chatvars.words[1] == "home2") and chatvars.words[2] == nil and (chatvars.playerid ~= 0) then
 		if isServerHardcore(chatvars.playerid) then
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is disabled.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is disabled.[-]")
 			botman.faultyChat = false
 			return true
 		end
@@ -977,12 +977,12 @@ if debug then dbug("debug base") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "setbase <player>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "sethome <player>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "setbase {player name}")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "sethome {player name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Set a player's first base for them where you are standing.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Set a player's first base for them where you are standing.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1035,12 +1035,12 @@ if debug then dbug("debug base") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "setbase2 <player>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "sethome2 <player>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "setbase2 {player name}")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "sethome2 {player name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Set a player's second base for them where you are standing.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Set a player's second base for them where you are standing.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1093,11 +1093,11 @@ if debug then dbug("debug base") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "test base")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "test base")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Turn your own base protection against you for 30 seconds to test that it works.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Turn your own base protection against you for 30 seconds to test that it works.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1122,13 +1122,13 @@ if debug then dbug("debug base") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "pause")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "pause")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Pause your base protection.")
-				irc_chat(players[chatvars.ircid].ircAlias, "Only works on your base(s) if you are within 100 metres of them and automatically resumes if you move away or leave the server.")
-				irc_chat(players[chatvars.ircid].ircAlias, "This allows players who you haven't friended access to your base with you present.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Pause your base protection.")
+				irc_chat(chatvars.ircAlias, "Only works on your base(s) if you are within 100 metres of them and automatically resumes if you move away or leave the server.")
+				irc_chat(chatvars.ircAlias, "This allows players who you haven't friended access to your base with you present.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -1159,11 +1159,11 @@ if debug then dbug("debug base") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "resume or unpause")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "resume or unpause")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Re-activate your base protection.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Re-activate your base protection.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end

@@ -91,7 +91,8 @@ function baseProtection(steam, posX, posY, posZ)
 
 								alertAdmins(igplayers[steam].name .. " has been ejected from " .. v.name  .."'s 1st base.")
 
-								if distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.homeX, v.homeZ) > v.protectSize then
+								if distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.homeX, v.homeZ) < tonumber(v.protectSize) then
+
 									message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to a protected player base. The base owner needs to add you to their friends list by typing " .. server.commandPrefix .. "friend " .. igplayers[steam].name .. "[-]")
 									cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " -1 " .. igplayers[steam].zPosLastOK
 
@@ -190,7 +191,7 @@ function baseProtection(steam, posX, posY, posZ)
 
 								alertAdmins(igplayers[steam].name .. " has been ejected from " .. v.name  .."'s 2nd base.")
 
-								if distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.home2X, v.home2Z) > v.protect2Size then
+								if distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.home2X, v.home2Z) < tonumber(v.protect2Size) then
 									message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to a protected player base.  The base owner needs to add you to their friends list by typing " .. server.commandPrefix .. "friend " .. igplayers[steam].name .. "[-]")
 									cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " -1 " .. igplayers[steam].zPosLastOK
 
@@ -230,7 +231,7 @@ function baseProtection(steam, posX, posY, posZ)
 						igplayers[steam].raiding = true
 
 						-- do the base protection magic
-						if distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.x, v.z) > tonumber(size) then
+						if distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.x, v.z) < tonumber(size) then
 							message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to " .. k .. ".[-]")
 							cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " -1 " .. igplayers[steam].zPosLastOK
 							igplayers[steam].lastTP = cmd

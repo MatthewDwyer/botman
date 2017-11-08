@@ -153,24 +153,58 @@ function isFriend(testid, steamid)
 end
 
 
-function message(msg, irc)
+function message(msg, steam)
 	-- parse msg and enclose the actual message in double quotes
-	local words, word
+	local words, word, skip
 
 	words = {}
-	for word in msg:gmatch("%S+") do table.insert(words, word) end
+	for word in msg:gmatch("%S+") do
+		skip = false
+
+		if string.find(msg, "{") then
+			-- look for placeholders and substitute with real values.
+			if word == "{player}" then
+				if steam then
+					word = players[steam].name
+				end
+
+				table.insert(words, word)
+				skip = true
+			end
+
+			if word == "{server}" then
+				word = server.serverName
+
+				table.insert(words, word)
+				skip = true
+			end
+
+			if word == "{money}" then
+				word = server.moneyName
+
+				table.insert(words, word)
+				skip = true
+			end
+
+			if word == "{monies}" then
+				word = server.moneyPlural
+
+				table.insert(words, word)
+				skip = true
+			end
+		end
+
+		if not skip then
+			table.insert(words, word)
+		end
+	end
 
 	if words[1] == "say" then
 		-- say the message in public chat
 		send("say \"" .. string.sub(msg, 5) .. "\"")
 	else
 		if players[words[2]].exiled~=1 then
-			send("pm  " .. words[2] .. " \"" .. string.sub(msg, 21) .. "\"")
-		end
-
-		if irc ~= nil then
-			-- send a copy of the pm to irc
-			irc_chat(irc, "pm to " .. words[2] .. " " .. string.sub(msg, 21))
+			send("pm " .. words[2] .. "\"" .. string.sub(msg, 22) .. "\"")
 		end
 	end
 end

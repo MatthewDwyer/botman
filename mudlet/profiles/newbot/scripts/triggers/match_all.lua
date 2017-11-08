@@ -38,6 +38,10 @@ end
 function matchAll(line)
 	-- locals defined lower down
 
+	-- set counter to help detect the bot going offline
+	botman.botOfflineCount = 2
+	botman.botOffline = false
+
 	if botman.botDisabled then
 		return
 	end
@@ -93,10 +97,6 @@ function matchAll(line)
 	if string.find(line, "WRN ") then
 		return
 	end
-
-	-- set counter to help detect the bot going offline
-	botman.botOfflineCount = 2
-	botman.botOffline = false
 
 	if string.find(line, "INF Server shutting down!") then
 		saveLuaTables()
@@ -181,6 +181,10 @@ function matchAll(line)
 		end
 	end
 
+	if string.find(line, "type=EntityMinibike") then
+		listEntities(line)
+	end
+
 	-- check for lag
 	if string.find(line, "pm LagCheck " .. server.botID) and string.find(line, server.botsIP) then
 		botman.lagCheckRead = true
@@ -192,7 +196,7 @@ function matchAll(line)
 		end
 
 		if server.lagged then
-			irc_chat(server.ircAlerts, "Server lag detected")
+			irc_chat(server.ircAlerts, "Compensating for server lag > 5 seconds. Some bot functions temporarily suspended.")
 		end
 	end
 
@@ -287,13 +291,18 @@ function matchAll(line)
 	end
 
 
-	if string.find(line, "DropOnDeath =") and not botman.readGG then
-		irc_chat(server.ircMain, "ALERT! It appears that the server config setting HideCommandExecutionLog is not set to 0")
-		irc_chat(server.ircMain, "If any telnet traffic is hidden from the bot, important features will not work.  Please set it to 0")
+	if string.find(line, "DropOnDeath =") then
+		if not botman.readGG then
+			botman.badServerConfig = true
+			irc_chat(server.ircMain, "ALERT! It appears that the server config setting HideCommandExecutionLog is not set to 0")
+			irc_chat(server.ircMain, "If any telnet traffic is hidden from the bot, important features will not work.  Please set it to 0")
+		else
+			botman.badServerConfig = false
+		end
 	end
 
 
-	if botman.readGG then
+	if botman.readGG or botman.badServerConfig then
 		number = tonumber(string.match(line, " (%d+)"))
 
 		if (string.find(line, "MaxSpawnedZombies set to")) then
@@ -338,6 +347,10 @@ function matchAll(line)
 
 		if (string.find(line, "LandClaimSize =")) then
 			server.LandClaimSize = number
+		end
+
+		if (string.find(line, "LandClaimSize =")) then
+			server.LandClaimExpiryTime = number
 		end
 
 		if (string.find(line, "LootAbundance =")) then
@@ -589,6 +602,8 @@ function matchAll(line)
 	if string.find(line, "Executing command 'le'") then
 		if string.find(line, server.botsIP) then
 			botman.listEntities = true
+			botman.lastListEntities = os.time()
+			conn:execute("DELETE FROM memEntities")
 		end
 	end
 
@@ -842,19 +857,6 @@ function matchAll(line)
 					players[pid].hackerScore = tonumber(players[pid].hackerScore) - 5
 				end
 			end
-		end
-
-
-		-- player chat colour
-		if string.find(line, "command 'cpc", nil, true) then
-			line = string.sub(line, string.find(line, "command ") + 9, string.find(line, " from") - 2)
-			local parts = string.split(line, " ")
-			local colour = stripAllQuotes(parts[3])
-			local name = parts[2]
-			steam = LookupPlayer(name, "all")
-
-			players[steam].chatColour = colour
-			if botman.dbConnected then conn:execute("UPDATE players SET chatColour = '" .. escape(colour) .. "' WHERE steam = " .. steam) end
 		end
 
 

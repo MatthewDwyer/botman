@@ -23,6 +23,7 @@ function gmsg_waypoints()
 	local debug
 	local shortHelp = false
 	local skipHelp = false
+	local pname, pid
 
 	debug = false
 
@@ -55,30 +56,30 @@ function gmsg_waypoints()
 	end
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Waypoint Commands:")
-		irc_chat(players[chatvars.ircid].ircAlias, "==================")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Waypoints are player managed personal teleports.")
-		irc_chat(players[chatvars.ircid].ircAlias, "You can specify how many waypoints indivuals or groups of players can have and apply other restrictions on their use.")
-		irc_chat(players[chatvars.ircid].ircAlias, "Pairs of waypoints can be linked to create a portal.  Portals differ in that the player steps into them to activate them.")
-		irc_chat(players[chatvars.ircid].ircAlias, "Waypoints can be shared with a players friends and they can step into their portals as well.  Portals can be unlinked which reverts them to waypoints.")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Waypoint Commands:")
+		irc_chat(chatvars.ircAlias, "==================")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Waypoints are player managed personal teleports.")
+		irc_chat(chatvars.ircAlias, "You can specify how many waypoints indivuals or groups of players can have and apply other restrictions on their use.")
+		irc_chat(chatvars.ircAlias, "Pairs of waypoints can be linked to create a portal.  Portals differ in that the player steps into them to activate them.")
+		irc_chat(chatvars.ircAlias, "Waypoints can be shared with a players friends and they can step into their portals as well.  Portals can be unlinked which reverts them to waypoints.")
+		irc_chat(chatvars.ircAlias, ".")
 	end
 
 	if chatvars.showHelpSections then
-		irc_chat(players[chatvars.ircid].ircAlias, "waypoints")
+		irc_chat(chatvars.ircAlias, "waypoints")
 	end
 
 	if (debug) then dbug("debug waypoints line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set waypoints public/restricted")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set waypoints public/restricted")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Make waypoints accessible to all (except new players) or restricted to donors only.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Make waypoints accessible to all (except new players) or restricted to donors only.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -91,8 +92,8 @@ function gmsg_waypoints()
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) > 0) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+			if (chatvars.accessLevel > 0) then
+				irc_chat(chatvars.ircAlias, "This command is restricted.")
 				botman.faultyChat = false
 				return true
 			end
@@ -105,7 +106,7 @@ function gmsg_waypoints()
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Everyone except new players can set and share waypoints.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Everyone except new players can set and share waypoints.")
+				irc_chat(chatvars.ircAlias, "Everyone except new players can set and share waypoints.")
 			end
 		else
 			server.waypointsPublic = false
@@ -114,7 +115,7 @@ function gmsg_waypoints()
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Waypoints are restricted to donors only.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "Waypoints are restricted to donors only.")
+				irc_chat(chatvars.ircAlias, "Waypoints are restricted to donors only.")
 			end
 		end
 
@@ -126,13 +127,13 @@ function gmsg_waypoints()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "way")) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set max waypoints <number>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set max waypoints <player> number <number>")
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set max waypoints donors <number>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set max waypoints {number}")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set max waypoints {player name} number {number}")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set max waypoints donors {number}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Set the max number of waypoints players can have or a specific player can have.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Set the max number of waypoints players can have or a specific player can have.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -145,8 +146,8 @@ function gmsg_waypoints()
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) > 1) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+			if (chatvars.accessLevel > 1) then
+				irc_chat(chatvars.ircAlias, "This command is restricted.")
 				botman.faultyChat = false
 				return true
 			end
@@ -158,7 +159,7 @@ function gmsg_waypoints()
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A number is required.[-]")
 			else
-				irc_chat(players[chatvars.ircid].ircAlias, "A number is required.")
+				irc_chat(chatvars.ircAlias, "A number is required.")
 			end
 
 			botman.faultyChat = false
@@ -174,7 +175,7 @@ function gmsg_waypoints()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[tmp.id].name .. " can set " .. chatvars.number .. " waypoints.[-]")
 				else
-					irc_chat(players[chatvars.ircid].ircAlias, "Player " .. players[tmp.id].name .. " can set " .. chatvars.number .. " waypoints.")
+					irc_chat(chatvars.ircAlias, "Player " .. players[tmp.id].name .. " can set " .. chatvars.number .. " waypoints.")
 				end
 
 				conn:execute("UPDATE players SET maxWaypoints = " .. chatvars.number .. " where steam = " .. tmp.id)
@@ -183,7 +184,7 @@ function gmsg_waypoints()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No matching player name found.[-]")
 				else
-					irc_chat(players[chatvars.ircid].ircAlias, "No matching player name found.")
+					irc_chat(chatvars.ircAlias, "No matching player name found.")
 				end
 			end
 		else
@@ -191,7 +192,7 @@ function gmsg_waypoints()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donors can set a maximum of " .. chatvars.number .. " waypoints unless individually set to something else.[-]")
 				else
-					irc_chat(players[chatvars.ircid].ircAlias, "Donors can set a maximum of " .. chatvars.number .. " waypoints unless individually set to something else.")
+					irc_chat(chatvars.ircAlias, "Donors can set a maximum of " .. chatvars.number .. " waypoints unless individually set to something else.")
 				end
 
 				for k,v in pairs(players) do
@@ -205,7 +206,7 @@ function gmsg_waypoints()
 					if (chatvars.playername ~= "Server") then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players can set a maximum of " .. chatvars.number .. " waypoints unless individually set to something else.[-]")
 					else
-						irc_chat(players[chatvars.ircid].ircAlias, "Players can set a maximum of " .. chatvars.number .. " waypoints unless individually set to something else.")
+						irc_chat(chatvars.ircAlias, "Players can set a maximum of " .. chatvars.number .. " waypoints unless individually set to something else.")
 					end
 
 					conn:execute("UPDATE server SET maxWaypoints = " .. chatvars.number)
@@ -219,16 +220,16 @@ function gmsg_waypoints()
 					if (chatvars.playername ~= "Server") then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There was something wrong with your command, a typo?[-]")
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Valid options are..[-]")
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints <number>[-]")
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints <player> number <number>[-]")
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints donors <number>[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints {number}[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints {player name} number {number}[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "set max waypoints donors {number}[-]")
 					else
-						irc_chat(players[chatvars.ircid].ircAlias, "There was something wrong with your command, a typo?")
-						irc_chat(players[chatvars.ircid].ircAlias, " ")
-						irc_chat(players[chatvars.ircid].ircAlias, "Valid options are..")
-						irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set max waypoints <number>")
-						irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set max waypoints <player> number <number>")
-						irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set max waypoints donors <number>")
+						irc_chat(chatvars.ircAlias, "There was something wrong with your command, a typo?")
+						irc_chat(chatvars.ircAlias, ".")
+						irc_chat(chatvars.ircAlias, "Valid options are..")
+						irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set max waypoints {number}")
+						irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set max waypoints {player name} number {number}")
+						irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set max waypoints donors {number}")
 					end
 				end
 			end
@@ -242,11 +243,11 @@ function gmsg_waypoints()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "way") or string.find(chatvars.command, "cost") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set waypoint cost <number>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set waypoint cost {number}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Set a price to use waypoints.  Players must have sufficient " .. server.moneyPlural .. " to teleport.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Set a price to use waypoints.  Players must have sufficient " .. server.moneyPlural .. " to teleport.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -259,8 +260,8 @@ function gmsg_waypoints()
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) > 1) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+			if (chatvars.accessLevel > 1) then
+				irc_chat(chatvars.ircAlias, "This command is restricted.")
 				botman.faultyChat = false
 				return true
 			end
@@ -281,11 +282,11 @@ function gmsg_waypoints()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "way") or string.find(chatvars.command, "cost") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set waypoint create cost <number>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set waypoint create cost {number}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Set a price to create waypoints.  Players must have sufficient " .. server.moneyPlural)
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Set a price to create waypoints.  Players must have sufficient " .. server.moneyPlural)
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -298,8 +299,8 @@ function gmsg_waypoints()
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) > 1) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+			if (chatvars.accessLevel > 1) then
+				irc_chat(chatvars.ircAlias, "This command is restricted.")
 				botman.faultyChat = false
 				return true
 			end
@@ -319,12 +320,85 @@ function gmsg_waypoints()
 	if (debug) then dbug("debug waypoints line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
-		if string.find(chatvars.command, "way") or string.find(chatvars.command, "time") or string.find(chatvars.command, "cool") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set waypoint cooldown <number>")
+		if string.find(chatvars.command, "way") or string.find(chatvars.command, "clear") or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "clear all waypoints {optional player name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Set how long in seconds players must wait between uses of waypoints")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Delete all your waypoints (anyone can do this) or those of a named player (only admins)")
+				irc_chat(chatvars.ircAlias, ".")
+			end
+		end
+	end
+
+	if chatvars.words[1] == "clear" and chatvars.words[2] == "all" and string.find(chatvars.words[3], "wayp") then
+		display("chatvars.accessLevel " .. chatvars.accessLevel)
+
+		if (chatvars.words[4]) and (chatvars.accessLevel > 3) then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only admins can clear a named player's waypoints.  Just type " .. server.commandPrefix .. "clear waypoints[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Only admins can clear a named player's waypoints.  Just type " .. server.commandPrefix .. "clear waypoints")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if chatvars.words[4] ~= nil then
+			pname = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[3], nil, true) + string.len(chatvars.words[3]))
+			pname = string.trim(pname)
+			pid = LookupPlayer(pname)
+
+			if not (pid == nil) then
+				conn:execute("DELETE FROM waypoints WHERE steam = " .. pid)
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have deleted all of " .. players[pid].name .. "'s waypoints.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "You have deleted all of " .. players[pid].name .. "'s waypoints.")
+				end
+
+				-- reload the player's waypoints
+				loadWaypoints(pid)
+			else
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found like " .. pname .. "[-]")
+				else
+					irc_chat(chatvars.ircAlias, "No player found like " .. pname)
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		else
+			if (chatvars.playername ~= "Server") then
+				conn:execute("DELETE FROM waypoints WHERE steam = " .. chatvars.playerid)
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have deleted all of your waypoints.[-]")
+
+				-- reload the player's waypoints
+				loadWaypoints(chatvars.playerid)
+			else
+				conn:execute("DELETE FROM waypoints WHERE steam = " .. chatvars.ircid)
+				irc_chat(chatvars.ircAlias, "You have deleted all of your waypoints.")
+
+				-- reload the player's waypoints
+				loadWaypoints(chatvars.ircid)
+			end
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug waypoints line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if string.find(chatvars.command, "way") or string.find(chatvars.command, "time") or string.find(chatvars.command, "cool") or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set waypoint cooldown {number}")
+
+			if not shortHelp then
+				irc_chat(chatvars.ircAlias, "Set how long in seconds players must wait between uses of waypoints")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -337,8 +411,8 @@ function gmsg_waypoints()
 				return true
 			end
 		else
-			if (accessLevel(chatvars.ircid) > 1) then
-				irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+			if (chatvars.accessLevel > 1) then
+				irc_chat(chatvars.ircAlias, "This command is restricted.")
 				botman.faultyChat = false
 				return true
 			end
@@ -359,21 +433,21 @@ function gmsg_waypoints()
 	-- Add the following condition to any commands added below here:  and (chatvars.playerid ~= 0)
 
 	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
-		irc_chat(players[chatvars.ircid].ircAlias, "Waypoint Commands (In-Game Only):")
-		irc_chat(players[chatvars.ircid].ircAlias, "=================================")
-		irc_chat(players[chatvars.ircid].ircAlias, " ")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Waypoint Commands (In-Game Only):")
+		irc_chat(chatvars.ircAlias, "=================================")
+		irc_chat(chatvars.ircAlias, ".")
 	end
 
 	if (debug) then dbug("debug waypoints line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "way") then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "open waypoint (or wp)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "open waypoint (or wp)")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Share the first waypoint with your friends.  The 2nd waypoint is always private.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Share the first waypoint with your friends.  The 2nd waypoint is always private.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -408,11 +482,11 @@ function gmsg_waypoints()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "close waypoint (or wp)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "close waypoint (or wp)")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Make the first waypoint private again. This is its default state.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Make the first waypoint private again. This is its default state.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -447,11 +521,11 @@ function gmsg_waypoints()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "set waypoint (or wp or wp1)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set waypoint (or wp or wp1)")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Create or move your first waypoint where you are standing.  It retains its current status.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Create or move your first waypoint where you are standing.  It retains its current status.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -463,7 +537,7 @@ function gmsg_waypoints()
 			return true
 		end
 
-		if not canSetHere(chatvars.playerid, chatvars.intX, chatvars.intZ) and (chatvars.accessLevel > 2 or not botman.ignoreAdmins) then
+		if not canSetWaypointHere(chatvars.playerid, chatvars.intX, chatvars.intZ) and (chatvars.accessLevel > 2 or not botman.ignoreAdmins) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not allowed to set your waypoint here.[-]")
 			botman.faultyChat = false
 			return true
@@ -518,11 +592,11 @@ function gmsg_waypoints()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "clear wp <name>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "clear wp {name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Delete a named waypoint.  If they are linked, this also unlinks them.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Delete a named waypoint.  If they are linked, this also unlinks them.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -568,11 +642,11 @@ function gmsg_waypoints()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "waypoint or " .. server.commandPrefix .. "wp1 or " .. server.commandPrefix .. "<your name>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "waypoint or " .. server.commandPrefix .. "wp1 or " .. server.commandPrefix .. "{your name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Teleport to your first waypoint.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Teleport to your first waypoint.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -689,11 +763,11 @@ function gmsg_waypoints()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "waypoints <player name>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "waypoints {player name}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "List the waypoints of a player.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "List the waypoints of a player.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -740,9 +814,17 @@ function gmsg_waypoints()
 			row = cursor:fetch({}, "a")
 
 			if row then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.steam].name .. "'s waypoints:[-]")
+				if tmp.steam == chatvars.playerid then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your waypoints:[-]")
+				else
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.steam].name .. "'s waypoints:[-]")
+				end
 			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.steam].name .. " has no waypoints.[-]")
+				if tmp.steam == chatvars.playerid then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have no waypoints.[-]")
+				else
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.steam].name .. " has no waypoints.[-]")
+				end
 			end
 
 			while row do
@@ -753,7 +835,7 @@ function gmsg_waypoints()
 				end
 
 				if tonumber(row.linked) > 0 then
-					tmp.linked = " linked to " .. waypoints[tonumber(row.linked)].name .. " "
+					tmp.linked = " linked to " .. waypoints[tonumber(row.linked)].name .. "."
 				else
 					tmp.linked = ""
 				end
@@ -798,11 +880,11 @@ function gmsg_waypoints()
 
 	if chatvars.showHelp and not skipHelp then
 		if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "link wp <name of wp1> to <name of wp2>")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "link wp {name of wp1} to {name of wp2}")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Link your waypoints to create a portal instead.  In this mode you cannot teleport to them, instead you activate them by stepping into them.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Link your waypoints to create a portal instead.  In this mode you cannot teleport to them, instead you activate them by stepping into them.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
@@ -852,11 +934,11 @@ function gmsg_waypoints()
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "way"))) or chatvars.words[1] ~= "help" then
-			irc_chat(players[chatvars.ircid].ircAlias, server.commandPrefix .. "unlink waypoints (or " .. server.commandPrefix .. "unlink wp)")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "unlink waypoints (or " .. server.commandPrefix .. "unlink wp)")
 
 			if not shortHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Close your portal and convert each end back into two waypoints which you can teleport to as normal.")
-				irc_chat(players[chatvars.ircid].ircAlias, " ")
+				irc_chat(chatvars.ircAlias, "Close your portal and convert each end back into two waypoints which you can teleport to as normal.")
+				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
