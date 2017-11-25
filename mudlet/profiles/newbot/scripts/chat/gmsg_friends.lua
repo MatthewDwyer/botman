@@ -47,13 +47,13 @@ if debug then dbug("debug friends") end
 		tmp.fname = string.trim(tmp.fname)
 		tmp.fid = LookupPlayer(tmp.fname)
 
-		if (tmp.pid == nil) then
+		if (tmp.pid == 0) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No match for " .. tmp.pname .. "[-]")
 			botman.faultyChat = false
 			return true
 		end
 
-		if (tmp.fid == nil) then
+		if (tmp.fid == 0) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No match for " .. tmp.fname .. "[-]")
 			botman.faultyChat = false
 			return true
@@ -82,7 +82,7 @@ if debug then dbug("debug friends") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (id == nil) then
+		if (id == 0) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Imaginary friends don't count.  Pick someone that exists.[-]")
 			botman.faultyChat = false
 			return true
@@ -118,7 +118,7 @@ if debug then dbug("debug friends") end
 			pname = string.trim(pname)
 			id = LookupPlayer(pname)
 
-			if id ~= nil then
+			if id ~= 0 then
 				-- reset the players friends list
 				friends[id] = {}
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " have no friends :([-]")
@@ -159,7 +159,7 @@ if debug then dbug("debug friends") end
 			return true
 		end
 
-		if (id ~= nil) then
+		if (id ~= 0) then
 			if botman.dbConnected then
 				-- check to see if this friend was auto friended and warn the player that they must unfriend them via the game.
 				cursor,errorString = conn:execute("select * from friends where steam = " .. chatvars.playerid .. " AND friend = " .. id .. " AND autoAdded = 1")
@@ -209,7 +209,7 @@ if debug then dbug("debug friends") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (id ~= nil) then
+		if (id ~= 0) then
 			if (not isFriend(id, chatvars.playerid)) then
 				if friends[id].friends == "" then
 					friends[id].friends = chatvars.playerid
@@ -247,7 +247,7 @@ if debug then dbug("debug friends") end
 		end
 
 		-- pm a list of all the players friends
-		if (friends[pid] == nil) or friends[pid].friends == "" then
+		if (friends[pid] == 0) or friends[pid].friends == "" then
 			if (pid == chatvars.playerid) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have no friends :([-]")
 			else
@@ -270,7 +270,7 @@ if debug then dbug("debug friends") end
 		for i=1,max,1 do
 			if (friendlist[i] ~= "") then
 				id = LookupPlayer(friendlist[i])
-				if id ~= nil then
+				if id ~= 0 then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. "[-]")
 				end
 			end

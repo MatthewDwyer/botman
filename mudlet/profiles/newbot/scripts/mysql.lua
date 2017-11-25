@@ -579,6 +579,7 @@ if debug then display("alterTables start\n") end
 	doSQL("ALTER TABLE `players` ADD `returnCooldown` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` CHANGE `cash` `cash` FLOAT(11) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` CHANGE `chatColour` `chatColour` VARCHAR(8) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'FFFFFF'")
+	doSQL("ALTER TABLE `players` ADD `commandCooldown` INT NOT NULL DEFAULT '0'")
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -613,7 +614,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD COLUMN disableTPinPVP TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD COLUMN `ServerToolsDetected` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` CHANGE `moneyName` `moneyName` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'Zenny|Zennies'")
-	doSQL("ALTER TABLE `server` CHANGE rules VARCHAR(1000) NOT NULL DEFAULT 'A zombie ate the server rules! Tell an admin.'")
+	doSQL("ALTER TABLE `server` CHANGE `rules` `rules` VARCHAR(1000) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT 'A zombie ate the server rules! Tell an admin.'")
 	doSQL("ALTER TABLE `server` ADD `updateBot` INT(1) NOT NULL DEFAULT '0' COMMENT '0 do not update, 1 stable branch, 2 testing branch'")
 	doSQL("ALTER TABLE `server` ADD `alertSpending` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `GBLBanThreshold` INT NOT NULL DEFAULT '0'")
@@ -662,6 +663,10 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` CHANGE `blockCountries` `blacklistCountries` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'CN,HK'")
 	doSQL("ALTER TABLE `server` ADD `botRestartDay` INT NOT NULL DEFAULT '7'")
 	doSQL("ALTER TABLE `server` CHANGE `perMinutePayRate` `perMinutePayRate` FLOAT(11) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `enableTimedClaimScan` TINYINT(1) NOT NULL DEFAULT '1', ADD `enableScreamerAlert` TINYINT(1) NOT NULL DEFAULT '1' , ADD `enableAirdropAlert` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `server` ADD `spleefGameCoords` VARCHAR(20) NOT NULL DEFAULT '4000 225 4000'")
+	doSQL("ALTER TABLE `server` CHANGE `blacklistResponse` `blacklistResponse` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'ban'")
+	doSQL("ALTER TABLE `server` ADD `gimmeResetTime` INT NOT NULL DEFAULT '120', ADD `gimmeRaincheck` INT NOT NULL DEFAULT '0'")
 
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
@@ -696,6 +701,12 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `teleports` ADD `size` FLOAT(11) NOT NULL DEFAULT '1.5' COMMENT 'size of start tp' , ADD `dsize` FLOAT(11) NOT NULL DEFAULT '1.5' COMMENT 'size of dest tp'")
 	doSQL("ALTER TABLE `botChat` MODIFY `botChatID` int(11) NOT NULL AUTO_INCREMENT")
 	doSQL("ALTER TABLE `botChatResponses` MODIFY `botChatResponseID` int(11) NOT NULL AUTO_INCREMENT")
+	doSQL("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('gimmeReset', '120', CURRENT_TIMESTAMP, '0')")
+	doSQL("ALTER TABLE `badItems` ADD `validated` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `gimmePrizes` ADD `validated` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `restrictedItems` ADD `validated` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `shop` ADD `validated` TINYINT(1) NOT NULL DEFAULT '1'")
+
 
 	-- fix zero default tp sizes
 	doSQL("UPDATE `teleports` SET size = 1.5 WHERE size = 0")
@@ -711,6 +722,9 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `memEntities` ENGINE = MEMORY")
 	doSQL("ALTER TABLE `locations` ADD `locationCategory` VARCHAR(20) NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `otherEntities` ADD `doNotDespawn` TINYINT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `reservedSlots` CHANGE `steam` `steam` BIGINT(17) NOT NULL")
+	doSQL("ALTER TABLE `reservedSlots` ENGINE = MEMORY")
+	doSQL("ALTER TABLE `list` ADD `id` INT NOT NULL DEFAULT '0' , ADD `class` VARCHAR(20) NOT NULL DEFAULT ''")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)

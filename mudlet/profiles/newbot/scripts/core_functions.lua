@@ -48,6 +48,22 @@ function stripCommas(value)
 end
 
 
+function stripAngleBrackets(text)
+	local oldText
+
+	text = string.trim(text)
+	oldText = text
+
+	text = string.match(text, "^<(.*)>$")
+
+	if text == nil then
+		text = oldtext
+	end
+
+	return text
+end
+
+
 function stripQuotes(name)
 	local oldName
 
@@ -207,6 +223,10 @@ function message(msg, steam)
 			send("pm " .. words[2] .. "\"" .. string.sub(msg, 22) .. "\"")
 		end
 	end
+
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
 end
 
 
@@ -347,7 +367,7 @@ function LookupPlayer(search, match)
 	local id, k,v
 
 	if string.trim(search) == "" then
-		return nil
+		return 0
 	end
 
 	search = string.lower(search)
@@ -400,8 +420,8 @@ function LookupPlayer(search, match)
 	-- no matches so try again but including all players
 	id = LookupOfflinePlayer(search, match)
 
-	-- if id isn't nil we found a match
-	if id ~= nil then return id end
+	-- if id isn't 0 we found a match
+	return id
 end
 
 
@@ -409,7 +429,7 @@ function LookupOfflinePlayer(search, match)
 	local k,v
 
 	if string.trim(search) == "" then
-		return nil
+		return 0
 	end
 
 	search = string.lower(search)
@@ -451,7 +471,7 @@ function LookupOfflinePlayer(search, match)
 		end
 	end
 
-	return nil
+	return 0
 end
 
 
@@ -480,7 +500,7 @@ function LookupIRCPass(login, pass)
 	local k,v
 
 	if string.trim(pass) == "" then
-		return nil
+		return 0
 	end
 
 	for k, v in pairs(players) do
@@ -752,6 +772,11 @@ end
 function say(message)
 	-- just a catcher for old code
 	send(message)
+
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
+
 	return
 end
 

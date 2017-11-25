@@ -193,7 +193,7 @@ function irc_ListBases(steam)
 end
 
 
-function irc_PlayersNearPlayer(name, name1, range, xPos, zPos, offline)
+function irc_PlayersNearPlayer(name, name1, range, xPos, zPos, offline, otherTarget)
 	local alone, dist, number, flag
 
 	alone = true
@@ -201,7 +201,13 @@ function irc_PlayersNearPlayer(name, name1, range, xPos, zPos, offline)
 	if offline == false then
 		if name1 ~= "" then
 			irc_chat(name, "Players within " .. range .. " meters of " .. players[name1].name .. " are:")
-		else
+		end
+
+		if otherTarget ~= nil then
+			irc_chat(name, "Players within " .. range .. " meters of " .. otherTarget .. " are:")
+		end
+
+		if name1 == "" and otherTarget == nil then
 			irc_chat(name, "Players within " .. range .. " meters of x " .. xPos .. " z " .. zPos .. " are:")
 		end
 
@@ -222,7 +228,13 @@ function irc_PlayersNearPlayer(name, name1, range, xPos, zPos, offline)
 	else
 		if name1 ~= "" then
 			irc_chat(name, "Players within " .. range .. " meters of " .. players[name1].name .. " including offline are:")
-		else
+		end
+
+		if otherTarget ~= nil then
+			irc_chat(name, "Players within " .. range .. " meters of " .. otherTarget .. " including offline are:")
+		end
+
+		if name1 == "" and otherTarget == nil then
 			irc_chat(name, "Players within " .. range .. " meters of x " .. xPos .. " z " .. zPos .. " including offline are:")
 		end
 
@@ -251,21 +263,38 @@ function irc_PlayersNearPlayer(name, name1, range, xPos, zPos, offline)
 	if (alone == true) then
 		if name1 ~= "" then
 			irc_chat(name, "There is nobody within " .. range .. " meters of " .. players[name1].name)
-		else
+		end
+
+		if otherTarget ~= nil then
+			irc_chat(name, "Players within " .. range .. " meters of " .. otherTarget .. " including offline are:")
+			irc_chat(name, "There is nobody within " .. range .. " meters of " .. otherTarget)
+		end
+
+		if name1 == "" and otherTarget == nil then
 			irc_chat(name, "There is nobody within " .. range .. " meters of x " .. xPos .. " z " .. zPos)
 		end
 	end
 
-	irc_chat(name, " ")
+	irc_chat(name, ".")
 end
 
 
-function irc_BasesNearPlayer(name, name1, range, xPos, zPos)
+function irc_BasesNearPlayer(name, name1, range, xPos, zPos, otherTarget)
 	local alone, dist, protected
 
 	alone = true
 
-	irc_chat(name, "Bases within " .. range .. " meters of " .. players[name1].name .. " are:")
+	if name1 ~= "" then
+		irc_chat(name, "Bases within " .. range .. " meters of " .. players[name1].name .. " are:")
+	end
+
+	if otherTarget ~= nil then
+		irc_chat(name, "Bases within " .. range .. " meters of " .. otherTarget .. " are:")
+	end
+
+	if name1 == "" and otherTarget == nil then
+		irc_chat(name, "Bases within " .. range .. " meters of " .. players[name].name .. " are:")
+	end
 
 	for k, v in pairs(players) do
 		if (v.homeX ~= 0 and v.homeZ ~= 0) then
@@ -275,7 +304,7 @@ function irc_BasesNearPlayer(name, name1, range, xPos, zPos)
 				dist = distancexz(xPos, zPos, v.homeX, v.homeZ)
 			end
 
-			if dist <= range then
+			if dist <= tonumber(range) then
 				if players[k].protect == true then
 					protected = " bot protected"
 				else
@@ -294,7 +323,7 @@ function irc_BasesNearPlayer(name, name1, range, xPos, zPos)
 				dist = distancexz(xPos, zPos, v.home2X, v.home2Z)
 			end
 
-			if dist <= range then
+			if dist <= tonumber(range) then
 				if players[k].protect2 == true then
 					protected = " bot protected"
 				else
@@ -308,19 +337,39 @@ function irc_BasesNearPlayer(name, name1, range, xPos, zPos)
 	end
 
 	if (alone == true) then
-		irc_chat(name, "There are none within " .. range .. " meters of " .. players[name1].name)
+		if name1 ~= "" then
+			irc_chat(name, "There are none within " .. range .. " meters of " .. players[name1].name)
+		end
+
+		if otherTarget ~= nil then
+			irc_chat(name, "There are none within " .. range .. " meters of " .. otherTarget)
+		end
+
+		if name1 == "" and otherTarget == nil then
+			irc_chat(name, "There are none within " .. range .. " meters of " .. players[name].name)
+		end
 	end
 
-	irc_chat(name, " ")
+	irc_chat(name, ".")
 end
 
 
-function irc_LocationsNearPlayer(name, name1, range, xPos, zPos)
+function irc_LocationsNearPlayer(name, name1, range, xPos, zPos, otherTarget)
 	local alone, dist
 
 	alone = true
 
-	irc_chat(name, "Locations within " .. range .. " meters of " .. players[name1].name .. " are:")
+	if name1 ~= "" then
+		irc_chat(name, "Locations within " .. range .. " meters of " .. players[name1].name .. " are:")
+	end
+
+	if otherTarget ~= nil then
+		irc_chat(name, "Locations within " .. range .. " meters of " .. otherTarget .. " are:")
+	end
+
+	if name1 == "" and otherTarget == nil then
+		irc_chat(name, "Locations within " .. range .. " meters of " .. players[name].name .. " are:")
+	end
 
 	for k, v in pairs(locations) do
 		if name1 ~= "" then
@@ -329,17 +378,27 @@ function irc_LocationsNearPlayer(name, name1, range, xPos, zPos)
 			dist = distancexz(xPos, zPos, v.x, v.z)
 		end
 
-		if dist <= range then
+		if dist <= tonumber(range) then
 			irc_chat(name, v.name .. " distance: " .. string.format("%-.2d", dist) .. " meters")
 			alone = false
 		end
 	end
 
 	if (alone == true) then
-		irc_chat(name, "There are none within " .. range .. " meters of " .. players[name1].name)
+		if name1 ~= "" then
+			irc_chat(name, "There are none within " .. range .. " meters of " .. players[name1].name)
+		end
+
+		if otherTarget ~= nil then
+			irc_chat(name, "There are none within " .. range .. " meters of " .. otherTarget)
+		end
+
+		if name1 == "" and otherTarget == nil then
+			irc_chat(name, "There are none within " .. range .. " meters of " .. players[name].name)
+		end
 	end
 
-	irc_chat(name, " ")
+	irc_chat(name, ".")
 end
 
 
@@ -714,7 +773,7 @@ function irc_new_players(name)
 		end
 	end
 
-	irc_chat(name, " ")
+	irc_chat(name, ".")
 end
 
 
@@ -751,7 +810,7 @@ function irc_server_status(name, days)
 	cursor,errorString = conn:execute("SELECT MAX(players) as number FROM performance WHERE timestamp > DATE_SUB(now(), INTERVAL ".. days .. " DAY)")
 	row = cursor:fetch({}, "a")
 	irc_chat(name, "Most players online: " .. row.number)
-	irc_chat(name, " ")
+	irc_chat(name, ".")
 end
 
 
@@ -775,15 +834,14 @@ function irc_server_event(name, event, steam, days)
 		row = cursor:fetch(row, "a")
 	end
 
-	irc_chat(name, " ")
+	irc_chat(name, ".")
 end
 
 
 function irc_players(name)
-	local id
-	local x
-	local z
-	local flags
+	local id, x, z, flags, line, sort
+
+	conn:execute("DELETE FROM list")
 
 	id = LookupPlayer(name, "all")
 
@@ -794,22 +852,56 @@ function irc_players(name)
 		z = math.floor(v.zPos / 512)
 
 		flags = " "
-		if players[k].newPlayer == true then flags = flags .. "[NEW]" end
-		if players[k].timeout == true then flags = flags .. "[TIMEOUT]" end
+		line = ""
+		sort = 999
+
+		if players[k].accessLevel < 3 then
+			flags = flags .. "[ADMIN]"
+			if sort == 999 then sort = 1 end
+		end
+
+		if players[k].newPlayer then
+			flags = flags .. "[NEW]"
+			if sort == 999 then sort = 3 end
+		end
+
+		if players[k].timeout then flags = flags .. "[TIMEOUT]" end
+		if players[k].prisoner then flags = flags .. "[PRISONER]" end
+
+		if players[k].donor then
+			flags = flags .. "[DONOR]"
+			if sort == 999 then sort = 2 end
+		end
+
+		if players[k].hackerScore > 0 then
+			flags = flags .. "[HACKER]"
+			if sort == 999 then sort = 0 end
+		end
 
 		if (accessLevel(id) > 3) then
-			irc_chat(name, v.name .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " " .. flags)
+			line = v.name .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " " .. flags
 		else
 			if players[id].ircAuthenticated == true then
-				irc_chat(name, "steam: " .. k .. " id: " .. string.format("%-7d", v.id) .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " level " .. v.level.. " region r." .. x .. "." .. z .. ".7   name: " .. v.name  .. flags .. " [ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos) .. " ] " .. players[k].country .. " " .. v.ping .. " Hacker score: " .. players[k].hackerScore)
+				line = "steam: " .. k .. " id: " .. string.format("%-7d", v.id) .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " level " .. v.level.. " region r." .. x .. "." .. z .. ".7   name: " .. v.name  .. flags .. " [ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos) .. " ] " .. players[k].country .. " " .. v.ping .. " Hacker score: " .. players[k].hackerScore
 			else
-				irc_chat(name, "steam: " .. k .. " " .. v.name .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " " .. flags .. " Hacker score: " .. players[k].hackerScore)
+				line = "steam: " .. k .. " " .. v.name .. " score: " .. string.format("%-6d", v.score) .. " PVP: " .. string.format("%-2d", v.playerKills) .. " zeds: " .. string.format("%-6d", v.zombies) .. " " .. flags .. " Hacker score: " .. players[k].hackerScore
 			end
 		end
+
+		conn:execute("INSERT INTO list (id, thing) VALUES (" .. sort .. ",'" .. escape(line) .. "')")
 	end
 
+	cursor,errorString = conn:execute("SELECT * FROM list order by id")
+	row = cursor:fetch({}, "a")
+	while row do
+		irc_chat(name, row.thing)
+		row = cursor:fetch(row, "a")
+	end
+
+	conn:execute("DELETE FROM list")
+
 	irc_chat(irc_params.name, "There are " .. botman.playersOnline .. " players online.")
-	irc_chat(name, " ")
+	irc_chat(name, ".")
 end
 
 
@@ -836,7 +928,7 @@ function irc_who_played(name)
 		row = cursor:fetch(row, "a")
 	end
 
-	irc_chat(name, " ")
+	irc_chat(name, ".")
 end
 
 
@@ -858,7 +950,7 @@ function irc_listResetZones(name)
 		irc_chat(name, "region: " .. v)
 	end
 
-	irc_chat(name, " ")
+	irc_chat(name, ".")
 end
 
 
@@ -906,7 +998,7 @@ function irc_uptime(name)
 		irc_chat(name, "Server uptime is " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
 	end
 
-	irc_chat(name, " ")
+	irc_chat(name, ".")
 end
 
 
@@ -932,12 +1024,12 @@ function irc_listAllPlayers(name)
 		irc_chat(irc_params.name, cmd)
 	end
 
-	irc_chat(name, " ")
+	irc_chat(name, ".")
 end
 
 
 function irc_IGPlayerInfo()
-	if (players[irc_params.pid] ~= nil) then
+	if (players[irc_params.pid]) then
 		if igplayers[irc_params.pid] then
 			irc_chat(irc_params.name, "In-Game Player record of: " .. irc_params.pname)
 			for k, v in pairs(igplayers[irc_params.pid]) do

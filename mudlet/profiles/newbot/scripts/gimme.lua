@@ -75,12 +75,21 @@ function setupArenaPlayers(pid)
 			send("give " .. v.id .. " firstAidBandage 2")
   			send("give " .. v.id .. " meatStew 1")
 
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 2
+			end
+
 			r = rand(3)
 			if (r == 1) then pointyStick = "boneShiv" end
 			if (r == 2) then pointyStick = "huntingKnife" end
 			if (r == 3) then pointyStick = "clubSpiked"	 end
 
 			send("give " .. v.id .. " " .. pointyStick .. " 1")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			message("pm " .. k .. " [" .. server.chatColour .. "]Supplies for the battle have been dropped at your feet. You have 10 seconds to prepare! (4 rounds)[-]")
 		end
 	end
@@ -205,7 +214,7 @@ function gimmeReset()
 	end
 
 	if (botman.playersOnline > 0) and server.allowGimme == true then
-		message("say [" .. server.chatColour .. "]Gimme has been reset!  Type gimme to play (10 gimmies per player, 15 for donors) " .. server.commandPrefix .. "help gimme for info.")
+		message("say [" .. server.chatColour .. "]Gimme has been reset!  Type " .. server.commandPrefix .. "gimme to play. " .. server.commandPrefix .. "help gimme for info.")
 	end
 end
 
@@ -227,6 +236,11 @@ function gimme(pid)
 	if botman.maxGimmeZombies == nil then
 		-- the gimmeZombies table is empty so run se to fill it.
 		send("se")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		botman.faultyGimme = false
 		return
 	end
@@ -710,6 +724,10 @@ end
 			send("give " .. pid .. " " .. prize .. " " .. qty)
 		end
 
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		botman.faultyGimme = false
 		return
 	end
@@ -821,7 +839,13 @@ end
 		if (item == 12) then prize = "coffee" end
 
 		for k, v in pairs(igplayers) do
-			if (k ~= pid) then send("give " .. k .. " " .. prize .. " 1") end
+			if (k ~= pid) then
+				send("give " .. k .. " " .. prize .. " 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
 		end
 
 		message("say [" .. server.chatColour .. "]" .. pname .. " won a " .. prize .. " for everyone! One for you, one for you, and you and.. oh sorry " .. pname .. " none left.[-]")
@@ -1007,6 +1031,10 @@ end
 
 		send("spawnairdrop")
 
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		botman.faultyGimme = false
 		return
 	end
@@ -1159,10 +1187,37 @@ end
 
 		if (specialDay == "valentine") then
 			z = rand(4)
-			if z == 1 then send("give " .. playerid .. " yellowflower 1") end
-			if z == 2 then send("give " .. playerid .. " plantChrysanthemum 1") end
-			if z == 3 then send("give " .. playerid .. " goldenrod 1") end
-			if z == 4 then send("give " .. playerid .. " cotton 1") end
+			if z == 1 then
+				send("give " .. playerid .. " yellowflower 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if z == 2 then
+				send("give " .. playerid .. " plantChrysanthemum 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if z == 3 then
+				send("give " .. playerid .. " goldenrod 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if z == 4 then
+				send("give " .. playerid .. " cotton 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
 		end
 	else
 		if (zombies > 2499) then

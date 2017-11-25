@@ -335,16 +335,39 @@ end
 
 
 function runTimedEvents()
-	local cursor, errorString, rows
+	local cursor, errorString, rows, row
 
 	if botman.dbConnected then
-		cursor,errorString = conn:execute("SELECT * FROM timedEvents WHERE nextTime < NOW() AND disabled = 0")
+		-- make sure the announcements event exists
+		cursor,errorString = conn:execute("SELECT * FROM timedEvents WHERE timer = 'announcements'")
+		row = cursor:fetch({}, "a")
+
+		if not row then
+			conn:execute("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('announcements', '60', CURRENT_TIMESTAMP, '0'")
+		end
+
+		-- make sure the gimmeReset event exists
+		cursor,errorString = conn:execute("SELECT * FROM timedEvents WHERE timer = 'gimmeReset'")
+		row = cursor:fetch({}, "a")
+
+		if not row then
+			conn:execute("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('gimmeReset', '120', CURRENT_TIMESTAMP, '0'")
+		end
+
+
+		-- look for any events due to be triggered
+		cursor,errorString = conn:execute("SELECT * FROM timedEvents WHERE nextTime <= NOW() AND disabled = 0")
 
 		row = cursor:fetch({}, "a")
 		while row do
 			if row.timer == "announcements" then
 				conn:execute("UPDATE timedEvents SET nextTime = NOW() + INTERVAL " .. row.delayMinutes .. " MINUTE WHERE timer = 'announcements'")
 				sendNextAnnouncement()
+			end
+
+			if row.timer == "gimmeReset" then
+				conn:execute("UPDATE timedEvents SET nextTime = NOW() + INTERVAL " .. row.delayMinutes .. " MINUTE WHERE timer = 'gimmeReset'")
+				gimmeReset()
 			end
 
 			row = cursor:fetch(row, "a")
@@ -354,7 +377,7 @@ end
 
 
 function sendNextAnnouncement()
-	local counter, cursor, errorString, rows
+	local counter, cursor, errorString, rows, row
 
 	if (tonumber(botman.playersOnline) == 0) then -- don't bother if nobody is there to see it
 		return
@@ -383,7 +406,7 @@ end
 
 
 function getLastCommandIndex(code)
-	local cursor,errorString,row
+	local cursor, errorString, row
 
 	cursor,errorString = conn:execute("SELECT max(cmdIndex) as lastIndex FROM botCommands WHERE cmdCode = '" .. escape(code) .. "'")
 	row = cursor:fetch({}, "a")
@@ -435,9 +458,35 @@ function canSetWaypointHere(steam, x, z)
 end
 
 
+function removeInvalidItems()
+	local cursor,errorString, row
+
+	cursor,errorString = conn:execute("SELECT * FROM spawnableItems WHERE deleteItem = 1")
+
+	row = cursor:fetch({}, "a")
+	while row do
+		-- delete invalid items
+		conn:execute("DELETE FROM badItems WHERE item = '" .. escape(row.itemName) .. "'")
+		conn:execute("DELETE FROM gimmePrizes WHERE name = '" .. escape(row.itemName) .. "'")
+		conn:execute("DELETE FROM restrictedItems WHERE item = '" .. escape(row.itemName) .. "'")
+		conn:execute("DELETE FROM shop WHERE item = '" .. escape(row.itemName) .. "'")
+
+		row = cursor:fetch(row, "a")
+	end
+
+	-- delete invalid items
+	conn:execute("DELETE FROM spawnableItems WHERE deleteItem = 1")
+end
+
+
 function collectSpawnableItemsList()
+	-- flag items in various tables so we can remove invalid items later
 	if botman.dbConnected then
 		conn:execute("UPDATE spawnableItems SET deleteItem = 1")
+		conn:execute("UPDATE badItems SET validated = 0")
+		conn:execute("UPDATE gimmePrizes SET validated = 0")
+		conn:execute("UPDATE restrictedItems SET validated = 0")
+		conn:execute("UPDATE shop SET validated = 0")
 	end
 
 	send("li a")
@@ -445,6 +494,11 @@ function collectSpawnableItemsList()
 	send("li i")
 	send("li o")
 	send("li u")
+	send("pm bot_RemoveInvalidItems")
+
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 6
+	end
 end
 
 
@@ -531,30 +585,58 @@ end
 function setChatColour(steam)
 	if accessLevel(steam) > 3 and accessLevel(steam) < 11 then
 		send("cpc " .. steam .. " " .. server.chatColourDonor .. " 1")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 	end
 
 	if accessLevel(steam) == 0 then
 		send("cpc " .. steam .. " " .. server.chatColourOwner .. " 1")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 	end
 
 	if accessLevel(steam) == 1 then
 		send("cpc " .. steam .. " " .. server.chatColourAdmin .. " 1")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 	end
 
 	if accessLevel(steam) == 2 then
 		send("cpc " .. steam .. " " .. server.chatColourMod .. " 1")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 	end
 
 	if accessLevel(steam) == 90 then
 		send("cpc " .. steam .. " " .. server.chatColourPlayer .. " 1")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 	end
 
 	if accessLevel(steam) == 99 then
 		send("cpc " .. steam .. " " .. server.chatColourNewPlayer .. " 1")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 	end
 
 	if players[steam].prisoner then
 		send("cpc " .. steam .. " " .. server.chatColourPrisoner .. " 1")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 	end
 end
 
@@ -722,6 +804,11 @@ end
 
 
 function fixBot()
+	local k, v, fixTables, faultCount
+
+	fixTables = false
+	faultCount = 0
+
 	fixMissingStuff()
 	fixShop()
 	enableTimer("ReloadScripts")
@@ -733,6 +820,25 @@ function fixBot()
 	end
 
 	botman.fixingBot = false
+
+	-- check in game player's coordinates. If all are 0 0 0, there's a fault.  It could be a missing table change so force the bot to redo them all.
+	for k,v in pairs(igplayers) do
+		if (math.floor(v.xPos) == 0) and (math.floor(v.yPos) == 0) and (math.floor(v.zPos) == 0) then
+			faultCount = faultCount + 1
+		end
+	end
+
+	if botman.playersOnline == faultCount then
+		if botman.dbConnected then
+			conn:execute("DELETE FROM altertables")
+			alertAdmins("The bot may become unresponsive for a while, it will do table maintenance in one minute.  When it comes back, the bot will need to be restarted to complete the maintenance.", "alert")
+			irc_chat(server.ircMain, "The bot may become unresponsive for a while, it will do table maintenance in one minute.  When it comes back, the bot will need to be restarted to complete the maintenance.")
+			tempTimer( 60, [[alterTables()]] )
+		end
+	end
+
+	irc_chat(server.ircMain, "Validating shop and gimme prize items.")
+	collectSpawnableItemsList()
 end
 
 
@@ -1012,6 +1118,11 @@ function restrictedCommandMessage()
 
 		if r == 12 then
 			send("give " .. igplayers[chatvars.playerid].id .. " turd 1")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			return("I don't give a shit. That was a lie, but you're still not using this command.")
 		end
 
@@ -1164,11 +1275,45 @@ function atHome(steam)
 			message("pm " .. steam .. " [" .. server.chatColour .. "]So you decided to come home " .. players[steam].name .. "?[-]")
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Dinner's on the floor.[-]")
 			r = rand(5)
-			if r == 1 then send("give " .. steam .. " canDogfood 1") end
-			if r == 2 then send("give " .. steam .. " canCatfood 1") end
-			if r == 3 then send("give " .. steam .. " femur 1") end
-			if r == 4 then send("give " .. steam .. " vegetableStew 1") end
-			if r == 5 then send("give " .. steam .. " meatStew 1") end
+			if r == 1 then
+				send("give " .. steam .. " canDogfood 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 2 then
+				send("give " .. steam .. " canCatfood 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 3 then
+				send("give " .. steam .. " femur 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 4 then
+				send("give " .. steam .. " vegetableStew 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 5 then
+				send("give " .. steam .. " meatStew 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
 		end
 	end
 
@@ -1502,12 +1647,16 @@ end
 function kick(steam, reason)
 	local tmp
 
+	if reason ~= nil then
+		stripAngleBrackets(reason)
+	end
+
 	tmp = steam
 	-- if there is no player with steamid steam, try looking it up incase we got their name instead of their steam
 	if not players[steam] then
 		steam = LookupPlayer(string.trim(steam))
 		-- restore the original steam value if nothing matched as we may be banning someone who's never played here.
-		if steam == nil then steam = tmp end
+		if steam == 0 then steam = tmp end
 	end
 
 	if igplayers[steam] then
@@ -1515,6 +1664,11 @@ function kick(steam, reason)
 	end
 
 	send("kick " .. steam .. " " .. " \"" .. reason .. "\"")
+
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
+
 	botman.playersOnline = botman.playersOnline - 1
 	irc_chat(server.ircMain, "Player " .. players[steam].name .. " kicked. Reason: " .. reason)
 end
@@ -1538,6 +1692,8 @@ function banPlayer(steam, duration, reason, issuer, gblBan, localOnly)
 
 	if reason == nil then
 		reason = "banned"
+	else
+		stripAngleBrackets(reason)
 	end
 
 	if string.len(issuer) > 10 then
@@ -1551,10 +1707,14 @@ function banPlayer(steam, duration, reason, issuer, gblBan, localOnly)
 	if not players[steam] then
 		steam = LookupPlayer(string.trim(steam))
 		-- restore the original steam value if nothing matched as we may be banning someone who's never played here.
-		if steam == nil then steam = tmp end
+		if steam == 0 then steam = tmp end
 	end
 
 	send("ban add " .. steam .. " " .. duration .. " \"" .. reason .. "\"")
+
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
 
 	-- grab their belt, pack and equipment
 	if players[steam] then
@@ -1589,10 +1749,18 @@ function banPlayer(steam, duration, reason, issuer, gblBan, localOnly)
 
 		send("llp " .. steam)
 
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		-- Look for and also ban ingame players with the same IP
 		for k,v in pairs(igplayers) do
 			if players[k].IP == players[steam].IP and k ~= steam then
 				send("ban add " .. k .. " " .. duration .. " \"same IP as banned player\"")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
 
 				if botman.dbConnected then
 					cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. k .." ORDER BY inventoryTrackerid DESC Limit 1")
@@ -1742,6 +1910,10 @@ function timeoutPlayer(steam, reason, bot)
 
 		send("tele " .. steam .. " " .. players[steam].xPosTimeout .. " 50000 " .. players[steam].zPosTimeout)
 
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		message("say [" .. server.chatColour .. "]Sending player " .. players[steam].name .. " to timeout for " .. reason .. "[-]")
 		irc_chat(server.ircAlerts, "[TIMEOUT] Player " .. steam .. " " .. players[steam].name .. " has been sent to timeout for " .. reason)
 	end
@@ -1757,6 +1929,11 @@ function checkRegionClaims(x, z)
 		while row do
 			if row.remove == "1" then
 				send("rlp " .. row.x .. " " .. row.y .. " " .. row.z)
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+
 				conn:execute("UPDATE keystones SET remove = 2 WHERE steam = " .. row.steam .. " AND x = " .. row.x .. " AND y = " .. row.y .. " AND z = " .. row.z )
 			end
 
@@ -1813,9 +1990,6 @@ function dailyMaintenance()
 	-- put something here to be run when the server date hits midnight
 	updateBot()
 
-	-- update the list of claims
-	send("llp")
-
 	-- purge old tracking data and set a flag so we can tell when the database maintenance is complete.
 	if tonumber(server.trackingKeepDays) > 0 then
 		conn:execute("UPDATE server set databaseMaintenanceFinished = 0")
@@ -1831,6 +2005,11 @@ function startReboot()
 	local rnd = rand(5)
 
 	send("sa")
+
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
+
 	botman.rebootTimerID = tempTimer( 10 + rnd, [[finishReboot()]] )
 end
 
@@ -1865,6 +2044,10 @@ function finishReboot()
 
 	botman.ignoreAdmins = true
 	send("shutdown")
+
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
 
 	-- flag all players as offline
 	connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID)
@@ -2366,7 +2549,7 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].flyingY = 0
 	igplayers[steam].flyingZ = 0
 	igplayers[steam].greet = true
-	igplayers[steam].greetdelay = 4
+	igplayers[steam].greetdelay = 1000
 	igplayers[steam].highPingCount = 0
 	igplayers[steam].id = entityid
 	igplayers[steam].illegalInventory = false
@@ -2383,6 +2566,7 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].pack = ""
 	igplayers[steam].ping = 0
 	igplayers[steam].playGimme = false
+	igplayers[steam].readCounter = 0
 	igplayers[steam].region = ""
 	igplayers[steam].sessionPlaytime = 0
 	igplayers[steam].sessionStart = os.time()
@@ -2439,6 +2623,10 @@ function fixMissingStuff()
 	if type(gimmeZombies) ~= "table" then
 		gimmeZombies = {}
 		send("se")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 	end
 
 	if benchmarkBot == nil then

@@ -521,7 +521,7 @@ function gmsg_teleports()
 
 		if chatvars.accessLevel < 3 and chatvars.words[2] ~= nil then
 			id = LookupPlayer(string.sub(chatvars.command, string.find(chatvars.command, "enabletp") + 9))
-			if (id == nil) then
+			if (id == 0) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No matching player found.[-]")
 				botman.faultyChat = false
 				return true
@@ -563,7 +563,7 @@ function gmsg_teleports()
 
 		if chatvars.accessLevel < 3 and chatvars.words[2] ~= nil then
 			id = LookupPlayer(string.sub(chatvars.command, string.find(chatvars.command, "disabletp") + 10))
-			if (id == nil) then
+			if (id == 0) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No matching player found.[-]")
 				botman.faultyChat = false
 				return true
@@ -722,7 +722,7 @@ function gmsg_teleports()
 			id = LookupPlayer(pname)
 		end
 
-		if id == nil then
+		if id == 0 then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
 			botman.faultyChat = false
 			return true
@@ -989,7 +989,7 @@ function gmsg_teleports()
 			return true
 		end
 
-		id = nil
+		id = 0
 		if (chatvars.words[2]) then
 			pname = string.sub(chatvars.command, string.find(chatvars.command, "teleports ") + 10)
 			pname = string.trim(pname)
@@ -1003,7 +1003,7 @@ function gmsg_teleports()
 				public = "private"
 			end
 
-			if (id == nil) then
+			if (id == 0) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. " " .. public .. "[-]")
 			else
 				if (v.owner == id) then

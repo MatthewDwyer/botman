@@ -311,6 +311,10 @@ if debug then dbug("check inventory 6") end
 						-- list beds for this player if they drop 1 bed
 						if b.item == "bedroll" and delta == -1 and server.coppi then
 							send("lpb " .. k)
+
+							if botman.getMetrics then
+								metrics.telnetCommands = metrics.telnetCommands + 1
+							end
 						end
 					end
 
@@ -335,6 +339,10 @@ if debug then dbug("check inventory 6") end
 
 								if not server.lagged then
 									send("llp " .. k)
+
+									if botman.getMetrics then
+										metrics.telnetCommands = metrics.telnetCommands + 1
+									end
 								end
 							end
 						end
@@ -434,6 +442,11 @@ if debug then dbug("check inventory 10") end
 			message("say [" .. server.chatColour .. "]Sending player " .. igplayers[k].name .. " to " .. moveTo .. " for " .. moveReason .. ".[-]")
 
 			teleport("tele " .. k .. " " .. locations[moveTo].x .. " " .. locations[moveTo].y + 1 .. " " .. locations[moveTo].z, k)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			players[k].exiled = 1
 			if accessLevel(k) > 2 then players[k].silentBob = true end
 			players[k].canTeleport = false

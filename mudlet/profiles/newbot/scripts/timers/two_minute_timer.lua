@@ -9,13 +9,17 @@
 
 function twoMinuteTimer()
 	-- to fix a weird bug where the bot would stop responding to chat but could be woken up by irc chatter we send the bot a wake up call
-	irc_chat(server.ircBotName, "Wake up!")
+	irc_chat(server.ircBotName, "Keep alive")
 
 	removeBadPlayerRecords()
 
-	if server.scanErrors then
+	if server.scanErrors and server.coppi then
 		for k,v in pairs(igplayers) do
 			send("rcd " .. math.floor(v.xPos) .. " " .. math.floor(v.zPos))
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		end
 	end
 

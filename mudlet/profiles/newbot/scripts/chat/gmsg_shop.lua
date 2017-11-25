@@ -50,7 +50,7 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 
 	if (chatvars.words[1] == "pay" and chatvars.words[2] ~= nil) then
 		id = LookupPlayer(chatvars.words[2])
-		if (id ~= nil) then
+		if (id ~= 0) then
 			players[chatvars.playerid].botQuestion = "pay player"
 			players[chatvars.playerid].botQuestionID = id
 			players[chatvars.playerid].botQuestionValue = math.abs(chatvars.words[3])

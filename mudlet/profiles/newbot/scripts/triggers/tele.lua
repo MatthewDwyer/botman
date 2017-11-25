@@ -17,7 +17,7 @@ function teleTrigger(line)
 	if string.find(line, "tele ") and string.find(line, "by Telnet") then
 		cmd = string.sub(line, string.find(line, "tele "), string.find(line, "by Telnet") - 2)
 		cmd = string.split(cmd, " ")
-		cmd[2] = stripQuotes(cmd[2])		
+		cmd[2] = stripQuotes(cmd[2])
 
 		-- the first part of the split is tele, 2nd part is the player being teleported
 		id = cmd[2]
@@ -26,13 +26,13 @@ function teleTrigger(line)
 		return
 	end
 
-	if string.find(line, "from ") then
+	if string.find(line, " from ") then
 		if string.find(line, "teleportplayer") then
 			cmd = string.sub(line, string.find(line, "teleportplayer "), string.find(line, "from") - 2)
 			cmd = string.split(cmd, " ")
 			cmd[2] = stripQuotes(cmd[2])
 			-- the first part of the split is tele, 2nd part is the player being teleported
-			
+
 
 			id = LookupPlayer(cmd[2], "all")
 			players[id].tp = 1

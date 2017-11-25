@@ -16,7 +16,10 @@ function gatherServerData()
 	tempTimer( 6, [[send("pm IPCHECK")]] )
 	tempTimer( 8, [[send("admin list")]] )
 	tempTimer( 10, [[send("ban list")]] )
---	tempTimer( 11, [[send("llp")]] )
+
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 5
+	end
 end
 
 

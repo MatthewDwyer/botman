@@ -14,6 +14,10 @@ function ThirtyMinuteTimer()
 	-- save the world (and the kitties)
 	send("sa")
 
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
+
 	-- check for new proxies
 	loadProxies()
 end

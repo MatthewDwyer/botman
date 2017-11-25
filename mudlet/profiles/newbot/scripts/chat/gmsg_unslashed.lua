@@ -224,6 +224,11 @@ function gmsg_unslashed()
 		if (r == 6) then
 			message("say [" .. server.chatColour .. "]What we've got here is failure to communicate.[-]")
 			send("mpc " .. chatvars.playerid .. " true")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			tempTimer( 180, [[unmutePlayer("]] .. chatvars.playerid .. [[")]] )
 		end
 
@@ -262,7 +267,7 @@ function gmsg_unslashed()
 			if l == 4 then message("say [" .. server.chatColour .. "]Glad to be of service[-]") end
 		else
 			if string.find(chatvars.words[1], "bad") then
-				l = rand(41)
+				l = rand(46)
 
 				if l == 1 then message("say [" .. server.chatColour .. "]Don't hate me! D:[-]") end
 				if l == 2 then message("say [" .. server.chatColour .. "]The voices made me do it![-]") end
@@ -292,10 +297,10 @@ function gmsg_unslashed()
 				if l == 10 then message("say [" .. server.chatColour .. "]I must be punished " .. chatvars.playername .. "![-]") end
 				if l == 11 then message("say [" .. server.chatColour .. "]I didn't break it![-]") end
 				if l == 12 then message("say [" .. server.chatColour .. "]It was like that when I found it honest![-]") end
-				if l == 13 then message("say [" .. server.chatColour .. "]It's supposed to only have 3 sides isn't it?[-]") end
+				if l == 13 then message("say [" .. server.chatColour .. "]Well.. it still has a door! *THUD*  ..or not.[-]") end
 				if l == 14 then message("say [" .. server.chatColour .. "]Why me? >.<[-]") end
 				if l == 15 then message("say [" .. server.chatColour .. "]Help! Help! I'm being repressed![-]") end
-				if l == 16 then message("say [" .. server.chatColour .. "]That'll buff right out[-]") end
+				if l == 16 then message("say [" .. server.chatColour .. "]That'll buff right out.[-]") end
 				if l == 17 then message("say [" .. server.chatColour .. "]Doh![-]") end
 				if l == 18 then message("say [" .. server.chatColour .. "]I need a hug D:[-]") end
 				if l == 19 then message("say [" .. server.chatColour .. "]Relax, it'll stop burning any minute now.[-]") end
@@ -312,8 +317,7 @@ function gmsg_unslashed()
 				if l == 30 then message("say [" .. server.chatColour .. "]*hides matches*[-]") end
 				if l == 31 then message("say [" .. server.chatColour .. "]It'll be fine with a lick of paint.. and a total rebuild.[-]") end
 				if l == 32 then message("say [" .. server.chatColour .. "]YEEEEEEEAH!!![-]") end
-
-				if l == 33 then message("say [" .. server.chatColour .. "]Oh.. it wasn't a flatpack?  Well now it is.[-]") end
+				if l == 33 then message("say [" .. server.chatColour .. "]Oh.. it wasn't a flatpack?  Well now it is! :D[-]") end
 				if l == 34 then message("say [" .. server.chatColour .. "]Curses!  It it hadn't been for that meddling " .. chatvars.playername .. " I'd have gotten away with it![-]") end
 				if l == 35 then message("say [" .. server.chatColour .. "]I didn't touch it! *edges away from it*[-]") end
 				if l == 36 then message("say [" .. server.chatColour .. "]It was just a prank bro[-]") end
@@ -322,6 +326,11 @@ function gmsg_unslashed()
 				if l == 39 then message("say [" .. server.chatColour .. "]GRR GRR GRR[-]") end
 				if l == 40 then message("say [" .. server.chatColour .. "]Mine.[-]") end
 				if l == 41 then message("say [" .. server.chatColour .. "]Uh..  SQUIRREL![-]") end
+				if l == 42 then message("say [" .. server.chatColour .. "]The floor is lava.[-]") end
+				if l == 43 then message("say [" .. server.chatColour .. "]Tis but a scratch.[-]") end
+				if l == 44 then message("say [" .. server.chatColour .. "]I know nothing. Nothing![-]") end
+				if l == 45 then message("say [" .. server.chatColour .. "]Wasn't me! Wasn't me!  Nope - Nuh-uh.  *hides evidence*[-]") end
+				if l == 46 then message("say [" .. server.chatColour .. "]I like trains.[-]") end
 
 				botman.faultyChat = false
 				return true
@@ -361,11 +370,12 @@ function gmsg_unslashed()
 				return true
 			end
 
-			if string.find(chatvars.command, "cool") or string.find(chatvars.command, "great")then
-				l = rand(3)
+			if string.find(chatvars.command, "cool") or string.find(chatvars.command, "great") or string.find(chatvars.command, "good") then
+				l = rand(4)
 				if l == 1 then message("say [" .. server.chatColour .. "]Thanks " .. chatvars.playername .. "![-]") end
 				if l == 2 then message("say [" .. server.chatColour .. "]Indeed[-]") end
 				if l == 3 then message("say [" .. server.chatColour .. "]I know[-]") end
+				if l == 4 then message("say [" .. server.chatColour .. "]^.^[-]") end
 
 				botman.faultyChat = false
 				return true
@@ -440,6 +450,10 @@ function gmsg_unslashed()
 		if (r == 5) then r = 6 end
 
 		send("se " .. igplayers[chatvars.playerid].id .. " " .. r)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 
 		botman.faultyChat = false
 		return true

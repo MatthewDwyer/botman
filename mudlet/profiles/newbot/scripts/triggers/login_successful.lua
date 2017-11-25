@@ -29,5 +29,8 @@ function loginSuccessful(line)
 		else
 			irc_chat(server.ircMain, "Successfully logged in and monitoring server traffic.")
 		end
+
+		botman.getMetrics = false
+		metrics = nil
 	end
 end

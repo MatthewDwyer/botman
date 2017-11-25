@@ -882,7 +882,7 @@ function gmsg_info()
 			end
 		end
 
-		if (id ~= nil) then
+		if (id ~= 0) then
 			if (igplayers[id]) then
 				time = tonumber(players[id].timeOnServer) + tonumber(igplayers[id].sessionPlaytime)
 			else

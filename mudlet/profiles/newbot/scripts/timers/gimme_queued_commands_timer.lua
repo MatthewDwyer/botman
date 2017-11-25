@@ -25,6 +25,10 @@ function miscCommandsTimer()
 
 			send(row.command)
 
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			if string.find(row.command, "admin add") then
 				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been given admin.")
 				setChatColour(row.steam)
@@ -59,6 +63,10 @@ function miscCommandsTimer()
 						end
 					else
 						send(row.command)
+
+						if botman.getMetrics then
+							metrics.telnetCommands = metrics.telnetCommands + 1
+						end
 					end
 
 					if string.find(row.command, "tele ") then
@@ -95,6 +103,11 @@ function gimmeQueuedCommands()
 
 				if row2 then
 					send(row2.command)
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
+
 					conn:execute("delete from gimmeQueue where id = " .. row2.id)
 				end
 			end

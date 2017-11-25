@@ -100,7 +100,7 @@ function gmsg_villages()
 				return true
 			end
 
-			if (pid ~= nil) then
+			if (pid ~= 0) then
 				if locations[villageName] ~= nil then
 					locations[villageName].mayor = pid
 					locations[villageName].owner = pid
@@ -188,7 +188,7 @@ function gmsg_villages()
 				return true
 			end
 
-			if (pid ~= nil) then
+			if (pid ~= 0) then
 				conn:execute("INSERT INTO villagers SET steam = " .. pid .. ", village = '" .. escape(villageName) .. "'")
 
 				villagers[pid .. vid] = {}
@@ -254,7 +254,7 @@ function gmsg_villages()
 				return true
 			end
 
-			if (pid ~= nil) then
+			if (pid ~= 0) then
 				conn:execute("DELETE FROM villagers WHERE village = '" .. escape(vid) .. "' and steam = " .. pid)
 				villagers[pid .. vid] = nil
 				message("say [" .. server.chatColour .. "]" .. players[pid].name .. " has been cast out of village " .. vid .. "[-]")
@@ -417,13 +417,13 @@ function gmsg_villages()
 
 		for k, v in pairs(locations) do
 			if (v.village == true) then
-				pid = nil
+				pid = 0
 
 				if v.mayor ~= 0 then
 					pid = LookupOfflinePlayer(v.mayor)
 				end
 
-				if pid ~= nil then
+				if pid ~= 0 then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. " the Mayor is " .. players[pid].name .. "[-]")
 				else
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. "[-]")

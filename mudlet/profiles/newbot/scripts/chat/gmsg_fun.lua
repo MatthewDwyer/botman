@@ -84,19 +84,6 @@ if debug then dbug("debug fun") end
 
 	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "haven" and chatvars.words[2] ~= nil) then
-		if type(brchat) ~= "table" then
-		  brchat = {}
-		end
-
-		table.insert(brchat, { os.time(), "BR-" .. players[chatvars.playerid].name .. ":" .. string.sub(chatvars.command, string.find(chatvars.command, "haven") + 6) } )
-
-		botman.faultyChat = false
-		return true
-	end
-
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
-
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
 			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "gimme peace")
@@ -141,6 +128,10 @@ if debug then dbug("debug fun") end
 		gimmeZombies = {}
 		if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies") end
 		send("se")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 
 		botman.faultyChat = false
 		return true
@@ -190,7 +181,7 @@ if debug then dbug("debug fun") end
 		end
 	end
 
-	if (chatvars.words[1] == "gimme" and chatvars.words[2] == "reset") then
+	if (chatvars.words[1] == "gimme" and chatvars.words[2] == "reset" and chatvars.words[3] == nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is for admins only[-]")
@@ -351,10 +342,78 @@ if debug then dbug("debug fun") end
 			end
 		end
 
-		message("say [" .. server.chatColour .. "]Gimme prizes now 100% certified zombie free![-]")
+		message("say [" .. server.chatColour .. "]Gimme prizes now 100% certified zombie free! (May contain nuts)[-]")
 		server.gimmeZombies = false
 
 		if botman.dbConnected then conn:execute("UPDATE server SET gimmeZombies = 0") end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "gimme reset time {number} (In minutes. Default is 120)")
+
+			if not shortHelp then
+				irc_chat(chatvars.ircAlias, "Reset everyone's gimme counter after (n) minutes.")
+				irc_chat(chatvars.ircAlias, ".")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "gimme" and chatvars.words[2] == "reset" and chatvars.words[3] == "time") then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 0) then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (chatvars.accessLevel > 0) then
+				irc_chat(chatvars.ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		if chatvars.number == nil then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]A number is required.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "A number is required.")
+			end
+
+			botman.faultyChat = false
+			return true
+		else
+			chatvars.number = math.abs(chatvars.number)
+
+			if chatvars.number == 0 then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Set a number higher than zero.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Set a number higher than zero.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			server.gimmeResetTime = chatvars.number
+			if botman.dbConnected then
+				conn:execute("UPDATE server SET gimmeResetTime = " .. chatvars.number)
+				conn:execute("UPDATE timedEvents SET delayMinutes = " .. chatvars.number .. ", nextTime = NOW() + INTERVAL " .. chatvars.number .. " MINUTE WHERE timer = 'gimmeReset'")
+			end
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Gimme will reset every " .. chatvars.number .. " minutes.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Gimme will reset every " .. chatvars.number .. " minutes.")
+			end
+		end
 
 		botman.faultyChat = false
 		return true
@@ -374,6 +433,11 @@ if debug then dbug("debug fun") end
 	if (chatvars.words[1] == "waiter" or chatvars.words[1] == "beer" and chatvars.words[2] == nil) then
 		if string.find(inLocation(chatvars.intX, chatvars.intZ), "beer") then
 			send("give " .. chatvars.playerid .. " beer 1")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Enjoy your beer![-]")
 		end
 
@@ -397,6 +461,11 @@ if debug then dbug("debug fun") end
 			end
 
 			send("kill " .. chatvars.playerid)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			players[chatvars.playerid].lastSuicide = os.time()
 		end
 
@@ -448,39 +517,237 @@ if debug then dbug("debug fun") end
 			send ("give " .. chatvars.playerid .. " pipeBomb 1")
 			send ("give " .. chatvars.playerid .. " splint 1")
 
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 6
+			end
+
 			r = rand(2)
-			if r == 1 then send ("give " .. chatvars.playerid .. " firstAidBandage 1") end
-			if r == 2 then send ("give " .. chatvars.playerid .. " firstAidKit 1") end
+			if r == 1 then
+				send ("give " .. chatvars.playerid .. " firstAidBandage 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 2 then
+				send ("give " .. chatvars.playerid .. " firstAidKit 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
 
 			players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) + 200
 
 			r = rand(26)
-			if r == 1 then send ("give " .. chatvars.playerid .. " canBeef 1") end
-			if r == 2 then send ("give " .. chatvars.playerid .. " canBoiledWater 1") end
-			if r == 3 then send ("give " .. chatvars.playerid .. " canCatfood 1") end
-			if r == 4 then send ("give " .. chatvars.playerid .. " canChicken 1") end
-			if r == 5 then send ("give " .. chatvars.playerid .. " canChili 1") end
-			if r == 6 then send ("give " .. chatvars.playerid .. " candle 1") end
-			if r == 7 then send ("give " .. chatvars.playerid .. " candleStick 1") end
-			if r == 8 then send ("give " .. chatvars.playerid .. " candleTable 1") end
-			if r == 9 then send ("give " .. chatvars.playerid .. " candleWall 1") end
-			if r == 10 then send ("give " .. chatvars.playerid .. " canDogfood 1") end
-			if r == 11 then send ("give " .. chatvars.playerid .. " candyTin 1") end
-			if r == 12 then send ("give " .. chatvars.playerid .. " canEmpty 1") end
-			if r == 13 then send ("give " .. chatvars.playerid .. " canHam 1") end
-			if r == 14 then send ("give " .. chatvars.playerid .. " canLamb 1") end
-			if r == 15 then send ("give " .. chatvars.playerid .. " canMiso 1") end
-			if r == 16 then send ("give " .. chatvars.playerid .. " canMurkyWater 1") end
-			if r == 17 then send ("give " .. chatvars.playerid .. " canPasta 1") end
-			if r == 18 then send ("give " .. chatvars.playerid .. " canPears 1") end
-			if r == 19 then send ("give " .. chatvars.playerid .. " canPeas 1") end
-			if r == 20 then send ("give " .. chatvars.playerid .. " canSalmon 1") end
-			if r == 21 then send ("give " .. chatvars.playerid .. " canSoup 1") end
-			if r == 22 then send ("give " .. chatvars.playerid .. " canStock 1") end
-			if r == 23 then send ("give " .. chatvars.playerid .. " canTuna 1") end
-			if r == 24 then send ("give " .. chatvars.playerid .. " gasCan 1") end
-			if r == 25 then send ("give " .. chatvars.playerid .. " gasCanSchematic 1") end
-			if r == 26 then send ("give " .. chatvars.playerid .. " mineCandyTin 1") end
+			if r == 1 then
+				send ("give " .. chatvars.playerid .. " canBeef 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 2 then
+				send ("give " .. chatvars.playerid .. " canBoiledWater 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 3 then
+				send ("give " .. chatvars.playerid .. " canCatfood 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 4 then
+				send ("give " .. chatvars.playerid .. " canChicken 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 5 then
+				send ("give " .. chatvars.playerid .. " canChili 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 6 then
+				send ("give " .. chatvars.playerid .. " candle 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 7 then
+				send ("give " .. chatvars.playerid .. " candleStick 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 8 then
+				send ("give " .. chatvars.playerid .. " candleTable 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 9 then
+				send ("give " .. chatvars.playerid .. " candleWall 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 10 then
+				send ("give " .. chatvars.playerid .. " canDogfood 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 11 then
+				send ("give " .. chatvars.playerid .. " candyTin 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 12 then
+				send ("give " .. chatvars.playerid .. " canEmpty 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 13 then
+				send ("give " .. chatvars.playerid .. " canHam 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 14 then
+				send ("give " .. chatvars.playerid .. " canLamb 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 15 then
+				send ("give " .. chatvars.playerid .. " canMiso 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 16 then
+				send ("give " .. chatvars.playerid .. " canMurkyWater 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 17 then
+				send ("give " .. chatvars.playerid .. " canPasta 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 18 then
+				send ("give " .. chatvars.playerid .. " canPears 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 19 then
+				send ("give " .. chatvars.playerid .. " canPeas 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 20 then
+				send ("give " .. chatvars.playerid .. " canSalmon 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 21 then
+				send ("give " .. chatvars.playerid .. " canSoup 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 22 then
+				send ("give " .. chatvars.playerid .. " canStock 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 23 then
+				send ("give " .. chatvars.playerid .. " canTuna 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 24 then
+				send ("give " .. chatvars.playerid .. " gasCan 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 25 then
+				send ("give " .. chatvars.playerid .. " gasCanSchematic 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if r == 26 then
+				send ("give " .. chatvars.playerid .. " mineCandyTin 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
 
 			players[chatvars.playerid].santa = "hohoho"
 		else
@@ -497,6 +764,10 @@ if debug then dbug("debug fun") end
 		if (server.allowGimme) then
 			if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
 				send("se")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
 			end
 
 			dist1 = distancexz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].zPos, players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ)
@@ -628,6 +899,10 @@ if debug then dbug("debug fun") end
 
 		if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
 			send("se")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		end
 
 		dist = distancexyz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].yPos, igplayers[chatvars.playerid].zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z)

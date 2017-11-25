@@ -266,7 +266,7 @@ function gmsg_hotspots()
 				pid = string.trim(pid)
 				pid = LookupPlayer(pid)
 
-				if (pid == nil) then
+				if (pid == 0) then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found with that name.[-]")
 					botman.faultyChat = false
 					return true
@@ -474,13 +474,13 @@ function gmsg_hotspots()
 				pid = chatvars.playerid
 			end
 
-			if (pid == nil and chatvars.number == nil) then
+			if (pid == 0 and chatvars.number == nil) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found with that name.[-]")
 				botman.faultyChat = false
 				return true
 			end
 
-			if (pid ~= nil) then
+			if (pid ~= 0) then
 				cursor,errorString = conn:execute("select * from hotspots where owner = " .. pid)
 				row = cursor:fetch({}, "a")
 

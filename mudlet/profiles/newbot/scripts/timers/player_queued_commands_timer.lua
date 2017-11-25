@@ -31,6 +31,11 @@ function playerQueuedCommands()
 					end
 
 					send(row.command)
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
+
 					conn:execute("delete from playerQueue where id = " .. row.id)
 					return
 				end
@@ -48,6 +53,10 @@ function playerQueuedCommands()
 		if tonumber(row.steam) == 0 then
 			if (string.sub(row.command, 1, 2) ~= "se") and (string.sub(row.command, 1, 3) ~= "say") and (string.sub(row.command, 1, 2) ~= "pm") and (row.command ~= "reset") then
 				send(row.command)
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
 			else
 				if row.command == "reset" then
 					resetGimmeHell()
@@ -70,6 +79,10 @@ function playerQueuedCommands()
 
 					if string.sub(row.command, 1, 2) == "se" then
 						send(row.command)
+
+						if botman.getMetrics then
+							metrics.telnetCommands = metrics.telnetCommands + 1
+						end
 					else
 						 message(row.command)
 					end
@@ -80,6 +93,10 @@ function playerQueuedCommands()
 			else
 				if string.sub(row.command, 1, 2) == "se" then
 					send(row.command)
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
 				else
 					 message(row.command)
 				end

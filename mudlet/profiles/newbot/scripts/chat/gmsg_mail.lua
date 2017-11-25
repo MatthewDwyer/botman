@@ -222,7 +222,7 @@ if debug then dbug("debug mail msg" .. msg) end
 			return true
 		end
 
-		if id ~= nil then
+		if id ~= 0 then
 			if isFriend(id, chatvars.playerid) or chatvars.accessLevel < 3 then
 				if igplayers[id] then
 					message("pm " .. id .. " [" .. server.chatColour .. "]Message from " .. players[chatvars.playerid].name .. ": " .. msg .. "[-]")

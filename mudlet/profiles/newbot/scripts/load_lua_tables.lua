@@ -70,9 +70,6 @@ if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentl
 		server.moneyName = temp[1]
 		server.moneyPlural = temp[2]
 
-		if server.coppi == nil then server.coppi = false end
-		if server.allocs == nil then server.allocs = false end
-
 		if server.ircServer ~= nil then
 			temp = string.split(server.ircServer, ":")
 			server.ircServer = temp[1]
@@ -106,6 +103,18 @@ if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentl
 		max = table.maxn(temp)
 		for i=1,max,1 do
 			blacklistedCountries[temp[i]] = {}
+		end
+
+		if server.enableScreamerAlert then
+			enableTrigger("Zombie Scouts")
+		else
+			disableTrigger("Zombie Scouts")
+		end
+
+		if server.enableAirdropAlert then
+			enableTrigger("AirDrop alert")
+		else
+			disableTrigger("AirDrop alert")
 		end
 
 		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end

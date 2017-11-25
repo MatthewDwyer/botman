@@ -27,6 +27,10 @@ function oneMinuteTimer()
 		for k, v in pairs(igplayers) do
 			if players[k].autoFriend ~= "NA" then
 				send("lpf " .. k)
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
 			end
 		end
 	end
@@ -48,7 +52,7 @@ function oneMinuteTimer()
 	end
 
 	botHeartbeat()
-	
+
 	-- check for timed events due to run
 	runTimedEvents()
 end

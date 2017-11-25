@@ -26,7 +26,6 @@ function thirtySecondTimer()
 	math.randomseed( os.time() )
 
 	if (botman.initError == true) then
-		message("say [" .. server.chatColour .. "]" .. server.botName .. " encountered a problem starting up.  Attempting automatic fix..[-]")
 		gatherServerData()
 		botman.initError = false
 		botman.announceBot = true
@@ -55,18 +54,20 @@ function thirtySecondTimer()
 		cmd = "DoneInventory"
 		if botman.dbConnected then conn:execute("INSERT into commandQueue (command) VALUES ('" .. cmd .. "')") end
 
-		if tonumber(botman.playersOnline) > 15 then
-			if server.scanZombies or server.scanEntities then
-				send("le")
-			end
+		if tonumber(botman.playersOnline) > 9 then
+			-- if server.scanZombies or server.scanEntities then
+				-- send("le")
+			-- end
 
 			if server.coppi then
 				if server.scanNoclip then
-					if not string.find(server.gameVersion, "Alpha 16 (b105)") then
-						-- check for noclipped players
-						for k,v in pairs(igplayers) do
-							if tonumber(players[k].accessLevel) > 2 then
-								send("pug " .. k)
+					-- check for noclipped players
+					for k,v in pairs(igplayers) do
+						if tonumber(players[k].accessLevel) > 2 then
+							send("pug " .. k)
+
+							if botman.getMetrics then
+								metrics.telnetCommands = metrics.telnetCommands + 1
 							end
 						end
 					end
@@ -77,6 +78,10 @@ function thirtySecondTimer()
 					for k,v in pairs(igplayers) do
 						if tonumber(players[k].accessLevel) > 2 then
 							send("pgd " .. k)
+
+							if botman.getMetrics then
+								metrics.telnetCommands = metrics.telnetCommands + 1
+							end
 						end
 					end
 				end

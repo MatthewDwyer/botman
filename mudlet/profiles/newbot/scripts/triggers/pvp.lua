@@ -25,7 +25,7 @@ function pvpPolice(line)
 
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
 
-	r = rand(15)
+	r = rand(17)
 	score = string.format("%.1f", math.random() * 10)
 
 	nameStart = string.find(line, "INF GMSG") + 10
@@ -77,7 +77,7 @@ function pvpPolice(line)
 		if (r == 2) then message("say [" .. server.chatColour .. "]LOL!  Didn't run far away enough did you " .. killerName .. "?[-]") end
 		if (r == 3) then message("say [" .. server.chatColour .. "]And the prize for most creative way to end themselves goes to.. " .. killerName .. "[-]") end
 		if (r == 4) then message("say [" .. server.chatColour .. "]" .. killerName .. " really shouldn't handle explosives.[-]") end
-		if (r == 5) then message("say Oh no! " .. killerName .. " died.  What a shame.[-]") end
+		if (r == 5) then message("say Oh no! " .. killerName .. " has died.  What a shame. :D[-]") end
 		if (r == 6) then message("say [" .. server.chatColour .. "]Great effort there " .. killerName .. ". I'm awarding " .. score .. " points.[-]") end
 		if (r == 7) then message("say [" .. server.chatColour .. "]LOL! REKT[-]") end
 
@@ -92,6 +92,8 @@ function pvpPolice(line)
 		if (r == 13) then message("say [" .. server.chatColour .. "]ISIS got nothing on " .. killerName .. "'s suicide bomber skillz.[-]") end
 		if (r == 14) then message("say [" .. server.chatColour .. "]" .. killerName .. " reached a new low with that death. Six feet under.[-]") end
 		if (r == 15) then message("say [" .. server.chatColour .. "]" .. killerName .. " needs clean undies after that one.[-]") end
+		if r == 16 then message("say [" .. server.chatColour .. "]" .. killerName .. " is really good at faking their own death! So realistic.[-]") end
+		if r == 17 then message("pm " .. killerID .. " [" .. server.chatColour .. "][  Wasted!  ][-]") end
 
 		return
 	else
@@ -138,7 +140,7 @@ function pvpPolice(line)
 				if r == 19 then message("say [" .. server.chatColour .. "]Gordon Bennet! " .. killerName .. " is racing towards the lead with another masterfull kill.[-]") end
 				if r == 20 then message("say [" .. server.chatColour .. "]That was a feeble effort by " .. victimName .. ".[-]") end
 				if r == 21 then message("say [" .. server.chatColour .. "]" .. victimName .. " will need to move faster next time.. because they just lost both legs below the knee![-]") end
-				if r == 22 then message("say [" .. server.chatColour .. "]" .. killerName .. " made new garden furnature from " .. victimName .. "'s corpse.[-]") end
+				if r == 22 then message("say [" .. server.chatColour .. "]" .. killerName .. " made new garden furniture from " .. victimName .. "'s corpse.[-]") end
 				if r == 23 then message("say [" .. server.chatColour .. "]" .. killerName .. " has a new trophy head! " .. victimName .. "'s head is pretty ugly but it'll do.[-]") end
 				if r == 24 then message("say [" .. server.chatColour .. "]" .. killerName .. " has meat on the menu again with a slice of " .. victimName .. " and a few unrecognisable gibblets.[-]") end
 				if r == 25 then message("say [" .. server.chatColour .. "]" .. victimName .. " should have taken up knitting, its safer.[-]") end
@@ -274,6 +276,10 @@ function pvpPolice(line)
 			players[killerID].prisonzPosOld = math.floor(igplayers[killerID].zPos)
 			players[killerID].prisonReleaseTime = os.time() + (server.maxPrisonTime * 60)
 			players[steam].bail = server.bailCost
+
+			if players[killerID].accessLevel > 2 then
+				players[killerID].silentBob = true
+			end
 
 			message("pm " .. victimID  .. " [" .. server.chatColour .. "]You may release " .. killerName .. ". Do so at your own risk by typing[-]")
 			message("pm " .. victimID  .. " " .. server.commandPrefix .. "release " .. players[killerID].id .. " or " .. server.commandPrefix .. "release " .. killerName .. "[-]")

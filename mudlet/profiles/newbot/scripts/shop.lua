@@ -503,6 +503,11 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. players[playerid].cash .. " " .. server.moneyPlural .. " remaining.[-]")
 			send("give " .. playerid .. " " .. shopItem .. " " .. number)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase is at your feet.  Look down and grab it before a zombie eats it.[-]")
 
 			conn:execute("UPDATE players SET cash = " .. players[playerid].cash .. " WHERE steam = " .. playerid)

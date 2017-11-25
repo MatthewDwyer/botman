@@ -159,6 +159,10 @@ function fixTables()
 	if type(staffList) ~= "table" then
 		staffList = {}
 	end
+
+	if type(fallingBlocks) ~= "table" then
+		fallingBlocks = {}
+	end
 end
 
 
@@ -619,9 +623,20 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	enableTrigger("Player disconnected")
 	enableTrigger("Inventory")
 	enableTrigger("lkp")
-	enableTrigger("Zombie scouts")
+
+	if server.enableScreamerAlert then
+		enableTrigger("Zombie Scouts")
+	else
+		disableTrigger("Zombie Scouts")
+	end
+
+	if server.enableAirdropAlert then
+		enableTrigger("AirDrop alert")
+	else
+		disableTrigger("AirDrop alert")
+	end
+
 	enableTrigger("InventoryOwner")
-	enableTrigger("AirDrop alert")
 	enableTrigger("Spam")
 	enableTrigger("Game Time")
 	enableTrigger("GameTickCount")
@@ -642,7 +657,6 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	enableTimer("listPlayers")
 	enableTimer("OneHourTimer")
 	enableTimer("Reconnect")
-	enableTimer("GimmeReset")
 	enableTimer("TimedCommands")
 	enableTimer("ThirtyMinuteTimer")
 	enableTimer("PlayerQueuedCommands")
@@ -656,6 +670,16 @@ end
 
 
 function reloadBotScripts(skipTables)
+	-- disable some stuff we no longer use
+	disableTrigger("le")
+	disableTimer("GimmeReset")
+
+	if exists("Every10Seconds", "timer") == 0 then
+	  permTimer("Every10Seconds", "", 10.0, [[TenSecondTimer()]])
+	end
+
+	enableTimer("Every10Seconds")
+
 	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	fixTables()
@@ -719,7 +743,7 @@ function reloadBotScripts(skipTables)
 			registerBot()
 
 			botman.webdavFolderExists = true
-			botman.webdavFolderWriteable = true
+			--botman.webdavFolderWriteable = true
 			if botman.chatlogPath == nil or botman.chatlogPath == "" then
 				botman.chatlogPath = webdavFolder
 				if botman.dbConnected then conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'") end
@@ -728,6 +752,10 @@ function reloadBotScripts(skipTables)
 			send("gg")
 			send("teleh")
 			send("se")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 3
+			end
 		end
 	end
 

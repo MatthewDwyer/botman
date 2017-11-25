@@ -29,10 +29,6 @@ function savePlayerData(steam)
 
 	-- update the player record in the database
 	updatePlayer(steam)
-
-	--dbug("savePlayerData " .. steam .. " saved")
-
---	initReservedSlots()
 end
 
 
@@ -46,6 +42,18 @@ function everyMinute()
 	debug = false
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+	-- special test for bot offline incase the main test fails to trigger
+	if botman.lastTelnetTimestamp == nil then
+		botman.lastTelnetTimestamp = os.time()
+	end
+
+	if os.time() - botman.lastTelnetTimestamp > 300 then
+		botman.lastTelnetTimestamp = os.time() -- reset this to make it sleep 5 minutes
+		botman.botOfflineCount = 2
+		reconnect()
+		irc_chat(server.ircMain, "Bot is offline - reconnecting.")
+	end
 
 	writeBotmanINI()
 
@@ -141,6 +149,10 @@ function everyMinute()
 			-- check how many claims they have placed
 			send("llp " .. k .. " parseable")
 
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			-- flag this ingame player record for deletion
 			zombiePlayers[k] = {}
 
@@ -152,6 +164,8 @@ function everyMinute()
 			if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 		end
 	end
+
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	initReservedSlots()
 
@@ -187,12 +201,40 @@ function everyMinute()
 		rebootTimerDelayID = nil
 
 		send("sa")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		finishReboot()
 	end
+
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	if (botman.playersOnline == 0 and gameTick < 0) and (scheduledReboot ~= true) and server.allowReboot == true then
 		botman.rebootTimerID = tempTimer( 60, [[startReboot()]] )
 		scheduledReboot = true
+	end
+
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+	-- report excessive falling blocks
+	for k,v in pairs(fallingBlocks) do
+		if tonumber(v.count) > 99 then
+			irc_chat(server.ircAlerts, v.count .. " blocks fell off the world in region " .. k .. " ( " .. v.x .. " " .. v.y .. " " .. v.z .. " ) in the last minute.")
+			alertAdmins(v.count .. " blocks fell off the world in region " .. k .. " ( " .. v.x .. " " .. v.y .. " " .. v.z .. " ) in the last minute.", "warn")
+		end
+	end
+
+	-- reset the fallingBlocks table
+	fallingBlocks = {}
+
+	if (server.scanZombies or server.scanEntities) and not server.lagged then
+		send("le")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 	end
 
 	if debug then dbug("debug one minute timer end") end

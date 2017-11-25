@@ -26,6 +26,11 @@ function gmsg_misc()
 	-- votecrate for Deadlights server
 	if chatvars.words[1] == "votecrate" then
 		send("cvc " .. chatvars.playerid)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		botman.faultyChat = false
 		return true
 	end
@@ -39,7 +44,7 @@ function gmsg_misc()
 			pid = chatvars.playerid
 		end
 
-		if (pid == nil) then
+		if (pid == 0) then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found with that name.[-]")
 			else
@@ -74,7 +79,7 @@ function gmsg_misc()
 		pid = stripQuotes(string.trim(pid))
 		pid = LookupPlayer(pid)
 
-		if (pid == nil) then
+		if (pid == 0) then
 			if tonumber(players[chatvars.playerid].bail) == 0 then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You cannot be bailed out of prison.[-]")
 				botman.faultyChat = false
@@ -192,7 +197,7 @@ function gmsg_misc()
 		pname = stripQuotes(string.trim(pname))
 		pid = LookupPlayer(pname)
 
-		if pid ~= nil then
+		if pid ~= 0 then
 			players[pid].ircInvite = rand(10000)
 
 			if igplayers[pid] then
@@ -221,6 +226,9 @@ function gmsg_misc()
 	if (chatvars.words[1] == "fetch" and chatvars.words[2] == "claims") then
 		send("llp " .. chatvars.playerid .. " parseable")
 
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 
 		botman.faultyChat = false
 		return true

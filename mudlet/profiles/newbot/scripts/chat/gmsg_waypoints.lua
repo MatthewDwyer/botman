@@ -171,7 +171,7 @@ function gmsg_waypoints()
 			tmp.pname = stripQuotes(tmp.pname)
 			tmp.id = LookupPlayer(tmp.pname)
 
-			if tmp.id ~= nil then
+			if tmp.id ~= 0 then
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[tmp.id].name .. " can set " .. chatvars.number .. " waypoints.[-]")
 				else
@@ -331,8 +331,6 @@ function gmsg_waypoints()
 	end
 
 	if chatvars.words[1] == "clear" and chatvars.words[2] == "all" and string.find(chatvars.words[3], "wayp") then
-		display("chatvars.accessLevel " .. chatvars.accessLevel)
-
 		if (chatvars.words[4]) and (chatvars.accessLevel > 3) then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only admins can clear a named player's waypoints.  Just type " .. server.commandPrefix .. "clear waypoints[-]")
@@ -349,7 +347,7 @@ function gmsg_waypoints()
 			pname = string.trim(pname)
 			pid = LookupPlayer(pname)
 
-			if not (pid == nil) then
+			if not (pid == 0) then
 				conn:execute("DELETE FROM waypoints WHERE steam = " .. pid)
 
 				if (chatvars.playername ~= "Server") then
@@ -678,7 +676,7 @@ function gmsg_waypoints()
 			tmp.friend = LookupPlayer(chatvars.words[2])
 			tmp.name = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[3]))
 
-			if tmp.friend ~= nil then
+			if tmp.friend ~= 0 then
 				tmp.id = LookupWaypointByName(chatvars.playerid, tmp.name, tmp.friend)
 			end
 		else
@@ -744,7 +742,7 @@ function gmsg_waypoints()
 				players[chatvars.playerid].waypointCooldown = os.time() + server.waypointCooldown
 			end
 		else
-			if tmp.friend ~= nil then
+			if tmp.friend ~= 0 then
 				if not isFriend(tmp.friend, chatvars.playerid) then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.friend].name .. " is not friends with you so you can't visit their waypoints.[-]")
 				else
@@ -781,7 +779,7 @@ function gmsg_waypoints()
 			tmp.name = string.trim(tmp.name)
 			if (tmp.name ~= nil) then tmp.steam = LookupPlayer(tmp.name) end
 
-			if (tmp.steam == nil) then
+			if (tmp.steam == 0) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. tmp.name .. "[-]")
 				botman.faultyChat = false
 				return true
@@ -802,14 +800,14 @@ function gmsg_waypoints()
 			end
 		end
 
-		if (tmp.steam == nil and tmp.range == nil) then
+		if (tmp.steam == 0 and tmp.range == nil) then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A player name or id is required unless a range is specified instead.[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]eg. " .. server.commandPrefix .. "waypoints Smegz0r or " .. server.commandPrefix .. "waypoints range 50.[-]")
 			botman.faultyChat = false
 			return true
 		end
 
-		if (tmp.steam ~= nil and tmp.range == nil) then
+		if (tmp.steam ~= 0 and tmp.range == nil) then
 			cursor,errorString = conn:execute("select * from waypoints where steam = " .. tmp.steam)
 			row = cursor:fetch({}, "a")
 

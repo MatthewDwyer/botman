@@ -615,7 +615,7 @@ function gmsg_locations()
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (id ~= nil) then
+		if (id ~= 0) then
 			-- if the player is ingame, send them to the lobby otherwise flag it to happen when they rejoin
 			if (igplayers[id]) then
 				cmd = "tele " .. id .. " " .. locations["spawnpoint1"].x .. " " .. locations["spawnpoint1"].y .. " " .. locations["spawnpoint1"].z

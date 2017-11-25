@@ -33,6 +33,11 @@ function timedCommandsTimer()
 			end
 
 			send(row.command)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			conn:execute("delete from commandQueue where id = " .. row.id)
 		else
 			conn:execute("delete from commandQueue where id = " .. row.id)

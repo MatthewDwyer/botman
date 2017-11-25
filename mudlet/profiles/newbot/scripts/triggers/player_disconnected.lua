@@ -84,5 +84,9 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 
 		-- check how many claims they have placed
 		send("llp " .. steam)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 	end
 end

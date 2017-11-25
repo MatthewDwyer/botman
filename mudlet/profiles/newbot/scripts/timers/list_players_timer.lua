@@ -21,6 +21,10 @@ function listPlayers()
 	server.scanZombies = false
 	send("lp")
 
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
+
 	if (botman.scheduledRestart == true and botman.scheduledRestartPaused == false) and server.allowReboot == true then
 
 		if server.delayReboot == nil then

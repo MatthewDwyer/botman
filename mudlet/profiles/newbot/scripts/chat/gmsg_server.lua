@@ -71,12 +71,22 @@ if debug then dbug("debug server") end
 		pname = string.sub(chatvars.command, string.find(chatvars.command, " on ") + 5)
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
-		if not (id == nil) then
-			players[id].translate = true
-			message("say [" .. server.chatColour .. "]Chat from player " .. players[id].name ..  " will be translated to English.[-]")
 
-			conn:execute("UPDATE players SET translate = 1 WHERE steam = " .. id)
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+			end
+
+			botman.faultyChat = false
+			return true
 		end
+
+		players[id].translate = true
+		message("say [" .. server.chatColour .. "]Chat from player " .. players[id].name ..  " will be translated to English.[-]")
+
+		conn:execute("UPDATE players SET translate = 1 WHERE steam = " .. id)
 
 		botman.faultyChat = false
 		return true
@@ -99,12 +109,23 @@ if debug then dbug("debug server") end
 		pname = string.sub(chatvars.command, string.find(chatvars.command, " off ") + 6)
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
-		if not (id == nil) then
-			players[id].translate = false
-			message("say [" .. server.chatColour .. "]Chat from player " .. players[id].name ..  " will no longer be translated.[-]")
 
-			conn:execute("UPDATE players SET translate = 0 WHERE steam = " .. id)
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+			end
+
+			botman.faultyChat = false
+			return true
 		end
+
+		players[id].translate = false
+		message("say [" .. server.chatColour .. "]Chat from player " .. players[id].name ..  " will no longer be translated.[-]")
+
+		conn:execute("UPDATE players SET translate = 0 WHERE steam = " .. id)
+
 		botman.faultyChat = false
 		return true
 	end
@@ -388,6 +409,10 @@ if debug then dbug("debug server") end
 
 		tmp = string.sub(line, string.find(line, "command") + 8)
 		send(tmp)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 
 		botman.faultyChat = false
 		return true
@@ -727,6 +752,11 @@ if debug then dbug("debug server") end
 			rebootTimerDelayID = nil
 
 			send("sa")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			finishReboot()
 
 			botman.faultyChat = false
@@ -1228,9 +1258,9 @@ if debug then dbug("debug server") end
 		conn:execute("UPDATE server SET chatColour = '" .. escape(server.chatColour) .. "'")
 
 		if (chatvars.playername ~= "Server") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have changed my chat colour.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have changed the bot's chat colour.[-]")
 		else
-			irc_chat(chatvars.ircAlias, "You have changed my chat colour.")
+			irc_chat(chatvars.ircAlias, "You have changed the bot's chat colour.")
 		end
 
 		botman.faultyChat = false
@@ -1255,9 +1285,9 @@ if debug then dbug("debug server") end
 		conn:execute("UPDATE server SET warnColour = '" .. escape(server.warnColour) .. "'")
 
 		if (chatvars.playername ~= "Server") then
-			message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]You have changed the colour for warning messages from me.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]You have changed the colour for warning messages from the bot.[-]")
 		else
-			irc_chat(chatvars.ircAlias, "You have changed the colour for warning messages from me.")
+			irc_chat(chatvars.ircAlias, "You have changed the colour for warning messages from the bot.")
 		end
 
 		botman.faultyChat = false
@@ -1282,9 +1312,9 @@ if debug then dbug("debug server") end
 		conn:execute("UPDATE server SET alertColour = '" .. escape(server.alertColour) .. "'")
 
 		if (chatvars.playername ~= "Server") then
-			message("pm " .. chatvars.playerid .. " [" .. server.alertColour .. "]You have changed the colour for alert messages from me.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.alertColour .. "]You have changed the colour for alert messages from the bot.[-]")
 		else
-			irc_chat(chatvars.ircAlias, "You have changed the colour for alert messages from me.")
+			irc_chat(chatvars.ircAlias, "You have changed the colour for alert messages from the bot.")
 		end
 
 		botman.faultyChat = false
@@ -1770,6 +1800,10 @@ if debug then dbug("debug server") end
 
 			send("sg MaxSpawnedZombies " .. chatvars.number)
 
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Max spawned zombies is now " .. chatvars.number .. "[-]")
 			else
@@ -1813,12 +1847,17 @@ if debug then dbug("debug server") end
 			chatvars.number = math.abs(math.floor(chatvars.number))
 
 			send("sg ServerMaxPlayerCount " .. chatvars.number)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			server.maxPlayers = chatvars.number
 			conn:execute("UPDATE server SET maxPlayers = " .. chatvars.number)
 
-			-- force reserved slots to be 1 less than max players if its equal
-			if server.reservedSlots == server.maxPlayers then
-				server.reservedSlots = server.maxPlayers - 1
+			-- don't allow reserved slots to exceed max players
+			if server.reservedSlots > server.maxPlayers then
+				server.reservedSlots = server.maxPlayers
 				conn:execute("UPDATE server SET reservedSlots = " .. server.reservedSlots)
 			end
 
@@ -1876,6 +1915,10 @@ if debug then dbug("debug server") end
 			end
 
 			send("sg MaxSpawnedAnimals " .. chatvars.number)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Max spawned animals is now " .. chatvars.number .. "[-]")
@@ -2048,7 +2091,7 @@ if debug then dbug("debug server") end
 			botman.faultyChat = false
 			return true
 		else
-			server.group = tmp.group
+			server.serverGroup = tmp.group
 			conn:execute("UPDATE server SET serverGroup = '" .. escape(tmp.group) .. "'")
 
 			if botman.db2Connected then
@@ -2339,6 +2382,10 @@ if debug then dbug("debug server") end
 -- comment if you don't want everyone to see animal and zed locations
 		send("webpermission add webapi.gethostilelocation 2000")
 		send("webpermission add webapi.getanimalslocation 2000")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 10
+		end
 
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The map permissions have been set.[-]")
@@ -3548,7 +3595,7 @@ if debug then dbug("debug server") end
 		end
 
 		if chatvars.number ~= nil then
-			chatvars.number = math.abs(math.floor(chatvars.number))
+			chatvars.number = math.abs(chatvars.number)
 
 			server.perMinutePayRate = chatvars.number
 			conn:execute("UPDATE server SET perMinutePayRate = " .. chatvars.number)
@@ -4298,11 +4345,11 @@ if debug then dbug("debug server") end
 		end
 
 		if chatvars.number ~= nil then
-			if math.abs(chatvars.number) == server.maxPlayers then
+			if math.abs(chatvars.number) > server.maxPlayers then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Reserved slots must be less than max players.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Reserved slots can't be more than max players.[-]")
 				else
-					irc_chat(chatvars.ircAlias, "Reserved slots must be less than max players.")
+					irc_chat(chatvars.ircAlias, "Reserved slots can't be more than max players.")
 				end
 
 				botman.faultyChat = false
@@ -4313,11 +4360,19 @@ if debug then dbug("debug server") end
 			conn:execute("UPDATE server SET reservedSlots = " .. server.reservedSlots)
 
 			if server.reservedSlots == 0 then
-				if tonumber(server.ServerMaxPlayerCount) > server.maxPlayers then
+				if tonumber(server.ServerMaxPlayerCount) > tonumber(server.maxPlayers) then
 					send("sg ServerMaxPlayerCount " .. server.maxPlayers) -- remove the extra slot that ensures reserved slot players can join in one go when server full
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
 				else
-					if tonumber(server.ServerMaxPlayerCount) <= server.maxPlayers then
+					if tonumber(server.ServerMaxPlayerCount) <= tonumber(server.maxPlayers) then
 						send("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add the extra slot that ensures reserved slot players can join in one go when server full
+
+						if botman.getMetrics then
+							metrics.telnetCommands = metrics.telnetCommands + 1
+						end
 					end
 				end
 			end

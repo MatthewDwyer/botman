@@ -447,6 +447,8 @@ function gmsg(line, ircid)
 
 	local result, x, z, id, pname, noWaypoint, temp, chatStringStart, cmd, msg, test, ircMsg
 
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
 	function messageIRC()
 		if ircMsg ~= nil then
 			-- ignore game messages
@@ -468,6 +470,8 @@ function gmsg(line, ircid)
 		end
 	end
 
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
 	if debug then
 		display("line " .. line)
 		dbug("gmsg " .. line)
@@ -476,6 +480,8 @@ function gmsg(line, ircid)
 			dbug("ircid " .. ircid)
 		end
 	end
+
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	noWaypoint = false
 	chatStringStart = ""
@@ -540,7 +546,7 @@ function gmsg(line, ircid)
 		chatvars.ircAlias = players[ircid].ircAlias
 
 		if tonumber(ircid) > 0 then
-			chatvars.accessLevel = accessLevel(ircid)
+			chatvars.accessLevel = tonumber(accessLevel(ircid))
 		else
 			chatvars.accessLevel = 0
 		end
@@ -606,7 +612,7 @@ function gmsg(line, ircid)
 		chatvars.playername = players[chatvars.playerid].name
 		chatvars.gameid = players[chatvars.playerid].id
 		chatvars.command = string.trim(msg)
-		chatvars.accessLevel = accessLevel(chatvars.playerid)
+		chatvars.accessLevel = tonumber(accessLevel(chatvars.playerid))
 
 if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		ircMsg = server.gameDate .. " " .. chatvars.command
@@ -676,26 +682,12 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			chatvars.intX = math.floor(igplayers[chatvars.playerid].xPos)
 			chatvars.intY = math.ceil(igplayers[chatvars.playerid].yPos)
 			chatvars.intZ = math.floor(igplayers[chatvars.playerid].zPos)
-			chatvars.accessLevel = accessLevel(chatvars.playerid)
+			chatvars.accessLevel = tonumber(accessLevel(chatvars.playerid))
 			x = math.floor(chatvars.intX / 512)
 			z = math.floor(chatvars.intZ / 512)
 			chatvars.region = "r." .. x .. "." .. z .. ".7"
 			zombies = tonumber(igplayers[chatvars.playerid].zombies)
 			chatvars.zombies = zombies
-
-			-- if string.len(chatvars.command) > 150 and server.coppi then
-				-- if igplayers[chatvars.playerid].longLineCount == nil then
-					-- igplayers[chatvars.playerid].longLineCount = 0
-					-- igplayers[chatvars.playerid].longLineTimer = os.time()
-				-- end
-
-				-- if tonumber(igplayers[chatvars.playerid].longLineCount) > 3 then
-					-- igplayers[chatvars.playerid].longLineTimer = os.time() + 10
-					-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have been muted for 1 minute for too many excessively long chat lines.[-]")
-					-- send("mpc " .. chatvars.playerid .. " true")
-					-- tempTimer( 60, [[unmutePlayer("]] .. chatvars.playerid .. [[")]] )
-				-- end
-			-- end
 		end
 
 		if players[chatvars.playerid].lockout then
@@ -736,12 +728,14 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 	chatvars.number = tonumber(string.match(chatvars.command, " (-?%d+)")) -- (-?\%d+)
 	result = false
 
-	if ircid ~= nil and ((chatvars.words[1] == "command" or chatvars.words[1] == "list") and chatvars.words[2] == "help" or chatvars.words[1] == "help") then
-		chatvars.showHelp = true
-	end
+	if ircid ~= nil then
+		if ((chatvars.words[1] == "command" or chatvars.words[1] == "list") and chatvars.words[2] == "help" or chatvars.words[1] == "help") then
+			chatvars.showHelp = true
+		end
 
-	if ircid ~= nil and chatvars.words[1] == "help" and chatvars.words[2] == "sections" then
-		chatvars.showHelpSections = true
+		if chatvars.words[1] == "help" and chatvars.words[2] == "sections" then
+			chatvars.showHelpSections = true
+		end
 	end
 
 	if (debug) then
@@ -750,13 +744,9 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-	display("ircMsg1 " .. ircMsg)
-
 	if ircMsg ~= nil then
 		messageIRC()
 	end
-
-	display("ircMsg2 " .. ircMsg)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
@@ -1188,7 +1178,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			return
 		end
 
-		if (id ~= nil) then
+		if (id ~= 0) then
 	if (debug) then dbug("id = " .. id) end
 
 			-- reject if not an admin and server is in hardcore mode

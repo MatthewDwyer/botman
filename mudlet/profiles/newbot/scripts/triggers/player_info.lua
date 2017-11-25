@@ -22,8 +22,6 @@ function playerInfo(faultyInfo)
 	local debug, id, name, posX, posY, posZ, lastX, lastY, lastZ, lastDist, mapCenterDistance, regionX, regionZ, chunkX, chunkZ
 	local deaths, zombies, kills, score, level, steam, steamtest, admin, lastGimme, lastLogin
 	local xPosOld, yPosOld, zPosOld, rawPosition, rawRotation, outsideMap, outsideMapDonor, fields, values, flag
-	local isAdmin = "No"
-	local isPrisoner = "No"
 	local timestamp = os.time()
 	local region = ""
 	local resetZone = false
@@ -32,6 +30,8 @@ function playerInfo(faultyInfo)
 	local badData = false
 
 	debug = false
+
+if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if debugPlayerInfo == nil then debugPlayerInfo = 0 end
 
@@ -126,6 +126,8 @@ function playerInfo(faultyInfo)
 		return
 	end
 
+if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
 	rawPosition = posX .. posY .. posZ
 	rawRotation = rotY
 
@@ -144,23 +146,39 @@ function playerInfo(faultyInfo)
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
+if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
 	-- check for invalid or missing steamid.  kick if not passed
 	steamtest = tonumber(steam)
 	if (steamtest == nil) then
 		send ("kick " .. id)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		irc_chat(server.ircMain, "Player " .. name .. " kicked for invalid Steam ID: " .. steam)
 
 		faultyPlayerinfo = false
 		return
 	end
+
+if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if (string.len(steam) < 17) then
 		send ("kick " .. id)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		irc_chat(server.ircMain, "Player " .. name .. " kicked for invalid Steam ID: " .. steam)
 
 		faultyPlayerinfo = false
 		return
 	end
+
+if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- add to in-game players table
 	if (igplayers[steam] == nil) then
@@ -182,6 +200,12 @@ function playerInfo(faultyInfo)
 				players[steam].alertPVP = true
 			end
 		end
+	end
+
+	if igplayers[steam].readCounter == nil then
+		igplayers[steam].readCounter = 0
+	else
+		igplayers[steam].readCounter = igplayers[steam].readCounter + 1
 	end
 
 	if igplayers[steam].checkNewPlayer == nil then
@@ -219,6 +243,8 @@ function playerInfo(faultyInfo)
 		CheckBlacklist(steam, IP)
 	end
 
+if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
 	if tonumber(ping) > 0 then
 		igplayers[steam].ping = ping
 		players[steam].ping = ping
@@ -235,18 +261,18 @@ function playerInfo(faultyInfo)
 		end
 	end
 
-	if (players[steam].prisoner == true) then
-		isPrisoner = "Yes"
-	end
-
 	if accessLevel(steam) < 3 then
-		isAdmin = "Yes"
+		-- admins don't hack (no lie) ^^
+		players[steam].hackerScore = 0
+		admin = true
 	end
 
 	if IP ~= "" and players[steam].IP == "" then
 		players[steam].IP = IP
 		CheckBlacklist(steam, IP)
 	end
+
+if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- ping kick
 	if not whitelist[steam] and players[steam].newPlayer then
@@ -304,7 +330,13 @@ function playerInfo(faultyInfo)
 
 	if tonumber(players[steam].hackerScore) >= 10000 then
 		players[steam].hackerScore = 0
-		message(string.format("say [%s]Banning %s. Detected possible evidence of hacking.[-]", server.chatColour, players[steam].name))
+
+		if igplayers[steam].hackerDetection ~= nil then
+			message(string.format("say [%s]Banning %s. Hacking suspected. Evidence: " .. igplayers[steam].hackerDetection .. "[-]", server.chatColour, players[steam].name))
+		else
+			message(string.format("say [%s]Banning %s. Detected possible evidence of hacking.[-]", server.chatColour, players[steam].name))
+		end
+
 		banPlayer(steam, "1 year", "Automatic ban for suspected hacking. Admins have been alerted.", "")
 
 		-- if the player has any pending global bans, activate them
@@ -312,8 +344,13 @@ function playerInfo(faultyInfo)
 	else
 		if tonumber(players[steam].hackerScore) >= 49  then
 			if tonumber(players[steam].pendingBans) > 0 then
-				players[steam].hackerScore = 0
-				message(string.format("say [%s]Temp banning %s 1 week. Detected clipping or flying too much. Admins have been alerted.[-]", server.chatColour, players[steam].name))
+				--players[steam].hackerScore = 0
+				if igplayers[steam].hackerDetection ~= nil then
+					message(string.format("say [%s]Temp banning %s. May be hacking. Detected " .. igplayers[steam].hackerDetection .. "[-]", server.chatColour, players[steam].name))
+				else
+					message(string.format("say [%s]Temp banning %s 1 week. Detected clipping or flying too much. Admins have been alerted.[-]", server.chatColour, players[steam].name))
+				end
+
 				banPlayer(steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
 
 				-- activate the pending bans
@@ -322,8 +359,13 @@ function playerInfo(faultyInfo)
 		end
 
 		if tonumber(players[steam].hackerScore) >= 100 then
-			players[steam].hackerScore = 0
-			message(string.format("say [%s]Temp banning %s 1 week for suspected hacking.[-]", server.chatColour, players[steam].name))
+			--players[steam].hackerScore = 0
+			if igplayers[steam].hackerDetection ~= nil then
+				message(string.format("say [%s]Temp banning %s 1 week for suspected hacking. Detected " .. igplayers[steam].hackerDetection .. "[-]", server.chatColour, players[steam].name))
+			else
+				message(string.format("say [%s]Temp banning %s 1 week for suspected hacking.[-]", server.chatColour, players[steam].name))
+			end
+
 			banPlayer(steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
 
 			-- if the player has any pending global bans, activate them
@@ -460,9 +502,17 @@ function playerInfo(faultyInfo)
 	igplayers[steam].zombies = zombies
 	igplayers[steam].score = score
 
-	if tonumber(players[steam].level) > 2000 then
+	-- hacker detection
+	if tonumber(players[steam].level) > 2000 and not admin then
 		players[steam].hackerScore = 10000
+		igplayers[steam].hackerDetection = "Level hack. (" .. level .. ")"
 	end
+
+	-- -- hacker detection
+	-- if tonumber(igplayers[steam].readCounter) > 2 and math.abs(level - players[steam].level) > 10 and not admin then
+		-- players[steam].hackerScore = 10000
+		-- igplayers[steam].hackerDetection = "Fast level change. (" .. level - players[steam].level .. ")"
+	-- end
 
 	igplayers[steam].level = level
 	players[steam].level = level
@@ -679,7 +729,6 @@ function playerInfo(faultyInfo)
 	end
 
 	if (igplayers[steam].greet == true) and tonumber(igplayers[steam].greetdelay) == 0 then
-	if (steam == debugPlayerInfo) and debug then dbug("greet is true", true) end
 		igplayers[steam].greet = false
 
 		if server.welcome ~= nil then
@@ -752,11 +801,6 @@ function playerInfo(faultyInfo)
 	end
 
 
-	if tonumber(igplayers[steam].greetdelay) > 0 then
-		igplayers[steam].greetdelay = tonumber(igplayers[steam].greetdelay) - 1
-	end
-
-
 	if (igplayers[steam].teleCooldown > 0) then
 		igplayers[steam].teleCooldown = tonumber(igplayers[steam].teleCooldown) - 1
 	end
@@ -791,6 +835,10 @@ function playerInfo(faultyInfo)
 				players[steam].tp = 1
 				players[steam].hackerTPScore = 0
 				send("tele " .. steam .. " " .. math.floor(igplayers[igplayers[steam].following].xPos) .. " " .. math.ceil(igplayers[igplayers[steam].following].yPos - 30) .. " " .. math.floor(igplayers[igplayers[steam].following].zPos))
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
 			end
 		end
 	end
@@ -1006,6 +1054,10 @@ function playerInfo(faultyInfo)
 			players[steam].tp = 1
 			players[steam].hackerTPScore = 0
 			send("tele " .. steam .. " " .. intX .. " " .. 50000 .. " " .. intZ)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		end
 
 		faultyPlayerinfo = false
@@ -1033,6 +1085,10 @@ function playerInfo(faultyInfo)
 			message("pm " .. steam .. " [" .. server.warnColour .. "]You have been moved to the center of the map.[-]")
 		else
 			send ("tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK)
+		end
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
 		end
 
 		faultyPlayerinfo = false
@@ -1090,6 +1146,10 @@ function playerInfo(faultyInfo)
 			players[steam].tp = 1
 			players[steam].hackerTPScore = 0
 			send("tele " .. steam .. " " .. players[steam].prisonxPosOld .. " " .. players[steam].prisonyPosOld .. " " .. players[steam].prisonzPosOld)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		end
 
 		faultyPlayerinfo = false
@@ -1341,6 +1401,11 @@ function playerInfo(faultyInfo)
 
 	if igplayers[steam].rawRotation ~= rawRotation and rawRotation ~= nil then
 		igplayers[steam].rawRotation = rawRotation
+
+		-- player has moved their head so they must have spawned.  We can greet them now.
+		if igplayers[steam].greet then
+			igplayers[steam].greetdelay = 0
+		end
 
 		if tonumber(igplayers[steam].teleCooldown) > 100 then
 			igplayers[steam].teleCooldown = 0

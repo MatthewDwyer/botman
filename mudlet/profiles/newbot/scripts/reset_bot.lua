@@ -126,6 +126,10 @@ function ResetBot(keepTheMoney)
 	tempTimer( 14, [[send("gg")]] )
 	tempTimer( 16, [[send("ban list")]] )
 
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 5
+	end
+
 	dbug("Finished resetting bot")
 	return true
 end

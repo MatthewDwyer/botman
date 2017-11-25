@@ -18,7 +18,7 @@ add /claim owners <distance> will list all the players with claims down in range
 function gmsg_admin()
 	calledFunction = "gmsg_admin"
 
-	local debug, tmp, str, pid, counter
+	local debug, tmp, str, counter, r, id, pname
 	local shortHelp = false
 	local skipHelp = false
 
@@ -91,6 +91,10 @@ if debug then dbug("debug admin") end
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reading claims[-]")
 		send("llp")
 
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		botman.faultyChat = false
 		return true
 	end
@@ -112,6 +116,10 @@ if debug then dbug("debug admin") end
 		-- run admin list
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reading admin list[-]")
 		send("admin list")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 
 		botman.faultyChat = false
 		return true
@@ -136,6 +144,14 @@ if debug then dbug("debug admin") end
 		message("say [" .. server.chatColour .. "]Collecting known players[-]")
 		send("lkp -online")
 
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		tempTimer( 4, [[message("say [" .. server.chatColour .. "]Reading admin list[-]")]] )
 		tempTimer( 4, [[send("admin list")]] )
 
@@ -153,6 +169,10 @@ if debug then dbug("debug admin") end
 
 		tempTimer( 15, [[send("teleh")]] )
 		tempTimer( 16, [[registerBot()]] )
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 6
+		end
 
 		botman.faultyChat = false
 		return true
@@ -226,6 +246,17 @@ if debug then dbug("debug admin") end
 			end
 		end
 
+		if tmp.id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. tmp.pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, tmp.pname .. " did not match any players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
 		if (players[tmp.id].timeout == true) then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This player is already in timeout.  Did you mean " .. server.commandPrefix .. "return ?[-]")
@@ -266,6 +297,10 @@ if debug then dbug("debug admin") end
 
 		-- then teleport the player to timeout
 		send("tele " .. tmp.id .. " " .. players[tmp.id].xPosTimeout .. " 50000 " .. players[tmp.id].zPosTimeout)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 
 		message("say [" .. server.chatColour .. "]" .. players[tmp.id].name .. " has been sent to timeout.[-]")
 
@@ -316,6 +351,17 @@ if debug then dbug("debug admin") end
 			tmp.id = LookupPlayer(tmp.pname)
 		end
 
+		if tmp.id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. tmp.pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, tmp.pname .. " did not match any players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
 		if (chatvars.playername ~= "Server") then
 			-- don't allow players to return anyone to a different location.
 			if (chatvars.accessLevel > 2) then
@@ -359,6 +405,10 @@ if debug then dbug("debug admin") end
 					tmp.cmd = "tele " .. tmp.id .. " " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z
 				else
 					send("tele " .. tmp.id .. " " .. players[tmp.id].xPosTimeout .. " " .. players[tmp.id].yPosTimeout .. " " .. players[tmp.id].zPosTimeout)
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
 
 					players[tmp.id].xPosTimeout = 0
 					players[tmp.id].yPosTimeout = 0
@@ -464,8 +514,9 @@ if debug then dbug("debug admin") end
 		prisonerid = LookupPlayer(prisoner)
 		prisoner = players[prisonerid].name
 
-		if prisonerid == nil then
+		if prisonerid == 0 then
 			message("say [" .. server.chatColour .. "]We don't have a prisoner called " .. prisoner .. ".[-]")
+
 			botman.faultyChat = false
 			return true
 		end
@@ -551,6 +602,11 @@ if debug then dbug("debug admin") end
 	if chatvars.words[1] == "give" and (string.find(chatvars.words[2], "claim") or string.find(chatvars.words[2], "key") or string.find(chatvars.words[2], "lcb")) then
 		if players[chatvars.playerid].removedClaims > 0 then
 			send("give " .. chatvars.playerid .. " keystoneBlock " .. players[chatvars.playerid].removedClaims)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I was holding " .. players[chatvars.playerid].removedClaims .. " keystones for you and have dropped them at your feet.  Press e to collect them now.[-]")
 			players[chatvars.playerid].removedClaims = 0
 		else
@@ -579,6 +635,132 @@ if debug then dbug("debug admin") end
 		end
 	end
 	-- ##################################################################
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "claim"))) or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "disable (or enable) claim scan")
+
+			if not shortHelp then
+				irc_chat(chatvars.ircAlias, "Every 45 seconds the bot reads the claims of all ingame players. This can be a lot of data and could impact server performance.")
+				irc_chat(chatvars.ircAlias, "If the bot is reporting server lag frequently, you can disable the timed claim scan.")
+				irc_chat(chatvars.ircAlias, "It will still scan when a player leaves the server and can be commanded to do a scan.")
+				irc_chat(chatvars.ircAlias, ".")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "claim" and chatvars.words[3] == "scan" then
+		if chatvars.words[1] == "disable" then
+			server.enableTimedClaimScan = 0
+			conn:execute("UPDATE server SET enableTimedClaimScan = 0")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Claims will not be scanned every minute.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Claims will not be scanned every minute.")
+			end
+		else
+			server.enableTimedClaimScan = 1
+			conn:execute("UPDATE server SET enableTimedClaimScan = 1")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Claims of ingame players (except admins) will be scanned every minute. This can produce a lot of data and may impact server performance.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Claims of ingame players (except admins) will be scanned every minute. This can produce a lot of data and may impact server performance.")
+			end
+		end
+
+		irc_chat(chatvars.ircAlias, ".")
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "scream"))) or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "disable (or enable) screamer alert")
+
+			if not shortHelp then
+				irc_chat(chatvars.ircAlias, "By default the bot will warn players when screamers are approaching.  You can disable that warning.")
+				irc_chat(chatvars.ircAlias, ".")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "screamer" then
+		if chatvars.words[1] == "disable" then
+			disableTrigger("Zombie Scouts")
+			server.enableScreamerAlert = 0
+			conn:execute("UPDATE server SET enableScreamerAlert = 0")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The screamer alert message is disabled.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "The screamer alert message is disabled.")
+			end
+		else
+			enableTrigger("Zombie Scouts")
+			server.enableScreamerAlert = 1
+			conn:execute("UPDATE server SET enableScreamerAlert = 1")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will be warned when screamers are heading towards their location.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Players will be warned when screamers are heading towards their location.")
+			end
+		end
+
+		irc_chat(chatvars.ircAlias, ".")
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "air"))) or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "disable (or enable) airdrop alert")
+
+			if not shortHelp then
+				irc_chat(chatvars.ircAlias, "By default the bot will inform players when an airdrop occurs near them.  You can disable the message.")
+				irc_chat(chatvars.ircAlias, ".")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "airdrop" then
+		if chatvars.words[1] == "disable" then
+			disableTrigger("AirDrop alert")
+			server.enableAirdropAlert = 0
+			conn:execute("UPDATE server SET enableAirdropAlert = 0")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will say nothing when airdrops occur.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "The bot will say nothing when airdrops occur.")
+			end
+		else
+			enableTrigger("AirDrop alert")
+			server.enableAirdropAlert = 1
+			conn:execute("UPDATE server SET enableAirdropAlert = 1")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will be alerted to airdrops near their location.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Players will be alerted to airdrops near their location.")
+			end
+		end
+
+		irc_chat(chatvars.ircAlias, ".")
+
+		botman.faultyChat = false
+		return true
+	end
 
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
@@ -1023,15 +1205,15 @@ if debug then dbug("debug admin") end
 
 		if string.find(chatvars.command, " reason ") then
 			pname = string.sub(chatvars.command, string.find(chatvars.command, "kick ") + 5, string.find(chatvars.command, " reason") - 1)
-			pid = LookupPlayer(pname)
+			id = LookupPlayer(pname)
 
 			reason = string.sub(chatvars.command, string.find(chatvars.command, "reason ") + 7)
 		else
 			pname = string.sub(chatvars.command, string.find(chatvars.command, "kick ") + 5)
-			pid = LookupPlayer(pname)
+			id = LookupPlayer(pname)
 		end
 
-		if pid == nil then
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
 			else
@@ -1042,19 +1224,19 @@ if debug then dbug("debug admin") end
 			return true
 		end
 
-		if not igplayers[pid] then
+		if not igplayers[id] then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[pid].name .. " is not on the server right now.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " is not on the server right now.[-]")
 			else
-				irc_chat(chatvars.ircAlias, "Player " .. players[pid].name .. " is not on the server right now.")
+				irc_chat(chatvars.ircAlias, "Player " .. players[id].name .. " is not on the server right now.")
 			end
 
 			botman.faultyChat = false
 			return true
 		end
 
-		if accessLevel(pid) > 2 then
-			kick(pid, reason)
+		if accessLevel(id) > 2 then
+			kick(id, reason)
 		else
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I won't kick staff.  :O[-]")
@@ -1099,6 +1281,10 @@ if debug then dbug("debug admin") end
 			end
 
 			send("tcch " .. tmp.prefix)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		else
 			server.commandPrefix = ""
 			conn:execute("UPDATE server SET commandPrefix = ''")
@@ -1110,6 +1296,10 @@ if debug then dbug("debug admin") end
 			end
 
 			send("tcch")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		end
 
 		botman.faultyChat = false
@@ -1276,12 +1466,12 @@ if debug then dbug("debug admin") end
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "password") and (chatvars.words[2] ~= nil) and (chatvars.accessLevel < 3) then
-		local r, response, ID
+		local response
 
-		if chatvars.ircid ~= nil then
-			ID = chatvars.ircid
+		if chatvars.ircid ~= 0 then
+			id = chatvars.ircid
 		else
-			ID = chatvars.playerid
+			id = chatvars.playerid
 		end
 
 		if string.sub(chatvars.command, string.find(chatvars.command, "password") + 9) ~= server.masterPassword then
@@ -1309,19 +1499,17 @@ if debug then dbug("debug admin") end
 			return true
 		else
 			-- password accepted (or a great guess)
-			dbug(players[ID].botQuestion)
-
-			if players[ID].botQuestion == "reset server" and chatvars.accessLevel == 0 then
+			if players[id].botQuestion == "reset server" and chatvars.accessLevel == 0 then
 				ResetServer()
 
 				botman.faultyChat = false
 				return true
 			end
 
-			 if players[ID].botQuestion == "restart bot" and (chatvars.accessLevel < 3) then
-				players[ID].botQuestion = ""
-				players[ID].botQuestionID = nil
-				players[ID].botQuestionValue = nil
+			 if players[id].botQuestion == "restart bot" and (chatvars.accessLevel < 3) then
+				players[id].botQuestion = ""
+				players[id].botQuestionID = nil
+				players[id].botQuestionValue = nil
 
 				restartBot()
 
@@ -1334,44 +1522,44 @@ if debug then dbug("debug admin") end
 
 				message("say [" .. server.chatColour .. "]The bot has been reset.  All bases, inventories etc are forgotten, but not the players or their money.[-]")
 
-				players[ID].botQuestion = ""
-				players[ID].botQuestionID = nil
-				players[ID].botQuestionValue = nil
+				players[id].botQuestion = ""
+				players[id].botQuestionID = nil
+				players[id].botQuestionValue = nil
 
 				botman.faultyChat = false
 				return true
 			end
 
-			if players[ID].botQuestion == "reset bot" and chatvars.accessLevel == 0 then
+			if players[id].botQuestion == "reset bot" and chatvars.accessLevel == 0 then
 				ResetBot()
 
 				message("say [" .. server.chatColour .. "]The bot has been reset.  All bases, inventories etc are forgotten, but not the players.[-]")
 
-				players[ID].botQuestion = ""
-				players[ID].botQuestionID = nil
-				players[ID].botQuestionValue = nil
+				players[id].botQuestion = ""
+				players[id].botQuestionID = nil
+				players[id].botQuestionValue = nil
 
 				botman.faultyChat = false
 				return true
 			end
 
-			if players[ID].botQuestion == "quick reset bot" and chatvars.accessLevel == 0 then
+			if players[id].botQuestion == "quick reset bot" and chatvars.accessLevel == 0 then
 				QuickBotReset()
 
 				message("say [" .. server.chatColour .. "]The bot has been reset except for players, locations and reset zones.[-]")
 
-				players[ID].botQuestion = ""
-				players[ID].botQuestionID = nil
-				players[ID].botQuestionValue = nil
+				players[id].botQuestion = ""
+				players[id].botQuestionID = nil
+				players[id].botQuestionValue = nil
 
 				botman.faultyChat = false
 				return true
 			end
 		end
 
-		players[ID].botQuestion = ""
-		players[ID].botQuestionID = nil
-		players[ID].botQuestionValue = nil
+		players[id].botQuestion = ""
+		players[id].botQuestionID = nil
+		players[id].botQuestionValue = nil
 
 		botman.faultyChat = false
 		return true
@@ -1415,6 +1603,11 @@ if debug then dbug("debug admin") end
 		if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 301) .. "')") end
 
 		send("admin remove " .. chatvars.playerid)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		message(string.format("pm %s [%s]Your admin status has been temporarily removed.  You are now a player.  You will regain admin in 5 minutes.  Good luck![-]", chatvars.playerid, server.chatColour))
 
 		botman.faultyChat = false
@@ -1613,7 +1806,18 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if id ~= nil then
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if id ~= 0 then
 			-- this players claims wil not be removed unless in a reset zone and not staff
 			players[id].removeClaims = false
 			if botman.dbConnected then conn:execute("UPDATE keystones SET remove = 0 WHERE steam = " .. id) end
@@ -1663,7 +1867,18 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if id ~= nil then
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if id ~= 0 then
 			-- flag the player's claims for removal
 			players[id].removeClaims = true
 
@@ -1674,6 +1889,10 @@ if debug then dbug("debug admin") end
 			end
 
 			send("llp " .. id)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 
 			if botman.dbConnected then conn:execute("UPDATE players SET removeClaims = 1 WHERE steam = " .. id) end
 		end
@@ -1765,7 +1984,18 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if id ~= nil then
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if id ~= 0 then
 			-- flag the player as exiled
 			players[id].exiled = 1
 			players[id].silentBob = true
@@ -1810,7 +2040,18 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if id ~= nil then
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if id ~= 0 then
 			-- flag the player as no longer exiled
 			players[id].exiled = 2
 			players[id].silentBob = false
@@ -1850,7 +2091,18 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if id ~= nil then
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if id ~= 0 then
 			-- set the newPlayer flag to false
 			players[id].newPlayer = false
 			players[id].watchPlayer = false
@@ -1959,26 +2211,41 @@ if debug then dbug("debug admin") end
 		end
 
 		tmp.sql = tmp.sql .. ", donorExpiry = '" .. os.date("%Y-%m-%d %H:%M:%S", tmp.expiry) .. "', donorLevel = " .. tmp.level
-		tmp.pname = chatvars.words[3]
-		tmp.id = LookupPlayer(tmp.pname)
+		pname = chatvars.words[3]
+		id = LookupPlayer(pname)
 
-		if tmp.id ~= nil then
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if id ~= 0 then
 			-- set the donor flag to true
-			players[tmp.id].donor = true
-			players[tmp.id].donorLevel = tmp.level
-			players[tmp.id].donorExpiry = tmp.expiry
-			message("say [" .. server.chatColour .. "]" .. players[tmp.id].name .. " has donated! Thanks =D[-]")
-			if botman.dbConnected then conn:execute(tmp.sql .. " WHERE steam = " .. tmp.id) end
+			players[id].donor = true
+			players[id].donorLevel = tmp.level
+			players[id].donorExpiry = tmp.expiry
+			message("say [" .. server.chatColour .. "]" .. players[id].name .. " has donated! Thanks =D[-]")
+			if botman.dbConnected then conn:execute(tmp.sql .. " WHERE steam = " .. id) end
 			-- also add them to the bot's whitelist
-			whitelist[tmp.id] = {}
-			if botman.dbConnected then conn:execute("INSERT INTO whitelist (steam) VALUES (" .. tmp.id .. ")") end
+			whitelist[id] = {}
+			if botman.dbConnected then conn:execute("INSERT INTO whitelist (steam) VALUES (" .. id .. ")") end
 
-			send("ban remove " .. tmp.id)
+			send("ban remove " .. id)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 
 			-- create or update the donor record on the shared database
 			if server.serverGroup ~= "" then
-				connBots:execute("INSERT INTO donors (donor, donorLevel, donorExpiry, steam, botID, serverGroup) VALUES (1, " .. tmp.level .. ", " .. tmp.expiry .. ", " .. tmp.id .. "," .. server.botID .. ",'" .. escape(server.serverGroup) .. "')")
-				connBots:execute("UPDATE donors SET donor = 1, donorLevel = " .. tmp.level .. ", donorExpiry = " .. tmp.expiry .. " WHERE steam = " .. tmp.id .. " AND serverGroup = '" .. escape(server.serverGroup) .. "'")
+				connBots:execute("INSERT INTO donors (donor, donorLevel, donorExpiry, steam, botID, serverGroup) VALUES (1, " .. tmp.level .. ", " .. tmp.expiry .. ", " .. id .. "," .. server.botID .. ",'" .. escape(server.serverGroup) .. "')")
+				connBots:execute("UPDATE donors SET donor = 1, donorLevel = " .. tmp.level .. ", donorExpiry = " .. tmp.expiry .. " WHERE steam = " .. id .. " AND serverGroup = '" .. escape(server.serverGroup) .. "'")
 			end
 		end
 
@@ -2018,7 +2285,18 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if id ~= nil then
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if id ~= 0 then
 			-- set the donor flag to false
 			players[id].donor = false
 			players[id].donorLevel = 0
@@ -2029,12 +2307,6 @@ if debug then dbug("debug admin") end
 
 			if server.serverGroup ~= "" then
 				connBots:execute("UPDATE donors SET donor = 0, donorLevel = 0, donorExpiry = " .. os.time() - 1 .. " WHERE steam = " .. id .. " AND serverGroup = '" .. escape(server.serverGroup) .. "'")
-			end
-		else
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found with that name.[-]")
-			else
-				irc_chat(chatvars.ircAlias, "No player found with that name.")
 			end
 		end
 
@@ -2076,6 +2348,10 @@ if debug then dbug("debug admin") end
 					send("give " .. k .. " " .. chatvars.words[2] .. " " .. chatvars.number)
 				else
 					send("give " .. k .. " " .. chatvars.words[2] .. " 1")
+				end
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 
 				message("pm " .. k .. " [" .. server.chatColour .. "][i]FREE STUFF!  Press e to pick up some " .. chatvars.words[2] .. " now. =D[/i]")
@@ -2121,7 +2397,18 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if id ~= nil then
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if id ~= 0 then
 			players[id].canTeleport = false
 			message("say [" .. server.chatColour .. "] " .. players[id].name ..  " is not allowed to use teleports.[-]")
 
@@ -2164,7 +2451,18 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if id ~= nil then
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if id ~= 0 then
 			players[id].canTeleport = true
 			message("say [" .. server.chatColour .. "] " .. players[id].name ..  " is allowed to use teleports.[-]")
 
@@ -2578,11 +2876,11 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (id == nil) then
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A player name is required.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
 			else
-				irc_chat(chatvars.ircAlias, "Command requires a player name or no match found.")
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
 			end
 
 			botman.faultyChat = false
@@ -2593,6 +2891,10 @@ if debug then dbug("debug admin") end
 		if botman.dbConnected then conn:execute("INSERT INTO whitelist (steam) VALUES (" .. id .. ")") end
 
 		send("ban remove " .. id)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .. " has been added to the whitelist.[-]")
@@ -2638,11 +2940,11 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (id == nil) then
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A player name is required.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
 			else
-				irc_chat(chatvars.ircAlias, "Command requires a player name or no match found.")
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
 			end
 
 			botman.faultyChat = false
@@ -2696,11 +2998,11 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (id == nil) then
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A player name is required.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
 			else
-				irc_chat(chatvars.ircAlias, "Command requires a player name or no match found.")
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
 			end
 
 			botman.faultyChat = false
@@ -2757,11 +3059,11 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (id == nil) then
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A player name is required.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
 			else
-				irc_chat(chatvars.ircAlias, "Command requires a player name or no match found.")
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
 			end
 
 			botman.faultyChat = false
@@ -2819,11 +3121,11 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (id == nil) then
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A player name is required.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
 			else
-				irc_chat(chatvars.ircAlias, "Command requires a player name or no match found.")
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
 			end
 
 			botman.faultyChat = false
@@ -2898,7 +3200,7 @@ if debug then dbug("debug admin") end
 		prisonerid = LookupPlayer(prisoner)
 		prisoner = players[prisonerid].name
 
-		if (prisonerid == nil or not players[prisonerid].prisoner) then
+		if (prisonerid == 0 or not players[prisonerid].prisoner) then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. prisoner .. " is not a prisoner[-]")
 			else
@@ -2972,7 +3274,7 @@ if debug then dbug("debug admin") end
 		prisoner = string.trim(prisoner)
 		prisonerid = LookupPlayer(prisoner)
 
-		if prisonerid == nil then
+		if prisonerid == 0 then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. prisoner .. "[-]")
 			else
@@ -3063,8 +3365,13 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (pname == nil and chatvars.playername ~= "Server") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A player name is required.[-]")
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
+			end
+
 			botman.faultyChat = false
 			return true
 		end
@@ -3194,12 +3501,18 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (pname == nil or pname == "") then
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
+			end
+
 			botman.faultyChat = false
 			return true
 		end
 
-		if (id ~= nil) then
+		if (id ~= 0) then
 			if accessLevel(id) < 3 then
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The staff are cold enough as it is.[-]")
@@ -3254,7 +3567,13 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (pname == nil or pname == "") then
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
+			end
+
 			botman.faultyChat = false
 			return true
 		end
@@ -3309,29 +3628,49 @@ if debug then dbug("debug admin") end
 		loc = LookupLocation(location)
 		id = LookupPlayer(pname)
 
-		if (id ~= nil and loc ~= nil) then
-			-- if the player is ingame, send them to the lobby otherwise flag it to happen when they rejoin
-			if (igplayers[id]) then
-				cmd = "tele " .. id .. " " .. locations[loc].x .. " " .. locations[loc].y .. " " .. locations[loc].z
-				igplayers[id].lastTP = cmd
-				teleport(cmd, id)
-
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " has been sent to " .. locations[loc].name .. "[-]")
-				else
-					irc_chat(chatvars.ircAlias, "Player " .. players[id].name .. " has been sent to " .. locations[loc].name)
-				end
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
 			else
-				players[id].location = loc
-
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " will spawn at " .. locations[loc].name .. " next time they join.[-]")
-				else
-					irc_chat(chatvars.ircAlias, "Player " .. players[id].name .. " will spawn at " .. locations[loc].name .. " next time they join.")
-				end
-
-				if botman.dbConnected then conn:execute("UPDATE players SET location = '" .. loc .. "' WHERE steam = " .. id) end
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
 			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if loc == nil then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No location matched.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No location matched.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		-- if the player is ingame, send them to the lobby otherwise flag it to happen when they rejoin
+		if (igplayers[id]) then
+			cmd = "tele " .. id .. " " .. locations[loc].x .. " " .. locations[loc].y .. " " .. locations[loc].z
+			igplayers[id].lastTP = cmd
+			teleport(cmd, id)
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " has been sent to " .. locations[loc].name .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Player " .. players[id].name .. " has been sent to " .. locations[loc].name)
+			end
+		else
+			players[id].location = loc
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " will spawn at " .. locations[loc].name .. " next time they join.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Player " .. players[id].name .. " will spawn at " .. locations[loc].name .. " next time they join.")
+			end
+
+			if botman.dbConnected then conn:execute("UPDATE players SET location = '" .. loc .. "' WHERE steam = " .. id) end
 		end
 
 		players[id].xPosOld = locations[loc].x
@@ -3420,6 +3759,10 @@ if debug then dbug("debug admin") end
 					if server.coppi then
 						prepareTeleport(id, "")
 						send("teleh " .. id)
+
+						if botman.getMetrics then
+							metrics.telnetCommands = metrics.telnetCommands + 1
+						end
 
 						if (chatvars.playername ~= "Server") then
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .. " has been sent to their bed.[-]")
@@ -3525,15 +3868,24 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if not (id == nil) then
-			players[id].watchPlayer = true
-			players[id].watchPlayerTimer = os.time() + 259200 -- 3 days
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admins will be alerted whenever " .. players[id].name ..  " enters a base.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
 			end
 
-			if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. id) end
+			botman.faultyChat = false
+			return true
 		end
+
+		players[id].watchPlayer = true
+		players[id].watchPlayerTimer = os.time() + 259200 -- 3 days
+		if (chatvars.playername ~= "Server") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admins will be alerted whenever " .. players[id].name ..  " enters a base.[-]")
+		end
+
+		if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. id) end
 
 		botman.faultyChat = false
 		return true
@@ -3585,14 +3937,23 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if not (id == nil) then
-			players[id].watchPlayer = false
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name ..  " will no longer be watched.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname .. " did not match any players.")
 			end
 
-			if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 0 WHERE steam = " .. id) end
+			botman.faultyChat = false
+			return true
 		end
+
+		players[id].watchPlayer = false
+		if (chatvars.playername ~= "Server") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name ..  " will no longer be watched.[-]")
+		end
+
+		if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 0 WHERE steam = " .. id) end
 
 		botman.faultyChat = false
 		return true
@@ -3626,22 +3987,52 @@ if debug then dbug("debug admin") end
 			end
 		end
 
-		id1 = nil
-		id2 = nil
+		pname1 = string.sub(chatvars.command, 7, string.find(chatvars.command, " to ") - 1)
+		pname2 = string.sub(chatvars.command, string.find(chatvars.command, " to ") + 4)
 
-		for i=2,chatvars.wordCount,1 do
-			if (chatvars.words[i] ~= "to") then
-				if id1 ~= nil and id2 == nil then
-					id2 = LookupPlayer(chatvars.words[i])
-				end
+		dbug("pname1 -" .. pname1 .. "-")
+		dbug("pname2 -" .. pname2 .. "-")
 
-				if id1 == nil then
-					id1 = LookupPlayer(chatvars.words[i])
-				end
+		id1 = LookupPlayer(pname1)
+		id2 = LookupPlayer(pname2)
+
+		dbug("id1 " .. id1)
+		dbug("id2 " .. id2)
+
+		if id1 == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname1 .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname1 .. " did not match any players.")
 			end
+
+			botman.faultyChat = false
+			return true
 		end
 
-		if (id ~= nil and id2 ~= nil) then
+		if id2 == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname2 .. " did not match any players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, pname2 .. " did not match any players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if not igplayers[id1] then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id1].name .. " is not on the server right now.[-]")
+			else
+				irc_chat(chatvars.ircAlias, players[id1].name .. " is not on the server right now.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if (id ~= 0 and id2 ~= 0) then
 			if (players[id1].timeout == true) then
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id1].name .. " is in timeout. Return them first[-]")
@@ -3701,13 +4092,13 @@ if debug then dbug("debug admin") end
 
 		if (chatvars.words[2] ~= nil) then
 			pname = chatvars.words[2]
-			pid = LookupPlayer(pname)
+			id = LookupPlayer(pname)
 
-			if pid == nil then
+			if id == 0 then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No in-game players found with that name.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
 				else
-					irc_chat(chatvars.ircAlias, "No in-game players found called " .. pname)
+					irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
 				end
 
 				botman.faultyChat = false
@@ -3715,12 +4106,27 @@ if debug then dbug("debug admin") end
 			end
 		end
 
-		send("buffplayer " .. pid .. " burning")
+		if not igplayers[id] then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. igplayers[id].name .. " is not playing right now and can't feel the burn.[-]")
+			else
+				irc_chat(chatvars.ircAlias, igplayers[id].name .. " is not playing right now and can't feel the burn.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		send("buffplayer " .. id .. " burning")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 
 		if (chatvars.playername ~= "Server") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You set " .. players[pid].name .. " on fire![-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You set " .. players[id].name .. " on fire![-]")
 		else
-			irc_chat(chatvars.ircAlias, "You set " .. players[pid].name .. " on fire!")
+			irc_chat(chatvars.ircAlias, "You set " .. players[id].name .. " on fire!")
 		end
 
 		botman.faultyChat = false
@@ -3757,13 +4163,13 @@ if debug then dbug("debug admin") end
 
 		if (chatvars.words[2] ~= nil) then
 			pname = chatvars.words[2]
-			pid = LookupPlayer(pname)
+			id = LookupPlayer(pname)
 
-			if pid == nil then
+			if id == 0 then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No in-game players found with that name.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
 				else
-					irc_chat(chatvars.ircAlias, "No in-game players found called " .. pname)
+					irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
 				end
 
 				botman.faultyChat = false
@@ -3771,12 +4177,29 @@ if debug then dbug("debug admin") end
 			end
 		end
 
-		send("buffplayer " .. pid .. " dysentery")
+		if not igplayers[id] then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. igplayers[id].name .. " is not playing right now and can't catch shit.[-]")
+			else
+				irc_chat(chatvars.ircAlias, igplayers[id].name .. " is not playing right now and can't catch shit.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		send("buffplayer " .. id .. " dysentery")
+		send("give " .. igplayers[id].id .. " turd")
+		message("pm " .. id .. " [" .. server.chatColour .. "]Hey " .. players[id].name .. "! You dropped something.[-]")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 2
+		end
 
 		if (chatvars.playername ~= "Server") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You showed " .. players[pid].name .. " that you give a shit.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You showed " .. players[id].name .. " that you give a shit.[-]")
 		else
-			irc_chat(chatvars.ircAlias, "You showed " .. players[pid].name .. " that you give a shit.")
+			irc_chat(chatvars.ircAlias, "You showed " .. players[id].name .. " that you give a shit.")
 		end
 
 		botman.faultyChat = false
@@ -3811,20 +4234,46 @@ if debug then dbug("debug admin") end
 			end
 		end
 
-		pid = chatvars.playerid
+		id = chatvars.playerid
 
 		if (chatvars.words[2] ~= nil) then
 			pname = chatvars.words[2]
-			pid = LookupPlayer(pname)
+			id = LookupPlayer(pname)
 		end
 
-		send("debuffplayer " .. pid .. " sprainedLeg")
-		send("debuffplayer " .. pid .. " brokenLeg")
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if not igplayers[id] then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. igplayers[id].name .. " is not playing right now and can't catch a break.[-]")
+			else
+				irc_chat(chatvars.ircAlias, igplayers[id].name .. " is not playing right now and can't catch a break.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		send("debuffplayer " .. id .. " sprainedLeg")
+		send("debuffplayer " .. id .. " brokenLeg")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 2
+		end
 
 		if (chatvars.playername ~= "Server") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You fixed " .. players[pid].name .. "'s legs[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You fixed " .. players[id].name .. "'s legs[-]")
 		else
-			irc_chat(chatvars.ircAlias, "You fixed " .. players[pid].name .. "'s legs")
+			irc_chat(chatvars.ircAlias, "You fixed " .. players[id].name .. "'s legs")
 		end
 
 		botman.faultyChat = false
@@ -3859,28 +4308,53 @@ if debug then dbug("debug admin") end
 			end
 		end
 
-		pid = chatvars.playerid
+		id = chatvars.playerid
 
 		if (chatvars.words[2] ~= nil) then
 			pname = chatvars.words[2]
-			pid = LookupPlayer(pname)
+			id = LookupPlayer(pname)
 		end
 
-		send("buffplayer " .. pid .. " cured")
-		send("debuffplayer " .. pid .. " dysentery")
-		send("debuffplayer " .. pid .. " dysentery2")
-		send("debuffplayer " .. pid .. " foodPoisoning")
-		send("debuffplayer " .. pid .. " infection")
-		send("debuffplayer " .. pid .. " infection1")
-		send("debuffplayer " .. pid .. " infection2")
-		send("debuffplayer " .. pid .. " infection3")
-		send("debuffplayer " .. pid .. " infection4")
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+			end
 
+			botman.faultyChat = false
+			return true
+		end
+
+		if not igplayers[id] then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. igplayers[id].name .. " is not playing right now. Next patient please![-]")
+			else
+				irc_chat(chatvars.ircAlias, igplayers[id].name .. " is not playing right now. Next patient please!")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		send("buffplayer " .. id .. " cured")
+		send("debuffplayer " .. id .. " dysentery")
+		send("debuffplayer " .. id .. " dysentery2")
+		send("debuffplayer " .. id .. " foodPoisoning")
+		send("debuffplayer " .. id .. " infection")
+		send("debuffplayer " .. id .. " infection1")
+		send("debuffplayer " .. id .. " infection2")
+		send("debuffplayer " .. id .. " infection3")
+		send("debuffplayer " .. id .. " infection4")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 9
+		end
 
 		if (chatvars.playername ~= "Server") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You cured " .. players[pid].name .. "[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You cured " .. players[id].name .. "[-]")
 		else
-			irc_chat(chatvars.ircAlias, "You cured " .. players[pid].name)
+			irc_chat(chatvars.ircAlias, "You cured " .. players[id].name)
 		end
 
 		botman.faultyChat = false
@@ -3915,19 +4389,45 @@ if debug then dbug("debug admin") end
 			end
 		end
 
-		pid = chatvars.playerid
+		id = chatvars.playerid
 
 		if (chatvars.words[2] ~= nil) then
 			pname = chatvars.words[2]
-			pid = LookupPlayer(pname)
+			id = LookupPlayer(pname)
 		end
 
-		send("buffplayer " .. pid .. " stewWarming")
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if not igplayers[id] then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. igplayers[id].name .. " is not playing right now and is left out in the cold.[-]")
+			else
+				irc_chat(chatvars.ircAlias, igplayers[id].name .. " is not playing right now and is left out in the cold.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		send("buffplayer " .. id .. " stewWarming")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 
 		if (chatvars.playername ~= "Server") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[pid].name .. " is warming up.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is warming up.[-]")
 		else
-			irc_chat(chatvars.ircAlias, players[pid].name .. " is warming up.")
+			irc_chat(chatvars.ircAlias, players[id].name .. " is warming up.")
 		end
 
 		botman.faultyChat = false
@@ -3962,19 +4462,45 @@ if debug then dbug("debug admin") end
 			end
 		end
 
-		pid = chatvars.playerid
+		id = chatvars.playerid
 
 		if (chatvars.words[2] ~= nil) then
 			pname = chatvars.words[2]
-			pid = LookupPlayer(pname)
+			id = LookupPlayer(pname)
 		end
 
-		send("buffplayer " .. pid .. " redTeaCooling")
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if not igplayers[id] then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. igplayers[id].name .. " is not playing right now.  They aren't cool enough.[-]")
+			else
+				irc_chat(chatvars.ircAlias, igplayers[id].name .. " is not playing right now. They aren't cool enough.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		send("buffplayer " .. id .. " redTeaCooling")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 
 		if (chatvars.playername ~= "Server") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[pid].name .. " is cooling down.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is cooling down.[-]")
 		else
-			irc_chat(chatvars.ircAlias, players[pid].name .. " is cooling down.")
+			irc_chat(chatvars.ircAlias, players[id].name .. " is cooling down.")
 		end
 
 		botman.faultyChat = false
@@ -4009,19 +4535,45 @@ if debug then dbug("debug admin") end
 			end
 		end
 
-		pid = chatvars.playerid
+		id = chatvars.playerid
 
 		if (chatvars.words[2] ~= nil) then
 			pname = chatvars.words[2]
-			pid = LookupPlayer(pname)
+			id = LookupPlayer(pname)
 		end
 
-		send("buffplayer " .. pid .. " firstAid")
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if not igplayers[id] then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. igplayers[id].name .. " is not playing right now so get your filthy ape hands off them![-]")
+			else
+				irc_chat(chatvars.ircAlias, igplayers[id].name .. " is not playing right now so get your filthy ape hands off them!")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		send("buffplayer " .. id .. " firstAid")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 
 		if (chatvars.playername ~= "Server") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You gave " .. players[pid].name .. " firstaid.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You gave " .. players[id].name .. " firstaid.[-]")
 		else
-			irc_chat(chatvars.ircAlias, "You gave " .. players[pid].name .. " firstaid.")
+			irc_chat(chatvars.ircAlias, "You gave " .. players[id].name .. " firstaid.")
 		end
 
 		botman.faultyChat = false
@@ -4142,11 +4694,11 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if id == nil then
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. ".[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
 			else
-				irc_chat(chatvars.ircAlias, "No player found called " .. pname)
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
 			end
 
 			botman.faultyChat = false
@@ -4154,6 +4706,10 @@ if debug then dbug("debug admin") end
 		end
 
 		send("ban remove " .. id)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
 
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has been unbanned.[-]")
@@ -4216,7 +4772,7 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if id == nil and chatvars.words[1] ~= "gblban" then
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. ".[-]")
 			else
@@ -4241,13 +4797,6 @@ if debug then dbug("debug admin") end
 
 		if chatvars.words[1] ~= "gblban" then
 			banPlayer(id, duration, reason, chatvars.playerid)
-			--send("ban add " .. id .. " " .. duration .. " " .. reason)
-
-			-- if (chatvars.playername ~= "Server") then
-				-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has been banned " .. duration .. " for " .. reason .. ".[-]")
-			-- else
-				-- irc_chat(chatvars.ircAlias, players[id].name .. " has been banned " .. duration .. " for " .. reason)
-			-- end
 		else
 			if id ~= nil then
 				-- don't ban if player is an admin :O
@@ -4274,7 +4823,6 @@ if debug then dbug("debug admin") end
 			if rows == 0 then
 				connBots:execute("INSERT INTO bans (steam, reason, GBLBan, GBLBanReason, botID) VALUES (" .. id .. ",'" .. escape(reason) .. "',1,'" .. escape(reason) .. "'," .. server.botID .. ")")
 				banPlayer(id, duration, reason, chatvars.playerid)
-				--send("ban add " .. id .. " " .. duration .. " " .. reason)
 			else
 				connBots:execute("UPDATE bans set GBLBan = 1, GBLBanReason = '" .. escape(reason) .. "' WHERE steam = " .. id .. " AND botID = " .. server.botID)
 			end
@@ -4687,16 +5235,25 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if not (id == nil) then
-			players[id].reserveSlot = true
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name ..  " can take a reserved slot when the server is full.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
 			else
-				irc_chat(chatvars.ircAlias, "Player " .. players[id].name ..  " can take a reserved slot when the server is full.")
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
 			end
 
-			if botman.dbConnected then conn:execute("UPDATE players SET reserveSlot = 1 WHERE steam = " .. id) end
+			botman.faultyChat = false
+			return true
 		end
+
+		players[id].reserveSlot = true
+		if (chatvars.playername ~= "Server") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name ..  " can take a reserved slot when the server is full.[-]")
+		else
+			irc_chat(chatvars.ircAlias, "Player " .. players[id].name ..  " can take a reserved slot when the server is full.")
+		end
+
+		if botman.dbConnected then conn:execute("UPDATE players SET reserveSlot = 1 WHERE steam = " .. id) end
 
 		botman.faultyChat = false
 		return true
@@ -4734,16 +5291,25 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if not (id == nil) then
-			players[id].reserveSlot = false
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name ..  " can not reserve a slot when the server is full.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
 			else
-				irc_chat(chatvars.ircAlias, "Player " .. players[id].name ..  " can not reserve a slot when the server is full.")
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
 			end
 
-			if botman.dbConnected then conn:execute("UPDATE players SET reserveSlot = 0 WHERE steam = " .. id) end
+			botman.faultyChat = false
+			return true
 		end
+
+		players[id].reserveSlot = false
+		if (chatvars.playername ~= "Server") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name ..  " can not reserve a slot when the server is full.[-]")
+		else
+			irc_chat(chatvars.ircAlias, "Player " .. players[id].name ..  " can not reserve a slot when the server is full.")
+		end
+
+		if botman.dbConnected then conn:execute("UPDATE players SET reserveSlot = 0 WHERE steam = " .. id) end
 
 		botman.faultyChat = false
 		return true
@@ -4843,35 +5409,34 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (pname == "") then
+		if id == 0 then
 			if (chatvars.playername ~= "Server") then
-				message(string.format("pm %s [%s]A player name is required or could not be found for this command.", chatvars.playerid, server.chatColour))
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
 			else
-				irc_chat(chatvars.ircAlias, "A player name is required or could not be found for this command.")
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
 			end
 
 			botman.faultyChat = false
 			return true
-		else
-			if (chatvars.words[1] == "block") then
-				players[id].block = true
-				if botman.dbConnected then conn:execute("UPDATE players SET block=1 WHERE steam = " .. id) end
+		end
 
-				if (chatvars.playername ~= "Server") then
-					message(string.format("pm %s [%s]Player " .. players[id].name .. " is blocked from talking to the bot.", chatvars.playerid, server.chatColour))
-				else
-					irc_chat(chatvars.ircAlias, "Player " .. players[id].name .. " is blocked from talking to the bot.")
-				end
+		if (chatvars.words[1] == "block") then
+			players[id].block = true
+			if botman.dbConnected then conn:execute("UPDATE players SET block=1 WHERE steam = " .. id) end
+
+			if (chatvars.playername ~= "Server") then
+				message(string.format("pm %s [%s]Player " .. players[id].name .. " is blocked from talking to the bot.", chatvars.playerid, server.chatColour))
 			else
-				players[id].block = false
-				if botman.dbConnected then conn:execute("UPDATE players SET block=0 WHERE steam = " .. id) end
+				irc_chat(chatvars.ircAlias, "Player " .. players[id].name .. " is blocked from talking to the bot.")
+			end
+		else
+			players[id].block = false
+			if botman.dbConnected then conn:execute("UPDATE players SET block=0 WHERE steam = " .. id) end
 
-				if (chatvars.playername ~= "Server") then
-					message(string.format("pm %s [%s]Player " .. players[id].name .. " can talk to the bot.", chatvars.playerid, server.chatColour))
-				else
-					irc_chat(chatvars.ircAlias, "Player " .. players[id].name .. " can talk to the bot.")
-				end
-
+			if (chatvars.playername ~= "Server") then
+				message(string.format("pm %s [%s]Player " .. players[id].name .. " can talk to the bot.", chatvars.playerid, server.chatColour))
+			else
+				irc_chat(chatvars.ircAlias, "Player " .. players[id].name .. " can talk to the bot.")
 			end
 		end
 
@@ -5049,6 +5614,17 @@ if debug then dbug("debug admin") end
 				tmp.name = chatvars.words[i+1]
 				tmp.steam = LookupPlayer(tmp.name)
 
+				if tmp.steam == 0 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. tmp.name .. "[-]")
+					else
+						irc_chat(chatvars.ircAlias, "No player found matching " .. tmp.name)
+					end
+
+					botman.faultyChat = false
+					return true
+				end
+
 				if tmp.steam and chatvars.words[i] == "player" then
 					tmp.player = true
 					tmp.x = players[tmp.steam].xPos
@@ -5197,15 +5773,15 @@ if debug then dbug("debug admin") end
 			end
 
 			name1 = string.trim(name1)
-			pid = LookupPlayer(name1)
+			id = LookupPlayer(name1)
 
-			if (pid ~= nil) then
+			if (id ~= 0) then
 				for k, v in pairs(players) do
 					if (v.homeX) and (v.homeX ~= 0 and v.homeZ ~= 0) then
-						dist = distancexz(igplayers[pid].xPos, igplayers[pid].zPos, v.homeX, v.homeZ)
+						dist = distancexz(igplayers[id].xPos, igplayers[id].zPos, v.homeX, v.homeZ)
 
 						if dist < tonumber(chatvars.number) then
-							if (alone == true) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]player bases within " .. chatvars.number .. " meters of " .. players[pid].name .. " are:[-]") end
+							if (alone == true) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]player bases within " .. chatvars.number .. " meters of " .. players[id].name .. " are:[-]") end
 
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. " distance: " .. string.format("%-8.2d", dist) .. " meters[-]")
 							alone = false
@@ -5213,10 +5789,10 @@ if debug then dbug("debug admin") end
 					end
 
 					if (v.home2X) and (v.home2X ~= 0 and v.home2Z ~= 0) then
-						dist = distancexz(igplayers[pid].xPos, igplayers[pid].zPos, v.home2X, v.home2Z)
+						dist = distancexz(igplayers[id].xPos, igplayers[id].zPos, v.home2X, v.home2Z)
 
 						if dist < tonumber(chatvars.number) then
-							if (alone == true) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]player bases within " .. chatvars.number .. " meters of " .. players[pid].name .. " are:[-]") end
+							if (alone == true) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]player bases within " .. chatvars.number .. " meters of " .. players[id].name .. " are:[-]") end
 
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. " distance: " .. string.format("%-8.2d", dist) .. " meters[-]")
 							alone = false
@@ -5225,7 +5801,7 @@ if debug then dbug("debug admin") end
 				end
 
 				if (alone == true) then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There are none within " .. chatvars.number .. " meters of " .. players[pid].name .. "[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There are none within " .. chatvars.number .. " meters of " .. players[id].name .. "[-]")
 				end
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. name1 .. "[-]")
@@ -5260,6 +5836,17 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 		number = -1
+
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
 
 		for i=3,chatvars.wordCount,1 do
 			if chatvars.words[i] == "level" then
@@ -5298,6 +5885,10 @@ if debug then dbug("debug admin") end
 
 			message("say [" .. server.chatColour .. "]" .. players[id].name .. " has been given admin powers[-]")
 			send("admin add " .. id .. " " .. number)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		end
 
 		botman.faultyChat = false
@@ -5324,15 +5915,28 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if id ~= nil then
-			-- remove the steamid from the admins table
-			owners[players[id].steam] = nil
-			admins[players[id].steam] = nil
-			mods[players[id].steam] = nil
-			players[id].accessLevel = 90
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+			end
 
-			message("say [" .. server.chatColour .. "]" .. players[id].name .. "'s admin powers have been revoked[-]")
-			send("admin remove " .. id)
+			botman.faultyChat = false
+			return true
+		end
+
+		-- remove the steamid from the admins table
+		owners[players[id].steam] = nil
+		admins[players[id].steam] = nil
+		mods[players[id].steam] = nil
+		players[id].accessLevel = 90
+
+		message("say [" .. server.chatColour .. "]" .. players[id].name .. "'s admin powers have been revoked[-]")
+		send("admin remove " .. id)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
 		end
 
 		botman.faultyChat = false
@@ -5376,11 +5980,20 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if not (id == nil) then
-			-- then teleport to the player
-			cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[id].xPos) + 1 .. " " .. math.ceil(players[id].yPos) .. " " .. math.floor(players[id].zPos)
-			teleport(cmd, chatvars.playerid)
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+			end
+
+			botman.faultyChat = false
+			return true
 		end
+
+		-- then teleport to the player
+		cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[id].xPos) + 1 .. " " .. math.ceil(players[id].yPos) .. " " .. math.floor(players[id].zPos)
+		teleport(cmd, chatvars.playerid)
 
 		botman.faultyChat = false
 		return true
@@ -5461,6 +6074,13 @@ if debug then dbug("debug admin") end
 		prisoner = string.trim(prisoner)
 		prisonerid = LookupPlayer(prisoner)
 
+		if prisonerid == 0 then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. prisoner .. "[-]")
+
+			botman.faultyChat = false
+			return true
+		end
+
 		if (players[prisonerid].prisoner) then
 			-- first record the current x y z
 			players[chatvars.playerid].xPosOld = chatvars.intX
@@ -5539,17 +6159,21 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if not (id == nil) then
-			igplayers[chatvars.playerid].following = id
+		if id == 0 then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
 
-			-- then teleport close to the player
-			if not string.find(server.gameVersion, "Alpha 16 (b105)") then
-				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos) .. " " .. math.ceil(igplayers[id].yPos - 20) .. " " .. math.floor(igplayers[id].zPos - igplayers[chatvars.playerid].followDistance)
-			else
-				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos) .. " -1 " .. math.floor(igplayers[id].zPos - igplayers[chatvars.playerid].followDistance)
-			end
+			botman.faultyChat = false
+			return true
+		end
 
-			send(cmd)
+		igplayers[chatvars.playerid].following = id
+
+		-- then teleport close to the player
+		cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos) .. " " .. math.ceil(igplayers[id].yPos - 20) .. " " .. math.floor(igplayers[id].zPos - igplayers[chatvars.playerid].followDistance)
+		send(cmd)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
 		end
 
 		botman.faultyChat = false
@@ -5937,6 +6561,17 @@ if debug then dbug("debug admin") end
 		prisoner = string.trim(prisoner)
 		prisonerid = LookupPlayer(prisoner)
 
+		if prisonerid == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. prisoner .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. prisoner)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
 		if (players[prisonerid].prisoner == false) then
 			message("say [" .. server.chatColour .. "]Citizen " .. players[prisonerid].name .. " is not a prisoner[-]")
 			botman.faultyChat = false
@@ -5951,6 +6586,10 @@ if debug then dbug("debug admin") end
 
 		if players[prisonerid].chatColour ~= "" then
 			send("cpc " .. prisonerid .. " " .. players[prisonerid].chatColour .. " 1")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		else
 			setChatColour(prisonerid)
 		end
@@ -6002,39 +6641,44 @@ if debug then dbug("debug admin") end
 		pname = string.trim(pname)
 		id = LookupPlayer(pname)
 
-		if (pname == "") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A player name is required or could not be found for this command[-]")
+		if id == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+			end
+
 			botman.faultyChat = false
 			return true
-		else
-			if (chatvars.words[1] == "playerhome" or chatvars.words[1] == "playerbase") then
-				if (players[id].homeX == 0 and players[id].homeZ == 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " Has not set a base yet.[-]")
-					botman.faultyChat = false
-					return true
-				else
-					-- first record the current x y z
-					players[chatvars.playerid].xPosOld = math.floor(igplayers[chatvars.playerid].xPos)
-					players[chatvars.playerid].yPosOld = math.ceil(igplayers[chatvars.playerid].yPos)
-					players[chatvars.playerid].zPosOld = math.floor(igplayers[chatvars.playerid].zPos)
+		end
 
-					cmd = "tele " .. chatvars.playerid .. " " .. players[id].homeX .. " " .. players[id].homeY .. " " .. players[id].homeZ
-					teleport(cmd, chatvars.playerid)
-				end
+		if (chatvars.words[1] == "playerhome" or chatvars.words[1] == "playerbase") then
+			if (players[id].homeX == 0 and players[id].homeZ == 0) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " Has not set a base yet.[-]")
+				botman.faultyChat = false
+				return true
 			else
-				if (players[id].home2X == 0 and players[id].home2Z == 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " Has not set a 2nd base yet.[-]")
-					botman.faultyChat = false
-					return true
-				else
-					-- first record the current x y z
-					players[chatvars.playerid].xPosOld = math.floor(igplayers[chatvars.playerid].xPos)
-					players[chatvars.playerid].yPosOld = math.ceil(igplayers[chatvars.playerid].yPos)
-					players[chatvars.playerid].zPosOld = math.floor(igplayers[chatvars.playerid].zPos)
+				-- first record the current x y z
+				players[chatvars.playerid].xPosOld = math.floor(igplayers[chatvars.playerid].xPos)
+				players[chatvars.playerid].yPosOld = math.ceil(igplayers[chatvars.playerid].yPos)
+				players[chatvars.playerid].zPosOld = math.floor(igplayers[chatvars.playerid].zPos)
 
-					cmd = "tele " .. chatvars.playerid .. " " .. players[id].home2X .. " " .. players[id].home2Y .. " " .. players[id].home2Z
-					teleport(cmd, chatvars.playerid)
-				end
+				cmd = "tele " .. chatvars.playerid .. " " .. players[id].homeX .. " " .. players[id].homeY .. " " .. players[id].homeZ
+				teleport(cmd, chatvars.playerid)
+			end
+		else
+			if (players[id].home2X == 0 and players[id].home2Z == 0) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. pname .. " Has not set a 2nd base yet.[-]")
+				botman.faultyChat = false
+				return true
+			else
+				-- first record the current x y z
+				players[chatvars.playerid].xPosOld = math.floor(igplayers[chatvars.playerid].xPos)
+				players[chatvars.playerid].yPosOld = math.ceil(igplayers[chatvars.playerid].yPos)
+				players[chatvars.playerid].zPosOld = math.floor(igplayers[chatvars.playerid].zPos)
+
+				cmd = "tele " .. chatvars.playerid .. " " .. players[id].home2X .. " " .. players[id].home2Y .. " " .. players[id].home2Z
+				teleport(cmd, chatvars.playerid)
 			end
 		end
 

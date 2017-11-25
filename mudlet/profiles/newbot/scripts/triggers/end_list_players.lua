@@ -9,6 +9,7 @@
 
 function endListPlayers(line)
 	local cursor, errorString, row
+	local freeSlots
 
 	if botman.botDisabled then
 		return
@@ -38,8 +39,11 @@ function endListPlayers(line)
 	-- reset relogCount as we have established that the server is talking to us
 	relogCount = 0
 
+
 	if tonumber(server.reservedSlots) > 0 then
- 		server.reservedSlotsUsed = tonumber(botman.playersOnline) - (tonumber(server.maxPlayers) - tonumber(server.reservedSlots))
+		freeSlots = server.maxPlayers - botman.playersOnline
+		server.reservedSlotsUsed = server.reservedSlots - freeSlots
+
 		if server.reservedSlotsUsed < 0 then
 			server.reservedSlotsUsed = 0
 		end

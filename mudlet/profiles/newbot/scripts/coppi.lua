@@ -88,6 +88,11 @@ end
 
 function mutePlayer(steam)
 	send("mpc " .. steam .. " true")
+
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
+
 	players[steam].mute = true
 	irc_chat(server.ircMain, players[steam].name .. "'s chat has been muted :D")
 	message("pm " .. steam .. " [" .. server.warnColour .. "]Your chat has been muted.[-]")
@@ -97,6 +102,11 @@ end
 
 function unmutePlayer(steam)
 	send("mpc " .. steam .. " false")
+
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
+
 	players[steam].mute = false
 	irc_chat(server.ircMain, players[steam].name .. "'s chat is no longer muted D:")
 	message("pm " .. steam .. " [" .. server.chatColour .. "]Your chat is no longer muted.[-]")
@@ -178,7 +188,7 @@ function gmsg_coppi()
 		tmp.pname = string.trim(tmp.pname)
 		tmp.pid = LookupPlayer(tmp.pname)
 
-		if tmp.pid == nil then
+		if tmp.pid == 0 then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]No player found called " .. tmp.pname .. "[-]")
 			else
@@ -223,15 +233,25 @@ function gmsg_coppi()
 	if chatvars.words[1] == "spawn" and (chatvars.words[2] == "horde") then
 		if chatvars.words[3] ~= nil then
 			tmp.pid = LookupPlayer(chatvars.words[3])
-			if tmp.pid ~= nil then
+			if tmp.pid ~= 0 then
 				if igplayers[tmp.pid] then
 					send("sh " .. math.floor(igplayers[tmp.pid].xPos) .. " " .. math.floor(igplayers[tmp.pid].yPos) .. " " .. math.floor(igplayers[tmp.pid].zPos) .. " " .. chatvars.number)
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
+
 					irc_chat(server.ircMain, "Horde spawned by bot at " .. igplayers[tmp.pid].name .. "'s position at " .. math.floor(igplayers[tmp.pid].xPos) .. " " .. math.floor(igplayers[tmp.pid].yPos) .. " " .. math.floor(igplayers[tmp.pid].zPos))
 				end
 			else
 				tmp.loc = LookupLocation(chatvars.words[3])
 				if tmp.loc ~= nil then
 					send("sh " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z .. " " .. chatvars.number)
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
+
 					irc_chat(server.ircMain, "Horde spawned by bot at " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z)
 				end
 			end
@@ -241,6 +261,10 @@ function gmsg_coppi()
 					send("sh " .. igplayers[chatvars.playerid].horde .. " " .. chatvars.number)
 				else
 					send("sh " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ .. " " .. chatvars.number)
+				end
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 			end
 		end
@@ -268,6 +292,11 @@ function gmsg_coppi()
 
 		if chatvars.words[1] == "hide" then
 			send("tcch " .. server.commandPrefix)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			if botman.dbConnected then conn:execute("UPDATE server SET hideCommands = 1") end
 
 			if (chatvars.playername ~= "Server") then
@@ -277,6 +306,11 @@ function gmsg_coppi()
 			end
 		else
 			send("tcch")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			if botman.dbConnected then conn:execute("UPDATE server SET hideCommands = 0") end
 
 			if (chatvars.playername ~= "Server") then
@@ -327,6 +361,10 @@ function gmsg_coppi()
 
 		if server.coppi then
 			send("py")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		end
 
 		botman.faultyChat = false
@@ -338,23 +376,51 @@ function gmsg_coppi()
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "chat") or string.find(chatvars.command, "colo")) or chatvars.words[1] ~= "help" then
 			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set new player/player/donor/prisoner/mod/admin/owner chat colour FFFFFF")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "reset chat colour")
 			irc_chat(chatvars.ircAlias, "To disable automatic chat colouring, set it to white which is FFFFFF")
 
 			if not shortHelp then
 				irc_chat(chatvars.ircAlias, "Set the default chat colour for a class of player.  You can also set chat colour for a named player.")
-				irc_chat(chatvars.ircAlias, "eg. " .. server.commandPrefix .. "set chat colour player joe B0E0E6")
+				irc_chat(chatvars.ircAlias, "eg. " .. server.commandPrefix .. "set player joe chat colour B0E0E6")
+				irc_chat(chatvars.ircAlias, "To reset everyone to white type " .. server.commandPrefix .. "reset chat colour")
 				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
 	end
 
-	if chatvars.words[1] == "set" and string.find(chatvars.command, "chat col") then
+	if (chatvars.words[1] == "set" or chatvars.words[1] == "reset") and string.find(chatvars.command, "chat col") then
 		tmp = {}
 		tmp.target = chatvars.words[2]
+		tmp.namedPlayer = false
+
+		if chatvars.words[1] == "reset" then
+			for k,v in pairs(players) do
+				v.chatColour = "FFFFFF"
+			end
+
+			for k,v in pairs(igplayers) do
+				send("cpc " .. k .. " FFFFFF 1")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+
+			if botman.dbConnected then conn:execute("UPDATE players SET chatColour = 'FFFFFF'") end
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Everyone's stored chat colour is white, but players will still be coloured if any player classes are coloured (eg. donors).[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Everyone's stored chat colour is white, but players will still be coloured if any player classes are coloured (eg. donors).")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
 
 		for i=4,chatvars.wordCount,1 do
 			if chatvars.words[i] == "colour" or chatvars.words[i] == "color" then
-				tmp.colour = chatvars.words[i] + 1
+				tmp.colour = chatvars.words[i+1]
 			end
 		end
 
@@ -363,7 +429,7 @@ function gmsg_coppi()
 			tmp.namedPlayer = true
 		end
 
-		if tmp.target ~= "new" and tmp.target ~= "player" and tmp.target ~= "donor" and tmp.target ~= "prisoner" and tmp.target ~= "mod" and tmp.target ~= "admin" and tmp.target ~= "owner" then
+		if tmp.target ~= "new" and tmp.target ~= "player" and tmp.target ~= "donor" and tmp.target ~= "prisoner" and tmp.target ~= "mod" and tmp.target ~= "admin" and tmp.target ~= "owner" and not tmp.namedPlayer then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Missing target for chat colour.  Expected new player or player or donor or prisoner or mod or admin or owner.[-]")
 			else
@@ -387,13 +453,14 @@ function gmsg_coppi()
 
 		-- strip out any # characters
 		tmp.colour = tmp.colour:gsub("#", "")
+		tmp.colour = string.upper(tmp.colour)
 
 		if tmp.target == "new" then
 			server.chatColourNewPlayer = tmp.colour
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourNewPlayer = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New player names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New player names will be coloured [" .. tmp.colour .. "]" .. tmp.colour .. "[-] if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(chatvars.ircAlias, "New player names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
 			end
@@ -401,6 +468,10 @@ function gmsg_coppi()
 			for k,v in pairs(igplayers) do
 				if accessLevel(k) == 99 and v.chatColour == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
 				end
 			end
 		end
@@ -410,12 +481,18 @@ function gmsg_coppi()
 				tmp.name = string.sub(chatvars.command, string.find(chatvars.command, " player ") + 8, string.find(chatvars.command, " chat ") - 1)
 				tmp.pid = LookupPlayer(tmp.name)
 
-				if tmp.pid ~= nil then
+				if tmp.pid ~= 0 then
 					send("cpc " .. tmp.pid .. " " .. tmp.colour .. " 1")
-					if botman.dbConnected then conn:execute("UPDATE players SET chatColour = '" .. escape(tmp.colour) .. "' WHERE steam = " .. pid) end
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
+
+					players[tmp.pid].chatColour = tmp.colour
+					if botman.dbConnected then conn:execute("UPDATE players SET chatColour = '" .. escape(tmp.colour) .. "' WHERE steam = " .. tmp.pid) end
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.pid].name ..  "'s name is now coloured " .. tmp.colour .. "[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.pid].name ..  "'s name is now coloured coloured [" .. tmp.colour .. "]" .. tmp.colour .. "[-][-]")
 					else
 						irc_chat(chatvars.ircAlias, players[tmp.pid].name ..  "'s name is now coloured " .. tmp.colour)
 					end
@@ -438,7 +515,7 @@ function gmsg_coppi()
 				if botman.dbConnected then conn:execute("UPDATE server SET chatColourPlayer = '" .. escape(tmp.colour) .. "'") end
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Non-new player names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Non-new player names will be coloured [" .. tmp.colour .. "]" .. tmp.colour .. "[-] if they haven't been assigned a colour of their own.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Non-new player names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
 				end
@@ -446,6 +523,10 @@ function gmsg_coppi()
 				for k,v in pairs(igplayers) do
 					if accessLevel(k) == 90 and v.chatColour == "FFFFFF" then
 						send("cpc " .. k .. " " .. tmp.colour .. " 1")
+
+						if botman.getMetrics then
+							metrics.telnetCommands = metrics.telnetCommands + 1
+						end
 					end
 				end
 			end
@@ -456,7 +537,7 @@ function gmsg_coppi()
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourDonor = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor's names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor's names will be coloured [" .. tmp.colour .. "]" .. tmp.colour .. "[-] if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(chatvars.ircAlias, "Donor's names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
 			end
@@ -464,6 +545,10 @@ function gmsg_coppi()
 			for k,v in pairs(igplayers) do
 				if (accessLevel(k) > 3 and accessLevel(k) < 11) and v.chatColour == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
 				end
 			end
 		end
@@ -473,7 +558,7 @@ function gmsg_coppi()
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourPrisoner = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Prisoner's names will be coloured " .. tmp.colour .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Prisoner's names will be coloured [" .. tmp.colour .. "]" .. tmp.colour .. "[-][-]")
 			else
 				irc_chat(chatvars.ircAlias, "Prisoner's names will be coloured " .. tmp.colour)
 			end
@@ -481,6 +566,10 @@ function gmsg_coppi()
 			for k,v in pairs(igplayers) do
 				if players[k].prisoner then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
 				end
 			end
 		end
@@ -490,7 +579,7 @@ function gmsg_coppi()
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourMod = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Mod names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Mod names will be coloured [" .. tmp.colour .. "]" .. tmp.colour .. "[-] if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(chatvars.ircAlias, "Mod names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
 			end
@@ -498,6 +587,10 @@ function gmsg_coppi()
 			for k,v in pairs(igplayers) do
 				if accessLevel(k) == 2 and v.chatColour == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
 				end
 			end
 		end
@@ -507,7 +600,7 @@ function gmsg_coppi()
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourAdmin = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admin names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admin names will be coloured [" .. tmp.colour .. "]" .. tmp.colour .. "[-] if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(chatvars.ircAlias, "Admin names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
 			end
@@ -515,6 +608,10 @@ function gmsg_coppi()
 			for k,v in pairs(igplayers) do
 				if accessLevel(k) == 1 and v.chatColour == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
 				end
 			end
 		end
@@ -524,7 +621,7 @@ function gmsg_coppi()
 			if botman.dbConnected then conn:execute("UPDATE server SET chatColourOwner = '" .. escape(tmp.colour) .. "'") end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Owner names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Owner names will be coloured [" .. tmp.colour .. "]" .. tmp.colour .. "[-] if they haven't been assigned a colour of their own.[-]")
 			else
 				irc_chat(chatvars.ircAlias, "Owner names will be coloured " .. tmp.colour .. " if they haven't been assigned a colour of their own.")
 			end
@@ -532,6 +629,10 @@ function gmsg_coppi()
 			for k,v in pairs(igplayers) do
 				if accessLevel(k) == 0 and v.chatColour == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
 				end
 			end
 		end
@@ -725,12 +826,22 @@ function gmsg_coppi()
 
 		if chatvars.words[2] == "save" then
 			send("prender " .. chatvars.playerid .. "bottemp" .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1  .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " 0")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			botman.faultyChat = false
 			return true
 		end
 
 		if botman.lastBlockCommandOwner == chatvars.playerid then
 			send("pundo")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Block undo command (pundo) sent. If it didn't work you don't have an undo available.[-]")
 		else
 			message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]No undo available.  Use " .. server.commandPrefix .. "undo save.[-]")
@@ -767,7 +878,7 @@ function gmsg_coppi()
 		tmp.name = string.trim(tmp.name)
 		tmp.pid = LookupPlayer(tmp.name)
 
-		if tmp.pid == nil then
+		if tmp.pid == 0 then
 			tmp.pid = chatvars.playerid
 			tmp.name = chatvars.playername
 		end
@@ -893,6 +1004,11 @@ function gmsg_coppi()
 			message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]You haven't marked a prefab called " .. chatvars.words[2] .. ". Please do that first.[-]")
 		else
 			send("pexport " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].name)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You saved a prefab called " .. chatvars.words[2] .. ".[-]")
 		end
 
@@ -967,6 +1083,11 @@ function gmsg_coppi()
 
 		send("prender " .. chatvars.playerid .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face)
 		send("prender " .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face)
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 2
+		end
+
 		botman.lastBlockCommandOwner = chatvars.playerid
 
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A prefab called " .. tmp.prefab .. " should have spawned.  If it didn't either the prefab isn't called " .. tmp.prefab .. " or it doesn't exist.[-]")
@@ -1000,6 +1121,10 @@ function gmsg_coppi()
 		playerListItems = chatvars.playerid
 		send("li " .. chatvars.words[2])
 
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		botman.faultyChat = false
 		return true
 	end
@@ -1031,6 +1156,11 @@ function gmsg_coppi()
 		if prefabCopies[chatvars.playerid .. chatvars.words[3]] then
 			-- first remove the original block by replacing it with air blocks
 			send("pblock " .. 0 ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. " 0")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			botman.lastBlockCommandOwner = chatvars.playerid
 
 			if chatvars.words[4] == "up" then
@@ -1040,6 +1170,10 @@ function gmsg_coppi()
 
 				-- render the block at its new position
 				send("pblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].rotation)
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
 			end
 
 			if chatvars.words[4] == "down" then
@@ -1049,6 +1183,10 @@ function gmsg_coppi()
 
 				-- render the block at its new position
 				send("pblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].rotation)
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
 			end
 
 			-- then update the xyz pairs so that you are standing on the lowest corner
@@ -1188,7 +1326,7 @@ function gmsg_coppi()
 			tmp.name = string.trim(chatvars.words[3])
 			tmp.pid = LookupPlayer(tmp.name)
 
-			if tmp.pid ~= nil then
+			if tmp.pid ~= 0 then
 				player[chatvars.playerid].markX = players[pid].xPos
 				player[chatvars.playerid].markY = players[pid].yPos - 1
 				player[chatvars.playerid].markZ = players[pid].zPos
@@ -1295,6 +1433,11 @@ function gmsg_coppi()
 
 		send("pexport " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number .. " " .. chatvars.playerid .. "bottemp")
 		send("pblock air " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number .. " 0")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 2
+		end
+
 		botman.lastBlockCommandOwner = chatvars.playerid
 
 		botman.faultyChat = false
@@ -1410,6 +1553,10 @@ function gmsg_coppi()
 
 			send("pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			if chatvars.words[1] == "dig" then
 				if tmp.newblock then
 				--prepblock <block_to_be_replaced> <block_name> <x1> <x2> <y1> <y2> <z1> <z2> <rot>
@@ -1417,11 +1564,19 @@ function gmsg_coppi()
 				else
 					send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 				end
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
 			else
 				if tmp.newblock then
 					send("prepblock " .. tmp.newblock .. " " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 				else
 					send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
+				end
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 			end
 
@@ -1444,10 +1599,18 @@ function gmsg_coppi()
 
 			send("pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			if chatvars.words[1] == "dig" then
 				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			else
 				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
+			end
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
 			botman.lastBlockCommandOwner = chatvars.playerid
@@ -1469,10 +1632,18 @@ function gmsg_coppi()
 
 			send("pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			if chatvars.words[1] == "dig" then
 				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			else
 				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
+			end
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
 			botman.lastBlockCommandOwner = chatvars.playerid
@@ -1494,10 +1665,18 @@ function gmsg_coppi()
 
 			send("pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			if chatvars.words[1] == "dig" then
 				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			else
 				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
+			end
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
 			botman.lastBlockCommandOwner = chatvars.playerid
@@ -1519,10 +1698,18 @@ function gmsg_coppi()
 
 			send("pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			if chatvars.words[1] == "dig" then
 				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			else
 				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
+			end
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
 			botman.lastBlockCommandOwner = chatvars.playerid
@@ -1544,10 +1731,18 @@ function gmsg_coppi()
 
 			send("pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			if chatvars.words[1] == "dig" then
 				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			else
 				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
+			end
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
 			botman.lastBlockCommandOwner = chatvars.playerid
@@ -1569,10 +1764,18 @@ function gmsg_coppi()
 
 			send("pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			if chatvars.words[1] == "dig" then
 				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			else
 				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
+			end
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
 			botman.lastBlockCommandOwner = chatvars.playerid
@@ -1619,6 +1822,10 @@ function gmsg_coppi()
 
 		send("pblock 12 " .. tmp.x1 .. " " .. tmp.x2 .. " " .. tmp.y1 .. " " .. tmp.y2 .. " " .. tmp.z1 .. " " .. tmp.z2 .. " 0")
 
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
 		botman.faultyChat = false
 		return true
 	end
@@ -1659,6 +1866,11 @@ function gmsg_coppi()
 			prefabCopies[chatvars.playerid .. chatvars.words[2]].blockName = tmp.block
 			prefabCopies[chatvars.playerid .. chatvars.words[2]].rotation = tmp.face
 			send("pblock " .. tmp.block ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 .. " " .. tmp.face)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
 			botman.lastBlockCommandOwner = chatvars.playerid
 			-- save the block to the database
 			if botman.dbConnected then

@@ -56,6 +56,10 @@ function teleport(cmd, steam, justTeleport)
 
 	send(cmd)
 
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
+
 	players[steam].tp = 1
 	players[steam].hackerTPScore = 0
 

@@ -8,11 +8,14 @@
 --]]
 
 function FifteenSecondTimer()
+	if botman.botOffline or botman.botDisabled then
+		return
+	end
+
 	-- run a quick test to prove or disprove that we are still connected to the database.
 	-- there is a rare instance where we lose the connection for unknown reasons.
 
 	if not botman.dbConnected then
-		--conn = env:connect(botDB, botDBUser, botDBPass)
 		openDB()
 	end
 
@@ -21,31 +24,49 @@ function FifteenSecondTimer()
 	botman.dbConnected = isDBConnected()
 
 	if not botman.db2Connected then
-		--connBots = env:connect(botsDB, botsDBUser, botsDBPass)
 		openBotsDB()
 	end
 
 	botman.db2Connected = false
 	botman.db2Connected = isDBBotsConnected()
 
-	if botman.botOffline or botman.botDisabled or server.lagged then
+	-- -- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
+	-- if not botman.botOffline and not botman.botDisabled then
+		-- botman.lagCheckTime = os.time()
+		-- send("pm LagCheck " .. server.botID)
+
+		-- if botman.getMetrics then
+			-- metrics.telnetCommands = metrics.telnetCommands + 1
+		-- end
+	-- else
+		-- botman.lagCheckTime = os.time()
+		-- server.lagged = false
+	-- end
+
+	if server.lagged then
 		return
 	end
 
 	send("gt")
 
-	if tonumber(botman.playersOnline) < 16 then
-		if server.scanZombies or server.scanEntities then
-			send("le")
-		end
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
+
+	if tonumber(botman.playersOnline) < 10 then
+		-- if server.scanZombies or server.scanEntities then
+			-- send("le")
+		-- end
 
 		if server.coppi then
 			if server.scanNoclip then
-				if not string.find(server.gameVersion, "Alpha 16 (b105)") then
-					-- check for noclipped players
-					for k,v in pairs(igplayers) do
-						if tonumber(players[k].accessLevel) > 2 then
-							send("pug " .. k)
+				-- check for noclipped players
+				for k,v in pairs(igplayers) do
+					if tonumber(players[k].accessLevel) > 2 then
+						send("pug " .. k)
+
+						if botman.getMetrics then
+							metrics.telnetCommands = metrics.telnetCommands + 1
 						end
 					end
 				end
@@ -56,6 +77,10 @@ function FifteenSecondTimer()
 				for k,v in pairs(igplayers) do
 					if tonumber(players[k].accessLevel) > 2 then
 						send("pgd " .. k)
+
+						if botman.getMetrics then
+							metrics.telnetCommands = metrics.telnetCommands + 1
+						end
 					end
 				end
 			end

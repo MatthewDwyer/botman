@@ -123,6 +123,10 @@ function login()
 		botman = {}
 	end
 
+	-- disable some stuff we no longer use
+	disableTrigger("le")
+	disableTimer("GimmeReset")
+
 	if type(server) ~= "table" then
 		server = {}
 		getAllPlayers = true
@@ -132,6 +136,7 @@ function login()
 		botman.scheduledRestartTimestamp = os.time()
 		botman.lastBlockCommandOwner =	0
 		botman.initReservedSlots = true
+		botman.webdavFolderWriteable = true
 		server.lagged = false
 	end
 

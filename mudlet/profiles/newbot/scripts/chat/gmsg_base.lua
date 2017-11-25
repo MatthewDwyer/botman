@@ -565,7 +565,7 @@ if debug then dbug("debug base") end
 				pname = string.sub(chatvars.command, string.find(chatvars.command, "delbase") + 8)
 				pname = string.trim(pname)
 				id = LookupPlayer(pname)
-				if id == nil then
+				if id == 0 then
 					if (chatvars.playername ~= "Server") then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
 					else
@@ -629,7 +629,7 @@ if debug then dbug("debug base") end
 				pname = string.sub(chatvars.command, string.find(chatvars.command, "delbase2") + 9)
 				pname = string.trim(pname)
 				id = LookupPlayer(pname)
-				if id == nil then
+				if id == 0 then
 					if (chatvars.playername ~= "Server") then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
 					else
@@ -829,6 +829,10 @@ if debug then dbug("debug base") end
 		if server.coppi then
 			-- update the coordinates of the players bedroll
 			send("lpb " .. chatvars.playerid)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		end
 
 		if (chatvars.accessLevel > 2) and (not server.allowHomeTeleport or not server.allowTeleporting) then
@@ -967,6 +971,10 @@ if debug then dbug("debug base") end
 			players[chatvars.playerid].tp = 1
 			players[chatvars.playerid].hackerTPScore = 0
 			send(cmd)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		end
 
 		botman.faultyChat = false
@@ -1003,7 +1011,7 @@ if debug then dbug("debug base") end
 			return true
 		end
 
-		if (id ~= nil) then
+		if (id ~= 0) then
 			players[id].homeX = chatvars.intX
 			players[id].homeY = chatvars.intY
 			players[id].homeZ = chatvars.intZ
@@ -1061,7 +1069,7 @@ if debug then dbug("debug base") end
 			return true
 		end
 
-		if (id ~= nil) then
+		if (id ~= 0) then
 			players[id].home2X = chatvars.intX
 			players[id].home2Y = chatvars.intY
 			players[id].home2Z = chatvars.intZ
