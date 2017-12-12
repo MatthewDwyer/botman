@@ -101,8 +101,8 @@ function getServerFields()
 end
 
 
-function saveServer(fields, values)
-	local i, sqlString, max
+function saveServer()
+	local sqlString, k, v, field, value
 
 	if debugdb then
 		dbug("saving to server table")
@@ -114,22 +114,29 @@ function saveServer(fields, values)
 
 	sqlString = "UPDATE server SET"
 
-	max = table.maxn(fields)
-	for i=1,max,1 do
-		if serverFields[fields[i]].type == "var" then
-			values[i] = "'" .. escape(values[i]) .. "'"
-		end
+	for k,v in pairs(server) do
+		field = nil
+		value = nil
 
-		if serverFields[fields[i]].type == "tin" then
-			if values[i] == true then values[i] = 1 end
-			if values[i] == false then values[i] = 0 end
-		end
+		if serverFields[k] then
+			if serverFields[k].type == "var" then
+				value = "'" .. escape(v) .. "'"
+			end
 
-		if serverFields[fields[i]].type == "tim" and values[i] ~= nil then
-			values[i] = "'" .. os.date("%Y-%m-%d %H:%M:%S", values[i]) .. "'"
-		end
+			if serverFields[k].type == "tin" then
+				if v == true then value = 1 end
+				if v == false then value = 0 end
+			end
 
-		sqlString = sqlString .. " " .. fields[i] .. "=" .. values[i] .. ","
+			if serverFields[k].type == "tim" and v ~= nil then
+				value = "'" .. os.date("%Y-%m-%d %H:%M:%S", v) .. "'"
+			end
+
+			if value ~= nil then
+				field = k
+				sqlString = sqlString .. " " .. field .. "=" .. value .. ","
+			end
+		end
 	end
 
 	sqlString = string.sub(sqlString, 1, string.len(sqlString) - 1)
@@ -138,9 +145,10 @@ function saveServer(fields, values)
 		dbug("save server " .. sqlString)
 	end
 
+
 	status, errorString = conn:execute(sqlString)
 
-	print(status,errorString )
+	--print(status,errorString )
 
 	if status == 0 then
 		if debugdb then
@@ -205,28 +213,19 @@ function savePlayer(steam, action)
 
 		for k,v in pairs(playerFields) do
 			if sql[k] and sql[k].value and v.type ~= "tim" then
---dbug("k " .. k)
---if v.type == "tin" then dbug("tim") end
---dbug("sql[k].value " .. sql[k].value)
-
 				if v.type == "var" then
---dbug("var")
 					sql[k].value = "'" .. escape(sql[k].value) .. "'"
 				end
 
 				if v.type == "tin" then
---dbug("tim")
 					if sql[k].value == true then sql[k].value = 1 end
 					if sql[k].value == false then sql[k].value = 0 end
 				end
 
 				if v.type == "tim" and sql[k].value ~= nil then
---dbug("tim")
-				--dbug("tim " .. sql[k].value)
 					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"
 				end
 
---dbug("num")
 				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. "=" .. sql[k].value .. ","
 			end
 		end

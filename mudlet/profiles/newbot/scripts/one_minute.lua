@@ -71,11 +71,6 @@ function everyMinute()
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
-	-- save some server fields
-	if botman.dbConnected then conn:execute("UPDATE server SET lottery = " .. server.lottery .. ", date = '" .. server.date .. "', ircBotName = '" .. server.ircBotName .. "'") end
-
-	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
-
 	if not server.delayReboot then
 		--if (scheduledReboot == true or botman.scheduledRestart == true) and botman.scheduledRestartPaused == false and tonumber(botman.playersOnline) > 0 and server.allowReboot == true then
 		if (botman.scheduledRestart == true) and botman.scheduledRestartPaused == false and tonumber(botman.playersOnline) > 0 and server.allowReboot == true then
@@ -236,6 +231,11 @@ function everyMinute()
 			metrics.telnetCommands = metrics.telnetCommands + 1
 		end
 	end
+
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+	-- save some server fields
+	if botman.dbConnected then conn:execute("UPDATE server SET lottery = " .. server.lottery .. ", date = '" .. server.dateTest .. "', ircBotName = '" .. server.ircBotName .. "'") end
 
 	if debug then dbug("debug one minute timer end") end
 end

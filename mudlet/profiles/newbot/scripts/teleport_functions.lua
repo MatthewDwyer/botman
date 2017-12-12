@@ -22,9 +22,12 @@ function prepareTeleport(steam, cmd)
 		players[steam].hackerTPScore = 0
 
 		-- record the player's current x y z
-		players[steam].xPosOld = math.floor(players[steam].xPos)
-		players[steam].yPosOld = math.ceil(players[steam].yPos)
-		players[steam].zPosOld = math.floor(players[steam].zPos)
+		if tonumber(players[steam].accessLevel) < 3 or (players[steam].inLocation ~= "prison") then
+			players[steam].xPosOld = math.floor(players[steam].xPos)
+			players[steam].yPosOld = math.floor(players[steam].yPos)
+			players[steam].zPosOld = math.floor(players[steam].zPos)
+		end
+
 		igplayers[steam].lastLocation = ""
 	end
 end

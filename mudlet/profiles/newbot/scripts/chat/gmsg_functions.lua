@@ -456,6 +456,8 @@ function gmsg(line, ircid)
 				return
 			end
 
+			ircMsg = string.gsub(ircMsg, "Smegz0r:", "Bot Master Smegz0r:")
+
 			irc_chat(server.ircMain, ircMsg)
 			windowMessage(server.windowGMSG, chatvars.playername .. ": " .. chatvars.command .. "\n", true)
 
@@ -561,6 +563,8 @@ function gmsg(line, ircid)
 		else
 			chatvars.command = temp[2]
 		end
+
+		temp[1] = string.gsub(temp[1], "Bot Master ", "")
 
 		chatvars.playername = string.sub(temp[1], 1, string.len(temp[1]) - 4)
 		chatvars.playerid = LookupPlayer(chatvars.playername, "all")
@@ -870,7 +874,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			result = true
 		end
 
-		if chatvars.words[1] == "reload" and (string.find(chatvars.command, "code") or string.find(chatvars.command, "script")) then
+		if chatvars.words[1] == "reload" and (string.find(chatvars.command, "cod") or string.find(chatvars.command, "script")) then
 			dofile(homedir .. "/scripts/reload_bot_scripts.lua")
 			reloadBotScripts(true)
 
@@ -878,6 +882,10 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 				players[chatvars.playerid].lastCommand = chatvars.command
 				players[chatvars.playerid].lastChatLine = chatvars.oldLine -- used for storing the telnet line from the last command
 				players[chatvars.playerid].lastCommandTimestamp = os.time()
+			end
+
+			if not string.find(chatvars.command, "code") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Something smells fishy.[-]")
 			end
 
 			botman.faultyChat = false

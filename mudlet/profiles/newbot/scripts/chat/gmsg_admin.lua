@@ -562,7 +562,7 @@ if debug then dbug("debug admin") end
 		players[prisonerid].zPosOld = 0
 
 		if (igplayers[prisonerid]) then
-			message("say [" .. server.warnColour .. "]Releasing prisoner " .. prisoner .. "[-]")
+			message("say [" .. server.warnColour .. "]Prisoner " .. prisoner .. " has been pardoned.[-]")
 			message("pm " .. prisonerid .. " [" .. server.chatColour .. "]You are released from prison.  Be a good citizen if you wish to remain free.[-]")
 
 			if (chatvars.words[1] ~= "just") then
@@ -635,6 +635,85 @@ if debug then dbug("debug admin") end
 		end
 	end
 	-- ##################################################################
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "ini"))) or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "load botman ini")
+
+			if not shortHelp then
+				irc_chat(chatvars.ircAlias, "Make the bot reload the botman.ini file.  It only reloads when told to.")
+				irc_chat(chatvars.ircAlias, ".")
+			end
+		end
+	end
+
+	if (chatvars.playername ~= "Server") then
+		if (chatvars.accessLevel > 1) then
+			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+			botman.faultyChat = false
+			return true
+		end
+	else
+		if (chatvars.accessLevel > 1) then
+			irc_chat(chatvars.ircAlias, "This command is restricted.")
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+	if chatvars.words[1] == "load" and chatvars.words[2] == "botman" and chatvars.words[3] == "ini" then
+		readBotmanINI()
+
+		if (chatvars.playername ~= "Server") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The botman.ini file has been read.[-]")
+		else
+			irc_chat(chatvars.ircAlias, "The botman.ini file has been read.")
+		end
+
+		botman.faultyChat = false
+		result = true
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "bounty")) or string.find(chatvars.command, "pvp")) or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "disable (or enable) bounty")
+
+			if not shortHelp then
+				irc_chat(chatvars.ircAlias, "Normally a small bounty is awarded for a player's first pvp kill in pvp rules.  You can disable the automatic bounty.")
+				irc_chat(chatvars.ircAlias, "Players will still be able to manually place bounties, but those come out of their " .. server.moneyPlural .. ".")
+				irc_chat(chatvars.ircAlias, ".")
+			end
+		end
+	end
+
+	if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "bounty" then
+		if chatvars.words[1] == "disable" then
+			server.enableBounty = 0
+			conn:execute("UPDATE server SET enableBounty = 0")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The automatic bounty for first kills is disabled.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "The automatic bounty for first kills is disabled.")
+			end
+		else
+			server.enableBounty = 1
+			conn:execute("UPDATE server SET enableBounty = 1")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A small automatic bounty will be awarded for a player's first kill.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "A small automatic bounty will be awarded for a player's first kill.")
+			end
+		end
+
+		irc_chat(chatvars.ircAlias, ".")
+
+		botman.faultyChat = false
+		return true
+	end
 
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
@@ -2210,7 +2289,8 @@ if debug then dbug("debug admin") end
 			end
 		end
 
-		tmp.sql = tmp.sql .. ", donorExpiry = '" .. os.date("%Y-%m-%d %H:%M:%S", tmp.expiry) .. "', donorLevel = " .. tmp.level
+--		tmp.sql = tmp.sql .. ", donorExpiry = '" .. os.date("%Y-%m-%d %H:%M:%S", tmp.expiry) .. "', donorLevel = " .. tmp.level .. ", maxWaypoints = " .. server.maxWaypoints
+		tmp.sql = tmp.sql .. ", donorExpiry = " .. tmp.expiry .. ", donorLevel = " .. tmp.level .. ", maxWaypoints = " .. server.maxWaypoints
 		pname = chatvars.words[3]
 		id = LookupPlayer(pname)
 
@@ -2230,6 +2310,7 @@ if debug then dbug("debug admin") end
 			players[id].donor = true
 			players[id].donorLevel = tmp.level
 			players[id].donorExpiry = tmp.expiry
+			players[id].maxWaypoints = server.maxWaypoints
 			message("say [" .. server.chatColour .. "]" .. players[id].name .. " has donated! Thanks =D[-]")
 			if botman.dbConnected then conn:execute(tmp.sql .. " WHERE steam = " .. id) end
 			-- also add them to the bot's whitelist
@@ -2301,9 +2382,16 @@ if debug then dbug("debug admin") end
 			players[id].donor = false
 			players[id].donorLevel = 0
 			players[id].donorExpiry = os.time() - 1
+			players[id].maxWaypoints = server.maxWaypoints
 			message("say [" .. server.chatColour .. "]" .. players[id].name .. " no longer has donor status :([-]")
 
 			if botman.dbConnected then conn:execute("UPDATE players SET donor = 0, donorLevel = 0, donorExpiry = " .. os.time() - 1 .. " WHERE steam = " .. id) end
+
+			-- to prevent the player having too many waypoints, we delete them.
+			if botman.dbConnected then conn:execute("DELETE FROM waypoints WHERE steam = " .. id) end
+
+			-- reload the player's waypoints
+			loadWaypoints(steam)
 
 			if server.serverGroup ~= "" then
 				connBots:execute("UPDATE donors SET donor = 0, donorLevel = 0, donorExpiry = " .. os.time() - 1 .. " WHERE steam = " .. id .. " AND serverGroup = '" .. escape(server.serverGroup) .. "'")
@@ -2632,6 +2720,72 @@ if debug then dbug("debug admin") end
 		return true
 	end
 
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set shop reset days {number}")
+
+			if not shortHelp then
+				irc_chat(chatvars.ircAlias, "Restock the shop to the max quantity of each item every {number} of real days.")
+				irc_chat(chatvars.ircAlias, "A setting of 0 disables the automatic restock.  To manually restock it use " .. server.commandPrefix .. "reset shop.")
+				irc_chat(chatvars.ircAlias, ".")
+			end
+		end
+	end
+
+	if chatvars.words[1] == "set" and chatvars.words[2] == "shop" and chatvars.words[3] == "reset" and chatvars.words[3] == "days" then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 1) then
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (chatvars.accessLevel > 1) then
+				irc_chat(chatvars.ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		if chatvars.number == nil then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Missing number for days.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Missing number for days.")
+			end
+
+			botman.faultyChat = false
+			return true
+		else
+			chatvars.number = math.abs(chatvars.number)
+
+			server.shopResetDays = chatvars.number
+			if botman.dbConnected then conn:execute("UPDATE server SET shopResetDays = " .. chatvars.number) end
+
+			if chatvars.number == 0 then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The shop must be manually restocked. You can do that with " .. server.commandPrefix .. "reset shop.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The shop must be manually restocked. You can do that with " .. server.commandPrefix .. "reset shop.")
+				end
+			else
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The shop will restock after " .. chatvars.number .. " days.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The shop will restock after " .. chatvars.number .. " days.")
+				end
+			end
+		end
+
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
 			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "reset shop")
@@ -2665,6 +2819,8 @@ if debug then dbug("debug admin") end
 		botman.faultyChat = false
 		return true
 	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
@@ -2713,6 +2869,8 @@ if debug then dbug("debug admin") end
 			return true
 		end
 	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
@@ -2763,6 +2921,8 @@ if debug then dbug("debug admin") end
 		end
 	end
 
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
 			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set shop location {location name}")
@@ -2806,6 +2966,8 @@ if debug then dbug("debug admin") end
 			return true
 		end
 	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
@@ -3247,9 +3409,10 @@ if debug then dbug("debug admin") end
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "arrest") or string.find(chatvars.command, "prison") or string.find(chatvars.command, "jail"))) or chatvars.words[1] ~= "help" then
 			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "arrest {player name}")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "arrest {player name} reason {why arrested}")
 
 			if not shortHelp then
-				irc_chat(chatvars.ircAlias, "Send a player to prison.  If the location prison does not exist they are put into timeout instead.")
+				irc_chat(chatvars.ircAlias, "Send a player to prison.  If the location prison does not exist they are temp-banned instead.")
 				irc_chat(chatvars.ircAlias, ".")
 			end
 		end
@@ -3270,7 +3433,16 @@ if debug then dbug("debug admin") end
 			end
 		end
 
-		prisoner = string.sub(chatvars.command, string.find(chatvars.command, "arrest ") + 7)
+		reason = "Arrested by admin"
+
+		if string.find(chatvars.command, " reason ") then
+			prisoner = string.sub(chatvars.command, string.find(chatvars.command, "arrest ") + 7, string.find(chatvars.command, " reason "))
+			reason = string.sub(chatvars.commandOld, string.find(chatvars.command, " reason ") + 8)
+		else
+			prisoner = string.sub(chatvars.command, string.find(chatvars.command, "arrest ") + 7)
+		end
+
+		reason = string.trim(reason)
 		prisoner = string.trim(prisoner)
 		prisonerid = LookupPlayer(prisoner)
 
@@ -3325,7 +3497,7 @@ if debug then dbug("debug admin") end
 			return true
 		end
 
-		arrest(prisonerid, "Arrested by admin", server.bailCost, server.maxPrisonTime)
+		arrest(prisonerid, reason, 10000, 44640) -- bail 10,000  prison time 1 month
 
 		botman.faultyChat = false
 		return true
@@ -3990,14 +4162,8 @@ if debug then dbug("debug admin") end
 		pname1 = string.sub(chatvars.command, 7, string.find(chatvars.command, " to ") - 1)
 		pname2 = string.sub(chatvars.command, string.find(chatvars.command, " to ") + 4)
 
-		dbug("pname1 -" .. pname1 .. "-")
-		dbug("pname2 -" .. pname2 .. "-")
-
 		id1 = LookupPlayer(pname1)
 		id2 = LookupPlayer(pname2)
-
-		dbug("id1 " .. id1)
-		dbug("id2 " .. id2)
 
 		if id1 == 0 then
 			if (chatvars.playername ~= "Server") then

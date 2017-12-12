@@ -100,6 +100,24 @@
 	-- file:close()
 -- end
 
+function finishServerMove()
+	if botman.botOffline then
+		-- assume the server move has failed and return to the old server defeated
+		if type(serverMove) == "table" then
+			server.telnetPass = serverMove.oldPass
+			telnetPassword = serverMove.oldPass
+			conn:execute("UPDATE server SET telnetPass = '" .. escape(serverMove.oldPass) .. "'")
+
+			reconnect(serverMove.oldServer, serverMove.oldPort, true)
+			saveProfile()
+
+			serverMove = nil
+		end
+	else
+		serverMove = nil
+	end
+end
+
 
 function url_encode(str)
   if (str) then
@@ -898,6 +916,8 @@ function trimLogs()
 	local files, file, temp, k, v
 	local yearPart, monthPart, dayPart
 
+display("trimLogs start")
+
 	files = {}
 
 	for file in lfs.dir(homedir .. "/log") do
@@ -955,12 +975,16 @@ function trimLogs()
 		end
 	end
 
+display(files)
+
 	for k,v in pairs(files) do
 		fileDate = os.time({year = v.dateSplit[yearPart], month = v.dateSplit[monthPart], day = v.dateSplit[dayPart], hour = 0, min = 0, sec = 0})
 		if os.time() - fileDate > 604800 then -- older than 7 days
 			os.remove(homedir .. "/log/" .. k)
 		end
 	end
+
+display("trimLogs end")
 end
 
 function removeEntities()
@@ -1802,17 +1826,18 @@ function arrest(steam, reason, bail, releaseTime)
 	local banTime = 60
 	local cmd
 
-	if tonumber(server.maxPrisonTime) > 0 then
-		banTime = server.maxPrisonTime
-	end
-
 	if not locations["prison"] then
+		if tonumber(server.maxPrisonTime) > 0 then
+			banTime = server.maxPrisonTime
+		end
+
 		message("say [" .. server.alertColour .. "]" .. players[steam].name .. " has been banned for " .. banTime .. " minutes for " .. reason .. ".[-]")
 		banPlayer(steam, banTime .. " minutes", reason, "")
 		return
 	end
 
 	players[steam].prisoner = true
+	players[steam].prisonReason = reason
 
 	if releaseTime ~= nil then
 		players[steam].prisonReleaseTime = os.time() + (releaseTime * 60)
@@ -1822,19 +1847,19 @@ function arrest(steam, reason, bail, releaseTime)
 
 	if igplayers[steam] then
 		players[steam].prisonxPosOld = math.floor(igplayers[steam].xPos)
-		players[steam].prisonyPosOld = math.ceil(igplayers[steam].yPos)
+		players[steam].prisonyPosOld = math.floor(igplayers[steam].yPos)
 		players[steam].prisonzPosOld = math.floor(igplayers[steam].zPos)
 		igplayers[steam].xPosOld = math.floor(igplayers[steam].xPos)
 		igplayers[steam].yPosOld = math.floor(igplayers[steam].yPos)
 		igplayers[steam].zPosOld = math.floor(igplayers[steam].zPos)
-		igplayers[steam].xPosLastOK = locations["prison"].x
-		igplayers[steam].yPosLastOK = locations["prison"].y
-		igplayers[steam].zPosLastOK = locations["prison"].z
+		-- igplayers[steam].xPosLastOK = locations["prison"].x
+		-- igplayers[steam].yPosLastOK = locations["prison"].y
+		-- igplayers[steam].zPosLastOK = locations["prison"].z
 		irc_chat(server.ircAlerts, players[steam].name .. " has been sent to prison for " .. reason .. " at " .. igplayers[steam].xPosOld .. " " .. igplayers[steam].yPosOld .. " " .. igplayers[steam].zPosOld)
 		setChatColour(steam)
 	else
 		players[steam].prisonxPosOld = math.floor(players[steam].xPos)
-		players[steam].prisonyPosOld = math.ceil(players[steam].yPos)
+		players[steam].prisonyPosOld = math.floor(players[steam].yPos)
 		players[steam].prisonzPosOld = math.floor(players[steam].zPos)
 		players[steam].xPosOld = math.floor(players[steam].xPos)
 		players[steam].yPosOld = math.floor(players[steam].yPos)
@@ -1866,7 +1891,7 @@ function arrest(steam, reason, bail, releaseTime)
 		teleport(cmd, steam)
 	end
 
-	message("say [" .. server.warnColour .. "]" .. players[steam].name .. " has been sent to prison for " .. reason .. ".[-]")
+	message("say [" .. server.warnColour .. "]" .. players[steam].name .. " has been sent to prison.  Reason: " .. reason .. ".[-]")
 	message("pm " .. steam .. " [" .. server.chatColour .. "]You are confined to prison until released.[-]")
 
 	if tonumber(bail) > 0 then
@@ -1874,14 +1899,9 @@ function arrest(steam, reason, bail, releaseTime)
 		message("pm " .. steam .. " [" .. server.chatColour .. "]Type " .. server.commandPrefix .. "bail to release yourself if you have the " .. server.moneyPlural .. ".[-]")
 	end
 
-	if releaseTime ~= nil then
+	if tonumber(releaseTime) > 0 then
 		days, hours, minutes = timeRemaining(os.time() + (releaseTime * 60))
 		message("pm " .. steam .. " [" .. server.chatColour .. "]You will be released in " .. days .. " days " .. hours .. " hours and " .. minutes .. " minutes.[-]")
-	else
-		if tonumber(server.maxPrisonTime) > 0 then
-			days, hours, minutes = timeRemaining(os.time() + (server.maxPrisonTime * 60))
-			message("pm " .. steam .. " [" .. server.chatColour .. "]You will be released in " .. days .. " days " .. hours .. " hours and " .. minutes .. " minutes.[-]")
-		end
 	end
 
 	if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','prison','Player " .. steam .. " " .. escape(players[steam].name) .. " has has been sent to prison for " .. escape(reason) .. "'," .. steam .. ")") end
@@ -2051,6 +2071,15 @@ function finishReboot()
 
 	-- flag all players as offline
 	connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID)
+
+	-- do some housekeeping
+	for k, v in pairs(players) do
+		v.botQuestion = ""
+	end
+
+	conn:execute("TRUNCATE TABLE memTracker")
+	conn:execute("TRUNCATE TABLE commandQueue")
+	conn:execute("TRUNCATE TABLE gimmeQueue")
 end
 
 
@@ -2437,7 +2466,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].botTimeout = false
 	players[steam].botQuestion = "" -- used for storing the last question the bot asked the player.
 	players[steam].cash = 0
-	players[steam].chatColour = "FFFFFF 1"
+	players[steam].chatColour = "FFFFFF"
 	players[steam].commandCooldown = 0
 	players[steam].country = ""
 	players[steam].donor = false
@@ -2463,6 +2492,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].lastCommand = ""
 	players[steam].lastCommandTimestamp = os.time()
 	players[steam].lastLogout = os.time()
+	players[steam].maxWaypoints = server.maxWaypoints
 	players[steam].mute = false
 	players[steam].name = player
 	players[steam].names = player .. ","

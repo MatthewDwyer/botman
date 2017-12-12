@@ -275,19 +275,21 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- ping kick
-	if not whitelist[steam] and players[steam].newPlayer then
-		if tonumber(ping) < tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
-			igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) - 1
-			if tonumber(igplayers[steam].highPingCount) < 0 then igplayers[steam].highPingCount = 0 end
-		end
+	if not (whitelist[steam] or players[steam].donor or tonumber(players[steam].accessLevel) < 3) then
+		if (server.pingKickTarget == "new" and players[steam].newPlayer) or server.pingKickTarget == "all" then
+			if tonumber(ping) < tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
+				igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) - 1
+				if tonumber(igplayers[steam].highPingCount) < 0 then igplayers[steam].highPingCount = 0 end
+			end
 
-		if tonumber(ping) > tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
-			igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) + 1
+			if tonumber(ping) > tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
+				igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) + 1
 
-			if tonumber(igplayers[steam].highPingCount) > 15 then
-				irc_chat(server.ircMain, "Kicked " .. name .. " steam: " .. steam.. " for high ping " .. ping)
-				kick(steam, "High ping kicked.")
-				return
+				if tonumber(igplayers[steam].highPingCount) > 15 then
+					irc_chat(server.ircMain, "Kicked " .. name .. " steam: " .. steam.. " for high ping " .. ping)
+					kick(steam, "High ping kicked.")
+					return
+				end
 			end
 		end
 	end
@@ -546,14 +548,15 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if currentLocation ~= false then
 		igplayers[steam].currentLocationPVP = locations[currentLocation].pvp
-	end
+		players[steam].inLocation = currentLocation
 
-	if currentLocation ~= false then
 		resetZone = locations[currentLocation].resetZone
 
 		if locations[currentLocation].killZombies then
 			server.scanZombies = true
 		end
+	else
+		players[steam].inLocation = ""
 	end
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
@@ -569,9 +572,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if currentLocation == false then
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 		if players[steam].showLocationMessages then
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 			if igplayers[steam].alertLocation ~= "" then
 				if not locations[igplayers[steam].alertLocation] then
 					igplayers[steam].alertLocation = ""
@@ -583,13 +584,9 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			end
 		end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
 		igplayers[steam].alertLocation = ""
-		players[steam].inLocation = ""
 	else
 		igplayers[steam].alertLocation = currentLocation
-		players[steam].inLocation = currentLocation
 	end
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end

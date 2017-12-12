@@ -32,7 +32,7 @@ function scoutsWarning(line)
 				direction = getCompass(v.xPos, v.zPos, xStart, zStart)
 				dist = distancexz(v.xPos, v.zPos, xEnd, zEnd)
 
-				if (dist < 50) then
+				if (dist < 100) then
 					message("pm " .. k .. " " ..  " [" .. server.chatColour .. "]Screamers have been detected heading your way from the " .. direction .. ".[-]")
 				end
 			end

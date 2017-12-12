@@ -346,7 +346,6 @@ INSERT INTO `gimmePrizes` (`name`, `category`, `prizeLimit`, `quality`) VALUES
 --
 
 INSERT INTO `shop` (`item`, `category`, `price`, `stock`, `idx`, `maxStock`, `variation`, `special`) VALUES
-('10mmBullet', 'ammo', 3, 500, 1, 500, 0, 0),
 ('44MagBullet', 'ammo', 3, 60, 2, 60, 0, 0),
 ('762mmBullet', 'ammo', 3, 500, 3, 500, 0, 0),
 ('9mmBullet', 'ammo', 3, 500, 4, 500, 0, 0),

@@ -23,7 +23,7 @@ function initBot()
 
 -- EDIT ME!
 	telnetPassword = ""
-	webdavFolder = "/var/www/chatlogs/bot"
+	webdavFolder = "/var/www/chatlogs/"
 	ircServer = "127.0.0.1"
 	ircPort = 6667
 	ircChannel = "bot"
@@ -42,10 +42,8 @@ end
 
 function openDB()
 	lastAction = "Open Database"
-	local sqliteDriver = require "luasql.sqlite3"
-	env = luasql.sqlite3()
-
-	conn = env:connect(getMudletHomeDir() .. "/Database_" .. botDB .. ".db")
+	env = mysql.mysql()
+	conn = env:connect(botDB, botDBUser, botDBPass)
 
 	conn:execute("INSERT INTO memRestrictedItems (select * from restrictedItems)")
 	conn:execute("INSERT INTO memLottery (select * from lottery)")
@@ -53,5 +51,5 @@ end
 
 
 function openBotsDB()
-	connBots = env:connect(getMudletHomeDir() .. "/Database_" .. botsDB .. ".db")
+	connBots = env:connect(botsDB, botsDBUser, botsDBPass)
 end

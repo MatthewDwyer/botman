@@ -37,7 +37,11 @@ function joinIRCServer()
 		tempTimer( 1, [[ircJoin("]] .. server.ircAlerts .. [[")]] )
 		tempTimer( 2, [[ircJoin("]] .. server.ircWatch .. [[")]] )
 		tempTimer( 3, [[ircReconnect()]] )
-		server.ircBotName = getNick()
+
+		if server.ircBotName == "Bot" then
+			server.ircBotName = getNick()
+		end
+
 		ircSetChannel(server.ircMain)
 	end
 
@@ -855,7 +859,7 @@ function irc_players(name)
 		line = ""
 		sort = 999
 
-		if players[k].accessLevel < 3 then
+		if tonumber(players[k].accessLevel) < 3 then
 			flags = flags .. "[ADMIN]"
 			if sort == 999 then sort = 1 end
 		end
@@ -873,7 +877,7 @@ function irc_players(name)
 			if sort == 999 then sort = 2 end
 		end
 
-		if players[k].hackerScore > 0 then
+		if tonumber(players[k].hackerScore) > 0 then
 			flags = flags .. "[HACKER]"
 			if sort == 999 then sort = 0 end
 		end

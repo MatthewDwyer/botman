@@ -14,10 +14,10 @@ function arenaPicknMix(wave, counter, playerLevel)
 
 	r = tostring(rand(botman.maxGimmeZombies))
 
-	if gimmeZombies[r] == nil then
+	if not gimmeZombies[r] then
 		r = arenaPicknMix(wave, counter, playerLevel)
 	else
-		if gimmeZombies[r].doNotSpawn or tonumber(gimmeZombies[r].minArenaLevel) > tonumber(playerLevel) then
+		if gimmeZombies[r].doNotSpawn then --  or tonumber(gimmeZombies[r].minArenaLevel) > tonumber(playerLevel)
 			r = arenaPicknMix(wave, counter, playerLevel)
 		end
 	end
@@ -28,8 +28,6 @@ function arenaPicknMix(wave, counter, playerLevel)
 		if not gimmeZombies[r].bossZombie and tonumber(counter) < 10 then
 			counter = counter + 1
 			r = arenaPicknMix(wave, counter, playerLevel) -- only pick boss zombies
-		else
-			-- give up trying to pick a boss zombie.  Maybe none are flagged yet?
 		end
 	end
 
@@ -46,7 +44,7 @@ function PicknMix(level)
 
 	r = tostring(rand(botman.maxGimmeZombies))
 
-	if gimmeZombies[r] == nil then
+	if not gimmeZombies[r] then
 		r = PicknMix(level)
 	else
 		if gimmeZombies[r].doNotSpawn or tonumber(gimmeZombies[r].minPlayerLevel) > tonumber(level) then
@@ -173,11 +171,15 @@ end
 
 
 function queueGimmeHell(wave)
-	local multiplier, i, r, p, k, v, cmd
+	-- if true then
+		-- return
+	-- end
+
+	local multiplier, i, zed, p, k, v, cmd
 
 	multiplier = rand(15, 7)
 
-	if (wave == 4) then
+	if tonumber(wave) == 4 then
 		multiplier = 2
 	end
 
@@ -189,12 +191,13 @@ function queueGimmeHell(wave)
 		end
 
 		-- the level of the player that started gimmehell is used to control which zombies can be picked
-		r = arenaPicknMix(wave, 0, players[arenaPlayers["1"].id].level)
-		cmd = "se " .. players[arenaPlayers[tostring(p)].id].id .. " " .. r
+		zed = arenaPicknMix(wave, 0, tonumber(players[arenaPlayers["1"].id].level))
+
+		cmd = "se " .. players[arenaPlayers[tostring(p)].id].id .. " " .. zed
 		conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. cmd .. "', true, " .. arenaPlayers[tostring(p)].id .. ")")
 	end
 
-	if (wave == 4) then
+	if tonumber(wave) == 4 then
 		for k, v in pairs(arenaPlayers) do
 			cmd = "pm " .. v.id .. " [" .. server.chatColour .. "]Congratulations!  You have survived to the end of the fight!  Rest now. Tend to your wounded and mourn the fallen.[-]"
 			conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. cmd .. "', true, " .. v.id .. ")")
@@ -247,16 +250,6 @@ function gimme(pid)
 
 	removeZombies() -- make sure there are no zeds left that we have flagged for removal
 	removeEntities() -- make sure there are no entities left that we have flagged for removal
-
-	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
-
-	if locations[players[pid].inLocation] then
-		if not locations[players[pid].inLocation].pvp then
-			message("pm " .. pid .. " [" .. server.chatColour .. "]Gimme cannot be played within a location unless it is pvp enabled.[-]")
-			botman.faultyGimme = false
-			return
-		end
-	end
 
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
@@ -916,7 +909,7 @@ end
 		tmp = {}
 		for k,v in pairs(gimmeZombies) do
 			if string.find(v.zombie, "zombiedog") then
-				tmp.entityid = k
+				tmp.entityid = v.entityID
 			end
 		end
 
@@ -947,7 +940,7 @@ end
 		tmp = {}
 		for k,v in pairs(gimmeZombies) do
 			if string.find(v.zombie, "snow") then
-				tmp.entityid = k
+				tmp.entityid = v.entityID
 			end
 		end
 
@@ -1077,7 +1070,7 @@ end
 		tmp = {}
 		for k,v in pairs(gimmeZombies) do
 			if string.find(v.zombie, "zombiedog") then
-				tmp.entityid = k
+				tmp.entityid = v.entityID
 			end
 		end
 

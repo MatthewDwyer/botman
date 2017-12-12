@@ -256,12 +256,19 @@ end
 function resetShop(forced)
 	local specialCount, r, i, discCount
 
+	-- don't reset the shop if shopResetDays is 0 and not forced
+	if not forced and server.shopResetDays == 0 then
+		return
+	end
+
 	server.shopCountdown = server.shopCountdown - 1
 
-	if tonumber(server.shopCountdown) < 0 or forced ~= nil then
+	if tonumber(server.shopCountdown) < 1 or forced ~= nil then
 		conn:execute("UPDATE shop SET stock = maxStock")
-		server.shopCountdown = 1
+		server.shopCountdown = server.shopResetDays
 	end
+
+	if botman.dbConnected then conn:execute("UPDATE server SET shopCountdown = " .. server.shopCountdown) end
 end
 
 

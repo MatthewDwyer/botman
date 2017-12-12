@@ -580,6 +580,13 @@ if debug then display("alterTables start\n") end
 	doSQL("ALTER TABLE `players` CHANGE `cash` `cash` FLOAT(11) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` CHANGE `chatColour` `chatColour` VARCHAR(8) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'FFFFFF'")
 	doSQL("ALTER TABLE `players` ADD `commandCooldown` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `players` CHANGE `chatColour` `chatColour` VARCHAR(6) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'FFFFFF'")
+	doSQL("ALTER TABLE `players` ADD `gimmeCooldown` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `players` CHANGE `donorExpiry` `donorExpiry` INT(11) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `players` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci")
+	doSQL("ALTER TABLE `players` CHANGE `name` `name` VARCHAR(25) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL")
+	doSQL("ALTER TABLE `players` CHANGE `aliases` `aliases` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
+
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -666,8 +673,13 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `enableTimedClaimScan` TINYINT(1) NOT NULL DEFAULT '1', ADD `enableScreamerAlert` TINYINT(1) NOT NULL DEFAULT '1' , ADD `enableAirdropAlert` TINYINT(1) NOT NULL DEFAULT '1'")
 	doSQL("ALTER TABLE `server` ADD `spleefGameCoords` VARCHAR(20) NOT NULL DEFAULT '4000 225 4000'")
 	doSQL("ALTER TABLE `server` CHANGE `blacklistResponse` `blacklistResponse` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'ban'")
-	doSQL("ALTER TABLE `server` ADD `gimmeResetTime` INT NOT NULL DEFAULT '120', ADD `gimmeRaincheck` INT NOT NULL DEFAULT '0'")
-
+	doSQL("ALTER TABLE `server` ADD `gimmeResetTime` INT NOT NULL DEFAULT '120', ADD `gimmeRaincheck` INT NOT NULL DEFAULT '0'") -- gimmeRainCheck is a gimme cooldown timer between gimmes.
+	doSQL("ALTER TABLE `server` ADD `pingKickTarget` VARCHAR(3) NOT NULL DEFAULT 'new' , ADD `enableBounty` TINYINT(1) NOT NULL DEFAULT '1', ADD `mapSizeNewPlayers` INT NOT NULL DEFAULT '10000' , ADD `mapSizePlayers` INT NOT NULL DEFAULT '10000', ADD `shopResetDays` INT NOT NULL DEFAULT '3'")
+	doSQL("ALTER TABLE `server` ADD `telnetLogKeepDays` INT NOT NULL DEFAULT '14'")
+	doSQL("ALTER TABLE `server` CHANGE `IP` `IP` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT '0.0.0.0'")
+	doSQL("ALTER TABLE `server` ADD `dailyRebootHour` int(11) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `maxWaypointsDonors` INT NOT NULL DEFAULT '2'")
+	doSQL("ALTER TABLE `server` CHANGE `lastBotsMessageTimestamp` `lastBotsMessageTimestamp` INT(11) NOT NULL DEFAULT '0'")
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 

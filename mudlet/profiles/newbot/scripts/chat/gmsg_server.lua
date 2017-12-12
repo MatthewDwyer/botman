@@ -163,6 +163,72 @@ if debug then dbug("debug server") end
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "join") or string.find(chatvars.command, "server"))) or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "join server {ip} port {port} pass {password}")
+
+			if not shortHelp then
+				irc_chat(chatvars.ircAlias, "Tell the bot to join a different game server.  If the bot does not find the server, it will automatically return after 5 minutes.")
+				irc_chat(chatvars.ircAlias, ".")
+			end
+		end
+	end
+
+	if chatvars.words[1] == "join" and chatvars.words[2] == "server" and string.find(chatvars.command, "port") then
+	-- TODO: Finish coding
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 0) then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (chatvars.accessLevel > 0) then
+				irc_chat(chatvars.ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		if server.IP == "0.0.0.0" then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ALERT! The current server IP known to the bot is 0.0.0.0[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]First set it with " .. server.commandPrefix .. "set server ip {IP or domain name of the server}[-]")
+			else
+				irc_chat(chatvars.ircAlias, "ALERT! The current server IP known to the bot is 0.0.0.0")
+				irc_chat(chatvars.ircAlias, "First set it with cmd " .. server.commandPrefix .. "set server ip {IP or domain name of the server}")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+		tempTimer( 30, [[finishServerMove()]] )
+
+		serverMove = {}
+		serverMove.oldServer = server.IP
+		serverMove.oldPort = server.ServerPort
+		serverMove.oldPass = server.telnetPass
+
+		serverMove.newServer = string.sub(chatvars.command, string.find(chatvars.command, " server ") + 8, string.find(chatvars.command, " port ") -1)
+		serverMove.newPort = string.sub(chatvars.command, string.find(chatvars.command, " port ") + 6, string.find(chatvars.command, " pass ") -1)
+		serverMove.newPass = string.sub(chatvars.command, string.find(chatvars.command, " pass ") + 6)
+
+		server.telnetPass = serverMove.newPass
+		telnetPassword = serverMove.newPass
+		conn:execute("UPDATE server SET telnetPass = '" .. escape(serverMove.newPass) .. "'")
+
+		reconnect(serverMove.newServer, serverMove.newPort, true)
+		saveProfile()
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "api") or string.find(chatvars.command, "set") or string.find(chatvars.command, "server"))) or chatvars.words[1] ~= "help" then
 			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set server api {api key from 7daystodie-servers.com}")
 			irc_chat(chatvars.ircAlias, "Your API key is not recorded in logs or the databases and no bot command reports it.")
@@ -1414,6 +1480,67 @@ if debug then dbug("debug server") end
 			else
 				irc_chat(chatvars.ircAlias, "The server ip is now " .. tmp)
 			end
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "ping"))) or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set ping kick target {new or all}")
+
+			if not shortHelp then
+				irc_chat(chatvars.ircAlias, "By default if a ping kick is set it only applies to new players. Set to all to have it applied to everyone.")
+				irc_chat(chatvars.ircAlias, "Note: Does not apply to exempt players which includes admins, donors and individuals that have been bot whitelisted.")
+				irc_chat(chatvars.ircAlias, ".")
+			end
+		end
+	end
+
+	if chatvars.words[1] == "set" and chatvars.words[2] == "ping" and chatvars.words[3] == "kick" and chatvars.words[4] == "target" then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 1) then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+		else
+			if (chatvars.accessLevel > 1) then
+				irc_chat(chatvars.ircAlias, "This command is restricted.")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		if chatvars.words[5] == "new" then
+			server.pingKickTarget = "new"
+			conn:execute("UPDATE server SET pingKickTarget = 'new'")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Ping kicks will only happen to new players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Ping kicks will only happen to new players.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if chatvars.words[5] == "all" then
+			server.pingKickTarget = "all"
+			conn:execute("UPDATE server SET pingKickTarget = 'all'")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Anyone except staff, donors and bot whitelisted players can be ping kicked.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Anyone except staff, donors and bot whitelisted players can be ping kicked.")
+			end
+
+			botman.faultyChat = false
+			return true
 		end
 
 		botman.faultyChat = false

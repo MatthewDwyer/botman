@@ -453,7 +453,7 @@ function gmsg_coppi()
 
 		-- strip out any # characters
 		tmp.colour = tmp.colour:gsub("#", "")
-		tmp.colour = string.upper(tmp.colour)
+		tmp.colour = string.upper(string.sub(tmp.colour, 1, 6))
 
 		if tmp.target == "new" then
 			server.chatColourNewPlayer = tmp.colour
@@ -466,7 +466,7 @@ function gmsg_coppi()
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 99 and v.chatColour == "FFFFFF" then
+				if accessLevel(k) == 99 and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 
 					if botman.getMetrics then
@@ -521,7 +521,7 @@ function gmsg_coppi()
 				end
 
 				for k,v in pairs(igplayers) do
-					if accessLevel(k) == 90 and v.chatColour == "FFFFFF" then
+					if accessLevel(k) == 90 and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
 						send("cpc " .. k .. " " .. tmp.colour .. " 1")
 
 						if botman.getMetrics then
@@ -543,7 +543,7 @@ function gmsg_coppi()
 			end
 
 			for k,v in pairs(igplayers) do
-				if (accessLevel(k) > 3 and accessLevel(k) < 11) and v.chatColour == "FFFFFF" then
+				if (accessLevel(k) > 3 and accessLevel(k) < 11) and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 
 					if botman.getMetrics then
@@ -585,7 +585,7 @@ function gmsg_coppi()
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 2 and v.chatColour == "FFFFFF" then
+				if accessLevel(k) == 2 and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 
 					if botman.getMetrics then
@@ -606,7 +606,7 @@ function gmsg_coppi()
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 1 and v.chatColour == "FFFFFF" then
+				if accessLevel(k) == 1 and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 
 					if botman.getMetrics then
@@ -627,7 +627,7 @@ function gmsg_coppi()
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 0 and v.chatColour == "FFFFFF" then
+				if accessLevel(k) == 0 and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 
 					if botman.getMetrics then

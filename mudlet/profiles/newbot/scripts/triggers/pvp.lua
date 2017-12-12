@@ -25,7 +25,7 @@ function pvpPolice(line)
 
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
 
-	r = rand(17)
+	r = rand(22)
 	score = string.format("%.1f", math.random() * 10)
 
 	nameStart = string.find(line, "INF GMSG") + 10
@@ -94,6 +94,11 @@ function pvpPolice(line)
 		if (r == 15) then message("say [" .. server.chatColour .. "]" .. killerName .. " needs clean undies after that one.[-]") end
 		if r == 16 then message("say [" .. server.chatColour .. "]" .. killerName .. " is really good at faking their own death! So realistic.[-]") end
 		if r == 17 then message("pm " .. killerID .. " [" .. server.chatColour .. "][  Wasted!  ][-]") end
+		if (r == 18) then message("say [" .. server.chatColour .. "]Some say " .. killerName .. " isn't very good at this.[-]") end
+		if (r == 19) then message("say [" .. server.chatColour .. "]And let us celebrate the untimely death of " .. killerName .. ". Taken from us finally.[-]") end
+		if (r == 20) then message("say [" .. server.chatColour .. "]" .. killerName .. " is formerly living proof of the importance of gun safety.[-]") end
+		if (r == 21) then message("say [" .. server.chatColour .. "]News of " .. killerName .. "'s death spread quickly, at least for a few feet.[-]") end
+		if (r == 22) then message("say [" .. server.chatColour .. "]" .. killerName .. " totally meant to do that.[-]") end
 
 		return
 	else

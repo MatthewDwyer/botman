@@ -147,9 +147,9 @@ function login()
 		reloadBotScripts()
 	end
 
-	if isFile(homedir .. "/botman.ini") then
-		dofile(homedir .. "/botman.ini")
-	end
+	-- if isFile(homedir .. "/botman.ini") then
+		-- dofile(homedir .. "/botman.ini")
+	-- end
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 

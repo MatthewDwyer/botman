@@ -7,6 +7,16 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+-- 2017-12-06T21:53:48 139450.416 INF Executing command 'traderlist' by Telnet from 158.69.250.118:60713
+-- traderlist: [1] Position, pos_x=714, pos_y=108, pos_z=1197, closed=True
+-- traderlist: [1] Size, size_x=41, size_y=24, size_z=43, closed=True
+-- traderlist: [1] Protection, protection_x=61, protection_y=24, protection_z=63, closed=True
+-- traderlist: [1] TeleportCenter, teleportCenter_x=0, teleportCenter_y=1, teleportCenter_z=1, closed=True
+-- traderlist: [1] TeleportSize, teleportSize_x=40, teleportSize_y=24, teleportSize_z=41, closed=True
+
+-- 2017-12-06T21:57:32 139674.910 INF Executing command 'lps 295' by Telnet from 158.69.250.118:60713
+-- Skill from: entityid=295, athletics=51, healthNut=0, sexualTyranosaurus=1, scavenging=23, fastEddie=0, qualityJoe=1, treasureHunter=0, clothingArmor=7, bluntWeapons=17, pummelPete=1, breakingAndEntering=0, bladeWeapons=20, knifeGuy=0, decapitator=0, miningTools=75, miner69er=4, constructionTools=64, workbench=1, concreteMixing=1, steelSmithing=1, chemistryStation=0, badMechanic=3, pistols=1, theOutlaw=0, deadShot=0, shotguns=1, boomStick=0, splatterGun=0, rifles=1, betterLeadThanDead=0, archery=23, medicine=2, craftSkillWeapons=6, macheteCraftingName=0, craftSkillTools=6, craftSkillGuns=0, 9mmRoundCrafting=0, 44MagnumRoundCrafting=0, shotgunShellCrafting=0, 762mmRoundCrafting=0, craftSkillScience=6, electricBasicsName=0, electricTriggersName=0, electricTrapsMeleeName=0, electricTrapsRangedName=0, electricGeneratorName=0, electricBatteryBankName=0, doItYourselfName=0, craftSkillArmor=0, craftSkillMiscellaneous=0, paintMagazineDecorations=0, paintMagazineFaux=1, paintMagazineMasonry=0, paintMagazineMetal=1, paintMagazineWallCoverings=1, paintMagazineWoodAndRoofing=0, theSurvivor=4, theCamel=2, quickerCrafting=0, theFixer=0, barter=32, secretStash=1.
+
 function removeOldStaff()
 	if getAdminList then
 		-- abort if getAdminList is true as that means there's been a fault in the telnet data
@@ -173,6 +183,41 @@ function matchAll(line)
 	end
 
 
+	if (string.sub(line, 1, 4) == os.date("%Y")) then
+		if botman.readGG then
+			botman.readGG = false
+		end
+
+		if echoConsole then
+			echoConsole = false
+			echoConsoleTo = nil
+		end
+
+		if getZombies then
+			getZombies = nil
+
+			if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies WHERE remove = 1") end
+			loadGimmeZombies()
+
+			if botman.dbConnected then
+				cursor,errorString = conn:execute("SELECT Count(entityID) as maxZeds from gimmeZombies")
+				row = cursor:fetch({}, "a")
+				botman.maxGimmeZombies = tonumber(row.maxZeds)
+			end
+		end
+
+		if collectBans then
+			collectBans = false
+		end
+	end
+
+
+	if echoConsole then
+		line = line:gsub(",", "") -- strip out commas
+		irc_chat(echoConsoleTo, line)
+	end
+
+
 	-- grab steam ID of player joining server if the server is using reserved slots
 	if tonumber(server.reservedSlots) > 0 then
 		if string.find(line, "INF Steam auth") then
@@ -187,6 +232,12 @@ function matchAll(line)
 			end
 
 			return
+		end
+	end
+
+	if string.find(line, "Executing command 'gg'") then
+		if string.find(line, server.botsIP) then
+			botman.readGG = true
 		end
 	end
 
@@ -291,29 +342,6 @@ function matchAll(line)
 		end
 
 		return
-	end
-
-
-	if (string.sub(line, 1, 4) == os.date("%Y")) then
-		botman.readGG = false
-
-		if (echoConsole) then
-			echoConsole = false
-			echoConsoleTo = nil
-		end
-
-		if getZombies then
-			getZombies = nil
-
-			if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies WHERE remove = 1") end
-			loadGimmeZombies()
-
-			if botman.dbConnected then
-				cursor,errorString = conn:execute("SELECT Count(entityID) as maxZeds from gimmeZombies")
-				row = cursor:fetch({}, "a")
-				botman.maxGimmeZombies = tonumber(row.maxZeds)
-			end
-		end
 	end
 
 
@@ -432,11 +460,6 @@ function matchAll(line)
 	end
 
 
-	if collectBans and (string.sub(line, 1, 4) ~= os.date("%Y")) then
-		collectBans = false
-	end
-
-
 	-- collect the ban list
 	if collectBans then
 		if not string.find(line, "banned until") then
@@ -450,8 +473,6 @@ function matchAll(line)
 			-- also insert the steam owner (will only work if the steam id is different)
 			if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. players[steam].steamOwner .. ",'" .. reason(reason) .. "','" .. bannedTo .. "')") end
 		end
-
-		return
 	end
 
 
@@ -492,54 +513,68 @@ function matchAll(line)
 
 
 	if echoConsoleTo ~= nil then
+		if string.find(line, "Executing command 'webpermission list") and string.find(line, server.botsIP) then
+			echoConsole = true
+		end
+
+		if string.find(line, "Executing command 'lpf") and string.find(line, server.botsIP) then
+			echoConsole = true
+		end
+
+		if string.find(line, "Executing command 'lpb") and string.find(line, server.botsIP) then
+			echoConsole = true
+		end
+
+		if string.find(line, "Executing command 'lps") and string.find(line, server.botsIP) then
+			echoConsole = true
+		end
+
+		if string.find(line, "Executing command 'SystemInfo") and string.find(line, server.botsIP) then
+			echoConsole = true
+		end
+
+		if string.find(line, "Executing command 'traderlist") and string.find(line, server.botsIP) then
+			echoConsole = true
+		end
+
 		if string.find(line, "Executing command 'help") and string.find(line, server.botsIP) then
 			echoConsole = true
-			return
 		end
 
 		if string.find(line, "Executing command 'version") and string.find(line, server.botsIP) then
 			echoConsole = true
-			return
 		end
 
 		if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
 			echoConsole = true
-			return
 		end
 
 		if string.find(line, "Executing command 'li ") and string.find(line, server.botsIP) then
 			echoConsole = true
-			return
 		end
 
 		if string.find(line, "Executing command 'se'") and string.find(line, server.botsIP) then
 			echoConsole = true
-			return
 		end
 
 		if string.find(line, "Executing command 'si ") and string.find(line, server.botsIP) and string.find(line, echoConsoleTrigger) then
 			echoConsole = true
-			return
 		end
 
 		if string.find(line, "Executing command 'gg'") and string.find(line, server.botsIP) then
 			echoConsole = true
-			return
+		end
+
+		if string.find(line, "Executing command 'ggs'") and string.find(line, server.botsIP) then
+			echoConsole = true
 		end
 
 		if string.find(line, "Executing command 'llp") and string.find(line, server.botsIP) then
 			echoConsole = true
-			return
 		end
 
 		if string.find(line, "Executing command 'ban list'") and string.find(line, server.botsIP) then
 			echoConsole = true
-			return
-		end
-
-		if echoConsole then
-			line = line:gsub(",", "") -- strip out commas
-			irc_chat(echoConsoleTo, line)
 		end
 	end
 
@@ -675,15 +710,6 @@ function matchAll(line)
 	-- infrequent telnet events below here
 	-- ===================================
 
-	if string.find(line, "Executing command 'gg'") then
-		if string.find(line, server.botsIP) then
-			botman.readGG = true
-		end
-
-		return
-	end
-
-
 	if string.find(line, "Executing command 'le'") then
 		if string.find(line, server.botsIP) then
 			botman.listEntities = true
@@ -761,7 +787,7 @@ function matchAll(line)
 	end
 
 
-	if (string.find(line, "Banned until")) then
+	if (string.find(line, "Banned until -")) then
 		collectBans = true
 		conn:execute("DELETE FROM bans")
 		return
@@ -1043,5 +1069,12 @@ function matchAll(line)
 		removeInvalidItems()
 		return
 	end
+
+
+	if string.find(line, "Version mismatch") then
+		irc_chat(server.ircAlerts, line)
+		return
+	end
+
 end
 

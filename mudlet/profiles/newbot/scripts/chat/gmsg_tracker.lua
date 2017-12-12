@@ -353,8 +353,10 @@ function gmsg_tracker()
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HAMMER TIME![-]")
 		end
 
-		if not igplayers[chatvars.playerid].trackerStopped then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Tracking stopped.[-]")
+		if igplayers[chatvars.playerid].trackerStopped ~= nil then
+			if not igplayers[chatvars.playerid].trackerStopped then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Tracking stopped.[-]")
+			end
 		end
 
 		if igplayers[chatvars.playerid].following ~= nil then

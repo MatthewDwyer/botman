@@ -35,7 +35,6 @@ function requireLogin(name, silent)
 				players[steam].ircAuthenticated = true
 				players[steam].ircAlias = name
 				ircid = steam
-				players[ircid].accessLevel = players[ircid].accessLevel
 				return false
 			end
 		end
@@ -49,12 +48,14 @@ IRCMessage = function (event, name, channel, msg)
 		dbug(event .. " " .. name .. " " .. channel .. " " .. msg)
 	end
 
-	if ircGetNick ~= nil then
-		server.ircBotName = ircGetNick()
-	end
+	if server.ircBotName == "Bot" then
+		if ircGetNick ~= nil then
+			server.ircBotName = ircGetNick()
+		end
 
-	if getIrcNick ~= nil then
-		server.ircBotName = getIrcNick()
+		if getIrcNick ~= nil then
+			server.ircBotName = getIrcNick()
+		end
 	end
 
 	-- block Mudlet from messaging the official Mudlet support channel
@@ -482,7 +483,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			if ircid then
 				if players[ircid].accessLevel < 3 then
-					irc_chat(name, v.name .. " " .. public .. " " .. active .. " xyz " .. v.x .. "," .. v.y .. "," .. v.z)
+					irc_chat(name, v.name .. " " .. public .. " " .. active .. " xyz " .. v.x .. " " .. v.y .. " " .. v.z)
 				else
 					if public == "public" then
 						irc_chat(name, v.name)
@@ -856,7 +857,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		if not players[ircid].ircMute then
 			msg = string.trim(string.sub(msg, 5))
-			message("say " .. players[ircid].name .. "-irc: [i]" .. msg .. "[/i][-]")
+			if ircid == "76561197983251951" then
+				message("say [FFD700]Bot Master[-] " .. players[ircid].name .. "-irc: [i]" .. msg .. "[/i][-]")
+			else
+				message("say " .. players[ircid].name .. "-irc: [i]" .. msg .. "[/i][-]")
+			end
 		else
 			irc_chat(name, "Sorry you have been muted")
 		end
@@ -1225,11 +1230,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		server.telnetPass = sPass
 		conn:execute("UPDATE server SET telnetPass = '" .. escape(sPass) .. "', telnetPort = " .. sPort)
 
-		--disconnect()
-		connectToServer(sIP, sPort, true)
+		reconnect(sIP, sPort, true)
+		saveProfile()
 
 		irc_chat(server.ircMain, "Connecting to new 7 Days to Die server " .. sIP .. " port " .. sPort)
-		irc_chat(chatvars.ircAlias, "Connecting to new 7 Days to Die server " .. sIP .. " port " .. sPort .. " with pass " .. sPass)
+		irc_chat(chatvars.ircAlias, "Connecting to new 7 Days to Die server " .. sIP .. " port " .. sPort)
 
 		return
 	end
@@ -2414,23 +2419,26 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 -- ************************************************************************************************8
 		if (words[1] == "con") and players[ircid].accessLevel == 0 then
 			msg = string.trim(string.sub(msg, string.find(msgLower, "con") + 4))
-			send(msg)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
 
 			if string.sub(msg, 1, 4) == "help" then
 				echoConsoleTo = name
+				echoConsole = false
 			end
 
-			if msg == "se" or msg == "le" or msg == "ban list" or msg == "gg" or msg == "version" or string.sub(msg, 1, 3) == "li " or string.sub(msg, 1, 3) == "si " or string.sub(msg, 1, 3) == "llp" then
+			if msg == "se" or msg == "webpermission list" or msg == "ban list" or msg == "le" or string.sub(msg, 1, 3) == "lpf" or string.sub(msg, 1, 3) == "lpb" or string.sub(msg, 1, 3) == "lps" or msg == "SystemInfo" or msg == "traderlist" or msg == "gg" or msg == "ggs" or msg == "version" or string.sub(msg, 1, 3) == "li " or string.sub(msg, 1, 3) == "si " or string.sub(msg, 1, 3) == "llp" then
+				echoConsole = false
 				echoConsoleTo = name
 				echoConsoleTrigger = ""
 
 				if string.sub(msg, 1, 3) == "si " then
 					echoConsoleTrigger = string.sub(msg, 4)
 				end
+			end
+
+			send(msg)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
 			return

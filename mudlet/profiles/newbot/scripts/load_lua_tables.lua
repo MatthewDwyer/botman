@@ -66,9 +66,21 @@ if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentl
 
 		botman.chatlogPath = row.chatlogPath
 
-		temp = string.split(row.moneyName, "|")
+		if row.moneyName == nil or row.moneyName == "|" then
+			-- fix if missing money
+			temp = string.split("Zenny|Zennies", "|")
+		else
+			temp = string.split(row.moneyName, "|")
+		end
+
 		server.moneyName = temp[1]
-		server.moneyPlural = temp[2]
+
+		if temp[2] == nil then
+			-- fix if missing money plural
+			server.moneyPlural = temp[1]
+		else
+			server.moneyPlural = temp[2]
+		end
 
 		if server.ircServer ~= nil then
 			temp = string.split(server.ircServer, ":")
@@ -87,6 +99,15 @@ if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentl
 
 		if server.telnetPass ~= "" then
 			telnetPassword = server.telnetPass
+		else
+			server.telnetPass = telnetPassword
+			conn:execute("UPDATE server SET telnetPass = '" .. escape(telnetPassword) .. "'")
+		end
+
+		if server.ircBotName ~= "Bot" then
+			if ircSetNick ~= nil then
+				ircSetNick(server.ircBotName)
+			end
 		end
 
 		whitelistedCountries = {}
@@ -157,19 +178,23 @@ function loadPlayers(steam)
 			end
 		end
 
-		-- convert donorExpiry to a timestamp
-		words = {}
-		for word in row.donorExpiry:gmatch("%w+") do table.insert(words, word) end
+		-- -- convert donorExpiry to a timestamp
+		-- if row.donorExpiry == 0 then
+			-- players[row.steam].donorExpiry = os.time()
+		-- else
+			-- words = {}
+			-- for word in row.donorExpiry:gmatch("%w+") do table.insert(words, word) end
 
-		ryear = words[1]
-		rmonth = words[2]
-		rday = words[3]
-		rhour = words[4]
-		rmin = words[5]
-		rsec = words[6]
+			-- ryear = words[1]
+			-- rmonth = words[2]
+			-- rday = words[3]
+			-- rhour = words[4]
+			-- rmin = words[5]
+			-- rsec = words[6]
 
-		rdate = {year=ryear, month=rmonth, day=rday, hour=rhour, min=rmin, sec=rsec}
-		players[row.steam].donorExpiry = os.time(rdate)
+			-- rdate = {year=ryear, month=rmonth, day=rday, hour=rhour, min=rmin, sec=rsec}
+			-- players[row.steam].donorExpiry = os.time(rdate)
+		-- end
 
 		if tonumber(row.accessLevel) < 3 then
 			-- add the steamid to the admins table
@@ -723,7 +748,8 @@ function loadGimmeZombies()
 	end
 
 	while row do
-		idx = row.entityID
+		idx = tostring(row.entityID)
+
 		gimmeZombies[idx] = {}
 
 		for k,v in pairs(cols) do
@@ -761,10 +787,11 @@ function loadOtherEntities()
 	cursor,errorString = conn:execute("select * from otherEntities")
 	row = cursor:fetch({}, "a")
 	while row do
-		idx = tonumber(row.entityID)
+		idx = tostring(row.entityID)
 
 		otherEntities[idx] = {}
 		otherEntities[idx].entity = row.entity
+		otherEntities[idx].entityID = row.entityID
 		otherEntities[idx].doNotSpawn = dbTrue(row.doNotSpawn)
 		otherEntities[idx].doNotDespawn = dbTrue(row.doNotDespawn)
 		row = cursor:fetch(row, "a")

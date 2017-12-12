@@ -172,6 +172,62 @@ if debug then dbug("debug fun") end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "gimme raincheck {seconds}")
+
+			if not shortHelp then
+				irc_chat(chatvars.ircAlias, "Set a time delay between gimmes.  The default is 0 seconds.")
+				irc_chat(chatvars.ircAlias, ".")
+			end
+		end
+	end
+
+	if chatvars.words[1] == "gimme" and string.find(chatvars.command, " rain") then
+		if (chatvars.playername ~= "Server") then
+			if (chatvars.accessLevel > 2) then
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		if chatvars.number == nil then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Missing number for seconds between gimmes.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Missing number for  seconds between gimmes.")
+			end
+
+			botman.faultyChat = false
+			return true
+		else
+			chatvars.number = math.abs(chatvars.number)
+		end
+
+		server.gimmeRaincheck = chatvars.number
+		if botman.dbConnected then conn:execute("UPDATE server SET gimmeRaincheck = " .. chatvars.number) end
+
+		if chatvars.number == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Gimmes can be played until there are none left.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Gimmes can be played until there are none left.")
+			end
+		else
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players must wait " .. chatvars.number .. " seconds between gimmes.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Players must wait " .. chatvars.number .. " seconds between gimmes.")
+			end
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
 			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "gimme reset")
 
 			if not shortHelp then
@@ -184,7 +240,7 @@ if debug then dbug("debug fun") end
 	if (chatvars.words[1] == "gimme" and chatvars.words[2] == "reset" and chatvars.words[3] == nil) then
 		if (chatvars.playername ~= "Server") then
 			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is for admins only[-]")
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
 				return true
 			end
@@ -768,13 +824,48 @@ if debug then dbug("debug fun") end
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
+
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Oopsie! Somebody fed the zombies. Wait a few seconds while we swap them out with fresh starving ones.[-]")
+
+				botman.faultyChat = false
+				return
 			end
 
-			dist1 = distancexz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].zPos, players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ)
-			dist2 = distancexz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].zPos, players[chatvars.playerid].home2X, players[chatvars.playerid].home2Z)
+			if tonumber(server.gimmeRaincheck) > 0 then
+				if (players[chatvars.playerid].gimmeCooldown - os.time() > 0) then
+					r = rand(5)
+					if r == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]WOAH WOAH WOAH there fella. Don't do gimme so fast![-]") end
+					if r == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Ya cannae gimme wi that thing.  Git a real gun Jimmy.[-]") end
+					if r == 3 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Hold it! You need to wait a bit before you can gimme some more.[-]") end
+					if r == 4 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Don't eat all your gimmes at once. Where are your manners?[-]") end
+					if r == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Gimme gimme gimme.[-]") end
 
-			if (dist1 < players[chatvars.playerid].protectSize) or (dist2 < players[chatvars.playerid].protect2Size) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Gimme will not spawn any zeds while you are inside your base protection.[-]")
+					r = rand(5)
+					if r == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Wait till you see the reds of their eyes.[-]") end
+					if r == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Ya gotta sneak up on them real careful like.[-]") end
+					if r == 3 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You'll reach your daily bag limit too soon.[-]") end
+					if r == 4 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Gimme that![-]") end
+					r1 = rand(10)
+					r2 = rand(10)
+					if r == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Article " .. r1 .. ", section " .. r2 .. " states, You must wait " .. server.gimmeRaincheck .. " seconds between gimmes.[-]") end
+
+					botman.faultyChat = false
+					return
+				end
+			end
+
+			if locations[players[chatvars.playerid].inLocation] then
+				if not locations[players[chatvars.playerid].inLocation].pvp then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Gimme cannot be played within a location unless it is pvp enabled.[-]")
+					botman.faultyChat = false
+					return
+				end
+			end
+
+			if (players[chatvars.playerid].atHome or players[chatvars.playerid].inABase) and server.gimmeZombies then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Gimme cannot be played inside a player base. Go play with Zombie Steve outside.[-]")
+				botman.faultyChat = false
+				return
 			end
 
 			gimme(chatvars.playerid)

@@ -201,6 +201,9 @@ function gmsg_waypoints()
 						conn:execute("UPDATE players SET maxWaypoints = " .. chatvars.number .. " where steam = " .. k)
 					end
 				end
+
+				server.maxWaypointsDonors = chatvars.number
+				conn:execute("UPDATE server SET maxWaypointsDonors = " .. chatvars.number)
 			else
 				if chatvars.words[5] == nil then
 					if (chatvars.playername ~= "Server") then

@@ -15,6 +15,7 @@ function collectBan(line)
 	local temp, reason, yr, mth, dy, hr, min, sec, tdate, steam, expiryDate, bannedTo
 
 	temp = string.split(line, " ")
+	temp[5] = string.sub(temp[5], 1, string.len(temp[5]) - 2)
 
 	tdate = string.split(temp[4], "/")
 	yr = tdate[3]
@@ -30,10 +31,21 @@ function collectBan(line)
 		hr = hr + 12
 	end
 
+	--display(temp)
+
 	bannedTo = temp[4] .. " " .. escape(temp[5]) .. " " .. escape(string.sub(temp[6], 1, 2))
+
+	--dbugi("bannedTo -" .. bannedTo .. "-")
+
 	expiryDate = yr .. "-" .. mth .. "-" .. dy .. " " .. hr .. ":" .. min .. ":" .. sec
+	--dbugi("expiryDate -" .. expiryDate .. "-")
+
 	steam = temp[1]
+	--dbugi("steam -" .. steam .. "-")
 	reason = string.sub(line, string.find(line, "reason:") + 8)
+	--dbugi("reason -" .. reason .. "-")
+
+	--dbugi("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "','" .. expiryDate .. "'")
 
 	if reason ~= nil then
 		if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "','" .. expiryDate .. "'") end

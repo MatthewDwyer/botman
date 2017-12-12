@@ -32,8 +32,8 @@ function initReservedSlots()
 		isStaff = 0
 		canReserve = 0
 
-		if (botman.dbReservedSlotsUsed < server.reservedSlots) then
-			if players[k].accessLevel < 3 then
+		if tonumber(botman.dbReservedSlotsUsed) < tonumber(server.reservedSlots) then
+			if tonumber(players[k].accessLevel) < 3 then
 				isStaff = 1
 				canReserve = 1
 			end
@@ -60,8 +60,8 @@ function initReservedSlots()
 		isStaff = 0
 		canReserve = 0
 
-		if (botman.dbReservedSlotsUsed < server.reservedSlots) then
-			if players[k].accessLevel < 3 then
+		if tonumber(botman.dbReservedSlotsUsed) < tonumber(server.reservedSlots) then
+			if tonumber(players[k].accessLevel) < 3 then
 				isStaff = 1
 				canReserve = 1
 			end
@@ -106,12 +106,12 @@ function fillReservedSlot(steam)
 	row = cursor:fetch({}, "a")
 	botman.dbReservedSlotsUsed = tonumber(row.totalRows)
 
-	if (botman.dbReservedSlotsUsed < server.reservedSlots) then
+	if tonumber(botman.dbReservedSlotsUsed) < tonumber(server.reservedSlots) then
 		if players[steam].donor or players[steam].reserveSlot then
 			canReserve = 1
 		end
 
-		if players[steam].accessLevel < 3 then
+		if tonumber(players[steam].accessLevel) < 3 then
 			isStaff = 1
 			canReserve = 1
 		end
@@ -142,7 +142,7 @@ function updateReservedSlots()
 	row = cursor:fetch({}, "a")
 	botman.dbReservedSlotsUsed = tonumber(row.totalRows)
 
-	while botman.dbReservedSlotsUsed > server.reservedSlotsUsed do
+	while tonumber(botman.dbReservedSlotsUsed) > tonumber(server.reservedSlotsUsed) do
 		playerRemoved = false
 
 		-- try to remove staff from reserved slots first
@@ -157,7 +157,7 @@ function updateReservedSlots()
 		end
 
 		-- try to remove other players from reserved slots
-		if botman.dbReservedSlotsUsed > server.reservedSlotsUsed then
+		if tonumber(botman.dbReservedSlotsUsed) > tonumber(server.reservedSlotsUsed) then
 			cursor,errorString = conn:execute("select * from reservedSlots where staff = 0 and reserved = 0 order by timeAdded desc limit " .. botman.dbReservedSlotsUsed - server.reservedSlotsUsed)
 			rows = cursor:numrows()
 
@@ -214,7 +214,7 @@ function freeReservedSlot(accessLevel)
 	end
 
 	-- the incoming player is an admin and we couldn't find a normal player to kick so kick a non-admin reserved slotter
-	if not kickedSomeone and accessLevel < 3 then
+	if not kickedSomeone and tonumber(accessLevel) < 3 then
 		-- kick a non-admin from a slot.  If this fails, it's admins all the way down! :O
 		cursor,errorString = conn:execute("select * from reservedSlots where reserved = 1 and staff = 0 order by timeAdded desc")
 		row = cursor:fetch({}, "a")
@@ -392,8 +392,8 @@ function playerConnected(line)
 	if tonumber(botman.playersOnline) == tonumber(server.ServerMaxPlayerCount) and tonumber(server.reservedSlots) > 0 then
 		-- any player that is staff or a donor can take a reserved slot from a regular joe
 		-- admins can take a reserved slot for any non-admins (unless it's admins all the way down).
-		if players[steam].reserveSlot or players[steam].accessLevel < 3 or players[steam].donor then
-			if (botman.dbReservedSlotsUsed >= server.reservedSlots) then
+		if players[steam].reserveSlot or tonumber(players[steam].accessLevel) < 3 or players[steam].donor then
+			if tonumber(botman.dbReservedSlotsUsed) >= tonumber(server.reservedSlots) then
 				if not freeReservedSlot(players[steam].accessLevel) then
 					kick(steam, "Server is full :(")
 					return
@@ -423,7 +423,7 @@ function playerConnected(line)
 		end
 
 		if players[steam].chatColour ~= "" then
-			if string.upper(players[steam].chatColour) ~= "FFFFFF" then
+			if string.upper(string.sub(players[steam].chatColour, 1, 6)) ~= "FFFFFF" then
 				send("cpc " .. steam .. " " .. stripAllQuotes(players[steam].chatColour) .. " 1")
 
 				if botman.getMetrics then
@@ -432,6 +432,8 @@ function playerConnected(line)
 			else
 				setChatColour(steam)
 			end
+		else
+			setChatColour(steam)
 		end
 	end
 
@@ -497,15 +499,12 @@ function playerConnected(line)
 
 		players[steam].donor = false
 		players[steam].donorLevel = 0
-		if botman.dbConnected then conn:execute("UPDATE players SET donor = 0, donorLevel = 0 WHERE steam = " .. steam) end
+		players[steam].protect2 = false
+		players[steam].maxWaypoints = server.maxWaypoints
+		if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0, donor = 0, donorLevel = 0, maxWaypoints = " .. server.maxWaypoints .. " WHERE steam = " .. steam) end
 
 		message("pm " .. steam .. " [" .. server.chatColour .. "]Your donor status has expired :(  Contact an admin if you need help accessing your second base. Your 2nd base's protection will be disabled one week from when your donor status expired.[-]")
-
-		if os.time() - tonumber(players[steam].donorExpiry) > (60 * 60 * 24 * 7) then
-			players[steam].protect2 = false
-			if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. steam) end
-			message("pm " .. steam .. " [" .. server.alertColour .. "]ALERT! Your second base is no longer bot protected![-]")
-		end
+		message("pm " .. steam .. " [" .. server.alertColour .. "]ALERT! Your second base is no longer bot protected![-]")
 
 		-- remove the player's waypoints
 		conn:execute("delete from waypoints where steam = " .. steam)

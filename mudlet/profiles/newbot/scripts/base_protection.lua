@@ -18,6 +18,7 @@ function baseProtection(steam, posX, posY, posZ)
 	local k, v, testMode, dist, size, alert, cmd
 
 	testMode = false
+	players[steam].inABase = false
 
 	-- check for and record any non-friend who gets within protectSize meters of a players /setbase coord
 	for k, v in pairs(players) do
@@ -26,6 +27,9 @@ function baseProtection(steam, posX, posY, posZ)
 			dist = distancexz(posX, posZ, v.homeX, v.homeZ)
 			size = tonumber(v.protectSize)
 
+			if (dist < size) then
+				players[steam].inABase = true
+			end
 
 			if (v.steam == steam and v.protectPaused) then
 				if (dist > 100) then
@@ -117,6 +121,10 @@ function baseProtection(steam, posX, posY, posZ)
 		if (math.abs(tonumber(v.home2X)) > 100 or math.abs(tonumber(v.home2Z)) > 100) then
 			dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, v.home2X, v.home2Z)
 			size = tonumber(v.protect2Size)
+
+			if (dist < size) then
+				players[steam].inABase = true
+			end
 
 			if (v.steam == steam and v.protect2Paused) then
 				if (dist > 100) then
