@@ -1,0 +1,7 @@
+This readme is empty atm.  Pester me to add some content.  I will get onto it when I have time and feel like doing the boring stuff xD
+
+Oh alright here's just a quick intro.
+
+These files handle all of the ingame commands to the bot and also processing of some general chat.  The file that kickstarts chat processing is gmsg_functions.lua  It contains the chat parser which creates and fills a temporary Lua table called chatvars with information and some results of processing the current chat line.  This is available globally to the bot so that all of the code in the chat folder can read it and do something with it or ignore it.  Passing the processed chat line info this way is very efficient as the bot doesn't need to re-process the chat other than doing simple string searches.  The chat line is passed to each chat file until one of them actions the line at which point processing of the current chat stops.
+
+Be very careful editing gmsg_functions (assuming you don't allow the bot to download new code from me) as this function is central to chat parsing and if you break it, your bot will not be able to respond to ingame commands.  The bot is very modular and it will still function but you won't be able to talk to it ingame and you will be very sad.

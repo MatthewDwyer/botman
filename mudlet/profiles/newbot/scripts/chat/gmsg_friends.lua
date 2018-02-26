@@ -1,18 +1,352 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local pid, pname, debug, max, result
+local shortHelp = false
+local skipHelp = false
+
+debug = false -- should be false unless testing
+
+if botman.debugAll then
+	debug = true
+end
+
 function gmsg_friends()
 	calledFunction = "gmsg_friends"
+	result = false
 
-	local pid, pname, debug, max
+-- ################## Friend command functions ##################
 
-	debug = false
+	local function cmd_AddFriend()
+		-- Say hello to my little friend
+		if (chatvars.words[1] == "friend") and (chatvars.playerid ~= 0) then
+			pname = string.sub(chatvars.command, string.find(chatvars.command, "friend ") + 7)
+			pname = string.trim(pname)
+			id = LookupPlayer(pname)
+
+			if (id == 0) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Imaginary friends don't count.  Pick someone that exists.[-]")
+				botman.faultyChat = false
+				return true
+			end
+
+			if (id == chatvars.playerid) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I know you are lonely but you're supposed to make friends with OTHER people.[-]")
+				botman.faultyChat = false
+				return true
+			end
+
+			-- add to friends table
+			if (friends[chatvars.playerid].friends == nil) then
+				friends[chatvars.playerid] = {}
+				friends[chatvars.playerid].friends = ""
+			end
+
+			if addFriend(chatvars.playerid, id, false) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is now recognised as a friend[-]")
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are already friends with " .. players[id].name .. ".[-]")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ForgetFriends()
+		-- FORGET FREEMAN!
+		if (chatvars.words[1] == "clear" and chatvars.words[2] == "friends") and (chatvars.playerid ~= 0) then
+			if (chatvars.accessLevel < 3) then
+				pname = string.sub(chatvars.command, string.find(chatvars.command, "friends") + 8)
+				pname = string.trim(pname)
+				id = LookupPlayer(pname)
+
+				if id ~= 0 then
+					-- reset the players friends list
+					friends[id] = {}
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " have no friends :([-]")
+
+					if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. id) end
+
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			-- reset the players friends list
+			friends[chatvars.playerid] = {}
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have no friends :([-]")
+
+			if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. chatvars.playerid) end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_FriendMe()
+		-- This is how admins make friends xD
+		if (chatvars.words[1] == "friendme") and (chatvars.playerid ~= 0) then
+			if (chatvars.accessLevel > 2) then
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
+			end
+
+			pname = string.sub(chatvars.command, string.find(chatvars.command, "friendme ") + 9)
+			pname = string.trim(pname)
+			id = LookupPlayer(pname)
+
+			if (id ~= 0) then
+				if (not isFriend(id, chatvars.playerid)) then
+					if friends[id].friends == "" then
+						friends[id].friends = chatvars.playerid
+					else
+						friends[id].friends = friends[id].friends .. "," .. chatvars.playerid
+					end
+
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " now lists you as a friend.[-]")
+					if botman.dbConnected then conn:execute("INSERT INTO friends (steam, friend) VALUES (" .. id .. "," .. chatvars.playerid .. ")") end
+
+					botman.faultyChat = false
+					return true
+				end
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are already a friend of " .. players[id].name .. ".[-]")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_FriendPlayerToPlayer()
+		if (chatvars.words[1] == "player") and string.find(chatvars.command, " friend ") and (chatvars.playerid ~= 0) then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			tmp = {}
+
+			tmp.pname = string.sub(chatvars.command, string.find(chatvars.command, "player ") + 7, string.find(chatvars.command, " friend ") - 1)
+			tmp.pname = string.trim(tmp.pname)
+			tmp.pid = LookupPlayer(tmp.pname)
+
+			tmp.fname = string.sub(chatvars.command, string.find(chatvars.command, " friend ") + 8)
+			tmp.fname = string.trim(tmp.fname)
+			tmp.fid = LookupPlayer(tmp.fname)
+
+			if (tmp.pid == 0) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No match for " .. tmp.pname .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+
+			if (tmp.fid == 0) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No match for " .. tmp.fname .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+
+			-- add to friends table
+			if (friends[tmp.pid].friends == nil) then
+				friends[tmp.pid] = {}
+				friends[tmp.pid].friends = ""
+			end
+
+			if addFriend(tmp.pid, tmp.fid, false) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.pid].name .. " is now friends with " .. players[tmp.fid].name .. "[-]")
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.pid].name .. " is already friends with " .. players[tmp.fid].name .. "[-]")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ListFriends()
+		-- List a player's bodies er.. I mean friends.
+		if (chatvars.words[1] == "friends") and (chatvars.playerid ~= 0) then
+			pid = chatvars.playerid
+
+			if chatvars.accessLevel > 2  and chatvars.words[2] ~= nil then
+				botman.faultyChat = false
+				return true
+			end
+
+			if chatvars.accessLevel < 3  and chatvars.words[2] ~= nil then
+				pname = string.sub(chatvars.command, string.find(chatvars.command, "friends") + 8, string.len(chatvars.command))
+				pid = LookupPlayer(pname)
+			end
+
+			-- pm a list of all the players friends
+			if (friends[pid] == 0) or friends[pid].friends == "" then
+				if (pid == chatvars.playerid) then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have no friends :([-]")
+				else
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[pid].name .. "  has no friends.[-]")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			friendlist = string.split(friends[pid].friends, ",")
+
+			if (pid == chatvars.playerid) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are friends with..[-]")
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[pid].name .. " is friends with..[-]")
+			end
+
+			max = table.maxn(friendlist)
+			for i=1,max,1 do
+				if (friendlist[i] ~= "") then
+					id = LookupPlayer(friendlist[i])
+					if id ~= 0 then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. "[-]")
+					end
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_Unfriend()
+		-- Say hello to the hand.
+		if (chatvars.words[1] == "unfriend") and (chatvars.playerid ~= 0) then
+			if chatvars.words[2] == nil then
+				botman.faultyChat = help("help friends", chatvars.playerid)
+				return true
+			end
+
+			pname = string.sub(chatvars.command, string.find(chatvars.command, "unfriend ") + 9)
+			pname = string.trim(pname)
+			id = LookupPlayer(pname)
+
+			-- unfriend someone
+			if (friends[chatvars.playerid] == nil or friends[chatvars.playerid] == {}) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have no friends :([-]")
+				botman.faultyChat = false
+				return true
+			end
+
+			if (id ~= 0) then
+				if botman.dbConnected then
+					-- check to see if this friend was auto friended and warn the player that they must unfriend them via the game.
+					cursor,errorString = conn:execute("select * from friends where steam = " .. chatvars.playerid .. " AND friend = " .. id .. " AND autoAdded = 1")
+					row = cursor:fetch({}, "a")
+
+					if row then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You need to unfriend " .. players[id].name .. " via the game since the bot can't unfriend them from there for you.[-]")
+						botman.faultyChat = false
+						return true
+					end
+				end
+
+				friendlist = string.split(friends[chatvars.playerid].friends, ",")
+
+				-- now simply rebuild friend skipping over the one we are removing
+				friends[chatvars.playerid].friends = ""
+				max = table.maxn(friendlist)
+				for i=1,max,1 do
+					if (friendlist[i] ~= id) and friendlist[i] ~= "" then
+						if friends[chatvars.playerid].friends == "" then
+							friends[chatvars.playerid].friends = friendlist[i]
+						else
+							friends[chatvars.playerid].friends = friends[chatvars.playerid].friends .. "," .. friendlist[i]
+						end
+					end
+				end
+
+				if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. chatvars.playerid .. " AND friend = " .. id) end
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are no longer friends with " .. players[id].name .. "[-]")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_UnfriendMe()
+		-- My friend doesn't like you.
+		-- I don't like you either.
+		if (chatvars.words[1] == "unfriendme") and (chatvars.playerid ~= 0) then
+			if (chatvars.accessLevel > 2) then
+				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
+			end
+
+			id = 0
+
+			if chatvars.words[2] ~= "everyone" then
+				pname = string.sub(chatvars.command, string.find(chatvars.command, "unfriendme ") + 12)
+				pname = string.trim(pname)
+				id = LookupPlayer(pname)
+			end
+
+			for k, v in pairs(friends) do
+				if (k == id) or chatvars.words[2] == "everyone" then
+					friendlist = string.split(friends[k].friends, ",")
+
+					-- now simply rebuild friend skipping over the one we are removing
+					friends[k].friends = ""
+					max = table.maxn(friendlist)
+					for i=1,max,1 do
+						if (friendlist[i] ~= chatvars.playerid) then
+							if friends[k].friends == "" then
+								friends[k].friends = friendlist[i]
+							else
+								friends[k].friends = friends[k].friends .. "," .. friendlist[i]
+							end
+						end
+					end
+
+					if (k == id) then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are off " .. players[id].name .. "'s friends list.[-]")
+						if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. k .. " AND friend = " .. chatvars.playerid) end
+						botman.faultyChat = false
+						return true
+					end
+				end
+			end
+
+			if (chatvars.words[2] == "everyone") then
+				if botman.dbConnected then conn:execute("DELETE FROM friends WHERE friend = " .. chatvars.playerid) end
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are off everyones friends list.[-]")
+				botman.faultyChat = false
+				return true
+			end
+		end
+	end
+
+-- ################## End of command functions ##################
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
@@ -20,317 +354,108 @@ function gmsg_friends()
 		return false
 	end
 
-if debug then dbug("debug friends") end
+	if (debug) then dbug("debug friends line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "player") and string.find(chatvars.command, " friend ") and (chatvars.playerid ~= 0) then
-		if (chatvars.playername ~= "Server") then
-			if (chatvars.accessLevel > 2) then
-				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-				botman.faultyChat = false
-				return true
-			end
-		else
-			if (chatvars.accessLevel > 2) then
-				irc_chat(chatvars.ircAlias, "This command is restricted.")
-				botman.faultyChat = false
-				return true
+	if chatvars.showHelp then
+		if chatvars.words[3] then
+			if not string.find(chatvars.words[3], "friends") then
+				skipHelp = true
 			end
 		end
 
-		tmp = {}
-
-		tmp.pname = string.sub(chatvars.command, string.find(chatvars.command, "player ") + 7, string.find(chatvars.command, " friend ") - 1)
-		tmp.pname = string.trim(tmp.pname)
-		tmp.pid = LookupPlayer(tmp.pname)
-
-		tmp.fname = string.sub(chatvars.command, string.find(chatvars.command, " friend ") + 8)
-		tmp.fname = string.trim(tmp.fname)
-		tmp.fid = LookupPlayer(tmp.fname)
-
-		if (tmp.pid == 0) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No match for " .. tmp.pname .. "[-]")
-			botman.faultyChat = false
-			return true
+		if chatvars.words[1] == "help" then
+			skipHelp = false
 		end
 
-		if (tmp.fid == 0) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No match for " .. tmp.fname .. "[-]")
-			botman.faultyChat = false
-			return true
+		if chatvars.words[1] == "list" then
+			shortHelp = true
 		end
-
-		-- add to friends table
-		if (friends[tmp.pid].friends == nil) then
-			friends[tmp.pid] = {}
-			friends[tmp.pid].friends = ""
-		end
-
-		if addFriend(tmp.pid, tmp.fid, false) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.pid].name .. " is now friends with " .. players[tmp.fid].name .. "[-]")
-		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.pid].name .. " is already friends with " .. players[tmp.fid].name .. "[-]")
-		end
-
-		botman.faultyChat = false
-		return true
 	end
 
 	if (debug) then dbug("debug friends line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "friend") and (chatvars.playerid ~= 0) then
-		pname = string.sub(chatvars.command, string.find(chatvars.command, "friend ") + 7)
-		pname = string.trim(pname)
-		id = LookupPlayer(pname)
-
-		if (id == 0) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Imaginary friends don't count.  Pick someone that exists.[-]")
-			botman.faultyChat = false
-			return true
-		end
-
-		if (id == chatvars.playerid) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I know you are lonely but you're supposed to make friends with OTHER people.[-]")
-			botman.faultyChat = false
-			return true
-		end
-
-		-- add to friends table
-		if (friends[chatvars.playerid].friends == nil) then
-			friends[chatvars.playerid] = {}
-			friends[chatvars.playerid].friends = ""
-		end
-
-		if addFriend(chatvars.playerid, id, false) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is now recognised as a friend[-]")
-		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are already friends with " .. players[id].name .. ".[-]")
-		end
-
-		botman.faultyChat = false
-		return true
+	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "Friend Commands:")
+		irc_chat(chatvars.ircAlias, "================")
+		irc_chat(chatvars.ircAlias, ".")
+		irc_chat(chatvars.ircAlias, "These commands are adding/removing or viewing player's friends.")
+		irc_chat(chatvars.ircAlias, ".")
 	end
 
 	if (debug) then dbug("debug friends line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "clear" and chatvars.words[2] == "friends") and (chatvars.playerid ~= 0) then
-		if (chatvars.accessLevel < 3) then
-			pname = string.sub(chatvars.command, string.find(chatvars.command, "friends") + 8)
-			pname = string.trim(pname)
-			id = LookupPlayer(pname)
-
-			if id ~= 0 then
-				-- reset the players friends list
-				friends[id] = {}
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " have no friends :([-]")
-
-				if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. id) end
-
-				botman.faultyChat = false
-				return true
-			end
-		end
-
-		-- reset the players friends list
-		friends[chatvars.playerid] = {}
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have no friends :([-]")
-
-		if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. chatvars.playerid) end
-
-		botman.faultyChat = false
-		return true
+	if chatvars.showHelpSections then
+		irc_chat(chatvars.ircAlias, "friends")
 	end
 
 	if (debug) then dbug("debug friends line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "unfriend") and (chatvars.playerid ~= 0) then
-		if chatvars.words[2] == nil then
-			botman.faultyChat = help("help friends", chatvars.playerid)
-			return true
-		end
+	result = cmd_FriendPlayerToPlayer()
 
-		pname = string.sub(chatvars.command, string.find(chatvars.command, "unfriend ") + 9)
-		pname = string.trim(pname)
-		id = LookupPlayer(pname)
-
-		-- unfriend someone
-		if (friends[chatvars.playerid] == nil or friends[chatvars.playerid] == {}) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have no friends :([-]")
-			botman.faultyChat = false
-			return true
-		end
-
-		if (id ~= 0) then
-			if botman.dbConnected then
-				-- check to see if this friend was auto friended and warn the player that they must unfriend them via the game.
-				cursor,errorString = conn:execute("select * from friends where steam = " .. chatvars.playerid .. " AND friend = " .. id .. " AND autoAdded = 1")
-				row = cursor:fetch({}, "a")
-
-				if row then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You need to unfriend " .. players[id].name .. " via the game since the bot can't unfriend them from there for you.[-]")
-					botman.faultyChat = false
-					return true
-				end
-			end
-
-
-			friendlist = string.split(friends[chatvars.playerid].friends, ",")
-
-			-- now simply rebuild friend skipping over the one we are removing
-			friends[chatvars.playerid].friends = ""
-			max = table.maxn(friendlist)
-			for i=1,max,1 do
-				if (friendlist[i] ~= id) and friendlist[i] ~= "" then
-					if friends[chatvars.playerid].friends == "" then
-						friends[chatvars.playerid].friends = friendlist[i]
-					else
-						friends[chatvars.playerid].friends = friends[chatvars.playerid].friends .. "," .. friendlist[i]
-					end
-				end
-			end
-
-			if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. chatvars.playerid .. " AND friend = " .. id) end
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are no longer friends with " .. players[id].name .. "[-]")
-		end
-
-		botman.faultyChat = false
-		return true
+	if result then
+		if debug then dbug("debug cmd_FriendPlayerToPlayer triggered") end
+		return result
 	end
 
 	if (debug) then dbug("debug friends line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "friendme") and (chatvars.playerid ~= 0) then
-		if (chatvars.accessLevel > 2) then
-			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-			botman.faultyChat = false
-			return true
-		end
+	result = cmd_AddFriend()
 
-		pname = string.sub(chatvars.command, string.find(chatvars.command, "friendme ") + 9)
-		pname = string.trim(pname)
-		id = LookupPlayer(pname)
-
-		if (id ~= 0) then
-			if (not isFriend(id, chatvars.playerid)) then
-				if friends[id].friends == "" then
-					friends[id].friends = chatvars.playerid
-				else
-					friends[id].friends = friends[id].friends .. "," .. chatvars.playerid
-				end
-
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " now lists you as a friend.[-]")
-				if botman.dbConnected then conn:execute("INSERT INTO friends (steam, friend) VALUES (" .. id .. "," .. chatvars.playerid .. ")") end
-
-				botman.faultyChat = false
-				return true
-			end
-		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are already a friend of " .. players[id].name .. ".[-]")
-		end
-
-		botman.faultyChat = false
-		return true
+	if result then
+		if debug then dbug("debug cmd_AddFriend triggered") end
+		return result
 	end
 
 	if (debug) then dbug("debug friends line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "friends") and (chatvars.playerid ~= 0) then
-		pid = chatvars.playerid
+	result = cmd_ForgetFriends()
 
-		if chatvars.accessLevel > 2  and chatvars.words[2] ~= nil then
-			botman.faultyChat = false
-			return true
-		end
-
-		if chatvars.accessLevel < 3  and chatvars.words[2] ~= nil then
-			pname = string.sub(chatvars.command, string.find(chatvars.command, "friends") + 8, string.len(chatvars.command))
-			pid = LookupPlayer(pname)
-		end
-
-		-- pm a list of all the players friends
-		if (friends[pid] == 0) or friends[pid].friends == "" then
-			if (pid == chatvars.playerid) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have no friends :([-]")
-			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[pid].name .. "  has no friends.[-]")
-			end
-
-			botman.faultyChat = false
-			return true
-		end
-
-		friendlist = string.split(friends[pid].friends, ",")
-
-		if (pid == chatvars.playerid) then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are friends with..[-]")
-		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[pid].name .. " is friends with..[-]")
-		end
-
-		max = table.maxn(friendlist)
-		for i=1,max,1 do
-			if (friendlist[i] ~= "") then
-				id = LookupPlayer(friendlist[i])
-				if id ~= 0 then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. "[-]")
-				end
-			end
-		end
-
-		botman.faultyChat = false
-		return true
+	if result then
+		if debug then dbug("debug cmd_ForgetFriends triggered") end
+		return result
 	end
 
 	if (debug) then dbug("debug friends line " .. debugger.getinfo(1).currentline) end
 
-	if (chatvars.words[1] == "unfriendme") and (chatvars.playerid ~= 0) then
-		if (chatvars.accessLevel > 2) then
-			message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-			botman.faultyChat = false
-			return true
-		end
+	result = cmd_Unfriend()
 
-		id = 0
-
-		if chatvars.words[2] ~= "everyone" then
-			pname = string.sub(chatvars.command, string.find(chatvars.command, "unfriendme ") + 12)
-			pname = string.trim(pname)
-			id = LookupPlayer(pname)
-		end
-
-		for k, v in pairs(friends) do
-			if (k == id) or chatvars.words[2] == "everyone" then
-				friendlist = string.split(friends[k].friends, ",")
-
-				-- now simply rebuild friend skipping over the one we are removing
-				friends[k].friends = ""
-				max = table.maxn(friendlist)
-				for i=1,max,1 do
-					if (friendlist[i] ~= chatvars.playerid) then
-						if friends[k].friends == "" then
-							friends[k].friends = friendlist[i]
-						else
-							friends[k].friends = friends[k].friends .. "," .. friendlist[i]
-						end
-					end
-				end
-
-				if (k == id) then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are off " .. players[id].name .. "'s friends list.[-]")
-					if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. k .. " AND friend = " .. chatvars.playerid) end
-					botman.faultyChat = false
-					return true
-				end
-			end
-		end
-
-		if (chatvars.words[2] == "everyone") then
-			if botman.dbConnected then conn:execute("DELETE FROM friends WHERE friend = " .. chatvars.playerid) end
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are off everyones friends list.[-]")
-			botman.faultyChat = false
-			return true
-		end
+	if result then
+		if debug then dbug("debug cmd_Unfriend triggered") end
+		return result
 	end
 
-if debug then dbug("debug friends end") end
+	if (debug) then dbug("debug friends line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_FriendMe()
+
+	if result then
+		if debug then dbug("debug cmd_FriendMe triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug friends line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ListFriends()
+
+	if result then
+		if debug then dbug("debug cmd_ListFriends triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug friends line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_UnfriendMe()
+
+	if result then
+		if debug then dbug("debug cmd_UnfriendMe triggered") end
+		return result
+	end
+
+	if debug then dbug("debug friends end") end
+
+	-- can't touch dis
+	if true then
+		return result
+	end
 end

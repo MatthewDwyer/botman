@@ -4,7 +4,11 @@
 local debug, steamID
 
 -- enable debug to see where the code is stopping. Any error will be after the last debug line.
-debug = false
+debug = false -- should be false unless testing
+
+if botman.debugAll then
+	debug = true
+end
 
 function updateBot(forced, steam)
 	if isFile(homedir .. "/blockScripts.txt") then
@@ -51,7 +55,9 @@ function checkScriptVersion(forced)
 		if split[1] == "version" then
 			version = split[2]
 
-			if server.botVersion ~= split[2] then
+			if server.botVersion ~= split[2] or botman.refreshCode then
+				botman.refreshCode = nil
+
 				if server.updateBot or forced then
 					irc_chat(server.ircMain, "Updating " .. server.botName .. " to version " .. version)
 					server.botVersion = version
@@ -340,6 +346,11 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
+	server.nextCodeReload = "/scripts/chat/gmsg_bot.lua"
+	dofile(homedir .. "/scripts/chat/gmsg_bot.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
 	server.nextCodeReload = "/custom/gmsg_custom.lua"
 	checkScript(homedir .. "/custom/gmsg_custom.lua")
 
@@ -402,6 +413,16 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 
 	server.nextCodeReload = "/scripts/chat/gmsg_shop.lua"
 	checkScript(homedir .. "/scripts/chat/gmsg_shop.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/chat/gmsg_stompy.lua"
+	checkScript(homedir .. "/scripts/chat/gmsg_stompy.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/chat/gmsg_djkrose.lua"
+	checkScript(homedir .. "/scripts/chat/gmsg_djkrose.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -503,6 +524,11 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 
 	server.nextCodeReload = "/scripts/timers/fifteen_second_timer.lua"
 	checkScript(homedir .. "/scripts/timers/fifteen_second_timer.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/timers/ten_second_timer.lua"
+	checkScript(homedir .. "/scripts/timers/ten_second_timer.lua")
 
 	server.nextCodeReload = ""
 if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -644,13 +670,13 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	enableTrigger("Collect Ban")
 	enableTrigger("Unban player")
 	enableTrigger("Overstack")
-	enableTrigger("Open Reserved Slot")
+--	enableTrigger("Open Reserved Slot")
 	enableTrigger("mem")
 	enableTrigger("lp")
 	enableTrigger("Tele")
 	enableTrigger("llp")
 	enableTrigger("Chat")
-	enableTrigger("log chat")
+--	enableTrigger("log chat")
 
 	enableTimer("EveryHalfMinute")
 	enableTimer("OneMinuteTimer")
@@ -663,6 +689,8 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	enableTimer("GimmeQueuedCommands")
 	enableTimer("ircQueue")
 	enableTimer("Every45Seconds")
+	enableTimer("Every15Seconds")
+	enableTimer("Every10Seconds")
 	enableTimer("TrackPlayer")
 	enableTimer("messageQueue")
 if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -761,6 +789,6 @@ function reloadBotScripts(skipTables)
 
 	server.reloadCodeSuccess = true
 
-if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+if (debug) then display("debug reloadBotScripts end \n") end
 
 end

@@ -1,18 +1,24 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug, r, l
+local shortHelp = false
+local skipHelp = false
+
+debug = false -- should be false unless testing
+
+if botman.debugAll then
+	debug = true
+end
+
 function gmsg_unslashed()
 	calledFunction = "gmsg_unslashed"
-
-	local debug, r, l
-	local shortHelp = false
-	local skipHelp = false
 
 	if chatvars.showHelp then
 		if chatvars.words[3] then
@@ -318,7 +324,7 @@ function gmsg_unslashed()
 				if l == 31 then message("say [" .. server.chatColour .. "]It'll be fine with a lick of paint.. and a total rebuild.[-]") end
 				if l == 32 then message("say [" .. server.chatColour .. "]YEEEEEEEAH!!![-]") end
 				if l == 33 then message("say [" .. server.chatColour .. "]Oh.. it wasn't a flatpack?  Well now it is! :D[-]") end
-				if l == 34 then message("say [" .. server.chatColour .. "]Curses!  It it hadn't been for that meddling " .. chatvars.playername .. " I'd have gotten away with it![-]") end
+				if l == 34 then message("say [" .. server.chatColour .. "]Curses!  If it hadn't been for that meddling " .. chatvars.playername .. " I'd have gotten away with it![-]") end
 				if l == 35 then message("say [" .. server.chatColour .. "]I didn't touch it! *edges away from it*[-]") end
 				if l == 36 then message("say [" .. server.chatColour .. "]It was just a prank bro[-]") end
 				if l == 37 then message("say [" .. server.chatColour .. "]Oh.. that was yours?[-]") end
@@ -472,6 +478,6 @@ function gmsg_unslashed()
 		return true
 	end
 
-if debug then dbug("debug unslashed end") end
+	if debug then dbug("debug unslashed end") end
 
 end

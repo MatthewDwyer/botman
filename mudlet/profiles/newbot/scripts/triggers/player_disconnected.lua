@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -57,6 +57,10 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 		botman.serverTime = string.sub(line, 1, 19)
 		botman.serverHour = string.sub(line, 12, 13)
 		botman.serverMinute = string.sub(line, 15, 16)
+
+		if server.dateTest == nil then
+			server.dateTest = string.sub(botman.serverTime, 1, 10)
+		end
 
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
 

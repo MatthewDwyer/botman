@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -20,7 +20,7 @@ function playerInfo(faultyInfo)
 	faultyPlayerinfoLine = line
 
 	local debug, id, name, posX, posY, posZ, lastX, lastY, lastZ, lastDist, mapCenterDistance, regionX, regionZ, chunkX, chunkZ
-	local deaths, zombies, kills, score, level, steam, steamtest, admin, lastGimme, lastLogin
+	local deaths, zombies, kills, score, level, steam, steamtest, admin, lastGimme, lastLogin, playerAccessLevel
 	local xPosOld, yPosOld, zPosOld, rawPosition, rawRotation, outsideMap, outsideMapDonor, fields, values, flag
 	local timestamp = os.time()
 	local region = ""
@@ -243,6 +243,12 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		CheckBlacklist(steam, IP)
 	end
 
+	if igplayers[steam].greet then
+		if tonumber(igplayers[steam].greetdelay) > 0 then
+			igplayers[steam].greetdelay = igplayers[steam].greetdelay -1
+		end
+	end
+
 if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if tonumber(ping) > 0 then
@@ -261,7 +267,9 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 	end
 
-	if accessLevel(steam) < 3 then
+	playerAccessLevel = accessLevel(steam)
+
+	if playerAccessLevel < 3 then
 		-- admins don't hack (no lie) ^^
 		players[steam].hackerScore = 0
 		admin = true
@@ -275,7 +283,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- ping kick
-	if not (whitelist[steam] or players[steam].donor or tonumber(players[steam].accessLevel) < 3) then
+	if not ((whitelist[steam] ~= nil) or players[steam].donor or tonumber(players[steam].accessLevel) < 3) then
 		if (server.pingKickTarget == "new" and players[steam].newPlayer) or server.pingKickTarget == "all" then
 			if tonumber(ping) < tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
 				igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) - 1
@@ -393,7 +401,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 							new = " [FF8C40]Player "
 						end
 
-						if accessLevel(steam) > 2 then
+						if playerAccessLevel > 2 then
 							irc_chat(server.ircMain, botman.serverTime .. " Player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
 							irc_chat(server.ircAlerts, botman.serverTime .. " Player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
 
@@ -561,9 +569,9 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if players[steam].showLocationMessages then
+	if server.showLocationMessages then
 		if igplayers[steam].alertLocation ~= currentLocation and currentLocation ~= false then
-			if locations[currentLocation].public or accessLevel(steam) < 3 then
+			if locations[currentLocation].public or playerAccessLevel < 3 then
 				message(string.format("pm %s [%s]Welcome to %s[-]", steam, server.chatColour, currentLocation))
 			end
 		end
@@ -572,12 +580,12 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if currentLocation == false then
-		if players[steam].showLocationMessages then
+		if server.showLocationMessages then
 			if igplayers[steam].alertLocation ~= "" then
 				if not locations[igplayers[steam].alertLocation] then
 					igplayers[steam].alertLocation = ""
 				else
-					if locations[igplayers[steam].alertLocation].public or accessLevel(steam) < 3 then
+					if locations[igplayers[steam].alertLocation].public or playerAccessLevel < 3 then
 						message(string.format("pm %s [%s]You have left %s[-]", steam, server.chatColour, igplayers[steam].alertLocation))
 					end
 				end
@@ -725,7 +733,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		players[steam].alertReset = true
 	end
 
-	if (igplayers[steam].greet == true) and tonumber(igplayers[steam].greetdelay) == 0 then
+	if (igplayers[steam].greet) and tonumber(igplayers[steam].greetdelay) == 0 then
 		igplayers[steam].greet = false
 
 		if server.welcome ~= nil then
@@ -778,7 +786,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]" .. server.rules .."[-]") .. "')") end
 		end
 
-		if server.warnBotReset == true and accessLevel(steam) == 0 then
+		if server.warnBotReset == true and playerAccessLevel == 0 then
 			if botman.dbConnected then
 				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]ALERT!  It appears that the server has been reset.[-]") .. "')")
 				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To reset me type " .. server.commandPrefix .. "reset bot.[-]") .. "')")
@@ -789,6 +797,9 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		if (not players[steam].santa) and specialDay == "christmas" then
 			if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]HO HO HO! Merry Christmas!  Type " .. server.commandPrefix .. "santa to open your Christmas stocking![-]") .. "')") end
 		end
+
+		-- run commands from the connectQueue now that the player has spawned and hopefully paying attention to chat
+		tempTimer( 3, [[processConnectQueue("]].. steam .. [[")]] )
 	end
 
 
@@ -925,7 +936,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				players[igplayers[steam].alertBaseID].exitY = intY
 				players[igplayers[steam].alertBaseID].exitZ = intZ
 
-				if (accessLevel(steam) < 3) then
+				if (playerAccessLevel < 3) then
 					message("pm " .. steam .. " [" .. server.chatColour .. "]You have set an exit teleport for " .. players[igplayers[steam].alertBaseID].name .. "'s base.[-]")
 				else
 					message("pm " .. steam .. " [" .. server.chatColour .. "]You have set an exit teleport for your base.  You can test it with " .. server.commandPrefix .. "test base.[-]")
@@ -979,7 +990,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				players[igplayers[steam].alertBaseID].exit2Y = intY
 				players[igplayers[steam].alertBaseID].exit2Z = intZ
 
-				if (accessLevel(steam) < 3) then
+				if (playerAccessLevel < 3) then
 					message("pm " .. steam .. " [" .. server.chatColour .. "]You have set an exit teleport for " .. players[igplayers[steam].alertBaseID].name .. "'s 2nd base.[-]")
 				else
 					message("pm " .. steam .. " [" .. server.chatColour .. "]You have set an exit teleport for your 2nd base.  You can test it with " .. server.commandPrefix .. "test base.[-]")
@@ -1035,7 +1046,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	x = math.floor(igplayers[steam].xPos / 512)
 	z = math.floor(igplayers[steam].zPos / 512)
 
-	if (accessLevel(steam) < 4) and server.enableRegionPM then
+	if (playerAccessLevel < 4) and server.enableRegionPM then
 		if (igplayers[steam].region ~= "r." .. x .. "." .. z .. ".7") then
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Region r." .. x .. "." .. z .. ".7[-]")
 		end
@@ -1078,7 +1089,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		players[steam].hackerTPScore = 0
 
 		if not isDestinationAllowed(steam, igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK) then
-			send ("tele " .. steam .. " 0 -1 0") -- if we don't know where to send the player, send them to the middle of the map. This should only happen rarely.
+			send ("tele " .. steam .. " 1 -1 0") -- if we don't know where to send the player, send them to the middle of the map. This should only happen rarely.
 			message("pm " .. steam .. " [" .. server.warnColour .. "]You have been moved to the center of the map.[-]")
 		else
 			send ("tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK)
@@ -1125,7 +1136,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		-- entered prison zone warning
 		if (distancexz( intX, intZ, locations["prison"].x, locations["prison"].z ) < tonumber(locations["prison"].size)) then
 			if (players[steam].alertPrison == true) then
-				if (not players[steam].prisoner) and players[steam].showLocationMessages then
+				if (not players[steam].prisoner) and server.showLocationMessages then
 					message("pm " .. steam .. " [" .. server.warnColour .. "]You have entered the prison.  Continue at your own risk.[-]")
 				end
 				players[steam].alertPrison = false
@@ -1160,12 +1171,12 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		tmp = {}
 		tmp.bootPlayer = false
 
-		if not locations[currentLocation].open and accessLevel(steam) > 2 then
+		if not locations[currentLocation].open and playerAccessLevel > 2 then
 			tmp.bootPlayer = true
 		end
 
 		-- check player level restrictions on the location
-		if (tonumber(locations[currentLocation].minimumLevel) > 0 or tonumber(locations[currentLocation].maximumLevel) > 0) and accessLevel(steam) > 2 then
+		if (tonumber(locations[currentLocation].minimumLevel) > 0 or tonumber(locations[currentLocation].maximumLevel) > 0) and playerAccessLevel > 2 then
 			if tonumber(locations[currentLocation].minimumLevel) > 0 and level < tonumber(locations[currentLocation].minimumLevel) then
 				tmp.bootPlayer = true
 			end
@@ -1218,27 +1229,33 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		if (tp ~= nil and teleports[tp].active == true) then
 			ownerid = LookupOfflinePlayer(teleports[tp].owner)
 			if (players[steam].walkies ~= true) then
-				if (accessLevel(steam) < 3) or (teleports[tp].owner == igplayers[steam].steam or teleports[tp].public == true or isFriend(ownerid, steam)) then
+				if ((playerAccessLevel < 3) or (teleports[tp].owner == igplayers[steam].steam or teleports[tp].public == true or isFriend(ownerid, steam))) and teleports[tp].active then
 					if match == 1 then
-						if isDestinationAllowed(steam, teleports[tp].dx, teleports[tp].dz) then
-							igplayers[steam].teleCooldown = 2
-							cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].dx) .. " " .. math.ceil(teleports[tp].dy) .. " " .. math.floor(teleports[tp].dz)
-							teleport(cmd, steam)
-						end
+						-- check access level restrictions on the teleport
+						if (playerAccessLevel >= tonumber(teleports[tp].minimumAccess) and playerAccessLevel <= tonumber(teleports[tp].maximumAccess)) or playerAccessLevel < 3 then
+							if isDestinationAllowed(steam, teleports[tp].dx, teleports[tp].dz) then
+								igplayers[steam].teleCooldown = 2
+								cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].dx) .. " " .. math.ceil(teleports[tp].dy) .. " " .. math.floor(teleports[tp].dz)
+								teleport(cmd, steam)
 
-						faultyPlayerinfo = false
-						return
+								faultyPlayerinfo = false
+								return
+							end
+						end
 					end
 
 					if match == 2 and teleports[tp].oneway == false then
-						if isDestinationAllowed(steam, teleports[tp].x, teleports[tp].z) then
-							igplayers[steam].teleCooldown = 2
-							cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
-							teleport(cmd, steam)
-						end
+						-- check access level restrictions on the teleport
+						if (playerAccessLevel >= tonumber(teleports[tp].minimumAccess) and playerAccessLevel <= tonumber(teleports[tp].maximumAccess)) or playerAccessLevel < 3 then
+							if isDestinationAllowed(steam, teleports[tp].x, teleports[tp].z) then
+								igplayers[steam].teleCooldown = 2
+								cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
+								teleport(cmd, steam)
 
-						faultyPlayerinfo = false
-						return
+								faultyPlayerinfo = false
+								return
+							end
+						end
 					end
 				end
 			end
@@ -1262,12 +1279,12 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 						igplayers[steam].teleCooldown = 2
 						cmd = "tele " .. steam .. " " .. math.floor(waypoints[tmp.linkedID].x) .. " " .. math.ceil(waypoints[tmp.linkedID].y) .. " " .. math.floor(waypoints[tmp.linkedID].z)
 						teleport(cmd, steam)
-					end
 
-					faultyPlayerinfo = false
-					return
+						faultyPlayerinfo = false
+						return
+					end
 				else
-					if accessLevel(steam) < 3 then
+					if playerAccessLevel < 3 then
 						igplayers[steam].teleCooldown = 2
 						cmd = "tele " .. steam .. " " .. math.floor(waypoints[tmp.linkedID].x) .. " " .. math.ceil(waypoints[tmp.linkedID].y) .. " " .. math.floor(waypoints[tmp.linkedID].z)
 						teleport(cmd, steam)
@@ -1284,7 +1301,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	-- left reset zone warning
 	if (not resetZone) then
-		if (players[steam].alertReset == false) and players[steam].showLocationMessages then
+		if (players[steam].alertReset == false) then
 			message("pm " .. steam .. " [" .. server.chatColour .. "]You are out of the reset zone.[-]")
 			players[steam].alertReset = true
 			faultyPlayerinfo = false
@@ -1294,7 +1311,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	-- entered reset zone warning
 	if (resetZone) then
-		if (players[steam].alertReset == true) and players[steam].showLocationMessages then
+		if (players[steam].alertReset == true) then
 			message("pm " .. steam .. " [" .. server.warnColour .. "]You are in a reset zone. Don't build here.[-]")
 			players[steam].alertReset = false
 			faultyPlayerinfo = false
@@ -1395,22 +1412,21 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		igplayers[steam].rawPosition = rawPosition
 	end
 
-
-	if igplayers[steam].rawRotation ~= rawRotation and rawRotation ~= nil then
-		igplayers[steam].rawRotation = rawRotation
-
-		-- player has moved their head so they must have spawned.  We can greet them now.
-		if igplayers[steam].greet then
-			igplayers[steam].greetdelay = 0
-		end
+	if igplayers[steam].greet and tonumber(igplayers[steam].greetdelay) > 0 and igplayers[steam].spawnedInWorld then
+		-- Player has spawned.  We can greet them now and do other stuff that waits for spawn
+		igplayers[steam].greetdelay = 0
 
 		if tonumber(igplayers[steam].teleCooldown) > 100 then
 			igplayers[steam].teleCooldown = 0
 		end
 	end
 
+	if (igplayers[steam].rawRotation ~= rawRotation) and rawRotation ~= nil then
+		igplayers[steam].rawRotation = rawRotation
+	end
 
-	if tonumber(botman.playersOnline) >= tonumber(server.maxPlayers) and (accessLevel(steam) > 3) and server.idleKick then
+
+	if tonumber(botman.playersOnline) >= tonumber(server.maxPlayers) and (playerAccessLevel > 3) and server.idleKick then
 		if (igplayers[steam].afk - os.time() < 0) then
 			kick(steam, "Server is full.  You were kicked because you idled too long, but you can rejoin at any time. Thanks for playing! xD")
 		end

@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -70,8 +70,13 @@ function setupArenaPlayers(pid)
 			arenaPlayers[tostring(botman.arenaCount)].id = k
 
 			-- give arena players stuff
-			send("give " .. v.id .. " firstAidBandage 2")
-  			send("give " .. v.id .. " meatStew 1")
+			if server.stompy then
+				send("bc-give " .. k .. " firstAidBandage /c=2")
+				send("bc-give " .. k .. " meatStew /c=1")
+			else
+				send("give " .. k .. " firstAidBandage 2")
+				send("give " .. k .. " meatStew 1")
+			end
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 2
@@ -82,7 +87,11 @@ function setupArenaPlayers(pid)
 			if (r == 2) then pointyStick = "huntingKnife" end
 			if (r == 3) then pointyStick = "clubSpiked"	 end
 
-			send("give " .. v.id .. " " .. pointyStick .. " 1")
+			if server.stompy then
+				send("bc-give " .. k .. " " .. pointyStick .. " /c=1 /q=600")
+			else
+				send("give " .. k .. " " .. pointyStick .. " 1")
+			end
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -230,7 +239,7 @@ function gimme(pid)
 
 	local cmd, maxGimmies, dist, r, rows, row, prize, category, entity, description, quality
 	local pname = players[pid].name
-	local specialDay = ""
+--	local specialDay = ""
 	local playerid = igplayers[pid].id
 	local zombies = tonumber(igplayers[pid].zombies)
 
@@ -253,7 +262,7 @@ function gimme(pid)
 
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
-	if (string.find(botman.serverTime, "02-14", 5, 10)) then specialDay = "valentine" end
+--	if (string.find(botman.serverTime, "02-14", 5, 10)) then specialDay = "valentine" end
 
 	if (botman.faultyGimme == true) then
 		dbugi("Fault occurred in Gimme #: " .. botman.faultyGimmeNumber)
@@ -281,6 +290,8 @@ function gimme(pid)
 
 	if server.gimmeZombies then
 		r = math.random(1, botman.maxGimmeZombies + 30)
+
+
 	else
 		r = rand(5)
 
@@ -372,114 +383,159 @@ function gimme(pid)
 			if (zombies > 4999) then spawnCount = rand(8) end
 		end
 
-if entity == "zombieferal" then
-	spawnCount = 1
-end
-
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
-
-		coffee = ""
---		if (tonumber(server.gameHour) > 21 or tonumber(server.gameHour) < 5) then coffee = "caffeinated " end
 
 		-- set up critter description
 		if (spawnCount == 1) then
 			if (descriptor == 1) then
-				description = "a surprised " .. coffee
+				description = "a surprised "
 			end
 
 			if (descriptor == 2) then
-				description = "an angry " .. coffee
+				description = "an angry "
 			end
 
 			if (descriptor == 3) then
-				description = "a very dangerous " .. coffee
+				description = "a very dangerous "
 			end
 
 			if (descriptor == 4) then
-				description = "a murderous " .. coffee
+				description = "a murderous "
 			end
 
 			if (descriptor == 5) then
-				description = "a pissed off " .. coffee
+				description = "a pissed off "
 			end
 
 			if (descriptor == 6) then
-				description = "an adorable " .. coffee
+				description = "an adorable "
 			end
 		else
 			if (descriptor == 1) then
-				description = "surprised " .. coffee
+				description = "surprised "
 			end
 
 			if (descriptor == 2) then
-				description = "angry " .. coffee
+				description = "angry "
 			end
 
 			if (descriptor == 3) then
-				description = "very dangerous " .. coffee
+				description = "very dangerous "
 			end
 
 			if (descriptor == 4) then
-				description = "murderous " .. coffee
+				description = "murderous "
 			end
 
 			if (descriptor == 5) then
-				description = "pissed off " .. coffee
+				description = "pissed off "
 			end
 
 			if (descriptor == 6) then
-				description = "adorable " .. coffee
+				description = "adorable "
+			end
+		end
+
+		if (specialDay == "christmas") then
+			if (spawnCount == 1) then
+				if (descriptor == 1) then
+					description = "a jolly "
+				end
+
+				if (descriptor == 2) then
+					description = "an over-weight "
+				end
+
+				if (descriptor == 3) then
+					description = "a very festive "
+				end
+
+				if (descriptor == 4) then
+					description = "a party "
+				end
+
+				if (descriptor == 5) then
+					description = "a rather drunk "
+				end
+
+				if (descriptor == 6) then
+					description = "a red nosed "
+				end
+			else
+				if (descriptor == 1) then
+					description = "jolly "
+				end
+
+				if (descriptor == 2) then
+					description = "santa "
+				end
+
+				if (descriptor == 3) then
+					description = "cheerful "
+				end
+
+				if (descriptor == 4) then
+					description = "celebrating "
+				end
+
+				if (descriptor == 5) then
+					description = "drunk "
+				end
+
+				if (descriptor == 6) then
+					description = "partying "
+				end
 			end
 		end
 
 		if (specialDay == "valentine") then
 			if (spawnCount == 1) then
 				if (descriptor == 1) then
-					description = "a romantic " .. coffee
+					description = "a romantic "
 				end
 
 				if (descriptor == 2) then
-					description = "an attractive " .. coffee
+					description = "an attractive "
 				end
 
 				if (descriptor == 3) then
-					description = "a very special " .. coffee
+					description = "a very special "
 				end
 
 				if (descriptor == 4) then
-					description = "a besotted " .. coffee
+					description = "a besotted "
 				end
 
 				if (descriptor == 5) then
-					description = "a single and looking " .. coffee
+					description = "a single and looking "
 				end
 
 				if (descriptor == 6) then
-					description = "an eligible " .. coffee
+					description = "an eligible "
 				end
 			else
 				if (descriptor == 1) then
-					description = "eligible " .. coffee
+					description = "eligible "
 				end
 
 				if (descriptor == 2) then
-					description = "super sexy " .. coffee
+					description = "super sexy "
 				end
 
 				if (descriptor == 3) then
-					description = "lusty " .. coffee
+					description = "lusty "
 				end
 
 				if (descriptor == 4) then
-					description = "infatuated " .. coffee
+					description = "infatuated "
 				end
 
 				if (descriptor == 5) then
-					description = "approachable " .. coffee
+					description = "approachable "
 				end
 
 				if (descriptor == 6) then
-					description = "gorgeous " .. coffee
+					description = "gorgeous "
 				end
 			end
 		end
@@ -712,9 +768,17 @@ end
 		end
 
 		if qual ~= 0 then
-			send("give " .. pid .. " " .. prize .. " " .. qty .. " " .. quality)
+			if server.stompy then
+				send("bc-give " .. pid .. " " .. prize .. " /c=" .. qty .. " /q=" .. quality)
+			else
+				send("give " .. pid .. " " .. prize .. " " .. qty .. " " .. quality)
+			end
 		else
-			send("give " .. pid .. " " .. prize .. " " .. qty)
+			if server.stompy then
+				send("bc-give " .. pid .. " " .. prize .. " /c=" .. qty)
+			else
+				send("give " .. pid .. " " .. prize .. " " .. qty)
+			end
 		end
 
 		if botman.getMetrics then
@@ -806,7 +870,7 @@ end
 			if (r == 6) then litter = "bulletCasing" end
 			if (r == 7) then litter = "emptyJar" end
 
-			cmd = "give " .. playerid .. " " .. litter .. " 1"
+			cmd = "give " .. pid .. " " .. litter .. " 1"
 			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 		end
 
@@ -833,7 +897,11 @@ end
 
 		for k, v in pairs(igplayers) do
 			if (k ~= pid) then
-				send("give " .. k .. " " .. prize .. " 1")
+				if server.stompy then
+					send("bc-give " .. k .. " " .. prize .. " /c=1")
+				else
+					send("give " .. k .. " " .. prize .. " 1")
+				end
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -908,7 +976,7 @@ end
 	if (r == botman.maxGimmeZombies + 7) then
 		tmp = {}
 		for k,v in pairs(gimmeZombies) do
-			if string.find(v.zombie, "zombiedog") then
+			if string.find(v.zombie, "ZombieDog") then
 				tmp.entityid = v.entityID
 			end
 		end
@@ -939,7 +1007,7 @@ end
 	if (r == botman.maxGimmeZombies + 8) then
 		tmp = {}
 		for k,v in pairs(gimmeZombies) do
-			if string.find(v.zombie, "snow") then
+			if string.find(v.zombie, "Snow") then
 				tmp.entityid = v.entityID
 			end
 		end
@@ -989,7 +1057,7 @@ end
 		end
 
 		for i = 1, spawnCount do
-			cmd = "give " .. playerid .. " potato 1"
+			cmd = "give " .. pid .. " potato 1"
 			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 		end
 
@@ -1006,7 +1074,12 @@ end
 			message("pm " .. pid .. " [" .. server.chatColour .. "]" .. pname .. " voted first place WINNER! Here's your trophy.[-]")
 		end
 
-		cmd = "give " .. playerid .. " trophy 1"
+		if server.stompy then
+			send("bc-give " .. pid .. " trophy /c=1")
+		else
+			cmd = "give " .. pid .. " trophy 1"
+		end
+
 		conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 
 		botman.faultyGimme = false
@@ -1069,7 +1142,7 @@ end
 
 		tmp = {}
 		for k,v in pairs(gimmeZombies) do
-			if string.find(v.zombie, "zombiedog") then
+			if string.find(v.zombie, "ZombieDog") then
 				tmp.entityid = v.entityID
 			end
 		end
@@ -1105,7 +1178,7 @@ end
 		end
 
 		for i = 1, spawnCount do
-			cmd = "give " .. playerid .. " turd 1"
+			cmd = "give " .. pid .. " turd 1"
 			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 		end
 
@@ -1181,7 +1254,7 @@ end
 		if (specialDay == "valentine") then
 			z = rand(4)
 			if z == 1 then
-				send("give " .. playerid .. " yellowflower 1")
+				send("give " .. pid .. " yellowflower 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1189,7 +1262,7 @@ end
 			end
 
 			if z == 2 then
-				send("give " .. playerid .. " plantChrysanthemum 1")
+				send("give " .. pid .. " plantChrysanthemum 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1197,7 +1270,7 @@ end
 			end
 
 			if z == 3 then
-				send("give " .. playerid .. " goldenrod 1")
+				send("give " .. pid .. " goldenrod 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1205,7 +1278,7 @@ end
 			end
 
 			if z == 4 then
-				send("give " .. playerid .. " cotton 1")
+				send("give " .. pid .. " cotton 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1225,10 +1298,10 @@ end
 
 				if (specialDay == "valentine") then
 					z = rand(4)
-					if z == 1 then cmd = "give " .. playerid .. " yellowflower 1" end
-					if z == 2 then cmd = "give " .. playerid .. " plantChrysanthemum 1" end
-					if z == 3 then cmd = "give " .. playerid .. " goldenrod 1" end
-					if z == 4 then cmd = "give " .. playerid .. " cotton 1" end
+					if z == 1 then cmd = "give " .. pid .. " yellowflower 1" end
+					if z == 2 then cmd = "give " .. pid .. " plantChrysanthemum 1" end
+					if z == 3 then cmd = "give " .. pid .. " goldenrod 1" end
+					if z == 4 then cmd = "give " .. pid .. " cotton 1" end
 
 					conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 				end

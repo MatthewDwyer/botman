@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -10,11 +10,12 @@
 -- if you have oper status on your irc server, you can set channel modes.  This one sets flood protection to 5000 chars in 1 second which should prevent the bot from getting banned for flooding.
 -- /mode #channel +f [5000t#b]:1
 
-local debug = false
+local debug = false -- should be false unless testing
 
 function getNick()
 	server.ircBotName = ircGetNick()
 end
+
 
 function joinIRCServer()
 	local channels = {}
@@ -22,6 +23,11 @@ function joinIRCServer()
 	if server.ircPort == "" then
 		return
 	end
+
+	-- delete some Mudlet files that store IP and other info forcing Mudlet to regenerate them.
+	os.remove(homedir .. "/irc_host")
+	os.remove(homedir .. "/irc_port")
+	os.remove(homedir .. "/irc_server_port")
 
 	if setIrcServer ~= nil then
 		table.insert(channels, server.ircMain)
@@ -43,19 +49,29 @@ function joinIRCServer()
 		end
 
 		ircSetChannel(server.ircMain)
+		ircSaveSessionConfigs()
 	end
 
-
-
+	--tempTimer( 10, [[ircWhoIs(Smegz0r)]] )
 end
 
+
 function irc_chat(name, message)
+	local multilineText, k, v
+
 	-- Don't allow the bot to command itself
 	if name == server.botName then
 		return
 	end
 
-	conn:execute("INSERT INTO ircQueue (name, command) VALUES ('" .. name .. "','" .. escape(message) .. "')")
+	-- replace any placeholder text with actual values
+	message = message:gsub("{#}", server.commandPrefix)
+
+	multilineText = string.split(message, "\n")
+
+	for k,v in pairs(multilineText) do
+		conn:execute("INSERT INTO ircQueue (name, command) VALUES ('" .. name .. "','" .. escape(v) .. "')")
+	end
 end
 
 
@@ -153,9 +169,9 @@ function irc_ListBases(steam)
 	local msg
 
 	if steam ~= nil then
-		cursor,errorString = conn:execute("SELECT steam, name, homeX, homeY, homeZ, home2X, home2Y, home2Z, protect, protect2, protectSize, protect2Size from players where steam = " .. steam .. " order by name")
+		cursor,errorString = conn:execute("SELECT steam, name, bedX, bedY, bedZ, homeX, homeY, homeZ, home2X, home2Y, home2Z, protect, protect2, protectSize, protect2Size from players where steam = " .. steam .. " order by name")
 	else
-		cursor,errorString = conn:execute("SELECT steam, name, homeX, homeY, homeZ, home2X, home2Y, home2Z, protect, protect2, protectSize, protect2Size from players order by name")
+		cursor,errorString = conn:execute("SELECT steam, name, bedX, bedY, bedZ, homeX, homeY, homeZ, home2X, home2Y, home2Z, protect, protect2, protectSize, protect2Size from players order by name")
 	end
 
 	row = cursor:fetch({}, "a")
@@ -176,6 +192,12 @@ function irc_ListBases(steam)
 		else
 			msg = msg .. row.homeX .. " " .. row.homeY .. " " .. row.homeZ .. " " .. prot1 .. " (" .. row.protectSize .. ") "
 			msg = msg .. row.home2X .. " " .. row.home2Y .. " " .. row.home2Z .. " " .. prot2 .. " (" .. row.protect2Size .. ") "
+		end
+
+		if tonumber(row.bedX) == 0 and tonumber(row.bedY) == 0 and tonumber(row.bedZ) == 0 then
+			msg = msg .. " no bedroll recorded"
+		else
+			msg = msg .. " bedroll " .. row.bedX .. " " .. row.bedY .. " " .. row.bedZ
 		end
 
 		if irc_params.filter == "protected" and (row.protect == true or row.protect2 == true) then
@@ -460,6 +482,25 @@ function irc_PlayerShortInfo()
 	irc_chat(irc_params.name, seen(irc_params.pid))
 	irc_chat(irc_params.name, "Total time played: " .. days .. " days " .. hours .. " hours " .. minutes .. " minutes " .. time .. " seconds")
 	if players[irc_params.pid].names then irc_chat(irc_params.name, "Has played as " .. players[irc_params.pid].names) end
+
+	if players[irc_params.pid].bedX ~= 0 and players[irc_params.pid].bedY ~= 0 and players[irc_params.pid].bedZ ~= 0 then
+		irc_chat(irc_params.name, "Has a bedroll at " .. players[irc_params.pid].bedX .. " " .. players[irc_params.pid].bedY .. " " .. players[irc_params.pid].bedZ )
+	else
+		irc_chat(irc_params.name, "Does not have a bedroll down or its location is not recorded yet.")
+	end
+
+	if players[irc_params.pid].homeX ~= 0 and players[irc_params.pid].homeY ~= 0 and players[irc_params.pid].homeZ ~= 0 then
+		irc_chat(irc_params.name, "Base one is at " .. players[irc_params.pid].homeX .. " " .. players[irc_params.pid].homeY .. " " .. players[irc_params.pid].homeZ )
+	else
+		irc_chat(irc_params.name, "Has not set base one.")
+	end
+
+	if players[irc_params.pid].home2X ~= 0 and players[irc_params.pid].home2Y ~= 0 and players[irc_params.pid].home2Z ~= 0 then
+		irc_chat(irc_params.name, "Base two is at " .. players[irc_params.pid].home2X .. " " .. players[irc_params.pid].home2Y .. " " .. players[irc_params.pid].home2Z )
+	else
+		irc_chat(irc_params.name, "Has not set base two.")
+	end
+
 	if players[irc_params.pid].hackerScore then irc_chat(irc_params.name, "Hacker score: " .. players[irc_params.pid].hackerScore) end
 
 	if players[irc_params.pid].timeout == true then
@@ -1099,6 +1140,24 @@ function irc_playerStatus()
 
 	if (players[irc_params.pid].protect2Paused ~= nil) then
 		irc_chat(irc_params.name, "Protection is paused")
+	end
+
+	if players[irc_params.pid].bedX ~= 0 and players[irc_params.pid].bedY ~= 0 and players[irc_params.pid].bedZ ~= 0 then
+		irc_chat(irc_params.name, "Has a bedroll at " .. players[irc_params.pid].bedX .. " " .. players[irc_params.pid].bedY .. " " .. players[irc_params.pid].bedZ )
+	else
+		irc_chat(irc_params.name, "Does not have a bedroll down or its location is not recorded yet.")
+	end
+
+	if players[irc_params.pid].homeX ~= 0 and players[irc_params.pid].homeY ~= 0 and players[irc_params.pid].homeZ ~= 0 then
+		irc_chat(irc_params.name, "Base one is at " .. players[irc_params.pid].homeX .. " " .. players[irc_params.pid].homeY .. " " .. players[irc_params.pid].homeZ )
+	else
+		irc_chat(irc_params.name, "Has not set base one.")
+	end
+
+	if players[irc_params.pid].home2X ~= 0 and players[irc_params.pid].home2Y ~= 0 and players[irc_params.pid].home2Z ~= 0 then
+		irc_chat(irc_params.name, "Base two is at " .. players[irc_params.pid].home2X .. " " .. players[irc_params.pid].home2Y .. " " .. players[irc_params.pid].home2Z )
+	else
+		irc_chat(irc_params.name, "Has not set base two.")
 	end
 
 	irc_chat(irc_params.name, " ")

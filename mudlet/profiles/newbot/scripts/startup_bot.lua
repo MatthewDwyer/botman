@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	          This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -14,10 +14,11 @@ local debug
 -- record start and end execution times of code and report it.  At the moment I'm sending the timing info to the bot's lists window.
 benchmarkBot = false
 
+
 function dbugi(text)
-	-- send text to the watch irc channel
+	-- send text to the special debug irc channel
 	if server ~= nil then
-		irc_chat(server.ircWatch, text)
+		irc_chat(server.ircMain .. "_debug", text)
 	end
 end
 
@@ -33,6 +34,7 @@ function dbug(text)
 		windowMessage(server.windowLists, text .. "\n")
 	end
 end
+
 
 function checkData()
 	local benchStart = os.clock()
@@ -52,7 +54,7 @@ function checkData()
 	end
 
 	if (botman.playersOnline > 0) then
-		if 	tablelength(igplayers) == 0 then
+		if tablelength(igplayers) == 0 then
 			igplayers = {}
 			send("lp")
 		end
@@ -147,16 +149,15 @@ function login()
 		reloadBotScripts()
 	end
 
-	-- if isFile(homedir .. "/botman.ini") then
-		-- dofile(homedir .. "/botman.ini")
-	-- end
-
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	tempTimer( 120, [[checkData()]] )
 	stackLimits = {}
 
 	if (botman.botStarted == nil) then
+		registerAnonymousEventHandler("sysExitEvent", "onSysExit")
+		registerAnonymousEventHandler("sysIrcStatusMessage", "ircStatusMessage")
+
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		botman.botStarted = os.time()
 		initBot()
@@ -203,7 +204,10 @@ function login()
 
 		if closeMudlet ~= nil then
 			botman.customMudlet = true
-		 	--loadWindowLayout()
+		end
+
+		if loadWindowLayout ~= nil then
+			loadWindowLayout()
 		end
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end

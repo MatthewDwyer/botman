@@ -1,11 +1,18 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
+
+local shortHelp = false
+local skipHelp = false
+local tmp = {}
+local debug
+
+debug = false -- should be false unless testing
 
 math.randomseed( os.time() )
 
@@ -116,13 +123,6 @@ end
 
 function gmsg_coppi()
 	calledFunction = "gmsg_coppi"
-
-	local shortHelp = false
-	local skipHelp = false
-	local tmp = {}
-	local debug
-
-	debug = false
 
 	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
 
@@ -466,7 +466,7 @@ function gmsg_coppi()
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 99 and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
+				if accessLevel(k) == 99 and string.sub(players[k].chatColour, 1, 6) == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 
 					if botman.getMetrics then
@@ -521,7 +521,7 @@ function gmsg_coppi()
 				end
 
 				for k,v in pairs(igplayers) do
-					if accessLevel(k) == 90 and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
+					if accessLevel(k) == 90 and string.sub(players[k].chatColour, 1, 6) == "FFFFFF" then
 						send("cpc " .. k .. " " .. tmp.colour .. " 1")
 
 						if botman.getMetrics then
@@ -585,7 +585,7 @@ function gmsg_coppi()
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 2 and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
+				if accessLevel(k) == 2 and string.sub(players[k].chatColour, 1, 6) == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 
 					if botman.getMetrics then
@@ -606,7 +606,7 @@ function gmsg_coppi()
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 1 and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
+				if accessLevel(k) == 1 and string.sub(players[k].chatColour, 1, 6) == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 
 					if botman.getMetrics then
@@ -627,7 +627,7 @@ function gmsg_coppi()
 			end
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 0 and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
+				if accessLevel(k) == 0 and string.sub(players[k].chatColour, 1, 6) == "FFFFFF" then
 					send("cpc " .. k .. " " .. tmp.colour .. " 1")
 
 					if botman.getMetrics then

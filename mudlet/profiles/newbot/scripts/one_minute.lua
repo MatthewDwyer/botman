@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -34,7 +34,7 @@ end
 
 function everyMinute()
 	local words, word, rday, rhour, rmin, k,v, debug
-	local diff, days, hours, restartTime, zombiePlayers
+	local diff, days, hours, restartTime, zombiePlayers, tempDate
 
 	windowMessage(server.windowDebug, "60 second timer\n")
 
@@ -216,8 +216,8 @@ function everyMinute()
 	-- report excessive falling blocks
 	for k,v in pairs(fallingBlocks) do
 		if tonumber(v.count) > 99 then
-			irc_chat(server.ircAlerts, v.count .. " blocks fell off the world in region " .. k .. " ( " .. v.x .. " " .. v.y .. " " .. v.z .. " ) in the last minute.")
-			alertAdmins(v.count .. " blocks fell off the world in region " .. k .. " ( " .. v.x .. " " .. v.y .. " " .. v.z .. " ) in the last minute.", "warn")
+			irc_chat(server.ircAlerts, v.count .. " blocks fell off the world in region " .. k .. " ( " .. v.x .. " " .. v.y .. " " .. v.z .. " )")
+			alertAdmins(v.count .. " blocks fell off the world in region " .. k .. " ( " .. v.x .. " " .. v.y .. " " .. v.z .. " )", "warn")
 		end
 	end
 
@@ -236,6 +236,21 @@ function everyMinute()
 
 	-- save some server fields
 	if botman.dbConnected then conn:execute("UPDATE server SET lottery = " .. server.lottery .. ", date = '" .. server.dateTest .. "', ircBotName = '" .. server.ircBotName .. "'") end
+
+	tempDate = os.date("%Y-%m-%d", os.time())
+
+	if botman.botDate == nil then
+		botman.botDate = os.date("%Y-%m-%d", os.time())
+		botman.botTime = os.date("%H:%M:%S", os.time())
+	end
+
+	-- if the bot's local date has changed, run NewBotDay
+	if tempDate ~= botman.botDate then
+		newBotDay()
+	end
+
+	botman.botDate = os.date("%Y-%m-%d", os.time())
+	botman.botTime = os.date("%H:%M:%S", os.time())
 
 	if debug then dbug("debug one minute timer end") end
 end

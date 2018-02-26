@@ -1,11 +1,30 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
+
+
+function irc_HelpAccess()
+	local id
+	id = LookupOfflinePlayer(irc_params.name, "all")
+
+	irc_chat(irc_params.name, "Access Levels:")
+	irc_chat(irc_params.name, "==============")
+	irc_chat(irc_params.name, "Access levels control who can do what.  Commands that are above a players level return unknown command.")
+	irc_chat(irc_params.name, "Level 0 server owners")
+	irc_chat(irc_params.name, "Level 1 admins")
+	irc_chat(irc_params.name, "Level 2 mods")
+	irc_chat(irc_params.name, "Level 10 Donors")
+	irc_chat(irc_params.name, "Level 90 Regular players")
+	irc_chat(irc_params.name, "Level 99 New players")
+	irc_chat(irc_params.name, ".")
+
+	return
+end
 
 
 function irc_commands()
@@ -20,6 +39,7 @@ function irc_commands()
 
 	irc_chat(irc_params.name, "help (display this list)")
 	irc_chat(irc_params.name, "help manual (New to the bot and IRC?  Read this.)")
+	irc_chat(irc_params.name, "help setup (Stuff to do when the bot is new.)")
 
 	irc_chat(irc_params.name, "fps (display current server performance metrics)")
 	irc_chat(irc_params.name, "say {something} to talk to players ingame")
@@ -120,8 +140,8 @@ function irc_Manual()
 	irc_chat(irc_params.name, string.format("The %s channel lists events such as new players, deaths, pvp's, hackers and more.", server.ircAlerts))
 	irc_chat(irc_params.name, string.format("The %s channel lists live inventory for new and watched players.  Players aren't watched forever.", server.ircWatch))
 	irc_chat(irc_params.name, string.format("The %s channel (this one) is a private chat between you and the bot *waves*", server.ircBotName))
-	irc_chat(irc_params.name, "Below the channels you will see 3 icons.  If you are hearing funny noises, you may need to turn off sound notifications.")
-	irc_chat(irc_params.name, "Click on the middle icon that looks like a cog.  This is the preferences screen.  Look for and untick Enable notification sound.")
+	irc_chat(irc_params.name, "Below the channels you will see 3 icons.  If you are hearing funny pop noises, you may need to turn off sound notifications.")
+	irc_chat(irc_params.name, "Click on the icon that looks like a cog.  This is the preferences screen.  Look for and untick Enable notification sound.")
 	irc_chat(irc_params.name, string.format("To return to these instructions click on %s)", server.ircBotName))
 	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "There are many commands and you can explore the help to read about them. Depending on your level (admin or player), you usually only see help for stuff you can do.  If you aren't supposed to use a command, it simply won't work for you.")
@@ -167,12 +187,35 @@ function irc_Manual()
 		irc_chat(irc_params.name, "You can make a bot login for another player by typing add player Joe login Joe pass password")
 		irc_chat(irc_params.name, "You can send players IRC invites by typing invite joe.  You will need to have previously told the bot your IRC server's IP and port or Joe will see 0.0.0.0 instead.")
 		irc_chat(irc_params.name, ".")
-		irc_chat(irc_params.name, "I hope this guide is useful to you.  There are over 1,000 commands but you'll only use around 20 routinely.  If you get stuck, you can send me a message on Steam or an email to smegzor@gmail.com")
-		irc_chat(irc_params.name, "Enjoy your new bot and make your server #1! xD")
+		irc_chat(irc_params.name, "I hope this guide is useful to you.  There are over 1,000 commands but you'll only use around 20 routinely.  If you get stuck, you can send me a message on Steam, Discord or an email to smegzor@gmail.com")
+		irc_chat(irc_params.name, "My Steam friends list is always full and Discord is better because it doesn't forget chat histories.  On Discord I am smegzor#9806.  On Steam I am Smegz0r.")
+		irc_chat(irc_params.name, ".")
+		irc_chat(irc_params.name, "Enjoy your new bot and have lots of fun making your server #1! xD")
 		irc_chat(irc_params.name, ".")
 		irc_chat(irc_params.name, "           Smegz0r")
 		irc_chat(irc_params.name, ".")
 	end
+end
+
+
+function irc_Setup()
+	-- TODO:  Finish this
+	local id
+	id = LookupOfflinePlayer(irc_params.name, "all")
+
+	irc_chat(irc_params.name, "When running the bot for the first time, there are several setup tasks to do and some mod requirements.")
+	irc_chat(irc_params.name, "The bot requires Alloc's mod to function. Many very nice extra features rely on Coppi's mod.  The bot also provides growing support for other mods")
+	irc_chat(irc_params.name, "such as StompyNZ's Bad Company mod, djkrose's scripting mod, and Server Tools.")
+	irc_chat(irc_params.name, "You can grab them directly from their authors or you can download http://botman.nz/Botman_Mods.zip")
+	irc_chat(irc_params.name, "If updating an installed mod, you will need to stop your server first.  If it is a new mod, you only need to restart afterwards.")
+	irc_chat(irc_params.name, "You may need to create the Mods folder first.  It lives in the main folder that contains all of your server files and folders.  If you can see 7daystodie_data you are in the right folder.")
+	irc_chat(irc_params.name, "Copy each mod directly into the Mods folder.  You should not end up with a folder called Mods inside your Mods folder.")
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "With the mods sorted, it is time to command your bot.  You can do most commands right here.  If it is necessary to join your server to issue a command there, I will say so.")
+	irc_chat(irc_params.name, "Note that when I ask you to type something, I expect you to type everything that follows from the word type. I will write comments in ().  Do not type those.")
+	irc_chat(irc_params.name, "Type cmd /blacklist action ban   (the bot will ban players coming from countries in your country blacklist.)")
+	irc_chat(irc_params.name, "To view the country blacklist type cmd /list blacklist")
+	irc_chat(irc_params.name, ".")
 end
 
 
@@ -256,11 +299,11 @@ function irc_HelpCustomCommands()
 	irc_chat(irc_params.name, "Custom Commands")
 	irc_chat(irc_params.name, "===============")
 	irc_chat(irc_params.name, "You can create commands that send a private message.")
-	irc_chat(irc_params.name, "Type custom commands (list them)[-]")
-	irc_chat(irc_params.name, "Type add command {command} level {access level} message {message}.[-]")
-	irc_chat(irc_params.name, "Type remove command {command}.[-]")
-	irc_chat(irc_params.name, "Access level is optional and defaults to 99.[-]")
-	irc_chat(irc_params.name, "See help access for the list of access levels.[-]")
+	irc_chat(irc_params.name, "Type custom commands (list them)")
+	irc_chat(irc_params.name, "Type add command {command} level {access level} message {message}.")
+	irc_chat(irc_params.name, "Type remove command {command}.")
+	irc_chat(irc_params.name, "Access level is optional and defaults to 99.")
+	irc_chat(irc_params.name, "See help access for the list of access levels.")
 	irc_chat(irc_params.name, ".")
 end
 

@@ -1,19 +1,22 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local note, pname, pid, debug, result
+
+debug = false -- should be false unless testing
+
+if botman.debugAll then
+	debug = true
+end
 
 function gmsg_misc()
 	calledFunction = "gmsg_misc"
-
-	local note, pname, pid, debug, result
-
-	debug = false
 
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 

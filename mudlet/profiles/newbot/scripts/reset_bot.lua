@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -22,6 +22,7 @@ function QuickBotReset()
 	conn:execute("TRUNCATE TABLE alerts")
 	conn:execute("TRUNCATE TABLE bookmarks")
 	conn:execute("TRUNCATE TABLE commandQueue")
+	conn:execute("TRUNCATE TABLE connectQueue")
 	conn:execute("TRUNCATE TABLE events")
 	conn:execute("TRUNCATE TABLE gimmeQueue")
 	conn:execute("TRUNCATE TABLE hotspots")
@@ -48,7 +49,6 @@ end
 
 
 function ResetBot(keepTheMoney)
-	dbug("Archiving data")
 	saveLuaTables(os.date("%Y%m%d_%H%M%S"))
 
 	-- save some additional tables in from mysql
@@ -56,8 +56,6 @@ function ResetBot(keepTheMoney)
 	dumpTable("announcements")
 	dumpTable("locationSpawns")
 	dumpTable("alerts")
-
-	dbug("Running ResetBot")
 
 	-- clean up other tables
 	teleports = {}
@@ -75,11 +73,10 @@ function ResetBot(keepTheMoney)
 	server.prisonSize = 100
 	server.warnBotReset = false
 
-	dbug("Emptying tables")
-
 	conn:execute("TRUNCATE TABLE alerts")
 	conn:execute("TRUNCATE TABLE bookmarks")
 	conn:execute("TRUNCATE TABLE commandQueue")
+	conn:execute("TRUNCATE TABLE connectQueue")
 	conn:execute("TRUNCATE TABLE events")
 	conn:execute("TRUNCATE TABLE gimmeQueue")
 	conn:execute("TRUNCATE TABLE hotspots")
@@ -117,20 +114,12 @@ function ResetBot(keepTheMoney)
 	conn:execute(sql)
 
 	loadPlayers()
-
-	dbug("Reading server, players, bans and admin data")
-
-	send("lkp")
-	tempTimer( 10, [[send("pm IPCHECK")]] )
-	tempTimer( 12, [[send("admin list")]] )
-	tempTimer( 14, [[send("gg")]] )
-	tempTimer( 16, [[send("ban list")]] )
+	getServerData(true)
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 5
 	end
 
-	dbug("Finished resetting bot")
 	return true
 end
 
@@ -141,7 +130,7 @@ function ResetServer()
 
 	botman.serverTime = ""
 	botman.feralWarning = false
-	homedir = getMudlethomedir()
+	homedir = getMudletHomeDir()
 
 	lfs.mkdir(homedir .. "/daily")
 	lfs.mkdir(homedir .. "/dns")
@@ -168,12 +157,6 @@ function ResetServer()
 	teleports = {}
 	villagers = {}
 	waypoints = {}
-
-	openUserWindow(server.windowGMSG)
-	openUserWindow(server.windowDebug)
-	openUserWindow(server.windowLists)
-
-	dbug("Resetting Bot (full wipe)")
 
 	Smegz0r = "76561197983251951"
 

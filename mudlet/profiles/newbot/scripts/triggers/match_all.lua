@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -175,6 +175,10 @@ function matchAll(line)
 
 				if (string.find(botman.serverTime, "02-14", 5, 10)) then specialDay = "valentine" end
 				if (string.find(botman.serverTime, "12-25", 5, 10)) then specialDay = "christmas" end
+
+				if server.dateTest == nil then
+					server.dateTest = string.sub(botman.serverTime, 1, 10)
+				end
 			end
 
 			-- write to the log
@@ -232,6 +236,16 @@ function matchAll(line)
 			end
 
 			return
+		end
+	end
+
+
+	if string.find(line, "PlayerSpawnedInWorld") then
+		temp = string.split(line, ", ")
+		pid = string.match(temp[6], "(-?%d+)")
+
+		if igplayers[pid] then
+			igplayers[pid].spawnedInWorld = true
 		end
 	end
 
@@ -506,7 +520,7 @@ function matchAll(line)
 		else
 			if botman.dbConnected then
 				temp = string.trim(line)
-				conn:execute("INSERT INTO spawnableItems (itemName) VALUES ('" .. escape(temp) .. "') ON DUPLICATE KEY UPDATE deleteItem = 0")
+				conn:execute("INSERT INTO spawnableItems (itemName) VALUES ('" .. escape(temp) .. "')")
 			end
 		end
 	end
@@ -941,17 +955,12 @@ function matchAll(line)
 			return
 		end
 
-		if (string.find(line, "EnemySenseMemory =")) then
-			server.EnemySenseMemory = number
-			return
-		end
-
 		if (string.find(line, "LandClaimSize =")) then
 			server.LandClaimSize = number
 			return
 		end
 
-		if (string.find(line, "LandClaimSize =")) then
+		if (string.find(line, "LandClaimExpiryTime =")) then
 			server.LandClaimExpiryTime = number
 			return
 		end

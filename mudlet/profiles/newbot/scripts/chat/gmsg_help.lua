@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -18,7 +18,7 @@ function help(command)
 		if (r==3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I can't fix that![-]") end
 		if (r==4) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Ask your cat.[-]") end
 		if (r==5) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You need a wash and a haircut.[-]") end
-		if (r==6) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Get up and go outside.  Maybe you've heard of it?[-]") end
+		if (r==6) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Get up and go Outside.  Maybe you've heard of it?[-]") end
 		return
 	end
 
@@ -40,7 +40,7 @@ function help(command)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can only send mail from your console, which you access from the tild key which is above TAB and left of your 1 key.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]To send a message to your friend Dave type pm @dave Hi Dave!  If he is on, he will get it now.[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can message the admins with pm @admin {your message here}.  Every admin will see it.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Ignore the command denied message.[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Ignore the command denied response from the server.[-]")
 		message("pm " .. chatvars.playerid .. "")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "list mail (see a numbered list of all your messages)[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "read mail {optional number} (reads all unread by default)[-]")
@@ -90,7 +90,7 @@ function help(command)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]For a general search type " .. server.commandPrefix .. "shop {item} eg. " .. server.commandPrefix .. "shop shirt[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "buy {item number} {quantity}  Buy all the things![-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "pay {player name} {amount}  You can't put a price on love so send money instead.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "gamble (gamble in our daily lottery) 25 " .. server.moneyPlural .. " per ticket[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "gamble (gamble in our daily lottery) " .. server.lotteryTicketPrice .. " " .. server.moneyPlural .. " per ticket[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Buy multiple tickets at once with " .. server.commandPrefix .. "gamble 5 (or any number). The winning number is picked from ticket number 1 to 100.[-]")
 		if (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "open shop - allow players access to the shop.[-]") end
 		if (chatvars.accessLevel < 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "close shop - block player access to the shop.[-]") end
@@ -164,8 +164,7 @@ function help(command)
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 0 server owners[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 1 admins[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 2 mods[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 3 {reserved}[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 4-10 Donors[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 10 Donors[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 90 Regular players[-]")
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Level 99 New players[-]")
 		return
@@ -443,6 +442,12 @@ function help(command)
 		end
 
 		return
+	end
+
+	if command ~= nil then
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No help topic for " .. command .. "[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The following topics are available: [-]")
+		command = nil
 	end
 
 	-- always have the main help last so it catches any unsupported help commands.

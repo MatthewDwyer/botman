@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -100,22 +100,68 @@
 	-- file:close()
 -- end
 
-function finishServerMove()
-	if botman.botOffline then
-		-- assume the server move has failed and return to the old server defeated
-		if type(serverMove) == "table" then
-			server.telnetPass = serverMove.oldPass
-			telnetPassword = serverMove.oldPass
-			conn:execute("UPDATE server SET telnetPass = '" .. escape(serverMove.oldPass) .. "'")
 
-			reconnect(serverMove.oldServer, serverMove.oldPort, true)
-			saveProfile()
+function processConnectQueue(steam)
+	local cursor, errorString, row
 
-			serverMove = nil
+	cursor,errorString = conn:execute("select * from connectQueue where steam = " .. steam .. "  order by id")
+
+	if cursor then
+		row = cursor:fetch({}, "a")
+
+		while row do
+			if string.sub(row.command, 1, 3) == "pm " or string.sub(row.command, 1, 3) == "say" then
+				message(row.command)
+			else
+				send(row.command)
+			end
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
+			conn:execute("update connectQueue set processed = 1 where id = " .. row.id)
+			row = cursor:fetch(row, "a")
 		end
-	else
-		serverMove = nil
+
+		conn:execute("delete from connectQueue where processed = 1")
 	end
+end
+
+
+function checkVACBan(steam)
+	local file, ln
+
+	file = io.open(homedir .. "/temp/steamrep_" .. steam .. ".txt", "r")
+	for ln in file:lines() do
+		if string.find(ln, "vacbanned") then
+			if string.find(ln, "<span id=\"vacbanned\"><span class=\"a02\">Banned</span></span>") then
+				players[steam].VACBanned = true
+				return true
+			else
+				players[steam].VACBanned = false
+				return false
+			end
+		end
+	end
+end
+
+
+function reloadCode()
+	tempTimer(5, [[ reloadStartup() ]] )
+
+	dofile(homedir .. "/scripts/reload_bot_scripts.lua")
+	reloadBotScripts(true)
+end
+
+
+function reloadStartup()
+	dofile(homedir .. "/scripts/startup_bot.lua")
+end
+
+
+function onSysExit()
+	saveWindowLayout()
 end
 
 
@@ -444,19 +490,19 @@ function canSetWaypointHere(steam, x, z)
 
 				if (tonumber(dist) < tonumber(v.protectSize) + 10) then
 					if not isFriend(k, steam) then
-						return false
+						return false, k
 					end
 				end
 			end
 		end
 
-		if (v.home2X ~= nil) then
+		if (v.home2X ~= nil) and k ~= steam then
 				if (v.home2X ~= 0 and v.home2Z ~= 0) then
 				dist = distancexz(x, z, v.home2X, v.home2Z)
 
 				if (dist < tonumber(v.protectSize) + 10) then
 					if not isFriend(k, steam) then
-						return false
+						return false, k
 					end
 				end
 			end
@@ -467,7 +513,7 @@ function canSetWaypointHere(steam, x, z)
 	for k, v in pairs(locations) do
 		if players[steam].inLocation == v.name then
 			if not v.allowWaypoints then
-				return false
+				return false, k
 			end
 		end
 	end
@@ -478,33 +524,45 @@ end
 
 function removeInvalidItems()
 	local cursor,errorString, row
+	local validItems = {}
 
-	cursor,errorString = conn:execute("SELECT * FROM spawnableItems WHERE deleteItem = 1")
-
+	cursor,errorString = conn:execute("select * from spawnableItems")
 	row = cursor:fetch({}, "a")
 	while row do
-		-- delete invalid items
-		conn:execute("DELETE FROM badItems WHERE item = '" .. escape(row.itemName) .. "'")
-		conn:execute("DELETE FROM gimmePrizes WHERE name = '" .. escape(row.itemName) .. "'")
-		conn:execute("DELETE FROM restrictedItems WHERE item = '" .. escape(row.itemName) .. "'")
-		conn:execute("DELETE FROM shop WHERE item = '" .. escape(row.itemName) .. "'")
-
+		validItems[row.itemName] = {}
 		row = cursor:fetch(row, "a")
 	end
 
-	-- delete invalid items
-	conn:execute("DELETE FROM spawnableItems WHERE deleteItem = 1")
+	-- remove invalid items from gimmePrizes
+	conn:execute("delete FROM `gimmePrizes` WHERE name not in (select itemName from spawnableItems)")
+
+	-- remove invalid items from the shop
+	conn:execute("delete FROM `shop` WHERE item not in (select itemName from spawnableItems)")
+
+	-- remove invalid items from badItems
+	conn:execute("delete FROM `badItems` WHERE item not in (select itemName from spawnableItems)")
+
+	-- remove invalid items from restrictedItems
+	conn:execute("delete FROM `restrictedItems` WHERE item not in (select itemName from spawnableItems)")
+
+	-- refresh the restrictedItems table
+	loadRestrictedItems()
+
+	-- refresh the badItems table
+	loadBadItems()
+
+	irc_chat(server.ircMain, "Finished validating items.")
 end
 
 
 function collectSpawnableItemsList()
 	-- flag items in various tables so we can remove invalid items later
 	if botman.dbConnected then
-		conn:execute("UPDATE spawnableItems SET deleteItem = 1")
-		conn:execute("UPDATE badItems SET validated = 0")
-		conn:execute("UPDATE gimmePrizes SET validated = 0")
-		conn:execute("UPDATE restrictedItems SET validated = 0")
-		conn:execute("UPDATE shop SET validated = 0")
+		conn:execute("TRUNCATE TABLE spawnableItems")
+		conn:execute("UPDATE badItems SET validated = 1")
+		conn:execute("UPDATE gimmePrizes SET validated = 1")
+		conn:execute("UPDATE restrictedItems SET validated = 1")
+		conn:execute("UPDATE shop SET validated = 1")
 	end
 
 	send("li a")
@@ -512,6 +570,7 @@ function collectSpawnableItemsList()
 	send("li i")
 	send("li o")
 	send("li u")
+
 	send("pm bot_RemoveInvalidItems")
 
 	if botman.getMetrics then
@@ -520,7 +579,7 @@ function collectSpawnableItemsList()
 end
 
 
-function adminsOnline()
+function isAdminOnline()
 	-- this function helps us choose different actions depending on if an admin is playing or not.
 	local k, v
 
@@ -751,8 +810,8 @@ function scanForPossibleHackersNearby(steam, world)
 end
 
 
-function registerHelp()
-	if botman.dbConnected then conn:execute("insert into helpCommands (command, description, keywords, accessLevel, ingameOnly) values ('" .. escape(tmp.command) .. "','" .. escape(tmp.description) .. "','" .. escape(tmp.keywords) .. "'," .. tmp.accessLevel .. "," .. tmp.ingameOnly .. ")") end
+function registerHelp(tmp)
+	if botman.dbConnected then conn:execute("insert into helpCommands (command, description, notes, keywords, accessLevel, ingameOnly) values ('" .. escape(tmp.command) .. "','" .. escape(tmp.description) .. "','" .. escape(tmp.notes) .. "','" .. escape(tmp.keywords) .. "'," .. tmp.accessLevel .. "," .. tmp.ingameOnly .. ")") end
 	tmp.commandID = tonumber(tmp.commandID) + 1
 	if botman.dbConnected then conn:execute("insert into helpTopicCommands (topicID, commandID) values (" .. tmp.topicID .. "," .. tmp.commandID .. ")") end
 end
@@ -846,7 +905,7 @@ function fixBot()
 		end
 	end
 
-	if botman.playersOnline == faultCount then
+	if tonumber(faultCount) > 0 then
 		if botman.dbConnected then
 			conn:execute("DELETE FROM altertables")
 			alertAdmins("The bot may become unresponsive for a while, it will do table maintenance in one minute.  When it comes back, the bot will need to be restarted to complete the maintenance.", "alert")
@@ -855,8 +914,8 @@ function fixBot()
 		end
 	end
 
-	irc_chat(server.ircMain, "Validating shop and gimme prize items.")
-	collectSpawnableItemsList()
+	--irc_chat(server.ircMain, "Validating shop and gimme prize items.")
+	--collectSpawnableItemsList()
 end
 
 
@@ -1168,8 +1227,6 @@ end
 
 
 function finishDownload(filePath)
-	dbugi("download complete.  reading file..")
-
 	local file, ln, codeVersion, codeBranch
 
 	if isFile(homedir .. "/temp/version.txt") then
@@ -1177,9 +1234,6 @@ function finishDownload(filePath)
 		codeVersion = file:read "*a"
 		codeBranch = file:read "*a"
 		file:close()
-
-		dbugi("codeVersion " .. codeVersion)
-		dbugi("codeBranch " .. codeBranch)
 	end
 end
 
@@ -1964,7 +2018,7 @@ end
 
 
 function dbWho(ownerid, x, y, z, dist, days, hours, height, ingame)
-	local cursor, errorString,row, counter
+	local cursor, errorString,row, counter, isStaff
 
 	if days == nil then days = 1 end
 	if height == nil then height = 5 end
@@ -1973,12 +2027,17 @@ function dbWho(ownerid, x, y, z, dist, days, hours, height, ingame)
 		return
 	end
 
+	isStaff = false
+	if players[ownerid].accessLevel < 3 then
+		isStaff = true
+	end
+
 	conn:execute("DELETE FROM searchResults WHERE owner = " .. ownerid)
 
 	if hours > 0 then
-		cursor,errorString = conn:execute("select distinct steam, session from tracker where abs(x - " .. x .. ") < " .. dist .. " and abs(z - " .. z .. ") < " .. dist .. " and abs(y - " .. y .. ") < " .. height .. " and timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(hours) * 3600)) .. "'")
+		cursor,errorString = conn:execute("select distinct steam, session from tracker where abs(x - " .. x .. ") <= " .. dist .. " and abs(z - " .. z .. ") <= " .. dist .. " and abs(y - " .. y .. ") <= " .. height .. " and timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(hours) * 3600)) .. "'")
 	else
-		cursor,errorString = conn:execute("select distinct steam, session from tracker where abs(x - " .. x .. ") < " .. dist .. " and abs(z - " .. z .. ") < " .. dist .. " and abs(y - " .. y .. ") < " .. height .. " and timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(days) * 86400)) .. "'")
+		cursor,errorString = conn:execute("select distinct steam, session from tracker where abs(x - " .. x .. ") <= " .. dist .. " and abs(z - " .. z .. ") <= " .. dist .. " and abs(y - " .. y .. ") <= " .. height .. " and timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(days) * 86400)) .. "'")
 	end
 
 	row = cursor:fetch({}, "a")
@@ -1987,17 +2046,26 @@ function dbWho(ownerid, x, y, z, dist, days, hours, height, ingame)
 
 	if igplayers[ownerid] == nil then
 		if rows > 50 then
-			irc_chat(ownerid, "****** Report length " .. rows .. " rows.  Cancel it with: nuke irc ******")
+			irc_chat(ownerid, "****** Report length " .. rows .. " rows.  Cancel it by typing nuke irc")
 		end
 	end
 
 	while row do
-		conn:execute("INSERT INTO searchResults (owner, steam, session, counter) VALUES (" .. ownerid .. "," .. row.steam .. "," .. row.session .. "," .. counter .. ")")
+		-- we will use the searchResults table later.  For now we're not doing anything with it.  It will become a lookup table with record numbers.
+		--conn:execute("INSERT INTO searchResults (owner, steam, session, counter) VALUES (" .. ownerid .. "," .. row.steam .. "," .. row.session .. "," .. counter .. ")")
 
 		if ingame then
-			message("pm " .. ownerid .. " [" .. server.chatColour .. "] #" .. counter .." " .. row.steam .. " " .. players[row.steam].id .. " " .. players[row.steam].name .. " sess: " .. row.session .. "[-]")
+			if isStaff then
+				message("pm " .. ownerid .. " [" .. server.chatColour .. "] #" .. counter .." " .. row.steam .. " " .. players[row.steam].id .. " " .. players[row.steam].name .. " sess: " .. row.session .. "[-]")
+			else
+				message("pm " .. ownerid .. " [" .. server.chatColour .. "]" .. players[row.steam].name .. " session: " .. row.session .. "[-]")
+			end
 		else
-			irc_chat(ownerid, "#" .. counter .." " .. row.steam .. " " .. players[row.steam].name .. " sess: " .. row.session)
+			if isStaff then
+				irc_chat(ownerid, "#" .. counter .." " .. row.steam .. " " .. players[row.steam].name .. " sess: " .. row.session)
+			else
+				irc_chat(ownerid, players[row.steam].name .. " session: " .. row.session)
+			end
 		end
 
 		counter = counter + 1
@@ -2015,6 +2083,9 @@ function dailyMaintenance()
 		conn:execute("UPDATE server set databaseMaintenanceFinished = 0")
 		deleteTrackingData(server.trackingKeepDays)
 	end
+
+	-- delete telnet logs older than server.telnetLogKeepDays
+	os.execute("find " .. homedir .. "/log* -mtime +" .. server.telnetLogKeepDays .. " -exec rm {} \\;")
 
 	return true
 end
@@ -2084,9 +2155,13 @@ end
 
 
 function newDay()
-	local diff, days, restarting
+	local diff, days, restarting, status
 
 	restarting = false
+
+	if server.dateTest == nil then
+		server.dateTest = string.sub(botman.serverTime, 1, 10)
+	end
 
 	if (string.sub(botman.serverTime, 1, 10) ~= server.dateTest) then
 		server.dateTest = string.sub(botman.serverTime, 1, 10)
@@ -2119,7 +2194,28 @@ function newDay()
 			dofile(homedir .. "/scripts/reload_bot_scripts.lua")
 			reloadBotScripts(true)
 		end
+
+		status = "Server is UP"
+
+		if botman.botOffline then
+			status "Server is OFFLINE"
+		end
+
+		if relogCount > 6 then
+			status "Telnet has crashed."
+		end
+
+		if botman.botOffline == false then
+			irc_chat("#status", "Bot " .. server.botName .. " on server " .. server.serverName .. " " .. server.IP .. ":" .. server.ServerPort .. " Game version: " .. server.gameVersion)
+			irc_chat("#status", "Status: " .. status .. ", bot version: " .. server.botVersion .. " on branch " .. server.updateBranch)
+		end
 	end
+end
+
+
+function newBotDay()
+	-- do stuff when the date changes where the bot is running (usually different to the 7 Days server's date)
+
 end
 
 
@@ -2224,7 +2320,7 @@ function CheckBlacklist(steam, ip)
 	cursor,errorString = connBots:execute("SELECT * FROM IPBlacklist WHERE StartIP <=  " .. ipint .. " AND EndIP >= " .. ipint)
 	if cursor:numrows() > 0 then
 
-		if not whitelist[steam] and accessLevel(steam) > 2 then
+		if (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			irc_chat(server.ircMain, "Blacklisted IP detected. " .. players[steam].name)
 			irc_chat(server.ircAlerts, "Blacklisted IP detected. " .. players[steam].name)
 		end
@@ -2233,7 +2329,7 @@ function CheckBlacklist(steam, ip)
 		players[steam].country = "CN"
 		players[steam].ircTranslate = true
 
-		if server.blacklistResponse ~= "ban" and not whitelist[steam] and accessLevel(steam) > 2 then
+		if server.blacklistResponse ~= "ban" and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			-- alert players
 			for k, v in pairs(igplayers) do
 				if players[k].exiled~=1 and not players[k].prisoner then
@@ -2242,14 +2338,14 @@ function CheckBlacklist(steam, ip)
 			end
 		end
 
-		if server.blacklistResponse == 'exile' and not whitelist[steam] and accessLevel(steam) > 2 then
+		if server.blacklistResponse == 'exile' and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			if tonumber(players[steam].exiled) == 0 then
 				players[steam].exiled = 1
 				if botman.dbConnected then conn:execute("UPDATE players SET country = 'CN', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam) end
 			end
 		end
 
-		if server.blacklistResponse == 'ban' and not whitelist[steam] and accessLevel(steam) > 2 then
+		if server.blacklistResponse == 'ban' and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			irc_chat(server.ircMain, "Blacklisted player " .. players[steam].name .. " banned.")
 			irc_chat(server.ircAlerts, "Blacklisted player " .. players[steam].name .. " banned.")
 			banPlayer(steam, "10 years", "blacklisted", "")
@@ -2288,7 +2384,7 @@ function readDNS(steam)
 			iprange = string.sub(ln, a, a+b)
 		end
 
-		if not whitelist[steam] and not players[steam].donor and accessLevel(steam) > 2 then
+		if (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			for k,v in pairs(proxies) do
 				if string.find(ln, string.upper(v.scanString), nil, true) then
 					v.hits = tonumber(v.hits) + 1
@@ -2334,7 +2430,7 @@ function readDNS(steam)
 			-- only report country change if CN or HK are involved. For once, don't blame Canada.
 			a,b = string.find(ln, "%s(%w+)")
 			country = string.sub(ln, a + 1)
-			if players[steam].country ~= "" and players[steam].country ~= country and (players[steam].country == "CN" or players[steam].country == "HK" or country == "CN" or country == "HK") and not whitelist[steam] and accessLevel(steam) > 2 then
+			if players[steam].country ~= "" and players[steam].country ~= country and (players[steam].country == "CN" or players[steam].country == "HK" or country == "CN" or country == "HK") and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 				irc_chat(server.ircAlerts, "Possible proxy detected! Country changed! " .. steam .. " " .. players[steam].name .. " " .. players[steam].IP .. " old country " .. players[steam].country .. " new " .. country)
 				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (0,0,0'" .. botman.serverTime .. "','proxy','Suspected proxy used by " .. escape(players[steam].name) .. " " .. players[steam].IP .. " old country " .. players[steam].country .. " new " .. country .. "," .. steam .. ")") end
 				proxy = true
@@ -2344,7 +2440,7 @@ function readDNS(steam)
 		end
 
 		-- We consider HongKong to be China since Chinese players connect from there too.
-		if (country == "CN" or country == "HK") and not whitelist[steam] and accessLevel(steam) > 2 then
+		if (country == "CN" or country == "HK") and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			-- China detected. Add ip range to IPBlacklist table
 			irc_chat(server.ircMain, "Chinese IP detected. " .. players[steam].name .. " " .. players[steam].IP)
 			irc_chat(server.ircAlerts, "Chinese IP detected. " .. players[steam].name .. " " .. players[steam].IP)
@@ -2391,7 +2487,7 @@ function readDNS(steam)
 	end
 
 	-- alert players
-	if blacklistedCountries[country] and server.blacklistResponse ~= 'ban' and accessLevel(steam) > 2 then
+	if blacklistedCountries[country] and server.blacklistResponse ~= 'ban' and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 		for k, v in pairs(igplayers) do
 			if players[k].exiled~=1 and not players[k].prisoner then
 				message("pm " .. k .. " Player " .. players[steam].name .. " from blacklisted country " .. country .. " has joined.[-]")
@@ -2399,7 +2495,7 @@ function readDNS(steam)
 		end
 	end
 
-	if blacklistedCountries[country] and accessLevel(steam) > 2 then
+	if blacklistedCountries[country] and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 		if server.blacklistResponse == 'ban' and not banned then
 			irc_chat(server.ircMain, "Player " .. players[steam].name .. " banned. Blacklisted country " .. country)
 			irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " banned. Blacklisted country " .. country)
@@ -2417,7 +2513,7 @@ function readDNS(steam)
 		end
 	end
 
-	if server.whitelistCountries ~= '' and not whitelistedCountries[country] and not banned and accessLevel(steam) > 2 then
+	if server.whitelistCountries ~= '' and not whitelistedCountries[country] and (not (whitelist[steam] or players[steam].donor)) and not banned and accessLevel(steam) > 2 then
 		irc_chat(server.ircMain, "Player " .. players[steam].name .. " temp banned 1 month. Country not on whitelist " .. country)
 		irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " temp banned 1 month. Country not on whitelist " .. country)
 		banPlayer(steam, "1 month", "Sorry, this server uses a whitelist.", "")
@@ -2425,11 +2521,10 @@ function readDNS(steam)
 	end
 
 	if botman.dbConnected then
-		if server.blacklistResponse ~= 'nothing' and exiled then
+		if server.blacklistResponse ~= 'nothing' and exiled and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			conn:execute("UPDATE players SET country = '" .. escape(country) .. "', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam)
+			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. players[steam].IP  .. "'," .. steam .. ")")
 		end
-
-		conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. players[steam].IP  .. "'," .. steam .. ")")
 	end
 
 	if proxy then
@@ -2567,7 +2662,6 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].afk = os.time() + 900
 	igplayers[steam].alertRemovedClaims = false
 	igplayers[steam].belt = ""
-	--igplayers[steam].botQuestion = "" -- used for storing the last question the bot asked the player.
 	igplayers[steam].checkNewPlayer = true
 	igplayers[steam].connected = true
 	igplayers[steam].equipment = ""
@@ -2600,6 +2694,7 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].region = ""
 	igplayers[steam].sessionPlaytime = 0
 	igplayers[steam].sessionStart = os.time()
+	igplayers[steam].spawnedInWorld = false
 	igplayers[steam].steam = steam
 	igplayers[steam].steamOwner = steamOwner
 	igplayers[steam].teleCooldown = 200
@@ -2649,6 +2744,29 @@ function fixMissingStuff()
 		file:write("end\n")
 		file:close()
 	end
+
+	if not isFile(homedir .. "/custom/customIRC.lua") then
+		file = io.open(homedir .. "/custom/customIRC.lua", "a")
+		file:write("\-\- Any code you put in here is accessed via bot commands on IRC not ingame.\n")
+		file:write("\-\- This code is not replaced by bot updates.\n")
+		file:write("function customIRC(name, words, wordsOld, msgLower)\n")
+		file:write("local ircid\n")
+		file:write("ircid = LookupOfflinePlayer(name, \"all\")\n")
+		file:write("if (words[1] == \"debug\" and words[2] == \"on\") then\n")
+		file:write("server.enableWindowMessages = true\n")
+		file:write("irc_chat(name, \"Debugging ON\")\n")
+		file:write("return true\n")
+		file:write("end\n")
+		file:write("if (words[1] == \"debug\" and words[2] == \"off\") then\n")
+		file:write("server.enableWindowMessages = false\n")
+		file:write("irc_chat(name, \"Debugging OFF\")\n")
+		file:write("return true\n")
+		file:write("end\n")
+		file:write("return false\n")
+		file:write("end\n")
+		file:close()
+	end
+
 
 	if type(gimmeZombies) ~= "table" then
 		gimmeZombies = {}

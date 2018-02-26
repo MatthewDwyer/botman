@@ -1,14 +1,14 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
 local debug
-debug = false
+debug = false -- should be false unless testing
 
 function loadServer()
 	local temp, cursor, errorString, row, rows
@@ -218,9 +218,10 @@ end
 
 function loadShopCategories()
 	-- load shop categories
-	shopCategories = {}
+
 	getTableFields("shopCategories")
 
+	shopCategories = {}
 	cursor,errorString = conn:execute("select * from shopCategories")
 
 	-- add the misc category so it always exists
@@ -242,9 +243,10 @@ end
 
 function loadResetZones()
 	-- load reset zones
-	resetRegions = {}
+
 	getTableFields("resetZones")
 
+	resetRegions = {}
 	cursor,errorString = conn:execute("select * from resetZones")
 	row = cursor:fetch({}, "a")
 	while row do
@@ -390,10 +392,7 @@ function loadBadItems()
 	-- load badItems
 	getTableFields("badItems")
 
-	if type(badItems) ~= "table" then
-		badItems = {}
-	end
-
+	badItems = {}
 	cursor,errorString = conn:execute("select * from badItems")
 	row = cursor:fetch({}, "a")
 
@@ -437,10 +436,7 @@ function loadRestrictedItems()
 	-- load restrictedItems
 	getTableFields("restrictedItems")
 
-	if type(restrictedItems) ~= "table" then
-		restrictedItems = {}
-	end
-
+	restrictedItems = {}
 	cursor,errorString = conn:execute("select * from restrictedItems")
 	row = cursor:fetch({}, "a")
 
@@ -509,10 +505,7 @@ function loadHotspots()
 	-- load hotspots
 	getTableFields("hotspots")
 
-	if type(hotspots) ~= "table" then
-		hotspots = {}
-	end
-
+	hotspots = {}
 	cursor,errorString = conn:execute("select * from hotspots")
 	row = cursor:fetch({}, "a")
 
@@ -652,9 +645,9 @@ end
 
 function loadPrefabCopies()
 	-- load prefabs
-    prefabCopies = {}
 	getTableFields("prefabCopies")
 
+    prefabCopies = {}
 	cursor,errorString = conn:execute("select * from prefabCopies")
 	row = cursor:fetch({}, "a")
 	while row do
@@ -716,9 +709,10 @@ end
 
 function loadWhitelist()
 	-- load whitelist
-    whitelist = {}
+
 	getTableFields("whitelist")
 
+    whitelist = {}
 	cursor,errorString = conn:execute("select * from whitelist")
 	row = cursor:fetch({}, "a")
 	while row do
@@ -737,9 +731,9 @@ function loadGimmeZombies()
 	if (debug) then dbug("debug gimmeZombies line " .. debugger.getinfo(1).currentline) end
 
 	-- load gimmeZombies
-	gimmeZombies = {}
 	getTableFields("gimmeZombies")
 
+	gimmeZombies = {}
 	cursor,errorString = conn:execute("select * from gimmeZombies")
 	row = cursor:fetch({}, "a")
 
@@ -781,9 +775,9 @@ function loadOtherEntities()
 	local idx
 
 	-- load otherEntities
-    otherEntities = {}
 	getTableFields("otherEntities")
 
+    otherEntities = {}
 	cursor,errorString = conn:execute("select * from otherEntities")
 	row = cursor:fetch({}, "a")
 	while row do
@@ -822,7 +816,6 @@ if (debug) then display("debug loaded locations\n") end
 
 if (debug) then display("debug loading locationCategories\n") end
 	loadLocationCategories()
-if (debug) then display("debug loaded locationCategories\n") end
 
 if (debug) then display("debug loading badItems\n") end
 	loadBadItems()
@@ -867,4 +860,6 @@ if (debug) then display("debug loaded gimmeZombies\n") end
 
 	loadOtherEntities()
 if (debug) then display("debug loaded otherEntities\n") end
+
+if (debug) then display("debug loadTables completed\n") end
 end

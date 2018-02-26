@@ -10,7 +10,11 @@
 local debug
 
 -- enable debug to see where the code is stopping. Any error will be after the last debug line.
-debug = false
+debug = false -- should be false unless testing
+
+if botman.debugAll then
+	debug = true
+end
 
 function day7(steam)
 	if (server.gameDay % 7 == 0) then
@@ -453,7 +457,7 @@ function gmsg(line, ircid)
 		if ircMsg ~= nil then
 			-- ignore game messages
 			if (chatvars.playername ~= "Server" and chatvars.playerid == nil) or string.find(ircMsg, " INF ") or string.find(ircMsg, "password") or string.find(ircMsg, "pass ") or string.find(string.lower(ircMsg), " api ") then
-				return
+				return true
 			end
 
 			ircMsg = string.gsub(ircMsg, "Smegz0r:", "Bot Master Smegz0r:")
@@ -475,10 +479,14 @@ function gmsg(line, ircid)
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if debug then
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		display("line " .. line)
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		dbug("gmsg " .. line)
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 		if ircid ~= nil then
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			dbug("ircid " .. ircid)
 		end
 	end
@@ -498,6 +506,7 @@ function gmsg(line, ircid)
 	chatvars.command = line
 	chatvars.ircid = 0
 	chatvars.ircAlias = ""
+	chatvars.helpRead = false
 
 	if debug then dbug("gmsg chatvars.accessLevel " .. chatvars.accessLevel) end
 
@@ -605,7 +614,7 @@ function gmsg(line, ircid)
 
 	if string.find(line, " command 'pm") and not string.find(line, "' from client") then
 		botman.faultyChat = false
-		return
+		return true
 	end
 
 	if string.find(line, " command 'pm") and string.find(line, "' from client") then
@@ -660,20 +669,21 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	-- ignore game messages
 	if (chatvars.playername ~= "Server") and chatvars.playerid == nil then
+		if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		botman.faultyChat = false
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-		return
+		return true
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.playername ~= "Server") then
 		if (players[chatvars.playerid].lastCommand ~= nil) then
-			-- don't allow commands or chat being spammed too quickly
+			-- don't allow identical commands being spammed too quickly
+--			if ((os.time() - players[chatvars.playerid].lastCommandTimestamp) < 4) and players[chatvars.playerid].lastCommand == chatvars.command then
 			if (os.time() - players[chatvars.playerid].lastCommandTimestamp) < 2 then
 				botman.faultyChat = false
 				result = true
-				return
+				return true
 			end
 		end
 	end
@@ -694,15 +704,19 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			chatvars.zombies = zombies
 		end
 
-		if players[chatvars.playerid].lockout then
+		if players[chatvars.playerid].block then
 			botman.faultyChat = false
 			result = true
 
-			return
+			return true
 		end
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
+	-- remove curly brackets
+	chatvars.command = string.gsub(chatvars.command, "{", "")
+	chatvars.command = string.gsub(chatvars.command, "}", "")
 
 	chatvars.numbers = {}
 	chatvars.words = {}
@@ -757,15 +771,17 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 	-- don't process any chat coming from irc or death messages
 	if string.find(chatvars.gmsg, "-irc:", nil, true) or (chatvars.playername == "Server" and (string.find(chatvars.gmsg, "died") or string.find(chatvars.gmsg, "eliminated"))) then
 		botman.faultyChat = false
-		return
+		return true
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-	if not result then
-		if not result and debug then dbug("debug entering gmsg_custom") end
-		result = gmsg_custom()
-		if result and debug then dbug("debug ran command in gmsg_custom") end
+	if debug then dbug("debug entering gmsg_custom") end
+	result = gmsg_custom()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_custom") end
+		return true
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -775,7 +791,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			if chatvars.command == server.commandPrefix then
 				players[chatvars.playerid].lastCommandTimestamp = os.time() - 10
 				gmsg(players[chatvars.playerid].lastChatLine)
-				return
+				return true
 			end
 
 			if (string.find(chatvars.command, server.commandPrefix .. "again") and chatvars.words[3] == nil) or (chatvars.command == server.commandPrefix .. " north") or (chatvars.command == server.commandPrefix .. " south") or (chatvars.command == server.commandPrefix .. " east") or (chatvars.command == server.commandPrefix .. " west") then
@@ -805,7 +821,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 				players[chatvars.playerid].lastChatLineTimestamp = os.time() - 10
 				gmsg(players[chatvars.playerid].lastChatLine)
-				return
+				return true
 			end
 		end
 	end
@@ -857,7 +873,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			end
 
 			botman.faultyChat = false
-			result = true
+			return true
 		end
 
 		if (chatvars.words[1] == "unpause" or chatvars.words[1] == "unpaws") and chatvars.words[2] == "bot" and chatvars.accessLevel == 0 then
@@ -871,13 +887,10 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			end
 
 			botman.faultyChat = false
-			result = true
+			return true
 		end
 
 		if chatvars.words[1] == "reload" and (string.find(chatvars.command, "cod") or string.find(chatvars.command, "script")) then
-			dofile(homedir .. "/scripts/reload_bot_scripts.lua")
-			reloadBotScripts(true)
-
 			if tonumber(chatvars.playerid) > 0 then
 				players[chatvars.playerid].lastCommand = chatvars.command
 				players[chatvars.playerid].lastChatLine = chatvars.oldLine -- used for storing the telnet line from the last command
@@ -889,7 +902,8 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			end
 
 			botman.faultyChat = false
-			result = true
+			reloadCode()
+			return true
 		end
 
 		if chatvars.words[1] == "reload" and chatvars.words[2] == "debug" then
@@ -902,7 +916,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			end
 
 			botman.faultyChat = false
-			result = true
+			return true
 		end
 
 		if chatvars.words[1] == "register" and chatvars.words[2] == "help" then
@@ -922,34 +936,26 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 			botman.faultyChat = false
 		end
-
-		if chatvars.words[1] == "register" and chatvars.words[2] == "commands" then
-			botman.registerCommands	= true
-
-			if tonumber(chatvars.playerid) > 0 then
-				players[chatvars.playerid].lastCommand = chatvars.command
-				players[chatvars.playerid].lastChatLine = chatvars.oldLine -- used for storing the telnet line from the last command
-				players[chatvars.playerid].lastCommandTimestamp = os.time()
-			end
-
-			botman.faultyChat = false
-		end
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_unslashed") end
-		result = gmsg_unslashed()
-		if result and debug then dbug("debug ran command in gmsg_unslashed") end
+	if debug then dbug("debug entering gmsg_unslashed") end
+	result = gmsg_unslashed()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_unslashed") end
+		return true
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_info") end
-		result = gmsg_info()
-		if result and debug then dbug("debug ran command in gmsg_info") end
+	if debug then dbug("debug entering gmsg_info") end
+	result = gmsg_info()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_info") end
+		return true
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -966,7 +972,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			end
 
 			botman.faultyChat = false
-			result = true
+			return true
 		end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -982,7 +988,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			end
 
 			botman.faultyChat = false
-			result = true
+			return true
 		end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -990,7 +996,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		if players[chatvars.playerid].silentBob == true then
 			result = true
 			botman.faultyChat = false
-			return
+			return true
 		end
 	end
 
@@ -1015,7 +1021,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		end
 
 		botman.faultyChat = false
-		result = true
+		return true
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -1028,10 +1034,20 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	-- If you want to override any commands in the sections below, create commands in gmsg_custom.lua or call them from within it making sure to match the commands keywords.
 
-	if not result then
-		if debug then dbug("debug entering gmsg_fun") end
-		result = gmsg_fun()
-		if result and debug then dbug("debug ran command in gmsg_fun") end
+	if debug then dbug("debug entering gmsg_bot") end
+	result = gmsg_bot()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_bot") end
+		return true
+	end
+
+	if debug then dbug("debug entering gmsg_fun") end
+	result = gmsg_fun()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_fun") end
+		return true
 	end
 
 	if botman.botDisabled then
@@ -1043,125 +1059,172 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			end
 
 			botman.faultyChat = false
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			return true
 		else
 			if (chatvars.accessLevel > 2) then
 				irc_chat(players[chatvars.ircid].ircAlias, "The bot is running in safe mode.  To exit safe mode type " .. server.commandPrefix .. "start bot")
 				botman.faultyChat = false
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 				return true
 			end
 		end
 
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-		return
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_mail") end
-		result = gmsg_mail()
-		if result and debug then dbug("debug ran command in gmsg_mail") end
+	if debug then dbug("debug entering gmsg_mail") end
+	result = gmsg_mail()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_mail") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_base") end
-		result = gmsg_base()
-		if result and debug then dbug("debug ran command in gmsg_base") end
+	if debug then dbug("debug entering gmsg_base") end
+	result = gmsg_base()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_base") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_admin") end
-		result = gmsg_admin()
-		if result and debug then dbug("debug ran command in gmsg_admin") end
+	if debug then dbug("debug entering gmsg_admin") end
+	result = gmsg_admin()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_admin") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_friends") end
-		result = gmsg_friends()
-		if result and debug then dbug("debug ran command in gmsg_friends") end
+	if debug then dbug("debug entering gmsg_friends") end
+	result = gmsg_friends()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_friends") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_hotspots") end
-		result = gmsg_hotspots()
-		if result and debug then dbug("debug ran command in gmsg_hotspots") end
+	if debug then dbug("debug entering gmsg_hotspots") end
+	result = gmsg_hotspots()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_hotspots") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_trial_code") end
-		result = gmsg_trial_code()
-		if result and debug then dbug("debug ran command in gmsg_trial_code") end
+	if debug then dbug("debug entering gmsg_trial_code") end
+	result = gmsg_trial_code()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_trial_code") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_resets") end
-		result = gmsg_resets()
-		if result and debug then dbug("debug ran command in gmsg_resets") end
+	if debug then dbug("debug entering gmsg_resets") end
+	result = gmsg_resets()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_resets") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_shop") end
-		result = gmsg_shop()
-		if result and debug then dbug("debug ran command in gmsg_shop") end
+	if debug then dbug("debug entering gmsg_shop") end
+	result = gmsg_shop()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_shop") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_tracker") end
-		result = gmsg_tracker()
-		if result and debug then dbug("debug ran command in gmsg_tracker") end
+	if debug then dbug("debug entering gmsg_tracker") end
+	result = gmsg_tracker()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_tracker") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_teleports") end
-		result = gmsg_teleports()
-		if result and debug then dbug("debug ran command in gmsg_teleports") end
+	if debug then dbug("debug entering gmsg_teleports") end
+	result = gmsg_teleports()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_teleports") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_villages") end
-		result = gmsg_villages()
-		if result and debug then dbug("debug ran command in gmsg_villages") end
+	if debug then dbug("debug entering gmsg_villages") end
+	result = gmsg_villages()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_villages") end
+		return true
 	end
 
-	if not result and server.allowWaypoints then
-		if debug then dbug("debug entering gmsg_waypoints") end
-		result = gmsg_waypoints()
-		if result and debug then dbug("debug ran command in gmsg_waypoints") end
+	if debug then dbug("debug entering gmsg_waypoints") end
+	result = gmsg_waypoints()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_waypoints") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_locations") end
-		result = gmsg_locations()
-		if result and debug then dbug("debug ran command in gmsg_locations") end
+	if debug then dbug("debug entering gmsg_locations") end
+	result = gmsg_locations()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_locations") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_server") end
-		result = gmsg_server()
-		if result and debug then dbug("debug ran command in gmsg_server") end
+	if debug then dbug("debug entering gmsg_server") end
+	result = gmsg_server()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_server") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_misc") end
-		result = gmsg_misc()
-		if result and debug then dbug("debug ran command in gmsg_misc") end
+	if debug then dbug("debug entering gmsg_misc") end
+	result = gmsg_misc()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_misc") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_pms") end
-		result = gmsg_pms()
-		if result and debug then dbug("debug ran command in gmsg_pms") end
+	if debug then dbug("debug entering gmsg_pms") end
+	result = gmsg_pms()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_pms") end
+		return true
 	end
 
-	if not result then
-		if debug then dbug("debug entering gmsg_coppi") end
-		result = gmsg_coppi()
-		if result and debug then dbug("debug ran command in gmsg_coppi") end
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
+	if debug then dbug("debug entering gmsg_coppi") end
+	result = gmsg_coppi()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_coppi") end
+		return true
 	end
+
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
+	if debug then dbug("debug entering gmsg_stompy") end
+	result = gmsg_stompy()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_stompy") end
+		return true
+	end
+
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if not chatvars.restrictedCommand then
-		igplayers[chatvars.playerid].restrictedCommand = false
+		if igplayers[chatvars.playerid] then
+			igplayers[chatvars.playerid].restrictedCommand = false
+		end
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -1170,7 +1233,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		-- a command matched and was executed so stop processing it
 		botman.faultyChat = false
 		botman.faultyChat2 = false
-		return
+		return true
 	end
 
 	if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) and (chatvars.playername ~= "Server") and not result then  -- THIS COMMAND MUST BE LAST OR IT STOPS SLASH COMMANDS BELOW IT WORKING.
@@ -1182,13 +1245,10 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 		if (players[chatvars.playerid].prisoner or not players[chatvars.playerid].canTeleport) then
 			botman.faultyChat = false
-			result = true
-			return
+			return true
 		end
 
 		if (id ~= 0) then
-	if (debug) then dbug("id = " .. id) end
-
 			-- reject if not an admin and server is in hardcore mode
 			if isServerHardcore(chatvars.playerid) then
 				message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is disabled.[-]")
@@ -1200,45 +1260,40 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			if tonumber(chatvars.accessLevel) > 2 and not server.allowTeleporting then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleporting has been disabled on this server.[-]")
 				botman.faultyChat = false
-				result = true
-				return
+				return true
 			end
 
 			-- reject if not an admin and player to player teleporting has been disabled
 			if tonumber(chatvars.accessLevel) > 2 and not server.allowPlayerToPlayerTeleporting then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleporting to friends has been disabled on this server.[-]")
 				botman.faultyChat = false
-				result = true
-				return
+				return true
 			end
 
 			-- reject if not an admin or a friend
 			if (not isFriend(id,  chatvars.playerid)) and (chatvars.accessLevel > 2) and (id ~= chatvars.playerid) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only friends of " .. players[id].name .. " and staff can do this.[-]")
 				botman.faultyChat = false
-				result = true
-				return
+				return true
 			end
 
 			-- if pvpZone(players[id].xPos, players[id].zPos) and chatvars.accessLevel > 2 then
 				-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not allowed to teleport to players in PVP zones.[-]")
 				-- botman.faultyChat = false
 				-- result = true
-				-- return
+				-- return true
 			-- end
 
 			if not igplayers[id] and chatvars.accessLevel > 2 then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is offline at the moment.  You will have to wait till they return or start walking.[-]")
 				botman.faultyChat = false
-				result = true
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-				return
+				return true
 			end
 
 			if math.floor(players[id].xPos) == 0 and math.floor(players[id].yPos) == 0 and math.floor(players[id].zPos) == 0 then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has not played here since the last map wipe.[-]")
 				botman.faultyChat = false
-				return
+				return true
 			end
 
 			-- teleport to a friend if sufficient zennies
@@ -1246,9 +1301,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 				if tonumber(players[chatvars.playerid].cash) < tonumber(server.teleportCost) then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You do not have enough " .. server.moneyPlural .. ".  Kill some zombies, gamble, trade or beg to earn more.[-]")
 					botman.faultyChat = false
-					result = true
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-					return
+					return true
 				end
 			end
 
@@ -1273,9 +1326,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			end
 
 			botman.faultyChat = false
-			result = true
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-			return
+			return true
 		end
 	end
 
@@ -1286,27 +1337,46 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		result = true
 	end
 
-	if chatvars.words[1] == "register" and chatvars.words[2] == "commands" then
-		botman.registerCommands	= false
-		result = true
-	end
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if not result then
 		if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) then
 			if (chatvars.playername ~= "Server") then
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Unknown command: " .. chatvars.command .. " Type " .. server.commandPrefix .. "help or " .. server.commandPrefix .. "commands for commands.[-]")
 			else
 				if not chatvars.showHelp then
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 					irc_chat(players[chatvars.ircid].ircAlias, "Unknown command")
 				end
 			end
 		else
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			Translate(chatvars.playerid, chatvars.command, "")
 		end
 	end
 
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
 	botman.faultyChat = false
 	botman.faultyChat2 = false
 
-	if debug then dbug("gmsg end") end
+	if chatvars.ircid == 0 then
+		-- make the bot forget questions so we don't have it randomly react later on unexpectedly >.<
+		if players[chatvars.playerid].botQuestion ~= "" then
+		if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+			if string.find(players[chatvars.playerid].botQuestion, "reset") and not string.find(chatvars.command, "reset") then
+				players[chatvars.playerid].botQuestion = ""
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reset cancelled.[-]")
+			end
+		end
+	end
+
+	if debug then dbug("debug gmsg end") end
+
+	if chatvars.helpRead then
+		return true
+	else
+		return false
+	end
 end

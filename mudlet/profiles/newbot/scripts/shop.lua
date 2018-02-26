@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -34,6 +34,9 @@ function fixShop()
 	for k, v in pairs(shopCategories) do
 		reindexShop(k)
 	end
+
+	irc_chat(server.ircMain, "Validating shop and gimme prize items.")
+	collectSpawnableItemsList()
 end
 
 
@@ -455,15 +458,16 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
-		if server.shopLocation ~= nil then
+		if server.shopLocation ~= "" then
 			if not locations[server.shopLocation] then
-				server.shopLocation = nil
-				conn:execute("UPDATE server SET shopLocation = null")
+				-- forget the shop location if the location no longer exists
+				server.shopLocation = ""
+				conn:execute("UPDATE server SET shopLocation = ''")
 			else
 				dist = distancexz(igplayers[playerid].xPos, igplayers[playerid].zPos, locations[server.shopLocation].x, locations[server.shopLocation].z)
 
 				if (dist > 20) and (accessLevel(playerid) > 2) then
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]The shop is only available in the " .. server.shopLocation .. " location.[-]")
+					message("pm " .. playerid .. " [" .. server.chatColour .. "]The shop is only available at " .. server.shopLocation .. ".[-]")
 					message("pm " .. playerid .. " [" .. server.chatColour .. "]Type " .. server.commandPrefix .. server.shopLocation .. " to go there now and " .. server.commandPrefix .. "return when finished.[-]")
 					return false
 				end
@@ -509,13 +513,22 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			players[playerid].cash = tonumber(players[playerid].cash) - (tonumber(shopPrice) * number)
 
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. players[playerid].cash .. " " .. server.moneyPlural .. " remaining.[-]")
-			send("give " .. playerid .. " " .. shopItem .. " " .. number)
+
+			if server.stompy then
+				send("bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number)
+			else
+				send("give " .. playerid .. " " .. shopItem .. " " .. number)
+			end
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase is at your feet.  Look down and grab it before a zombie eats it.[-]")
+			if server.stompy then
+				message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase should be in your inventory but it could be at your feet.  Check the ground if you didn't notice the item being added.[-]")
+			else
+				message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase is at your feet.  Look down and grab it before a zombie eats it.[-]")
+			end
 
 			conn:execute("UPDATE players SET cash = " .. players[playerid].cash .. " WHERE steam = " .. playerid)
 			conn:execute("UPDATE shop SET stock = " .. shopStock - tonumber(number) .. " WHERE item = '" .. escape(shopItem) .. "'")

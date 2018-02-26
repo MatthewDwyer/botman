@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 			  http://botman.nz/latest_bot.zip
@@ -45,7 +45,6 @@ function updatePlayer(steam)
 
 	-- update the db
 	sql = {}
---dbug("update player " .. steam)
 
 	for k,v in pairs(playerFields) do
 		if players[steam][v.field] then
@@ -198,6 +197,7 @@ end
 
 
 function savePlayer(steam, action)
+	-- DO NOT call this function directly.  Call updatePlayer instead.
 	local k, v, i, sqlString, sqlValues, status, errorString, max
 
 	if debugdb then

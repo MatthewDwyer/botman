@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -44,7 +44,7 @@ function endListPlayers(line)
 		freeSlots = server.maxPlayers - botman.playersOnline
 		server.reservedSlotsUsed = server.reservedSlots - freeSlots
 
-		if server.reservedSlotsUsed < 0 then
+		if tonumber(server.reservedSlotsUsed) < 0 then
 			server.reservedSlotsUsed = 0
 		end
 
@@ -59,7 +59,7 @@ function endListPlayers(line)
 		end
 
 		if tonumber(botman.dbReservedSlotsUsed) > tonumber(server.reservedSlotsUsed) then
-			updateReservedSlots()
+			updateReservedSlots(botman.dbReservedSlotsUsed)
 		end
 	else
 		server.reservedSlotsUsed = 0

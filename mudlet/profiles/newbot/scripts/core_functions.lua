@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -157,6 +157,10 @@ function isFriend(testid, steamid)
 
 	if friends[testid].friends == nil then -- testid has no friends
 		return false
+	end
+
+	if testid == steamid then -- self
+		return true -- I hope you are friends with yourself! (sorry if not)
 	end
 
 	if string.find(friends[testid].friends, steamid) then
@@ -1308,6 +1312,10 @@ function fixMissingIGPlayer(steam)
 
 	if igplayers[steam].rawPosition == nil then
 		igplayers[steam].rawPosition = 0
+	end
+
+	if igplayers[steam].spawnedInWorld == nil then
+		igplayers[steam].spawnedInWorld = true
 	end
 end
 

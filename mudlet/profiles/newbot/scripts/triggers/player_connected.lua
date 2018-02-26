@@ -1,8 +1,8 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2018  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
+    Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
@@ -134,60 +134,53 @@ function fillReservedSlot(steam)
 end
 
 
-function updateReservedSlots()
+function updateReservedSlots(dbSlotsUsed)
 	local cursor, errorString, row, rows, playerRemoved
 
 	-- update botman.dbReservedSlotsUsed
-	cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
-	row = cursor:fetch({}, "a")
-	botman.dbReservedSlotsUsed = tonumber(row.totalRows)
-
-	while tonumber(botman.dbReservedSlotsUsed) > tonumber(server.reservedSlotsUsed) do
+	while tonumber(dbSlotsUsed) > tonumber(server.reservedSlotsUsed) do
 		playerRemoved = false
 
 		-- try to remove staff from reserved slots first
-		cursor,errorString = conn:execute("select * from reservedSlots where staff = 1 limit " .. botman.dbReservedSlotsUsed - server.reservedSlotsUsed)
+		cursor,errorString = conn:execute("select * from reservedSlots where staff = 1")
 		rows = cursor:numrows()
 
 		if rows > 0 then
 			row = cursor:fetch({}, "a")
 			conn:execute("delete * from reservedSlots where steam = " .. row.steam)
 			botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
+			dbSlotsUsed = dbSlotsUsed -1
 			playerRemoved = true
 		end
 
 		-- try to remove other players from reserved slots
 		if tonumber(botman.dbReservedSlotsUsed) > tonumber(server.reservedSlotsUsed) then
-			cursor,errorString = conn:execute("select * from reservedSlots where staff = 0 and reserved = 0 order by timeAdded desc limit " .. botman.dbReservedSlotsUsed - server.reservedSlotsUsed)
+			cursor,errorString = conn:execute("select * from reservedSlots where staff = 0 and reserved = 0 order by timeAdded desc")
 			rows = cursor:numrows()
 
 			if rows > 0 then
 				row = cursor:fetch({}, "a")
 				conn:execute("delete * from reservedSlots where steam = " .. row.steam)
 				botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
+				dbSlotsUsed = dbSlotsUsed -1
 				playerRemoved = true
 			end
 		end
 
 		if not playerRemoved then
-			-- update botman.dbReservedSlotsUsed from the db
-			cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
-			row = cursor:fetch({}, "a")
-			botman.dbReservedSlotsUsed = tonumber(row.totalRows)
-
 			-- nobody left to remove so break the loop
 			return
 		end
 	end
 
-	-- update botman.dbReservedSlotsUsed from the db
+	-- update botman.dbReservedSlotsUsed
 	cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
 	row = cursor:fetch({}, "a")
 	botman.dbReservedSlotsUsed = tonumber(row.totalRows)
 end
 
 
-function freeReservedSlot(accessLevel)
+function freeReservedSlot(accessLevel, steam)
 	-- returns true if someone gets kicked
 	local cursor, errorString, row, kickedSomeone
 
@@ -205,7 +198,7 @@ function freeReservedSlot(accessLevel)
 		if igplayers[row.steam] then
 			kickedSomeone = true
 			kick(row.steam, "Sorry, you have been kicked to make room for a reserved slot :(")
-			irc_chat(server.ircAlerts, "Player " .. players[row.steam].name ..  " was kicked from a reserved slot.")
+			irc_chat(server.ircAlerts, "Player " .. players[row.steam].name ..  " was kicked from a reserved slot to let " .. players[steam].name .. " join.")
 			conn:execute("DELETE FROM reservedSlots WHERE steam = " .. row.steam)
 			botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
 
@@ -223,7 +216,7 @@ function freeReservedSlot(accessLevel)
 			if igplayers[row.steam] then
 				kickedSomeone = true
 				kick(row.steam, "Sorry, you have been kicked to make room for an admin :O")
-				irc_chat(server.ircAlerts, "Player " .. players[row.steam].name ..  " was kicked from a reserved slot to make room for an admin.")
+				irc_chat(server.ircAlerts, "Player " .. players[row.steam].name ..  " was kicked from a reserved slot to make room for admin " .. players[steam].name .. ".")
 				conn:execute("DELETE FROM reservedSlots WHERE steam = " .. row.steam)
 				botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
 
@@ -394,7 +387,7 @@ function playerConnected(line)
 		-- admins can take a reserved slot for any non-admins (unless it's admins all the way down).
 		if players[steam].reserveSlot or tonumber(players[steam].accessLevel) < 3 or players[steam].donor then
 			if tonumber(botman.dbReservedSlotsUsed) >= tonumber(server.reservedSlots) then
-				if not freeReservedSlot(players[steam].accessLevel) then
+				if not freeReservedSlot(players[steam].accessLevel, steam) then
 					kick(steam, "Server is full :(")
 					return
 				end
@@ -407,7 +400,7 @@ function playerConnected(line)
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
-	if server.reservedSlotsUsed > 0 and (botman.dbReservedSlotsUsed < server.reservedSlotsUsed) then
+	if tonumber(server.reservedSlotsUsed) > 0 and tonumber(botman.dbReservedSlotsUsed) < tonumber(server.reservedSlotsUsed) then
 		fillReservedSlot(steam)
 	end
 
