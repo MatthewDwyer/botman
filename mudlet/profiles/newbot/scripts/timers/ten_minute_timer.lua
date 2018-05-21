@@ -7,4 +7,8 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
--- Note:  This code has been moved to /scripts/timers/one_hour_timer.lua
+function tenMinuteTimer()
+	if customTenMinuteTimer ~= nil then
+		customTenMinuteTimer()
+	end
+end

@@ -7,98 +7,12 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
--- function readINIFile(tbl)
--- -- TODO: finish this (or not)
--- end
+function sleep(s)
+	dbug("sleeping " .. s)
 
-
--- function writeINITable(tbl)
-	-- local file
-
-	-- if tbl == "server" then
-		-- return false
-	-- end
-
-	-- -- first delete the file
-	-- os.remove(homedir .. "/" .. tbl .. ".ini")
-
-	-- -- now build a new one
-	-- file = io.open(homedir .. "/" .. tbl .. ".ini", "a")
-
-	-- file:write("table=\"" .. tbl .. "\"\n")
-
-	-- for k, v in pairs(_G[tbl]) do
-		-- if type(_G[tbl][k]) ~= "table" then
-			-- if type(v) == "number" then
-				-- file:write(k .. "=" .. v .. "\n")
-			-- elseif type(v) == "boolean" then
-				-- file:write(k .. "=\"" .. trueFalse(v) .. "\"\n")
-			-- else
-				-- file:write(k .. "=\"" .. v .. "\"\n")
-			-- end
-		-- else
-			-- if tbl=="locations" then
-				-- file:write("record=\"" .. _G[tbl][k].name .. "\"\n")
-			-- end
-
-			-- if tbl=="waypoints" then
-				-- file:write("record=\"" .. _G[tbl][k].name .. "\"\n")
-			-- end
-
-			-- if tbl=="teleports" then
-				-- file:write("record=\"" .. _G[tbl][k].name .. "\"\n")
-			-- end
-
-			-- if tbl=="shop" then
-				-- file:write("record=\"" .. _G[tbl][k].item .. "\"\n")
-			-- end
-
-			-- if tbl=="restrictedItems" then
-				-- file:write("record=\"" .. _G[tbl][k].item .. "\"\n")
-			-- end
-
-			-- if tbl=="badItems" then
-				-- file:write("record=\"" .. _G[tbl][k].item .. "\"\n")
-			-- end
-
-			-- if tbl=="gimmeZombies" then
-				-- file:write("record=\"" .. _G[tbl][k].zombie .. "\"\n")
-			-- end
-
-			-- if tbl=="otherEntities" then
-				-- file:write("record=\"" .. _G[tbl][k].entity .. "\"\n")
-			-- end
-
-			-- if tbl=="hotspots" then
-				-- file:write("record=\"" .. _G[tbl][k].hotspot .. "\"\n")
-			-- end
-
-			-- if tbl=="alerts" then
-				-- file:write("record=\"" .. _G[tbl][k].alertID .. "\"\n")
-			-- end
-
-			-- if tbl=="customMessages" then
-				-- file:write("record=\"" .. _G[tbl][k].command .. "\"\n")
-			-- end
-
-			-- if tbl=="proxies" then
-				-- file:write("record=\"" .. _G[tbl][k].scanString .. "\"\n")
-			-- end
-
-			-- for n,m in pairs(_G[tbl][k]) do
-				-- if type(m) == "number" then
-					-- file:write(n .. "=" .. m .. "\n")
-				-- elseif type(m) == "boolean" then
-					-- file:write(n .. "=\"" .. trueFalse(m) .. "\"\n")
-				-- else
-					-- file:write(n .. "=\"" .. m .. "\"\n")
-				-- end
-			-- end
-		-- end
-	-- end
-
-	-- file:close()
--- end
+	local ntime = os.time() + s
+	repeat until os.time() > ntime
+end
 
 
 function processConnectQueue(steam)
@@ -130,15 +44,42 @@ end
 
 
 function checkVACBan(steam)
-	local file, ln
+	-- while there is a more efficient way to do this using the Steam API, this way works without all the extra stuff required to use the API.
+	local file, ln, fileStr
 
-	file = io.open(homedir .. "/temp/steamrep_" .. steam .. ".txt", "r")
+	fileStr = homedir .. "/temp/steamrep_" .. steam .. ".txt"
+
+	file = io.open(fileStr, "r")
 	for ln in file:lines() do
 		if string.find(ln, "vacbanned") then
 			if string.find(ln, "<span id=\"vacbanned\"><span class=\"a02\">Banned</span></span>") then
-				players[steam].VACBanned = true
+				io.close(file)
+				tempTimer( 2, [[ os.remove("]] .. fileStr .. [[")]])
+
+				if players[steam] then
+					players[steam].VACBanned = true
+					if botman.dbConnected then conn:execute("UPDATE players SET VACBanned=1 WHERE steam = " .. steam) end
+
+					if accessLevel(steam) > 2 and not whitelist[steam] then
+						alertAdmins("Player " .. steam .. " " .. players[steam].name .. " has one or more VAC bans on record.")
+						irc_chat(server.ircAlerts, "Player " .. steam .. " " .. players[steam].name .. " has one or more VAC bans on record.")
+						irc_chat(server.ircMain, "Player " .. steam .. " " .. players[steam].name .. " has one or more VAC bans on record.")
+					end
+				else
+					alertAdmins("Player " .. steam .. " has one or more VAC bans on record.")
+					irc_chat(server.ircAlerts, "Player " .. steam .. " has one or more VAC bans on record.")
+					irc_chat(server.ircMain, "Player " .. steam .. " has one or more VAC bans on record.")
+				end
+
+				if server.banVACBannedPlayers and not whitelist[steam] and accessLevel(steam) > 2 then
+					banPlayer(steam, "10 years", "You have a VAC ban")
+				end
+
 				return true
 			else
+				io.close(file)
+				tempTimer( 2, [[ os.remove("]] .. fileStr .. [[")]])
+
 				players[steam].VACBanned = false
 				return false
 			end
@@ -812,24 +753,25 @@ end
 
 function registerHelp(tmp)
 	if botman.dbConnected then conn:execute("insert into helpCommands (command, description, notes, keywords, accessLevel, ingameOnly) values ('" .. escape(tmp.command) .. "','" .. escape(tmp.description) .. "','" .. escape(tmp.notes) .. "','" .. escape(tmp.keywords) .. "'," .. tmp.accessLevel .. "," .. tmp.ingameOnly .. ")") end
-	tmp.commandID = tonumber(tmp.commandID) + 1
-	if botman.dbConnected then conn:execute("insert into helpTopicCommands (topicID, commandID) values (" .. tmp.topicID .. "," .. tmp.commandID .. ")") end
+	if botman.dbConnected then conn:execute("insert into helpTopicCommands (topicID, commandID) values (" .. topicID .. "," .. commandID .. ")") end
+	commandID = commandID + 1
 end
 
 
 function isValidSteamID(steam)
+if (debug) then dbug("debug isValidSteamID line " .. debugger.getinfo(1).currentline) end
 	-- here we're testing 2 things.  that the id is numeric and that it contains 17 digits
 	-- I'm also testing that it begins with 7656.  As far as I know all Steam keys begin with this.
-
-	if ToInt(steam) == nil then
-		return false
-	end
 
 	if string.len(steam) ~= 17 then
 		return false
 	end
 
 	if string.sub(steam, 1, 4) ~= "7656" then
+		return false
+	end
+
+	if ToInt(steam) == nil then
 		return false
 	end
 
@@ -907,7 +849,7 @@ function fixBot()
 
 	if tonumber(faultCount) > 0 then
 		if botman.dbConnected then
-			conn:execute("DELETE FROM altertables")
+			conn:execute("TRUNCATE altertables")
 			alertAdmins("The bot may become unresponsive for a while, it will do table maintenance in one minute.  When it comes back, the bot will need to be restarted to complete the maintenance.", "alert")
 			irc_chat(server.ircMain, "The bot may become unresponsive for a while, it will do table maintenance in one minute.  When it comes back, the bot will need to be restarted to complete the maintenance.")
 			tempTimer( 60, [[alterTables()]] )
@@ -1752,14 +1694,28 @@ function kick(steam, reason)
 end
 
 
-function banPlayer(steam, duration, reason, issuer, gblBan, localOnly)
-	local tmp, admin, belt, pack, equipment, country
+function banPlayer(steam, duration, reason, issuer, localOnly)
+	local id, tmp, admin, belt, pack, equipment, country, isArchived, playerName
 
-	--TODO: Add GBL ban save
+	admin = 0
+	playerName = "Not Sure" -- placeholder in case we're banning a steam ID that hasn't played here yet.
+	isArchived = false
+
+	if not players[steam] then
+		id = LookupArchivedPlayer(steam)
+
+		if not (id == 0) then
+			playerName = playersArchived[id].name
+			isArchived = true
+		end
+	else
+		isArchived = false
+		playerName = players[steam].name
+	end
 
 	if accessLevel(steam) < 3 then
-		irc_chat(server.ircAlerts, "Request to ban admin " .. players[steam].name .. "  [DENIED]")
-		message("pm " .. issuer .. " [" .. server.chatColour .. "]Request to ban admin " .. players[steam].name .. "  [DENIED][-]")
+		irc_chat(server.ircAlerts, "Request to ban admin " .. playerName .. "  [DENIED]")
+		message("pm " .. issuer .. " [" .. server.chatColour .. "]Request to ban admin " .. playerName .. "  [DENIED][-]")
 		return
 	end
 
@@ -1774,16 +1730,19 @@ function banPlayer(steam, duration, reason, issuer, gblBan, localOnly)
 		stripAngleBrackets(reason)
 	end
 
-	if string.len(issuer) > 10 then
+	if issuer then
 		admin = issuer
-	else
-		admin = 0
 	end
 
 	tmp = steam
 	-- if there is no player with steamid steam, try looking it up incase we got their name instead of their steam
 	if not players[steam] then
 		steam = LookupPlayer(string.trim(steam))
+
+		if steam == 0 then
+			steam = LookupArchivedPlayer(string.trim(steam))
+		end
+
 		-- restore the original steam value if nothing matched as we may be banning someone who's never played here.
 		if steam == 0 then steam = tmp end
 	end
@@ -1795,8 +1754,12 @@ function banPlayer(steam, duration, reason, issuer, gblBan, localOnly)
 	end
 
 	-- grab their belt, pack and equipment
-	if players[steam] then
-		country = players[steam].country
+	if players[steam] or playersArchived[steam] then
+		if not isArchived then
+			country = players[steam].country
+		else
+			country = playersArchived[steam].country
+		end
 
 		if botman.dbConnected then
 			cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .." ORDER BY inventoryTrackerid DESC Limit 1")
@@ -1807,21 +1770,37 @@ function banPlayer(steam, duration, reason, issuer, gblBan, localOnly)
 				equipment = row.equipment
 			end
 
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(players[steam].name) .. " has has been banned for " .. duration .. " for " .. escape(reason) .. "'," .. steam .. ")")
+			if not isArchived then
+				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(playerName) .. " has has been banned for " .. duration .. " for " .. escape(reason) .. "'," .. steam .. ")")
+			else
+				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(playersArchived[steam].xPos) .. "," .. math.ceil(playersArchived[steam].yPos) .. "," .. math.floor(playersArchived[steam].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(playerName) .. " has has been banned for " .. duration .. " for " .. escape(reason) .. "'," .. steam .. ")")
+			end
 		end
 
-		irc_chat(server.ircMain, "[BANNED] Player " .. steam .. " " .. players[steam].name .. " has been banned for " .. duration .. " " .. reason)
-		irc_chat(server.ircAlerts, "[BANNED] Player " .. steam .. " " .. players[steam].name .. " has been banned for " .. duration .. " " .. reason)
-		alertAdmins("Player " .. players[steam].name .. " has been banned for " .. duration .. " " .. reason)
+		irc_chat(server.ircMain, "[BANNED] Player " .. steam .. " " .. playerName .. " has been banned for " .. duration .. " " .. reason)
+		irc_chat(server.ircAlerts, "[BANNED] Player " .. steam .. " " .. playerName .. " has been banned for " .. duration .. " " .. reason)
+		alertAdmins("Player " .. playerName .. " has been banned for " .. duration .. " " .. reason)
 
 		-- add to bots db
 		if botman.db2Connected and not localOnly then
-			if tonumber(players[steam].pendingBans) > 0 then
-				connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin, GBLBan, GBLBanActive) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(players[steam].timeOnServer) + tonumber(players[steam].playtime) .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].zombies .. ",'" .. players[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "',1,1)")
-				irc_chat(server.ircMain, "Player " .. steam .. " " .. players[steam].name .. " has been globally banned.")
-				message("say [" .. server.alertColourColour .. "]" .. players[id].name .. " has been globally banned.[-]")
-			else
-				connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(players[steam].timeOnServer) + tonumber(players[steam].playtime) .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].zombies .. ",'" .. players[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "')")
+			if players[steam] then
+				if tonumber(players[steam].pendingBans) > 0 then
+					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin, GBLBan, GBLBanActive) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(players[steam].timeOnServer) + tonumber(players[steam].playtime) .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].zombies .. ",'" .. players[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "',1,1)")
+					irc_chat(server.ircMain, "Player " .. steam .. " " .. players[steam].name .. " has been globally banned.")
+					message("say [" .. server.alertColourColour .. "]" .. players[id].name .. " has been globally banned.[-]")
+				else
+					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(players[steam].timeOnServer) + tonumber(players[steam].playtime) .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].zombies .. ",'" .. players[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "')")
+				end
+			end
+
+			if playersArchived[steam] then
+				if tonumber(playersArchived[steam].pendingBans) > 0 then
+					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin, GBLBan, GBLBanActive) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(playersArchived[steam].timeOnServer) + tonumber(playersArchived[steam].playtime) .. "," .. playersArchived[steam].score .. "," .. playersArchived[steam].playerKills .. "," .. playersArchived[steam].zombies .. ",'" .. playersArchived[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "',1,1)")
+					irc_chat(server.ircMain, "Player " .. steam .. " " .. playerName .. " has been globally banned.")
+					message("say [" .. server.alertColourColour .. "]" .. playerName .. " has been globally banned.[-]")
+				else
+					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(playersArchived[steam].timeOnServer) + tonumber(playersArchived[steam].playtime) .. "," .. playersArchived[steam].score .. "," .. playersArchived[steam].playerKills .. "," .. playersArchived[steam].zombies .. ",'" .. playersArchived[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "')")
+				end
 			end
 		end
 
@@ -1833,7 +1812,7 @@ function banPlayer(steam, duration, reason, issuer, gblBan, localOnly)
 
 		-- Look for and also ban ingame players with the same IP
 		for k,v in pairs(igplayers) do
-			if players[k].IP == players[steam].IP and k ~= steam then
+			if v.IP == players[steam].IP and k ~= steam and v.IP ~= "" then
 				send("ban add " .. k .. " " .. duration .. " \"same IP as banned player\"")
 
 				if botman.getMetrics then
@@ -2056,15 +2035,31 @@ function dbWho(ownerid, x, y, z, dist, days, hours, height, ingame)
 
 		if ingame then
 			if isStaff then
-				message("pm " .. ownerid .. " [" .. server.chatColour .. "] #" .. counter .." " .. row.steam .. " " .. players[row.steam].id .. " " .. players[row.steam].name .. " sess: " .. row.session .. "[-]")
+				if players[row.steam] then
+					message("pm " .. ownerid .. " [" .. server.chatColour .. "] #" .. counter .." " .. row.steam .. " " .. players[row.steam].id .. " " .. players[row.steam].name .. " sess: " .. row.session .. "[-]")
+				else
+					message("pm " .. ownerid .. " [" .. server.chatColour .. "] #" .. counter .." " .. row.steam .. " " .. playersArchived[row.steam].id .. " " .. playersArchived[row.steam].name .. " (archived) sess: " .. row.session .. "[-]")
+				end
 			else
-				message("pm " .. ownerid .. " [" .. server.chatColour .. "]" .. players[row.steam].name .. " session: " .. row.session .. "[-]")
+				if players[row.steam] then
+					message("pm " .. ownerid .. " [" .. server.chatColour .. "]" .. players[row.steam].name .. " session: " .. row.session .. "[-]")
+				else
+					message("pm " .. ownerid .. " [" .. server.chatColour .. "]" .. playersArchived[row.steam].name .. " session: " .. row.session .. "[-]")
+				end
 			end
 		else
 			if isStaff then
-				irc_chat(ownerid, "#" .. counter .." " .. row.steam .. " " .. players[row.steam].name .. " sess: " .. row.session)
+				if players[row.steam] then
+					irc_chat(ownerid, "#" .. counter .." " .. row.steam .. " " .. players[row.steam].name .. " sess: " .. row.session)
+				else
+					irc_chat(ownerid, "#" .. counter .." " .. row.steam .. " " .. playersArchived[row.steam].name .. " (archived) sess: " .. row.session)
+				end
 			else
-				irc_chat(ownerid, players[row.steam].name .. " session: " .. row.session)
+				if players[row.steam] then
+					irc_chat(ownerid, players[row.steam].name .. " session: " .. row.session)
+				else
+					irc_chat(ownerid, playersArchived[row.steam].name .. " session: " .. row.session)
+				end
 			end
 		end
 
@@ -2558,8 +2553,10 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].bedX = 0
 	players[steam].bedY = 0
 	players[steam].bedZ = 0
+	players[steam].block = false
 	players[steam].botTimeout = false
 	players[steam].botQuestion = "" -- used for storing the last question the bot asked the player.
+	players[steam].bountyReason = ""
 	players[steam].cash = 0
 	players[steam].chatColour = "FFFFFF"
 	players[steam].commandCooldown = 0
@@ -2569,6 +2566,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].donorLevel = 0
 	players[steam].firstSeen = os.time()
 	players[steam].GBLCount = 0
+	players[steam].gimmeCooldown = 0
 	players[steam].gimmeCount = 0
 	players[steam].hackerScore = 0
 	players[steam].hackerTPScore = 0
@@ -2611,12 +2609,14 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].protect2 = false
 	players[steam].protect2Size = server.baseSize
 	players[steam].protectSize = server.baseSize
+	players[steam].pvpTeleportCooldown = 0
 	players[steam].pvpVictim = 0
 	players[steam].raiding = false
 	players[steam].relogCount = 0
 	players[steam].removeClaims = false
 	players[steam].reserveSlot = false
 	players[steam].sessionCount = 1
+	players[steam].returnCooldown = 0
 	players[steam].silentBob = false
 	players[steam].steam = steam
 	players[steam].steamOwner = steamOwner
@@ -2625,6 +2625,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].timeout = false
 	players[steam].tokens = 0
 	players[steam].tp = 0
+	players[steam].VACBanned = false
 	players[steam].walkies = false
 	players[steam].watchPlayer = true
 	players[steam].watchPlayerTimer = os.time() + 2419200 -- stop watching in one month.  it will stop earlier once they are upgraded from new player status
@@ -2646,11 +2647,14 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].zPos = 0
 	players[steam].zPosOld = 0
 	players[steam].zPosOld2 = 0
+	players[steam].location = ""
+
+	if locations["spawn"] then
+		players[steam].location = "spawn"
+	end
 
 	if locations["lobby"] then
 		players[steam].location = "lobby"
-	else
-		players[steam].location = ""
 	end
 
 	return true
@@ -2695,6 +2699,9 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].sessionPlaytime = 0
 	igplayers[steam].sessionStart = os.time()
 	igplayers[steam].spawnedInWorld = false
+	igplayers[steam].spawnedReason = "fake reason"
+	igplayers[steam].spawnedCoordsOld = "0 0 0"
+	igplayers[steam].spawnedCoords = "0 0 0"
 	igplayers[steam].steam = steam
 	igplayers[steam].steamOwner = steamOwner
 	igplayers[steam].teleCooldown = 200

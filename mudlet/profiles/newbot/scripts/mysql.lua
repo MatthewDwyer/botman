@@ -562,6 +562,7 @@ if debug then display("alterTables start\n") end
 	doSQL("CREATE TABLE `connectQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `steam` bigint(17) NOT NULL, `command` varchar(255) NOT NULL, `processed` TINYINT(1) NOT NULL DEFAULT '0', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `commandAccessRestrictions` (`id` int(11) NOT NULL, `functionName` varchar(100) NOT NULL DEFAULT '', `accessLevel` int(11) NOT NULL DEFAULT '3', PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE IF NOT EXISTS `customCommands_Detail` (`detailID` int(11) NOT NULL, `commandID` int(11) NOT NULL, `action` varchar(5) NOT NULL DEFAULT '' COMMENT 'say,give,tele,spawn,buff,cmd', `thing` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`detailID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
+	doSQL("CREATE TABLE IF NOT EXISTS playersArchived LIKE players")
 
 	-- changes to players table
 	doSQL("ALTER TABLE `players` ADD COLUMN `waypoint2X` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Y` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Z` INT NOT NULL DEFAULT '0', ADD COLUMN `waypointsLinked` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -697,6 +698,8 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `allowSecondBaseWithoutDonor` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `nonAlphabeticChatReaction` VARCHAR(10) NOT NULL DEFAULT 'nothing'")
 	doSQL("ALTER TABLE `server` ADD `lotteryTicketPrice` INT NOT NULL DEFAULT '25'")
+	doSQL("ALTER TABLE `server` ADD `newPlayerMaxLevel` INT NOT NULL DEFAULT '9'")
+	doSQL("ALTER TABLE `server` ADD `hordeNight` INT NOT NULL DEFAULT '7'")
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -760,6 +763,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `helpTopics` CHANGE `topic` `topic` VARCHAR(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL")
 	doSQL("ALTER TABLE `helpCommands` CHANGE `command` `command` TEXT CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `helpCommands` CHANGE `description` `description` TEXT CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT ''")
+	doSQL("ALTER TABLE `locations` ADD `coolDownTimer` INT NOT NULL DEFAULT '0'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)
@@ -769,6 +773,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `bans` ADD `GBLBanExpiry` DATE NOT NULL", true)
 	doSQL("ALTER TABLE `bans` ADD `GBLBanReason` VARCHAR(255) NOT NULL DEFAULT ''", true)
 	doSQL("ALTER TABLE `bans` ADD `GBLBanVetted` TINYINT(1) NOT NULL DEFAULT '0',  ADD `GBLBanActive` TINYINT(1) NOT NULL DEFAULT '0'", true)
+	doSQL("ALTER TABLE `players` ADD `VACBanned` TINYINT(1) NOT NULL DEFAULT '0'", true)
 
 	-- change the primary key of table bans from steam to id (an auto incrementing integer field) if the id field does not exist.
 	cursor,errorString = connBots:execute("SHOW COLUMNS FROM `bans` LIKE 'id'")
@@ -783,7 +788,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	rows = cursor:numrows()
 
 	if rows == 0 then
-		doSQL("DELETE FROM gimmeZombies")
+		doSQL("TRUNCATE gimmeZombies")
 		doSQL("ALTER TABLE `gimmeZombies` DROP PRIMARY KEY , ADD PRIMARY KEY (  `entityID` ), ADD `remove` TINYINT(1) NOT NULL DEFAULT '0'")
 	end
 

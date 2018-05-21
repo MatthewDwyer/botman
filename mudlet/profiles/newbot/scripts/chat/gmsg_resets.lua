@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local region, x, z, debug, result, row, rows, cursor, errorString
+local region, x, z, debug, result, help, tmp
 local shortHelp = false
 local skipHelp = false
 
@@ -20,16 +20,31 @@ end
 function gmsg_resets()
 	calledFunction = "gmsg_resets"
 	result = false
+	tmp = {}
 
 -- ################## reset command functions ##################
 
 	local function cmd_DeleteResetZones()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}clear reset zones"
+			help[2] = "The bot will forget all the reset zones so you can start over marking new ones."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "clear,forget,remo,del,reset,zone"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "clear" or chatvars.words[1] == "reset" or chatvars.words[1] == "delete") and chatvars.words[2] == "reset" and chatvars.words[3] == "zones"  or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "clear reset zones")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "The bot will forget all the reset zones so you can start over marking new ones.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -53,7 +68,7 @@ function gmsg_resets()
 			end
 
 			resetRegions = {}
-			conn:execute("DELETE FROM resetZones")
+			conn:execute("TRUNCATE resetZones")
 			conn:execute("UPDATE keystones SET remove = 0") -- clear the remove flag from the keystones table to prevent removals that we don't want.
 
 			if (chatvars.playername ~= "Server") then
@@ -69,13 +84,26 @@ function gmsg_resets()
 
 
 	local function cmd_ToggleResetZone()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}add/remove reset zone"
+			help[2] = "Flag or unflag an entire region as a reset zone."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "add,remo,reset,zone"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "add") or string.find(chatvars.command, "remo") or string.find(chatvars.command, "dele") or string.find(chatvars.command, "reset") or string.find(chatvars.command, "regi") or string.find(chatvars.command, "zone") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "add reset zone")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "remove reset zone")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Flag or unflag an entire region as a reset zone.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -112,12 +140,26 @@ function gmsg_resets()
 
 
 	local function cmd_ListResetZones()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}reset zones"
+			help[2] = "List all of the regions that are reset zones."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "view,list,reset,zone"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "reset") or string.find(chatvars.command, "zone") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "reset zones")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "List all of the regions that are reset zones.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -174,6 +216,24 @@ function gmsg_resets()
 	end
 
 -- ################## End of command functions ##################
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "==== Registering help - reset commands ====")
+		dbug("Registering help - reset commands")
+
+		tmp = {}
+		tmp.topicDescription = "Reset zones tell a player where when they can't place claims or setbase in a location or region.  The bot is not able to actually delete parts of the map and that must be done manually with the server offline.  The bot does provide a list of regions that are reset zones if any regions have been flagged as such."
+
+		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'reset zones'")
+		rows = cursor:numrows()
+		if rows == 0 then
+			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
+			row = cursor:fetch(row, "a")
+			tmp.topicID = row.Auto_increment
+
+			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('reset zones', '" .. escape(tmp.topicDescription) .. "')")
+		end
+	end
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
@@ -233,7 +293,7 @@ function gmsg_resets()
 	if debug then dbug("debug resets end of remote commands") end
 
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not chatvars.showHelp then
+	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
 		return false
 	end
@@ -246,6 +306,12 @@ function gmsg_resets()
 	if result then
 		if debug then dbug("debug cmd_ToggleResetZone triggered") end
 		return result
+	end
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "**** Reset commands help registered ****")
+		dbug("Reset commands help registered")
+		topicID = topicID + 1
 	end
 
 	if debug then dbug("debug resets end") end

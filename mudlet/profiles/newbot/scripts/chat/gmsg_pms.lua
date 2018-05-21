@@ -7,20 +7,10 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-
---[[
-private message messages
-=============
-These are stored in the table customMessages.  Currently they are limited to simple private text responses.
-add command
-remove command
-custom commands
---]]
-
 function gmsg_pms()
 	calledFunction = "gmsg_pms"
 
-	local access, msg, cmd
+	local access, msg, cmd, help
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
@@ -167,12 +157,12 @@ function gmsg_pms()
 		return true
 	end
 
-	-- ###################  do not allow remote commands beyond this point ################
-	if (chatvars.playerid == 0) then
+	-- ###################  do not run remote commands beyond this point unless displaying command help ################
+	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
 		return false
 	end
-	-- ####################################################################################
+	-- ###################  do not run remote commands beyond this point unless displaying command help ################
 
 	if customMessages[cmd] then
 		cursor,errorString = conn:execute("select * from customMessages where command = '" .. escape(cmd) .. "'")

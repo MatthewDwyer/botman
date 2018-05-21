@@ -76,7 +76,7 @@ function LookupShop(search,all)
 	shopPrice = 0
 	shopIndex = 0
 
-	conn:execute("DELETE FROM memShop")
+	conn:execute("TRUNCATE memShop")
 
 	if all ~= nil then
 		cursor,errorString = conn:execute("SELECT * FROM shop WHERE item = '" .. escape(search) .. "' or category = '" .. escape(search) .. "' ORDER BY idx")
@@ -202,8 +202,8 @@ function drawLottery(steam)
 		message("say [" .. server.chatColour .. "]$$$ Congratulation$ $$$   xD[-]")
 
 		if steam == nil then
-			conn:execute("DELETE FROM memLottery")
-			conn:execute("DELETE FROM lottery")
+			conn:execute("TRUNCATE memLottery")
+			conn:execute("TRUNCATE lottery")
 			server.lottery = 0
 			conn:execute("UPDATE server SET lottery = 0")
 		else
@@ -479,7 +479,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		LookupShop(words[2], true)
 
 		if words[3] ~= nil then
-			number = tonumber(words[3])
+			number = math.abs(tonumber(words[3]))
 		else
 			number = 1
 		end

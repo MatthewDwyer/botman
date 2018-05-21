@@ -14,7 +14,7 @@ function initReservedSlots()
 	local k, v, cursor,errorString, row, isStaff, canReserve
 
 	if server.reservedSlotsUsed == 0 then
-		conn:execute("DELETE FROM reservedSlots")
+		conn:execute("TRUNCATE reservedSlots")
 		botman.dbReservedSlotsUsed = 0
 		return
 	end
@@ -230,7 +230,7 @@ end
 
 
 function playerConnected(line)
-	local entityid, player, steam, steamOwner, IP, temp_table, temp, debug, commas, freeSlots
+	local entityid, player, steam, steamOwner, IP, temp_table, temp, debug, commas, freeSlots, test
 	local timestamp = os.time()
 
 	debug = false
@@ -313,11 +313,6 @@ function playerConnected(line)
 	lastPlayerConnected = player
 	lastSteamConnected = steam
 
-	if string.find(player, "[\(\)]%d+") then
-		kick(steam, "Sorry another player with the same name as you is playing here right now.  We do not allow multiple players on at the same time with the same name.")
-		return
-	end
-
 	if isReservedName(player, steam) then
 		kick(steam, "That name is reserved.  You cannot play as " .. player .. " here.")
 		alertAdmins("A player was kicked using an admin's name! " .. entityid .. " " .. player, "alert")
@@ -325,6 +320,20 @@ function playerConnected(line)
 		irc_chat(server.ircMain, "!!  Player joined with admin's name but a different steam key !! " .. player .. " steam: " .. steam.. " owner: " .. steamOwner .. " id: " .. entityid)
 		irc_chat(server.ircAlerts, "!!  Player joined with admin's name but a different steam key !! " .. player .. " steam: " .. steam.. " owner: " .. steamOwner .. " id: " .. entityid)
 		return
+	end
+
+	if string.find(player, "[\(\)]%d+") then
+		kick(steam, "Sorry another player with the same name as you is playing here right now.  We do not allow multiple players on at the same time with the same name.")
+		return
+	end
+
+	-- check playersArchived and move the player record back to the players table if found
+	if playersArchived[steam] then
+		dbug("Restoring player " .. steam .. " " .. player .. " from archive")
+		conn:execute("INSERT INTO players SELECT * from playersArchived WHERE steam = " .. steam)
+		conn:execute("DELETE FROM playersArchived WHERE steam = " .. steam)
+		playersArchived[steam] = nil
+		loadPlayers(steam)
 	end
 
 	-- add to players table
@@ -368,12 +377,37 @@ function playerConnected(line)
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
+	-- check for VAC ban
+
+	if tonumber(steam) == tonumber(steamOwner) then
+		os.remove(homedir .. "/temp/steamrep_" .. steam .. ".txt")
+		os.execute("wget -nd http://steamrep.com/profiles/" .. steam .. " -O \"" .. homedir .. "/temp/steamrep_" .. steam .. ".txt\"")
+		tempTimer( 5, [[ checkVACBan("]] .. steam .. [[") ]] )
+	else
+		os.remove(homedir .. "/temp/steamrep_" .. steam .. ".txt")
+		os.execute("wget -nd http://steamrep.com/profiles/" .. steam .. " -O \"" .. homedir .. "/temp/steamrep_" .. steam .. ".txt\"")
+		tempTimer( 5, [[ checkVACBan("]] .. steam .. [[") ]] )
+
+		os.remove(homedir .. "/temp/steamrep_" .. steamOwner .. ".txt")
+		os.execute("wget -nd http://steamrep.com/profiles/" .. steamOwner .. " -O \"" .. homedir .. "/temp/steamrep_" .. steamOwner .. ".txt\"")
+		tempTimer( 10, [[ checkVACBan("]] .. steamOwner .. [[") ]] )
+	end
+
 	-- kick for bad player name
 	if	(not server.allowNumericNames or not server.allowGarbageNames) and not whitelist[steam] then
 		temp = countAlphaNumeric(player)
 
 		if tonumber(player) ~= nil or tonumber(temp) == 0 then
 			kick(steam, "Names without letters are not allowed here. You need to change your name to play on this server.")
+			return
+		end
+	end
+
+	-- kick if player name looks like a steam ID
+	if string.len(player) == 17 then
+		test = tonumber(player)
+		if (test ~= nil) then
+			kick(steam, "Your name is a number and the same length as a steam key. Nice try though.")
 			return
 		end
 	end
@@ -529,7 +563,7 @@ function playerConnected(line)
 		if tonumber(rows) > 0 then
 			row = cursor:fetch({}, "a")
 			kick(steam, "You are on the global ban list. " .. row.GBLBanReason)
-			banPlayer(steam, "10 years", "On global ban list", 0, 0, true)
+			banPlayer(steam, "10 years", "On global ban list", 0, true)
 			return
 		else
 			-- check number of pending global bans and alert if this player has any, but allow them to join.
@@ -540,6 +574,13 @@ function playerConnected(line)
 				players[steam].pendingBans = row.pendingBans
 				alertAdmins("ALERT!  Player " .. steam ..  " " .. player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.", "alert")
 			end
+		end
+	end
+
+	if customPlayerConnected ~= nil then
+		-- read the note on overriding bot code in custom/custom_functions.lua
+		if customPlayerConnected(line, entityid, player, steam, steamOwner, IP) then
+			return
 		end
 	end
 

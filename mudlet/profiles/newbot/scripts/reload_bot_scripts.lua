@@ -23,6 +23,10 @@ function updateBot(forced, steam)
 		steamID = steam
 	end
 
+	if not server.botsIP then
+		send("pm IPCHECK")
+	end
+
 	if server.updateBranch ~= "" then
 		os.remove(homedir .. "/temp/scripts.zip")
 		os.remove(homedir .. "/temp/version.txt")
@@ -83,8 +87,17 @@ end
 
 
 function unpackScripts()
+	local k, v
+
+	for k,v in pairs(igplayers) do
+		savePlayerData(k)
+	end
+
 	os.execute("unzip -X -o \"" .. homedir .. "\"/temp/scripts.zip -d \"" .. homedir .. "\"")
 	tempTimer( 3, [[ reloadBotScripts(true) ]] )
+
+	tempTimer( 6, [[ loadPlayers() ]] )
+	tempTimer( 8, [[ loadPlayersArchived() ]] )
 	message("say [" .. server.chatColour .. "]" .. server.botName .. " has been updated.[-]")
 end
 
@@ -100,6 +113,10 @@ function fixTables()
 
 	if type(admins) ~= "table" then
 		admins = {}
+	end
+
+	if type(bans) ~= "table" then
+		bans = {}
 	end
 
 	if type(mods) ~= "table" then
@@ -225,6 +242,13 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 		dofile(homedir .. "/custom/customIRC.lua")
 	end
 
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	if isFile(homedir .. "/custom/custom_functions.lua") then
+		server.nextCodeReload = "/custom/custom_functions.lua"
+		dofile(homedir .. "/custom/custom_functions.lua")
+	end
+
 	server.nextCodeReload = "/scripts/debug.lua"
 	checkScript(homedir .. "/scripts/debug.lua")
 
@@ -247,11 +271,6 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 
 	server.nextCodeReload = "/scripts/irc_help.lua"
 	checkScript(homedir .. "/scripts/irc_help.lua")
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
-	server.nextCodeReload = "/scripts/coppi.lua"
-	checkScript(homedir .. "/scripts/coppi.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -305,16 +324,6 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	server.nextCodeReload = "/scripts/one_minute.lua"
-	checkScript(homedir .. "/scripts/one_minute.lua")
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
-	server.nextCodeReload = "/scripts/one_hour.lua"
-	checkScript(homedir .. "/scripts/one_hour.lua")
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
 	server.nextCodeReload = "/scripts/thirty_minutes.lua"
 	checkScript(homedir .. "/scripts/thirty_minutes.lua")
 
@@ -348,6 +357,16 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 
 	server.nextCodeReload = "/scripts/chat/gmsg_bot.lua"
 	dofile(homedir .. "/scripts/chat/gmsg_bot.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/chat/gmsg_coppi_old.lua"
+	checkScript(homedir .. "/scripts/chat/gmsg_coppi_old.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/chat/gmsg_coppi_new.lua"
+	checkScript(homedir .. "/scripts/chat/gmsg_coppi_new.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -530,6 +549,11 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	server.nextCodeReload = "/scripts/timers/ten_second_timer.lua"
 	checkScript(homedir .. "/scripts/timers/ten_second_timer.lua")
 
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/timers/ten_minute_timer.lua"
+	checkScript(homedir .. "/scripts/timers/ten_minute_timer.lua")
+
 	server.nextCodeReload = ""
 if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -702,6 +726,10 @@ function reloadBotScripts(skipTables)
 	disableTrigger("le")
 	disableTimer("GimmeReset")
 
+	if not server.botsIP then
+		send("pm IPCHECK")
+	end
+
 	if exists("Every10Seconds", "timer") == 0 then
 	  permTimer("Every10Seconds", "", 10.0, [[TenSecondTimer()]])
 	end
@@ -746,7 +774,7 @@ function reloadBotScripts(skipTables)
 
 			if skipTables ~= nil then
 	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-				-- force a reload of the lua tables incase new fields have been added so they get initialised with default values.
+				-- force a reload of the lua tables in case new fields have been added so they get initialised with default values.
 				loadTables(true) -- passing true tells loadTables to not reload the players table.
 			end
 
@@ -777,6 +805,7 @@ function reloadBotScripts(skipTables)
 				if botman.dbConnected then conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'") end
 			end
 
+			send("version")
 			send("gg")
 			send("teleh")
 			send("se")

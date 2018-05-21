@@ -8,7 +8,7 @@
 --]]
 
 
-function help(command)
+function commandHelp(command)
 	local list
 
 	if (command == "me") then

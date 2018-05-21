@@ -10,6 +10,10 @@
 function miscCommandsTimer()
 	local cursor, errorString, row
 
+	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
+		return
+	end
+
 	cursor,errorString = conn:execute("select * from miscQueue where timerDelay = '0000-00-00 00:00:00'  order by id limit 0,1")
 
 	if cursor then

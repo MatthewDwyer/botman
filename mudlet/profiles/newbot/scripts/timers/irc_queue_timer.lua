@@ -13,7 +13,7 @@
 function ircQueueTimer()
 	local row1, row2, cursor1, cursor2, errorString
 
-	if not botman.dbConnected then
+	if not botman.dbConnected or botman.ircQueueEmpty then
 		return
 	end
 
@@ -24,6 +24,11 @@ function ircQueueTimer()
 	end
 
 	row1 = cursor1:fetch({}, "a")
+
+	if not row1 then
+		botman.ircQueueEmpty = true
+		disableTimer("ircQueue")
+	end
 
 	while row1 do
 		cursor2,errorString = conn:execute("select * from ircQueue where name = '" .. escape(row1.name) .. "' order by id limit 0,2")

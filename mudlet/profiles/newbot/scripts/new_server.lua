@@ -12,6 +12,7 @@ function gatherServerData()
 	-- read a bunch of info from the server.  The bot will capture it elsewhere.
 
 	send("lkp -online")
+	tempTimer( 3, [[send("version")]] )
 	tempTimer( 4, [[send("gg")]] )
 	tempTimer( 6, [[send("pm IPCHECK")]] )
 	tempTimer( 8, [[send("admin list")]] )
@@ -121,7 +122,9 @@ function initServer()
 	server.reservedSlotsUsed = 0
 
 	if botman.dbConnected then
-		conn:execute("DELETE FROM server")
+		conn:execute("TRUNCATE server")
 		cursor,errorString = conn:execute("INSERT INTO server (botName, windowGMSG, windowAlerts, windowDebug, windowLists, windowPlayers) values ('Bot', 'Chat', 'Alerts', 'Debug', 'Lists', 'Players')")
+		-- save all the settings above to the server table
+		saveServer()
 	end
 end

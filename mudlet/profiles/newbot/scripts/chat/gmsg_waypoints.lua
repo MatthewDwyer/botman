@@ -11,8 +11,6 @@ local tmp, debug, pname, pid, result, help
 local shortHelp = false
 local skipHelp = false
 
-help = {}
-
 debug = false -- should be false unless testing
 
 if botman.debugAll then
@@ -30,6 +28,7 @@ end
 function gmsg_waypoints()
 	calledFunction = "gmsg_waypoints"
 	result = false
+	tmp = {}
 
 -- ################## waypoint command functions ##################
 
@@ -89,6 +88,21 @@ function gmsg_waypoints()
 				pname = string.trim(pname)
 				pid = LookupPlayer(pname)
 
+				if pid == 0 then
+					pid = LookupArchivedPlayer(pname)
+
+					if not (pid == 0) then
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
+						else
+							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.")
+						end
+
+						botman.faultyChat = false
+						return true
+					end
+				end
+
 				if not (pid == 0) then
 					conn:execute("DELETE FROM waypoints WHERE steam = " .. pid)
 
@@ -102,9 +116,9 @@ function gmsg_waypoints()
 					loadWaypoints(pid)
 				else
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found like " .. pname .. "[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
 					else
-						irc_chat(chatvars.ircAlias, "No player found like " .. pname)
+						irc_chat(chatvars.ircAlias, "No player found called " .. pname)
 					end
 				end
 
@@ -427,6 +441,21 @@ function gmsg_waypoints()
 			if (tmp.name ~= "") then
 				tmp.name = string.trim(tmp.name)
 				tmp.steam = LookupPlayer(tmp.name)
+
+				if tmp.steam == 0 then
+					tmp.steam = LookupArchivedPlayer(tmp.pname)
+
+					if not (tmp.steam == 0) then
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
+						else
+							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.")
+						end
+
+						botman.faultyChat = false
+						return true
+					end
+				end
 
 				if (tmp.steam == 0) then
 					-- look for a location instead
@@ -773,6 +802,21 @@ function gmsg_waypoints()
 				tmp.pname = string.sub(chatvars.command, string.find(chatvars.command, "waypoints ") + 10, string.find(chatvars.command, " number") - 1)
 				tmp.pname = stripQuotes(tmp.pname)
 				tmp.id = LookupPlayer(tmp.pname)
+
+				if tmp.id == 0 then
+					tmp.id = LookupArchivedPlayer(tmp.pname)
+
+					if not (tmp.id == 0) then
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
+						else
+							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.")
+						end
+
+						botman.faultyChat = false
+						return true
+					end
+				end
 
 				if tmp.id ~= 0 then
 					if (chatvars.playername ~= "Server") then
@@ -1336,7 +1380,7 @@ function gmsg_waypoints()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleporting has been disabled on this server.[-]")
 				botman.faultyChat = false
 				result = true
-				return
+				return true
 			end
 
 			if (chatvars.accessLevel > 10) and not server.waypointsPublic then
@@ -1390,7 +1434,7 @@ function gmsg_waypoints()
 					message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
 					botman.faultyChat = false
 					result = true
-					return
+					return true
 				end
 
 				-- check the waypoint destination in restricted area
@@ -1453,6 +1497,9 @@ function gmsg_waypoints()
 -- ################## End of command functions ##################
 
 	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "==== Registering help - waypoint commands ====")
+		dbug("Registering help - waypoint commands")
+
 		tmp = {}
 		tmp.topicDescription = "Waypoints are player managed personal teleports.\n"
 		tmp.topicDescription = tmp.topicDescription .. "You can specify how many waypoints individuals or groups of players can have and apply other restrictions on their use.\n"
@@ -1468,10 +1515,6 @@ function gmsg_waypoints()
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('waypoints', '" .. escape(tmp.topicDescription) .. "')")
 		end
-
-		cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpCommands'")
-		row = cursor:fetch(row, "a")
-		tmp.commandID = row.Auto_increment
 	end
 
 	-- reject if not an admin and server is in hardcore mode
@@ -1666,6 +1709,12 @@ function gmsg_waypoints()
 	if result then
 		if debug then dbug("debug cmd_UseWaypoint triggered") end
 		return result
+	end
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "**** Waypoint commands help registered ****")
+		dbug("Waypoint commands help registered")
+		topicID = topicID + 1
 	end
 
 	if debug then dbug("debug waypoints end") end

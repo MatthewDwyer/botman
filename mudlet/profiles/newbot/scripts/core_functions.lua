@@ -339,15 +339,26 @@ function inLocation(x, z)
 end
 
 
-function LookupArenaPlayer(id)
-	local k,v
+function pickRandomArenaPlayer()
+	local k, v, r, i
 
-	-- is id in the arenaPlayers table?
+	-- abort to prevent an infinite loop
+	if tonumber(botman.arenaCount) == 0 then
+		return 0
+	end
+
+	i = 1
+	r = tonumber(rand(botman.arenaCount))
+
 	for k, v in pairs(arenaPlayers) do
-		if (id == v.id) then
+		if r == i then
 			return k
+		else
+			i = i + 1
 		end
 	end
+
+	return 0 -- return something
 end
 
 
@@ -368,10 +379,20 @@ end
 
 function LookupPlayer(search, match)
 	-- try to find the player amoung those who are playing right now
-	local id, k,v
+	local id, k, v, test
 
 	if string.trim(search) == "" then
 		return 0
+	end
+
+	-- if the search is a steam ID, don't bother walking through the list of in game players, just check that it is a member of the lua table igplayers
+	if string.len(search) == 17 then
+		test = tonumber(search)
+		if (test ~= nil) then
+			if igplayers[test] then
+				return test
+			end
+		end
 	end
 
 	search = string.lower(search)
@@ -430,10 +451,20 @@ end
 
 
 function LookupOfflinePlayer(search, match)
-	local k,v
+	local k, v, test
 
 	if string.trim(search) == "" then
 		return 0
+	end
+
+	-- if the search is a steam ID, don't bother walking through the list of players, just check that it is a member of the lua table players
+	if string.len(search) == 17 then
+		test = tonumber(search)
+		if (test ~= nil) then
+			if players[test] then
+				return test
+			end
+		end
 	end
 
 	search = string.lower(search)
@@ -446,6 +477,66 @@ function LookupOfflinePlayer(search, match)
 	for k, v in pairs(players) do
 		if match == "code" then
 			if tonumber(search) == tonumber(players[k].ircInvite) then
+				return k
+			end
+		else
+			if (v.name ~= nil) then
+				if match == "all" then
+					if (search == string.lower(v.name)) then
+						return k
+					end
+
+					if (v.ircAlias ~= nil) and (search == string.lower(v.ircAlias)) then
+						return k
+					end
+				else
+					if (search == string.lower(v.name)) or (string.find(string.lower(v.name), search, nil, true)) then
+						return k
+					end
+				end
+			end
+
+			if search == v.id then
+				return k
+			end
+
+			if k == search then
+				return k
+			end
+		end
+	end
+
+	return 0
+end
+
+
+function LookupArchivedPlayer(search, match)
+	local k, v, test
+
+	if string.trim(search) == "" then
+		return 0
+	end
+
+	-- if the search is a steam ID, don't bother walking through the list of players, just check that it is a member of the lua table playersArchived
+	if string.len(search) == 17 then
+		test = tonumber(search)
+		if (test ~= nil) then
+			if playersArchived[test] then
+				return test
+			end
+		end
+	end
+
+	search = string.lower(search)
+
+	if string.starts(search, "\"") and string.ends(search,"\"") then
+		search = search:match("%w+")
+		match = "all"
+	end
+
+	for k, v in pairs(playersArchived) do
+		if match == "code" then
+			if tonumber(search) == tonumber(playersArchived[k].ircInvite) then
 				return k
 			end
 		else
@@ -496,6 +587,8 @@ function LookupIRCAlias(name)
 
 	if nickCount == 1 then
 		return steam
+	else
+		return 0
 	end
 end
 
@@ -659,7 +752,11 @@ function LookupHotspot(x,y,z)
 		end
 
 		if distancexyz(x, y, z, v.x, v.y, v.z) <= tonumber(size) then
-			return k
+			-- don't return the hotspot if the player has been archived (staff are never archived)
+
+			if players[v.owner] then
+				return k
+			end
 		end
 	end
 end
@@ -835,7 +932,7 @@ function accessLevel(pid)
 	if debug then dbug("accesslevel pid " .. pid) end
 
 	if pid == 0 then
-		-- no pid?  return the worst possible access level.
+		-- no pid?  return the worst possible access level. That'll show em!
 		return 99
 	end
 
@@ -862,26 +959,24 @@ function accessLevel(pid)
 
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
-	if tonumber(server.accessLevelOverride) < 99 then
+	if tonumber(server.accessLevelOverride) < 99 and players[pid] then
 		return tonumber(server.accessLevelOverride)
 	end
 
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
-	-- 3 is reserved for visiting admins
-
-	if players[pid].donor == true then
---TODO: Add donor levels
-		players[pid].accessLevel = 10
-		return 10
-	end
-
-	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
-
 	-- anyone stripped of certain rights
-	if players[pid].denyRights == true then
-		players[pid].accessLevel = 99
-		return 99
+	if players[pid] then
+		if players[pid].denyRights == true then
+			players[pid].accessLevel = 99
+			return 99
+		end
+
+		if players[pid].donor then
+	--TODO: Add donor levels
+			players[pid].accessLevel = 10
+			return 10
+		end
 	end
 
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
@@ -893,16 +988,21 @@ function accessLevel(pid)
 			return 90
 		end
 	else
-		if tonumber(players[pid].timeOnServer) > (server.newPlayerTimer * 60) then
-			players[pid].accessLevel = 90
-			return 90
+		if players[pid] then
+			if tonumber(players[pid].timeOnServer) > (server.newPlayerTimer * 60) then
+				players[pid].accessLevel = 90
+				return 90
+			end
 		end
 	end
 
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
 	-- new players
-	players[pid].accessLevel = 99
+	if players[pid] then
+		players[pid].accessLevel = 99
+	end
+
 	return 99
 end
 
@@ -965,12 +1065,40 @@ function fixMissingPlayer(steam)
 		lastHotspots[steam] = {}
 	end
 
+	if (players[steam].block == nil) then
+		players[steam].block = false
+	end
+
 	if (players[steam].botQuestion == nil) then
 		players[steam].botQuestion = ""
 	end
 
+	if (players[steam].bountyReason == nil) then
+		players[steam].bountyReason = ""
+	end
+
 	if players[steam].packCooldown == nil then
 		players[steam].packCooldown = 0
+	end
+
+	if players[steam].waypointCooldown == nil then
+		players[steam].waypointCooldown = 0
+	end
+
+	if players[steam].gimmeCooldown == nil then
+		players[steam].gimmeCooldown = 0
+	end
+
+	if players[steam].pvpTeleportCooldown == nil then
+		players[steam].pvpTeleportCooldown = 0
+	end
+
+	if players[steam].returnCooldown == nil then
+		players[steam].returnCooldown = 0
+	end
+
+	if players[steam].commandCooldown == nil then
+		players[steam].commandCooldown = 0
 	end
 
 	if players[steam].tp == nil then
@@ -1136,6 +1264,10 @@ function fixMissingPlayer(steam)
 
 	if players[steam].ISP == nil then
 		players[steam].ISP = ""
+	end
+
+	if players[steam].VACBanned == nil then
+		players[steam].VACBanned = false
 	end
 
 -- if steam == Smegz0r then dbug("finished fixMissingPlayer") end
@@ -1316,6 +1448,9 @@ function fixMissingIGPlayer(steam)
 
 	if igplayers[steam].spawnedInWorld == nil then
 		igplayers[steam].spawnedInWorld = true
+		igplayers[steam].spawnedReason = "fake reason"
+		igplayers[steam].spawnedCoordsOld = "0 0 0"
+		igplayers[steam].spawnedCoords = "0 0 0"
 	end
 end
 

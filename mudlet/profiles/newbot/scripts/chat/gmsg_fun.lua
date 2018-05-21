@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local result, debug
+local result, debug, help, tmp
 local shortHelp = false
 local skipHelp = false
 
@@ -20,16 +20,33 @@ end
 function gmsg_fun()
 	calledFunction = "gmsg_fun"
 	result = false
+	tmp = {}
 
 -- ################## Fun command functions ##################
 
 	local function cmd_ViewPlayerBounty()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}bounty {optional player name}\n"
+			help[1] = help[1] .. " {#}view bounty {optional player name}\n"
+			help[1] = help[1] .. " {#}view bounties"
+			help[2] = "See the player kills and current bounty on a players head or on all players currently on the server."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "pvp,bounty,play,view"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "bounty") or string.find(chatvars.command, "pvp"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "bounty {player name}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "See the player kills and current bounty on a player's head.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -37,20 +54,95 @@ function gmsg_fun()
 			end
 		end
 
-		if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
+		if (chatvars.words[1] == "bounty" or chatvars.words[1] == "view" or chatvars.words[1] == "list") and (chatvars.words[2] == "bounty" or chatvars.words[2] == "bounties") then
+			local tmp = {}
 
-		if (chatvars.words[1] == "bounty") then
-			id = chatvars.playerid
-
-			if (chatvars.words[2] ~= nil) then
-				pname = string.sub(chatvars.command, 9)
-				id = LookupPlayer(pname)
-			end
+			tmp.bountyFound = false
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has " .. players[id].playerKills .. " kills. Kill them for " .. players[id].pvpBounty .. " " .. server.moneyPlural .. ".[-]")
+				tmp.id = chatvars.playerid
 			else
-				irc_chat(chatvars.ircAlias, players[id].name .. " has " .. players[id].playerKills .. " kills. Kill them for " .. players[id].pvpBounty .. " " .. server.moneyPlural .. ".")
+				tmp.id = chatvars.ircid
+			end
+
+			if (chatvars.words[2] ~= "bounties") then
+				tmp.pname = string.sub(chatvars.command, string.find(chatvars.command, " bounty ") + 8)
+
+				if tmp.pname ~= "" and tmp.pnam ~= nil then
+					tmp.pname = string.trim(tmp.pname)
+					tmp.id = LookupPlayer(tmp.pname)
+				end
+
+				if tmp.id == 0 then
+					tmp.id = LookupArchivedPlayer(tmp.pname)
+
+					if not (tmp.id == 0) then
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[tmp.id].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
+						else
+							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[tmp.id].name .. " was archived. Get them to rejoin the server, then repeat this command.")
+						end
+					else
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. tmp.pname .. "[-]")
+						else
+							irc_chat(chatvars.ircAlias, "No player found matching " .. tmp.pname)
+						end
+					end
+
+					botman.faultyChat = false
+					return true
+				end
+
+				if tmp.id == chatvars.playerid or tmp.id == chatvars.ircid then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have " .. players[tmp.id].playerKills .. " kills and a bounty of " .. players[tmp.id].pvpBounty .. " " .. server.moneyPlural .. " on your head.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "You have " .. players[tmp.id].playerKills .. " kills and a bounty of " .. players[tmp.id].pvpBounty .. " " .. server.moneyPlural .. " on your head.")
+					end
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.id].name .. " has " .. players[tmp.id].playerKills .. " kills. Kill them for " .. players[tmp.id].pvpBounty .. " " .. server.moneyPlural .. ".[-]")
+					else
+						irc_chat(chatvars.ircAlias, players[tmp.id].name .. " has " .. players[tmp.id].playerKills .. " kills. Kill them for " .. players[tmp.id].pvpBounty .. " " .. server.moneyPlural .. ".")
+					end
+				end
+			else
+				if tonumber(botman.playersOnline) > 0 then
+					for k, v in pairs(igplayers) do
+						if tonumber(players[k].pvpBounty) > 0 then
+							tmp.bountyFound = true
+
+							if (chatvars.playername ~= "Server") then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[k].name .. " has " .. players[k].playerKills .. " kills and a bounty of " .. players[k].pvpBounty .. "[-]")
+							else
+								irc_chat(chatvars.ircAlias, players[k].name .. " has " .. players[k].playerKills .. " kills and a bounty of " .. players[k].pvpBounty)
+							end
+						end
+					end
+
+					if not tmp.bountyFound then
+						if (chatvars.playername ~= "Server") then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player on the server right now has a bounty on their head.[-]")
+							else
+								irc_chat(chatvars.ircAlias, "No player on the server right now has a bounty on their head.")
+						end
+					end
+				else
+					if (chatvars.playername == "Server") then
+						for k, v in pairs(players) do
+							if tonumber(v.pvpBounty) > 0 then
+								tmp.bountyFound = true
+
+								irc_chat(chatvars.ircAlias, v.name .. " has " .. v.playerKills .. " kills and a bounty of " .. v.pvpBounty)
+							end
+						end
+
+						if not tmp.bountyFound then
+							irc_chat(chatvars.ircAlias, "No player has a bounty on their head.")
+						end
+					end
+				end
 			end
 
 			botman.faultyChat = false
@@ -60,12 +152,26 @@ function gmsg_fun()
 
 
 	local function cmd_FixGimme()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}fix gimme"
+			help[2] = "Force the bot to rescan the list of zombies and animals."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "fix,gimm,init"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "fix gimme")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Force the bot to rescan the list of zombies and animals.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -75,13 +181,27 @@ function gmsg_fun()
 
 		if (chatvars.words[1] == "fix" and chatvars.words[2] == "gimme") then
 			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The zombies have been reloaded.[-]")
 			else
 				irc_chat(chatvars.ircAlias, "The zombies have been reloaded.")
 			end
 
 			gimmeZombies = {}
-			if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies") end
+			if botman.dbConnected then conn:execute("TRUNCATE gimmeZombies") end
 			send("se")
 
 			if botman.getMetrics then
@@ -98,6 +218,33 @@ function gmsg_fun()
 
 
 	local function cmd_ResetGimmeHell()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}reset gimmehell"
+			help[2] = "Cancel a gimmehell game in progress."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "fix,gimm,init"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
 		if chatvars.showHelp and not skipHelp then
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "gimm"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "reset gimmehell")
@@ -120,9 +267,20 @@ function gmsg_fun()
 				return true
 			end
 
-			dist = distancexyz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].yPos, igplayers[chatvars.playerid].zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z)
-			if (dist < locations["arena"].size + 5) or (chatvars.playername == "Server") or (chatvars.accessLevel < 3) then
-				resetGimmeHell()
+			if arenaPlayers[chatvars.playerid] or (chatvars.accessLevel < 3) then
+				dist = distancexyz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].yPos, igplayers[chatvars.playerid].zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z)
+				if (dist < locations["arena"].size + 5) or (chatvars.accessLevel < 3) then
+					resetGimmeHell()
+
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only an arena participant or an admin can stop an active game.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Only an arena participant or an admin can stop an active game.")
+				end
 
 				botman.faultyChat = false
 				return true
@@ -234,7 +392,7 @@ function gmsg_fun()
 			end
 		end
 
-		if (chatvars.words[1] == "gimme" and chatvars.words[2] == "gimme") then
+		if chatvars.words[1] == "gimme" and (chatvars.words[2] == "gimme" or chatvars.words[2] == "peace") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -473,6 +631,27 @@ function gmsg_fun()
 		if (chatvars.words[1] == "place" and chatvars.words[2] == "bounty") then
 			pname = chatvars.words[3]
 			id = LookupPlayer(pname)
+
+			if id == 0 then
+				id = LookupArchivedPlayer(pname)
+
+				if not (id == 0) then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.")
+					end
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+					else
+						irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+					end
+				end
+
+				botman.faultyChat = false
+				return true
+			end
 
 			bounty = math.abs(chatvars.words[4])
 
@@ -893,7 +1072,7 @@ function gmsg_fun()
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Oopsie! Somebody fed the zombies. Wait a few seconds while we swap them out with fresh starving ones.[-]")
 
 					botman.faultyChat = false
-					return
+					return true
 				end
 
 				if tonumber(server.gimmeRaincheck) > 0 then
@@ -915,22 +1094,24 @@ function gmsg_fun()
 						if r == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Article " .. r1 .. ", section " .. r2 .. " states, You must wait " .. server.gimmeRaincheck .. " seconds between gimmes.[-]") end
 
 						botman.faultyChat = false
-						return
+						return true
 					end
 				end
 
 				if locations[players[chatvars.playerid].inLocation] then
 					if not locations[players[chatvars.playerid].inLocation].pvp then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Gimme cannot be played within a location unless it is pvp enabled.[-]")
+
 						botman.faultyChat = false
-						return
+						return true
 					end
 				end
 
 				if (players[chatvars.playerid].atHome or players[chatvars.playerid].inABase) and server.gimmeZombies then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Gimme cannot be played inside a player base. Go play with Zombie Steve outside.[-]")
+
 					botman.faultyChat = false
-					return
+					return true
 				end
 
 				gimme(chatvars.playerid)
@@ -1087,13 +1268,13 @@ function gmsg_fun()
 
 				setupArenaPlayers(chatvars.playerid)
 				arenaTimer1 = tempTimer( 5, [[ announceGimmeHell(1) ]] )
-				arenaTimer2 = tempTimer( 10, [[ queueGimmeHell(1) ]] )
+				arenaTimer2 = tempTimer( 10, [[ queueGimmeHell(1,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
 				arenaTimer3 = tempTimer( 60, [[ announceGimmeHell(2) ]] )
-				arenaTimer4 = tempTimer( 65, [[ queueGimmeHell(2) ]] )
+				arenaTimer4 = tempTimer( 65, [[ queueGimmeHell(2,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
 				arenaTimer5 = tempTimer( 120, [[ announceGimmeHell(3) ]] )
-				arenaTimer6 = tempTimer( 125, [[ queueGimmeHell(3) ]] )
+				arenaTimer6 = tempTimer( 125, [[ queueGimmeHell(3,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
 				arenaTimer7 = tempTimer( 180, [[ announceGimmeHell(4) ]] )
-				arenaTimer8 = tempTimer( 185, [[ queueGimmeHell(4) ]] )
+				arenaTimer8 = tempTimer( 185, [[ queueGimmeHell(4,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
 				faultChat = false
 				return true
 			else
@@ -1122,6 +1303,24 @@ function gmsg_fun()
 	end
 
 -- ################## End of command functions ##################
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "==== Registering help - fun commands ====")
+		dbug("Registering help - fun commands")
+
+		tmp = {}
+		tmp.topicDescription = "Fun commands are miscellaneous commands that include gimme, bounties and a few silly commands."
+
+		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'fun'")
+		rows = cursor:numrows()
+		if rows == 0 then
+			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
+			row = cursor:fetch(row, "a")
+			tmp.topicID = row.Auto_increment
+
+			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('fun', '" .. escape(tmp.topicDescription) .. "')")
+		end
+	end
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
@@ -1242,7 +1441,7 @@ if debug then dbug("debug fun") end
 	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not chatvars.showHelp then
+	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
 		return false
 	end
@@ -1336,6 +1535,12 @@ if debug then dbug("debug fun") end
 	if result then
 		if debug then dbug("debug cmd_ToggleDogeMode triggered") end
 		return result
+	end
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "**** Fun commands help registered ****")
+		dbug("Fun commands help registered")
+		topicID = topicID + 1
 	end
 
 	if debug then dbug("debug fun end") end

@@ -65,4 +65,6 @@ function endListPlayers(line)
 		server.reservedSlotsUsed = 0
 		botman.dbReservedSlotsUsed = 0
 	end
+
+	deleteLine()
 end

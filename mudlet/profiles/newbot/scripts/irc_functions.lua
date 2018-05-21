@@ -72,6 +72,9 @@ function irc_chat(name, message)
 	for k,v in pairs(multilineText) do
 		conn:execute("INSERT INTO ircQueue (name, command) VALUES ('" .. name .. "','" .. escape(v) .. "')")
 	end
+
+	botman.ircQueueEmpty = false
+	enableTimer("ircQueue")
 end
 
 
@@ -886,7 +889,7 @@ end
 function irc_players(name)
 	local id, x, z, flags, line, sort
 
-	conn:execute("DELETE FROM list")
+	conn:execute("TRUNCATE list")
 
 	id = LookupPlayer(name, "all")
 
@@ -943,7 +946,7 @@ function irc_players(name)
 		row = cursor:fetch(row, "a")
 	end
 
-	conn:execute("DELETE FROM list")
+	conn:execute("TRUNCATE list")
 
 	irc_chat(irc_params.name, "There are " .. botman.playersOnline .. " players online.")
 	irc_chat(name, ".")
@@ -1049,9 +1052,7 @@ end
 
 function irc_listAllPlayers(name)
     local a = {}
-	local n
-	local sid
-	local pid
+	local n, id, steam, isDonor, isAdmin, isPrisoner, isBanned
 
 	irc_chat(name, "These are all the players on record:")
 
@@ -1062,10 +1063,27 @@ function irc_listAllPlayers(name)
 	table.sort(a)
 
     for k, v in ipairs(a) do
-		sid = LookupOfflinePlayer(v, "all")
-		pid = players[sid].id
+		steam = LookupOfflinePlayer(v, "all")
 
-		cmd = "steam: " .. sid .. " id: " .. string.format("%-8d", pid) .. " name: " .. v
+		if players[steam].prisoner then
+			isPrisoner = "Yes"
+		else
+			isPrisoner = "No"
+		end
+
+		if players[steam].donor then
+			isDonor = "Yes"
+		else
+			isDonor = "No"
+		end
+
+		if players[steam].accessLevel < 3 then
+			isAdmin = "Yes"
+		else
+			isAdmin = "No"
+		end
+
+		cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", players[steam].id) .. " name: " .. v .. " admin " .. isAdmin .. " donor " .. isDonor .. " prisoner " .. isPrisoner .. " seen " .. players[steam].seen .. " playtime " .. players[steam].playtime
 		irc_chat(irc_params.name, cmd)
 	end
 

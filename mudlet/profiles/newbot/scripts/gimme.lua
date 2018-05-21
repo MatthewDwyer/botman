@@ -66,13 +66,13 @@ function setupArenaPlayers(pid)
 	for k, v in pairs(igplayers) do
 		if (distancexyz(v.xPos, v.yPos, v.zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z) < tonumber(locations["arena"].size)) and math.abs(v.yPos - locations["arena"].y) < 4 then
 			botman.arenaCount = botman.arenaCount + 1
-			arenaPlayers[tostring(botman.arenaCount)] = {}
-			arenaPlayers[tostring(botman.arenaCount)].id = k
+			arenaPlayers[k] = {}
+			arenaPlayers[k].id = v.id
 
 			-- give arena players stuff
 			if server.stompy then
-				send("bc-give " .. k .. " firstAidBandage /c=2")
-				send("bc-give " .. k .. " meatStew /c=1")
+				send("bc-give " .. k .. " firstAidBandage /c=2 /silent")
+				send("bc-give " .. k .. " meatStew /c=1 /silent")
 			else
 				send("give " .. k .. " firstAidBandage 2")
 				send("give " .. k .. " meatStew 1")
@@ -88,7 +88,7 @@ function setupArenaPlayers(pid)
 			if (r == 3) then pointyStick = "clubSpiked"	 end
 
 			if server.stompy then
-				send("bc-give " .. k .. " " .. pointyStick .. " /c=1 /q=600")
+				send("bc-give " .. k .. " " .. pointyStick .. " /c=1 /q=600 /silent")
 			else
 				send("give " .. k .. " " .. pointyStick .. " 1")
 			end
@@ -97,12 +97,16 @@ function setupArenaPlayers(pid)
 				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
-			message("pm " .. k .. " [" .. server.chatColour .. "]Supplies for the battle have been dropped at your feet. You have 10 seconds to prepare! (4 rounds)[-]")
+			if server.stompy then
+				message("pm " .. k .. " [" .. server.chatColour .. "]Check the ground at your feet for supplies. You have 10 seconds to prepare! (4 rounds)[-]")
+			else
+				message("pm " .. k .. " [" .. server.chatColour .. "]Supplies for the battle have been dropped at your feet. You have 10 seconds to prepare! (4 rounds)[-]")
+			end
 		end
 	end
 
 	if (botman.arenaCount == 0) then
-		message("pm " .. pid .. " [" .. server.chatColour .. "]Nobody is in the arena.  You can't play from the spectator area.  Get in the arena coward.[-]")
+		message("pm " .. pid .. " [" .. server.chatColour .. "]Nobody is in the arena and you can't play from the spectator area.  Get in the arena coward.[-]")
 		botman.gimmeHell = 0
 	end
 end
@@ -113,9 +117,9 @@ function announceGimmeHell(wave)
 
 	for k, v in pairs(arenaPlayers) do
 		if (wave == 1) then
-			message("pm " .. v.id .. " [" .. server.chatColour .. "]Here they come![-]")
+			message("pm " .. k .. " [" .. server.chatColour .. "]Here they come![-]")
 		else
-			message("pm " .. v.id .. " [" .. server.chatColour .. "]Here comes round " .. wave .. "![-]")
+			message("pm " .. k .. " [" .. server.chatColour .. "]Here comes round " .. wave .. "![-]")
 		end
 	end
 end
@@ -166,7 +170,7 @@ function resetGimmeHell()
 
 	botman.gimmeHell = 0
 	arenaPlayers = {}
-	conn:execute("DELETE FROM playerQueue")
+	conn:execute("TRUNCATE playerQueue")
 
 	for k, v in pairs(igplayers) do
 		if (distancexyz(v.xPos, v.yPos, v.zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z) < tonumber(locations["arena"].size) + 20) then
@@ -179,7 +183,7 @@ function resetGimmeHell()
 end
 
 
-function queueGimmeHell(wave)
+function queueGimmeHell(wave, level)
 	-- if true then
 		-- return
 	-- end
@@ -200,16 +204,20 @@ function queueGimmeHell(wave)
 		end
 
 		-- the level of the player that started gimmehell is used to control which zombies can be picked
-		zed = arenaPicknMix(wave, 0, tonumber(players[arenaPlayers["1"].id].level))
+		zed = arenaPicknMix(wave, 0, level)
 
-		cmd = "se " .. players[arenaPlayers[tostring(p)].id].id .. " " .. zed
-		conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. cmd .. "', true, " .. arenaPlayers[tostring(p)].id .. ")")
+		p = pickRandomArenaPlayer()
+
+		if tonumber(p) > 0 then
+			cmd = "se " .. arenaPlayers[p].id .. " " .. zed
+			conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. cmd .. "', true, " .. p .. ")")
+		end
 	end
 
 	if tonumber(wave) == 4 then
 		for k, v in pairs(arenaPlayers) do
 			cmd = "pm " .. v.id .. " [" .. server.chatColour .. "]Congratulations!  You have survived to the end of the fight!  Rest now. Tend to your wounded and mourn the fallen.[-]"
-			conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. cmd .. "', true, " .. v.id .. ")")
+			conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. cmd .. "', true, " .. k .. ")")
 		end
 
 		conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('reset', true, 0)")
@@ -239,7 +247,6 @@ function gimme(pid)
 
 	local cmd, maxGimmies, dist, r, rows, row, prize, category, entity, description, quality
 	local pname = players[pid].name
---	local specialDay = ""
 	local playerid = igplayers[pid].id
 	local zombies = tonumber(igplayers[pid].zombies)
 
@@ -261,8 +268,6 @@ function gimme(pid)
 	removeEntities() -- make sure there are no entities left that we have flagged for removal
 
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
-
---	if (string.find(botman.serverTime, "02-14", 5, 10)) then specialDay = "valentine" end
 
 	if (botman.faultyGimme == true) then
 		dbugi("Fault occurred in Gimme #: " .. botman.faultyGimmeNumber)

@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local debug, result, pid, vid, name1, villageName, r, pname, cursor1, cursor2, errorString
+local debug, result, pid, vid, name1, villageName, r, pname, cursor1, cursor2, errorString, help, tmp
 local shortHelp = false
 local skipHelp = false
 
@@ -20,16 +20,31 @@ end
 function gmsg_villages()
 	calledFunction = "gmsg_villages"
 	result = false
+	tmp = {}
 
 -- ################## village command functions ##################
 
 	local function cmd_AddVillage()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}add village {village name}"
+			help[2] = "Create a new village."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "vill,add,crea"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "add") or string.find(chatvars.command, "vill") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "add village {village name}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Create a new village.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -75,12 +90,28 @@ function gmsg_villages()
 
 
 	local function cmd_AddVillageMember()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}add member {player name} village {village}"
+			help[2] = "Add a player as a member of a village."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "vill,add,play,memb"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+
+				display(tmp)
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "vill") or string.find(chatvars.command, "add") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "add member {player name} village {village}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Make a player a member of a village.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -94,6 +125,27 @@ function gmsg_villages()
 				name1 = string.trim(name1)
 
 				pid = LookupPlayer(name1)
+
+				if pid == 0 then
+					pid = LookupArchivedPlayer(name1)
+
+					if not (pid == 0) then
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
+						else
+							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.")
+						end
+
+						botman.faultyChat = false
+						return true
+					else
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. name1 .. "[-]")
+						else
+							irc_chat(chatvars.ircAlias, "No player found called " .. name1)
+						end
+					end
+				end
 
 				villageName = string.sub(chatvars.command, string.find(chatvars.command, "village") + 8)
 				villageName = string.trim(villageName)
@@ -156,12 +208,26 @@ function gmsg_villages()
 
 
 	local function cmd_ElectMayor()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}elect {player name} village {village}"
+			help[2] = "Elect a player as mayor of a village.  Democratically of course :)"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "vill,add,play,elect,mayor"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "vill") or string.find(chatvars.command, "elect") or string.find(chatvars.command, "mayo") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "elect {player name} village {village}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Elect a player as mayor of a village.  Democratically of course :)")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -204,6 +270,27 @@ function gmsg_villages()
 					return true
 				end
 
+				if pid == 0 then
+					pid = LookupArchivedPlayer(name1)
+
+					if not (pid == 0) then
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
+						else
+							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.")
+						end
+
+						botman.faultyChat = false
+						return true
+					else
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. name1 .. "[-]")
+						else
+							irc_chat(chatvars.ircAlias, "No player found called " .. name1)
+						end
+					end
+				end
+
 				if (pid ~= 0) then
 					if locations[villageName] ~= nil then
 						locations[villageName].mayor = pid
@@ -235,12 +322,27 @@ function gmsg_villages()
 
 
 	local function cmd_List()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}villages\n"
+			help[1] = help[1] .. " {#}villagers"
+			help[2] = "List villages or villagers."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "vill,add,play,elect,mayor"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "vill") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "villages (or villagers)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "List villages or villagers.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -316,12 +418,26 @@ function gmsg_villages()
 
 
 	local function cmd_ProtectVillage()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}protect village {village name}"
+			help[2] = "Set village protection and follow the prompt from the bot, just like setting base protection."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "vill,prot,set"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "prot") or string.find(chatvars.command, "vill") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "protect village {village name}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set village protection and follow the prompt from the bot, just like setting base protection.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -359,12 +475,26 @@ function gmsg_villages()
 
 
 	local function cmd_RemoveVillage()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}remove village {village}"
+			help[2] = "Delete a village and everything associated with it."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "vill,remo,dele"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "vill") or string.find(chatvars.command, "remo") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "remove village {village}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Delete a village and everything associated with it.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -425,12 +555,26 @@ function gmsg_villages()
 
 
 	local function cmd_RemoveVillageMember()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}remove member {player name} village {village}"
+			help[2] = "Remove a player from a village."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "vill,remo,dele"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "vill") or string.find(chatvars.command, "remo") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "remove member {player name} village {village}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Remove a player from a village.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -473,7 +617,28 @@ function gmsg_villages()
 					return true
 				end
 
-				if (pid ~= 0) then
+				if pid == 0 then
+					pid = LookupArchivedPlayer(name1)
+
+					if not (pid == 0) then
+						conn:execute("DELETE FROM villagers WHERE village = '" .. escape(vid) .. "' and steam = " .. pid)
+						villagers[pid .. vid] = nil
+						message("say [" .. server.chatColour .. "]" .. playersArchived[pid].name .. " has been cast out of village " .. vid .. "[-]")
+
+						if (chatvars.playername ~= "Server") then
+							irc_chat(chatvars.ircAlias, playersArchived[pid].name .. " has been cast out of village " .. vid)
+						end
+
+						botman.faultyChat = false
+						return true
+					else
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. name1 .. "[-]")
+						else
+							irc_chat(chatvars.ircAlias, "No player found called " .. name1)
+						end
+					end
+				else
 					conn:execute("DELETE FROM villagers WHERE village = '" .. escape(vid) .. "' and steam = " .. pid)
 					villagers[pid .. vid] = nil
 					message("say [" .. server.chatColour .. "]" .. players[pid].name .. " has been cast out of village " .. vid .. "[-]")
@@ -491,12 +656,26 @@ function gmsg_villages()
 
 
 	local function cmd_RemoveVillageProtection()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}unprotect village {village name}"
+			help[2] = "Remove protection on a village."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "vill,remo,prot"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "prot") or string.find(chatvars.command, "vill") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "unprotect village {village name}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Remove protection on a village.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -533,12 +712,26 @@ function gmsg_villages()
 
 
 	local function cmd_SetVillageSize()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}village {village} size {metres}"
+			help[2] = "Resize a village. Note that this removes village protection to prevent teleport loops."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "vill,remo,prot"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "vill") or string.find(chatvars.command, "size") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "village {village} size {metres}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Resize a village. Note that this removes village protection to prevent teleport loops.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -602,6 +795,25 @@ function gmsg_villages()
 	end
 
 -- ################## End of command functions ##################
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "==== Registering help - village commands ====")
+		dbug("Registering help - village commands")
+
+		tmp = {}
+		tmp.topicDescription = "Villages work like protected bases except that they can have many players (villagers) and a mayor.\n"
+		tmp.topicDescription = tmp.topicDescription .. "Just like a base, a village can have protection enabled.  Villages work best when they are much larger than the area of the village so that an effective barrier against invading players exists."
+
+		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'villages'")
+		rows = cursor:numrows()
+		if rows == 0 then
+			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
+			row = cursor:fetch(row, "a")
+			tmp.topicID = row.Auto_increment
+
+			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('villages', '" .. escape(tmp.topicDescription) .. "')")
+		end
+	end
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
@@ -696,7 +908,7 @@ function gmsg_villages()
 	if debug then dbug("debug villages end of remote commands") end
 
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not chatvars.showHelp then
+	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
 		return false
 	end
@@ -725,6 +937,12 @@ function gmsg_villages()
 	if result then
 		if debug then dbug("debug cmd_RemoveVillageProtection triggered") end
 		return result
+	end
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "**** Village commands help registered ****")
+		dbug("Village commands help registered")
+		topicID = topicID + 1
 	end
 
 	if debug then dbug("debug villages end") end

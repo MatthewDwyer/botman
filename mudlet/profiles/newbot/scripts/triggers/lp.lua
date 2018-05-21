@@ -18,7 +18,7 @@ function lpTrigger(line)
 
 	if string.find(string.sub(line, 1, 19), os.date("%Y")) then
 		-- 2016-09-11T04:14:28
-		botman.serverTime = string.sub(line, 1, 19)
+		botman.serverTime = string.sub(line, 1, 10) .. " " .. string.sub(line, 12, 16)
 		botman.serverHour = string.sub(line, 12, 13)
 		botman.serverMinute = string.sub(line, 15, 16)
 		specialDay = ""
@@ -30,6 +30,8 @@ function lpTrigger(line)
 			server.dateTest = string.sub(botman.serverTime, 1, 10)
 		end
 	end
+
+	deleteLine()
 
 	if tonumber(botman.serverHour) == tonumber(server.botRestartHour) and server.allowBotRestarts then
 		uptime = math.floor((os.difftime(os.time(), botman.botStarted) / 3600))

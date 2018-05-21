@@ -7,7 +7,9 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local debug, tmp, msg, result
+-- todo: add archived player lookup
+
+local debug, tmp, msg, result, help
 local shortHelp = false
 local skipHelp = false
 
@@ -21,17 +23,31 @@ end
 function gmsg_server()
 	calledFunction = "gmsg_server"
 	result = false
+	tmp = {}
 
 -- ################## server command functions ##################
 
 	local function cmd_CancelReboot()
-		if chatvars.showHelp and not skipHelp then
-			if (chatvars.words[1] == "help" and string.find(chatvars.command, "reboot")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "cancel reboot")
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}cancel reboot"
+			help[2] = "Cancel a scheduled reboot.  You may not be able to stop a forced or automatically scheduled reboot but you can pause it instead."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "reboo,shut,canc,stop"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "cancel") or string.find(chatvars.command, "reboot"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Cancel a scheduled reboot.")
-					irc_chat(chatvars.ircAlias, "You may not be able to stop a forced or automatically scheduled reboot but you can pause it instead.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -82,12 +98,26 @@ function gmsg_server()
 
 
 	local function cmd_JoinGameServer()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}join server {ip} port {telnet port} pass {telnet password}"
+			help[2] = "Tell the bot to join a different game server."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "server,join,new,change,ip,port,pass"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "join") or string.find(chatvars.command, "server"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "join server {ip} port {telnet port} pass {telnet password}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Tell the bot to join a different game server.  If the bot does not find the server, it will automatically return after 5 minutes.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -141,13 +171,26 @@ function gmsg_server()
 
 
 	local function cmd_PauseReboot()
-		if chatvars.showHelp and not skipHelp then
-			if (chatvars.words[1] == "help" and string.find(chatvars.command, "reboot")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "pause reboot")
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}pause reboot"
+			help[2] = "Pause a scheduled reboot.  It will stay paused until you unpause it or restart the bot."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "server,rebo,pause,resu"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pause") or string.find(chatvars.command, "reboot"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Pause a scheduled reboot.")
-					irc_chat(chatvars.ircAlias, "It will stay paused until you unpause it or restart the bot.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -156,6 +199,20 @@ function gmsg_server()
 		end
 
 		if (chatvars.words[1] == "pause" or chatvars.words[1] == "paws") and chatvars.words[2] == "reboot" and chatvars.words[3] == nil then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
 			if botman.scheduledRestart == true and botman.scheduledRestartPaused == false then
 				botman.scheduledRestartPaused = true
 				restartTimeRemaining = botman.scheduledRestartTimestamp - os.time()
@@ -174,14 +231,27 @@ function gmsg_server()
 
 
 	local function cmd_RunConsoleCommand()
-		if chatvars.showHelp and not skipHelp then
-			if string.find(chatvars.command, "run") or string.find(chatvars.command, "comm") then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "run command {a console command}")
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}run command {a console command}"
+			help[2] = "Sometimes you need to make the bot run a specific console command.\n"
+			help[2] = help[2] .. "This can be used to force the bot re-parse a list.  Only server owners can do this."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,run,comm,cons"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "run") or string.find(chatvars.command, "comm") or string.find(chatvars.command, "cons"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Sometimes you need to make the bot run a specific console command.")
-					irc_chat(chatvars.ircAlias, "This can be used to force the bot re-parse a list.")
-					irc_chat(chatvars.ircAlias, "Only server owners can do this.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -218,6 +288,35 @@ function gmsg_server()
 
 
 	local function cmd_Say()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}say{2 letter language code} {something you want translated}"
+			help[2] = "If the translator utility is installed, the bot can translate from english what you say into the language you specify.\n"
+			help[2] = help[2] .. "eg. {#}sayfr Hello.  The bot will say Smegz0r: Bonjour\n"
+			help[2] = help[2] .. "Note: This uses Google and due to the number of bots I host, it is not installed on my servers as I don't want to risk an invoice from them.\n"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,run,comm,cons"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "say"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
 		if (string.find(chatvars.words[1], "say") and (string.len(chatvars.words[1]) == 5) and chatvars.words[2] ~= nil) then
 			msg = string.sub(chatvars.command, string.len(chatvars.words[1]) + 2)
 			msg = string.trim(msg)
@@ -233,16 +332,30 @@ function gmsg_server()
 
 
 	local function cmd_ScheduleServerReboot()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}reboot\n"
+			help[1] = help[1] .. " {#}reboot {n} minute (or hour) (optional: forced)\n"
+			help[1] = help[1] .. " {#}reboot now"
+			help[2] = "Schedule a timed or immediate server reboot.  The actual restart must be handled externally by something else.\n"
+			help[2] = help[2] .. "Just before the reboot happens, the bot issues a save command. If you add forced, only a level 0 admin can stop the reboot.\n"
+			help[2] = help[2] .. "Shutting down the bot will also cancel a reboot but any automatic (timed) reboots will reschedule if the server wasn't also restarted."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "server,rebo,now,time,sched"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "reboot")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "reboot")
-				irc_chat(chatvars.ircAlias, "or " .. server.commandPrefix .. "reboot {n} minute (or hour) (optional: forced)")
-				irc_chat(chatvars.ircAlias, "or " .. server.commandPrefix .. "reboot now")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Schedule a timed or immediate server reboot.  The actual restart must be handled externally by something else.")
-					irc_chat(chatvars.ircAlias, "Just before the reboot happens, the bot issues a save command. If you add forced, only a level 0 admin can stop the reboot.")
-					irc_chat(chatvars.ircAlias, "Shutting down the bot will also cancel a reboot but any automatic (timed) reboots will reschedule if the server wasn't also restarted.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -342,13 +455,27 @@ function gmsg_server()
 
 
 	local function cmd_SetAccessOverride()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}override access {number from 99 to 4}"
+			help[2] = "All players have an access level which governs what they can do.  You can override it for everyone to temporarily raise their access.\n"
+			help[2] = help[2] .. "eg. {#}overide access 10 would make all players donors until you restore it.  To do that type {#}override access 99.  This is faster than giving individual players donor access if you just want to do a free donor weekend."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,acce,over,set"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "overr") or string.find(chatvars.command, "acc"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "override access {number from 99 to 4}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "All players have an access level which governs what they can do.  You can override it for everyone to temporarily raise their access.")
-					irc_chat(chatvars.ircAlias, "eg. " .. server.commandPrefix .. "overide access 10 would make all players donors until you restore it.  To do that type " .. server.commandPrefix .. "override access 99.  This is faster than giving individual players donor access if you just want to do a free donor weekend.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -402,13 +529,26 @@ function gmsg_server()
 
 
 	local function cmd_SetBailCost()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set bail {number}"
+			help[2] = "Set how many " .. server.moneyPlural .. " it costs to bail out of prison.  To disable bail set it to zero (the default)"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,bail,prison,cost,amount,price"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "bail") or string.find(chatvars.command, "prison") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set bail {number}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set how many " .. server.moneyPlural .. " it costs to bail out of prison.")
-					irc_chat(chatvars.ircAlias, "To disable bail set it to zero (the default)")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -463,15 +603,29 @@ function gmsg_server()
 
 
 	local function cmd_SetClearViewMOTD()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}motd (to view it)\n"
+			help[1] = help[1] .. " {#}motd (or {#}set motd) {your message here} (to set it)\n"
+			help[1] = help[1] .. " {#}motd clear (to disable it)"
+			help[2] = "Display the current message of the day.  If an admin types anything after {#}motd the typed text becomes the new MOTD.\n"
+			help[2] = help[2] .. "To remove it type {#}motd clear"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,motd,mess,day"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "motd") or string.find(chatvars.command, "mess"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "motd")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "motd (or " .. server.commandPrefix .. "set motd) {your message here}")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "motd clear")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Display the current message of the day.  If an admin types anything after " .. server.commandPrefix .. "motd the typed text becomes the new MOTD.")
-					irc_chat(chatvars.ircAlias, "To remove it type " .. server.commandPrefix .. "motd clear")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -539,12 +693,26 @@ function gmsg_server()
 
 
 	local function cmd_SetIRCChannels()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set irc main (or alerts or watch) {channel name without a # sign}"
+			help[2] = "Change the bot's IRC channels."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,irc,web,chan,main,alert,watc"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, " irc")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set irc main (or alerts or watch) {channel name without a # sign}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Change the bot's IRC channels.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -552,7 +720,7 @@ function gmsg_server()
 			end
 		end
 
-		if (chatvars.words[1] == "set" and chatvars.words[2] == "irc") then
+		if chatvars.words[1] == "set" and chatvars.words[2] == "irc" and (chatvars.words[3] == "main" or chatvars.words[3] == "alerts" or chatvars.words[3] == "watch") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 1) then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
@@ -615,12 +783,26 @@ function gmsg_server()
 
 
 	local function cmd_SetIRCNick()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set irc nick {bot name}"
+			help[2] = "Change the bot's IRC nickname. Sometimes it can have a nick collision with itself and it gets an underscore appended to it."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,irc,nick,name"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, " irc")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set irc nick {bot name}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Change the bot's IRC nickname. Sometimes it can have a nick collision with itself and it gets an underscore appended to it.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -662,12 +844,26 @@ function gmsg_server()
 
 
 	local function cmd_SetIRCServer()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set irc server {IP or URL and optional port}"
+			help[2] = "Use this command if you want players to know your IRC server's address."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,irc,server,port"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, " irc")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set irc server {IP or URL and optional port}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Use this command if you want players to know your IRC server's address.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -693,7 +889,7 @@ function gmsg_server()
 			tmp = string.sub(chatvars.command, string.find(chatvars.command, "server") + 7)
 			tmp = string.trim(tmp)
 
-			if tmp == nil then
+			if tmp == nil or tmp == "" then
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]A server name is required.[-]")
 				else
@@ -708,9 +904,13 @@ function gmsg_server()
 
 				temp = string.split(tmp, ":")
 				server.ircServer = temp[1]
-				server.ircPort = temp[2]
 
-				conn:execute("UPDATE server SET ircServer = '" .. escape(server.ircServer) .. "', ircPort = '" .. escape(server.ircPort) .. "'")
+				if temp[2] ~= nil then
+					server.ircPort = temp[2]
+					conn:execute("UPDATE server SET ircServer = '" .. escape(server.ircServer) .. "', ircPort = '" .. escape(server.ircPort) .. "'")
+				else
+					conn:execute("UPDATE server SET ircServer = '" .. escape(server.ircServer) .. "'")
+				end
 
 				joinIRCServer()
 				ircSaveSessionConfigs()
@@ -723,14 +923,28 @@ function gmsg_server()
 
 
 	local function cmd_SetMapSize()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set map size {number}"
+			help[2] = "Set the maximum distance from 0,0 that players are allowed to travel. Any players already outside this limit will be teleported to 0,0 and may get stuck under the map.  They can relog.\n"
+			help[2] = help[2] .. "Size is in metres (blocks) and be careful not to set it too small.  The default map size is 10000 but the bot's default is 20000.\n"
+			help[2] = help[2] .. "Whatever size you set, donors will be able to travel 5km futher out so the true boundary is +5000."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,map,size,limit,bound"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, " map")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set map size {number}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set the maximum distance from 0,0 that players are allowed to travel. Any players already outside this limit will be teleported to 0,0 and may get stuck under the map.  They can relog.")
-					irc_chat(chatvars.ircAlias, "Size is in metres (blocks) and be careful not to set it too small.  The default map size is 10000 but the bot's default is 20000.")
-					irc_chat(chatvars.ircAlias, "Whatever size you set, donors will be able to travel 5km futher out so the true boundary is +5000.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -767,12 +981,26 @@ function gmsg_server()
 
 
 	local function cmd_SetMaxAnimals()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set max animals {number}"
+			help[2] = "Change the server's max spawned animals."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,max,anim,enti"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " max") or string.find(chatvars.command, "anim"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set max animals {number}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Change the server's max spawned animals.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -829,13 +1057,27 @@ function gmsg_server()
 
 
 	local function cmd_SetMaxPing()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set (or clear) max ping {number}"
+			help[2] = "To kick high ping players set a max ping.  It will only be applied to new players. You can also whitelist a new player to make them exempt.\n"
+			help[2] = help[2] .. "The bot doesn't immediately kick for high ping, it samples ping over 30 seconds and will only kick for a sustained high ping."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,max,ping,kick"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "ping"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set (or clear) max ping {number}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "To kick high ping players set a max ping.  It will only be applied to new players. You can also whitelist a new player to make them exempt.")
-					irc_chat(chatvars.ircAlias, "The bot doesn't immediately kick for high ping, it samples ping over 30 seconds and will only kick for a sustained high ping.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -898,12 +1140,26 @@ function gmsg_server()
 
 
 	local function cmd_SetMaxPlayers()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set max players {number}"
+			help[2] = "Change the server's max players. Admins can always join using the automated reserved slots feature."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,max,play"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " max") or string.find(chatvars.command, "play"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set max players {number}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Change the server's max players. Admins can always join using the automated reserved slots feature.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -958,13 +1214,27 @@ function gmsg_server()
 
 
 	local function cmd_SetMaxUptime()
-		if chatvars.showHelp and not skipHelp then
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " max"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, "info: " .. server.commandPrefix .. "max uptime")
-				irc_chat(chatvars.ircAlias, "set: " .. server.commandPrefix .. "set max uptime {number}")
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set max uptime {number}\n"
+			help[1] = help[1] .. " {#}max uptime (to see it)"
+			help[2] = "Set how long (in hours) that the server can be running before the bot schedules a reboot.  The bot will always add 15 minutes as the reboot is only scheduled at that time."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,max,upt"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " max") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set how long (in hours) that the server can be running before the bot schedules a reboot.  The bot will always add 15 minutes as the reboot is only scheduled at that time.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1020,12 +1290,26 @@ function gmsg_server()
 
 
 	local function cmd_SetMaxZombies()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set max zombies {number}"
+			help[2] = "Change the server's max spawned zombies."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,max,zed,zom"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " max") or string.find(chatvars.command, "zom"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set max zombies {number}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Change the server's max spawned zombies.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1081,15 +1365,103 @@ function gmsg_server()
 	end
 
 
-	local function cmd_SetNewPlayerTimer()
-		if chatvars.showHelp and not skipHelp then
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " time") or string.find(chatvars.command, " play"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, "info: " .. server.commandPrefix .. "new player timer")
-				irc_chat(chatvars.ircAlias, "set: " .. server.commandPrefix .. "set new player timer {number} (in minutes)")
+	local function cmd_SetNewPlayerMaxLevel()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set new player max level {number} (game level)"
+			help[2] = "By default a new player is automatically upgraded to a regular player once they pass level 9.\n"
+			help[2] = help[2] .. "Use this command to change it to a different player level."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,new,play,max,level"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " level") or string.find(chatvars.command, " play"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "By default a new player is treated differently from regulars and has some restrictions placed on them mainly concerning inventory.")
-					irc_chat(chatvars.ircAlias, "Set it to 0 to disable this feature.")
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.command == "new player max level" then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New players stop being new after level " .. server.newPlayerMaxLevel .. ".[-]")
+			else
+				irc_chat(chatvars.ircAlias, "New players stop being new after level " .. server.newPlayerMaxLevel)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+		if string.find(chatvars.command, "new player max level") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number ~= nil then
+				chatvars.number = math.abs(math.floor(chatvars.number))
+
+				server.newPlayerMaxLevel = chatvars.number
+				conn:execute("UPDATE server SET newPlayerMaxLevel = " .. chatvars.number)
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New players stop being new after level " .. chatvars.number .. ".[-]")
+				else
+					irc_chat(chatvars.ircAlias, "New players stop being new after level " .. chatvars.number)
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_SetNewPlayerTimer()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set new player timer {number} (in minutes)\n"
+			help[1] = help[1] .. " {#}new player timer (to see it)"
+			help[2] = "By default a new player is treated differently from regulars and has some restrictions placed on them mainly concerning inventory.\n"
+			help[2] = help[2] .. "Set it to 0 to disable this feature."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,new,play,time"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " time") or string.find(chatvars.command, " play"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1145,12 +1517,26 @@ function gmsg_server()
 
 
 	local function cmd_SetOverstackLimit()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set overstack {number} (default 1000)"
+			help[2] = "Sets the maximum stack size before the bot will warn a player about overstacking.  Usually the bot learns this directly from the server as stack sizes are exceeded."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,over,stack,time"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "overs"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set overstack {number} (default 1000)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Sets the maximum stack size before the bot will warn a player about overstacking.  Usually the bot learns this directly from the server as stack sizes are exceeded.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1189,13 +1575,27 @@ function gmsg_server()
 
 
 	local function cmd_SetPingKickTarget()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set ping kick target {new or all}"
+			help[2] = "By default if a ping kick is set it only applies to new players. Set to all to have it applied to everyone.\n"
+			help[2] = help[2] .. "Note: Does not apply to exempt players which includes admins, donors and individuals that have been bot whitelisted."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,ping,kick,targ"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "ping"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set ping kick target {new or all}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "By default if a ping kick is set it only applies to new players. Set to all to have it applied to everyone.")
-					irc_chat(chatvars.ircAlias, "Note: Does not apply to exempt players which includes admins, donors and individuals that have been bot whitelisted.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1253,13 +1653,26 @@ function gmsg_server()
 
 
 	local function cmd_SetPrisonTimer()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set prison timer {number} (in minutes)"
+			help[2] = "Set how long someone stays in prison when jailed by the bot.  To not have a time limit, set this to 0 which is the default."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,prison,time"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "time") or string.find(chatvars.command, "prison") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set prison timer {number} (in minutes)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set how long someone stays in prison when jailed by the bot.")
-					irc_chat(chatvars.ircAlias, "To not have a time limit, set this to 0 which is the default.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1269,13 +1682,13 @@ function gmsg_server()
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "prison" and chatvars.words[3] == "timer" then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
@@ -1314,12 +1727,26 @@ function gmsg_server()
 
 
 	local function cmd_SetPVPCooldown()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set pvp cooldown {seconds}"
+			help[2] = "Set how long after a pvp kill before the player can use teleport commands again."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,pvp,time,cool,delay"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pvp") or string.find(chatvars.command, "cool") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set pvp cooldown {seconds}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set how long after a pvp kill before the player can use teleport commands again.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1368,14 +1795,28 @@ function gmsg_server()
 
 
 	local function cmd_SetReservedSlots()
-		if chatvars.showHelp and not skipHelp then
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "rese") or string.find(chatvars.command, "slot") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set reserved slots {number of slots}")
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set reserved slots {number of slots}"
+			help[2] = "You can have a number of server slots reserved for admins and selected players.\n"
+			help[2] = help[2] .. "Anyone can join but if the server becomes full, players who aren't staff or allowed to reserve a slot will be randomly selected and kicked if an admin or authorised player joins.\n"
+			help[2] = help[2] .. "To disable, set reserved slots to 0."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,reser,slot"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "reser") or string.find(chatvars.command, "slot") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "You can have a number of server slots reserved for admins and selected players.")
-					irc_chat(chatvars.ircAlias, "Anyone can join but if the server becomes full, players who aren't staff or allowed to reserve a slot will be randomly selected and kicked if an admin or authorised player joins.")
-					irc_chat(chatvars.ircAlias, "To disable, set reserved slots to 0.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1453,12 +1894,27 @@ function gmsg_server()
 
 
 	local function cmd_SetRollingAnnouncementTimer()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set rolling delay {minutes}"
+			help[2] = "Set the delay in minutes between rolling announcements."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,roll,anno,time,delay"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "anno") or string.find(chatvars.command, "set") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set rolling delay {minutes}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set the delay in minutes between rolling announcements.")
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
 				end
 
 				chatvars.helpRead = true
@@ -1467,13 +1923,13 @@ function gmsg_server()
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "rolling" and chatvars.words[3] == "delay" then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
@@ -1499,13 +1955,27 @@ function gmsg_server()
 
 
 	local function cmd_SetRules()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set rules {new rules}"
+			help[2] = "Set the server rules.  You can use supported bbcode tags, but only when setting the rules from IRC.  Each tag must be closed with this tag [-] or colours will bleed into the next line.\n"
+			help[2] = help[2] .. "To display the rules type {#}rules"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,rule"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "rules") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set rules {new rules}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set the server rules.  You can use supported bbcode tags, but only when setting the rules from IRC.  Each tag must be closed with this tag [-] or colours will bleed into the next line.")
-					irc_chat(chatvars.ircAlias, "To display the rules type " .. server.commandPrefix .. "rules")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1546,13 +2016,27 @@ function gmsg_server()
 
 
 	local function cmd_SetServerAPIKey()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set server api {api key from 7daystodie-servers.com}"
+			help[2] = "Your API key is not recorded in logs or the databases and no bot command reports it.  It is used to determine if a player has voted for your server today.\n"
+			help[2] = help[2] .. "While the bot takes precautions to keep your API key a secret, you should be careful not to type it anywhere in public.  The safest place to give it to the bot is in private chat on IRC or on the bot's web interface when that is available."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,api,key"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "api") or string.find(chatvars.command, "set") or string.find(chatvars.command, "server"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set server api {api key from 7daystodie-servers.com}")
-				irc_chat(chatvars.ircAlias, "Your API key is not recorded in logs or the databases and no bot command reports it.")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Your server API key is used to determine if a player has voted for your server today.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1602,12 +2086,26 @@ function gmsg_server()
 
 
 	local function cmd_SetServerGroup()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set server group {group name} (one word)"
+			help[2] = "This is used by the bots database which could be a cloud database.  It is used to identify this bot as belonging to a group if you have more than one server.  You do not need to set this."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,server,group"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "serv") or string.find(chatvars.command, "group"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set server group {group name} (one word)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "This is used by the bots database which could be a cloud database.  It is used to identify this bot as belonging to a group if you have more than one server.  You do not need to set this.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1665,12 +2163,26 @@ function gmsg_server()
 
 
 	local function cmd_SetServerIP()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set server ip {IP of your 7 Days to Die server}"
+			help[2] = "The bot is unable to read the IP from its own profile for the server so enter it here.  It will display in the {#}info command and be used if a few other places."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,server,ip"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "server") or string.find(chatvars.command, " ip"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set server ip {IP of your 7 Days to Die server}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "The bot is unable to read the IP from its own profile for the server so enter it here.  It will display in the " .. server.commandPrefix .. "info command and be used if a few other places.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1719,13 +2231,26 @@ function gmsg_server()
 
 
 	local function cmd_SetServerRebootHour()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set reboot hour {0 to 23}"
+			help[2] = "Reboot the server when the server time matches the hour (24 hour time).  To disable clock based reboots set this to -1 or don't enter a number."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,server,reboo,hour,time"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "reboot") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set reboot hour {0 to 23}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Reboot the server when the server time matches the hour (24 hour time)")
-					irc_chat(chatvars.ircAlias, "To disable clock based reboots set this to -1 or don't enter a number.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1735,13 +2260,13 @@ function gmsg_server()
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "reboot" and chatvars.words[3] == "hour" then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
@@ -1799,13 +2324,26 @@ function gmsg_server()
 
 
 	local function cmd_SetServerRebootMinute()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set reboot minute {0 to 59}"
+			help[2] = "Reboot the server when the server time matches the hour and minute (24 hour time).  To disable clock based reboots use {#}set reboot hour (without a number)"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,server,reboo,mini,time"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "reboot") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set reboot minute {0 to 59}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Reboot the server when the server time matches the hour and minute (24 hour time)")
-					irc_chat(chatvars.ircAlias, "To disable clock based reboots use " .. server.commandPrefix .. "set reboot hour (without a number)")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1815,13 +2353,13 @@ function gmsg_server()
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "reboot" and chatvars.words[3] == "minute" then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
@@ -1877,13 +2415,27 @@ function gmsg_server()
 
 
 	local function cmd_SetServerType()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set server pve (or pvp, creative or contest)"
+			help[2] = "Set the entire server to be PVE, PVP, Creative or Contest.\n"
+			help[2] = help[2] .. "Contest mode is not implemented yet and all setting it creative does is stop the bot pestering players about their inventory."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,server,pvp,pve,crea"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "server") or string.find(chatvars.command, "pve") or string.find(chatvars.command, "pvp"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set server pve (or pvp, creative or contest)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set the entire server to be PVE, PVP, Creative or Contest.")
-					irc_chat(chatvars.ircAlias, "Contest mode is not implemented yet and all setting it creative does is stop the bot pestering players about their inventory.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1893,13 +2445,13 @@ function gmsg_server()
 
 		if (chatvars.words[1] == "set" and chatvars.words[2] == "server") and chatvars.words[3] ~= nil then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
+				if (chatvars.accessLevel > 0) then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if (chatvars.accessLevel > 1) then
+				if (chatvars.accessLevel > 0) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
@@ -1954,35 +2506,46 @@ function gmsg_server()
 
 
 	local function cmd_SetupAllocsWebMap()
-		if chatvars.showHelp and not skipHelp then
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "map"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "setup map")
-				irc_chat(chatvars.ircAlias, "Optional extras after setup map: no hostiles, no animals, show players, show claims, show inventory")
-				irc_chat(chatvars.ircAlias, "eg. " .. server.commandPrefix .. "setup map no hostiles no animals show players show claims show inventory")
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}setup map"
+			help[2] = "Optional extras after setup map: no hostiles, no animals, show players, show claims, show inventory\n"
+			help[2] = help[2] .. "eg. {#}setup map no hostiles no animals show players show claims show inventory\n"
+			help[2] = help[2] .. "The bot can fix your server map's permissions with some nice settings.  If you use this command, the following permissions are set:\n"
+			help[2] = help[2] .. "web.map 2000\n"
+			help[2] = help[2] .. "webapi.getlandclaims 1000\n"
+			help[2] = help[2] .. "webapi.viewallplayers 2\n"
+			help[2] = help[2] .. "webapi.viewallclaims 2\n"
+			help[2] = help[2] .. "webapi.getplayerinventory 2\n"
+			help[2] = help[2] .. "webapi.getplayerslocation 2\n"
+			help[2] = help[2] .. "webapi.getplayersOnline 2000\n"
+			help[2] = help[2] .. "webapi.getstats 2000\n"
+			help[2] = help[2] .. "webapi.gethostilelocation 2000\n"
+			help[2] = help[2] .. "webapi.getanimalslocation 2000\n"
+			help[2] = help[2] .. "If setting no hostiles and/or no animals:\n"
+			help[2] = help[2] .. "webapi.gethostilelocation 2\n"
+			help[2] = help[2] .. "webapi.getanimalslocation 2\n"
+			help[2] = help[2] .. "If setting show players, show claims, show inventory:\n"
+			help[2] = help[2] .. "webapi.viewallplayers 2000\n"
+			help[2] = help[2] .. "webapi.viewallclaims 2000\n"
+			help[2] = help[2] .. "webapi.getplayerinventory 2000"
 
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,map,perm"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "map"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
-					irc_chat(chatvars.ircAlias, "The bot can fix your server map's permissions with some nice settings.  If you use this command, the following permissions are set:")
-					irc_chat(chatvars.ircAlias, "web.map 2000")
-					irc_chat(chatvars.ircAlias, "webapi.getlandclaims 1000")
-					irc_chat(chatvars.ircAlias, "webapi.viewallplayers 2")
-					irc_chat(chatvars.ircAlias, "webapi.viewallclaims 2")
-					irc_chat(chatvars.ircAlias, "webapi.getplayerinventory 2")
-					irc_chat(chatvars.ircAlias, "webapi.getplayerslocation 2")
-					irc_chat(chatvars.ircAlias, "webapi.getplayersOnline 2000")
-					irc_chat(chatvars.ircAlias, "webapi.getstats 2000")
-					irc_chat(chatvars.ircAlias, "webapi.gethostilelocation 2000")
-					irc_chat(chatvars.ircAlias, "webapi.getanimalslocation 2000")
-					irc_chat(chatvars.ircAlias, ".")
-					irc_chat(chatvars.ircAlias, "If setting no hostiles and/or no animals:")
-					irc_chat(chatvars.ircAlias, "webapi.gethostilelocation 2")
-					irc_chat(chatvars.ircAlias, "webapi.getanimalslocation 2")
-					irc_chat(chatvars.ircAlias, ".")
-					irc_chat(chatvars.ircAlias, "If setting show players, show claims, show inventory:")
-					irc_chat(chatvars.ircAlias, "webapi.viewallplayers 2000")
-					irc_chat(chatvars.ircAlias, "webapi.viewallclaims 2000")
-					irc_chat(chatvars.ircAlias, "webapi.getplayerinventory 2000")
 				end
 
 				chatvars.helpRead = true
@@ -2058,12 +2621,26 @@ function gmsg_server()
 
 
 	local function cmd_SetWebsite()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set website {your website or steam group}"
+			help[2] = "Tell the bot the URL of your website or steam group so your players can ask for it."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,web,url"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "web"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set website {your website or steam group}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Tell the bot the URL of your website or steam group so your players can ask for it.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2107,19 +2684,33 @@ function gmsg_server()
 
 
 	local function cmd_SetWelcomeMessage()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set welcome message {your message here}\n"
+			help[1] = help[1] .. " {#}clear welcome message"
+			help[2] = "You can set a custom welcome message that will override the default greeting message when a player joins."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,welc,mess"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "welc"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set (or clear) welcome message {your message here}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "You can set a custom welcome message that will override the default greeting message when a player joins.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
 				chatvars.helpRead = true
 			end
 		end
-
 
 		if (chatvars.words[1] == "set" or chatvars.words[1] == "clear") and chatvars.words[2] == "welcome" and chatvars.words[3] == "message" then
 			if (chatvars.playername ~= "Server") then
@@ -2169,13 +2760,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleBadNames()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}allow/disallow/kick bad names"
+			help[2] = "Auto-kick players with numeric names or names that contain no letters such as ascii art crap.\n"
+			help[2] = help[2] .. "They will see a kick message asking them to change their name."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "allow,bad,name,kick"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "bad") or string.find(chatvars.command, "name"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "allow/disallow/kick bad names")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Auto-kick players with numeric names or names that contain no letters such as ascii art crap.")
-					irc_chat(chatvars.ircAlias, "They will see a kick message asking them to change their name.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2226,15 +2831,99 @@ function gmsg_server()
 	end
 
 
-	local function cmd_ToggleCBSMFriendly()
-		if chatvars.showHelp and not skipHelp then
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "cbsm"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set cbsm friendly (the default)")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set cbsm unfriendly")
+	local function cmd_ToggleBanVACBannedPlayers()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable vac (disable is the default)"
+			help[2] = "If a player has any VAC bans you can auto-ban them or allow them in.\n"
+			help[2] = help[2] .. "Each time they join, admins will be alerted to their VAC ban. To stop that, add the them to the bot's whitelist."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,vac,ban,alert"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "ban") or string.find(chatvars.command, "vac"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "If set to friendly, the bot will automatically switch from / commands to using the ! since CBSM uses the /")
-					irc_chat(chatvars.ircAlias, "Set to anything else and the bot will use / commands whether CBSM is present or not.")
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "vac" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "enable" then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players with VAC bans can play here.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Players with VAC bans can play here.")
+				end
+
+				server.banVACBannedPlayers = false
+				conn:execute("UPDATE server SET banVACBannedPlayers = 0")
+			else
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players with VAC bans will be banned from the server unless they are staff or whitelisted.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Players with VAC bans will be banned from the server unless they are staff or whitelisted.")
+				end
+
+				server.banVACBannedPlayers = true
+				conn:execute("UPDATE server SET banVACBannedPlayers = 1")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ToggleCBSMFriendly()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set cbsm friendly (the default)\n"
+			help[1] = help[1] .. " {#}set cbsm unfriendly (or anything other than the word friendly such as die die die)"
+			help[2] = "If set to friendly, the bot will automatically switch from / commands to using the ! since CBSM uses the /\n"
+			help[2] = help[2] .. "Set to anything else and the bot will use / commands whether CBSM is present or not."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,cbsm"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "cbsm"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2244,13 +2933,13 @@ function gmsg_server()
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "cbsm" and chatvars.words[3] ~= nil then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
@@ -2287,13 +2976,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleEntityScan()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable entity scan (disabled by default)"
+			help[2] = "Scan for entities server wide every 30 seconds.\n"
+			help[2] = help[2] .. "The resulting list is copied to the entities Lua table where it can be further processed for other bot features."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,scan,enti"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "scan") or string.find(chatvars.command, "ent"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable/disable entity scan (disabled by default)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Scan for entities server wide every 30 seconds.")
-					irc_chat(chatvars.ircAlias, "The resulting list is copied to the entities Lua table where it can be further processed for other bot features.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2343,13 +3046,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleErrorScan()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable error scan (disabled by default)"
+			help[2] = "The server can automatically scan for and fix some errors using console commands if you have Coppi's mod or djkrose's scripting mod installed.\n"
+			help[2] = help[2] .. "You can disable the scan if you suspect it is creating lag."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,scan,err"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "scan") or string.find(chatvars.command, "err") or string.find(chatvars.command, "fix"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable/disable error scan (disabled by default)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "The bot can automatically scan for and fix some errors using console commands.")
-					irc_chat(chatvars.ircAlias, "The scan happens automatically every 2 minutes.  You can disable the scan if you suspect it is creating lag.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2399,13 +3116,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleHardcoreMode()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable hardcore mode"
+			help[2] = "Allow players to use bot commands.  This is the default.\n"
+			help[2] = help[2] .. "Players can still talk to the bot and use info commands such as {#}rules."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,hard,mode,comm"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "hard") or string.find(chatvars.command, "mode") or string.find(chatvars.command, "server"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable/disable hardcore mode")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Allow players to use bot commands.  This is the default.")
-					irc_chat(chatvars.ircAlias, "Players can still talk to the bot and use info commands such as " .. server.commandPrefix .. "rules.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2455,12 +3186,26 @@ function gmsg_server()
 
 
 	local function cmd_ToggleIdleKick()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable idle kick (disabled is default)"
+			help[2] = "When the server is full, if idle kick is on players will get kick warnings for 15 minutes of no movement then they get kicked."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,idle,kick"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "kick"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable/disable idle kick (disabled is default)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "When the server is full, if idle kick is on players will get kick warnings for 15 minutes of no movement then they get kicked.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2510,12 +3255,26 @@ function gmsg_server()
 
 
 	local function cmd_ToggleIgnorePlayerFlying()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}allow/disallow flying"
+			help[2] = "Toggle the bot's player flying detection.  You would want to do this if players can use debug mode on your server."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "allow,fly"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "fly") or string.find(chatvars.command, "hack") or string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "allow/disallow flying")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Toggle the bot's player flying detection.  You would want to do this if players can use debug mode on your server.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2566,13 +3325,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleIRCPrivate()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set irc private/public"
+			help[2] = "If IRC is private, the bot won't share the url or info with players and players can't invite anyone to irc using the invite command.\n"
+			help[2] = help[2] .. "When public, players can find the IRC info with {#}help irc and they can create irc invites for themselves and others."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,irc,pub,priv"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "irc") or string.find(chatvars.command, "pub") or string.find(chatvars.command, "priv"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set irc private/public")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "If IRC is private, the bot won't share the url or info with players and players can't invite anyone to irc using the invite command.")
-					irc_chat(chatvars.ircAlias, "When public, players can find the IRC info with " .. server.commandPrefix .. "help irc and they can create irc invites for themselves and others.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2622,14 +3395,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleNoClipScan()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable noclip scan (the default)"
+			help[2] = "Using Coppi's mod version 2.5+ you can detect players that are noclipping under the map.\n"
+			help[2] = help[2] .. "It can false flag but it is still a useful early warning of a possible hacker.  The bot will ban a player found clipping a lot for one week."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,clip,scan"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "scan") or string.find(chatvars.command, "clip") or string.find(chatvars.command, "fly"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable noclip scan (the default)")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "disable noclip scan")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Using Coppi's mod version 2.5+ you can detect players that are noclipping under the map.")
-					irc_chat(chatvars.ircAlias, "It can false flag but it is still a useful early warning of a possible hacker. Currently this feature only alerts to IRC. It does not punish.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2639,13 +3425,13 @@ function gmsg_server()
 
 		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "noclip" and chatvars.words[3] == "scan" then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 0) then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 0) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
@@ -2679,14 +3465,26 @@ function gmsg_server()
 
 
 	local function cmd_ToggleOverstackChecking()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}allow/disallow overstack or {#}enable/disable overstack"
+			help[2] = "By default the bot reads overstack warnings coming from the server to learn what the stack limits are and it will pester players with excessive stack sizes and can send them to timeout for non-compliance."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,allow,over,stack"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "overs"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "allow/disallow overstack")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable/disable overstack")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "By default the bot reads overstack warnings coming from the server to learn what the stack limits are and it will pester players with excessive stack sizes and can send them to timeout for non-compliance.")
-					irc_chat(chatvars.ircAlias, "Use this command to toggle this feature")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2737,19 +3535,34 @@ function gmsg_server()
 
 
 	local function cmd_TogglePVPRulesByCompass()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}northeast pve/pvp\n"
+			help[1] = help[1] .. " {#}northeast pve/pvp\n"
+			help[1] = help[1] .. " {#}northwest pve/pvp\n"
+			help[1] = help[1] .. " {#}southeast pve/pvp\n"
+			help[1] = help[1] .. " {#}southwest pve/pvp\n"
+			help[1] = help[1] .. " {#}north pve/pvp\n"
+			help[1] = help[1] .. " {#}south pve/pvp\n"
+			help[1] = help[1] .. " {#}east pve/pvp\n"
+			help[1] = help[1] .. " {#}west pve/pvp"
+			help[2] = "Make northeast/northwest/southeast/southwest/north/south/east/west of 0,0 PVE or PVP."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,pvp,pve,north,south,east,west"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pvp") or string.find(chatvars.command, "pve"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "northeast pve/pvp")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "northwest pve/pvp")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "southeast pve/pvp")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "southwest pve/pvp")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "north pve/pvp")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "south pve/pvp")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "east pve/pvp")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "west pve/pvp")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Make northeast/northwest/southeast/southwest/north/south/east/west of 0,0 PVE or PVP.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2882,13 +3695,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleRapidRelogTempBan()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}allow/disallow rapid relog"
+			help[2] = "New players who want to cheat often relog rapidly in order to spawn lots of items into the server using cheats or bugs.\n"
+			help[2] = help[2] .. "If enabled, the bot will temp ban (10 minutes) players caught relogging several times in short order."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "allow,rapid,relog,log,join"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "relog") or string.find(chatvars.command, "allow"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "allow/disallow rapid relog")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "New players who want to cheat often relog rapidly in order to spawn lots of items into the server using cheats or bugs.")
-					irc_chat(chatvars.ircAlias, "If enabled, the bot will temp ban (10 minutes) players caught relogging several times in short order.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2938,12 +3765,26 @@ function gmsg_server()
 
 
 	local function cmd_ToggleRegionPM()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable region pm"
+			help[2] = "A PM for admins that tells them the region name when they move to a new region."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,region,pm"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "region") or string.find(chatvars.command, " pm"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable/disable region pm")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "A PM for admins that tells them the region name when they move to a new region.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2994,13 +3835,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleServerReboots()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable (or disable) reboot"
+			help[2] = "By default the bot does not manage server reboots.\n"
+			help[2] = help[2] .. "See also {#}set max uptime (default 12 hours)"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,rebo,rest,shut,start,stop"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "reboot")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable (or disable) reboot")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "By default the bot does not manage server reboots.")
-					irc_chat(chatvars.ircAlias, "See also " .. server.commandPrefix .. "set max uptime (default 12 hours)")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3050,13 +3905,28 @@ function gmsg_server()
 
 
 	local function cmd_ToggleTranslate()
-		if chatvars.showHelp and not skipHelp then
-			if string.find(chatvars.command, "translate") then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "translate on {player name}")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "translate off {player name}")
+		local playerName, isArchived
+
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}translate on/off {player name}"
+			help[2] = "If the Google translate API is installed, the bot can automatically translate the players chat to english."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "on,off,trans,lang"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "translate" and (chatvars.words[2] == "on" or chatvars.words[2] == "off") and chatvars.words[3] ~= nil) then
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "If the Google translate API is installed, the bot can automatically translate the players chat to english.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3075,26 +3945,46 @@ function gmsg_server()
 			id = LookupPlayer(pname)
 
 			if id == 0 then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
-				else
-					irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
-				end
+				id = LookupArchivedPlayer(pname)
 
-				botman.faultyChat = false
-				return true
+				if not (id == 0) then
+					playerName = playersArchived[id].name
+					isArchived = true
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+					else
+						irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+					end
+
+					botman.faultyChat = false
+					return true
+				end
+			else
+				playerName = players[id].name
+				isArchived = false
 			end
 
 			if chatvars.words[2] == "on" then
-				players[id].translate = true
-				message("say [" .. server.chatColour .. "]Chat from player " .. players[id].name ..  " will be translated to English.[-]")
+				if not isArchived then
+					players[id].translate = true
+					conn:execute("UPDATE players SET translate = 1 WHERE steam = " .. id)
+				else
+					playersArchived[id].translate = true
+					conn:execute("UPDATE playersArchived SET translate = 1 WHERE steam = " .. id)
+				end
 
-				conn:execute("UPDATE players SET translate = 1 WHERE steam = " .. id)
+				message("say [" .. server.chatColour .. "]Chat from player " .. playerName ..  " will be translated to English.[-]")
 			else
-				players[id].translate = false
-				message("say [" .. server.chatColour .. "]Chat from player " .. players[id].name ..  " will not be translated.[-]")
+				if not isArchived then
+					players[id].translate = false
+					conn:execute("UPDATE players SET translate = 0 WHERE steam = " .. id)
+				else
+					playersArchived[id].translate = false
+					conn:execute("UPDATE playersArchived SET translate = 0 WHERE steam = " .. id)
+				end
 
-				conn:execute("UPDATE players SET translate = 0 WHERE steam = " .. id)
+				message("say [" .. server.chatColour .. "]Chat from player " .. playerName ..  " will not be translated.[-]")
 			end
 
 			botman.faultyChat = false
@@ -3104,13 +3994,26 @@ function gmsg_server()
 
 
 	local function cmd_ToggleWatchAlerts()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}disable/enable watch alerts"
+			help[2] = "Enable or disable ingame private messages about watched player inventory and base raiding. Alerts will still go to IRC."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,watch,alert,pm,irc"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "watch") or string.find(chatvars.command, "player") or string.find(chatvars.command, "new"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "disable watch alerts")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable watch alerts")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Enable or disable ingame private messages about watched player inventory and base raiding. Alerts will still go to IRC.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3160,12 +4063,26 @@ function gmsg_server()
 
 
 	local function cmd_UnpauseReboot()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}resume/unpause reboot"
+			help[2] = "Resume a paused reboot."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "pause,resume,rebo"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "reboot")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "unpause (or resume) reboot")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Resume a reboot.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3174,6 +4091,20 @@ function gmsg_server()
 		end
 
 		if (chatvars.words[1] == "unpause" or chatvars.words[1] == "unpaws" or chatvars.words[1] == "resume") and chatvars.words[2] == "reboot" and chatvars.words[3] == nil then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
 			if botman.scheduledRestartPaused == true then
 				botman.scheduledRestartTimestamp = os.time() + restartTimeRemaining
 				botman.scheduledRestartPaused = false
@@ -3194,6 +4125,24 @@ function gmsg_server()
 -- ################## End of command functions ##################
 
 if debug then dbug("debug server") end
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "==== Registering help - server commands ====")
+		dbug("Registering help - server commands")
+
+		tmp = {}
+		tmp.topicDescription = "Server commands mainly cover settings that change the nature of the server or turn features on or off that relate to the server."
+
+		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'server'")
+		rows = cursor:numrows()
+		if rows == 0 then
+			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
+			row = cursor:fetch(row, "a")
+			tmp.topicID = row.Auto_increment
+
+			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('server', '" .. escape(tmp.topicDescription) .. "')")
+		end
+	end
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
@@ -3418,6 +4367,15 @@ if debug then dbug("debug server") end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_SetNewPlayerMaxLevel()
+
+	if result then
+		if debug then dbug("debug cmd_SetNewPlayerMaxLevel triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_SetNewPlayerTimer()
 
 	if result then
@@ -3580,6 +4538,15 @@ if debug then dbug("debug server") end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_ToggleBanVACBannedPlayers()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleBanVACBannedPlayers triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_ToggleCBSMFriendly()
 
 	if result then
@@ -3716,7 +4683,7 @@ if debug then dbug("debug server") end
 	if debug then dbug("debug server end of remote commands") end
 
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not chatvars.showHelp then
+	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
 		return false
 	end
@@ -3728,6 +4695,12 @@ if debug then dbug("debug server") end
 		-- irc_chat(chatvars.ircAlias, "========================")
 		-- irc_chat(chatvars.ircAlias, ".")
 	-- end
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "**** Server commands help registered ****")
+		dbug("Server commands help registered")
+		topicID = topicID + 1
+	end
 
 	if debug then dbug("debug server end") end
 

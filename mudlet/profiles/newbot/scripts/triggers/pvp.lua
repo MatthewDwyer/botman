@@ -77,7 +77,7 @@ function pvpPolice(line)
 		if (r == 2) then message("say [" .. server.chatColour .. "]LOL!  Didn't run far away enough did you " .. killerName .. "?[-]") end
 		if (r == 3) then message("say [" .. server.chatColour .. "]And the prize for most creative way to end themselves goes to.. " .. killerName .. "[-]") end
 		if (r == 4) then message("say [" .. server.chatColour .. "]" .. killerName .. " really shouldn't handle explosives.[-]") end
-		if (r == 5) then message("say Oh no! " .. killerName .. " has died.  What a shame. :D[-]") end
+		if (r == 5) then message("say [" .. server.chatColour .. "]Oh no! " .. killerName .. " has died.  What a shame. :D[-]") end
 		if (r == 6) then message("say [" .. server.chatColour .. "]Great effort there " .. killerName .. ". I'm awarding " .. score .. " points.[-]") end
 		if (r == 7) then message("say [" .. server.chatColour .. "]LOL! REKT[-]") end
 
@@ -92,8 +92,8 @@ function pvpPolice(line)
 		if (r == 13) then message("say [" .. server.chatColour .. "]ISIS got nothing on " .. killerName .. "'s suicide bomber skillz.[-]") end
 		if (r == 14) then message("say [" .. server.chatColour .. "]" .. killerName .. " reached a new low with that death. Six feet under.[-]") end
 		if (r == 15) then message("say [" .. server.chatColour .. "]" .. killerName .. " needs clean undies after that one.[-]") end
-		if r == 16 then message("say [" .. server.chatColour .. "]" .. killerName .. " is really good at faking their own death! So realistic.[-]") end
-		if r == 17 then message("pm " .. killerID .. " [" .. server.chatColour .. "][  Wasted!  ][-]") end
+		if (r == 16) then message("say [" .. server.chatColour .. "]" .. killerName .. " is really good at faking their own death! So realistic.[-]") end
+		if (r == 17) then message("pm " .. killerID .. " [" .. server.chatColour .. "][  Wasted!  ][-]") end
 		if (r == 18) then message("say [" .. server.chatColour .. "]Some say " .. killerName .. " isn't very good at this.[-]") end
 		if (r == 19) then message("say [" .. server.chatColour .. "]And let us celebrate the untimely death of " .. killerName .. ". Taken from us finally.[-]") end
 		if (r == 20) then message("say [" .. server.chatColour .. "]" .. killerName .. " is formerly living proof of the importance of gun safety.[-]") end

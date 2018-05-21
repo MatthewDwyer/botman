@@ -509,7 +509,8 @@ end
 function readInventorySlot()
 	local timestamp, slot, item, quantity, quality, pos, words, dupeTest
 
-	if not string.find(line, "Slot") then
+	if not (string.find(line, "Slot") and string.find(line, ": ")) then
+		-- abort if the line isn't actually a player's inventory
 		return
 	end
 
@@ -560,4 +561,6 @@ function readInventorySlot()
 	if (invScan == "equipment") then
 		igplayers[invCheckID].equipment = igplayers[invCheckID].equipment .. slot .. "," .. item .. "," .. quality .. "|"
 	end
+
+	deleteLine()
 end

@@ -14,6 +14,13 @@ function fortyfiveSecondTimer()
 		return
 	end
 
+	if customFortyfiveSecondTimer ~= nil then
+		-- read the note on overriding bot code in custom/custom_functions.lua
+		if customFortyfiveSecondTimer() then
+			return
+		end
+	end
+
 	conn:execute("UPDATE keystones SET removed = 1")
 
 	for k, v in pairs(igplayers) do

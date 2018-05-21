@@ -1,0 +1,20 @@
+Hi!  This is just a random to-do list as I think of things or am made aware of them.  It is not a list of everything xD
+
+Expire base protection automatically x days after a player was last on.  Add a field and code to set how many days with zero meaning never expire.
+
+Add code for Server Tools so that teleporting hackers still get banned if no admin is on otherwise just notify the admins that Joe just teleported and could be a hacker.
+
+Add commands and code for new waypoint public field.
+
+Add code for new baseProtectionExpiryDays field.
+
+Add support for Coppi's si2 inventory command as a replacement for Alloc's si command
+
+Add support for djkrose's scripting mod's commands
+
+Add support for more of Stompy's BC mod
+
+check code behind location accessLevel field and minimumAccess and maximumAccess
+
+Check that teleports that should cost money are being charged and that the player is properly informed.
+Finish coding the spending alert.

@@ -29,14 +29,14 @@ function playerInfo(faultyInfo)
 	local skipTPtest = false
 	local badData = false
 
-	debug = false
+	debug = false -- should be false unless testing
 
 if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if debugPlayerInfo == nil then debugPlayerInfo = 0 end
 
 	-- Set debugPlayerInfo to the steam id or player name that you want to monitor.  If the player is not on the server, the bot will reset debugPlayerInfo to zero.
-	debugPlayerInfo = 0
+	debugPlayerInfo = 0 -- should be 0 unless testing against a steam id
 
 	if (debugPlayerInfo ~= 0) then
 		dbug("debug playerinfo " .. debugPlayerInfo, true)
@@ -296,6 +296,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				if tonumber(igplayers[steam].highPingCount) > 15 then
 					irc_chat(server.ircMain, "Kicked " .. name .. " steam: " .. steam.. " for high ping " .. ping)
 					kick(steam, "High ping kicked.")
+					deleteLine()
 					return
 				end
 			end
@@ -384,16 +385,17 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	end
 
 	-- test for hackers teleporting
-	if (os.time() - players[steam].lastCommandTimestamp > 60) and server.hackerTPDetection then
+	--if (os.time() - players[steam].lastCommandTimestamp > 60) and server.hackerTPDetection then
+	if server.hackerTPDetection then
 		if not (players[steam].timeout or players[steam].botTimeout) and not players[steam].ignorePlayer then
 			if tonumber(intY) > -5000 and tonumber(intX) ~= 0 and tonumber(intZ) ~= 0 and tonumber(igplayers[steam].xPos) ~= 0 and tonumber(igplayers[steam].zPos) ~= 0 and tonumber(os.time() - igplayers[steam].lastLP) < 6 then
 				dist = 0
 
-				if igplayers[steam].deadX == nil then
+				if igplayers[steam].spawnedInWorld and igplayers[steam].spawnedReason == "teleport" and (igplayers[steam].spawnedCoords ~= igplayers[steam].spawnedCoordsOld) then
 					dist = distancexz(posX, posZ, igplayers[steam].xPos, igplayers[steam].zPos)
 				end
 
-				if (dist >= 700) and tonumber(igplayers[steam].deaths) == tonumber(deaths) then
+				if (dist >= 700) then
 					if tonumber(players[steam].tp) < 1 then
 						if players[steam].newPlayer == true then
 							new = " [FF8C40]NEW player "
@@ -602,7 +604,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if igplayers[steam].checkNewPlayer == true then
 		igplayers[steam].checkNewPlayer = false
 
-		if tonumber(level) > 9 and players[steam].newPlayer then
+		if tonumber(level) > server.newPlayerMaxLevel and players[steam].newPlayer then
 			players[steam].newPlayer = false
 			players[steam].watchPlayer = false
 			players[steam].watchPlayerTimer = 0
@@ -861,6 +863,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 			message("pm " .. steam .. " [" .. server.chatColour .. "]You have moved too far away from the location. If you still wish to do " .. server.commandPrefix .. "protect location, please start again.[-]")
 			faultyPlayerinfo = false
+			deleteLine()
 			return
 		end
 
@@ -876,6 +879,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			igplayers[steam].alertLocationExit = nil
 
 			faultyPlayerinfo = false
+			deleteLine()
 			return
 		end
 	end
@@ -890,6 +894,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 			message("pm " .. steam .. " [" .. server.chatColour .. "]You have moved too far away from " .. igplayers[steam].alertVillageExit .. ". Return to " .. igplayers[steam].alertVillageExit .. " and type " .. server.commandPrefix .. "protect village " .. igplayers[steam].alertVillageExit .. " again.[-]")
 			faultyPlayerinfo = false
+			deleteLine()
 			return
 		end
 
@@ -905,6 +910,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			igplayers[steam].alertVillageExit = nil
 
 			faultyPlayerinfo = false
+			deleteLine()
 			return
 		end
 	end
@@ -927,6 +933,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 			message("pm " .. steam .. " [" .. server.chatColour .. "]You have moved too far away from the base. If you still wish to do " .. server.commandPrefix .. "protect, please start again.[-]")
 			faultyPlayerinfo = false
+			deleteLine()
 			return
 		end
 
@@ -982,6 +989,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				igplayers[steam].alertBase = nil
 
 				faultyPlayerinfo = false
+				deleteLine()
 				return
 			end
 		else
@@ -1036,6 +1044,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				igplayers[steam].alertBase = nil
 
 				faultyPlayerinfo = false
+				deleteLine()
 				return
 			end
 		end
@@ -1069,6 +1078,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 
 		faultyPlayerinfo = false
+		deleteLine()
 		return
 	end
 
@@ -1100,6 +1110,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 
 		faultyPlayerinfo = false
+		deleteLine()
 		return
 	end
 
@@ -1107,6 +1118,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		if (distancexz( intX, intZ, locations["exile"].x, locations["exile"].z ) > tonumber(locations["exile"].size)) then
 			randomTP(steam, "exile", true)
 			faultyPlayerinfo = false
+			deleteLine()
 			return
 		end
 	end
@@ -1130,6 +1142,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			end
 
 			faultyPlayerinfo = false
+			deleteLine()
 			return
 		end
 
@@ -1161,6 +1174,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 
 		faultyPlayerinfo = false
+		deleteLine()
 		return
 	end
 
@@ -1232,13 +1246,14 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				if ((playerAccessLevel < 3) or (teleports[tp].owner == igplayers[steam].steam or teleports[tp].public == true or isFriend(ownerid, steam))) and teleports[tp].active then
 					if match == 1 then
 						-- check access level restrictions on the teleport
-						if (playerAccessLevel >= tonumber(teleports[tp].minimumAccess) and playerAccessLevel <= tonumber(teleports[tp].maximumAccess)) or playerAccessLevel < 3 then
+						if (playerAccessLevel >= tonumber(teleports[tp].maximumAccess) and playerAccessLevel <= tonumber(teleports[tp].minimumAccess)) or playerAccessLevel < 3 then
 							if isDestinationAllowed(steam, teleports[tp].dx, teleports[tp].dz) then
 								igplayers[steam].teleCooldown = 2
 								cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].dx) .. " " .. math.ceil(teleports[tp].dy) .. " " .. math.floor(teleports[tp].dz)
 								teleport(cmd, steam)
 
 								faultyPlayerinfo = false
+								deleteLine()
 								return
 							end
 						end
@@ -1246,13 +1261,14 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 					if match == 2 and teleports[tp].oneway == false then
 						-- check access level restrictions on the teleport
-						if (playerAccessLevel >= tonumber(teleports[tp].minimumAccess) and playerAccessLevel <= tonumber(teleports[tp].maximumAccess)) or playerAccessLevel < 3 then
+						if (playerAccessLevel >= tonumber(teleports[tp].maximumAccess) and playerAccessLevel <= tonumber(teleports[tp].minimumAccess)) or playerAccessLevel < 3 then
 							if isDestinationAllowed(steam, teleports[tp].x, teleports[tp].z) then
 								igplayers[steam].teleCooldown = 2
 								cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
 								teleport(cmd, steam)
 
 								faultyPlayerinfo = false
+								deleteLine()
 								return
 							end
 						end
@@ -1281,6 +1297,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 						teleport(cmd, steam)
 
 						faultyPlayerinfo = false
+						deleteLine()
 						return
 					end
 				else
@@ -1290,6 +1307,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 						teleport(cmd, steam)
 
 						faultyPlayerinfo = false
+						deleteLine()
 						return
 					end
 				end
@@ -1325,6 +1343,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if	baseProtection(steam, posX, posY, posZ) and not resetZone then
 		faultyPlayerinfo = false
+		deleteLine()
 		return
 	end
 
@@ -1354,7 +1373,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if (igplayers[steam].deadX ~= nil) then
+	if (igplayers[steam].deadX ~= nil) and igplayers[steam].spawnedInWorld and igplayers[steam].spawnedReason ~= "fake reason" then
 		dist = math.abs(distancexz(igplayers[steam].deadX, igplayers[steam].deadZ, posX, posZ))
 		if (dist > 2) then
 			igplayers[steam].deadX = nil
@@ -1412,9 +1431,11 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		igplayers[steam].rawPosition = rawPosition
 	end
 
-	if igplayers[steam].greet and tonumber(igplayers[steam].greetdelay) > 0 and igplayers[steam].spawnedInWorld then
-		-- Player has spawned.  We can greet them now and do other stuff that waits for spawn
-		igplayers[steam].greetdelay = 0
+	if igplayers[steam].spawnedInWorld then
+		if igplayers[steam].greet and tonumber(igplayers[steam].greetdelay) > 0 then
+			-- Player has spawned.  We can greet them now and do other stuff that waits for spawn
+			igplayers[steam].greetdelay = 0
+		end
 
 		if tonumber(igplayers[steam].teleCooldown) > 100 then
 			igplayers[steam].teleCooldown = 0
@@ -1462,6 +1483,8 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if (steam == debugPlayerInfo) then
 		dbug("end playerinfo", true)
 	end
+
+	deleteLine()
 end
 
 

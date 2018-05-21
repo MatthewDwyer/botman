@@ -54,7 +54,7 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
 
 		-- 2016-09-11T04:14:28
-		botman.serverTime = string.sub(line, 1, 19)
+		botman.serverTime = string.sub(line, 1, 10) .. " " .. string.sub(line, 12, 16)
 		botman.serverHour = string.sub(line, 12, 13)
 		botman.serverMinute = string.sub(line, 15, 16)
 
@@ -63,6 +63,13 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 		end
 
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
+
+		if customPlayerDisconnected ~= nil then
+			-- read the note on overriding bot code in custom/custom_functions.lua
+			if customPlayerDisconnected(line, entityID, steam, name) then
+				return
+			end
+		end
 
 		dbug("Saving disconnected player " .. igplayers[steam].name)
 

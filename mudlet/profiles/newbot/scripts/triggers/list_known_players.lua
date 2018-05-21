@@ -12,45 +12,61 @@ function listKnownPlayers(line)
 		return
 	end
 
-	local name, id, steam, playtime, seen, result
+	local tmp
 
-	data = string.split(line, ",")
+	tmp = {}
+	tmp.data = string.split(line, ",")
+	tmp.name = string.sub(tmp.data[1], string.find(tmp.data[1], ". ") + 2)
+	tmp.id = string.sub(tmp.data[2], string.find(tmp.data[2], "id=") + 3)
+	tmp.steam = string.sub(tmp.data[3], string.find(tmp.data[3], "steamid=") + 8)
+	tmp.playtime = string.sub(tmp.data[6], string.find(tmp.data[6], "playtime=") + 9, string.len(tmp.data[6]) - 2)
+	tmp.seen = string.sub(tmp.data[7], string.find(tmp.data[7], "seen=") + 5)
 
-	name = string.sub(data[1], string.find(data[1], ". ") + 2)
-	id = string.sub(data[2], string.find(data[2], "id=") + 3)
-	steam = string.sub(data[3], string.find(data[3], "steamid=") + 8)
-	playtime = string.sub(data[6], string.find(data[6], "playtime=") + 9, string.len(data[6]) - 2)
-	seen = string.sub(data[7], string.find(data[7], "seen=") + 5)
+	if playersArchived[tmp.steam] then
+		-- don't process if this player has been archived
+		return
+	end
 
 	local pattern = "(%d+)-(%d+)-(%d+) (%d+):(%d+)"
-	local runyear, runmonth, runday, runhour, runminute, runseconds = seen:match(pattern)
-	local seenTimestamp = os.time({year = runyear, month = runmonth, day = runday, hour = runhour, min = runminute, sec = runseconds})
+	local runyear, runmonth, runday, runhour, runminute = tmp.seen:match(pattern)
+	local seenTimestamp = os.time({year = runyear, month = runmonth, day = runday, hour = runhour, min = runminute, 0})
 
-	if (not players[steam] and (playtime ~= "0")) then
-		players[steam] = {}
+	if not igplayer[tmp.steam] and players[tmp.steam] then
+		-- acrchive players that haven't played in 2 months and aren't an admin
+		if (os.time() - seenTimestamp > 5184000) and (accessLevel(tmp.steam) > 3) then
+			conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. tmp.steam)
+			conn:execute("DELETE FROM players WHERE steam = " .. tmp.steam)
+			players[tmp.steam] = nil
+			loadPlayersArchived(tmp.steam)
+			return
+		end
+	end
 
-		if id ~= "-1" then
-			players[steam].id = id
+	if (not players[tmp.steam] and (tmp.playtime ~= "0")) then
+		players[tmp.steam] = {}
+
+		if tmp.id ~= "-1" then
+			players[tmp.steam].id = tmp.id
 		end
 
-		players[steam].name = name
-		players[steam].steam = steam
-		players[steam].playtime = playtime
-		players[steam].seen = seen
+		players[tmp.steam].name = tmp.name
+		players[tmp.steam].steam = tmp.steam
+		players[tmp.steam].playtime = tmp.playtime
+		players[tmp.steam].seen = tmp.seen
 
-		if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steam .. "," .. id .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "'") end
+		if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. tmp.steam .. "," .. tmp.id .. ",'" .. escape(tmp.name) .. "'," .. tmp.playtime .. ",'" .. tmp.seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. tmp.playtime .. ", seen = '" .. tmp.seen .. "'") end
 	else
-		if id ~= "-1" then
-			players[steam].id = id
+		if tmp.id ~= "-1" then
+			players[tmp.steam].id = tmp.id
 		end
 
-		players[steam].name = name
-		players[steam].playtime = playtime
-		players[steam].seen = seen
+		players[tmp.steam].name = tmp.name
+		players[tmp.steam].playtime = tmp.playtime
+		players[tmp.steam].seen = tmp.seen
 
-		if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steam .. "," .. id .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "', name = '" .. escape(name) .. "', id = " .. id) end
+		if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. tmp.steam .. "," .. tmp.id .. ",'" .. escape(tmp.name) .. "'," .. tmp.playtime .. ",'" .. tmp.seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. tmp.playtime .. ", seen = '" .. tmp.seen .. "', name = '" .. escape(tmp.name) .. "', id = " .. tmp.id) end
 	end
 
 	-- add missing fields and give them default values
-	fixMissingPlayer(steam)
+	fixMissingPlayer(tmp.steam)
 end

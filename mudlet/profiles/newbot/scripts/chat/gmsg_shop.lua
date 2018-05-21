@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local debug, result
+local debug, result, tmp
 
 debug = false -- should be false unless testing
 
@@ -18,17 +18,32 @@ end
 function gmsg_shop()
 	calledFunction = "gmsg_shop"
 	result = false
+	tmp = {}
 
 -- ################## shop command functions ##################
 
 	local function cmd_FixShop()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}fix shop"
+			help[2] = "Attempt to automatically fix the shop.  It reloads the shop categories, checks for any missing categories in shop items and assigns them to misc then reindexes the shop.\n"
+			help[2] = help[2] .. "This fix is experimental and might not actually fix whatever is wrong with your shop."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,fix"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "fix shop")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Attempt to automatically fix the shop.  It reloads the shop categories, checks for any missing categories in shop items and assigns them to misc then reindexes the shop.")
-					irc_chat(chatvars.ircAlias, "This fix is experimental and might not actually fix whatever is wrong with your shop.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -66,12 +81,26 @@ function gmsg_shop()
 
 
 	local function cmd_SetLotteryMultiplier()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set lottery multiplier {number}"
+			help[2] = "Every zombie killed adds 1 x the lottery multiplier to the lottery total.  The higher the number, the faster the lottery rises.  The default is 2."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,set,lott,daily"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "lott") or string.find(chatvars.command, "gamb"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set lottery multiplier {number}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Every zombie killed adds 1 x the lottery multiplier to the lottery total.  The higher the number, the faster the lottery rises.  The default is 2.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -114,12 +143,26 @@ function gmsg_shop()
 
 
 	local function cmd_SetLotteryPrize()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set lottery prize {number}"
+			help[2] = "You can set or reset the lottery prize to any number.  Useful if it gets too large."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,set,prize,lott,daily"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "lott") or string.find(chatvars.command, "gamb"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set lottery prize {number}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "You can set or reset the lottery prize to any number.  Useful if it gets too large.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -162,13 +205,27 @@ function gmsg_shop()
 
 
 	local function cmd_ToggleLottery()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}open/close lottery\n"
+			help[1] = help[1] .. " {#}enable/disable lottery"
+			help[2] = "Turn on or off the daily lottery.  It is on be default."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,able,daily,lott"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "lott") or string.find(chatvars.command, "gamb"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "open/close lottery")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable/disable lottery")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Turn on or off the daily lottery.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -219,12 +276,26 @@ function gmsg_shop()
 
 
 	local function cmd_SetPlaytimeReward()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set playtime reward {" .. server.moneyPlural .. "}"
+			help[2] = "Set how many " .. server.moneyPlural .. " a player earns for each minutes played. (excludes new players)"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,set,play,rewa"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pay") or string.find(chatvars.command, "rate"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set playtime reward {" .. server.moneyPlural .. "}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set how many " .. server.moneyPlural .. " a player earns for each minutes played. (excludes new players)")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -267,12 +338,26 @@ function gmsg_shop()
 
 
 	local function cmd_SetZombieReward()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set zombie reward {" .. server.moneyPlural .. "}"
+			help[2] = "Set how many " .. server.moneyPlural .. " a player earns for each zombie killed."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,set,zomb,kill,rewa"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "zom") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set zombie reward {" .. server.moneyPlural .. "}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set how many " .. server.moneyPlural .. " a player earns for each zombie killed.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -315,12 +400,26 @@ function gmsg_shop()
 
 
 	local function cmd_ToggleBank()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable bank"
+			help[2] = "Players can earn " .. server.moneyPlural .. " if the bank is enabled."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,able,bank,money"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "bank") or string.find(chatvars.command, "cash"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable/disable bank")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Players can earn " .. server.moneyPlural .. " if the bank is enabled.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -371,13 +470,27 @@ function gmsg_shop()
 
 
 	local function cmd_SetMoneyName()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set money name {singular} {plural}"
+			help[2] = "The default money name is the Zenny and the plural is Zennies. Both names must be one word each.\n"
+			help[2] = help[2] .. "eg {#}set money name Chip Chips."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,able,bank,money"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "money") or string.find(chatvars.command, "name") or string.find(chatvars.command, "cash"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set money name {singular} {plural}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "The default money name is the Zenny and the plural is Zennies. Both names must be one word each.")
-					irc_chat(chatvars.ircAlias, "eg " .. server.commandPrefix .. "set money name Chip Chips.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -436,21 +549,34 @@ function gmsg_shop()
 	end
 
 
-	local function cmd_BuyTicket()
-		if (chatvars.words[1] == "shop"or chatvars.words[1] == "buy") and chatvars.words[2] ~= "ticket" then
-			if (chatvars.accessLevel > 2) and (server.allowShop == false) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The shop is closed until further notice.[-]")
-				botman.faultyChat = false
-				return true
+	local function cmd_Cash()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}cash or {#}wallet or {#}bank"
+			help[2] = "Tells you how many " .. server.moneyPlural .. " you have."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,bank,money,cash,wallet"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
 			end
 
-			botman.faultyChat = doShop(chatvars.command, chatvars.playerid, chatvars.words)
-			return true
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "cash") or string.find(chatvars.command, "bank") or string.find(chatvars.command, "wallet")))  or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
 		end
-	end
 
-
-	local function cmd_Cash()
 		if (chatvars.words[1] == "cash" or chatvars.words[1] == server.moneyName or chatvars.words[1] == server.moneyPlural or chatvars.words[1] == "bank" or chatvars.words[1] == "wallet") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have " .. players[chatvars.playerid].cash .. " " .. server.moneyPlural .. " in the bank.[-]")
 			botman.faultyChat = false
@@ -460,13 +586,65 @@ function gmsg_shop()
 
 
 	local function cmd_PayPlayer()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}pay {player name} {amount}"
+			help[2] = "Pay a player some amount of " .. server.moneyPlural .. ". Admins don't need to have the cash in their balance first."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,pay,cash"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pay") or string.find(chatvars.command, "cash"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
 		if (chatvars.words[1] == "pay" and chatvars.words[2] ~= nil) then
+			if chatvars.number == nil then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You forgot to tell me how much you want to pay.[-]")
+
+				botman.faultyChat = false
+				return true
+			end
+
 			id = LookupPlayer(chatvars.words[2])
+
+			if id == 0 then
+				id = LookupArchivedPlayer(chatvars.words[2])
+
+				if not (id == 0) then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server and repeat this command.")
+					end
+
+					botman.faultyChat = false
+					return true
+				end
+			end
+
 			if (id ~= 0) then
 				players[chatvars.playerid].botQuestion = "pay player"
 				players[chatvars.playerid].botQuestionID = id
-				players[chatvars.playerid].botQuestionValue = math.abs(chatvars.words[3])
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You want to pay " .. math.abs(chatvars.words[3]) .. " " .. server.moneyPlural .. " to " .. players[id].name .. "? Type " .. server.commandPrefix .. "yes to complete the transaction or start over.[-]")
+				players[chatvars.playerid].botQuestionValue = math.abs(chatvars.number)
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You want to pay " .. math.abs(chatvars.number) .. " " .. server.moneyPlural .. " to " .. players[id].name .. "? Type " .. server.commandPrefix .. "yes to complete the transaction or start over.[-]")
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Nobody here by that name.[-]")
 			end
 
 			botman.faultyChat = false
@@ -476,6 +654,33 @@ function gmsg_shop()
 
 
 	local function cmd_Lottery()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}lotto or {#}lottery or {#}tickets"
+			help[2] = "See how big the lottery is and how many tickets you have in the draw."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "lotto,tick,daily"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "lott") or string.find(chatvars.command, "tick"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
 		if (chatvars.words[1] == "lottery" or chatvars.words[1] == "lotto" or chatvars.words[1] == "tickets") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The lottery prize pool has reached " .. server.lottery .. " " .. server.moneyPlural .. "![-]")
 			cursor,errorString = conn:execute("SELECT count(ticket) as tickets FROM lottery WHERE steam = " .. chatvars.playerid)
@@ -492,8 +697,41 @@ function gmsg_shop()
 
 
 	local function cmd_Gamble()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}game {optional quantity} or {#}buy ticket {optional quantity}"
+			help[2] = "Buy a ticket in the next daily lottery."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "buy,lotto,tick,daily,gamb"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "lott") or string.find(chatvars.command, "tick") or string.find(chatvars.command, "buy"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
 		if (chatvars.words[1] == "buy" and chatvars.words[2] == "ticket") or chatvars.words[1] == "gamble" then
 			if chatvars.number == nil then chatvars.number = 1 end
+
+			if not server.allowLottery then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry but the lottery is closed :([-]")
+				botman.faultyChat = false
+				return true
+			end
 
 			if players[chatvars.playerid].cash < (server.lotteryTicketPrice * math.abs(chatvars.number)) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry " .. players[chatvars.playerid].name .. " but you don't have enough " .. server.moneyPlural .. ".[-]")
@@ -547,7 +785,105 @@ function gmsg_shop()
 	end
 
 
+	local function cmd_ToggleSpendingAlert()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable spending alert (default disabled)"
+			help[2] = "PM the player every time an a command costs them money.  Tell them how much they spent and what they have left."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,cash,alert,spend,cost"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "cash") or string.find(chatvars.command, "able") or string.find(chatvars.command, "alert"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if string.find(chatvars.command, "able") and chatvars.words[2] == "spending" and chatvars.words[3] == "alert" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "disable" then
+				server.alertSpending = false
+
+				if botman.dbConnected then conn:execute("UPDATE server SET alertSpending = 0") end
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will not be PM'ed every time they spend money.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Players will not be PM'ed every time they spend money.")
+				end
+			else
+				server.alertSpending = true
+
+				if botman.dbConnected then conn:execute("UPDATE server SET alertSpending = 1") end
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will receive a PM every time they spend money telling them how much they spent and how much they have left.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Players will receive a PM every time they spend money telling them how much they spent and how much they have left.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleShowCash()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}show/hide cash"
+			help[2] = "See an ingame PM every time your cash balance changes."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "show,hide,cash"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "show") or string.find(chatvars.command, "hide") or string.find(chatvars.command, "cash"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
 		if (chatvars.words[1] == "show" or chatvars.words[1] == "hide") and chatvars.words[2] == "cash" then
 			if chatvars.words[1] == "show" then
 				players[chatvars.playerid].watchCash = true
@@ -566,12 +902,26 @@ function gmsg_shop()
 
 
 	local function cmd_ToggleShop()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}open/close or {#}enable/disable shop"
+			help[2] = "Enable or disable the shop feature."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,open,close,able"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "open/close shop")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Enable or disable the shop feature.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -579,7 +929,7 @@ function gmsg_shop()
 			end
 		end
 
-		if (chatvars.words[1] == "open" or chatvars.words[1] == "close") and chatvars.words[2] == "shop" then
+		if (chatvars.words[1] == "open" or chatvars.words[1] == "close" or string.find(chatvars.command, "able")) and chatvars.words[2] == "shop" then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -594,7 +944,7 @@ function gmsg_shop()
 				end
 			end
 
-			if chatvars.words[1] == "close" then
+			if chatvars.words[1] == "close" or chatvars.words[1] == "disable" then
 				message("say [" .. server.chatColour .. "]The shop is closed until further notice.[-]")
 				server.allowShop = false
 
@@ -614,12 +964,26 @@ function gmsg_shop()
 
 
 	local function cmd_SetLotteryTicketPrice()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set lottery ticket price {number}"
+			help[2] = "The default cost of a lottery ticket is 25 " .. server.moneyPlural .. ". You can change it to anything above 0."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,set,tick,price"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set lottery ticket price {number}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "The default cost of a lottery ticket is 25 " .. server.moneyPlural .. ". You can change it to anything above 0.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -678,13 +1042,27 @@ function gmsg_shop()
 
 
 	local function cmd_SetShopResetDays()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set shop reset days {number}"
+			help[2] = "Restock the shop to the max quantity of each item every {number} of real days.\n"
+			help[2] = help[2] .. "A setting of 0 disables the automatic restock.  To manually restock it use {#}reset shop."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,set,reset,day"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set shop reset days {number}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Restock the shop to the max quantity of each item every {number} of real days.")
-					irc_chat(chatvars.ircAlias, "A setting of 0 disables the automatic restock.  To manually restock it use " .. server.commandPrefix .. "reset shop.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -745,12 +1123,26 @@ function gmsg_shop()
 
 
 	local function cmd_ResetShop()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}reset shop"
+			help[2] = "Restock the shop to the max quantity of each item."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,reset,stock"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "reset shop")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Restock the shop to the max quantity of each item.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -773,7 +1165,7 @@ function gmsg_shop()
 				end
 			end
 
-			message("say [" .. server.chatColour .. "]Hurrah!  >NEW< stock![-]")
+			message("say [" .. server.chatColour .. "]Hurrah! >NEW< stock![-]")
 			resetShop(true)
 			loadShopCategories()
 
@@ -784,12 +1176,26 @@ function gmsg_shop()
 
 
 	local function cmd_SetShopTradingHours()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set shop open/close {0 - 23}"
+			help[2] = "Enter a number from 0 to 23 which will be the game hour that the shop opens or closes."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,set,hour,time,trad"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set shop open/close {0 - 23}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Enter a number from 0 to 23 which will be the game hour that the shop opens or closes.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -843,13 +1249,27 @@ function gmsg_shop()
 
 
 	local function cmd_SetClearShopLocation()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set/clear shop location {location name (for set only)}"
+			help[2] = "Restrict the shop to a specific location.  Buying from the shop will only be possible while in that location (excluding admins).\n"
+			help[2] = help[2] .. "Or clear the location so that the shop can be accessed server wide. (the default)"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,set,clear,loca"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set/clear shop location {location name (for set only)}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Tie the shop to a location.  Buying from the shop will only be possible while in that location (excluding admins).")
-					irc_chat(chatvars.ircAlias, "Or clear the location so that the shop can be accessed server wide. (the default)")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -872,32 +1292,67 @@ function gmsg_shop()
 				end
 			end
 
-			str = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9)
-			str = string.trim(str)
-			str = LookupLocation(str)
+			if chatvars.words[1] == "set" then
+				str = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9)
+				str = string.trim(str)
+				str = LookupLocation(str)
 
-			if str == nil then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A location is required for this command.[-]")
-				botman.faultyChat = false
-				return true
-			else
-				if chatvars.words[1] == "set" then
-					message("say [" .. server.chatColour .. "]The shop is now located at ".. str .. "[-]")
-					server.shopLocation = str
-					if botman.dbConnected then conn:execute("UPDATE server SET shopLocation = '" .. str .. "'") end
-				else
-					message("say [" .. server.chatColour .. "]The shop is now available server wide.[-]")
-					server.shopLocation = ""
-					if botman.dbConnected then conn:execute("UPDATE server SET shopLocation = ''") end
+				if str == nil then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A location is required for this command.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "A location is required for this command.")
+					end
+
+					botman.faultyChat = false
+					return true
 				end
 
-				botman.faultyChat = false
-				return true
+				server.shopLocation = str
+				if botman.dbConnected then conn:execute("UPDATE server SET shopLocation = '" .. str .. "'") end
+
+				if (chatvars.playername ~= "Server") then
+					message("say [" .. server.chatColour .. "]The shop is now located at ".. str .. "[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The shop is now located at ".. str)
+				end
+			else
+				server.shopLocation = ""
+				if botman.dbConnected then conn:execute("UPDATE server SET shopLocation = ''") end
+
+				if (chatvars.playername ~= "Server") then
+					message("say [" .. server.chatColour .. "]The shop is now available server wide.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The shop is now available server wide.")
+				end
 			end
+
+			botman.faultyChat = false
+			return true
 		end
 	end
 
 -- ################## End of command functions ##################
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "==== Registering help - shop commands ====")
+		dbug("Registering help - shop commands")
+
+		tmp = {}
+		tmp.topicDescription = "The bot's shop allows players to buy items for " .. server.moneyPlural .. ".\n"
+		tmp.topicDescription = tmp.topicDescription .. "The shop can be available all the time or within certain hours of the day or from a specific location.\n"
+		tmp.topicDescription = tmp.topicDescription .. "While you can manage the shop ingame, it is much easier to do so from the bot's web client."
+
+		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'shop'")
+		rows = cursor:numrows()
+		if rows == 0 then
+			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
+			row = cursor:fetch(row, "a")
+			tmp.topicID = row.Auto_increment
+
+			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('shop', '" .. escape(tmp.topicDescription) .. "')")
+		end
+	end
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
@@ -1033,18 +1488,31 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 
 	if debug then dbug("debug shop end of remote commands") end
 
+	result = cmd_ToggleSpendingAlert()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleSpendingAlert triggered") end
+		return result
+	end
+
+if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
+
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not chatvars.showHelp then
+	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
 		return false
 	end
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
 
-	result = cmd_BuyTicket()
+	if (chatvars.words[1] == "shop"or chatvars.words[1] == "buy") and chatvars.words[2] ~= "ticket" then
+		if (chatvars.accessLevel > 2) and (server.allowShop == false) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The shop is closed until further notice.[-]")
+			botman.faultyChat = false
+			return true
+		end
 
-	if result then
-		if debug then dbug("debug cmd_BuyTicket triggered") end
-		return result
+		botman.faultyChat = doShop(chatvars.command, chatvars.playerid, chatvars.words)
+		return true
 	end
 
 if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
@@ -1101,6 +1569,12 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 			botman.faultyChat = false
 			return true
 		end
+	end
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "**** Shop commands help registered ****")
+		dbug("Shop commands help registered")
+		topicID = topicID + 1
 	end
 
 	if debug then dbug("end debug gmsg_shop") end

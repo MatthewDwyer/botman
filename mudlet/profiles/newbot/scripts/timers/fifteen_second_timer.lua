@@ -12,6 +12,13 @@ function FifteenSecondTimer()
 		return
 	end
 
+	if customFifteenSecondTimer ~= nil then
+		-- read the note on overriding bot code in custom/custom_functions.lua
+		if customFifteenSecondTimer() then
+			return
+		end
+	end
+
 	-- run a quick test to prove or disprove that we are still connected to the database.
 	-- there is a rare instance where we lose the connection for unknown reasons.
 
@@ -30,19 +37,6 @@ function FifteenSecondTimer()
 	botman.db2Connected = false
 	botman.db2Connected = isDBBotsConnected()
 
-	-- -- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
-	-- if not botman.botOffline and not botman.botDisabled then
-		-- botman.lagCheckTime = os.time()
-		-- send("pm LagCheck " .. server.botID)
-
-		-- if botman.getMetrics then
-			-- metrics.telnetCommands = metrics.telnetCommands + 1
-		-- end
-	-- else
-		-- botman.lagCheckTime = os.time()
-		-- server.lagged = false
-	-- end
-
 	if server.lagged then
 		return
 	end
@@ -54,10 +48,6 @@ function FifteenSecondTimer()
 	end
 
 	if tonumber(botman.playersOnline) < 10 then
-		-- if server.scanZombies or server.scanEntities then
-			-- send("le")
-		-- end
-
 		if server.coppi then
 			if server.scanNoclip then
 				-- check for noclipped players

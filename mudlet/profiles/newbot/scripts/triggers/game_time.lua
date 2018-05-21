@@ -87,4 +87,6 @@ function gameTimeTrigger(line)
 			end
 		end
 	end
+
+	deleteLine()
 end

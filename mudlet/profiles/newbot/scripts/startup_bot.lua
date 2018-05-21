@@ -39,6 +39,10 @@ end
 function checkData()
 	local benchStart = os.clock()
 
+	if botman.botDisabled or botman.botOffline then
+		return
+	end
+
 	if server.botName == nil then
 		loadServer()
 		botman.botStarted = nil
@@ -77,6 +81,10 @@ end
 
 function getServerData(getAllPlayers)
 	local benchStart = os.clock()
+
+	if botman.botDisabled or botman.botOffline then
+		return
+	end
 
 	--read mods
 	send("version")
@@ -132,6 +140,7 @@ function login()
 	if type(server) ~= "table" then
 		server = {}
 		getAllPlayers = true
+		botman.botOffline = true
 		botman.scheduledRestartPaused = false
 		botman.scheduledRestartForced = false
 		botman.scheduledRestart = false
@@ -276,6 +285,10 @@ function login()
 	-- join the irc server
 	if botman.customMudlet then
 		joinIRCServer()
+	end
+
+	if custom_startup ~= nil then
+		custom_startup()
 	end
 
 	if debug then display("debug login end\n") end

@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local id, pname, psize,  words, word, dist, debug, dist1, dist2, wait, loc, reset, result
+local id, pname, psize,  words, word, dist, debug, loc, reset, result, help, tmp
 local shortHelp = false
 local skipHelp = false
 
@@ -20,16 +20,31 @@ end
 function gmsg_base()
 	calledFunction = "gmsg_base"
 	result = false
+	tmp = {}
 
 -- ################## base command functions ##################
 
 	local function cmd_SetBaseCost()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set base cost {number}"
+			help[2] = "By default players can type {#}base to return to their base.  You can set a delay and/or a cost before the command is available."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "base,set,cost"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "base") or string.find(chatvars.command, "cost") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set base cost {number}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "By default players can type " .. server.commandPrefix .. "base to return to their base.  You can set a delay and/or a cost before the command is available.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -80,13 +95,27 @@ function gmsg_base()
 
 
 	local function cmd_SetBaseSize()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set base size {number} {player name}\n"
+			help[1] = help[1] .. " {#}set base2 size {number} {player name}"
+			help[2] = "Set the base protection size for a player's first or second base."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "base,set,cost"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "base") or string.find(chatvars.command, "set")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set base size {number} {player name}")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set base2 size {number} {player name}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set the base protection size for a player's first or second base.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -97,8 +126,14 @@ function gmsg_base()
 		if (chatvars.words[1] == "set" and (chatvars.words[2] == "base" or chatvars.words[2] == "base2") and chatvars.words[3] == "size") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					chatvars.botman.faultyChat = false
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
 					return true
 				end
 			end
@@ -108,6 +143,28 @@ function gmsg_base()
 			for word in chatvars.command:gmatch("%w+") do table.insert(words, word) end
 
 			id = LookupPlayer(chatvars.words[5])
+
+			if id == 0 then
+				id = LookupArchivedPlayer(chatvars.words[5])
+
+				if id == 0 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. chatvars.words[5] .. "[-]")
+					else
+						irc_chat(chatvars.ircAlias, "No player found called " .. chatvars.words[5])
+					end
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.")
+					end
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
 			if (players[id]) then
 				pname = players[id].name
 			end
@@ -123,7 +180,12 @@ function gmsg_base()
 			if (chatvars.words[2] == "base") then
 				if (players[id]) then players[id].protectSize = psize end
 
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .."'s base is protected to " .. psize .. " metres from their base teleport[-]")
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .."'s base is protected to " .. psize .. " metres from their base teleport[-]")
+				else
+					irc_chat(chatvars.ircAlias, players[id].name .."'s base is protected to " .. psize .. " metres from their base teleport")
+				end
+
 				if botman.dbConnected then conn:execute("UPDATE players SET protectSize = " .. psize .. " WHERE steam = " .. id) end
 
 				if botman.db2Connected then
@@ -134,7 +196,12 @@ function gmsg_base()
 				if (accessLevel(id) < 11) then
 					if (players[id]) then players[id].protect2Size = psize end
 
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .."'s 2nd base is protected to " .. psize .. " metres from their base teleport[-]")
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .."'s 2nd base is protected to " .. psize .. " metres from their base teleport[-]")
+					else
+						irc_chat(chatvars.ircAlias, players[id].name .."'s 2nd base is protected to " .. psize .. " metres from their base teleport")
+					end
+
 					if botman.dbConnected then conn:execute("UPDATE players SET protect2Size = " .. psize .. " WHERE steam = " .. id) end
 
 					if botman.db2Connected then
@@ -151,14 +218,27 @@ function gmsg_base()
 
 
 	local function cmd_SetClearBed()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}setbed/clearbed"
+			help[2] = "When you die, the bot can automatically return you to your first or second base after respawn.\n"
+			help[2] = help[2] .. "Set within 50 metres of your base.  The closest base will become your new spawn point after death."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "base,set,clear,bed"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "bed") or string.find(chatvars.command, "set") or string.find(chatvars.command, "clear")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "setbed")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "clearbed")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "When you die, the bot can automatically return you to your first or second base.")
-					irc_chat(chatvars.ircAlias, "Set within 50 metres of your base.  The closest base will become your new spawn point after death.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -204,13 +284,27 @@ function gmsg_base()
 
 
 	local function cmd_SetDefaultBaseSize()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set default base size {number in metres or blocks}"
+			help[2] = "The default base protection size is 32 blocks (64 diameter).  This default only applies to new players joining the server for the first time.\n"
+			help[2] = help[2] .. "Existing base sizes are not changed with this command."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "base,set,clear,size"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "base") or string.find(chatvars.command, "size") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set default base size {number in metres or blocks}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "The default base protection size is 32 blocks (64 diameter).  This default only applies to new players joining the server for the first time.")
-					irc_chat(chatvars.ircAlias, "Existing base sizes are not changed with this command.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -259,13 +353,27 @@ function gmsg_base()
 
 
 	local function cmd_SetBase()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}sethome (or sethome2)\n"
+			help[1] = help[1] .. " {#}setbase (or setbase2)"
+			help[2] = "Tell the bot where your first or second base is for base protection, raid alerting and the ability to teleport home."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "base,home,set"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base") or string.find(chatvars.command, "set")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "sethome (or sethome2)")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "setbase (or setbase2)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Tell the bot where your first or second base is for base protection, raid alerting and the ability to teleport home.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -377,13 +485,27 @@ function gmsg_base()
 
 
 	local function cmd_ProtectBase()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}protect (or protect2)"
+			help[2] = "Set up the bot's base protection.  The bot will tell the player to move towards or away from their base and will\n"
+			help[2] = help[2] .. "automatically set protection outside of their base protected area.  Players should not set traps in this area."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "base,home,prot"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "protect") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "protect (or protect2)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set up the bot's base protection.  The bot will tell the player to move towards or away from their base and will")
-					irc_chat(chatvars.ircAlias, "automatically set protection outside of their base protected area.  Players should not set traps in this area.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -407,10 +529,31 @@ function gmsg_base()
 
 			id = chatvars.playerid
 
-			if (chatvars.words[2] ~= nil and chatvars.accessLevel < 4) then
+			if (chatvars.words[2] ~= nil and chatvars.accessLevel < 3) then
 				pname = string.sub(chatvars.command, string.find(chatvars.command, "protect") + 8)
 				pname = string.trim(pname)
 				id = LookupPlayer(pname)
+
+				if id == 0 then
+					id = LookupArchivedPlayer(pname)
+
+					if id == 0 then
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
+						else
+							irc_chat(chatvars.ircAlias, "No player found called " .. pname)
+						end
+					else
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
+						else
+							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.")
+						end
+					end
+
+					botman.faultyChat = false
+					return true
+				end
 			end
 
 			if players[chatvars.playerid].inLocation ~= "" then
@@ -601,13 +744,27 @@ function gmsg_base()
 
 
 	local function cmd_UnprotectBase()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}unprotectbase {player name}\n"
+			help[1] = help[1] .. " {#}unprotectbase2 {player name}"
+			help[2] = "Disable base protection for a player."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "base,home,prot"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "unprotectbase {player name}")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "unprotectbase2 {player name}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Disable base protection for a player.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -618,7 +775,13 @@ function gmsg_base()
 		if (chatvars.words[1] == "unprotectbase" or chatvars.words[1] == "unprotectbase2") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
 				end
@@ -626,9 +789,31 @@ function gmsg_base()
 
 			pname = string.sub(chatvars.command, string.find(chatvars.command, "unprotectbase") + 14)
 			pname = string.trim(pname)
-			id = LookupPlayer(pname)
 
 			if (pname == nil or pname == "") then
+				botman.faultyChat = false
+				return true
+			end
+
+			id = LookupPlayer(pname)
+
+			if id == 0 then
+				id = LookupArchivedPlayer(pname)
+
+				if id == 0 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
+					else
+						irc_chat(chatvars.ircAlias, "No player found called " .. pname)
+					end
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.")
+					end
+				end
+
 				botman.faultyChat = false
 				return true
 			end
@@ -648,7 +833,7 @@ function gmsg_base()
 					irc_chat(server.ircMain, players[id].name .."'s base is no longer protected.")
 				end
 			else
-				if (players[id].donor == true or (accessLevel(id) < 4)) then
+				if (players[id].donor == true or (accessLevel(id) < 3)) then
 					if (players[id]) then players[id].protect2 = false end
 					if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. id) end
 
@@ -678,13 +863,28 @@ function gmsg_base()
 
 
 	local function cmd_DeleteBase()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}delbase/delbase2\n"
+			help[1] = help[1] .. " {#}delbase/delbase2 {player name} (for admins only)"
+			help[2] = "Delete a player's base and base protection (in the bot only).  It does not physically delete the base in the game world.\n"
+			help[2] = help[2] .. "Players can only delete their own bases."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "base,home,del,remo,clear"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "delbase")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "delbase {player name}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Tell the bot to forget about a base.  Players can only remove their own bases.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -700,11 +900,22 @@ function gmsg_base()
 					pname = string.sub(chatvars.command, string.find(chatvars.command, "delbase") + 8)
 					pname = string.trim(pname)
 					id = LookupPlayer(pname)
+
 					if id == 0 then
-						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
+						id = LookupArchivedPlayer(pname)
+
+						if id == 0 then
+							if (chatvars.playername ~= "Server") then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
+							else
+								irc_chat(chatvars.ircAlias, "No player found called " .. pname)
+							end
 						else
-							irc_chat(server.ircMain, "No player found called " .. pname)
+							if (chatvars.playername ~= "Server") then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
+							else
+								irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.")
+							end
 						end
 
 						botman.faultyChat = false
@@ -742,20 +953,6 @@ function gmsg_base()
 			return true
 		end
 
-		if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
-
-		if chatvars.showHelp and not skipHelp then
-			if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "delbase2")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "delbase2 {player name}")
-
-				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Tell the bot to forget about a base.  Players can only remove their own bases.")
-					irc_chat(chatvars.ircAlias, ".")
-				end
-			end
-		end
-
 		if chatvars.words[1] == "delbase2" then
 			id = chatvars.playerid
 
@@ -764,11 +961,22 @@ function gmsg_base()
 					pname = string.sub(chatvars.command, string.find(chatvars.command, "delbase2") + 9)
 					pname = string.trim(pname)
 					id = LookupPlayer(pname)
+
 					if id == 0 then
-						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
+						id = LookupArchivedPlayer(pname)
+
+						if id == 0 then
+							if (chatvars.playername ~= "Server") then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
+							else
+								irc_chat(chatvars.ircAlias, "No player found called " .. pname)
+							end
 						else
-							irc_chat(server.ircMain, "No player found called " .. pname)
+							if (chatvars.playername ~= "Server") then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
+							else
+								irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.")
+							end
 						end
 
 						botman.faultyChat = false
@@ -841,7 +1049,6 @@ function gmsg_base()
 
 			if (chatvars.words[1] == "enable") then
 				server.allowHomeTeleport = true
-
 				conn:execute("UPDATE server SET allowHomeTeleport = 1")
 
 				if (chatvars.playername ~= "Server") then
@@ -851,7 +1058,6 @@ function gmsg_base()
 				end
 			else
 				server.allowHomeTeleport = false
-
 				conn:execute("UPDATE server SET allowHomeTeleport = 0")
 
 				if (chatvars.playername ~= "Server") then
@@ -868,6 +1074,8 @@ function gmsg_base()
 
 
 	local function cmd_Base()
+		local dist1, dist2, wait
+
 		if chatvars.showHelp and not skipHelp then
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "home (or base)")
@@ -1028,16 +1236,19 @@ function gmsg_base()
 				cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].home2X .. " " .. players[chatvars.playerid].home2Y .. " " .. players[chatvars.playerid].home2Z
 			end
 
-			if wait then
+			-- teleport the player back to their base
+			players[chatvars.playerid].tp = 1
+			players[chatvars.playerid].hackerTPScore = 0
+
+			if tonumber(server.playerTeleportDelay) == 0 or tonumber(players[chatvars.playerid].accessLevel) < 3 then
 				teleport(cmd, chatvars.playerid)
-			else
-				players[chatvars.playerid].tp = 1
-				players[chatvars.playerid].hackerTPScore = 0
-				send(cmd)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will be teleported to your base in " .. server.playerTeleportDelay .. " seconds.[-]")
+				if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
 			end
 
 			botman.faultyChat = false
@@ -1071,6 +1282,27 @@ function gmsg_base()
 			pname = chatvars.words[chatvars.wordCount]
 			pname = string.trim(pname)
 			id = LookupPlayer(pname)
+
+			if id == 0 then
+				id = LookupArchivedPlayer(pname)
+
+				if id == 0 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
+					else
+						irc_chat(chatvars.ircAlias, "No player found called " .. pname)
+					end
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.")
+					end
+				end
+
+				botman.faultyChat = false
+				return true
+			end
 
 			if not validPosition(chatvars.playerid, true) then
 				botman.faultyChat = false
@@ -1129,6 +1361,27 @@ function gmsg_base()
 			pname = chatvars.words[chatvars.wordCount]
 			pname = string.trim(pname)
 			id = LookupPlayer(pname)
+
+			if id == 0 then
+				id = LookupArchivedPlayer(pname)
+
+				if id == 0 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
+					else
+						irc_chat(chatvars.ircAlias, "No player found called " .. pname)
+					end
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.")
+					end
+				end
+
+				botman.faultyChat = false
+				return true
+			end
 
 			if not validPosition(chatvars.playerid, true) then
 				botman.faultyChat = false
@@ -1447,6 +1700,24 @@ function gmsg_base()
 
 if debug then dbug("debug base") end
 
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "==== Registering help - base commands ====")
+		dbug("Registering help - base commands")
+
+		tmp = {}
+		tmp.topicDescription = "Base commands includes commands for admins to set various restrictions on players using base commands and commands for players to set and protect their base(s)."
+
+		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'base'")
+		rows = cursor:numrows()
+		if rows == 0 then
+			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
+			row = cursor:fetch(row, "a")
+			tmp.topicID = row.Auto_increment
+
+			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('base', '" .. escape(tmp.topicDescription) .. "')")
+		end
+	end
+
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
 		botman.faultyChat = false
@@ -1591,7 +1862,7 @@ if debug then dbug("debug base") end
 	if debug then dbug("debug base end of remote commands") end
 
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not chatvars.showHelp then
+	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
 		return false
 	end
@@ -1651,6 +1922,12 @@ if debug then dbug("debug base") end
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Doh![-]")
 		botman.faultyChat = false
 		return true
+	end
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "**** Base commands help registered ****")
+		dbug("Base commands help registered")
+		topicID = topicID + 1
 	end
 
 	if debug then dbug("debug base end") end

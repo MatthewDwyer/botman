@@ -16,13 +16,9 @@ function loginSuccessful(line)
 		relogCount = relogCount + 1
 
 		botman.botOffline = false
-		botman.botConnectedTimestamp = os.time() -- used to measure how long the bot has been offline so we can slow down how often it
-		-- tries to reconnect.  Mudlet creates high cpu load if it is offline for too long.  Hopefully checking less frequently will reduce that.
+		botman.botConnectedTimestamp = os.time() -- used to measure how long the bot has been offline so we can slow down how often it tries to reconnect.
 
-		if not serverDataLoaded then
-			-- The bot hasn't yet managed to get data from gg and other server info commands so run gg etc now.
-			getServerData()
-		end
+		getServerData()
 
 		if relogCount > 6 then
 			irc_chat(server.ircMain, "Server has crashed.  Please manually restart it.")

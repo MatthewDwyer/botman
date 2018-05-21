@@ -14,6 +14,12 @@ function messageQueueTimer()
 		return
 	end
 
+	cursor,errorString = conn:execute("select * from messageQueue")
+
+	if cursor:numrows() == 0 then
+		return
+	end
+
 	cursor,errorString = conn:execute("select * from messageQueue where recipient = 0 order by id limit 0,1")
 
 	if cursor then

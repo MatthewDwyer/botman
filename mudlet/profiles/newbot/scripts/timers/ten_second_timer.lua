@@ -12,21 +12,30 @@ function TenSecondTimer()
 		return
 	end
 
-	-- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
-	if not botman.botOffline and not botman.botDisabled then
-		if server.enableLagCheck then
-			botman.lagCheckTime = os.time()
-			send("pm LagCheck " .. server.botID)
+	if customTenSecondTimer ~= nil then
+		-- read the note on overriding bot code in custom/custom_functions.lua
+		if customTenSecondTimer() then
+			return
 		end
+	end
 
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
-	else
-		if server.enableLagCheck then
-			botman.lagCheckTime = os.time()
-		end
+	if server.lagged then
+		-- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
+		if not botman.botOffline and not botman.botDisabled then
+			if server.enableLagCheck then
+				botman.lagCheckTime = os.time()
+				send("pm LagCheck " .. os.time())
+			end
 
-		server.lagged = false
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+		else
+			if server.enableLagCheck then
+				botman.lagCheckTime = os.time()
+			end
+
+			server.lagged = false
+		end
 	end
 end

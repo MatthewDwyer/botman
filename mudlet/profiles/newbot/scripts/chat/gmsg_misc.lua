@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local note, pname, pid, debug, result
+local note, pname, pid, debug, result, help
 
 debug = false -- should be false unless testing
 
@@ -39,9 +39,13 @@ function gmsg_misc()
 	end
 
 	if chatvars.words[1] == "list" and chatvars.words[2] == "bookmarks" then
-		pid = string.sub(chatvars.command, string.find(chatvars.command, "bookmarks ") + 10)
-		pid = stripQuotes(string.trim(pid))
-		pid = LookupPlayer(pid)
+		pname = string.sub(chatvars.command, string.find(chatvars.command, "bookmarks ") + 10)
+		pname = stripQuotes(string.trim(pname))
+		pid = LookupPlayer(pname)
+
+		if pid == 0 then
+			pid = LookupArchivedPlayer(pname)
+		end
 
 		if (chatvars.accessLevel > 2) then
 			pid = chatvars.playerid
@@ -78,9 +82,24 @@ function gmsg_misc()
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.words[1] == "bail" then
-		pid = string.sub(chatvars.command, string.find(chatvars.command, "bail") + 5)
-		pid = stripQuotes(string.trim(pid))
-		pid = LookupPlayer(pid)
+		pname = string.sub(chatvars.command, string.find(chatvars.command, "bail") + 5)
+		pname = stripQuotes(string.trim(pname))
+		pid = LookupPlayer(pname)
+
+		if pid == 0 then
+			pid = LookupArchivedPlayer(pname)
+
+			if not (pid == 0) then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+		end
 
 		if (pid == 0) then
 			if tonumber(players[chatvars.playerid].bail) == 0 then
@@ -200,6 +219,21 @@ function gmsg_misc()
 		pname = stripQuotes(string.trim(pname))
 		pid = LookupPlayer(pname)
 
+		if pid == 0 then
+			pid = LookupArchivedPlayer(pname)
+
+			if not (pid == 0) then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Player " .. playersArchived[pid].name .. " was archived. Get them to rejoin the server and repeat this command.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+		end
+
 		if pid ~= 0 then
 			players[pid].ircInvite = rand(10000)
 
@@ -217,12 +251,12 @@ function gmsg_misc()
 		return true
 	end
 
-	-- ###################  do not allow remote commands beyond this point ################
-	if (chatvars.playerid == 0) then
+	-- ###################  do not run remote commands beyond this point unless displaying command help ################
+	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
 		return false
 	end
-	-- ####################################################################################
+	-- ###################  do not run remote commands beyond this point unless displaying command help ################
 
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 

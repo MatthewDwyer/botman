@@ -80,7 +80,7 @@ end
 
 function importServer()
 	dbug("Importing Server")
---	message("say [" .. server.chatColour .. "]Importing server[-]")
+
 	conn:execute("DELETE FROM server)")
 	conn:execute("INSERT INTO server (ircMain, ircAlerts, ircWatch, rules, shopCountdown, gimmePeace, allowGimme, mapSize, baseCooldown, MOTD, allowShop, chatColour, botName, lottery, allowWaypoints, prisonSize, baseSize) VALUES ('" .. escape(server.ircMain) .. "','" .. escape(server.ircAlerts) .. "','" .. escape(server.ircWatch) .. "','" .. escape(server.rules) .. "',0," .. dbBool(server.gimmePeace) .. "," .. dbBool(server.allowGimme) .. "," .. server.mapSize .. "," .. server.baseCooldown .. ",'" .. escape(server.MOTD) .. "'," .. dbBool(server.allowShop) .. ",'" .. server.chatColour .. "','" .. escape(server.botName) .. "'," .. server.lottery .. "," .. dbBool(server.allowWaypoints) .. "," .. server.prisonSize .. "," .. server.baseSize .. ")")
 
@@ -95,7 +95,6 @@ end
 
 function importShopCategories()
 	dbug("Importing Shop Categories")
---	message("say [" .. server.chatColour .. "]Importing shop categories[-]")
 
 	for k,v in pairs(shopCategories) do
 		conn:execute("INSERT INTO shopCategories (category, idx, code) VALUES ('" .. escape(k) .. "'," .. v.idx .. ",'" .. v.code .. "')")
@@ -107,9 +106,9 @@ end
 
 function importPlayers()
 	dbug("Importing Players")
---	message("say [" .. server.chatColour .. "]Importing players[-]")
 
 	for k,v in pairs(players) do
+		dbug("Importing " .. k .. " " .. v.id .. " " .. v.name)
 		conn:execute("INSERT INTO players (steam, id, name) VALUES (" .. k .. "," .. v.id .. ",'" .. escape(v.name) .. "')")
 		fixMissingPlayer(k)
 		updatePlayer(k)
@@ -121,7 +120,6 @@ end
 
 function importTeleports()
 	dbug("Importing Teleports")
---	message("say [" .. server.chatColour .. "]Importing teleports[-]")
 
 	for k,v in pairs(teleports) do
 		conn:execute("INSERT INTO teleports (name, active, public, oneway, friends, x, y, z, dx, dy, dz, owner) VALUES ('" .. escape(v.name) .. "'," .. dbBool(v.active) .. "," .. dbBool(v.public) .. "," .. dbBool(v.oneway) .. "," .. dbBool(v.friends) .. "," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. v.dx .. "," .. v.dy .. "," .. v.owner .. ")")
@@ -133,7 +131,6 @@ function importLocations()
 	local sql, fields, values
 
 	dbug("Importing Locations")
---	message("say [" .. server.chatColour .. "]Importing locations[-]")
 
 	for k,v in pairs(locations) do
 		fields = "name, x, y, z, public, active"
@@ -197,9 +194,10 @@ function importFriends()
 	local friendlist, i, max
 
 	dbug("Importing Friends")
---	message("say [" .. server.chatColour .. "]Importing friends[-]")
 
 	for k,v in pairs(friends) do
+		dbug("Importing friends of " .. k)
+
 		friendlist = string.split(v.friends, ",")
 
 		max = table.maxn(friendlist)
@@ -216,7 +214,6 @@ end
 
 function importVillagers()
 	dbug("Importing Villagers")
---	message("say [" .. server.chatColour .. "]Importing villagers[-]")
 
 	for k,v in pairs(villagers) do
 		conn:execute("INSERT INTO villagers (steam, village) VALUES (" .. k .. ",'" .. escape(v.village) .. "')")
@@ -228,7 +225,6 @@ end
 
 function importHotspots()
 	dbug("Importing Hotspots")
---	message("say [" .. server.chatColour .. "]Importing hotspots[-]")
 
 	for k,v in pairs(hotspots) do
 		if v.radius then
@@ -244,7 +240,6 @@ end
 
 function importResets()
 	dbug("Importing Reset Zones")
---	message("say [" .. server.chatColour .. "]Importing reset zones[-]")
 
 	for k,v in pairs(resetRegions) do
 		conn:execute("INSERT INTO resetZones (region) VALUES ('" .. escape(k) .. "')")
@@ -256,7 +251,6 @@ end
 
 function importBaditems()
 	dbug("Importing Bad Items")
---	message("say [" .. server.chatColour .. "]Importing bad items list[-]")
 
 	for k,v in pairs(badItems) do
 		conn:execute("INSERT INTO badItems (item) VALUES ('" .. escape(k) .. "')")
@@ -268,10 +262,9 @@ end
 
 function importWaypoints()
 	dbug("Importing Waypoints")
---	message("say [" .. server.chatColour .. "]Importing waypoints[-]")
 
 	for k,v in pairs(waypoints) do
-		conn:execute("INSERT INTO waypoints (steam, name, x, y, z, linked, shared) VALUES (" .. v.steam .. ",'" .. escape(v.name) .. "'," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. dbBool(v.linked) .. "," .. dbBool(v.shared) .. ")")
+		conn:execute("INSERT INTO waypoints (steam, name, x, y, z, linked, shared) VALUES (" .. v.steam .. ",'" .. escape(v.name) .. "'," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. v.linked .. "," .. dbBool(v.shared) .. ")")
 	end
 
 	dbug("Waypoints Imported")
@@ -283,65 +276,70 @@ function importLuaData()
 	dbug("Importing Lua Tables")
 	message("say Restoring bot data from backup..")
 
-dbug("import 1")
 	dbug("Loading server")
 	table.load(homedir .. "/data_backup/server.lua", server)
-dbug("import 2")
-	dbug("Loading players")
-	table.load(homedir .. "/data_backup/players.lua", players)
-dbug("import 3")
-	dbug("Loading teleports")
-	table.load(homedir .. "/data_backup/teleports.lua", teleports)
-dbug("import 4")
-	dbug("Loading friends")
-	table.load(homedir .. "/data_backup/friends.lua", friends)
-dbug("import 5")
-	dbug("Loading locations")
-	table.load(homedir .. "/data_backup/locations.lua", locations)
-dbug("import 6")
-	dbug("Loading hotspots")
-	table.load(homedir .. "/data_backup/hotspots.lua", hotspots)
-dbug("import 7")
-	dbug("Loading villagers")
-	table.load(homedir .. "/data_backup/villagers.lua", villagers)
-dbug("import 9")
-	dbug("Loading shop categories")
-	table.load(homedir .. "/data_backup/shopCategories.lua", shopCategories)
-dbug("import 11")
-	dbug("Loading reset zones")
-	table.load(homedir .. "/data_backup/resetRegions.lua", resetRegions)
-dbug("import 12")
-	dbug("Loading bad items")
-	table.load(homedir .. "/data_backup/badItems.lua", badItems)
-dbug("import 13")
-	conn:execute("DELETE FROM badItems")
-	conn:execute("DELETE FROM friends")
-	conn:execute("DELETE FROM hotspots")
-	conn:execute("DELETE FROM locations")
-	conn:execute("DELETE FROM players")
-	conn:execute("DELETE FROM resetZones")
-	conn:execute("DELETE FROM shopCategories")
-	conn:execute("DELETE FROM teleports")
-	conn:execute("DELETE FROM villagers")
 
-dbug("import 4")
-	importPlayers()
-dbug("import 5")
+	dbug("Loading teleports")
+	teleports = {}
+	table.load(homedir .. "/data_backup/teleports.lua", teleports)
+
+	 dbug("Loading friends")
+	 friends = {}
+	 table.load(homedir .. "/data_backup/friends.lua", friends)
+
+	dbug("Loading locations")
+	locations = {}
+	table.load(homedir .. "/data_backup/locations.lua", locations)
+
+	dbug("Loading hotspots")
+	hotspots = {}
+	table.load(homedir .. "/data_backup/hotspots.lua", hotspots)
+
+	dbug("Loading villagers")
+	villagers = {}
+	table.load(homedir .. "/data_backup/villagers.lua", villagers)
+
+	dbug("Loading shop categories")
+	shopCategories = {}
+	table.load(homedir .. "/data_backup/shopCategories.lua", shopCategories)
+
+	dbug("Loading reset zones")
+	resetZones = {}
+	table.load(homedir .. "/data_backup/resetRegions.lua", resetRegions)
+
+	dbug("Loading bad items")
+	badItems = {}
+	table.load(homedir .. "/data_backup/badItems.lua", badItems)
+
+	dbug("Loading waypoints")
+	waypoints = {}
+	table.load(homedir .. "/data_backup/waypoints.lua", waypoints)
+
+	dbug("Loading players")
+	players = {}
+	table.load(homedir .. "/data_backup/players.lua", players)
+
+	conn:execute("TRUNCATE badItems")
+	conn:execute("TRUNCATE friends")
+	conn:execute("TRUNCATE hotspots")
+	conn:execute("TRUNCATE locations")
+	conn:execute("TRUNCATE players")
+	conn:execute("TRUNCATE resetZones")
+	conn:execute("TRUNCATE shopCategories")
+	conn:execute("TRUNCATE teleports")
+	conn:execute("TRUNCATE villagers")
+	conn:execute("TRUNCATE waypoints")
+
 	importBaditems()
-dbug("import 6")
 	importHotspots()
-dbug("import 8")
 	importLocations()
-dbug("import 9")
 	importResets()
-dbug("import 12")
 	importTeleports()
-dbug("import 13")
 	importVillagers()
-dbug("import 14")
 	importFriends()
-dbug("import 15")
 	importShopCategories()
+	importWaypoints()
+	importPlayers()
 
 	dbug("Import of Lua tables Complete")
 	message("say Bot restore complete. It is now safe to turn off your modem. xD")

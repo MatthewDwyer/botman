@@ -48,7 +48,7 @@ end
 function matchAll(line)
 	local pname, pid, number, died, coords, words, temp, msg
 	local dy, mth, yr, hr, min, sec, pm, reason, timestamp, banDate
-	local fields, values, x, y, z, id, loc, reset, steam, k, v, rows
+	local fields, values, x, y, z, id, loc, reset, steam, k, v, rows, tmp
 
 	-- set counter to help detect the bot going offline
 	botman.botOfflineCount = 2
@@ -106,6 +106,7 @@ function matchAll(line)
 
 	if string.find(line, "WRN ") then -- ignore lines containing this.
 		if not string.find(line, "DENSITYMISMATCH") then
+			deleteLine()
 			return
 		end
 	end
@@ -115,6 +116,7 @@ function matchAll(line)
 			metrics.telnetErrors = metrics.telnetErrors + 1
 		end
 
+		deleteLine()
 		return
 	end
 
@@ -123,10 +125,12 @@ function matchAll(line)
 			metrics.telnetErrors = metrics.telnetErrors + 1
 		end
 
+		deleteLine()
 		return
 	end
 
 	if string.find(line, "->") then -- ignore lines containing this.
+		deleteLine()
 		return
 	end
 
@@ -137,12 +141,32 @@ function matchAll(line)
 			metrics.telnetLines = metrics.telnetLines + 1
 		end
 
+		deleteLine()
 		return
 	end
+
+
+	if string.find(line, "pm IPCHECK") then
+		temp = string.sub(line, string.find(line, "from ") + 5)
+		server.botsIP = string.sub(temp, 1, string.find(temp, ":") - 1)
+
+		deleteLine()
+		return
+	end
+
+
+	if customMatchAll ~= nil then
+		-- read the note on overriding bot code in custom/custom_functions.lua
+		if customMatchAll(line) then
+			return
+		end
+	end
+
 
 	if string.find(line, "*** ERROR: Executing command 'admin'") then -- abort processing the admin list
 		-- abort reading admin list
 		getAdminList = nil
+		deleteLine()
 		return
 	end
 
@@ -156,11 +180,13 @@ function matchAll(line)
 				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
+			deleteLine()
 			return
 		end
 	end
 
 	if string.find(line, "WRN ") then
+		deleteLine()
 		return
 	end
 
@@ -168,7 +194,7 @@ function matchAll(line)
 	if botman.serverTime == "" then
 		if string.find(line, "INF ") then
 			if string.find(string.sub(line, 1, 19), os.date("%Y")) then
-				botman.serverTime = string.sub(line, 1, 19)
+				botman.serverTime = string.sub(line, 1, 10) .. " " .. string.sub(line, 12, 16)
 				botman.serverHour = string.sub(line, 12, 13)
 				botman.serverMinute = string.sub(line, 15, 16)
 				specialDay = ""
@@ -235,19 +261,41 @@ function matchAll(line)
 				end
 			end
 
+			deleteLine()
 			return
 		end
 	end
 
 
 	if string.find(line, "PlayerSpawnedInWorld") then
-		temp = string.split(line, ", ")
-		pid = string.match(temp[6], "(-?%d+)")
+		tmp = {}
 
-		if igplayers[pid] then
-			igplayers[pid].spawnedInWorld = true
+		tmp.coords = string.sub(line, string.find(line, "position:") + 10, string.find(line, ")") -1)
+		tmp.coords = tmp.coords:gsub(",", "")
+
+		temp = string.split(line, ", ")
+		tmp.pid = string.match(temp[5], "(-?%d+)")
+
+		if string.find(line, "reason: Died") then
+			tmp.spawnedReason = "died"
+		end
+
+		if string.find(line, "reason: JoinMultiplayer") then
+			tmp.spawnedReason = "joined"
+		end
+
+		if string.find(line, "reason: Teleport") then
+			tmp.spawnedReason = "teleport"
+		end
+
+		if igplayers[tmp.pid] then
+			igplayers[tmp.pid].spawnedInWorld = true
+			igplayers[tmp.pid].spawnedReason = tmp.spawnedReason
+			igplayers[tmp.pid].spawnedCoordsOld = igplayers[tmp.pid].spawnedCoords
+			igplayers[tmp.pid].spawnedCoords = tmp.coords
 		end
 	end
+
 
 	if string.find(line, "Executing command 'gg'") then
 		if string.find(line, server.botsIP) then
@@ -258,6 +306,8 @@ function matchAll(line)
 
 	if string.find(line, "type=Entity") then
 		listEntities(line)
+
+		deleteLine()
 		return
 	end
 
@@ -267,6 +317,8 @@ function matchAll(line)
 		if (string.find(line, "(BCM) Spawn Detected", nil, true)) then
 			botman.stompyReportsSpawns = true
 			listEntities(line, "BCM")
+
+			deleteLine()
 			return
 		end
 	end
@@ -303,6 +355,7 @@ function matchAll(line)
 			igplayers[pid].deadY = math.ceil(igplayers[pid].yPos)
 			igplayers[pid].deadZ = math.floor(igplayers[pid].zPos)
 			igplayers[pid].teleCooldown = 1000
+			igplayers[pid].spawnedInWorld = false
 
 			players[pid].deathX = igplayers[pid].xPos
 			players[pid].deathY = igplayers[pid].yPos
@@ -323,6 +376,7 @@ function matchAll(line)
 			end
 		end
 
+		deleteLine()
 		return
 	end
 
@@ -355,15 +409,17 @@ function matchAll(line)
 			end
 		end
 
+		deleteLine()
 		return
 	end
 
 
 	if getAdminList then
-		if string.sub(line, 1, 3) ~= "   " or string.find(line, "Total of") then
+		if string.sub(line, 1, 3) ~= "   " or string.find(line, 1, 8) == "Total of" then
 			getAdminList = nil
 			removeOldStaff()
 
+			deleteLine()
 			return
 		end
 	end
@@ -405,7 +461,9 @@ function matchAll(line)
 			players[pid].enableTP = true
 			players[pid].botHelp = true
 			players[pid].hackerScore = 0
+
 			if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. number .. " WHERE steam = " .. pid) end
+			if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. pid .. "," .. number .. ")") end
 		end
 
 		return
@@ -447,6 +505,7 @@ function matchAll(line)
 			playerListItems = nil
 		end
 
+		deleteLine()
 		return
 	end
 
@@ -456,6 +515,7 @@ function matchAll(line)
 			ircListItems = nil
 		end
 
+		deleteLine()
 		return
 	end
 
@@ -644,6 +704,7 @@ function matchAll(line)
 				igplayers[pid].noclipZ = 0
 			end
 
+			deleteLine()
 			return
 		end
 
@@ -716,6 +777,7 @@ function matchAll(line)
 				end
 			end
 
+			deleteLine()
 			return
 		end
 	end
@@ -728,9 +790,10 @@ function matchAll(line)
 		if string.find(line, server.botsIP) then
 			botman.listEntities = true
 			botman.lastListEntities = os.time()
-			conn:execute("DELETE FROM memEntities")
+			conn:execute("TRUNCATE memEntities")
 		end
 
+		deleteLine()
 		return
 	end
 
@@ -740,6 +803,7 @@ function matchAll(line)
 			botman.listItems = true
 		end
 
+		deleteLine()
 		return
 	end
 
@@ -788,12 +852,19 @@ function matchAll(line)
 			fixChunkDensity = true
 		end
 
+		deleteLine()
 		return
 	end
 
 
 	if string.find(line, "Executing command 'version'") and string.find(line, server.botsIP) then
 		if botman.dbConnected then
+			server.alloc = false
+			server.coppi = false
+			server.stompy = false
+			server.SDXDetected = false
+			server.ServerToolsDetected = false
+			server.hackerTPDetection = false
 			conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
 		end
 
@@ -803,7 +874,7 @@ function matchAll(line)
 
 	if (string.find(line, "Banned until -")) then
 		collectBans = true
-		conn:execute("DELETE FROM bans")
+		conn:execute("TRUNCATE bans")
 		return
 	end
 
@@ -817,7 +888,7 @@ function matchAll(line)
 
 
 	if string.find(line, "DropOnDeath =") then
-		if not botman.readGG then
+		if (not botman.readGG) and server.botsIP then
 			botman.badServerConfig = true
 			irc_chat(server.ircMain, "ALERT! It appears that the server config setting HideCommandExecutionLog is not set to 0")
 			irc_chat(server.ircMain, "If any telnet traffic is hidden from the bot, important features will not work.  Please set it to 0")
@@ -867,7 +938,7 @@ function matchAll(line)
 	-- detect SDX mods
 	if string.find(line, "Mod Server Tools:") or string.find(line, "mod 'Server Tools'") and not server.ServerToolsDetected then
 		server.ServerToolsDetected = true
-		server.hackerTPDetection = false
+		--server.hackerTPDetection = false
 		if botman.dbConnected then conn:execute("UPDATE server SET ServerToolsDetected = 1, hackerTPDetection = 0") end
 		return
 	end
@@ -1047,9 +1118,12 @@ function matchAll(line)
 
 
 	-- check for lag
-	if string.find(line, "pm LagCheck " .. server.botID) and string.find(line, server.botsIP) then
+	if string.find(line, "pm LagCheck ") and string.find(line, server.botsIP) then
+		temp = string.split(line, "'")
+		timestamp = tonumber(string.match(temp[2], " (%d+)"))
+
 		server.lagged = false
-		local lag = os.time() - botman.lagCheckTime
+		local lag = os.time() - timestamp
 
 		if botman.getMetrics then
 			metrics.telnetCommandLag = lag
@@ -1059,17 +1133,7 @@ function matchAll(line)
 			server.lagged = true
 		end
 
-		if server.lagged then
-			irc_chat(server.ircAlerts, "Detected telnet command lag of " .. lag .. " seconds.")
-		end
-
-		return
-	end
-
-
-	if string.find(line, "IPCHECK") then
-		temp = string.sub(line, string.find(line, "from ") + 5)
-		server.botsIP = string.sub(temp, 1, string.find(temp, ":") - 1)
+		deleteLine()
 		return
 	end
 

@@ -42,6 +42,7 @@ function reconnectTimer()
 		end
 
 		botman.botOffline = true
+		botman.botOfflineTimestamp = os.time()
 
 		if math.abs(os.time() - botman.botConnectedTimestamp) < 600 then -- 600
 			dbug("Bot is offline - attempting reconnection.")

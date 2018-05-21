@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local debug, result, tmp, r, cursor ,errorString
+local debug, result, tmp, r, cursor ,errorString, help
 local shortHelp = false
 local skipHelp = false
 local filter = ""
@@ -21,10 +21,38 @@ end
 function gmsg_tracker()
 	calledFunction = "gmsg_tracker"
 	result = false
+	tmp = {}
 
 -- ################## tracker command functions ##################
 
 	local function cmd_CheckBases()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}check bases"
+			help[2] = "Load base coordinates into the tracker so you can tp directly to each base in sequence.  Used for visiting every single base ingame."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,base,visit,check"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "track") or string.find(chatvars.command, "base") or string.find(chatvars.command, "visit") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
 		if ((chatvars.words[1] == "check") and (chatvars.words[2] == "bases")) then
 			if (chatvars.accessLevel > 2) then
 				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -58,6 +86,33 @@ function gmsg_tracker()
 
 
 	local function cmd_DeleteBase()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}killbase"
+			help[2] = "Remove the current base and protection that the tracker has teleported you to.  Used with " .. server.commandPrefix .. "check base."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,base,kill,dele,remo"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "track") or string.find(chatvars.command, "base") or string.find(chatvars.command, "remo") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
 		if (chatvars.words[1] == "killbase" and chatvars.words[2] == nil) then
 			if (chatvars.accessLevel > 2) then
 				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -94,6 +149,33 @@ function gmsg_tracker()
 
 
 	local function cmd_GoBack()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}go back"
+			help[2] = "Remove the current base and protection that the tracker has teleported you to.  Used with " .. server.commandPrefix .. "check base."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,back,chang,dire"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "track") or string.find(chatvars.command, "dire") or string.find(chatvars.command, "back") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
 		if (chatvars.words[1] == "go" and chatvars.words[2] == "back") then
 			if (chatvars.accessLevel > 2) then
 				botman.faultyChat = false
@@ -115,12 +197,26 @@ function gmsg_tracker()
 
 
 	local function cmd_GotoEnd()
-		if chatvars.showHelp and not skipHelp then
-			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "goto end")
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}goto end"
+			help[2] = "Move to the end of the current track."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,end,jump,move"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "track") or string.find(chatvars.command, "jump") or string.find(chatvars.command, "back") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Move to the end of the current track.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -144,12 +240,26 @@ function gmsg_tracker()
 
 
 	local function cmd_GotoStart()
-		if chatvars.showHelp and not skipHelp then
-			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "goto start")
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}goto start"
+			help[2] = "Move to the start of the current track."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,start,jump,move"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "track") or string.find(chatvars.command, "jump") or string.find(chatvars.command, "start") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Move to the start of the current track.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -173,12 +283,26 @@ function gmsg_tracker()
 
 
 	local function cmd_Jump()
-		if chatvars.showHelp and not skipHelp then
-			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "jump {number}")
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}jump {number of steps}"
+			help[2] = "Jump forward {number} steps or backwards if given a negative number."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,jump,move"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "track") or string.find(chatvars.command, "jump") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Jump forward {number} steps or backwards if given a negative number.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -203,12 +327,26 @@ function gmsg_tracker()
 
 
 	local function cmd_ResumeTracking()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}go"
+			help[2] = "Resume tracking."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,go,cont"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "go")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Resume tracking.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -230,12 +368,26 @@ function gmsg_tracker()
 
 
 	local function cmd_SetSpeed()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}speed {number}"
+			help[2] = "The default pause between each tracked step is 3 seconds. Change it to any number of seconds from 1 to whatever."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,step,speed"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "speed {number>")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "The default pause between each tracked step is 3 seconds. Change it to any number of seconds from 1 to whatever.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -258,12 +410,26 @@ function gmsg_tracker()
 
 
 	local function cmd_SkipSteps()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}skip {number of steps}"
+			help[2] = "Skip {number} of steps.  Instead of tracking each recorded step, you will skip {number} steps for faster but less precise tracking."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,step,speed,skip"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "skip {number}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Skip {number} of steps.  Instead of tracking each recorded step, you will skip {number} steps for faster but less precise tracking.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -286,12 +452,26 @@ function gmsg_tracker()
 
 
 	local function cmd_Stop()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}stop"
+			help[2] = "Stop tracking.  Resume it with " .. server.commandPrefix .. "go"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,stop"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "stop")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Stop tracking.  Resume it with " .. server.commandPrefix .. "go")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -334,12 +514,26 @@ function gmsg_tracker()
 
 
 	local function cmd_StopTracking()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}stop tracking"
+			help[2] = "Stops tracking and clears the tracking data from memory.  This happens when you exit the server anyway so you don't have to do this."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,stop"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "stop tracking")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Stops tracking and clears the tracking data from memory.  This happens when you exit the server anyway so you don't have to do this.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -364,14 +558,30 @@ function gmsg_tracker()
 
 
 	local function cmd_TrackPlayer()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}track {player name} session {number} (session is optional and defaults to the latest)\n"
+			help[1] = " {#}track {player name} session {number} range {distance}\n"
+			help[1] = help[1] .. " {#}next (track the next session)\n"
+			help[1] = help[1] .. " {#}last (track the previous session)"
+			help[2] = "Track the movements of a player.  If a session is given, you will track their movements from that session.\n"
+			help[2] = help[2] .. "If you add the word hax, hacking or cheat the bot will only send you to coordinates that were flagged as flying or clipping."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,next,last"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "track {player name} session {number} (session is optional and defaults to the latest)")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "next (track the next session)")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "last (track the previous session)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Track the movements of a player.  If a session is given, you will track their movements from that session.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -425,6 +635,21 @@ function gmsg_tracker()
 				if chatvars.words[i] == "track" then
 					tmp.name = chatvars.words[i+1]
 					tmp.id = LookupPlayer(tmp.name)
+
+					if tmp.id == 0 then
+						tmp.id = LookupArchivedPlayer(tmp.name)
+
+						if not (tmp.id == 0) then
+							if (chatvars.playername ~= "Server") then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[tmp.id].name .. " was archived. There won't be any tracking data for them.[-]")
+							else
+								irc_chat(chatvars.ircAlias, "Player " .. playersArchived[tmp.id].name .. " was archived. There won't be any tracking data for them.")
+							end
+
+							botman.faultyChat = false
+							return true
+						end
+					end
 
 					if tmp.id ~= 0 then
 						tmp.session = players[tmp.id].sessionCount
@@ -483,6 +708,33 @@ function gmsg_tracker()
 
 
 	local function cmd_VisitNextBase()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}nb"
+			help[2] = "Visit the next base in the tracker."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,next,base,visit"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
 		if (chatvars.words[1] == "nb" and chatvars.words[2] == nil) then
 			if (chatvars.accessLevel > 2) then
 				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -521,6 +773,33 @@ function gmsg_tracker()
 
 
 	local function cmd_VisitPreviousBase()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}pb"
+			help[2] = "Visit the previous base in the tracker."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "track,prev,base,visit"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
 		if (chatvars.words[1] == "pb" and chatvars.words[2] == nil) then
 			if (chatvars.accessLevel > 2) then
 				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -561,6 +840,27 @@ function gmsg_tracker()
 
 -- ################## End of command functions ##################
 
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "==== Registering help - tracker commands ====")
+		dbug("Registering help - tracker commands")
+
+		tmp = {}
+		tmp.topicDescription = "All player movement is recorded every 3 seconds.\n"
+		tmp.topicDescription = tmp.topicDescription .. "The tracker allows admins to follow a player's movements now or in the past so long as there is tracking data recorded.\n"
+		tmp.topicDescription = tmp.topicDescription .. "The tracker can also be used to visit every recorded player base using special commands.\n"
+		tmp.topicDescription = tmp.topicDescription .. "The tracker runs slowly by default to give admins time to look around and time to command the tracker. Several controls are available to change speed, direction and more."
+
+		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'tracker'")
+		rows = cursor:numrows()
+		if rows == 0 then
+			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
+			row = cursor:fetch(row, "a")
+			tmp.topicID = row.Auto_increment
+
+			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('tracker', '" .. escape(tmp.topicDescription) .. "')")
+		end
+	end
+
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
 		botman.faultyChat = false
@@ -597,7 +897,7 @@ function gmsg_tracker()
 	if debug then dbug("debug tracker end of remote commands") end
 
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not chatvars.showHelp then
+	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
 		return false
 	end
@@ -737,6 +1037,12 @@ function gmsg_tracker()
 	if result then
 		if debug then dbug("debug cmd_DeleteBase triggered") end
 		return result
+	end
+
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "**** Tracker commands help registered ****")
+		dbug("Tracker commands help registered")
+		topicID = topicID + 1
 	end
 
 	if debug then dbug("debug tracker end") end

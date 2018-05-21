@@ -9,7 +9,8 @@
 
 --/mode #haven2 +f [5000t#b]:1
 
-local ircid, pid, login, name1, name2, words, wordsOld, words2, wordCount, word2Count, result, msgLower, number, counter, xpos, zpos, debug, tmp, k, v, filter
+local ircid, pid, login, name1, name2, words, wordsOld, words2, wordCount, word2Count, result, msgLower, counter, xpos, zpos, debug, tmp, k, v, filter, temp
+local number, numberCount, numbers = {}
 
 debug = false -- should be false unless testing
 
@@ -23,7 +24,7 @@ local function requireLogin(name, silent)
 	steam = LookupIRCAlias(name)
 
 	-- see if we can find this irc nick in the bots database
-	if steam then
+	if steam ~= 0 then
 		if players[steam].block then
 			irc_chat(name, "You are not allowed to command me :P")
 			return false
@@ -40,7 +41,7 @@ local function requireLogin(name, silent)
 			row = cursor:fetch(row, "a")
 
 			if row.ircAuthenticated then
-				players[steam].ircSessionExpiry = os.time() + 3600
+				players[steam].ircSessionExpiry = os.time() + 10800
 				players[steam].ircAuthenticated = true
 				players[steam].ircAlias = name
 				ircid = steam
@@ -132,6 +133,13 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	number = tonumber(string.match(msg, " (-?\%d+)"))
+
+	-- break the line into numbers
+	for word in string.gmatch (msg, " (-?\%d+)") do
+		table.insert(numbers, tonumber(word))
+	end
+
+	numberCount = table.maxn(numbers)
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
@@ -354,7 +362,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if words[1] == "fps" and words[2] == nil then
-		cursor,errorString = conn:execute("SELECT * FROM performance ORDER BY serverdate DESC Limit 0, 1")
+		cursor,errorString = conn:execute("SELECT * FROM performance ORDER BY timestamp DESC Limit 0, 1")
 		row = cursor:fetch({}, "a")
 
 		if row then
@@ -387,6 +395,33 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
+	if (words[1] == "location" and words[2] == "categories") then
+		if tablelength(locationCategories) == 0 then
+			irc_chat(name, "There are no location categories.")
+		else
+			if players[ircid].accessLevel < 3 then
+				irc_chat(name, "Category | Minimum Access Level | Maximum Access Level")
+
+				for k, v in pairs(locationCategories) do
+					irc_chat(name, k .. " min: " .. v.minAccessLevel .. " max: " .. v.maxAccessLevel)
+				end
+			else
+				irc_chat(name, "Category")
+
+				for k, v in pairs(locationCategories) do
+					irc_chat(name, k)
+				end
+
+			end
+		end
+
+		irc_chat(name, ".")
+
+		return
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
 	if (words[1] == "location") then
 		-- display details about the location
 
@@ -402,6 +437,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			row = cursor:fetch({}, "a")
 
 			irc_chat(name, "Location: " .. row.name)
+			irc_chat(name, "Category: " .. row.locationCategory)
 			irc_chat(name, "Active: " .. dbYN(row.active))
 			irc_chat(name, "Reset Zone: " .. dbYN(row.resetZone))
 			irc_chat(name, "Safe Zone: " .. dbYN(row.killZombies))
@@ -515,7 +551,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			if ircid then
 				if players[ircid].accessLevel < 3 then
-					irc_chat(name, v.name .. " " .. public .. " " .. active .. " xyz " .. v.x .. " " .. v.y .. " " .. v.z)
+					irc_chat(name, v.name .. " " .. public .. " " .. active .. " xyz " .. v.x .. " " .. v.y .. " " .. v.z .. " category " .. v.locationCategory)
 				else
 					if public == "public" then
 						irc_chat(name, v.name)
@@ -569,10 +605,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	-- try to find the irc person in the players table
 	-- commands below here won't work if the bot doesn't match you against a player record
-	ircid = LookupOfflinePlayer(name, "all")
+	ircid = LookupIRCAlias(name)
 
 	if ircid == 0 then
-		ircid = LookupOfflinePlayer(name)
+		ircid = LookupOfflinePlayer(name, "all")
 	end
 
 	if ircid ~= 0 then
@@ -584,11 +620,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			requireLogin(name, true)
 		else
 			-- keep login session alive
-			if players[ircid].accessLevel < 4 then
-				players[ircid].ircSessionExpiry = os.time() + 3600
-			else
-				players[ircid].ircSessionExpiry = os.time() + 10800
-			end
+			players[ircid].ircSessionExpiry = os.time() + 10800
 
 			connBots:execute("UPDATE players SET ircAuthenticated = 1 WHERE steam = " .. ircid)
 		end
@@ -598,11 +630,24 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
+	if words[1] == "logout" or (words[1] == "log" and words[2] == "out") then
+		if ircid ~= 0 then
+			players[ircid].ircAuthenticated = false
+			players[ircid].ircSessionExpiry = os.time()
+			connBots:execute("UPDATE players SET ircAuthenticated = 0 WHERE steam = " .. ircid)
+			irc_chat(name, "You have logged out.  To log back in type your bot login or type bow before me.")
+		end
+
+		return
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
 	if (words[1] == "hi" or words[1] == "hello") and (string.lower(words[2]) == string.lower(server.botName) or string.lower(words[2]) == string.lower(server.ircBotName) or words[2] == "bot" or words[2] == "server") then
 		irc_chat(name, "Hi there " .. name .. "!  How can I help you today?")
 
 		if ircid == nil then
-			ircid = LookupOfflinePlayer(name)
+			ircid = LookupOfflinePlayer(name, "all")
 		else
 			if not players[ircid].ircAuthenticated then
 				requireLogin(name, true)
@@ -610,14 +655,20 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		end
 
 		if ircid ~= 0 then
+			if players[ircid].ircAuthenticated then
+				irc_chat(channel, "Command me :3")
+			else
+				if name == channel then
+					irc_chat(channel, "To command me you need to log in to the bot.  You can use your bot login here or type the special command, bow before me.")
+				else
+					irc_chat(channel, "Hi there " .. name .. "! To command me, please move to " .. server.ircBotName .. " to login.")
+				end
+			end
+		else
 			if name == channel then
 				irc_chat(channel, "Hi there " .. name .. "!  You are not logged in to the bot.  You can login here or type the special command, bow before me.")
 			else
 				irc_chat(channel, "Hi there " .. name .. ", this is the " .. channel .. " channel.  Please move to " .. server.ircBotName .. " to login.")
-			end
-		else
-			if players[ircid].ircAuthenticated then
-				irc_chat(channel, "Hi there " .. name .. "!  Welcome to " .. channel .. ". You are logged in.")
 			end
 		end
 
@@ -770,7 +821,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		ircid = LookupPlayer(words[3], "code")
 
 		if ircid ~= 0 then
-			players[ircid].ircSessionExpiry = os.time() + 3600
+			players[ircid].ircSessionExpiry = os.time() + 10800
 			players[ircid].ircAuthenticated = true
 			players[ircid].ircAlias = name
 			players[ircid].ircInvite = nil
@@ -1063,7 +1114,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if words[1] == "nuke" or words[1] == "clear" or words[1] == "stop" and words[2] == "all" then
-		conn:execute("DELETE FROM ircQueue")
+		conn:execute("TRUNCATE ircQueue")
 		irc_chat(channel, "IRC spam nuked for everyone")
 
 		ircListItems = nil
@@ -1132,6 +1183,76 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			return
 		end
 	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+		if words[1] == "add" and words[2] == "location" and words[3] == "category" then
+			tmp = {}
+			tmp.category = wordsOld[4]
+			tmp.minAccessLevel = 99
+			tmp.maxAccessLevel = 0
+
+			if numbers[1] then
+				numbers[1] = math.abs(numbers[1])
+
+				if numbers[1] > 99 then
+					irc_chat(name, "Minimum access level must be in the range 0 to 99")
+					return
+				end
+			end
+
+			if numbers[2] then
+				numbers[2] = math.abs(numbers[2])
+
+				if numbers[2] > 99 then
+					irc_chat(name, "Maximum access level must be in the range 0 to 99")
+					return
+				end
+			end
+
+			if numbers[1] and numbers[2] then
+				if numbers[1] < numbers[2] then
+					numbers[3] = numbers[1]
+					numbers[1] = numbers[2]
+					numbers[2] = numbers[3]
+				end
+
+				tmp.minAccessLevel = numbers[1]
+				tmp.maxAccessLevel = numbers[2]
+			end
+
+			conn:execute("DELETE FROM locationCategories WHERE categoryName = '" .. escape(tmp.category) .. "'")
+			conn:execute("INSERT INTO locationCategories (categoryName, minAccessLevel, maxAccessLevel) VALUES ('" .. escape(tmp.category) .. "'," .. tmp.minAccessLevel .. "," .. tmp.maxAccessLevel .. ")")
+
+			irc_chat(name, "Location category " .. tmp.category .. " added with minimum access level " .. tmp.minAccessLevel .. " and maximum access level " .. tmp.maxAccessLevel)
+			irc_chat(name, ".")
+
+			-- reload location categories from the database
+			loadLocationCategories()
+
+			return
+		end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+		if words[1] == "remove" and words[2] == "location" and words[3] == "category" then
+			tmp = {}
+			tmp.category = wordsOld[4]
+
+			conn:execute("DELETE FROM locationCategories WHERE categoryName = '" .. escape(tmp.category) .. "'")
+			conn:execute("UPDATE locations SET locationCategory = '' WHERE locationCategory = '" .. escape(tmp.category) .. "'")
+
+			irc_chat(name, "Location category " .. tmp.category .. " removed")
+			irc_chat(name, ".")
+
+			-- reload location categories from the database
+			loadLocationCategories()
+
+			-- reload locations from the database
+			loadLocations()
+
+			return
+		end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
@@ -1269,6 +1390,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (words[1] == "set" and words[2] == "server") and string.find(msg, "pass") and players[ircid].accessLevel == 0 then
 		local sIP, sPort, sPass
 
+		sIP = server.IP
+		sPass = telnetPassword
+		sPort = server.telnetPort
+
 		for i=2,word2Count,1 do
 			if words2[i] == "server" then
 				sIP = words2[i+1]
@@ -1287,7 +1412,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 		end
 
+		server.IP = sIP
 		server.telnetPass = sPass
+		server.telnetPort = sPort
 		telnetPassword = sPass
 		conn:execute("UPDATE server SET IP = '" .. escape(sIP) .. "', telnetPass = '" .. escape(sPass) .. "', telnetPort = " .. sPort)
 
@@ -3034,10 +3161,16 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if (words[1] == "inv") then
 			tmp = {}
 			tmp.name = name
-			tmp.playerID = string.trim(string.sub(msg, string.find(msgLower, "inv") + 4))
-			tmp.playerID = LookupPlayer(tmp.playerID)
+
+			if words[2] == nil then
+				tmp.playerID = players[ircid].selectedSteam
+			else
+				tmp.playerID = string.trim(string.sub(msg, string.find(msgLower, "inv") + 4))
+				tmp.playerID = LookupPlayer(tmp.playerID)
+			end
 
 			if (tmp.playerID ~= 0) then
+				players[ircid].selectedSteam = tmp.playerID
 				irc_NewInventory(tmp)
 			end
 
@@ -3184,15 +3317,18 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if (words[1] == "info" and words[2] ~= nil) then
-			name1 = string.sub(msg, string.find(msgLower, "info") + 5)
-			name1 = string.trim(name1)
-			pid = LookupPlayer(name1)
-
-			if debug then dbug("debug ircmessage " .. name1) end
-			if debug then dbug("debug ircmessage " .. pid) end
+		if (words[1] == "info") then
+			if words[2] == nil then
+			display("players[ircid].selectedSteam " .. players[ircid].selectedSteam)
+				pid = players[ircid].selectedSteam
+			else
+				name1 = string.sub(msg, string.find(msgLower, "info") + 5)
+				name1 = string.trim(name1)
+				pid = LookupPlayer(name1)
+			end
 
 			if (pid ~= 0) then
+				players[ircid].selectedSteam = pid
 				irc_params.pid = pid
 				irc_params.pname = players[pid].name
 
@@ -3741,7 +3877,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 		if (words[1] == "empty" and words[2] == "shop") then
-			conn:execute("DELETE FROM shop")
+			conn:execute("TRUNCATE shop")
 			conn:execute("DELETE FROM shopCategories WHERE category <> 'misc'")
 			loadShopCategories()
 
@@ -4004,7 +4140,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 		if words[1] == "list" and words[2] == "regions" then
-			conn:execute("DELETE FROM list")
+			conn:execute("TRUNCATE list")
 
 			irc_chat(name, "The following regions have player bases in them.")
 
@@ -4027,7 +4163,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				row = cursor:fetch(row, "a")
 			end
 
-			conn:execute("DELETE FROM list")
+			conn:execute("TRUNCATE list")
 
 			irc_chat(name, ".")
 			irc_chat(name, "The following regions have locations in them.")
@@ -4044,7 +4180,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				row = cursor:fetch(row, "a")
 			end
 
-			conn:execute("DELETE FROM list")
+			conn:execute("TRUNCATE list")
 
 			irc_chat(name, ".")
 			return

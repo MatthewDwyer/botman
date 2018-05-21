@@ -12,8 +12,19 @@ function thirtySecondTimer()
 
 	windowMessage(server.windowDebug, "30 second timer\n")
 
+	if customThirtySecondTimer ~= nil then
+		-- read the note on overriding bot code in custom/custom_functions.lua
+		if customThirtySecondTimer() then
+			return
+		end
+	end
+
 	if botman.botDisabled or botman.botOffline then
 		return
+	end
+
+	if not server.botsIP then
+		send("pm IPCHECK")
 	end
 
 	if (botman.announceBot == true) then
@@ -86,6 +97,24 @@ function thirtySecondTimer()
 					end
 				end
 			end
+		end
+
+		-- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
+		if not botman.botOffline and not botman.botDisabled then
+			if server.enableLagCheck then
+				botman.lagCheckTime = os.time()
+				send("pm LagCheck " .. os.time())
+			end
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+		else
+			if server.enableLagCheck then
+				botman.lagCheckTime = os.time()
+			end
+
+			server.lagged = false
 		end
 	end
 

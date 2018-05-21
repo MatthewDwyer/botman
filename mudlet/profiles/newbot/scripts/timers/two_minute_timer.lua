@@ -11,6 +11,17 @@ function twoMinuteTimer()
 	-- to fix a weird bug where the bot would stop responding to chat but could be woken up by irc chatter we send the bot a wake up call
 	irc_chat(server.ircBotName, "Keep alive")
 
+	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
+		return
+	end
+
+	if customTwoMinuteTimer ~= nil then
+		-- read the note on overriding bot code in custom/custom_functions.lua
+		if customTwoMinuteTimer() then
+			return
+		end
+	end
+
 	removeBadPlayerRecords()
 
 	if server.scanErrors and server.coppi then

@@ -10,6 +10,28 @@
 local debug
 debug = false -- should be false unless testing
 
+
+function loadBans()
+	local cursor, errorString, row
+	-- load bans
+
+	getTableFields("bans")
+
+    bans = {}
+	cursor,errorString = conn:execute("select * from bans")
+	row = cursor:fetch({}, "a")
+	while row do
+		bans[row.Steam] = {}
+		bans[row.Steam].steam = row.Steam
+		bans[row.Steam].BannedTo = row.BannedTo
+		bans[row.Steam].Reason = row.Reason
+		bans[row.Steam].expiryDate = row.expiryDate
+
+		row = cursor:fetch(row, "a")
+	end
+end
+
+
 function loadServer()
 	local temp, cursor, errorString, row, rows
 
@@ -144,6 +166,7 @@ end
 
 
 function loadPlayers(steam)
+	local cursor, errorString, row
 	local word, words, rdate, ryear, rmonth, rday, rhour, rmin, rsec, k, v
 
 	-- load players table)
@@ -158,56 +181,85 @@ function loadPlayers(steam)
 
 	row = cursor:fetch({}, "a")
 	while row do
-		players[row.steam] = {}
+		-- don't load the player if they are in the table playersArchived
+		if not playersArchived[row.steam] then
+			players[row.steam] = {}
 
-		for k,v in pairs(playerFields) do
-			if v.type == "var" or v.type == "big" then
-				players[row.steam][k] = row[k]
+			for k,v in pairs(playerFields) do
+				if v.type == "var" or v.type == "big" then
+					players[row.steam][k] = row[k]
+				end
+
+				if v.type == "int" then
+					players[row.steam][k] = tonumber(row[k])
+				end
+
+				if v.type == "flo" then
+					players[row.steam][k] = tonumber(row[k])
+				end
+
+				if v.type == "tin" then
+					players[row.steam][k] = dbTrue(row[k])
+				end
 			end
 
-			if v.type == "int" then
-				players[row.steam][k] = tonumber(row[k])
-			end
+			if tonumber(row.accessLevel) < 3 then
+				-- add the steamid to the admins table
+				if tonumber(row.accessLevel) == 0 then
+					owners[players[row.steam].steam] = {}
+				end
 
-			if v.type == "flo" then
-				players[row.steam][k] = tonumber(row[k])
-			end
+				if tonumber(row.accessLevel) == 1 then
+					admins[players[row.steam].steam] = {}
+				end
 
-			if v.type == "tin" then
-				players[row.steam][k] = dbTrue(row[k])
+				if tonumber(row.accessLevel) == 2 then
+					mods[players[row.steam].steam] = {}
+				end
 			end
 		end
 
-		-- -- convert donorExpiry to a timestamp
-		-- if row.donorExpiry == 0 then
-			-- players[row.steam].donorExpiry = os.time()
-		-- else
-			-- words = {}
-			-- for word in row.donorExpiry:gmatch("%w+") do table.insert(words, word) end
+		row = cursor:fetch(row, "a")
+	end
+end
 
-			-- ryear = words[1]
-			-- rmonth = words[2]
-			-- rday = words[3]
-			-- rhour = words[4]
-			-- rmin = words[5]
-			-- rsec = words[6]
 
-			-- rdate = {year=ryear, month=rmonth, day=rday, hour=rhour, min=rmin, sec=rsec}
-			-- players[row.steam].donorExpiry = os.time(rdate)
-		-- end
+function loadPlayersArchived(steam)
+	local cursor, errorString, row
+	local word, words, rdate, ryear, rmonth, rday, rhour, rmin, rsec, k, v
 
-		if tonumber(row.accessLevel) < 3 then
-			-- add the steamid to the admins table
-			if tonumber(row.accessLevel) == 0 then
-				owners[players[row.steam].steam] = {}
+	-- load playersArchived table)
+	getTableFields("playersArchived")
+
+	if steam == nil then
+		playersArchived = {}
+		cursor,errorString = conn:execute("select * from playersArchived")
+	else
+		cursor,errorString = conn:execute("select * from playersArchived where steam = " .. steam)
+	end
+
+	row = cursor:fetch({}, "a")
+
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	while row do
+		playersArchived[row.steam] = {}
+
+		for k,v in pairs(playersArchivedFields) do
+			if v.type == "var" or v.type == "big" then
+				playersArchived[row.steam][k] = row[k]
 			end
 
-			if tonumber(row.accessLevel) == 1 then
-				admins[players[row.steam].steam] = {}
+			if v.type == "int" then
+				playersArchived[row.steam][k] = tonumber(row[k])
 			end
 
-			if tonumber(row.accessLevel) == 2 then
-				mods[players[row.steam].steam] = {}
+			if v.type == "flo" then
+				playersArchived[row.steam][k] = tonumber(row[k])
+			end
+
+			if v.type == "tin" then
+				playersArchived[row.steam][k] = dbTrue(row[k])
 			end
 		end
 
@@ -217,6 +269,7 @@ end
 
 
 function loadShopCategories()
+	local cursor, errorString, row
 	-- load shop categories
 
 	getTableFields("shopCategories")
@@ -242,6 +295,7 @@ end
 
 
 function loadResetZones()
+	local cursor, errorString, row
 	-- load reset zones
 
 	getTableFields("resetZones")
@@ -367,6 +421,8 @@ end
 
 
 function loadLocationCategories()
+	local cursor, errorString, row
+
 	-- load locationCategories
 	getTableFields("locationCategories")
 
@@ -374,9 +430,9 @@ function loadLocationCategories()
 	cursor,errorString = conn:execute("select * from locationCategories")
 	row = cursor:fetch({}, "a")
 	while row do
-		villagers[row.categoryName] = {}
-		villagers[row.categoryName].minAccessLevel = row.minAccessLevel
-		villagers[row.categoryName].maxAccessLevel = row.maxAccessLevel
+		locationCategories[row.categoryName] = {}
+		locationCategories[row.categoryName].minAccessLevel = row.minAccessLevel
+		locationCategories[row.categoryName].maxAccessLevel = row.maxAccessLevel
 		row = cursor:fetch(row, "a")
 	end
 end
@@ -471,6 +527,8 @@ end
 
 
 function loadFriends()
+	local cursor, errorString, row
+
 	-- load friends
 	getTableFields("friends")
 
@@ -497,6 +555,8 @@ end
 function loadHotspots()
 	local idx, nextidx
 	local cursor, errorString, row
+
+	nextidx = -1
 
 	--debug = false
 	calledFunction = "hotspots"
@@ -556,6 +616,8 @@ end
 
 
 function loadVillagers()
+	local cursor, errorString, row
+
 	-- load villagers
 	getTableFields("villagers")
 
@@ -572,6 +634,8 @@ end
 
 
 function loadCustomMessages()
+	local cursor, errorString, row
+
 	-- load customMessages
 	getTableFields("customMessages")
 
@@ -589,6 +653,7 @@ end
 
 function loadProxies()
 	local proxy
+	local cursor, errorString, row
 
 	-- load proxies
 	getTableFields("proxies")
@@ -628,6 +693,8 @@ end
 
 
 function loadBadWords()
+	local cursor, errorString, row
+
 	-- load badWords
 	getTableFields("badWords")
 
@@ -644,6 +711,8 @@ end
 
 
 function loadPrefabCopies()
+	local cursor, errorString, row
+
 	-- load prefabs
 	getTableFields("prefabCopies")
 
@@ -667,6 +736,7 @@ end
 
 function loadWaypoints(steam)
 	local idx, k, v
+	local cursor, errorString, row
 
 	-- load waypoints
 	if steam == nil then
@@ -708,6 +778,8 @@ end
 
 
 function loadWhitelist()
+	local cursor, errorString, row
+
 	-- load whitelist
 
 	getTableFields("whitelist")
@@ -773,6 +845,7 @@ end
 
 function loadOtherEntities()
 	local idx
+	local cursor, errorString, row
 
 	-- load otherEntities
 	getTableFields("otherEntities")
@@ -798,6 +871,11 @@ if (debug) then display("debug loadTables\n") end
 
 	loadServer()
 if (debug) then display("debug loaded server\n") end
+
+	if not skipPlayers then
+		loadPlayersArchived()
+if (debug) then display("debug loaded playersArchived\n") end
+	end
 
 	if not skipPlayers then
 		loadPlayers()
@@ -860,6 +938,9 @@ if (debug) then display("debug loaded gimmeZombies\n") end
 
 	loadOtherEntities()
 if (debug) then display("debug loaded otherEntities\n") end
+
+	loadBans()
+if (debug) then display("debug loaded bans\n") end
 
 if (debug) then display("debug loadTables completed\n") end
 end

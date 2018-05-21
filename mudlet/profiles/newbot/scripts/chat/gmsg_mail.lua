@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local counter, status, debug, n
+local counter, status, debug, n, help
 
 debug = false -- should be false unless testing
 
@@ -16,16 +16,18 @@ if botman.debugAll then
 end
 
 function gmsg_mail()
+	local playerName, isArchived
+
 	calledFunction = "gmsg_mail"
 
 	if (debug) then dbug("debug mail line " .. debugger.getinfo(1).currentline) end
 
-	-- ###################  do not allow remote commands beyond this point ################
-	if (chatvars.playerid == 0) then
+	-- ###################  do not run remote commands beyond this point unless displaying command help ################
+	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
 		return false
 	end
-	-- ####################################################################################
+	-- ###################  do not run remote commands beyond this point unless displaying command help ################
 
 	if (chatvars.words[1] == "pm" and chatvars.words[2] ~= nil) then
 		if string.find(chatvars.words[2], "admin") then
@@ -195,6 +197,16 @@ function gmsg_mail()
 		pname = string.trim(pname)
 
 		id = LookupPlayer(pname)
+
+		if id == 0 then
+			id = LookupArchivedPlayer(pname)
+
+			if not (id == 0) then
+				playerName = playersArchived[id].name
+				isArchived = true
+			end
+		end
+
 		n = string.len(chatvars.wordsOld[1]) + 1
 		msg = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, chatvars.wordsOld[1], nil, true) + n), string.len(chatvars.oldLine)
 		msg = stripQuotes(msg)
@@ -224,8 +236,13 @@ if debug then dbug("debug mail msg" .. msg) end
 					message("pm " .. id .. " [" .. server.chatColour .. "]Message from " .. players[chatvars.playerid].name .. ": " .. msg .. "[-]")
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has received your message.[-]")
 				else
-					conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (" .. chatvars.playerid .. "," .. id .. ", '" .. escape(msg) .. "')")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " will receive your message when they return.[-]")
+					if not isArchived then
+						conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (" .. chatvars.playerid .. "," .. id .. ", '" .. escape(msg) .. "')")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " will receive your message when they return.[-]")
+					else
+						conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (" .. chatvars.playerid .. "," .. id .. ", '" .. escape(msg) .. "')")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. playerName .. " will receive your message when they return.[-]")
+					end
 				end
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has not friended you so you are not allowed to send them private messages yet.[-]")

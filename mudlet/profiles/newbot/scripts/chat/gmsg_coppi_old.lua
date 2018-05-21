@@ -77,10 +77,10 @@ local function makeMaze(w, h, xPos, yPos, zPos, wall, fill, tall)
   for i = 1, h*2+1 do
     for j = 1, w*2+1 do
       if map[i][j] then
-		cmd = "pblock1 " .. wall .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos - 1 .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1
+		cmd = "pblock " .. wall .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos - 1 .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1 .. " 0"
 		if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (0, '" .. escape(cmd) .. "')") end
       else
-		cmd = "pblock1 " .. fill .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos - 1 .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1
+		cmd = "pblock " .. fill .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos - 1 .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1 .. " 0"
 		if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (0, '" .. escape(cmd) .. "')") end
       end
     end
@@ -121,10 +121,10 @@ function unmutePlayer(steam)
 end
 
 
-function gmsg_coppi()
-	calledFunction = "gmsg_coppi"
+function gmsg_coppi_old()
+	calledFunction = "gmsg_coppi_old"
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	-- ###################  Staff only beyond this point ################
 	-- Don't proceed if this is a player.  Server and staff only here.
@@ -169,7 +169,7 @@ function gmsg_coppi()
 		irc_chat(chatvars.ircAlias, "coppi")
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "mute")) or chatvars.words[1] ~= "help" then
@@ -232,7 +232,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "horde")) or chatvars.words[1] ~= "help" then
@@ -288,7 +288,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "comm")) or chatvars.words[1] ~= "help" then
@@ -339,7 +339,54 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.showHelp and not skipHelp then
+		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "phy")) or chatvars.words[1] ~= "help" then
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "physics on")
+			irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "physics off")
+
+			if not shortHelp then
+				irc_chat(chatvars.ircAlias, "Enable or disable physics on the server.  The state of physics is persistent across reboots.")
+				irc_chat(chatvars.ircAlias, ".")
+			end
+		end
+	end
+
+	if chatvars.words[1] == "physics" and (chatvars.words[2] == "on" or chatvars.words[2] == "off") then
+		if chatvars.words[2] == "off" then
+			server.allowPhysics = false
+			if botman.dbConnected then conn:execute("UPDATE server SET allowPhysics = 0") end
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Physics is disabled.[-]")
+			else
+				irc_chat(server.ircMain, "Physics is disabled.")
+			end
+		else
+			server.allowPhysics = true
+			if botman.dbConnected then conn:execute("UPDATE server SET allowPhysics = 1") end
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Physics is enabled.[-]")
+			else
+				irc_chat(server.ircMain, "Physics is enabled.")
+			end
+		end
+
+		if server.coppi then
+			send("py")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "chat") or string.find(chatvars.command, "colo")) or chatvars.words[1] ~= "help" then
@@ -453,8 +500,21 @@ function gmsg_coppi()
 					tmp.pid = LookupArchivedPlayer(tmp.name)
 
 					if tmp.pid ~= 0 then
-						tmp.name = playersArchived[tmp.pid].name
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[tmp.pid].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
+						else
+							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[tmp.pid].name .. " was archived. Get them to rejoin the server, then repeat this command.")
+						end
+					else
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. tmp.name .. "[-]")
+						else
+							irc_chat(chatvars.ircAlias, "No player found called " .. tmp.name)
+						end
 					end
+
+					botman.faultyChat = false
+					return true
 				else
 					tmp.name = players[tmp.pid].name
 				end
@@ -618,7 +678,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	-- ###################  do not allow remote commands beyond this point ################
 	if (chatvars.playerid == nil) then
@@ -627,7 +687,7 @@ function gmsg_coppi()
 	end
 	-- ####################################################################################
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "maze")) or chatvars.words[1] ~= "help" then
@@ -651,7 +711,7 @@ function gmsg_coppi()
 			return true
 		end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 		tmp = {}
 		tmp.wallBlock = "steelBlock"
@@ -697,17 +757,17 @@ function gmsg_coppi()
 			end
 		end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 		renderMaze(tmp.wallBlock, tmp.x, tmp.y, tmp.z, tmp.width, tmp.length, tmp.height, tmp.fillBlock)
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 		botman.faultyChat = false
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "maze")) or chatvars.words[1] ~= "help" then
@@ -733,7 +793,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and string.find(chatvars.command, "coppi") or string.find(chatvars.command, "horde")) or chatvars.words[1] ~= "help" then
@@ -762,7 +822,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "add") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "copy"))) or chatvars.words[1] ~= "help" then
@@ -776,7 +836,7 @@ function gmsg_coppi()
 		end
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	-- ###################  Block commands ################
 
@@ -828,7 +888,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "save") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "list"))) or chatvars.words[1] ~= "help" then
@@ -885,7 +945,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "mark") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "copy"))) or chatvars.words[1] ~= "help" then
@@ -958,7 +1018,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 		if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "save") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "copy"))) or chatvars.words[1] ~= "help" then
@@ -996,7 +1056,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 		if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "load") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "paste"))) or chatvars.words[1] ~= "help" then
@@ -1076,7 +1136,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 		if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "list") or string.find(chatvars.command, "item"))) or chatvars.words[1] ~= "help" then
@@ -1109,7 +1169,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "move") or string.find(chatvars.command, "block") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "prefab"))) or chatvars.words[1] ~= "help" then
@@ -1135,7 +1195,7 @@ function gmsg_coppi()
 
 		if prefabCopies[chatvars.playerid .. chatvars.words[3]] then
 			-- first remove the original block by replacing it with air blocks
-			send("pblock " .. 0 ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2)
+			send("pblock " .. 0 ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. " 0")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1149,7 +1209,7 @@ function gmsg_coppi()
 				if botman.dbConnected then conn:execute("UPDATE prefabCopies SET y1 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number .. ", y2 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 + chatvars.number .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[3]) .. "'") end
 
 				-- render the block at its new position
-				send("pblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. " " .. prefabCopies[chatvars.playerid])
+				send("pblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].rotation)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1162,7 +1222,7 @@ function gmsg_coppi()
 				if botman.dbConnected then conn:execute("UPDATE prefabCopies SET y1 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number .. ", y2 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 + chatvars.number .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[3]) .. "'") end
 
 				-- render the block at its new position
-				send("pblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. " " .. prefabCopies[chatvars.playerid])
+				send("pblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].rotation)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1182,7 +1242,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "copy") or string.find(chatvars.command, "block") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "prefab"))) or chatvars.words[1] ~= "help" then
@@ -1215,7 +1275,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "rot") or (string.find(chatvars.command, "spin") or string.find(chatvars.command, "block") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "prefab")))) or chatvars.words[1] ~= "help" then
@@ -1247,7 +1307,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "rot") or (string.find(chatvars.command, "spin") or string.find(chatvars.command, "block")))) or chatvars.words[1] ~= "help" then
@@ -1279,7 +1339,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "mark") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
@@ -1342,7 +1402,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
@@ -1366,7 +1426,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
@@ -1390,7 +1450,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "erase") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
@@ -1427,7 +1487,7 @@ function gmsg_coppi()
 		prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + chatvars.number
 
 		send("pexport " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number .. " " .. chatvars.playerid .. "bottemp")
-		send("pblock air " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number)
+		send("pblock air " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number .. " 0")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 2
@@ -1439,7 +1499,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "dig") or string.find(chatvars.command, "fill") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi"))) or chatvars.words[1] ~= "help" then
@@ -1555,9 +1615,9 @@ function gmsg_coppi()
 			if chatvars.words[1] == "dig" then
 				if tmp.newblock then
 				--prepblock <block_to_be_replaced> <block_name> <x1> <x2> <y1> <y2> <z1> <z2> <rot>
-					send("prepblock " .. tmp.newblock .. " air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+					send("prepblock " .. tmp.newblock .. " air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 				else
-					send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+					send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 				end
 
 				if botman.getMetrics then
@@ -1565,9 +1625,9 @@ function gmsg_coppi()
 				end
 			else
 				if tmp.newblock then
-					send("prepblock " .. tmp.newblock .. " " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+					send("prepblock " .. tmp.newblock .. " " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 				else
-					send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+					send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 				end
 
 				if botman.getMetrics then
@@ -1599,9 +1659,9 @@ function gmsg_coppi()
 			end
 
 			if chatvars.words[1] == "dig" then
-				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			else
-				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			end
 
 			if botman.getMetrics then
@@ -1632,9 +1692,9 @@ function gmsg_coppi()
 			end
 
 			if chatvars.words[1] == "dig" then
-				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			else
-				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			end
 
 			if botman.getMetrics then
@@ -1665,9 +1725,9 @@ function gmsg_coppi()
 			end
 
 			if chatvars.words[1] == "dig" then
-				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			else
-				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			end
 
 			if botman.getMetrics then
@@ -1698,9 +1758,9 @@ function gmsg_coppi()
 			end
 
 			if chatvars.words[1] == "dig" then
-				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			else
-				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			end
 
 			if botman.getMetrics then
@@ -1731,9 +1791,9 @@ function gmsg_coppi()
 			end
 
 			if chatvars.words[1] == "dig" then
-				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			else
-				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			end
 
 			if botman.getMetrics then
@@ -1764,9 +1824,9 @@ function gmsg_coppi()
 			end
 
 			if chatvars.words[1] == "dig" then
-				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+				send("pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			else
-				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
+				send("pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " 0")
 			end
 
 			if botman.getMetrics then
@@ -1780,7 +1840,7 @@ function gmsg_coppi()
 		end
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 		if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "fix") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "bed"))) or chatvars.words[1] ~= "help" then
@@ -1815,7 +1875,7 @@ function gmsg_coppi()
 		tmp.z1 = chatvars.intZ - chatvars.number
 		tmp.z2 = chatvars.intZ + chatvars.number
 
-		send("pblock 12 " .. tmp.x1 .. " " .. tmp.x2 .. " " .. tmp.y1 .. " " .. tmp.y2 .. " " .. tmp.z1 .. " " .. tmp.z2)
+		send("pblock 12 " .. tmp.x1 .. " " .. tmp.x2 .. " " .. tmp.y1 .. " " .. tmp.y2 .. " " .. tmp.z1 .. " " .. tmp.z2 .. " 0")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1825,7 +1885,7 @@ function gmsg_coppi()
 		return true
 	end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug coppi_old line " .. debugger.getinfo(1).currentline) end
 
 		if chatvars.showHelp and not skipHelp then
 		if (chatvars.words[1] == "help" and (string.find(chatvars.command, "block") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "copy"))) or chatvars.words[1] ~= "help" then
@@ -1860,7 +1920,7 @@ function gmsg_coppi()
 		else
 			prefabCopies[chatvars.playerid .. chatvars.words[2]].blockName = tmp.block
 			prefabCopies[chatvars.playerid .. chatvars.words[2]].rotation = tmp.face
-			send("pblock " .. tmp.block ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z2)
+			send("pblock " .. tmp.block ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 .. " " .. tmp.face)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1878,6 +1938,6 @@ function gmsg_coppi()
 		return true
 	end
 
-if debug then dbug("debug coppi end") end
+if debug then dbug("debug coppi_old end") end
 
 end
