@@ -808,6 +808,11 @@ function matchAll(line)
 	end
 
 
+	if string.sub(line, 1, 4) == "Mod " then
+		modVersions[line] = {}
+	end
+
+
 	-- detect Coppi's Mod
 	if string.find(line, "Mod Coppis command additions") then
 		server.coppi = true
@@ -858,13 +863,15 @@ function matchAll(line)
 
 
 	if string.find(line, "Executing command 'version'") and string.find(line, server.botsIP) then
+		modVersions = {}
+		server.alloc = false
+		server.coppi = false
+		server.stompy = false
+		server.SDXDetected = false
+		server.ServerToolsDetected = false
+		server.hackerTPDetection = false
+
 		if botman.dbConnected then
-			server.alloc = false
-			server.coppi = false
-			server.stompy = false
-			server.SDXDetected = false
-			server.ServerToolsDetected = false
-			server.hackerTPDetection = false
 			conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
 		end
 

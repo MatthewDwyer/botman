@@ -230,22 +230,27 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			irc_chat(name, "Command prefix is " .. server.commandPrefix)
 
-			if server.allocs then
-				irc_chat(name, "Alloc's mod is " .. server.allocsVersion)
-			else
+			if not server.allocs then
 				irc_chat(name, "Alloc's mod is not installed")
 			end
 
-			if server.coppi then
-				irc_chat(name, "Coppi's mod is " .. server.coppiVersion)
-			else
+			if not server.coppi then
 				irc_chat(name, "Coppi's mod is not installed")
 			end
 
-			if server.stompy then
-				irc_chat(name, "StompyNZ's mod is " .. server.stompyVersion)
-			else
+			if not server.stompy then
 				irc_chat(name, "StompyNZ's mod is not installed")
+			end
+
+			if modVersions then
+				irc_chat(name, ".")
+				irc_chat(name, "The server is running these mods:")
+
+				for k, v in pairs(modVersions) do
+					irc_chat(name, k)
+				end
+
+				irc_chat(name, ".")
 			end
 
 			irc_chat(name, "There are  " .. botman.playersOnline .. " players online.")
@@ -3620,8 +3625,15 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-		if (words[1] == "players" and words[2] == nil) and players[ircid].accessLevel == 0 then
+		if (msgLower == "players") and players[ircid].accessLevel == 0 then
 			irc_listAllPlayers(name)
+			return
+		end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+		if (msgLower == "archived players") and players[ircid].accessLevel == 0 then
+			irc_listAllArchivedPlayers(name)
 			return
 		end
 

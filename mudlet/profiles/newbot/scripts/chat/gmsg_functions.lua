@@ -1527,18 +1527,15 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if not result then
-		if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) then
+		if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) and not server.hideUnknownCommand then
 			if (chatvars.playername ~= "Server") then
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Unknown command: " .. chatvars.command .. " Type " .. server.commandPrefix .. "help or " .. server.commandPrefix .. "commands for commands.[-]")
 			else
 				if not chatvars.showHelp then
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 					irc_chat(players[chatvars.ircid].ircAlias, "Unknown command")
 				end
 			end
 		else
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			Translate(chatvars.playerid, chatvars.command, "")
 		end
 	end

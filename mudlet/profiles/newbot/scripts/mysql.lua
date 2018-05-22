@@ -677,7 +677,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `botRestartDay` INT NOT NULL DEFAULT '7'")
 	doSQL("ALTER TABLE `server` CHANGE `perMinutePayRate` `perMinutePayRate` FLOAT(11) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `enableTimedClaimScan` TINYINT(1) NOT NULL DEFAULT '1', ADD `enableScreamerAlert` TINYINT(1) NOT NULL DEFAULT '1' , ADD `enableAirdropAlert` TINYINT(1) NOT NULL DEFAULT '1'")
-	doSQL("ALTER TABLE `server` ADD `spleefGameCoords` VARCHAR(20) NOT NULL DEFAULT '4000 225 4000'")
+	doSQL("ALTER TABLE `server` ADD `spleefGameCoords` VARCHAR(20) NOT NULL DEFAULT '4000 225 4000'") --todo add the game code
 	doSQL("ALTER TABLE `server` CHANGE `blacklistResponse` `blacklistResponse` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'ban'")
 	doSQL("ALTER TABLE `server` ADD `gimmeResetTime` INT NOT NULL DEFAULT '120', ADD `gimmeRaincheck` INT NOT NULL DEFAULT '0'") -- gimmeRainCheck is a gimme cooldown timer between gimmes.
 	doSQL("ALTER TABLE `server` ADD `pingKickTarget` VARCHAR(3) NOT NULL DEFAULT 'new' , ADD `enableBounty` TINYINT(1) NOT NULL DEFAULT '1', ADD `mapSizeNewPlayers` INT NOT NULL DEFAULT '10000' , ADD `mapSizePlayers` INT NOT NULL DEFAULT '10000', ADD `shopResetDays` INT NOT NULL DEFAULT '3'")
@@ -700,6 +700,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `lotteryTicketPrice` INT NOT NULL DEFAULT '25'")
 	doSQL("ALTER TABLE `server` ADD `newPlayerMaxLevel` INT NOT NULL DEFAULT '9'")
 	doSQL("ALTER TABLE `server` ADD `hordeNight` INT NOT NULL DEFAULT '7'")
+	doSQL("ALTER TABLE `server` ADD `hideUnknownCommand` TINYINT(1) NOT NULL DEFAULT '0', ADD `beQuietBot` TINYINT(1) NOT NULL DEFAULT '0'")
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 

@@ -1050,7 +1050,7 @@ function irc_uptime(name)
 end
 
 
-function irc_listAllPlayers(name)
+function irc_listAllPlayers(name) --tested
     local a = {}
 	local n, id, steam, isDonor, isAdmin, isPrisoner, isBanned
 
@@ -1066,24 +1066,65 @@ function irc_listAllPlayers(name)
 		steam = LookupOfflinePlayer(v, "all")
 
 		if players[steam].prisoner then
-			isPrisoner = "Yes"
+			isPrisoner = "Prisoner"
 		else
-			isPrisoner = "No"
+			isPrisoner = ""
 		end
 
 		if players[steam].donor then
-			isDonor = "Yes"
+			isDonor = "Donor"
 		else
-			isDonor = "No"
+			isDonor = ""
 		end
 
 		if players[steam].accessLevel < 3 then
-			isAdmin = "Yes"
+			isAdmin = "Admin"
 		else
-			isAdmin = "No"
+			isAdmin = "Player"
 		end
 
-		cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", players[steam].id) .. " name: " .. v .. " admin " .. isAdmin .. " donor " .. isDonor .. " prisoner " .. isPrisoner .. " seen " .. players[steam].seen .. " playtime " .. players[steam].playtime
+		cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", players[steam].id) .. " name: " .. v .. " [ " .. isAdmin .. " " .. isDonor .. " " .. isPrisoner .. " ] seen " .. players[steam].seen .. " playtime " .. players[steam].playtime
+		irc_chat(irc_params.name, cmd)
+	end
+
+	irc_chat(name, ".")
+end
+
+
+function irc_listAllArchivedPlayers(name) --tested
+    local a = {}
+	local n, id, steam, isDonor, isAdmin, isPrisoner, isBanned
+
+	irc_chat(name, "These are all the archived players on record:")
+
+    for n in pairs(playersArchived) do
+		table.insert(a, playersArchived[n].name)
+	end
+
+	table.sort(a)
+
+    for k, v in ipairs(a) do
+		steam = LookupArchivedPlayer(v, "all")
+
+		if playersArchived[steam].prisoner then
+			isPrisoner = "Prisoner"
+		else
+			isPrisoner = ""
+		end
+
+		if playersArchived[steam].donor then
+			isDonor = "Donor"
+		else
+			isDonor = ""
+		end
+
+		if playersArchived[steam].accessLevel < 3 then
+			isAdmin = "Admin"
+		else
+			isAdmin = "Player"
+		end
+
+		cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", playersArchived[steam].id) .. " name: " .. v .. " [ " .. isAdmin .. " " .. isDonor .. " " .. isPrisoner .. " ] seen " .. playersArchived[steam].seen .. " playtime " .. playersArchived[steam].playtime
 		irc_chat(irc_params.name, cmd)
 	end
 

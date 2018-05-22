@@ -7,6 +7,8 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+-- 	if not server.beQuietBot then
+
 
 local id, page, count, shopState, debug
 
@@ -199,7 +201,9 @@ function drawLottery(steam)
 			row = cursor:fetch(row, "a")
 		end
 
-		message("say [" .. server.chatColour .. "]$$$ Congratulation$ $$$   xD[-]")
+		if not server.beQuietBot then
+			message("say [" .. server.chatColour .. "]$$$ Congratulation$ $$$   xD[-]")
+		end
 
 		if steam == nil then
 			conn:execute("TRUNCATE memLottery")
@@ -211,46 +215,50 @@ function drawLottery(steam)
 			conn:execute("DELETE FROM lottery where steam = '" .. steam .. "'")
 		end
 	else
-		r = rand(7)
-		if (r == 1) then message("say [" .. server.chatColour .. "]Nobody wins again![-]") end
-		if (r == 2) then
-			thing = PicknMix()
-			thing = PicknMix()
-			message("say [" .. server.chatColour .. "]Tonight's winner is.. " .. gimmeZimbies[thing].zombie .. "! Who gave that a ticket? O.o[-]")
-		end
+		if not server.beQuietBot then
+			r = rand(7)
+			if (r == 1) then message("say [" .. server.chatColour .. "]Nobody wins again![-]") end
+			if (r == 2) then
+				thing = PicknMix()
+				thing = PicknMix()
+				message("say [" .. server.chatColour .. "]Tonight's winner is.. " .. gimmeZimbies[thing].zombie .. "! Who gave that a ticket? O.o[-]")
+			end
 
-		if (r == 3) then
-			message("say [" .. server.chatColour .. "]OH NO! A zombie ate the winning number![-]")
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]BAD ZOMBIE!  No biscuit![-]") .. "')")
-		end
+			if (r == 3) then
+				message("say [" .. server.chatColour .. "]OH NO! A zombie ate the winning number![-]")
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]BAD ZOMBIE!  No biscuit![-]") .. "')")
+			end
 
-		if (r == 4) then
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody again!  That guy has all the luck.[-]") .. "')")
-		end
+			if (r == 4) then
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody again!  That guy has all the luck.[-]") .. "')")
+			end
 
-		if (r == 5) then
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]*CRASH*    BLUUUUEERGH!      AAAAH!  ZOMBIES!   *SCREAM!*[-]") .. "')")
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]CUT!  Go to commercials![-]") .. "')")
-		end
+			if (r == 5) then
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]*CRASH*    BLUUUUEERGH!      AAAAH!  ZOMBIES!   *SCREAM!*[-]") .. "')")
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]CUT!  Go to commercials![-]") .. "')")
+			end
 
-		if (r == 6) then
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody!  But he's won enough so we're doing a redraw![-]") .. "')")
-			tempTimer( 15, [[drawLottery()]] )
-		end
+			if (r == 6) then
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody!  But he's won enough so we're doing a redraw![-]") .. "')")
+				tempTimer( 15, [[drawLottery()]] )
+			end
 
-		if (r == 7) then
-			r = rand(6)
-			if r == 1 then thing = "severed head" end
-			if r == 2 then thing = "severed hand" end
-			if r == 3 then thing = "severed foot" end
-			if r == 4 then thing = "mouldy eyeball" end
-			if r == 5 then thing = "used nappy" end
-			if r == 6 then thing = "rotten cheese" end
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
-			conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]EWW!  Who put a " .. thing .. " in the bag?  That's gross![-]") .. "')")
+			if (r == 7) then
+				r = rand(6)
+				if r == 1 then thing = "severed head" end
+				if r == 2 then thing = "severed hand" end
+				if r == 3 then thing = "severed foot" end
+				if r == 4 then thing = "mouldy eyeball" end
+				if r == 5 then thing = "used nappy" end
+				if r == 6 then thing = "rotten cheese" end
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
+				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]EWW!  Who put a " .. thing .. " in the bag?  That's gross![-]") .. "')")
+			end
+		else
+			message("say [" .. server.chatColour .. "]Nobody won this time.[-]")
 		end
 	end
 end

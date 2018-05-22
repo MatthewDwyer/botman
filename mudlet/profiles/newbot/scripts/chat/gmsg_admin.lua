@@ -33,7 +33,7 @@ function gmsg_admin()
 
 -- ################## Admin command functions ##################
 
-	local function cmd_AddRemoveAdmin()
+	local function cmd_AddRemoveAdmin() --tested
 		local playerName, isArchived
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
@@ -146,18 +146,20 @@ function gmsg_admin()
 						players[id].newPlayer = false
 						players[id].silentBob = false
 						players[id].walkies = false
+						players[id].block = false
 						players[id].exiled = 2
 						players[id].canTeleport = true
 						players[id].botHelp = true
 						players[id].accessLevel = number
+
+						if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, block = 0, exiled = 2, canTeleport = 1, botHelp = 1, accessLevel = " .. number .. " WHERE steam = " .. id) end
 					else
-						playersArchived[id].newPlayer = false
-						playersArchived[id].silentBob = false
-						playersArchived[id].walkies = false
-						playersArchived[id].exiled = 2
-						playersArchived[id].canTeleport = true
-						playersArchived[id].botHelp = true
-						playersArchived[id].accessLevel = number
+						if botman.dbConnected then conn:execute("UPDATE playersArchived SET newPlayer = 0, silentBob = 0, walkies = 0, block = 0, exiled = 2, canTeleport = 1, botHelp = 1, accessLevel = " .. number .. " WHERE steam = " .. id) end
+
+						conn:execute("INSERT INTO players SELECT * from playersArchived WHERE steam = " .. id)
+						conn:execute("DELETE FROM playersArchived WHERE steam = " .. id)
+						playersArchived[id] = nil
+						loadPlayers(id)
 					end
 
 					message("say [" .. server.chatColour .. "]" .. playerName .. " has been given admin powers[-]")
@@ -196,10 +198,12 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_AddRemoveBadItem()
+	local function cmd_AddRemoveBadItem() --tested
+		local bad, action
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
-			help[1] = " {#}add/remove bad item {item}"
+			help[1] = " {#}add/remove bad item {item} action {timeout or ban} (default action is timeout)"
 			help[2] = "Add or remove an item to/from the list of bad items.  The default action is to timeout the player.\n"
 			help[2] = help[2] .. "See also {#}ignore player {name} and {#}include player {name}"
 
@@ -240,16 +244,27 @@ function gmsg_admin()
 				end
 			end
 
-			bad = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, "bad item") + 9)
+			action = "timeout"
+
+			if string.find(chatvars.command, " action ") then
+				bad = string.sub(chatvars.commandOld, string.find(chatvars.command, "bad item") + 9, string.find(chatvars.command, " action") - 1)
+				action = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, " action ") + 8)
+			else
+				bad = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, "bad item") + 9)
+			end
+
+			if action ~= "timeout" and action ~= "ban" then
+				action = "timeout"
+			end
 
 			if chatvars.words[1] == "add" then
-				badItems[bad] = {}
-				if botman.dbConnected then conn:execute("INSERT INTO badItems SET item = '" .. bad .. "'") end
+				if botman.dbConnected then conn:execute("DELETE FROM badItems WHERE item = '" .. escape(bad) .. "'") end
+				if botman.dbConnected then conn:execute("INSERT INTO badItems (item, action) VALUES ('" .. escape(bad) .. "','" .. escape(action) .. "')") end
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You added " .. bad .. " to the list of bad items.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You added " .. bad .. " to the list of bad items. The bot will " .. action .. " players found with it unless permitted.[-]")
 				else
-					irc_chat(chatvars.ircAlias, "You added " .. bad .. " to the list of bad items.")
+					irc_chat(chatvars.ircAlias, "You added " .. bad .. " to the list of bad items. The bot will " .. action .. " players found with it unless permitted")
 				end
 			else
 				bad = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, "bad item") + 9)
@@ -264,13 +279,16 @@ function gmsg_admin()
 				end
 			end
 
+			-- reload the badItems table
+			loadBadItems()
+
 			botman.faultyChat = false
 			return true
 		end
 	end
 
 
-	local function cmd_AddRemoveBlacklistCountry()
+	local function cmd_AddRemoveBlacklistCountry() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}add/remove blacklist country {US}"
@@ -409,7 +427,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_AddRemoveDonor()
+	local function cmd_AddRemoveDonor() --tested
 		local playerName, isArchived
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
@@ -651,13 +669,15 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_AddRemoveRestrictedItem()
+	local function cmd_AddRemoveRestrictedItem() --tested
+		local bad, item, qty, access, action
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}add restricted item {item name} qty {count} action {action} access {level}\n"
 			help[1] = help[1] .. " {#}remove restricted item {item name}"
 			help[2] = "Add an item to the list of restricted items.\n"
-			help[2] = help[2] .. "Valid actions are timeout, ban, exile  and watch\n"
+			help[2] = help[2] .. "Valid actions are timeout, ban, exile and watch\n"
 			help[2] = help[2] .. "eg. {#}add restricted item tnt qty 5 action timeout access 90\n"
 			help[2] = help[2] .. "Players with access > 90 will be sent to timeout for more than 5 tnt."
 
@@ -752,24 +772,54 @@ function gmsg_admin()
 
 				if item == "" or access == 100 then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Item, qty and access are required.[-]")
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]eg. " .. server.commandPrefix .. "add restricted item mineCandyTin qty 20 access 99 action timeout[-]")
+						if item == "" and access < 100 then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Item name required.[-]")
+						end
+
+						if item ~= "" and access == 100 then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Access level required.[-]")
+						end
+
+						if item == "" and access == 100 then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Item name and access level required.[-]")
+						end
+
+						if item == "" then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]eg. " .. server.commandPrefix .. "add restricted item mineCandyTin qty 20 access 99 action timeout[-]")
+						else
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]eg. " .. server.commandPrefix .. "add restricted item " .. item .. " qty 20 access 99 action timeout[-]")
+						end
+
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Valid actions are timeout, ban, exile. Bans last 1 day.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "Item, qty and access are required.")
-						irc_chat(chatvars.ircAlias, "eg. " .. server.commandPrefix .. "add restricted item mineCandyTin qty 20 access 99 action timeout")
+						if item == "" and access < 100 then
+							irc_chat(chatvars.ircAlias, "Item name required.")
+						end
+
+						if item ~= "" and access == 100 then
+							irc_chat(chatvars.ircAlias, "Access level required.")
+						end
+
+						if item == "" and access == 100 then
+							irc_chat(chatvars.ircAlias, "Item name and access level required.")
+						end
+
+						if item == "" then
+							irc_chat(chatvars.ircAlias, "eg. cmd " .. server.commandPrefix .. "add restricted item mineCandyTin qty 20 access 99 action timeout")
+						else
+							irc_chat(chatvars.ircAlias, "eg. cmd " .. server.commandPrefix .. "add restricted item " .. item .. " qty 20 access 99 action timeout")
+						end
+
 						irc_chat(chatvars.ircAlias, "Valid actions are timeout, ban, exile. Bans last 1 day.")
 					end
 				else
 					if botman.dbConnected then
+						conn:execute("DELETE FROM restrictedItems WHERE item = '" .. escape(bad) .. "'")
+						conn:execute("DELETE FROM memRestrictedItems WHERE item = '" .. escape(bad) .. "'")
+
 						conn:execute("INSERT INTO restrictedItems (item, qty, accessLevel, action) VALUES ('" .. escape(item) .. "'," .. qty .. "," .. access .. ",'" .. action .. "') ON DUPLICATE KEY UPDATE item = '" .. escape(item) .. "', qty = " .. qty .. ", accessLevel = " .. access .. ", action = '" .. action .. "'")
 						conn:execute("INSERT INTO memRestrictedItems (item, qty, accessLevel, action) VALUES ('" .. escape(item) .. "'," .. qty .. "," .. access .. ",'" .. action .. "') ON DUPLICATE KEY UPDATE item = '" .. escape(item) .. "', qty = " .. qty .. ", accessLevel = " .. access .. ", action = '" .. action .. "'")
 					end
-
-					restrictedItems[item] = {}
-					restrictedItems[item].qty = tonumber(qty)
-					restrictedItems[item].accessLevel = tonumber(access)
-					restrictedItems[item].action = action
 
 					if (chatvars.playername ~= "Server") then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You added " .. item .. " quantity " .. qty .. " with minimum access level " .. access .. " and action " .. action .. " to restricted items.[-]")
@@ -786,9 +836,11 @@ function gmsg_admin()
 					conn:execute("DELETE FROM memRestrictedItems WHERE item = '" .. escape(bad) .. "'")
 				end
 
-				restrictedItems[bad] = nil
+				--restrictedItems[bad] = nil
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You removed " .. bad .. " from the list of restricted items[-]")
 			end
+
+			loadRestrictedItems()
 
 			botman.faultyChat = false
 			return true
@@ -796,7 +848,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_AddRemoveWhitelistCountry()
+	local function cmd_AddRemoveWhitelistCountry() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}add whitelist country {US}\n"
@@ -876,6 +928,20 @@ function gmsg_admin()
 						irc_chat(chatvars.ircAlias, chatvars.words[4] .. " is already whitelisted.")
 					end
 
+					if server.whitelistCountries ~= "" then
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]These countries are whitelisted: " .. server.whitelistCountries .. "[-]")
+						else
+							irc_chat(chatvars.ircAlias, "These countries are whitelisted: " .. server.whitelistCountries)
+						end
+					else
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No countries are whitelisted.[-]")
+						else
+							irc_chat(chatvars.ircAlias, "No countries are whitelisted.")
+						end
+					end
+
 					botman.faultyChat = false
 					return true
 				end
@@ -932,13 +998,27 @@ function gmsg_admin()
 				end
 			end
 
+			if server.whitelistCountries ~= "" then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]These countries are whitelisted: " .. server.whitelistCountries .. "[-]")
+				else
+					irc_chat(chatvars.ircAlias, "These countries are whitelisted: " .. server.whitelistCountries)
+				end
+			else
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No countries are whitelisted.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "No countries are whitelisted.")
+				end
+			end
+
 			botman.faultyChat = false
 			return true
 		end
 	end
 
 
-	local function cmd_ArrestPlayer()
+	local function cmd_ArrestPlayer() --tested
 		local reason, prisoner, prisonerid
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
@@ -1066,7 +1146,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_BanUnbanPlayer()
+	local function cmd_BanUnbanPlayer() --tested
 		local id, pname, reason, duration, rows, cursor, errorString, playerName, unknownPlayer
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
@@ -1200,9 +1280,9 @@ function gmsg_admin()
 				-- don't ban if player is an admin :O
 				if accessLevel(id) < 3 then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You what?  You want to global ban one of your own admins?   [DENIED][-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You what?  You want to ban one of your own admins?   [DENIED][-]")
 					else
-						irc_chat(chatvars.ircAlias, "You what?  You want to global ban one of your own admins?   [DENIED]")
+						irc_chat(chatvars.ircAlias, "You what?  You want to ban one of your own admins?   [DENIED]")
 					end
 
 					botman.faultyChat = false
@@ -1255,7 +1335,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_BlockChatCommandsForPlayer()
+	local function cmd_BlockChatCommandsForPlayer() --tested
 		local playerName, isArchived
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
@@ -1326,6 +1406,17 @@ function gmsg_admin()
 			end
 
 			if (chatvars.words[1] == "block") then
+				if accessLevel(id) < 3 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Action not permitted against admins.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Action not permitted against admins.")
+					end
+
+					botman.faultyChat = false
+					return true
+				end
+
 				if not isArchived then
 					players[id].block = true
 				else
@@ -1361,7 +1452,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_BurnPlayer()
+	local function cmd_BurnPlayer() --tested (ouch)
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}burn {player name}"
@@ -1389,7 +1480,7 @@ function gmsg_admin()
 			end
 		end
 
-		if (chatvars.words[1] == "burn" and chatvars.words[2] ~= nil) then
+		if (chatvars.words[1] == "burn") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 0) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -1403,6 +1494,8 @@ function gmsg_admin()
 					return true
 				end
 			end
+
+			id = chatvars.playerid -- you look hot
 
 			if (chatvars.words[2] ~= nil) then
 				pname = chatvars.words[2]
@@ -1445,7 +1538,11 @@ function gmsg_admin()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You set " .. players[id].name .. " on fire![-]")
 
 				if accessLevel(id) < 3 then
-					message("pm " .. id .. " [" .. server.alertColour .. "]" .. players[chatvars.playerid].name .. " set you on fire![-]")
+					if chatvars.playerid == id then
+						message("pm " .. id .. " [" .. server.alertColour .. "]You set yourself on fire!  Should'a listened to the Surgeon General.[-]")
+					else
+						message("pm " .. id .. " [" .. server.alertColour .. "]" .. players[chatvars.playerid].name .. " set you on fire![-]")
+					end
 				end
 			else
 				irc_chat(chatvars.ircAlias, "You set " .. players[id].name .. " on fire!")
@@ -1457,9 +1554,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_ArchivePlayers()
-		local archive, notSeen
-
+	local function cmd_ArchivePlayers() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}archive players"
@@ -1504,44 +1599,6 @@ function gmsg_admin()
 				end
 			end
 
-			-- flag players for archival
-			for k,v in pairs(players) do
-				archive = false
-				notSeen = false
-
-				if v.seen ~= "" then
-					if string.find(v.seen, "T") then
-						-- correct an issue caused by some dates being lifted directly from the server without being cleaned up
-						v.seen = string.sub(v.seen, 1, 10) .. " " .. string.sub(v.seen, 12, 16)
-					end
-
-					runyear, runmonth, runday, runhour, runminute = v.seen:match(pattern)
-					seenTimestamp = os.time({year = runyear, month = runmonth, day = runday, hour = runhour, min = runminute, 0})
-					notSeen = false
-				else
-					notSeen = true
-				end
-
-				-- acrchive player if they haven't played in 2 months and aren't an admin
-				if notSeen then
-					if not igplayers[k] and (tonumber(v.accessLevel) > 3) then
-						archive = true
-					end
-				else
-					if not igplayers[k] and (os.time() - seenTimestamp > 5184000 or tonumber(v.playtime) == 0) and (tonumber(v.accessLevel) > 3) then
-						archive = true
-					end
-				end
-
-				if archive then
-					conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. k)
-					conn:execute("DELETE FROM players WHERE steam = " .. k)
-				end
-			end
-
-			loadPlayers()
-			loadPlayersArchived()
-
 			send("lkp")
 
 			if botman.getMetrics then
@@ -1560,7 +1617,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_ClearBlacklist()
+	local function cmd_ClearBlacklist() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}clear country blacklist"
@@ -1620,7 +1677,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_ClearWhitelist()
+	local function cmd_ClearWhitelist() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}clear country whitelist"
@@ -1680,7 +1737,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_CoolPlayer()
+	local function cmd_CoolPlayer() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}cool {player name}"
@@ -1709,6 +1766,11 @@ function gmsg_admin()
 		end
 
 		if (chatvars.words[1] == "cool") then
+			if locations["cool"] then
+				botman.faultyChat = false
+				return false
+			end
+
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -1774,7 +1836,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_CurePlayer()
+	local function cmd_CurePlayer() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}cure {player name}"
@@ -1803,6 +1865,11 @@ function gmsg_admin()
 		end
 
 		if (chatvars.words[1] == "cure") then
+			if locations["cure"] then
+				botman.faultyChat = false
+				return false
+			end
+
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -1876,7 +1943,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_EquipAdmin()
+	local function cmd_EquipAdmin() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}equip admin"
@@ -2549,7 +2616,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_GiveAdminSupplies()
+	local function cmd_GiveAdminSupplies() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}supplies"
@@ -3174,7 +3241,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_HealPlayer()
+	local function cmd_HealPlayer() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}heal {player name}"
@@ -3203,6 +3270,11 @@ function gmsg_admin()
 		end
 
 		if (chatvars.words[1] == "heal") then
+			if locations["heal"] then
+				botman.faultyChat = false
+				return false
+			end
+
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -3272,7 +3344,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_HordeMe()
+	local function cmd_HordeMe() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}hordme"
@@ -3674,8 +3746,12 @@ function gmsg_admin()
 					name1 = string.sub(chatvars.command, string.find(chatvars.command, "near") + 5)
 				end
 
-				name1 = string.trim(name1)
-				id = LookupPlayer(name1)
+				if string.find(chatvars.command, "nearby") then
+					id = chatvars.playerid
+				else
+					name1 = string.trim(name1)
+					id = LookupPlayer(name1)
+				end
 
 				if id == 0 then
 					id = LookupArchivedPlayer(name1)
@@ -4285,7 +4361,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_MendPlayer()
+	local function cmd_MendPlayer() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}mend {player name}"
@@ -4314,6 +4390,11 @@ function gmsg_admin()
 		end
 
 		if (chatvars.words[1] == "mend") then
+			if locations["mend"] then
+				botman.faultyChat = false
+				return false
+			end
+
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -6337,7 +6418,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_ShitPlayer()
+	local function cmd_ShitPlayer() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}shit {player name}"
@@ -6365,7 +6446,12 @@ function gmsg_admin()
 			end
 		end
 
-		if (chatvars.words[1] == "shit" and chatvars.words[2] ~= nil) then
+		if (chatvars.words[1] == "shit") then
+			if locations["shit"] then
+				botman.faultyChat = false
+				return false
+			end
+
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -8256,7 +8342,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_WarmPlayer()
+	local function cmd_WarmPlayer() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}warm {player name}"
@@ -8285,6 +8371,11 @@ function gmsg_admin()
 		end
 
 		if (chatvars.words[1] == "warm") then
+			if locations["warm"] then
+				botman.faultyChat = false
+				return false
+			end
+
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
