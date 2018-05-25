@@ -1274,6 +1274,258 @@ function fixMissingPlayer(steam)
 end
 
 
+function fixMissingArchivedPlayer(steam)
+	-- if any fields are missing from the players player record, add them with default values
+-- if steam == Smegz0r then dbug("fixMissingPlayer" .. steam) end
+
+	local k,v
+
+	if playersArchived[steam] == nil then
+		playersArchived[steam] = {}
+	end
+
+	for k,v in pairs(playerFields) do
+		if playersArchived[steam][k] == nil then
+			if v.default ~= "nil" then
+				if v.type == "tin" then
+					if v.default == "0" then
+						playersArchived[steam][k] = false
+					else
+						playersArchived[steam][k] = true
+					end
+				else
+					if v.default == "CURRENT_TIMESTAMP" then
+						playersArchived[steam][k] = os.time()
+					else
+						playersArchived[steam][k] = v.default
+					end
+				end
+			else
+				if v.type == "var" then
+					playersArchived[steam][k] = ""
+				end
+
+				if v.type == "big" or v.type == "int" then
+					playersArchived[steam][k] = 0
+				end
+			end
+		end
+	end
+
+	-- do not remove these lines !!
+	-- ============================
+
+	if (playersArchived[steam].steamOwner == nil) then
+		playersArchived[steam].steamOwner = steam
+	end
+
+	if (playersArchived[steam].block == nil) then
+		playersArchived[steam].block = false
+	end
+
+	if (playersArchived[steam].botQuestion == nil) then
+		playersArchived[steam].botQuestion = ""
+	end
+
+	if (playersArchived[steam].bountyReason == nil) then
+		playersArchived[steam].bountyReason = ""
+	end
+
+	if playersArchived[steam].packCooldown == nil then
+		playersArchived[steam].packCooldown = 0
+	end
+
+	if playersArchived[steam].waypointCooldown == nil then
+		playersArchived[steam].waypointCooldown = 0
+	end
+
+	if playersArchived[steam].gimmeCooldown == nil then
+		playersArchived[steam].gimmeCooldown = 0
+	end
+
+	if playersArchived[steam].pvpTeleportCooldown == nil then
+		playersArchived[steam].pvpTeleportCooldown = 0
+	end
+
+	if playersArchived[steam].returnCooldown == nil then
+		playersArchived[steam].returnCooldown = 0
+	end
+
+	if playersArchived[steam].commandCooldown == nil then
+		playersArchived[steam].commandCooldown = 0
+	end
+
+	if playersArchived[steam].tp == nil then
+		playersArchived[steam].tp = 0
+	end
+
+	if playersArchived[steam].hackerTPScore == nil then
+		playersArchived[steam].hackerTPScore = 0
+	end
+
+	if playersArchived[steam].atHome == nil then
+		playersArchived[steam].atHome = false
+	end
+
+	if playersArchived[steam].overstackScore == nil then
+		playersArchived[steam].overstackScore = 0
+	end
+
+	if playersArchived[steam].overstackItems == nil then
+		playersArchived[steam].overstackItems = ""
+	end
+
+	if playersArchived[steam].names == nil then
+		playersArchived[steam].names = playersArchived[steam].name
+	end
+
+	if (playersArchived[steam].lastBaseRaid == nil) then
+		playersArchived[steam].lastBaseRaid = 0
+	end
+
+	if (playersArchived[steam].watchPlayerTimer == nil) then
+		if playersArchived[steam].watchPlayer then
+			playersArchived[steam].watchPlayerTimer = os.time() + 259200 -- 3 days
+		else
+			playersArchived[steam].watchPlayerTimer = 0
+		end
+	end
+
+	if (playersArchived[steam].alertPrison == nil) then
+		playersArchived[steam].alertPrison = true
+	end
+
+	if (playersArchived[steam].alertReset == nil) then
+		playersArchived[steam].alertReset = true
+	end
+
+	if (playersArchived[steam].alertMapLimit == nil) then
+		playersArchived[steam].alertMapLimit = false
+	end
+
+	if (playersArchived[steam].alertRemovedClaims == nil) then
+		playersArchived[steam].alertRemovedClaims = false
+	end
+
+	if (playersArchived[steam].alertPVP == nil) then
+		playersArchived[steam].alertPVP = true
+	end
+
+	if playersArchived[steam].home2X == 0 and playersArchived[steam].home2Z == 0 then
+		playersArchived[steam].home2Y = 0
+	end
+
+	if playersArchived[steam].homeX == 0 and playersArchived[steam].homeZ == 0 then
+		playersArchived[steam].homeY = 0
+	end
+
+	if (playersArchived[steam].protectSize == nil) then
+		playersArchived[steam].protectSize = server.baseSize
+	else
+		if tonumber(playersArchived[steam].protectSize) < tonumber(server.baseSize) then
+			playersArchived[steam].protectSize = server.baseSize
+		end
+	end
+
+	if (playersArchived[steam].protect2Size == nil) then
+		playersArchived[steam].protect2Size = server.baseSize
+	else
+		if tonumber(playersArchived[steam].protect2Size) < tonumber(server.baseSize) then
+			playersArchived[steam].protect2Size = server.baseSize
+		end
+	end
+
+	if playersArchived[steam].ircAuthenticated == nil then
+		playersArchived[steam].ircAuthenticated = false
+	end
+
+	if playersArchived[steam].exit2X == 0 and playersArchived[steam].exit2Z == 0 then
+		playersArchived[steam].exit2Y = 0
+	end
+
+	if playersArchived[steam].exitX == 0 and playersArchived[steam].exitZ == 0 then
+		playersArchived[steam].exitY = 0
+	end
+
+	if (playersArchived[steam].raiding == nil) then
+		playersArchived[steam].raiding = false
+	end
+
+	if (playersArchived[steam].removeClaims == nil) then
+		playersArchived[steam].removeClaims = false
+	end
+
+	if playersArchived[steam].GBLCount == nil then
+		playersArchived[steam].GBLCount = 0
+	end
+
+	if playersArchived[steam].pendingBans == nil then
+		playersArchived[steam].pendingBans = 0
+	end
+
+	if playersArchived[steam].lastCommand == nil then
+		playersArchived[steam].lastCommand = ""
+	end
+
+	if playersArchived[steam].lastCommandTimestamp == nil then
+		playersArchived[steam].lastCommandTimestamp = os.time() -1
+	end
+
+	if playersArchived[steam].lastChatLine == nil then
+		playersArchived[steam].lastChatLine = ""
+	end
+
+	if playersArchived[steam].lastLogout == nil then
+		playersArchived[steam].lastLogout = os.time()
+		playersArchived[steam].relogCount = 0
+	end
+
+	if playersArchived[steam].IP == nil then
+		playersArchived[steam].IP = ""
+	end
+
+	if playersArchived[steam].country == nil then
+		playersArchived[steam].country = ""
+	end
+
+	if playersArchived[steam].seen == nil then
+		playersArchived[steam].seen = ""
+	end
+
+	if playersArchived[steam].ircAlias == nil then
+		playersArchived[steam].ircAlias = ""
+	end
+
+	if playersArchived[steam].bed == nil then
+		playersArchived[steam].bed = ""
+	end
+
+	if playersArchived[steam].prisonReason == nil then
+		playersArchived[steam].prisonReason = ""
+	end
+
+	if playersArchived[steam].aliases == nil then
+		playersArchived[steam].aliases = ""
+	end
+
+	if playersArchived[steam].ircPass == nil then
+		playersArchived[steam].ircPass = ""
+	end
+
+	if playersArchived[steam].ircOtherNames == nil then
+		playersArchived[steam].ircOtherNames = ""
+	end
+
+	if playersArchived[steam].ISP == nil then
+		playersArchived[steam].ISP = ""
+	end
+
+	if playersArchived[steam].VACBanned == nil then
+		playersArchived[steam].VACBanned = false
+	end
+end
+
+
 function fixMissingIGPlayer(steam)
 	-- if any fields are missing from the players in-game player record, add them with default values
 

@@ -18,3 +18,6 @@ check code behind location accessLevel field and minimumAccess and maximumAccess
 
 Check that teleports that should cost money are being charged and that the player is properly informed.
 Finish coding the spending alert.
+
+add check so that if a command's access level is set to -1, the command is disabled.  This way we can have multiple identical commands but using different mods
+and be able to disable one so that the bot always uses the other mod's command instead.  Of course not having the other mod would disable it's version of the command too.

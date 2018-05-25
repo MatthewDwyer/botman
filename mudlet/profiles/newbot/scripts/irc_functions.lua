@@ -197,10 +197,13 @@ function irc_ListBases(steam)
 			msg = msg .. row.home2X .. " " .. row.home2Y .. " " .. row.home2Z .. " " .. prot2 .. " (" .. row.protect2Size .. ") "
 		end
 
-		if tonumber(row.bedX) == 0 and tonumber(row.bedY) == 0 and tonumber(row.bedZ) == 0 then
-			msg = msg .. " no bedroll recorded"
-		else
-			msg = msg .. " bedroll " .. row.bedX .. " " .. row.bedY .. " " .. row.bedZ
+
+		if msg ~= nil then
+			if tonumber(row.bedX) == 0 and tonumber(row.bedY) == 0 and tonumber(row.bedZ) == 0 then
+				msg = msg .. " no bedroll recorded"
+			else
+				msg = msg .. " bedroll " .. row.bedX .. " " .. row.bedY .. " " .. row.bedZ
+			end
 		end
 
 		if irc_params.filter == "protected" and (row.protect == true or row.protect2 == true) then

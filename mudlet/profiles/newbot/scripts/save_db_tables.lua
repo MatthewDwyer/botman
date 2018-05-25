@@ -71,6 +71,44 @@ debugdb = false
 end
 
 
+function updateArchivedPlayer(steam)
+	local k,v,value,temp
+
+	if tonumber(steam) == nil or (string.len(steam) < 17) then
+		dbug("skipping player " .. steam .. " for invalid steam id")
+
+		-- don't process if steam is invalid
+		return
+	end
+
+	-- update the db
+	sql = {}
+
+	for k,v in pairs(playerFields) do
+		if playersArchived[steam][v.field] then
+			value = playersArchived[steam][v.field]
+
+			sql[v.field] = {}
+			sql[v.field].field = v.field
+
+			if v.type == "var" then
+				sql[v.field].value = stripCommas(value)
+			else
+				sql[v.field].value = value
+			end
+
+			if v.type == "tim" and value ~= nil then
+				sql[v.field].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", value) .. "'"
+			end
+		end
+	end
+
+--debugdb = true
+	saveArchivedPlayer(steam)
+debugdb = false
+end
+
+
 function getServerFields()
 	local field
 
@@ -279,6 +317,96 @@ function savePlayer(steam, action)
 		if debugdb then
 			dbug("save player success")
 			dbug("save player sqlString " .. sqlString)
+		end
+
+		return true -- record inserted/updated
+	end
+end
+
+
+function saveArchivedPlayer(steam, action)
+	-- DO NOT call this function directly.  Call updatePlayer instead.
+	local k, v, i, sqlString, sqlValues, status, errorString, max
+
+	if debugdb then
+		dbug("saving archived player " .. steam .. " " .. playersArchived[steam].name)
+	end
+
+	if playerFields == nil then
+		getPlayerFields()
+	end
+
+	if action == nil then
+		sqlString = "update playersArchived set"
+
+		for k,v in pairs(playerFields) do
+			if sql[k] and sql[k].value and v.type ~= "tim" then
+				if v.type == "var" then
+					sql[k].value = "'" .. escape(sql[k].value) .. "'"
+				end
+
+				if v.type == "tin" then
+					if sql[k].value == true then sql[k].value = 1 end
+					if sql[k].value == false then sql[k].value = 0 end
+				end
+
+				if v.type == "tim" and sql[k].value ~= nil then
+					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"
+				end
+
+				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. "=" .. sql[k].value .. ","
+			end
+		end
+
+		sqlString = string.sub(sqlString, 1, string.len(sqlString) - 1)
+		sqlString = sqlString .. " where steam = '" .. steam .. "'"
+	else
+		sqlString = "insert into playersArchived ("
+		sqlValues = " values ("
+
+		for k,v in pairs(playerFields) do
+			if sql[k] and v.type ~= "tim" then
+				if v.type == "var" then
+					sql[k].value = "'" .. escape(sql[k].value) .. "'"
+				end
+
+				if v.type == "tin" then
+					if sql[k].value == true then sql[k].value = 1 end
+					if sql[k].value == false then sql[k].value = 0 end
+				end
+
+				if v.type == "tim" then
+					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"
+				end
+
+				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. ","
+				sqlValues = sqlValues .. sql[k].value .. ","
+			end
+		end
+
+		sqlString = string.sub(sqlString, 1, string.len(sqlString) - 1) .. ")"
+		sqlValues = string.sub(sqlValues, 1, string.len(sqlValues) - 1) .. ")"
+		sqlString = sqlString .. sqlValues
+	end
+
+	if debugdb then
+		dbug("save playerArchived sqlString " .. sqlString)
+	end
+
+	status, errorString = conn:execute(sqlString)
+
+	if status == 0 then
+		if debugdb then
+			dbug("save playerArchived failed")
+			dbug(status .. " " .. errorString )
+		end
+
+		getPlayerFields()
+		return false -- no record changed
+	else
+		if debugdb then
+			dbug("save playerArchived success")
+			dbug("save playerArchived sqlString " .. sqlString)
 		end
 
 		return true -- record inserted/updated

@@ -239,7 +239,7 @@ function commandHelp(command)
 
 	if 	(command == "manual") and (chatvars.accessLevel < 3) then
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]More detailed help is available to admins on the IRC server.[-]")
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is also botman.nz/docs/commands/all-bot-commands[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is also botman.nz/docs/commands/all-bot-commands-new-version[-]")
 		return
 	end
 

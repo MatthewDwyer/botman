@@ -15,7 +15,7 @@ local number, numberCount, numbers = {}
 debug = false -- should be false unless testing
 
 if botman.debugAll then
-	debug = true
+	debug = true -- this should be true
 end
 
 local function requireLogin(name, silent)
@@ -3217,7 +3217,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_params.filter = "all"
 			end
 
-			if pid ~= 0 then
+			if pid ~= nil then
 				pid = LookupPlayer(pid)
 			end
 
@@ -3324,7 +3324,6 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		if (words[1] == "info") then
 			if words[2] == nil then
-			display("players[ircid].selectedSteam " .. players[ircid].selectedSteam)
 				pid = players[ircid].selectedSteam
 			else
 				name1 = string.sub(msg, string.find(msgLower, "info") + 5)

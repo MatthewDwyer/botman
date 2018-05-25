@@ -93,8 +93,12 @@ function unpackScripts()
 		savePlayerData(k)
 	end
 
+	dofile(homedir .. "/scripts/update.lua")
+	runBeforeBotUpdate()
+
 	os.execute("unzip -X -o \"" .. homedir .. "\"/temp/scripts.zip -d \"" .. homedir .. "\"")
 	tempTimer( 3, [[ reloadBotScripts(true) ]] )
+	tempTimer( 60, [[ reloadBotScripts(true) ]] ) -- while not strictly necessary it does seem to fix lingering issues after an update most of the time.
 
 	tempTimer( 6, [[ loadPlayers() ]] )
 	tempTimer( 8, [[ loadPlayersArchived() ]] )
@@ -336,6 +340,11 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 
 	server.nextCodeReload = "/scripts/trialCode.lua"
 	checkScript(homedir .. "/scripts/trialCode.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/update.lua"
+	checkScript(homedir .. "/scripts/update.lua")
 
 if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -694,13 +703,11 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	enableTrigger("Collect Ban")
 	enableTrigger("Unban player")
 	enableTrigger("Overstack")
---	enableTrigger("Open Reserved Slot")
 	enableTrigger("mem")
 	enableTrigger("lp")
 	enableTrigger("Tele")
 	enableTrigger("llp")
 	enableTrigger("Chat")
---	enableTrigger("log chat")
 
 	enableTimer("EveryHalfMinute")
 	enableTimer("OneMinuteTimer")

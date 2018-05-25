@@ -12,7 +12,7 @@ local note, pname, pid, debug, result, help
 debug = false -- should be false unless testing
 
 if botman.debugAll then
-	debug = true
+	debug = true -- this should be true
 end
 
 function gmsg_misc()

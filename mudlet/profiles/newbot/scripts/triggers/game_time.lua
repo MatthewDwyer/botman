@@ -8,7 +8,7 @@
 --]]
 
 function gameTimeTrigger(line)
-	local word, words, k, v
+	local word, words, k, v, closed, closingSoon
 
 	if botman.botDisabled then
 		return
@@ -75,16 +75,27 @@ function gameTimeTrigger(line)
 
 	 --check locations for opening and closing times
 	for k,v in pairs(locations) do
+		closed, closingSoon = isLocationOpen(v.name)
+
 		if isLocationOpen(v.name) then
 			if not v.open then
-				message("say [" .. server.chatColour .. "]The location " .. v.name .. " is now open.[-]")
+				message("say [" .. server.chatColour .. "]The location called " .. v.name .. " is now open.[-]")
 				v.open = true
 			end
 		else
 			if v.open then
-				message("say [" .. server.chatColour .. "]The location " .. v.name .. " has closed.[-]")
+				message("say [" .. server.chatColour .. "]The location called " .. v.name .. " has closed.[-]")
 				v.open = false
 			end
+		end
+
+		if closingSoon then
+			if not v.closingSoon then
+				message("say [" .. server.chatColour .. "]The location called " .. v.name .. " is closing soon.[-]")
+				v.closingSoon = true
+			end
+		else
+			v.closingSoon = false
 		end
 	end
 

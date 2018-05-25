@@ -13,7 +13,7 @@ local debug, result, x, z, id, pname, noWaypoint, temp, chatStringStart, cmd, ms
 debug = false -- should be false unless testing
 
 if botman.debugAll then
-	debug = true
+	debug = true -- this should be true
 end
 
 function day7(steam)
@@ -1382,7 +1382,7 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if server.coppiVersion then
-		if tonumber(server.coppiVersion) < 4.6 then
+		if tonumber(server.coppiVersion) < 4.7 then
 			if debug then dbug("debug entering gmsg_coppi_old") end
 			result = gmsg_coppi_old()
 		else

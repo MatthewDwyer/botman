@@ -660,17 +660,18 @@ end
 
 
 function isLocationOpen(loc)
-	local timeOpen, timeClosed, isOpen, gameHour
+	local timeOpen, timeClosed, isOpen, closingSoon, gameHour
 
 	gameHour = tonumber(server.gameHour)
 	timeOpen = tonumber(locations[loc].timeOpen)
 	timeClosed = tonumber(locations[loc].timeClosed)
 	isOpen = true
+	closingSoon = false
 
 	-- check the location for opening and closing times
 	if tonumber(locations[loc].dayClosed) > 0 then
 		if ((server.gameDay + 7 - locations[loc].dayClosed) % 7 == 0) then
-			return false
+			return false, false
 		end
 	end
 
@@ -685,7 +686,7 @@ function isLocationOpen(loc)
 			if gameHour < timeOpen then
 				isOpen = false
 			end
-		 else
+		else
 			if gameHour >= timeClosed then
 				isOpen = false
 			end
@@ -694,9 +695,17 @@ function isLocationOpen(loc)
 				isOpen = true
 			end
 		 end
+
+		if timeClosed == 0 and gameHour == 23 then
+			closingSoon = true
+		end
+
+		if timeClosed - gameHour == 1 then
+			closingSoon = true
+		end
 	end
 
-	return isOpen
+	return isOpen, closingSoon
 end
 
 
@@ -917,8 +926,6 @@ function trimLogs()
 	local files, file, temp, k, v
 	local yearPart, monthPart, dayPart
 
-display("trimLogs start")
-
 	files = {}
 
 	for file in lfs.dir(homedir .. "/log") do
@@ -976,16 +983,12 @@ display("trimLogs start")
 		end
 	end
 
-display(files)
-
 	for k,v in pairs(files) do
 		fileDate = os.time({year = v.dateSplit[yearPart], month = v.dateSplit[monthPart], day = v.dateSplit[dayPart], hour = 0, min = 0, sec = 0})
 		if os.time() - fileDate > 604800 then -- older than 7 days
 			os.remove(homedir .. "/log/" .. k)
 		end
 	end
-
-display("trimLogs end")
 end
 
 function removeEntities()

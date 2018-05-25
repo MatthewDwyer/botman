@@ -23,7 +23,7 @@ local runyear, runmonth, runday, runhour, runminute, runseconds, seenTimestamp
 debug = false -- should be false unless testing
 
 if botman.debugAll then
-	debug = true
+	debug = true -- this should be true
 end
 
 function gmsg_admin()
@@ -618,8 +618,7 @@ function gmsg_admin()
 					connBots:execute("UPDATE donors SET donor = 1, donorLevel = " .. tmp.level .. ", donorExpiry = " .. tmp.expiry .. " WHERE steam = " .. tmp.id .. " AND serverGroup = '" .. escape(server.serverGroup) .. "'")
 				end
 
-				message("say [" .. server.chatColour .. "]" .. playerName .. " has donated! Thanks =D[-]")
-
+				message("pm " .. tmp.id .. " [" .. server.chatColour .. "]You have been given donor privileges until " .. os.date("%d-%b-%Y",  tmp.expiry) .. ". Thank you for being awesome! =D[-]")
 				irc_chat(server.ircMain, playerName .. " donor status expires on " .. os.date("%d-%b-%Y",  tmp.expiry))
 
 				if chatvars.ircid ~= 0 then
@@ -3291,27 +3290,32 @@ function gmsg_admin()
 
 			id = chatvars.playerid
 
-			if id == 0 then
-				id = LookupArchivedPlayer(pname)
+			if (chatvars.words[2] ~= nil) then
+				pname = chatvars.words[2]
+				id = LookupPlayer(pname)
 
-				if not (id == 0) then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
+				if id == 0 then
+					id = LookupArchivedPlayer(pname)
+
+					if not (id == 0) then
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
+						else
+							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server and repeat this command.")
+						end
+
+						botman.faultyChat = false
+						return true
 					else
-						irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server and repeat this command.")
-					end
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+						else
+							irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+						end
 
-					botman.faultyChat = false
-					return true
-				else
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
-					else
-						irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+						botman.faultyChat = false
+						return true
 					end
-
-					botman.faultyChat = false
-					return true
 				end
 			end
 
