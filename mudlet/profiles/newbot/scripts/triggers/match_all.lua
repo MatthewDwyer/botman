@@ -290,9 +290,25 @@ function matchAll(line)
 
 		if igplayers[tmp.pid] then
 			igplayers[tmp.pid].spawnedInWorld = true
+			igplayers[tmp.pid].spawnChecked = false
 			igplayers[tmp.pid].spawnedReason = tmp.spawnedReason
-			igplayers[tmp.pid].spawnedCoordsOld = igplayers[tmp.pid].spawnedCoords
-			igplayers[tmp.pid].spawnedCoords = tmp.coords
+
+			if igplayers[tmp.pid].spawnedCoordsOld == "0 0 0" then
+				igplayers[tmp.pid].spawnedCoordsOld = igplayers[tmp.pid].spawnedCoords
+				igplayers[tmp.pid].spawnedCoords = tmp.coords
+				igplayers[tmp.pid].spawnChecked = true
+			else
+				igplayers[tmp.pid].spawnedCoords = tmp.coords
+
+				if igplayers[tmp.pid].spawnedCoordsOld ~= igplayers[tmp.pid].spawnedCoords then
+					igplayers[steam].tp = tonumber(igplayers[steam].tp) - 1
+				end
+			end
+
+			temp = string.split(tmp.coords, " ")
+			igplayers[tmp.pid].spawnedXPos = temp[1]
+			igplayers[tmp.pid].spawnedYPos = temp[2]
+			igplayers[tmp.pid].spawnedZPos = temp[3]
 		end
 	end
 
@@ -349,8 +365,8 @@ function matchAll(line)
 		if (pid ~= 0) then
 			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[pid].xPos) .. "," .. math.ceil(igplayers[pid].yPos) .. "," .. math.floor(igplayers[pid].zPos) .. ",'" .. botman.serverTime .. "','death','" .. escape(pname) .. " died'," .. pid .. ")") end
 
-			players[pid].tp = 1
-			players[pid].hackerTPScore = 0
+			igplayers[pid].tp = 1
+			igplayers[pid].hackerTPScore = 0
 			igplayers[pid].deadX = math.floor(igplayers[pid].xPos)
 			igplayers[pid].deadY = math.ceil(igplayers[pid].yPos)
 			igplayers[pid].deadZ = math.floor(igplayers[pid].zPos)
@@ -542,10 +558,14 @@ function matchAll(line)
 			steam = string.trim(temp[4])
 			reason = string.trim(temp[5])
 
-			if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "','" .. bannedTo .. "')") end
+			if botman.dbConnected then
+				conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "','" .. bannedTo .. "')")
 
-			-- also insert the steam owner (will only work if the steam id is different)
-			if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. players[steam].steamOwner .. ",'" .. reason(reason) .. "','" .. bannedTo .. "')") end
+				if players[steam] then
+					-- also insert the steam owner (will only work if the steam id is different)
+					conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. players[steam].steamOwner .. ",'" .. escape(reason) .. "','" .. bannedTo .. "')")
+				end
+			end
 		end
 	end
 
@@ -862,20 +882,21 @@ function matchAll(line)
 	end
 
 
-	if string.find(line, "Executing command 'version'") and string.find(line, server.botsIP) then
-		modVersions = {}
-		server.alloc = false
-		server.coppi = false
-		server.stompy = false
-		server.SDXDetected = false
-		server.ServerToolsDetected = false
-		server.hackerTPDetection = false
+	if string.find(line, "Executing command 'version'") and server.botsIP then
+		if string.find(line, server.botsIP) then
+			modVersions = {}
+			server.alloc = false
+			server.coppi = false
+			server.stompy = false
+			server.SDXDetected = false
+			server.ServerToolsDetected = false
 
-		if botman.dbConnected then
-			conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
+			if botman.dbConnected then
+				conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
+			end
+
+			return
 		end
-
-		return
 	end
 
 
@@ -934,18 +955,17 @@ function matchAll(line)
 		return
 	end
 
-	-- detect server tools
+	-- detect SDX mods
 	if string.find(line, "Mod SDX:") or string.find(line, "SDX: ") and not server.SDXDetected then
 		server.SDXDetected = true
-		server.hackerTPDetection = false
+		server.hackerTPDetection = true
 		if botman.dbConnected then conn:execute("UPDATE server SET SDXDetected = 1, hackerTPDetection = 0") end
 		return
 	end
 
-	-- detect SDX mods
+	-- detect server tools
 	if string.find(line, "Mod Server Tools:") or string.find(line, "mod 'Server Tools'") and not server.ServerToolsDetected then
 		server.ServerToolsDetected = true
-		--server.hackerTPDetection = false
 		if botman.dbConnected then conn:execute("UPDATE server SET ServerToolsDetected = 1, hackerTPDetection = 0") end
 		return
 	end

@@ -354,8 +354,9 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. steam)
 	else
 		if tonumber(players[steam].hackerScore) >= 49  then
+			-- if the player has pending global bans recorded against them, we ban them early and also activate the global ban
 			if tonumber(players[steam].pendingBans) > 0 then
-				--players[steam].hackerScore = 0
+				players[steam].hackerScore = 0
 				if igplayers[steam].hackerDetection ~= nil then
 					message(string.format("say [%s]Temp banning %s. May be hacking. Detected " .. igplayers[steam].hackerDetection .. "[-]", server.chatColour, players[steam].name))
 				else
@@ -370,7 +371,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 
 		if tonumber(players[steam].hackerScore) >= 100 then
-			--players[steam].hackerScore = 0
+			players[steam].hackerScore = 0
 			if igplayers[steam].hackerDetection ~= nil then
 				message(string.format("say [%s]Temp banning %s 1 week for suspected hacking. Detected " .. igplayers[steam].hackerDetection .. "[-]", server.chatColour, players[steam].name))
 			else
@@ -385,18 +386,17 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	end
 
 	-- test for hackers teleporting
-	--if (os.time() - players[steam].lastCommandTimestamp > 60) and server.hackerTPDetection then
-	if server.hackerTPDetection then
-		if not (players[steam].timeout or players[steam].botTimeout) and not players[steam].ignorePlayer then
-			if tonumber(intY) > -5000 and tonumber(intX) ~= 0 and tonumber(intZ) ~= 0 and tonumber(igplayers[steam].xPos) ~= 0 and tonumber(igplayers[steam].zPos) ~= 0 and tonumber(os.time() - igplayers[steam].lastLP) < 6 then
+	if server.hackerTPDetection and not igplayers[steam].spawnChecked then
+		if not (players[steam].timeout or players[steam].botTimeout or players[steam].ignorePlayer) then
+			if tonumber(intX) ~= 0 and tonumber(intZ) ~= 0 and tonumber(igplayers[steam].xPos) ~= 0 and tonumber(igplayers[steam].zPos) ~= 0 then
 				dist = 0
 
-				if igplayers[steam].spawnedInWorld and igplayers[steam].spawnedReason == "teleport" and (igplayers[steam].spawnedCoords ~= igplayers[steam].spawnedCoordsOld) then
+				if igplayers[steam].spawnedInWorld and igplayers[steam].spawnedReason == "teleport" and igplayers[steam].spawnedCoordsOld ~= "0 0 0" then
 					dist = distancexz(posX, posZ, igplayers[steam].xPos, igplayers[steam].zPos)
 				end
 
-				if (dist >= 700) then
-					if tonumber(players[steam].tp) < 1 then
+				if (dist >= 300) then
+					if tonumber(igplayers[steam].tp) < 1 then
 						if players[steam].newPlayer == true then
 							new = " [FF8C40]NEW player "
 						else
@@ -407,26 +407,26 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 							irc_chat(server.ircMain, botman.serverTime .. " Player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
 							irc_chat(server.ircAlerts, botman.serverTime .. " Player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
 
-							players[steam].hackerTPScore = tonumber(players[steam].hackerTPScore) + 1
+							igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
 							players[steam].watchPlayer = true
 							players[steam].watchPlayerTimer = os.time() + 259200 -- watch for 3 days
 							if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. steam) end
 
 							if tonumber(players[steam].exiled) == 1 or players[steam].newPlayer then
-								players[steam].hackerTPScore = tonumber(players[steam].hackerTPScore) + 1
+								igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
 							end
 
-							if players[steam].hackerTPScore > 0 and players[steam].newPlayer and tonumber(players[steam].ping) > 180 then
+							if igplayers[steam].hackerTPScore > 0 and players[steam].newPlayer and tonumber(players[steam].ping) > 180 then
 								if locations["exile"] and not players[steam].prisoner then
 									players[steam].exiled = 1
 								else
-									players[steam].hackerTPScore = tonumber(players[steam].hackerTPScore) + 1
+									igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
 								end
 							end
 
-							if tonumber(players[steam].hackerTPScore) > 1 then
-								players[steam].hackerTPScore = 0
-								players[steam].tp = 0
+							if tonumber(igplayers[steam].hackerTPScore) > 1 then
+								igplayers[steam].hackerTPScore = 0
+								igplayers[steam].tp = 0
 								message(string.format("say [%s]Temp banning %s 1 week for unexplained teleporting. An admin will investigate the circumstances.[-]", server.chatColour, players[steam].name))
 								banPlayer(steam, "1 week", "We detected unusual teleporting from you and are investigating the circumstances.", "")
 
@@ -438,12 +438,16 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 						end
 					end
 
-					players[steam].tp = 0
+					igplayers[steam].tp = 0
+				else
+					igplayers[steam].tp = 0
 				end
 			end
 		end
 	end
 
+	igplayers[steam].spawnChecked = true
+	igplayers[steam].spawnedCoordsOld = igplayers[steam].spawnedCoords
 	igplayers[steam].lastLP = os.time()
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
@@ -504,30 +508,34 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	igplayers[steam].xPosLast = igplayers[steam].xPos
 	igplayers[steam].yPosLast = igplayers[steam].yPos
 	igplayers[steam].zPosLast = igplayers[steam].zPos
-
 	igplayers[steam].xPos = posX
 	igplayers[steam].yPos = posY
 	igplayers[steam].zPos = posZ
 	igplayers[steam].playerKills = kills
-
 	igplayers[steam].deaths = deaths
 	igplayers[steam].zombies = zombies
 	igplayers[steam].score = score
 
-	-- hacker detection
-	if tonumber(players[steam].level) > 2000 and not admin then
-		players[steam].hackerScore = 10000
-		igplayers[steam].hackerDetection = "Level hack. (" .. level .. ")"
+	if igplayers[steam].oldLevel == nil then
+		igplayers[steam].oldLevel = level
 	end
 
-	-- -- hacker detection
-	-- if tonumber(igplayers[steam].readCounter) > 2 and math.abs(level - players[steam].level) > 10 and not admin then
-		-- players[steam].hackerScore = 10000
-		-- igplayers[steam].hackerDetection = "Fast level change. (" .. level - players[steam].level .. ")"
-	-- end
+	-- hacker detection
+	if tonumber(level) - tonumber(igplayers[steam].oldLevel) > 50 and not admin then
+		alertAdmins(id .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel), "alert")
+		irc_chat(server.ircAlerts, steam .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel))
+	end
 
-	igplayers[steam].level = level
+	if server.checkLevelHack then
+		if tonumber(level) - tonumber(igplayers[steam].oldLevel) > 50 and not admin then
+			players[steam].hackerScore = 10000
+			igplayers[steam].hackerDetection = "Suspected level hack. (" .. level .. ") an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel)
+		end
+	end
+
 	players[steam].level = level
+	igplayers[steam].level = level
+	igplayers[steam].oldLevel = level
 	igplayers[steam].killTimer = 0 -- to help us detect a player that has disconnected unnoticed
 	igplayers[steam].raiding = false
 	igplayers[steam].regionX = regionX
@@ -553,7 +561,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	atHome(steam)
-
 	currentLocation = inLocation(intX, intZ)
 
 	if currentLocation ~= false then
@@ -842,8 +849,8 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, igplayers[igplayers[steam].following].xPos, igplayers[igplayers[steam].following].zPos)
 			if dist > followDistance and igplayers[igplayers[steam].following].yPos > 0 then
 				-- teleport close to the player
-				players[steam].tp = 1
-				players[steam].hackerTPScore = 0
+				igplayers[steam].tp = 1
+				igplayers[steam].hackerTPScore = 0
 				send("tele " .. steam .. " " .. math.floor(igplayers[igplayers[steam].following].xPos) .. " " .. math.ceil(igplayers[igplayers[steam].following].yPos - 30) .. " " .. math.floor(igplayers[igplayers[steam].following].zPos))
 
 				if botman.getMetrics then
@@ -1056,20 +1063,20 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	z = math.floor(igplayers[steam].zPos / 512)
 
 	if (playerAccessLevel < 4) and server.enableRegionPM then
-		if (igplayers[steam].region ~= "r." .. x .. "." .. z .. ".7") then
+		if (igplayers[steam].region ~= "r." .. x .. "." .. z .. ".7rg") then
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Region r." .. x .. "." .. z .. ".7[-]")
 		end
 	end
 
-	igplayers[steam].region = "r." .. x .. "." .. z .. ".7"
+	igplayers[steam].region = region
 	igplayers[steam].regionX = x
 	igplayers[steam].regionZ = z
 
 	-- timeout
 	if (players[steam].timeout == true or players[steam].botTimeout == true) then
 		if (intY < 20000) then
-			players[steam].tp = 1
-			players[steam].hackerTPScore = 0
+			igplayers[steam].tp = 1
+			igplayers[steam].hackerTPScore = 0
 			send("tele " .. steam .. " " .. intX .. " " .. 50000 .. " " .. intZ)
 
 			if botman.getMetrics then
@@ -1084,9 +1091,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	-- world fall catcher (redundant)
-	--fallCatcher(steam, intX, intY, intZ)
-
 	-- prevent player exceeding the map limit unless they are an admin except when ignoreadmins is false
 	if not isDestinationAllowed(steam, intX, intZ) then
 		if players[steam].donor then
@@ -1095,8 +1099,8 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")
 		end
 
-		players[steam].tp = 1
-		players[steam].hackerTPScore = 0
+		igplayers[steam].tp = 1
+		igplayers[steam].hackerTPScore = 0
 
 		if not isDestinationAllowed(steam, igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK) then
 			send ("tele " .. steam .. " 1 -1 0") -- if we don't know where to send the player, send them to the middle of the map. This should only happen rarely.
@@ -1164,8 +1168,8 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		dist = distancexz(posX, posZ, players[steam].prisonxPosOld, players[steam].prisonzPosOld)
 
 		if dist > 2 then
-			players[steam].tp = 1
-			players[steam].hackerTPScore = 0
+			igplayers[steam].tp = 1
+			igplayers[steam].hackerTPScore = 0
 			send("tele " .. steam .. " " .. players[steam].prisonxPosOld .. " " .. players[steam].prisonyPosOld .. " " .. players[steam].prisonzPosOld)
 
 			if botman.getMetrics then

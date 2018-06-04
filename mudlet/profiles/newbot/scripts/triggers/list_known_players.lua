@@ -31,7 +31,7 @@ function listKnownPlayers(line)
 	local runyear, runmonth, runday, runhour, runminute = tmp.seen:match(pattern)
 	local seenTimestamp = os.time({year = runyear, month = runmonth, day = runday, hour = runhour, min = runminute, 0})
 
-	if not igplayer[tmp.steam] and players[tmp.steam] then
+	if not igplayers[tmp.steam] and players[tmp.steam] then
 		-- acrchive players that haven't played in 2 months and aren't an admin
 		if (os.time() - seenTimestamp > 5184000) and (accessLevel(tmp.steam) > 3) then
 			conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. tmp.steam)
@@ -40,6 +40,11 @@ function listKnownPlayers(line)
 			loadPlayersArchived(tmp.steam)
 			return
 		end
+	end
+
+	if playersArchived[tmp.steam] then
+		-- abort if the player has been archived
+		return
 	end
 
 	if (not players[tmp.steam] and (tmp.playtime ~= "0")) then

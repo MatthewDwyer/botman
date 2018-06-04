@@ -49,6 +49,8 @@ function checkData()
 		login()
 	end
 
+	send("gt")
+
 	if tablelength(shopCategories) == 0 then
 		loadShopCategories()
 	end
@@ -88,6 +90,9 @@ function getServerData(getAllPlayers)
 
 	--read mods
 	send("version")
+
+	-- got the time?  Hey that's a nice watch.  Can I have it?
+	send("gt")
 
 	--read the ban list
 	tempTimer( 4, [[send("ban list")]] )
@@ -166,6 +171,8 @@ function login()
 	if (botman.botStarted == nil) then
 		registerAnonymousEventHandler("sysExitEvent", "onSysExit")
 		registerAnonymousEventHandler("sysIrcStatusMessage", "ircStatusMessage")
+
+		modVersions = {}
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		botman.botStarted = os.time()

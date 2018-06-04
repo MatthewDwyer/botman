@@ -1961,8 +1961,8 @@ function timeoutPlayer(steam, reason, bot)
 		end
 
 		-- then teleport the player to timeout
-		players[steam].tp = 1
-		players[steam].hackerTPScore = 0
+		igplayers[steam].tp = 1
+		igplayers[steam].hackerTPScore = 0
 
 		send("tele " .. steam .. " " .. players[steam].xPosTimeout .. " 50000 " .. players[steam].zPosTimeout)
 
@@ -1999,8 +1999,10 @@ function checkRegionClaims(x, z)
 end
 
 
-function dbWho(ownerid, x, y, z, dist, days, hours, height, ingame)
-	local cursor, errorString,row, counter, isStaff
+function dbWho(name, x, y, z, dist, days, hours, height, steamid, ingame)
+	local cursor, errorString, row, counter, isStaff
+
+	isStaff = false
 
 	if days == nil then days = 1 end
 	if height == nil then height = 5 end
@@ -2009,14 +2011,15 @@ function dbWho(ownerid, x, y, z, dist, days, hours, height, ingame)
 		return
 	end
 
-	isStaff = false
-	if players[ownerid].accessLevel < 3 then
-		isStaff = true
+	if players[steamid] then
+		if tonumber(players[steamid].accessLevel) < 3 then
+			isStaff = true
+		end
 	end
 
-	conn:execute("DELETE FROM searchResults WHERE owner = " .. ownerid)
+	conn:execute("DELETE FROM searchResults WHERE owner = " .. steamid)
 
-	if hours > 0 then
+	if tonumber(hours) > 0 then
 		cursor,errorString = conn:execute("select distinct steam, session from tracker where abs(x - " .. x .. ") <= " .. dist .. " and abs(z - " .. z .. ") <= " .. dist .. " and abs(y - " .. y .. ") <= " .. height .. " and timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(hours) * 3600)) .. "'")
 	else
 		cursor,errorString = conn:execute("select distinct steam, session from tracker where abs(x - " .. x .. ") <= " .. dist .. " and abs(z - " .. z .. ") <= " .. dist .. " and abs(y - " .. y .. ") <= " .. height .. " and timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(days) * 86400)) .. "'")
@@ -2026,42 +2029,41 @@ function dbWho(ownerid, x, y, z, dist, days, hours, height, ingame)
 	counter = 1
 	rows = cursor:numrows()
 
-	if igplayers[ownerid] == nil then
-		if rows > 50 then
-			irc_chat(ownerid, "****** Report length " .. rows .. " rows.  Cancel it by typing nuke irc")
+	if not ingame then
+		if tonumber(rows) > 50 then
+			irc_chat(name, "****** Report length " .. rows .. " rows.  Cancel it by typing nuke irc")
 		end
 	end
 
 	while row do
 		-- we will use the searchResults table later.  For now we're not doing anything with it.  It will become a lookup table with record numbers.
 		--conn:execute("INSERT INTO searchResults (owner, steam, session, counter) VALUES (" .. ownerid .. "," .. row.steam .. "," .. row.session .. "," .. counter .. ")")
-
 		if ingame then
 			if isStaff then
 				if players[row.steam] then
-					message("pm " .. ownerid .. " [" .. server.chatColour .. "] #" .. counter .." " .. row.steam .. " " .. players[row.steam].id .. " " .. players[row.steam].name .. " sess: " .. row.session .. "[-]")
+					message("pm " .. steamid .. " [" .. server.chatColour .. "] #" .. counter .." " .. row.steam .. " " .. players[row.steam].id .. " " .. players[row.steam].name .. " sess: " .. row.session .. "[-]")
 				else
-					message("pm " .. ownerid .. " [" .. server.chatColour .. "] #" .. counter .." " .. row.steam .. " " .. playersArchived[row.steam].id .. " " .. playersArchived[row.steam].name .. " (archived) sess: " .. row.session .. "[-]")
+					message("pm " .. steamid .. " [" .. server.chatColour .. "] #" .. counter .." " .. row.steam .. " " .. playersArchived[row.steam].id .. " " .. playersArchived[row.steam].name .. " (archived) sess: " .. row.session .. "[-]")
 				end
 			else
 				if players[row.steam] then
-					message("pm " .. ownerid .. " [" .. server.chatColour .. "]" .. players[row.steam].name .. " session: " .. row.session .. "[-]")
+					message("pm " .. steamid .. " [" .. server.chatColour .. "]" .. players[row.steam].name .. " session: " .. row.session .. "[-]")
 				else
-					message("pm " .. ownerid .. " [" .. server.chatColour .. "]" .. playersArchived[row.steam].name .. " session: " .. row.session .. "[-]")
+					message("pm " .. steamid .. " [" .. server.chatColour .. "]" .. playersArchived[row.steam].name .. " session: " .. row.session .. "[-]")
 				end
 			end
 		else
 			if isStaff then
 				if players[row.steam] then
-					irc_chat(ownerid, "#" .. counter .." " .. row.steam .. " " .. players[row.steam].name .. " sess: " .. row.session)
+					irc_chat(name, "#" .. counter .." " .. row.steam .. " " .. players[row.steam].name .. " sess: " .. row.session)
 				else
-					irc_chat(ownerid, "#" .. counter .." " .. row.steam .. " " .. playersArchived[row.steam].name .. " (archived) sess: " .. row.session)
+					irc_chat(name, "#" .. counter .." " .. row.steam .. " " .. playersArchived[row.steam].name .. " (archived) sess: " .. row.session)
 				end
 			else
 				if players[row.steam] then
-					irc_chat(ownerid, players[row.steam].name .. " session: " .. row.session)
+					irc_chat(name, players[row.steam].name .. " session: " .. row.session)
 				else
-					irc_chat(ownerid, playersArchived[row.steam].name .. " session: " .. row.session)
+					irc_chat(name, playersArchived[row.steam].name .. " session: " .. row.session)
 				end
 			end
 		end
@@ -2550,6 +2552,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].alertPrison = true
 	players[steam].alertPVP = true
 	players[steam].alertReset = true
+	players[steam].aliases = player .. ","
 	players[steam].atHome = false
 	players[steam].autoFriend = ""
 	players[steam].baseCooldown = 0
@@ -2564,15 +2567,16 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].chatColour = "FFFFFF"
 	players[steam].commandCooldown = 0
 	players[steam].country = ""
+	players[steam].denyRights = false
 	players[steam].donor = false
 	players[steam].donorExpiry = os.time()
 	players[steam].donorLevel = 0
+	players[steam].exiled = 0
 	players[steam].firstSeen = os.time()
 	players[steam].GBLCount = 0
 	players[steam].gimmeCooldown = 0
 	players[steam].gimmeCount = 0
 	players[steam].hackerScore = 0
-	players[steam].hackerTPScore = 0
 	players[steam].home2X = 0
 	players[steam].home2Y = 0
 	players[steam].home2Z = 0
@@ -2581,6 +2585,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].homeZ = 0
 	players[steam].id = entityid
 	players[steam].ignorePlayer = false -- exclude player from checks like inventory, flying, teleporting etc.
+	players[steam].IP = ""
 	players[steam].ircPass = ""
 	players[steam].ISP = ""
 	players[steam].lastBaseRaid = 0
@@ -2588,10 +2593,10 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].lastCommand = ""
 	players[steam].lastCommandTimestamp = os.time()
 	players[steam].lastLogout = os.time()
+	players[steam].location = ""
 	players[steam].maxWaypoints = server.maxWaypoints
 	players[steam].mute = false
 	players[steam].name = player
-	players[steam].names = player .. ","
 	players[steam].newPlayer = true
 	players[steam].overstack = false
 	players[steam].overstackItems = ""
@@ -2627,7 +2632,6 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].timeOnServer = 0
 	players[steam].timeout = false
 	players[steam].tokens = 0
-	players[steam].tp = 0
 	players[steam].VACBanned = false
 	players[steam].walkies = false
 	players[steam].watchPlayer = true
@@ -2650,7 +2654,6 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].zPos = 0
 	players[steam].zPosOld = 0
 	players[steam].zPosOld2 = 0
-	players[steam].location = ""
 
 	if locations["spawn"] then
 		players[steam].location = "spawn"
@@ -2681,6 +2684,7 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].flyingZ = 0
 	igplayers[steam].greet = true
 	igplayers[steam].greetdelay = 1000
+	igplayers[steam].hackerTPScore = 0
 	igplayers[steam].highPingCount = 0
 	igplayers[steam].id = entityid
 	igplayers[steam].illegalInventory = false
@@ -2703,12 +2707,14 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].sessionStart = os.time()
 	igplayers[steam].spawnedInWorld = false
 	igplayers[steam].spawnedReason = "fake reason"
+	igplayers[steam].spawnChecked = true
 	igplayers[steam].spawnedCoordsOld = "0 0 0"
 	igplayers[steam].spawnedCoords = "0 0 0"
 	igplayers[steam].steam = steam
 	igplayers[steam].steamOwner = steamOwner
 	igplayers[steam].teleCooldown = 200
 	igplayers[steam].timeOnServer = 0
+	igplayers[steam].tp = 1
 	igplayers[steam].xPos = 0
 	igplayers[steam].xPosLast = 0
 	igplayers[steam].xPosLastAlert = 0

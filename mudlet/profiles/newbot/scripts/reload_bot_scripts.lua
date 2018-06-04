@@ -63,7 +63,7 @@ function checkScriptVersion(forced)
 				botman.refreshCode = nil
 
 				if server.updateBot or forced then
-					irc_chat(server.ircMain, "Updating " .. server.botName .. " to version " .. version)
+					irc_chat(server.ircMain, "Updating " .. server.botName .. " to version " .. version .. " code branch " .. server.updateBranch)
 					server.botVersion = version
 					conn:execute("UPDATE server set botVersion = '" .. version .. "'")
 

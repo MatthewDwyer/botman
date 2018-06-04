@@ -1237,8 +1237,8 @@ function gmsg_base()
 			end
 
 			-- teleport the player back to their base
-			players[chatvars.playerid].tp = 1
-			players[chatvars.playerid].hackerTPScore = 0
+			igplayers[chatvars.playerid].tp = 1
+			igplayers[chatvars.playerid].hackerTPScore = 0
 
 			if tonumber(server.playerTeleportDelay) == 0 or tonumber(players[chatvars.playerid].accessLevel) < 3 then
 				teleport(cmd, chatvars.playerid)

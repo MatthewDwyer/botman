@@ -20,9 +20,9 @@ function teleTrigger(line)
 		cmd[2] = stripQuotes(cmd[2])
 
 		-- the first part of the split is tele, 2nd part is the player being teleported
-		id = cmd[2]
-		players[id].tp = 1
-		players[id].hackerTPScore = 0
+		id = LookupPlayer(cmd[2], "all")
+		igplayers[id].tp = 1
+		igplayers[id].hackerTPScore = 0
 		return
 	end
 
@@ -35,8 +35,8 @@ function teleTrigger(line)
 
 
 			id = LookupPlayer(cmd[2], "all")
-			players[id].tp = 1
-			players[id].hackerTPScore = 0
+			igplayers[id].tp = 1
+			igplayers[id].hackerTPScore = 0
 			return
 		end
 
@@ -47,8 +47,8 @@ function teleTrigger(line)
 			-- the first part of the split is tele, 2nd part is the player being teleported
 
 			id = LookupPlayer(cmd[2], "all")
-			players[id].tp = 1
-			players[id].hackerTPScore = 0
+			igplayers[id].tp = 1
+			igplayers[id].hackerTPScore = 0
 			return
 		end
 	end

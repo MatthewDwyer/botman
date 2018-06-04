@@ -8,7 +8,15 @@
 --]]
 
 function FifteenSecondTimer()
-	if botman.botOffline or botman.botDisabled then
+	if botman.botOffline then
+		return
+	end
+
+	if tonumber(botman.playersOnline) == 0 then
+		send("gt")
+	end
+
+	if botman.botDisabled then
 		return
 	end
 
@@ -40,8 +48,6 @@ function FifteenSecondTimer()
 	if server.lagged then
 		return
 	end
-
-	send("gt")
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 1

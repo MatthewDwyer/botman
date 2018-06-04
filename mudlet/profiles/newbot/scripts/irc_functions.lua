@@ -487,7 +487,7 @@ function irc_PlayerShortInfo()
 	if players[irc_params.pid].firstSeen ~= nil then irc_chat(irc_params.name, "First seen: " .. os.date("%Y-%m-%d %H:%M:%S", players[irc_params.pid].firstSeen) ) end
 	irc_chat(irc_params.name, seen(irc_params.pid))
 	irc_chat(irc_params.name, "Total time played: " .. days .. " days " .. hours .. " hours " .. minutes .. " minutes " .. time .. " seconds")
-	if players[irc_params.pid].names then irc_chat(irc_params.name, "Has played as " .. players[irc_params.pid].names) end
+	if players[irc_params.pid].aliases then irc_chat(irc_params.name, "Has played as " .. players[irc_params.pid].aliases) end
 
 	if players[irc_params.pid].bedX ~= 0 and players[irc_params.pid].bedY ~= 0 and players[irc_params.pid].bedZ ~= 0 then
 		irc_chat(irc_params.name, "Has a bedroll at " .. players[irc_params.pid].bedX .. " " .. players[irc_params.pid].bedY .. " " .. players[irc_params.pid].bedZ )

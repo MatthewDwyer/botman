@@ -18,8 +18,8 @@ end
 function prepareTeleport(steam, cmd)
 	if igplayers[steam] then
 		igplayers[steam].lastTP = cmd
-		players[steam].tp = 1
-		players[steam].hackerTPScore = 0
+		igplayers[steam].tp = 1
+		igplayers[steam].hackerTPScore = 0
 
 		-- record the player's current x y z
 		if tonumber(players[steam].accessLevel) < 3 or (players[steam].inLocation ~= "prison") then
@@ -54,8 +54,8 @@ function teleport(cmd, steam, justTeleport)
 	-- if an admin is following a player (using the /near command) and they teleport away, stop following the player
 	if igplayers[steam].following ~= nil then igplayers[steam].following = nil end
 
-	players[steam].tp = 1
-	players[steam].hackerTPScore = 0
+	igplayers[steam].tp = 1
+	igplayers[steam].hackerTPScore = 0
 
 	send(cmd)
 
@@ -63,8 +63,8 @@ function teleport(cmd, steam, justTeleport)
 		metrics.telnetCommands = metrics.telnetCommands + 1
 	end
 
-	players[steam].tp = 1
-	players[steam].hackerTPScore = 0
+	igplayers[steam].tp = 1
+	igplayers[steam].hackerTPScore = 0
 
 	if not justTeleport then
 		if tonumber(server.returnCooldown) > 0 and accessLevel(steam) > 2 then

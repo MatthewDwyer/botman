@@ -1598,16 +1598,16 @@ function gmsg_admin()
 				end
 			end
 
-			send("lkp")
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players (except staff) who have not played in more than 2 months will be archived.  The bot may become un-responsive during this time.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Players (except staff) who have not played in more than 2 months will be archived.  The bot may become un-responsive during this time.")
+			end
+
+			tempTimer( 10, [[send("lkp")]] )
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Archiving old player records except for staff.[-]")
-			else
-				irc_chat(chatvars.ircAlias, "Archiving old player records except for staff.")
 			end
 
 			botman.faultyChat = false

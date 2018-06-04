@@ -1709,6 +1709,79 @@ function gmsg_bot()
 	end
 
 
+	local function cmd_ToggleCheckLevelHack()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable level hack check"
+			help[2] = "Hackers can give themselves XP but normal play and/or game bugs can also cause large level changes.\n"
+			help[2] = help[2] .. "The level check could falsely report legit level changes as hacking so this is disabled by default.\n"
+			help[2] = help[2] .. "If you enable it and innocent players get banned, either unban them or turn it off again."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,able,level,hack"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "hack") or string.find(chatvars.command, "level") or string.find(chatvars.command, "able"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "level" and chatvars.words[3] == "hack" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "disable" then
+				server.checkLevelHack = false
+				if botman.dbConnected then conn:execute("UPDATE server SET checkLevelHack = 0") end
+
+				if (chatvars.playername ~= "Server") then
+					message(string.format("pm %s [%s]Level hack detection is disabled.", chatvars.playerid, server.chatColour))
+				else
+					irc_chat(chatvars.ircAlias, "Level hack detection is disabled.")
+				end
+			end
+
+			if chatvars.words[1] == "enable" then
+				server.checkLevelHack = true
+				if botman.dbConnected then conn:execute("UPDATE server SET checkLevelHack = 1") end
+
+				if (chatvars.playername ~= "Server") then
+					message(string.format("pm %s [%s]Level hack detection is enabled.", chatvars.playerid, server.chatColour))
+				else
+					irc_chat(chatvars.ircAlias, "Level hack detection is enabled.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleHackerTPDetection()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -2234,6 +2307,15 @@ function gmsg_bot()
 
 	if result then
 		if debug then dbug("debug cmd_ToggleBotUpdates triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleCheckLevelHack()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleCheckLevelHack triggered") end
 		return result
 	end
 

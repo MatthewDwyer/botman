@@ -19,7 +19,10 @@ function listPlayers()
 	end
 
 	server.scanZombies = false
-	send("lp")
+
+	if tonumber(botman.playersOnline) ~= 0 then
+		send("lp")
+	end
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 1

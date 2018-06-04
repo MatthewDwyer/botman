@@ -23,6 +23,10 @@ function thirtySecondTimer()
 		return
 	end
 
+	if tonumber(botman.playersOnline) ~= 0 then
+		send("gt")
+	end
+
 	if not server.botsIP then
 		send("pm IPCHECK")
 	end

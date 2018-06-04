@@ -503,6 +503,10 @@ end
 
 
 function logChat(chatTime, chatLine)
+	if chatvars == nil then
+		return
+	end
+
 	local chatPosition
 	local playerName = chatvars.playername
 
@@ -648,6 +652,7 @@ function gmsg(line, ircid)
 	chatvars.ircid = 0
 	chatvars.ircAlias = ""
 	chatvars.helpRead = false
+	chatvars.playername = ""
 
 	if debug then dbug("gmsg chatvars.accessLevel " .. chatvars.accessLevel) end
 
@@ -694,6 +699,7 @@ function gmsg(line, ircid)
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if ircid ~= nil then
+		chatvars.playername = "Server"
 		chatvars.ircid = ircid
 		chatvars.ircAlias = players[ircid].ircAlias
 
@@ -768,7 +774,6 @@ function gmsg(line, ircid)
 		chatvars.command = string.trim(msg)
 		chatvars.accessLevel = tonumber(accessLevel(chatvars.playerid))
 
-if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		ircMsg = server.gameDate .. " " .. chatvars.command
 	else
 		if string.find(chatvars.gmsg, "'Server':", nil, true) and not string.find(line, "-irc:") then
@@ -781,18 +786,15 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 				temp = string.gsub(chatvars.playername, "%[[%/%!]-[^%[%]]-]", "") .. ": " .. string.sub(chatvars.command, 1, 200)
 				temp = string.gsub(temp, "%[[%/%!]-[^%[%]]-]", "")
 
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 				ircMsg = server.gameDate .. " " .. temp
 				messageIRC()
 
 				temp = string.sub(chatvars.command, 201)
 				temp = string.gsub(temp, "%[[%/%!]-[^%[%]]-]", "")
 
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 				ircMsg = server.gameDate .. " " .. temp
 			else
 				if not string.find(chatvars.command, server.commandPrefix .. "accept") and not string.find(chatvars.command, server.commandPrefix .. "poke") then
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 					ircMsg = server.gameDate .. " " .. string.gsub(chatvars.playername, "%[[%/%!]-[^%[%]]-]", "") .. ": " .. string.gsub(chatvars.command, "%[[%/%!]-[^%[%]]-]", "")
 				end
 			end
@@ -818,20 +820,22 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.playername ~= "Server") then
-		if chatvars.playerid == 0 then
+		if chatvars.playerid == 0 and chatvars.ircid == 0 then
 			-- usually this is a message from the server such as player left the game.  Ignore it and stop processing the line here.
 			botman.faultyChat = false
 			result = true
 			return true
 		end
 
-		if (players[chatvars.playerid].lastCommand) then
-			-- don't allow identical commands being spammed too quickly
---			if ((os.time() - players[chatvars.playerid].lastCommandTimestamp) < 4) and players[chatvars.playerid].lastCommand == chatvars.command then
-			if (os.time() - players[chatvars.playerid].lastCommandTimestamp) < 2 then
-				botman.faultyChat = false
-				result = true
-				return true
+		if chatvars.playerid ~= 0 then
+			if (players[chatvars.playerid].lastCommand) then
+				-- don't allow identical commands being spammed too quickly
+	--			if ((os.time() - players[chatvars.playerid].lastCommandTimestamp) < 4) and players[chatvars.playerid].lastCommand == chatvars.command then
+				if (os.time() - players[chatvars.playerid].lastCommandTimestamp) < 2 then
+					botman.faultyChat = false
+					result = true
+					return true
+				end
 			end
 		end
 	end
@@ -852,10 +856,12 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 			chatvars.zombies = zombies
 		end
 
-		if players[chatvars.playerid].block then
-			botman.faultyChat = false
-			result = true
-			return true
+		if chatvars.playerid ~= 0 then
+			if players[chatvars.playerid].block then
+				botman.faultyChat = false
+				result = true
+				return true
+			end
 		end
 	end
 
@@ -1545,12 +1551,14 @@ if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 	botman.faultyChat = false
 	botman.faultyChat2 = false
 
-	if chatvars.ircid == 0 and players[chatvars.playerid].botQuestion then
-		-- make the bot forget questions so we don't have it randomly react later on unexpectedly >.<
-		if players[chatvars.playerid].botQuestion ~= "" then
-			if string.find(players[chatvars.playerid].botQuestion, "reset") and not string.find(chatvars.command, "reset") then
-				players[chatvars.playerid].botQuestion = ""
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reset cancelled.[-]")
+	if chatvars.playerid ~= 0 then
+		if chatvars.ircid == 0 and players[chatvars.playerid].botQuestion then
+			-- make the bot forget questions so we don't have it randomly react later on unexpectedly >.<
+			if players[chatvars.playerid].botQuestion ~= "" then
+				if string.find(players[chatvars.playerid].botQuestion, "reset") and not string.find(chatvars.command, "reset") then
+					players[chatvars.playerid].botQuestion = ""
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reset cancelled.[-]")
+				end
 			end
 		end
 	end

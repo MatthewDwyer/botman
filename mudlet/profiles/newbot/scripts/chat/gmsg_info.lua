@@ -672,6 +672,8 @@ function gmsg_info()
 
 
 	local function cmd_ShowWherePlayer()
+		local inResetZone
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}where"
@@ -700,6 +702,8 @@ function gmsg_info()
 		end
 
 		if (chatvars.words[1] == "where" or chatvars.words[1] == "whereami") and chatvars.words[2] == nil then
+			inResetZone = false
+
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are " .. string.format("%.2f", (distancexz(chatvars.intX, chatvars.intZ,0,0) / 1000)) .. " km from the center of the map.[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are at " .. mapPosition(chatvars.playerid) .. "[-]")
 
@@ -711,6 +715,22 @@ function gmsg_info()
 
 			if players[chatvars.playerid].inLocation ~= "" then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in the location " .. players[chatvars.playerid].inLocation .. "[-]")
+			end
+
+			if players[chatvars.playerid].inLocation ~= "" then
+				if locations[players[chatvars.playerid].inLocation].resetZone then
+					inResetZone = true
+				end
+			end
+
+			if resetRegions[igplayers[chatvars.playerid].region] then
+				inResetZone = true
+			end
+
+			if inResetZone then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in a reset zone.  Don't build here or place a claim.[-]")
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not in a reset zone.[-]")
 			end
 
 			if players[chatvars.playerid].atHome then
@@ -1331,7 +1351,7 @@ function gmsg_info()
 					return true
 				end
 
-				if igplayer[chatvars.playerid] then
+				if igplayers[chatvars.playerid] then
 					if igplayers[chatvars.playerid].currentLocationPVP then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is not available in PVP.[-]")
 
@@ -1367,7 +1387,7 @@ function gmsg_info()
 			tmp.days = 1
 			tmp.hours = 0
 			tmp.range = 10
-			tmp.height = 0
+			tmp.height = 10
 			tmp.basesOnly = "player"
 			tmp.base = ""
 
@@ -1413,7 +1433,7 @@ function gmsg_info()
 						tmp.steam = LookupPlayer(tmp.name)
 
 						if tmp.steam == 0 then
-							tmp.steam = LookupArchivedPlayer(pname)
+							tmp.steam = LookupArchivedPlayer(tmp.name)
 
 							if not (tmp.steam == 0) then
 								playerName = playersArchived[tmp.steam].name
@@ -1488,26 +1508,26 @@ function gmsg_info()
 					if not isArchived then
 						if players[tmp.steam].homeX ~= 0 and players[tmp.steam].homeZ ~= 0 then
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 1 of " .. players[tmp.steam].name .. " at " .. players[tmp.steam].homeX .. " " .. players[tmp.steam].homeY .. " " .. players[tmp.steam].homeZ .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-							dbWho(chatvars.playerid, players[tmp.steam].homeX, players[tmp.steam].homeY, players[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, true)
+							dbWho(chatvars.playerid, players[tmp.steam].homeX, players[tmp.steam].homeY, players[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
 						else
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.steam].name .. " does not have a base set yet.[-]")
 						end
 
 						if players[tmp.steam].home2X ~= 0 and players[tmp.steam].home2Z ~= 0 then
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 2 of " .. players[tmp.steam].name .. " at " .. players[tmp.steam].home2X .. " " .. players[tmp.steam].home2Y .. " " .. players[tmp.steam].home2Z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-							dbWho(chatvars.playerid, players[tmp.steam].home2X, players[tmp.steam].home2Y, players[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, true)
+							dbWho(chatvars.playerid, players[tmp.steam].home2X, players[tmp.steam].home2Y, players[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
 						end
 					else
 						if playersArchived[tmp.steam].homeX ~= 0 and playersArchived[tmp.steam].homeZ ~= 0 then
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 1 of " .. players[tmp.steam].name .. " at " .. playersArchived[tmp.steam].homeX .. " " .. playersArchived[tmp.steam].homeY .. " " .. playersArchived[tmp.steam].homeZ .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-							dbWho(chatvars.playerid, playersArchived[tmp.steam].homeX, playersArchived[tmp.steam].homeY, playersArchived[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, true)
+							dbWho(chatvars.playerid, playersArchived[tmp.steam].homeX, playersArchived[tmp.steam].homeY, playersArchived[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
 						else
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. playersArchived[tmp.steam].name .. " does not have a base set yet.[-]")
 						end
 
 						if playersArchived[tmp.steam].home2X ~= 0 and playersArchived[tmp.steam].home2Z ~= 0 then
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 2 of " .. playersArchived[tmp.steam].name .. " at " .. playersArchived[tmp.steam].home2X .. " " .. playersArchived[tmp.steam].home2Y .. " " .. playersArchived[tmp.steam].home2Z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-							dbWho(chatvars.playerid, playersArchived[tmp.steam].home2X, playersArchived[tmp.steam].home2Y, playersArchived[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, true)
+							dbWho(chatvars.playerid, playersArchived[tmp.steam].home2X, playersArchived[tmp.steam].home2Y, playersArchived[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
 						end
 					end
 				end
@@ -1531,12 +1551,12 @@ function gmsg_info()
 						end
 					end
 
-					dbWho(chatvars.playerid, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height, true)
+					dbWho(chatvars.playerid, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
 				end
 
 				if not tmp.steam then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-					dbWho(chatvars.playerid, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height, true)
+					dbWho(chatvars.playerid, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
 				end
 			end
 
@@ -1550,7 +1570,7 @@ function gmsg_info()
 				if tmp.base == "1" then
 					if players[tmp.steam].homeX ~= 0 and players[tmp.steam].homeZ ~= 0 then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of your home at " .. players[tmp.steam].homeX .. " " .. players[tmp.steam].homeY .. " " .. players[tmp.steam].homeZ .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-						dbWho(chatvars.playerid, players[tmp.steam].homeX, players[tmp.steam].homeY, players[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, true)
+						dbWho(chatvars.playerid, players[tmp.steam].homeX, players[tmp.steam].homeY, players[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
 					else
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have not done " .. server.commandPrefix .. "sethome yet.[-]")
 					end
@@ -1559,7 +1579,7 @@ function gmsg_info()
 				if tmp.base == "2" then
 					if players[tmp.steam].home2X ~= 0 and players[tmp.steam].home2Z ~= 0 then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of your second home at " .. players[tmp.steam].home2X .. " " .. players[tmp.steam].home2Y .. " " .. players[tmp.steam].home2Z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-						dbWho(chatvars.playerid, players[tmp.steam].home2X, players[tmp.steam].home2Y, players[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, true)
+						dbWho(chatvars.playerid, players[tmp.steam].home2X, players[tmp.steam].home2Y, players[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
 					else
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have not done " .. server.commandPrefix .. "sethome2 yet (if you can have a 2nd home).[-]")
 					end

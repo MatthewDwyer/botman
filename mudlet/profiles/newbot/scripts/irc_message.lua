@@ -111,7 +111,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	-- block Mudlet from reacting to its own messages
-	if (name == server.botName or name == server.ircBotName or string.find(msg, "<" .. server.ircBotName .. ">", nil, true)) then return end
+	if (name == server.botName or name == server.ircBotName or string.find(msg, "<" .. server.ircBotName .. ">", nil, true)) then
+		return
+	end
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
@@ -862,8 +864,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		return
 	end
 
-	if players[ircid].denyRights then
-		return
+	if ircid ~= 0 then
+		if players[ircid].denyRights then
+			return
+		end
 	end
 
 	if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
@@ -1175,7 +1179,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 -- ########### Staff only in this section ###########
-	if (ircid == nil) then
+	if (ircid == nil or ircid == 0) then
 		return
 	end
 
@@ -2442,7 +2446,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			tmp.days = 1
 			tmp.hours = 0
 			tmp.range = 10
-			tmp.height = 5
+			tmp.height = 10
 			tmp.basesOnly = "player"
 			tmp.steam = 0
 
@@ -2504,7 +2508,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			if (tmp.basesOnly == "base") and tmp.steam ~= 0 then
 				if players[tmp.steam].homeX ~= 0 and players[tmp.steam].homeZ ~= 0 then
 					irc_chat(name, "Players who visited within " .. tmp.range .. " metres of base 1 of " .. players[tmp.steam].name .. " at " .. players[tmp.steam].homeX .. " " .. players[tmp.steam].homeY .. " " .. players[tmp.steam].homeZ .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height)
-					dbWho(name, players[tmp.steam].homeX, players[tmp.steam].homeY, players[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height)
+					dbWho(name, players[tmp.steam].homeX, players[tmp.steam].homeY, players[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, ircid, false)
 				else
 					irc_chat(name, "Player " .. players[tmp.steam].name .. " does not have a base set.")
 				end
@@ -2512,7 +2516,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				if players[tmp.steam].home2X ~= 0 and players[tmp.steam].home2Z ~= 0 then
 					irc_chat(name, ".")
 					irc_chat(name, "Players who visited within " .. tmp.range .. " metres of base 2 of " .. players[tmp.steam].name .. " at " .. players[tmp.steam].home2X .. " " .. players[tmp.steam].home2Y .. " " .. players[tmp.steam].home2Z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height)
-					dbWho(name, players[tmp.steam].home2X, players[tmp.steam].home2Y, players[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height)
+					dbWho(name, players[tmp.steam].home2X, players[tmp.steam].home2Y, players[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, ircid, false)
 				end
 			end
 
@@ -2525,12 +2529,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 					irc_chat(name, "Players who visited within " .. tmp.range .. " metres of player " .. players[tmp.steam].name .. "'s bed at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height)
 				end
 
-				dbWho(name, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height)
+				dbWho(name, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height, ircid, false)
 			end
 
 			if tmp.steam == 0 then
 				irc_chat(name, "Players who visited within " .. tmp.range .. " metres of " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height)
-				dbWho(name, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height)
+				dbWho(name, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height, ircid, false)
 			end
 
 			irc_chat(name, ".")
