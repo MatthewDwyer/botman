@@ -272,26 +272,13 @@ function matchAll(line)
 
 		tmp.coords = string.sub(line, string.find(line, "position:") + 10, string.find(line, ")") -1)
 		tmp.coords = tmp.coords:gsub(",", "")
+		tmp.spawnedReason = "N/A"
 
 		temp = string.split(line, ", ")
 		tmp.pid = string.match(temp[5], "(-?%d+)")
 
-		if string.find(line, "reason: Died") then
-			tmp.spawnedReason = "died"
-		end
-
-		if string.find(line, "reason: JoinMultiplayer") then
-			tmp.spawnedReason = "joined"
-		end
-
-		if string.find(line, "reason: Teleport") then
-			tmp.spawnedReason = "teleport"
-		end
-
 		if igplayers[tmp.pid] then
 			igplayers[tmp.pid].spawnedInWorld = true
-			igplayers[tmp.pid].spawnChecked = false
-			igplayers[tmp.pid].spawnedReason = tmp.spawnedReason
 
 			if igplayers[tmp.pid].spawnedCoordsOld == "0 0 0" then
 				igplayers[tmp.pid].spawnedCoordsOld = igplayers[tmp.pid].spawnedCoords
@@ -301,7 +288,7 @@ function matchAll(line)
 				igplayers[tmp.pid].spawnedCoords = tmp.coords
 
 				if igplayers[tmp.pid].spawnedCoordsOld ~= igplayers[tmp.pid].spawnedCoords then
-					igplayers[steam].tp = tonumber(igplayers[steam].tp) - 1
+					igplayers[tmp.pid].tp = tonumber(igplayers[tmp.pid].tp) - 1
 				end
 			end
 
@@ -310,6 +297,29 @@ function matchAll(line)
 			igplayers[tmp.pid].spawnedYPos = temp[2]
 			igplayers[tmp.pid].spawnedZPos = temp[3]
 		end
+
+		if string.find(line, "reason: Died") then
+			tmp.spawnedReason = "died"
+			igplayers[tmp.pid].spawnChecked = true
+		end
+
+		if string.find(line, "reason: JoinMultiplayer") then
+			tmp.spawnedReason = "joined"
+			igplayers[tmp.pid].spawnChecked = true
+		end
+
+		if string.find(line, "reason: Teleport") then
+			tmp.spawnedReason = "teleport"
+
+			if igplayers[tmp.pid].spawnPending then
+				igplayers[tmp.pid].spawnChecked = true
+			else
+				igplayers[tmp.pid].spawnChecked = false
+			end
+		end
+
+		igplayers[tmp.pid].spawnPending = false
+		igplayers[tmp.pid].spawnedReason = tmp.spawnedReason
 	end
 
 
@@ -691,13 +701,14 @@ function matchAll(line)
 					igplayers[pid].noclipY = math.floor(igplayers[pid].yPos)
 					igplayers[pid].noclipZ = math.floor(igplayers[pid].zPos)
 				else
+					-- dist is horizontal distance travelled since last detection
 					dist = distancexyz(igplayers[pid].noclipX,igplayers[pid].noclipY,igplayers[pid].noclipZ,math.floor(igplayers[pid].xPos),math.floor(igplayers[pid].yPos),math.floor(igplayers[pid].zPos))
 					igplayers[pid].noclipX = math.floor(igplayers[pid].xPos)
 					igplayers[pid].noclipY = math.floor(igplayers[pid].yPos)
 					igplayers[pid].noclipZ = math.floor(igplayers[pid].zPos)
 
-					if tonumber(dist) > 5 then
-						igplayers[steam].hackerDetection = "noclipping"
+					if tonumber(dist) > 5 or (tonumber(dist) > 1 and players[pid].newPlayer) then
+						igplayers[pid].hackerDetection = "noclipping"
 
 						if players[pid].newPlayer then
 							if tonumber(players[pid].ping) > 150 then
@@ -708,20 +719,20 @@ function matchAll(line)
 						else
 							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
 						end
-					end
 
-					if tonumber(dist) > 5 then
-						alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos) .. "[-]", "warn")
-						irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
-						irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
+						if igplayers[pid].noclipCount == nil then
+							igplayers[pid].noclipCount = 1
+						end
+
+						alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].noclipZ .. " " .. igplayers[pid].noclipY .. " " .. igplayers[pid].noclipZ .. "[-]", "warn")
+						irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].noclipX .. " " .. igplayers[pid].noclipY .. " " .. igplayers[pid].noclipZ)
+						irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].noclipX .. " " .. igplayers[pid].noclipY .. " " .. igplayers[pid].noclipZ)
+						igplayers[pid].noclipCount = tonumber(igplayers[pid].noclipCount) + 1
 					end
 				end
 			else
 				igplayers[pid].noclip = false
 				igplayers[pid].noclipCount = 0
-				igplayers[pid].noclipX = 0
-				igplayers[pid].noclipY = 0
-				igplayers[pid].noclipZ = 0
 			end
 
 			deleteLine()
@@ -738,9 +749,9 @@ function matchAll(line)
 			pid = words[1]
 			pid = LookupPlayer(pid)
 			igplayers[pid].flying = false
-			dist = tonumber(words[2])
+			dist = tonumber(words[2]) -- distance above ground
 
-			if tonumber(dist) > 5 and accessLevel(pid) > 2 then
+			if tonumber(dist) > 1 and accessLevel(pid) > 2 then
 				if not players[pid].timeout and not players[pid].botTimeout and igplayers[pid].lastTP == nil and not players[pid].ignorePlayer then
 					igplayers[pid].flying = true
 
@@ -749,9 +760,10 @@ function matchAll(line)
 						igplayers[pid].flyingY = math.floor(igplayers[pid].yPos)
 						igplayers[pid].flyingZ = math.floor(igplayers[pid].zPos)
 					else
+						-- distance of travel horizontally
 						dist = distancexz(igplayers[pid].flyingX,igplayers[pid].flyingZ,math.floor(igplayers[pid].xPos),math.floor(igplayers[pid].zPos))
 
-						if tonumber(dist) > 5 then
+						if tonumber(dist) > 5 or players[pid].newPlayer then
 							if players[pid].newPlayer then
 								if tonumber(players[pid].ping) > 150 then
 									players[pid].hackerScore = tonumber(players[pid].hackerScore) + 40
@@ -767,17 +779,17 @@ function matchAll(line)
 						igplayers[pid].flyingY = math.floor(igplayers[pid].yPos)
 						igplayers[pid].flyingZ = math.floor(igplayers[pid].zPos)
 
-						if tonumber(dist) > 5 then
+						if tonumber(dist) > 5 or players[pid].newPlayer then
 							igplayers[pid].flyCount = igplayers[pid].flyCount + 1
-							igplayers[steam].hackerDetection = "flying"
+							igplayers[pid].hackerDetection = "flying"
 
 							if tonumber(igplayers[pid].flyCount) > 1 then
-								irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (session: " .. players[pid].sessionCount .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
-								irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (session: " .. players[pid].sessionCount .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
+								irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (session: " .. players[pid].sessionCount .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
+								irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (session: " .. players[pid].sessionCount .. " hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos))
 							end
 
-							if tonumber(igplayers[pid].flyCount) > 2 then
-								alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " may be flying (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos) .. "[-]", "warn")
+							if tonumber(igplayers[pid].flyCount) > 1 then
+								alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " may be flying (count: " .. igplayers[pid].flyCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos) .. "[-]", "warn")
 							end
 						end
 					end
@@ -786,9 +798,6 @@ function matchAll(line)
 
 			if not igplayers[pid].flying then
 				igplayers[pid].flyCount = 0
-				igplayers[pid].flyingX = 0
-				igplayers[pid].flyingY = 0
-				igplayers[pid].flyingZ = 0
 			end
 
 			if not igplayers[pid].noclip and not igplayers[pid].flying then
@@ -958,15 +967,14 @@ function matchAll(line)
 	-- detect SDX mods
 	if string.find(line, "Mod SDX:") or string.find(line, "SDX: ") and not server.SDXDetected then
 		server.SDXDetected = true
-		server.hackerTPDetection = true
-		if botman.dbConnected then conn:execute("UPDATE server SET SDXDetected = 1, hackerTPDetection = 0") end
+		if botman.dbConnected then conn:execute("UPDATE server SET SDXDetected = 1") end
 		return
 	end
 
 	-- detect server tools
 	if string.find(line, "Mod Server Tools:") or string.find(line, "mod 'Server Tools'") and not server.ServerToolsDetected then
 		server.ServerToolsDetected = true
-		if botman.dbConnected then conn:execute("UPDATE server SET ServerToolsDetected = 1, hackerTPDetection = 0") end
+		if botman.dbConnected then conn:execute("UPDATE server SET ServerToolsDetected = 1") end
 		return
 	end
 

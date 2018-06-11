@@ -57,6 +57,8 @@ function gmsg_bot()
 
 					botman.faultyChat = false
 					return true
+				else
+					playerName = players[id].name
 				end
 			else
 				id = LookupArchivedPlayer(pname)
@@ -192,7 +194,7 @@ function gmsg_bot()
 				id = chatvars.playerid
 			end
 
-			if string.sub(chatvars.command, string.find(chatvars.command, "password") + 9) ~= server.masterPassword then
+			if string.sub(chatvars.commandOld, string.find(chatvars.command, "password") + 9) ~= server.masterPassword then
 				response = "password attempt failed."
 
 				r = rand(10)
@@ -1059,7 +1061,7 @@ function gmsg_bot()
 				end
 			end
 
-			tmp = stripQuotes(string.sub(chatvars.oldLine, string.find(chatvars.oldLine, chatvars.words[2], nil, true) + 4, string.len(chatvars.oldLine)))
+			tmp = stripQuotes(string.sub(chatvars.commandOld, string.find(chatvars.commandOld, chatvars.words[2], nil, true) + 4, string.len(chatvars.commandOld)))
 			if tmp == "Tester" and chatvars.playerid ~= Smegz0r then
 				message("say [" .. server.warnColour .. "]That name is reserved.[-]")
 				botman.faultyChat = false
@@ -1362,7 +1364,7 @@ function gmsg_bot()
 					irc_chat(chatvars.ircAlias, "You have cleared the master password. Bot commands are only protected by access levels.")
 				end
 			else
-				server.masterPassword = string.sub(chatvars.command, string.find(chatvars.command, "master password") + 16)
+				server.masterPassword = string.sub(chatvars.commandOld, string.find(chatvars.command, "master password") + 16)
 				conn:execute("UPDATE server SET masterPassword = '" .. escape(server.masterPassword) .. "'")
 
 				if (chatvars.playername ~= "Server") then

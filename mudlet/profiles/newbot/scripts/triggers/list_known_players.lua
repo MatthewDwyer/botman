@@ -22,6 +22,10 @@ function listKnownPlayers(line)
 	tmp.playtime = string.sub(tmp.data[6], string.find(tmp.data[6], "playtime=") + 9, string.len(tmp.data[6]) - 2)
 	tmp.seen = string.sub(tmp.data[7], string.find(tmp.data[7], "seen=") + 5)
 
+	if tmp.steam == "" then
+		return
+	end
+
 	if playersArchived[tmp.steam] then
 		-- don't process if this player has been archived
 		return

@@ -283,7 +283,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- ping kick
-	if not ((whitelist[steam] ~= nil) or players[steam].donor or tonumber(players[steam].accessLevel) < 3) then
+	if not whitelist[steam] and not players[steam].donor and tonumber(playerAccessLevel) > 2 then
 		if (server.pingKickTarget == "new" and players[steam].newPlayer) or server.pingKickTarget == "all" then
 			if tonumber(ping) < tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
 				igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) - 1
@@ -385,8 +385,11 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 	end
 
+
 	-- test for hackers teleporting
-	if server.hackerTPDetection and not igplayers[steam].spawnChecked then
+	if server.hackerTPDetection and igplayers[steam].spawnChecked == false and not igplayers[steam].spawnPending then
+		igplayers[steam].spawnChecked = true
+
 		if not (players[steam].timeout or players[steam].botTimeout or players[steam].ignorePlayer) then
 			if tonumber(intX) ~= 0 and tonumber(intZ) ~= 0 and tonumber(igplayers[steam].xPos) ~= 0 and tonumber(igplayers[steam].zPos) ~= 0 then
 				dist = 0
@@ -444,10 +447,11 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				end
 			end
 		end
+
+		igplayers[steam].spawnChecked = true
+		igplayers[steam].spawnedCoordsOld = igplayers[steam].spawnedCoords
 	end
 
-	igplayers[steam].spawnChecked = true
-	igplayers[steam].spawnedCoordsOld = igplayers[steam].spawnedCoords
 	igplayers[steam].lastLP = os.time()
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
@@ -1074,7 +1078,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	-- timeout
 	if (players[steam].timeout == true or players[steam].botTimeout == true) then
-		if (intY < 20000) then
+		if (intY < 30000) then
 			igplayers[steam].tp = 1
 			igplayers[steam].hackerTPScore = 0
 			send("tele " .. steam .. " " .. intX .. " " .. 50000 .. " " .. intZ)

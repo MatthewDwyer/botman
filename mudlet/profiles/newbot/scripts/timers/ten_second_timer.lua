@@ -38,4 +38,34 @@ function TenSecondTimer()
 			server.lagged = false
 		end
 	end
+
+	if botman.botOffline or botman.botDisabled or server.lagged then
+		return
+	end
+
+	if server.coppi then
+		-- here we only test new players for flying/clipping
+		-- we'll test everyone else on either the 15 second or 30 second timer depending on how many are playing now
+		for k,v in pairs(igplayers) do
+			if players[k].newPlayer then
+				if server.scanNoclip then
+					-- check for noclipped players
+					send("pug " .. k)
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
+				end
+
+				if not server.playersCanFly then
+					-- check for flying players
+					send("pgd " .. k)
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
+				end
+			end
+		end
+	end
 end

@@ -3891,6 +3891,18 @@ function gmsg_server()
 				server.allowReboot = false
 				conn:execute("UPDATE server SET allowReboot = 0")
 
+				-- also cancel any pending reboot
+				botman.scheduledRestart = false
+				botman.scheduledRestartTimestamp = os.time()
+				botman.scheduledRestartPaused = false
+				botman.scheduledRestartForced = false
+
+				if (botman.rebootTimerID ~= nil) then killTimer(botman.rebootTimerID) end
+				if (rebootTimerDelayID ~= nil) then killTimer(rebootTimerDelayID) end
+
+				botman.rebootTimerID = nil
+				rebootTimerDelayID = nil
+
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I will not reboot the server.[-]")
 				else

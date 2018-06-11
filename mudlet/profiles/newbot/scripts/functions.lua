@@ -18,7 +18,7 @@ end
 function processConnectQueue(steam)
 	local cursor, errorString, row
 
-	cursor,errorString = conn:execute("select * from connectQueue where steam = " .. steam .. "  order by id")
+	cursor,errorString = conn:execute("SELECT * FROM connectQueue WHERE steam = " .. steam .. "  ORDER BY id")
 
 	if cursor then
 		row = cursor:fetch({}, "a")
@@ -34,11 +34,11 @@ function processConnectQueue(steam)
 				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
-			conn:execute("update connectQueue set processed = 1 where id = " .. row.id)
+			conn:execute("UPDATE connectQueue SET processed = 1 WHERE id = " .. row.id)
 			row = cursor:fetch(row, "a")
 		end
 
-		conn:execute("delete from connectQueue where processed = 1")
+		conn:execute("DELETE FROM connectQueue WHERE processed = 1")
 	end
 end
 
@@ -406,14 +406,14 @@ function sendNextAnnouncement()
 
 	server.nextAnnouncement = server.nextAnnouncement + 1
 	if (server.nextAnnouncement > rows) then server.nextAnnouncement = 1 end
-	conn:execute("UPDATE server set nextAnnouncement = " .. server.nextAnnouncement)
+	conn:execute("UPDATE server SET nextAnnouncement = " .. server.nextAnnouncement)
 end
 
 
 function getLastCommandIndex(code)
 	local cursor, errorString, row
 
-	cursor,errorString = conn:execute("SELECT max(cmdIndex) as lastIndex FROM botCommands WHERE cmdCode = '" .. escape(code) .. "'")
+	cursor,errorString = conn:execute("SELECT MAX(cmdIndex) AS lastIndex FROM botCommands WHERE cmdCode = '" .. escape(code) .. "'")
 	row = cursor:fetch({}, "a")
 
 	return tonumber(row.lastIndex) + 1
@@ -464,27 +464,29 @@ end
 
 
 function removeInvalidItems()
-	local cursor,errorString, row
-	local validItems = {}
-
-	cursor,errorString = conn:execute("select * from spawnableItems")
-	row = cursor:fetch({}, "a")
-	while row do
-		validItems[row.itemName] = {}
-		row = cursor:fetch(row, "a")
-	end
-
 	-- remove invalid items from gimmePrizes
-	conn:execute("delete FROM `gimmePrizes` WHERE name not in (select itemName from spawnableItems)")
+	conn:execute("DELETE FROM `gimmePrizes` WHERE name NOT IN (select itemName from spawnableItems)")
+
+	-- update gimmePrizes prize names to match case of itemName in spawnableItems
+	conn:execute("UPDATE gimmePrizes INNER JOIN spawnableItems ON spawnableItems.itemName = gimmePrizes.name SET gimmePrizes.name = spawnableItems.itemName")
 
 	-- remove invalid items from the shop
-	conn:execute("delete FROM `shop` WHERE item not in (select itemName from spawnableItems)")
+	conn:execute("DELETE FROM `shop` WHERE item NOT IN (select itemName from spawnableItems)")
+
+	-- update shop item names to match case of itemName in spawnableItems
+	conn:execute("UPDATE shop INNER JOIN spawnableItems ON spawnableItems.itemName = shop.item SET shop.item = spawnableItems.itemName")
 
 	-- remove invalid items from badItems
-	conn:execute("delete FROM `badItems` WHERE item not in (select itemName from spawnableItems)")
+	conn:execute("DELETE FROM `badItems` WHERE item NOT IN (select itemName from spawnableItems)")
+
+	-- update badItems item name to match case of itemName in spawnableItems
+	conn:execute("UPDATE badItems INNER JOIN spawnableItems ON spawnableItems.itemName = badItems.item SET badItems.item = spawnableItems.itemName")
 
 	-- remove invalid items from restrictedItems
-	conn:execute("delete FROM `restrictedItems` WHERE item not in (select itemName from spawnableItems)")
+	conn:execute("DELETE FROM `restrictedItems` WHERE item NOT IN (select itemName from spawnableItems)")
+
+	-- update restrictedItems item name to match case of itemName in spawnableItems
+	conn:execute("UPDATE restrictedItems INNER JOIN spawnableItems ON spawnableItems.itemName = restrictedItems.item SET restrictedItems.item = spawnableItems.itemName")
 
 	-- refresh the restrictedItems table
 	loadRestrictedItems()
@@ -712,7 +714,7 @@ end
 function countGBLBans(steam)
 	players[steam].GBLBans = 0
 
-	cursor,errorString = connBots:execute("SELECT count(GBLBan) as totalBans FROM bans WHERE steam = '" .. steam .. "'")
+	cursor,errorString = connBots:execute("SELECT COUNT(GBLBan) AS totalBans FROM bans WHERE steam = '" .. steam .. "'")
 	row = cursor:fetch({}, "a")
 	players[steam].GBLBans = tonumber(row.totalBans)
 end
@@ -761,8 +763,8 @@ end
 
 
 function registerHelp(tmp)
-	if botman.dbConnected then conn:execute("insert into helpCommands (command, description, notes, keywords, accessLevel, ingameOnly) values ('" .. escape(tmp.command) .. "','" .. escape(tmp.description) .. "','" .. escape(tmp.notes) .. "','" .. escape(tmp.keywords) .. "'," .. tmp.accessLevel .. "," .. tmp.ingameOnly .. ")") end
-	if botman.dbConnected then conn:execute("insert into helpTopicCommands (topicID, commandID) values (" .. topicID .. "," .. commandID .. ")") end
+	if botman.dbConnected then conn:execute("INSERT INTO helpCommands (command, description, notes, keywords, accessLevel, ingameOnly) VALUES ('" .. escape(tmp.command) .. "','" .. escape(tmp.description) .. "','" .. escape(tmp.notes) .. "','" .. escape(tmp.keywords) .. "'," .. tmp.accessLevel .. "," .. tmp.ingameOnly .. ")") end
+	if botman.dbConnected then conn:execute("INSERT INTO helpTopicCommands (topicID, commandID) VALUES (" .. topicID .. "," .. commandID .. ")") end
 	commandID = commandID + 1
 end
 
@@ -1086,9 +1088,9 @@ function updateGimmeZombies(entityID, zombie)
 
 		if string.find(zombieLower, "cop") or string.find(zombieLower, "dog") or string.find(zombieLower, "bear") or string.find(zombieLower, "feral") or string.find(zombieLower, "radiated") or string.find(zombieLower, "behemoth") or string.find(zombieLower, "template") then
 			gimmeZombies[entityID].doNotSpawn = true
-			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
+			if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
 		else
-			if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end
+			if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end
 		end
 
 		gimmeZombies[entityID].maxHealth = 0
@@ -1111,9 +1113,9 @@ function updateGimmeZombies(entityID, zombie)
 
 			if string.find(zombieLower, "cop") or string.find(zombieLower, "dog") or string.find(zombieLower, "bear") or string.find(zombieLower, "feral") or string.find(zombieLower, "radiated") or string.find(zombieLower, "behemoth") or string.find(zombieLower, "template") then
 				gimmeZombies[entityID].doNotSpawn = true
-				if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
+				if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
 			else
-				if botman.dbConnected then conn:execute("UPDATE gimmeZombies set bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end
+				if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end
 			end
 
 			gimmeZombies[entityID].maxHealth = 0
@@ -1485,7 +1487,7 @@ function inInventory(steam, item, quantity, slot)
 	local tbl, test, i, max
 
 	if botman.dbConnected then
-		cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .."  ORDER BY inventoryTrackerID DESC Limit 0, 1")
+		cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .."  ORDER BY inventoryTrackerID DESC LIMIT 0, 1")
 		row = cursor:fetch({}, "a")
 
 		tbl = string.split(row.belt .. row.pack .. row.equipment, "|")
@@ -1514,7 +1516,7 @@ function inBelt(steam, item, quantity, slot)
 	local tbl, test, i, max
 
 	if botman.dbConnected then
-		cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .."  ORDER BY inventoryTrackerID DESC Limit 0, 1")
+		cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .."  ORDER BY inventoryTrackerID DESC LIMIT 0, 1")
 		row = cursor:fetch({}, "a")
 
 		tbl = string.split(row.belt, "|")
@@ -1765,7 +1767,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 		end
 
 		if botman.dbConnected then
-			cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .." ORDER BY inventoryTrackerid DESC Limit 1")
+			cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. steam .." ORDER BY inventoryTrackerid DESC LIMIT 1")
 			row = cursor:fetch({}, "a")
 			if row then
 				belt = row.belt
@@ -1823,7 +1825,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 				end
 
 				if botman.dbConnected then
-					cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. k .." ORDER BY inventoryTrackerid DESC Limit 1")
+					cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. k .." ORDER BY inventoryTrackerid DESC LIMIT 1")
 					row = cursor:fetch({}, "a")
 					if row then
 						belt = row.belt
@@ -1913,7 +1915,7 @@ function arrest(steam, reason, bail, releaseTime)
 	end
 
 	if botman.dbConnected then
-		cursor,errorString = conn:execute("select * from locationSpawns where location='prison'")
+		cursor,errorString = conn:execute("SELECT * FROM locationSpawns WHERE location='prison'")
 		rows = cursor:numrows()
 
 		if rows > 0 then
@@ -2020,9 +2022,9 @@ function dbWho(name, x, y, z, dist, days, hours, height, steamid, ingame)
 	conn:execute("DELETE FROM searchResults WHERE owner = " .. steamid)
 
 	if tonumber(hours) > 0 then
-		cursor,errorString = conn:execute("select distinct steam, session from tracker where abs(x - " .. x .. ") <= " .. dist .. " and abs(z - " .. z .. ") <= " .. dist .. " and abs(y - " .. y .. ") <= " .. height .. " and timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(hours) * 3600)) .. "'")
+		cursor,errorString = conn:execute("SELECT DISTINCT steam, session FROM tracker WHERE abs(x - " .. x .. ") <= " .. dist .. " AND ABS(z - " .. z .. ") <= " .. dist .. " AND ABS(y - " .. y .. ") <= " .. height .. " AND timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(hours) * 3600)) .. "'")
 	else
-		cursor,errorString = conn:execute("select distinct steam, session from tracker where abs(x - " .. x .. ") <= " .. dist .. " and abs(z - " .. z .. ") <= " .. dist .. " and abs(y - " .. y .. ") <= " .. height .. " and timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(days) * 86400)) .. "'")
+		cursor,errorString = conn:execute("SELECT DISTINCT steam, session FROM tracker WHERE abs(x - " .. x .. ") <= " .. dist .. " AND ABS(z - " .. z .. ") <= " .. dist .. " AND ABS(y - " .. y .. ") <= " .. height .. " AND timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(days) * 86400)) .. "'")
 	end
 
 	row = cursor:fetch({}, "a")
@@ -2080,7 +2082,7 @@ function dailyMaintenance()
 
 	-- purge old tracking data and set a flag so we can tell when the database maintenance is complete.
 	if tonumber(server.trackingKeepDays) > 0 then
-		conn:execute("UPDATE server set databaseMaintenanceFinished = 0")
+		conn:execute("UPDATE server SET databaseMaintenanceFinished = 0")
 		deleteTrackingData(server.trackingKeepDays)
 	end
 
@@ -2141,7 +2143,7 @@ function finishReboot()
 	end
 
 	-- flag all players as offline
-	connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID)
+	connBots:execute("UPDATE players SET online = 0 WHERE botID = " .. server.botID)
 
 	-- do some housekeeping
 	for k, v in pairs(players) do
@@ -2695,6 +2697,7 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].lastLogin = ""
 	igplayers[steam].lastLP = os.time()
 	igplayers[steam].name = player
+	igplayers[steam].noclipCount = 0
 	igplayers[steam].noclipX = 0
 	igplayers[steam].noclipY = 0
 	igplayers[steam].noclipZ = 0
@@ -2710,6 +2713,7 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].spawnChecked = true
 	igplayers[steam].spawnedCoordsOld = "0 0 0"
 	igplayers[steam].spawnedCoords = "0 0 0"
+	igplayers[steam].spawnPending = false
 	igplayers[steam].steam = steam
 	igplayers[steam].steamOwner = steamOwner
 	igplayers[steam].teleCooldown = 200

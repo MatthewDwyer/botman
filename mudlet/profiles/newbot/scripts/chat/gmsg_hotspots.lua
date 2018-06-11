@@ -483,7 +483,7 @@ function gmsg_hotspots()
 					return true
 				end
 
-				hotspotmsg = string.sub(chatvars.commandOld, string.find(chatvars.commandOld, "hotspot ") + 8)
+				hotspotmsg = string.sub(chatvars.commandOld, string.find(chatvars.command, "hotspot ") + 8)
 				hotspotmsg = string.trim(hotspotmsg)
 
 				cursor,errorString = conn:execute("select max(idx) as max_idx from hotspots")

@@ -127,7 +127,7 @@ function fillReservedSlot(steam)
 		end
 
 		-- update botman.dbReservedSlotsUsed
-		cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
+		cursor,errorString = conn:execute("SELECT COUNT(steam) AS totalRows FROM reservedSlots")
 		row = cursor:fetch({}, "a")
 		botman.dbReservedSlotsUsed = tonumber(row.totalRows)
 	end
@@ -142,12 +142,12 @@ function updateReservedSlots(dbSlotsUsed)
 		playerRemoved = false
 
 		-- try to remove staff from reserved slots first
-		cursor,errorString = conn:execute("select * from reservedSlots where staff = 1")
+		cursor,errorString = conn:execute("SELECT * FROM reservedSlots WHERE staff = 1")
 		rows = cursor:numrows()
 
 		if rows > 0 then
 			row = cursor:fetch({}, "a")
-			conn:execute("delete * from reservedSlots where steam = " .. row.steam)
+			conn:execute("DELETE * FROM reservedSlots WHERE steam = " .. row.steam)
 			botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
 			dbSlotsUsed = dbSlotsUsed -1
 			playerRemoved = true
@@ -155,12 +155,12 @@ function updateReservedSlots(dbSlotsUsed)
 
 		-- try to remove other players from reserved slots
 		if tonumber(botman.dbReservedSlotsUsed) > tonumber(server.reservedSlotsUsed) then
-			cursor,errorString = conn:execute("select * from reservedSlots where staff = 0 and reserved = 0 order by timeAdded desc")
+			cursor,errorString = conn:execute("SELECT * FROM reservedSlots WHERE staff = 0 AND reserved = 0 ORDER BY timeAdded DESC")
 			rows = cursor:numrows()
 
 			if rows > 0 then
 				row = cursor:fetch({}, "a")
-				conn:execute("delete * from reservedSlots where steam = " .. row.steam)
+				conn:execute("DELETE * FROM reservedSlots WHERE steam = " .. row.steam)
 				botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
 				dbSlotsUsed = dbSlotsUsed -1
 				playerRemoved = true
@@ -174,7 +174,7 @@ function updateReservedSlots(dbSlotsUsed)
 	end
 
 	-- update botman.dbReservedSlotsUsed
-	cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
+	cursor,errorString = conn:execute("SELECT COUNT(steam) AS totalRows FROM reservedSlots")
 	row = cursor:fetch({}, "a")
 	botman.dbReservedSlotsUsed = tonumber(row.totalRows)
 end
@@ -329,6 +329,25 @@ function playerConnected(line)
 		return
 	end
 
+	-- kick for bad player name
+	if	(not server.allowNumericNames or not server.allowGarbageNames) and not whitelist[tmp.steam] then
+		temp = countAlphaNumeric(tmp.player)
+
+		if tonumber(tmp.player) ~= nil or tonumber(temp) == 0 then
+			kick(tmp.steam, "Names without letters are not allowed here. You need to change your name to play on this server.")
+			return
+		end
+	end
+
+	-- kick if player name looks like a steam ID
+	if string.len(tmp.player) == 17 then
+		test = tonumber(tmp.player)
+		if (test ~= nil) then
+			kick(tmp.steam, "Your name is a number and the same length as a steam key. Nice try though.")
+			return
+		end
+	end
+
 	-- check playersArchived and move the player record back to the players table if found
 	if playersArchived[tmp.steam] then
 		dbug("Restoring player " .. tmp.steam .. " " .. tmp.player .. " from archive")
@@ -377,6 +396,30 @@ function playerConnected(line)
 		fixMissingIGPlayer(tmp.steam, tmp.steamOwner)
 	end
 
+	players[tmp.steam].pendingBans = 0
+
+	-- check if GBL ban
+	if botman.db2Connected then
+		cursor,errorString = connBots:execute("SELECT * FROM bans WHERE (Steam = " .. tmp.steam .. " or Steam = " .. tmp.steamOwner .. ") and GBLBan = 1 and GBLBanActive = 1")
+		rows = cursor:numrows()
+
+		if tonumber(rows) > 0 then
+			row = cursor:fetch({}, "a")
+			kick(tmp.steam, "You are on the global ban list. " .. row.GBLBanReason)
+			banPlayer(tmp.steam, "10 years", "On global ban list", 0, true)
+			return
+		else
+			-- check number of pending global bans and alert if this player has any, but allow them to join.
+			cursor,errorString = connBots:execute("SELECT count(steam) as pendingBans FROM bans WHERE (Steam = " .. tmp.steam .. " or Steam = " .. tmp.steamOwner .. ") and GBLBan = 1 and GBLBanVetted = 0")
+			row = cursor:fetch({}, "a")
+			if tonumber(row.pendingBans) > 0 then
+				irc_chat(server.ircMain, "ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")
+				players[tmp.steam].pendingBans = row.pendingBans
+				alertAdmins("ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.", "alert")
+			end
+		end
+	end
+
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
 	-- check for VAC ban
@@ -393,25 +436,6 @@ function playerConnected(line)
 		os.remove(homedir .. "/temp/steamrep_" .. tmp.steamOwner .. ".txt")
 		os.execute("wget -nd http://steamrep.com/profiles/" .. tmp.steamOwner .. " -O \"" .. homedir .. "/temp/steamrep_" .. tmp.steamOwner .. ".txt\"")
 		tempTimer( 10, [[ checkVACBan("]] .. tmp.steamOwner .. [[") ]] )
-	end
-
-	-- kick for bad player name
-	if	(not server.allowNumericNames or not server.allowGarbageNames) and not whitelist[tmp.steam] then
-		temp = countAlphaNumeric(tmp.player)
-
-		if tonumber(tmp.player) ~= nil or tonumber(temp) == 0 then
-			kick(tmp.steam, "Names without letters are not allowed here. You need to change your name to play on this server.")
-			return
-		end
-	end
-
-	-- kick if player name looks like a steam ID
-	if string.len(tmp.player) == 17 then
-		test = tonumber(tmp.player)
-		if (test ~= nil) then
-			kick(tmp.steam, "Your name is a number and the same length as a steam key. Nice try though.")
-			return
-		end
 	end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
@@ -553,30 +577,6 @@ function playerConnected(line)
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 1
-	end
-
-	players[tmp.steam].pendingBans = 0
-
-	-- check if GBL ban
-	if botman.db2Connected then
-		cursor,errorString = connBots:execute("SELECT * FROM bans WHERE (Steam = " .. tmp.steam .. " or Steam = " .. tmp.steamOwner .. ") and GBLBan = 1 and GBLBanActive = 1")
-		rows = cursor:numrows()
-
-		if tonumber(rows) > 0 then
-			row = cursor:fetch({}, "a")
-			kick(tmp.steam, "You are on the global ban list. " .. row.GBLBanReason)
-			banPlayer(tmp.steam, "10 years", "On global ban list", 0, true)
-			return
-		else
-			-- check number of pending global bans and alert if this player has any, but allow them to join.
-			cursor,errorString = connBots:execute("SELECT count(steam) as pendingBans FROM bans WHERE (Steam = " .. tmp.steam .. " or Steam = " .. tmp.steamOwner .. ") and GBLBan = 1 and GBLBanVetted = 0")
-			row = cursor:fetch({}, "a")
-			if tonumber(row.pendingBans) > 0 then
-				irc_chat(server.ircMain, "ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")
-				players[tmp.steam].pendingBans = row.pendingBans
-				alertAdmins("ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.", "alert")
-			end
-		end
 	end
 
 	if customPlayerConnected ~= nil then

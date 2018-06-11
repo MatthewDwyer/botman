@@ -33,13 +33,13 @@ function gmsg_pms()
 		cmd = nil
 
 		if string.find(chatvars.command, "message") then
-			msg = string.sub(chatvars.command, string.find(chatvars.command, "message") + 8)
+			msg = string.sub(chatvars.commandOld, string.find(chatvars.command, "message") + 8)
 
 			if string.find(chatvars.command, "level") then
-				cmd = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, "command") + 8, string.find(chatvars.oldLine, "level") - 2)
+				cmd = string.sub(chatvars.commandOld, string.find(chatvars.command, "command") + 8, string.find(chatvars.command, "level") - 2)
 				access = string.sub(chatvars.command, string.find(chatvars.command, "level") + 6, string.find(chatvars.command, "message") - 2)
 			else
-				cmd = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, "command") + 8, string.find(chatvars.oldLine, "message") - 2)
+				cmd = string.sub(chatvars.commandOld, string.find(chatvars.command, "command") + 8, string.find(chatvars.command, "message") - 2)
 			end
 		else
 			if (chatvars.playername ~= "Server") then
@@ -93,7 +93,7 @@ function gmsg_pms()
 			end
 		end
 
-		cmd = string.sub(chatvars.command, string.find(chatvars.command, "command") + 9)
+		cmd = string.sub(chatvars.commandOld, string.find(chatvars.command, "command") + 9)
 
 		if cmd ~= nil then
 			conn:execute("DELETE FROM customMessages WHERE command = '" .. escape(cmd) .. "'")

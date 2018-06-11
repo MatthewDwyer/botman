@@ -7,7 +7,7 @@ local debug, steamID
 debug = false -- should be false unless testing
 
 if botman.debugAll then
-	debug = true
+	debug = true -- this should be true
 end
 
 function updateBot(forced, steam)

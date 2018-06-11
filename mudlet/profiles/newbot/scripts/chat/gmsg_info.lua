@@ -291,7 +291,7 @@ function gmsg_info()
 				return true
 			end
 
-			command = string.sub(chatvars.command, string.find(chatvars.command, "alert ") + 6)
+			command = string.sub(chatvars.commandOld, string.find(chatvars.command, "alert ") + 6)
 			sendIrc(server.ircAlerts, "***** " .. chatvars.playerid .. " " .. chatvars.playername .. " at position " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ .. " said: " .. command .. "\n")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Thank you! Your message has been recorded! =D[-]")
 

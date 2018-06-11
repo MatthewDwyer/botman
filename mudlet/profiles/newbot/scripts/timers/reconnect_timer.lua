@@ -33,7 +33,7 @@ function reconnectTimer()
 		botman.lastTelnetTimestamp = os.time() -- reset this to make it sleep 5 minutes
 		botman.botOfflineCount = 2
 		reconnect()
-		irc_chat(server.ircMain, "Bot is offline - reconnecting.")
+		irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
 	end
 
 	if tonumber(botman.botOfflineCount) < 1 then
@@ -51,21 +51,18 @@ function reconnectTimer()
 			irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
 		else
 			if tonumber(botman.botOfflineCount) < -6 then
-				dbug("Bot is offline - attempting reconnection (2 minute delay).")
-				botman.botOfflineCount = 2
-				reconnect()
-				irc_chat(server.ircMain, "Bot is offline - attempting reconnection (2 minute delay).")
+				if server.allowBotRestarts then
+					restartBot()
+					return
+				else
+					dbug("Bot is offline - attempting reconnection (2 minute delay).")
+					botman.botOfflineCount = 2
+					reconnect()
+					irc_chat(server.ircMain, "Bot is offline - attempting reconnection (2 minute delay).")
+				end
 			end
 		end
 	end
-
-	-- -- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
-	-- moved to 15 second timer
-	-- if not botman.botOffline then
-		-- botman.lagCheckRead = false
-		-- botman.lagCheckTime = os.time()
-		-- send("pm LagCheck " .. server.botID)
-	-- end
 
 	if ircGetChannels ~= nil then
 		channels = ircGetChannels()

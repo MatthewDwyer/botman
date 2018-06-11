@@ -23,6 +23,7 @@ function teleTrigger(line)
 		id = LookupPlayer(cmd[2], "all")
 		igplayers[id].tp = 1
 		igplayers[id].hackerTPScore = 0
+		igplayers[id].spawnPending = true
 		return
 	end
 
@@ -37,6 +38,7 @@ function teleTrigger(line)
 			id = LookupPlayer(cmd[2], "all")
 			igplayers[id].tp = 1
 			igplayers[id].hackerTPScore = 0
+			igplayers[id].spawnPending = true
 			return
 		end
 
@@ -48,7 +50,8 @@ function teleTrigger(line)
 
 			id = LookupPlayer(cmd[2], "all")
 			igplayers[id].tp = 1
-			igplayers[id].hackerTPScore = 0
+			igplayers[id].hackserTPScore = 0
+			igplayers[id].spawnPending = true
 			return
 		end
 	end

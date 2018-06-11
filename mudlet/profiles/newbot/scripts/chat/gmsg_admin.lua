@@ -248,9 +248,9 @@ function gmsg_admin()
 
 			if string.find(chatvars.command, " action ") then
 				bad = string.sub(chatvars.commandOld, string.find(chatvars.command, "bad item") + 9, string.find(chatvars.command, " action") - 1)
-				action = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, " action ") + 8)
+				action = string.sub(chatvars.commandOld, string.find(chatvars.command, " action ") + 8)
 			else
-				bad = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, "bad item") + 9)
+				bad = string.sub(chatvars.commandOld, string.find(chatvars.command, "bad item") + 9)
 			end
 
 			if action ~= "timeout" and action ~= "ban" then
@@ -267,7 +267,7 @@ function gmsg_admin()
 					irc_chat(chatvars.ircAlias, "You added " .. bad .. " to the list of bad items. The bot will " .. action .. " players found with it unless permitted")
 				end
 			else
-				bad = string.sub(chatvars.oldLine, string.find(chatvars.oldLine, "bad item") + 9)
+				bad = string.sub(chatvars.commandOld, string.find(chatvars.command, "bad item") + 9)
 
 				badItems[bad] = nil
 				if botman.dbConnected then conn:execute("DELETE FROM badItems WHERE item = '" .. escape(bad) .. "'") end
@@ -828,7 +828,7 @@ function gmsg_admin()
 				end
 			else
 				-- remove restricted item
-				bad = string.sub(chatvars.command, string.find(chatvars.command, "restricted item") + 16)
+				bad = string.sub(chatvars.commandOld, string.find(chatvars.command, "restricted item") + 16)
 
 				if botman.dbConnected then
 					conn:execute("DELETE FROM restrictedItems WHERE item = '" .. escape(bad) .. "'")
@@ -1202,7 +1202,7 @@ function gmsg_admin()
 			playerName = "Not Sure (unknown player)"
 
 			if string.find(chatvars.command, "reason") then
-				reason = string.sub(chatvars.command, string.find(chatvars.command, "reason ") + 7)
+				reason = string.sub(chatvars.commandOld, string.find(chatvars.command, "reason ") + 7)
 			end
 
 			if not string.find(chatvars.command, "reason") and not string.find(chatvars.command, "time") then
@@ -3060,8 +3060,6 @@ function gmsg_admin()
 
 			if string.find(chatvars.command, "message") then
 				tmp.message = string.sub(chatvars.commandOld, string.find(chatvars.command, "message ") + 8)
-
-				dbug("tmp.message " .. tmp.message)
 			end
 
 			tmp.pname = string.sub(chatvars.command, string.find(chatvars.command, "player ") + 7, string.find(chatvars.command, " item ") - 1)
@@ -3449,7 +3447,7 @@ function gmsg_admin()
 
 			if string.find(chatvars.command, " reason ") then
 				pname = string.sub(chatvars.command, string.find(chatvars.command, "kick ") + 5, string.find(chatvars.command, " reason") - 1)
-				reason = string.sub(chatvars.command, string.find(chatvars.command, "reason ") + 7)
+				reason = string.sub(chatvars.commandOld, string.find(chatvars.command, "reason ") + 7)
 			else
 				pname = string.sub(chatvars.command, string.find(chatvars.command, "kick ") + 5)
 			end
@@ -5030,14 +5028,18 @@ function gmsg_admin()
 				players[prisonerid].yPosOld = 0
 				players[prisonerid].zPosOld = 0
 				players[prisonerid].prisoner = false
+				players[prisonerid].prisonReason = ""
 				players[prisonerid].silentBob = false
+				players[prisonerid].prisonReleaseTime = os.time()
 				setChatColour(prisonerid)
 			else
 				playersArchived[prisonerid].xPosOld = 0
 				playersArchived[prisonerid].yPosOld = 0
 				playersArchived[prisonerid].zPosOld = 0
 				playersArchived[prisonerid].prisoner = false
+				playersArchived[prisonerid].prisonReason = ""
 				playersArchived[prisonerid].silentBob = false
+				playersArchived[prisonerid].prisonReleaseTime = os.time()
 			end
 
 			botman.faultyChat = false
@@ -5139,6 +5141,8 @@ function gmsg_admin()
 				players[prisonerid].botTimeout = false
 				players[prisonerid].freeze = false
 				players[prisonerid].silentBob = false
+				players[prisonerid].prisonReason = ""
+				players[prisonerid].prisonReleaseTime = os.time()
 
 				message("say [" .. server.chatColour .. "]Releasing prisoner " .. playerName .. "[-]")
 				message("pm " .. prisonerid .. " [" .. server.chatColour .. "]You are released from prison.  Be a good citizen if you wish to remain free.[-]")
@@ -6347,7 +6351,7 @@ function gmsg_admin()
 
 			if string.find(chatvars.command, "arrested") then
 				prisoner = string.sub(chatvars.command, string.find(chatvars.command, "prisoner ") + 9, string.find(chatvars.command, "arrested") -1)
-				reason = string.sub(chatvars.command, string.find(chatvars.command, "arrested ") + 9)
+				reason = string.sub(chatvars.commandOld, string.find(chatvars.command, "arrested ") + 9)
 			else
 				prisoner = string.sub(chatvars.command, string.find(chatvars.command, "prisoner ") + 9)
 			end

@@ -70,28 +70,20 @@ function thirtySecondTimer()
 		if botman.dbConnected then conn:execute("INSERT into commandQueue (command) VALUES ('" .. cmd .. "')") end
 
 		if tonumber(botman.playersOnline) > 9 then
-			-- if server.scanZombies or server.scanEntities then
-				-- send("le")
-			-- end
-
 			if server.coppi then
-				if server.scanNoclip then
-					-- check for noclipped players
-					for k,v in pairs(igplayers) do
-						if tonumber(players[k].accessLevel) > 2 then
+				for k,v in pairs(igplayers) do
+					if tonumber(players[k].accessLevel) > 2 and not players[k].newPlayer then
+						if server.scanNoclip then
+							-- check for noclipped players
 							send("pug " .. k)
 
 							if botman.getMetrics then
 								metrics.telnetCommands = metrics.telnetCommands + 1
 							end
 						end
-					end
-				end
 
-				if not server.playersCanFly then
-					-- check for flying players
-					for k,v in pairs(igplayers) do
-						if tonumber(players[k].accessLevel) > 2 then
+						if not server.playersCanFly then
+							-- check for flying players
 							send("pgd " .. k)
 
 							if botman.getMetrics then

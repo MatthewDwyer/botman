@@ -14,44 +14,45 @@ function miscCommandsTimer()
 		return
 	end
 
-	cursor,errorString = conn:execute("select * from miscQueue where timerDelay = '0000-00-00 00:00:00'  order by id limit 0,1")
+	cursor,errorString = conn:execute("SELECT * FROM miscQueue WHERE timerDelay = '0000-00-00 00:00:00'  ORDER BY id limit 0,1")
 
 	if cursor then
 		row = cursor:fetch({}, "a")
 
 		if row then
-			if tonumber(row.steam) > 0 then
-				if igplayers[row.steam] == nil then
-					conn:execute("delete from miscQueue where steam = " .. row.steam)
-					return
-				end
-			end
-
-			send(row.command)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-
 			if string.find(row.command, "admin add") then
+				send(row.command)
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+
 				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been given admin.")
 				setChatColour(row.steam)
 			end
 
 			if string.find(row.command, "ban remove") then
+				send(row.command)
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+
 				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been unbanned.")
 			end
 
 			if string.find(row.command, "tele ") then
-				teleport(row.command, row.steam)
+				if igplayers[row.steam] then
+					teleport(row.command, row.steam)
+				end
 			end
 
-			conn:execute("delete from miscQueue where id = " .. row.id)
+			conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
 		end
 	end
 
 	-- check all the delayed commands.  send any that are not in the future
-	cursor,errorString = conn:execute("select id, steam, command, action, value, UNIX_TIMESTAMP(timerDelay) as delay from miscQueue where timerDelay <> '0000-00-00 00:00:00' order by id")
+	cursor,errorString = conn:execute("SELECT id, steam, command, action, value, UNIX_TIMESTAMP(timerDelay) AS delay FROM miscQueue WHERE timerDelay <> '0000-00-00 00:00:00' ORDER BY id")
 
 	if cursor then
 		row = cursor:fetch({}, "a")
@@ -66,18 +67,20 @@ function miscCommandsTimer()
 							irc_chat(server.ircMain, "OH GOD NOOOO! " .. players[row.steam].name .. "'s admin status has been restored.")
 						end
 					else
-						send(row.command)
+						if string.find(row.command, "tele ") then
+							if igplayers[row.steam] then
+								teleport(row.command, row.steam)
+							end
+						else
+							send(row.command)
 
-						if botman.getMetrics then
-							metrics.telnetCommands = metrics.telnetCommands + 1
+							if botman.getMetrics then
+								metrics.telnetCommands = metrics.telnetCommands + 1
+							end
 						end
 					end
 
-					if string.find(row.command, "tele ") then
-						teleport(row.command, row.steam)
-					end
-
-					conn:execute("delete from miscQueue where id = " .. row.id)
+					conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
 				end
 
 				row = cursor:fetch(row, "a")
@@ -94,25 +97,29 @@ function gimmeQueuedCommands()
 		return
 	end
 
-	cursor1,errorString = conn:execute("select distinct steam from gimmeQueue")
+	cursor1,errorString = conn:execute("SELECT DISTINCT steam FROM gimmeQueue")
 
 	if cursor1 then
 		row1 = cursor1:fetch({}, "a")
 
 		while row1 do
-			cursor2,errorString = conn:execute("select * from gimmeQueue where steam = " .. row1.steam .. " order by id limit 0,1")
+			if not igplayers[row1.steam] then
+				conn:execute("DELETE FROM gimmeQueue WHERE steam = " .. row1.steam)
+			else
+				cursor2,errorString = conn:execute("SELECT * FROM gimmeQueue WHERE steam = " .. row1.steam .. " ORDER BY id limit 0,1")
 
-			if cursor2 then
-				row2 = cursor2:fetch({}, "a")
+				if cursor2 then
+					row2 = cursor2:fetch({}, "a")
 
-				if row2 then
-					send(row2.command)
+					if row2 then
+						send(row2.command)
 
-					if botman.getMetrics then
-						metrics.telnetCommands = metrics.telnetCommands + 1
+						if botman.getMetrics then
+							metrics.telnetCommands = metrics.telnetCommands + 1
+						end
+
+						conn:execute("DELETE FROM gimmeQueue WHERE id = " .. row2.id)
 					end
-
-					conn:execute("delete from gimmeQueue where id = " .. row2.id)
 				end
 			end
 

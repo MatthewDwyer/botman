@@ -224,7 +224,7 @@ function message(msg, steam)
 		send("say \"" .. string.sub(msg, 5) .. "\"")
 	else
 		if players[words[2]].exiled ~= 1 then
-			send("pm " .. words[2] .. "\"" .. string.sub(msg, 22) .. "\"")
+			send("pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"")
 		end
 	end
 
@@ -1605,6 +1605,7 @@ function fixMissingIGPlayer(steam)
 
 	if igplayers[steam].noclip == nil then
 		igplayers[steam].noclip = false
+		igplayers[steam].noclipCount = 0
 		igplayers[steam].noclipX = 0
 		igplayers[steam].noclipY = 0
 		igplayers[steam].noclipZ = 0
@@ -1654,6 +1655,7 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].spawnedInWorld = true
 		igplayers[steam].spawnedReason = "fake reason"
 		igplayers[steam].spawnChecked = true
+		igplayers[steam].spawnPending = false
 		igplayers[steam].spawnedCoordsOld = "0 0 0"
 		igplayers[steam].spawnedCoords = "0 0 0"
 	end
