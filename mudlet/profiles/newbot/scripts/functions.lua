@@ -2696,6 +2696,7 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].lastHotspot = 0
 	igplayers[steam].lastLogin = ""
 	igplayers[steam].lastLP = os.time()
+	igplayers[steam].lastTPTimestamp = os.time()
 	igplayers[steam].name = player
 	igplayers[steam].noclipCount = 0
 	igplayers[steam].noclipX = 0

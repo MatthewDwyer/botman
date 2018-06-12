@@ -3259,6 +3259,12 @@ function gmsg_locations()
 			return true
 		end
 
+		if (os.time() - igplayers[chatvars.playerid].lastTPTimestamp < 5) and (chatvars.accessLevel > 2) then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport is recharging.  Wait a few seconds.  You can repeat your last command by typing " .. server.commandPrefix .."[-]")
+			botman.faultyChat = false
+			return true
+		end
+
 		cursor,errorString = conn:execute("SELECT * FROM locations WHERE name = '" .. escape(loc) .."'")
 		row = cursor:fetch({}, "a")
 
@@ -3405,7 +3411,7 @@ function gmsg_locations()
 
 			cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
 
-			if tonumber(server.playerTeleportDelay) == 0 or not igplayers[chatvars.playerid].currentLocationPVP or tonumber(players[chatvars.playerid].accessLevel) < 2 then
+			if tonumber(server.playerTeleportDelay) == 0 or tonumber(players[chatvars.playerid].accessLevel) < 2 then --  or not igplayers[chatvars.playerid].currentLocationPVP
 				teleport(cmd, chatvars.playerid)
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. loc .. " in " .. server.playerTeleportDelay .. " seconds.[-]")

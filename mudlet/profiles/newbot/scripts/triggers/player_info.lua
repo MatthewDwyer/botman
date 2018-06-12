@@ -390,60 +390,63 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if server.hackerTPDetection and igplayers[steam].spawnChecked == false and not igplayers[steam].spawnPending then
 		igplayers[steam].spawnChecked = true
 
-		if not (players[steam].timeout or players[steam].botTimeout or players[steam].ignorePlayer) then
-			if tonumber(intX) ~= 0 and tonumber(intZ) ~= 0 and tonumber(igplayers[steam].xPos) ~= 0 and tonumber(igplayers[steam].zPos) ~= 0 then
-				dist = 0
+		-- ignore tele spawns for 10 seconds after the last legit tp to allow for lag and extra tp commands on delayed tp servers.
+		if (os.time() - igplayers[steam].lastTPTimestamp > 10) and (igplayers[steam].spawnedCoordsOld ~= igplayers[steam].spawnedCoords)then
+			if not (players[steam].timeout or players[steam].botTimeout or players[steam].ignorePlayer) then
+				if tonumber(intX) ~= 0 and tonumber(intZ) ~= 0 and tonumber(igplayers[steam].xPos) ~= 0 and tonumber(igplayers[steam].zPos) ~= 0 then
+					dist = 0
 
-				if igplayers[steam].spawnedInWorld and igplayers[steam].spawnedReason == "teleport" and igplayers[steam].spawnedCoordsOld ~= "0 0 0" then
-					dist = distancexz(posX, posZ, igplayers[steam].xPos, igplayers[steam].zPos)
-				end
-
-				if (dist >= 300) then
-					if tonumber(igplayers[steam].tp) < 1 then
-						if players[steam].newPlayer == true then
-							new = " [FF8C40]NEW player "
-						else
-							new = " [FF8C40]Player "
-						end
-
-						if playerAccessLevel > 2 then
-							irc_chat(server.ircMain, botman.serverTime .. " Player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
-							irc_chat(server.ircAlerts, botman.serverTime .. " Player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
-
-							igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
-							players[steam].watchPlayer = true
-							players[steam].watchPlayerTimer = os.time() + 259200 -- watch for 3 days
-							if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. steam) end
-
-							if tonumber(players[steam].exiled) == 1 or players[steam].newPlayer then
-								igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
-							end
-
-							if igplayers[steam].hackerTPScore > 0 and players[steam].newPlayer and tonumber(players[steam].ping) > 180 then
-								if locations["exile"] and not players[steam].prisoner then
-									players[steam].exiled = 1
-								else
-									igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
-								end
-							end
-
-							if tonumber(igplayers[steam].hackerTPScore) > 1 then
-								igplayers[steam].hackerTPScore = 0
-								igplayers[steam].tp = 0
-								message(string.format("say [%s]Temp banning %s 1 week for unexplained teleporting. An admin will investigate the circumstances.[-]", server.chatColour, players[steam].name))
-								banPlayer(steam, "1 week", "We detected unusual teleporting from you and are investigating the circumstances.", "")
-
-								-- if the player has any pending global bans, activate them
-								connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. steam)
-							end
-
-							alertAdmins(id .. " name: " .. name .. " detected teleporting! In fly mode, type " .. server.commandPrefix .. "near " .. id .. " to shadow them.", "warn")
-						end
+					if igplayers[steam].spawnedInWorld and igplayers[steam].spawnedReason == "teleport" and igplayers[steam].spawnedCoordsOld ~= "0 0 0" then
+						dist = distancexz(posX, posZ, igplayers[steam].xPos, igplayers[steam].zPos)
 					end
 
-					igplayers[steam].tp = 0
-				else
-					igplayers[steam].tp = 0
+					if (dist >= 300) then
+						if tonumber(igplayers[steam].tp) < 1 then
+							if players[steam].newPlayer == true then
+								new = " [FF8C40]NEW player "
+							else
+								new = " [FF8C40]Player "
+							end
+
+							if playerAccessLevel > 2 then
+								irc_chat(server.ircMain, botman.serverTime .. " Player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
+								irc_chat(server.ircAlerts, botman.serverTime .. " Player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
+
+								igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
+								players[steam].watchPlayer = true
+								players[steam].watchPlayerTimer = os.time() + 259200 -- watch for 3 days
+								if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. steam) end
+
+								if tonumber(players[steam].exiled) == 1 or players[steam].newPlayer then
+									igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
+								end
+
+								if igplayers[steam].hackerTPScore > 0 and players[steam].newPlayer and tonumber(players[steam].ping) > 180 then
+									if locations["exile"] and not players[steam].prisoner then
+										players[steam].exiled = 1
+									else
+										igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
+									end
+								end
+
+								if tonumber(igplayers[steam].hackerTPScore) > 1 then
+									igplayers[steam].hackerTPScore = 0
+									igplayers[steam].tp = 0
+									message(string.format("say [%s]Temp banning %s 1 week for unexplained teleporting. An admin will investigate the circumstances.[-]", server.chatColour, players[steam].name))
+									banPlayer(steam, "1 week", "We detected unusual teleporting from you and are investigating the circumstances.", "")
+
+									-- if the player has any pending global bans, activate them
+									connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. steam)
+								end
+
+								alertAdmins(id .. " name: " .. name .. " detected teleporting! In fly mode, type " .. server.commandPrefix .. "near " .. id .. " to shadow them.", "warn")
+							end
+						end
+
+						igplayers[steam].tp = 0
+					else
+						igplayers[steam].tp = 0
+					end
 				end
 			end
 		end

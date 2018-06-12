@@ -104,7 +104,7 @@ function randomTP(playerid, location, forced)
 		if rows == 0 then
 			cmd = "tele " .. playerid .. " " .. locations[location].x .. " " .. locations[location].y .. " " .. locations[location].z
 
-			if tonumber(server.playerTeleportDelay) == 0 or forced or not igplayers[playerid].currentLocationPVP or tonumber(players[playerid].accessLevel) < 2 then
+			if tonumber(server.playerTeleportDelay) == 0 or forced or tonumber(players[playerid].accessLevel) < 2 then --  or not igplayers[playerid].currentLocationPVP
 				teleport(cmd, playerid)
 			else
 				message("pm " .. playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
@@ -130,11 +130,12 @@ function randomTP(playerid, location, forced)
 	if location == "lobby" then
 		teleport(cmd, playerid)
 	else
-		if tonumber(server.playerTeleportDelay) == 0 or forced or not igplayers[playerid].currentLocationPVP or tonumber(players[playerid].accessLevel) < 2 then
+		if tonumber(server.playerTeleportDelay) == 0 or forced or tonumber(players[playerid].accessLevel) < 2 then --  or not igplayers[playerid].currentLocationPVP
 			teleport(cmd, playerid)
 		else
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
 			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
+			igplayers[playerid].lastTPTimestamp = os.time()
 		end
 	end
 end

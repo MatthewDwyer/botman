@@ -1462,6 +1462,12 @@ function gmsg_waypoints()
 					return true
 				end
 
+				if (os.time() - igplayers[chatvars.playerid].lastTPTimestamp < 5) and (chatvars.accessLevel > 2) then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport is recharging.  Wait a few seconds.  You can repeat your last command by typing " .. server.commandPrefix .."[-]")
+					botman.faultyChat = false
+					return true
+				end
+
 				-- store the current coords
 				players[chatvars.playerid].xPosOld = chatvars.intX
 				players[chatvars.playerid].yPosOld = chatvars.intY

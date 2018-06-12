@@ -1056,10 +1056,16 @@ function gmsg_teleports()
 			-- return to previously recorded x y z
 			if tonumber(players[chatvars.playerid].yPosOld) ~= 0 or tonumber(players[chatvars.playerid].yPosOld2) ~= 0 then
 				if tonumber(players[chatvars.playerid].yPosOld2) ~= 0 then
+					if (os.time() - igplayers[chatvars.playerid].lastTPTimestamp < 5) and (chatvars.accessLevel > 2) then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport is recharging.  Wait a few seconds.  You can repeat your last command by typing " .. server.commandPrefix .."[-]")
+						botman.faultyChat = false
+						return true
+					end
+
 					-- the player has teleported within the same location so they are returning to somewhere in that location
 					cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPosOld2 .. " " .. players[chatvars.playerid].yPosOld2 .. " " .. players[chatvars.playerid].zPosOld2
 
-					if tonumber(server.playerTeleportDelay) == 0 or not igplayers[chatvars.playerid].currentLocationPVP or tonumber(chatvars.accessLevel) < 3 then
+					if tonumber(server.playerTeleportDelay) == 0 or tonumber(chatvars.accessLevel) < 3 then --  or not igplayers[chatvars.playerid].currentLocationPVP
 						teleport(cmd, chatvars.playerid)
 					else
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will return in " .. server.playerTeleportDelay .. " seconds.[-]")
@@ -1076,10 +1082,16 @@ function gmsg_teleports()
 
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have another " .. server.commandPrefix .. "return available.[-]")
 				else
+					if (os.time() - igplayers[chatvars.playerid].lastTPTimestamp < 5) and (chatvars.accessLevel > 2) then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport is recharging.  Wait a few seconds.  You can repeat your last command by typing " .. server.commandPrefix .."[-]")
+						botman.faultyChat = false
+						return true
+					end
+
 					-- the player has teleported from outside their current location so they are returning to there.
 					cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPosOld .. " " .. players[chatvars.playerid].yPosOld .. " " .. players[chatvars.playerid].zPosOld
 
-					if tonumber(server.playerTeleportDelay) == 0 or not igplayers[chatvars.playerid].currentLocationPVP or tonumber(chatvars.accessLevel) < 3 then
+					if tonumber(server.playerTeleportDelay) == 0 or tonumber(chatvars.accessLevel) < 3 then --  or not igplayers[chatvars.playerid].currentLocationPVP
 						teleport(cmd, chatvars.playerid)
 					else
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will return in " .. server.playerTeleportDelay .. " seconds.[-]")

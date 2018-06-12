@@ -1603,6 +1603,10 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].lastLP = os.time()
 	end
 
+	if igplayers[steam].lastTPTimestamp == nil then
+		igplayers[steam].lastTPTimestamp = os.time()
+	end
+
 	if igplayers[steam].noclip == nil then
 		igplayers[steam].noclip = false
 		igplayers[steam].noclipCount = 0
