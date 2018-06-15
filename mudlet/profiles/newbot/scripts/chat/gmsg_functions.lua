@@ -1388,12 +1388,12 @@ function gmsg(line, ircid)
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if server.coppi then
-		if server.coppiRelease == "Mod Coppis command additions" then
-			if debug then dbug("debug entering gmsg_coppi_old") end
-			result = gmsg_coppi_old()
-		else
+		if server.coppiRelease == "Mod Coppis command additions Light" or tonumber(server.coppiVersion) > 4.4 then
 			if debug then dbug("debug entering gmsg_coppi_new") end
 			result = gmsg_coppi_new()
+		else
+			if debug then dbug("debug entering gmsg_coppi_old") end
+			result = gmsg_coppi_old()
 		end
 	end
 
