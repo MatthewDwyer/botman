@@ -7,7 +7,9 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local debug = false
+local debug, pickCounter
+
+debug = false -- this should be false unless testing
 
 function arenaPicknMix(wave, counter, playerLevel)
 	local r
@@ -71,26 +73,27 @@ function setupArenaPlayers(pid)
 
 			-- give arena players stuff
 			if server.stompy then
-				send("bc-give " .. k .. " firstAidBandage /c=2 /silent")
-				send("bc-give " .. k .. " meatStew /c=1 /silent")
+				send("bc-give " .. k .. " firstAidBandage /c=1 /silent")
+				send("bc-give " .. k .. " spint /c=1 /silent")
+				send("bc-give " .. k .. " beer /c=1 /silent")
+				send("bc-give " .. k .. " turd /c=1 /silent")
+				send("bc-give " .. k .. " trapSpikesNew 5")
 			else
-				send("give " .. k .. " firstAidBandage 2")
-				send("give " .. k .. " meatStew 1")
+				send("give " .. k .. " firstAidBandage 1")
+				send("give " .. k .. " splint 1")
+				send("give " .. k .. " beer 1")
+				send("give " .. k .. " turd 1")
+				send("give " .. k .. " trapSpikesNew 5")
 			end
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 2
 			end
 
-			r = rand(3)
-			if (r == 1) then pointyStick = "boneShiv" end
-			if (r == 2) then pointyStick = "huntingKnife" end
-			if (r == 3) then pointyStick = "clubSpiked"	 end
-
 			if server.stompy then
-				send("bc-give " .. k .. " " .. pointyStick .. " /c=1 /q=600 /silent")
+				send("bc-give " .. k .. " boneShiv /c=1 /q=600 /silent")
 			else
-				send("give " .. k .. " " .. pointyStick .. " 1")
+				send("give " .. k .. " boneShiv 1")
 			end
 
 			if botman.getMetrics then
@@ -125,7 +128,7 @@ function announceGimmeHell(wave)
 end
 
 
-function resetGimmeHell()
+function resetGimmeArena()
 	local k, v
 
 	if (arenaTimer1 ~= nil) then
@@ -174,7 +177,7 @@ function resetGimmeHell()
 
 	for k, v in pairs(igplayers) do
 		if (distancexyz(v.xPos, v.yPos, v.zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z) < tonumber(locations["arena"].size) + 20) then
-			message("pm " .. k .. " [" .. server.chatColour .. "]GimmeHell is ready to play![-]")
+			message("pm " .. k .. " [" .. server.chatColour .. "]The Gimme Arena is ready to play![-]")
 		end
 	end
 
@@ -184,16 +187,26 @@ end
 
 
 function queueGimmeHell(wave, level)
-	-- if true then
-		-- return
-	-- end
-
 	local multiplier, i, zed, p, k, v, cmd
 
-	multiplier = rand(15, 7)
+	if botman.gimmeDifficulty == 1 then
+		--multiplier = rand(15, 7)
+		multiplier = 5
+	end
 
-	if tonumber(wave) == 4 then
-		multiplier = 2
+	if botman.gimmeDifficulty == 2 then
+--		multiplier = rand(20, 10)
+		multiplier = 8
+	end
+
+	if botman.gimmeDifficulty == 3 then
+		--multiplier = rand(20, 15)
+		multiplier = 10
+	end
+
+	if botman.gimmeDifficulty == 4 then
+		--multiplier = rand(25, 20)
+		multiplier = 12
 	end
 
 	for i = 1, botman.arenaCount * multiplier do
@@ -204,6 +217,7 @@ function queueGimmeHell(wave, level)
 		end
 
 		-- the level of the player that started gimmehell is used to control which zombies can be picked
+		pickCounter = 0
 		zed = arenaPicknMix(wave, 0, level)
 
 		p = pickRandomArenaPlayer()
@@ -295,8 +309,6 @@ function gimme(pid)
 
 	if server.gimmeZombies then
 		r = math.random(1, botman.maxGimmeZombies + 30)
-
-
 	else
 		r = rand(5)
 

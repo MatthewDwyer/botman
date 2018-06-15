@@ -265,7 +265,7 @@ function nextReboot(steam)
 				irc_chat(players[steam].ircAlias, "The reboot is paused at the moment. When it is resumed, the reboot will happen in " .. string.format("%02d", hours) .. ":" .. string.format("%02d", minutes) ..":" .. string.format("%02d", seconds))
 			end
 		else
-			if (server.gameDay % 7 == 0) then
+			if (server.gameDay % server.hordeNight == 0) then
 				if steam == nil then
 					message("say [" .. server.chatColour .. "]Feral hordes run today so the server will reboot tomorrow.[-]")
 				else
@@ -1071,7 +1071,7 @@ function gmsg(line, ircid)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-		if string.find(chatvars.command, "asmfr") then
+		if string.find(chatvars.command, "asmfreakz") then
 			banPlayer(chatvars.playerid, "10 year", "advertising hacks", "")
 
 			message("say [" .. server.chatColour .. "]Banning player " .. igplayers[chatvars.playerid].name .. " 10 years for advertising hacks.[-]")
@@ -1387,8 +1387,8 @@ function gmsg(line, ircid)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-	if server.coppiVersion then
-		if tonumber(server.coppiVersion) < 4.7 then
+	if server.coppi then
+		if server.coppiRelease == "Mod Coppis command additions" then
 			if debug then dbug("debug entering gmsg_coppi_old") end
 			result = gmsg_coppi_old()
 		else

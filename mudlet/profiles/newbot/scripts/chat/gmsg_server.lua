@@ -2975,6 +2975,76 @@ function gmsg_server()
 	end
 
 
+	local function cmd_ToggleDespawnZombiesBeforeBloodMoon()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}remove zombies before bloodmoon\n"
+			help[1] = help[1] .. " {#}leave zombies before bloodmoon\n"
+			help[2] = "If you have Stompy's BC mod, the bot can despawn all zombies server wide at 9pm before bloodmoon starts.\n"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "blood,horde,remo,desp"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "remov") or string.find(chatvars.command, "zomb"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "remove" or chatvars.words[1] == "leave") and chatvars.words[2] == "zombies" and chatvars.words[3] == "before" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "remove" then
+				server.despawnZombiesBeforeBloodMoon = true
+				conn:execute("UPDATE server SET despawnZombiesBeforeBloodMoon = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]All zombies will despawn one or more times during 9pm before bloodmoon begins.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "All zombies will despawn one or more times during 9pm before bloodmoon begins.")
+				end
+			else
+				server.despawnZombiesBeforeBloodMoon = true
+				conn:execute("UPDATE server SET despawnZombiesBeforeBloodMoon = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Zombies will not be despawned before bloodmoon begins.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Zombies will not be despawned before bloodmoon begins.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleEntityScan()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -4563,6 +4633,15 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleCBSMFriendly triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleDespawnZombiesBeforeBloodMoon()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleDespawnZombiesBeforeBloodMoon triggered") end
 		return result
 	end
 

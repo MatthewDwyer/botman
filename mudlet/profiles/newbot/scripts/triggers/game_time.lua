@@ -24,7 +24,10 @@ function gameTimeTrigger(line)
 	server.gameMinute = words[4]
 	server.gameDate = "Day " .. server.gameDay .. ", " ..string.format("%02d", server.gameHour) .. ":" .. server.gameMinute
 
-	if (server.gameDay % 7 == 0) then
+	if (server.gameDay % server.hordeNight == 0) then
+		botman.hordeNightToday = true
+		botman.hordeNightYesterday = false
+
 		if server.delayReboot == nil then
 			server.delayReboot = false
 		end
@@ -34,6 +37,9 @@ function gameTimeTrigger(line)
 			server.delayReboot = true
 		end
 	else
+		botman.hordeNightToday = false
+		botman.hordeNightYesterday = true
+
 		if server.delayReboot and botman.scheduledRestart then
 			if tonumber(server.feralRebootDelay) == 0 then
 				botman.scheduledRestartTimestamp = os.time() + ((server.DayLightLength + server.DayNightLength) * 60)
@@ -45,6 +51,11 @@ function gameTimeTrigger(line)
 		end
 
 		server.delayReboot = false
+	end
+
+	if (botman.hordeNightToday and tonumber(server.gameHour) == 21 and server.despawnZombiesBeforeBloodMoon and server.stompy) then
+		send("bc-remove /type=EntityZombie")
+		send("bc-remove /type=EntityZombieCrawl")
 	end
 
 	if (tonumber(server.gameHour) == 0 and server.allowLottery == true) then

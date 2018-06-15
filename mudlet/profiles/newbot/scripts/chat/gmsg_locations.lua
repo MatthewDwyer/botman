@@ -1015,6 +1015,112 @@ function gmsg_locations()
 	end
 
 
+	local function cmd_RenameLocation()
+		local oldLocation, newLocation, loc
+
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}location {old name} rename {new name}"
+			help[2] = "Change an existing location's name to something else."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "locat,name"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "locat") or string.find(chatvars.command, "name") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "location" and string.find(chatvars.command, "rename")) then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			newLocation = string.sub(chatvars.commandOld, string.find(chatvars.command, "rename ") + 7)
+			newLocation = string.trim(newLocation)
+
+			if locations[newLocation] then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. newLocation .. " already exists.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The location " .. newLocation .. " already exists.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			oldLocation = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "rename") - 2)
+			oldLocation = string.trim(oldLocation)
+			loc = LookupLocation(oldLocation)
+
+			if not locations[oldLocation] then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. oldLocation .. " does not exist.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The location " .. oldLocation .. " does not exist.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if newLocation == "" then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New location name required.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "New location name required.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if loc ~= nil and newLocation ~= "" then
+				locations[newLocation] = locations[loc]
+				locations[newLocation].name = newLocation
+				locations[loc] = nil
+
+				conn:execute("UPDATE locations SET name = '" .. escape(newLocation) .. "' WHERE name = '" .. escape(oldLocation) .. "'")
+				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. locations[newLocation].x .. "," .. locations[newLocation].y .. "," .. locations[newLocation].z .. ",'" .. botman.serverTime .. "','location change','Location " .. escape(oldLocation) .. " renamed " .. escape(newLocation) .. "'," .. chatvars.playerid .. ")")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have renamed " .. oldLocation .. " to " .. newLocation .. ".[-]")
+				else
+					irc_chat(chatvars.ircAlias, "You have renamed " .. oldLocation .. " to " .. newLocation)
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_SetClearLocationCategory()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -2945,6 +3051,15 @@ function gmsg_locations()
 
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_RenameLocation()
+
+	if result then
+		if debug then dbug("debug cmd_RenameLocation triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_SetClearLocationCategory()
 
 	if result then
@@ -3229,6 +3344,21 @@ function gmsg_locations()
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
 
 	-- look for command in locations table
+
+	-- if a location called spawn exists and lobby does not, substitute lobby with spawn
+	if chatvars.command == "spawn" then
+		if locations["lobby"] and not locations["spawn"] then
+			chatvars.command = "lobby"
+		end
+	end
+
+	-- if a location called lobby exists and spawn does not, substitute spawn with lobby
+	if chatvars.command == "lobby" then
+		if locations["spawn"] and not locations["lobby"] then
+			chatvars.command = "spawn"
+		end
+	end
+
 	loc = LookupLocation(chatvars.command)
 
 	if (loc ~= nil) then

@@ -370,7 +370,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			end
 		end
 
-		if tonumber(players[steam].hackerScore) >= 100 then
+		if tonumber(players[steam].hackerScore) >= 60 then
 			players[steam].hackerScore = 0
 			if igplayers[steam].hackerDetection ~= nil then
 				message(string.format("say [%s]Temp banning %s 1 week for suspected hacking. Detected " .. igplayers[steam].hackerDetection .. "[-]", server.chatColour, players[steam].name))
@@ -400,7 +400,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 						dist = distancexz(posX, posZ, igplayers[steam].xPos, igplayers[steam].zPos)
 					end
 
-					if (dist >= 300) then
+					if (dist >= 900) then
 						if tonumber(igplayers[steam].tp) < 1 then
 							if players[steam].newPlayer == true then
 								new = " [FF8C40]NEW player "
@@ -613,23 +613,23 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		igplayers[steam].alertLocation = currentLocation
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	-- if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if igplayers[steam].checkNewPlayer == true then
-		igplayers[steam].checkNewPlayer = false
+	-- if igplayers[steam].checkNewPlayer == true then
+		-- igplayers[steam].checkNewPlayer = false
 
-		if tonumber(level) > server.newPlayerMaxLevel and players[steam].newPlayer then
-			players[steam].newPlayer = false
-			players[steam].watchPlayer = false
-			players[steam].watchPlayerTimer = 0
-			if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0  WHERE steam = " .. steam) end
-			irc_chat(server.ircMain, "Player " .. name .. "'s new player status has been removed because their level is " .. level)
+		-- if tonumber(level) > server.newPlayerMaxLevel and players[steam].newPlayer then
+			-- players[steam].newPlayer = false
+			-- players[steam].watchPlayer = false
+			-- players[steam].watchPlayerTimer = 0
+			-- if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0  WHERE steam = " .. steam) end
+			-- irc_chat(server.ircMain, "Player " .. name .. "'s new player status has been removed because their level is " .. level)
 
-			if string.upper(players[steam].chatColour) == "FFFFFF" then
-				setChatColour(steam)
-			end
-		end
-	end
+			-- if string.upper(players[steam].chatColour) == "FFFFFF" then
+				-- setChatColour(steam)
+			-- end
+		-- end
+	-- end
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 

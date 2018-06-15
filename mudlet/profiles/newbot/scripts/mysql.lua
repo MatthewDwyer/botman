@@ -704,6 +704,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `gimmeResetTimer` INT NOT NULL DEFAULT '120', ADD `shopResetGameOrRealDays` TINYINT(1) NOT NULL DEFAULT '0', ADD `zombieKillRewardDonors` FLOAT NOT NULL DEFAULT '3'")
 	doSQL("ALTER TABLE `server` ADD `allowFamilySteamKeys` TINYINT(1) NOT NULL DEFAULT '1'") --todo: add commands and check and join for mismatched steam keys
 	doSQL("ALTER TABLE `server` ADD `checkLevelHack` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `despawnZombiesBeforeBloodMoon` TINYINT(1) NOT NULL DEFAULT '0'")
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -769,6 +770,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `helpCommands` CHANGE `description` `description` TEXT CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `locations` ADD `coolDownTimer` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `locations` ADD `plot` TINYINT(1) NOT NULL DEFAULT '0', ADD `plotWallBock` VARCHAR(20) NOT NULL DEFAULT 'bedrock', ADD `plotFillBlock` VARCHAR(20) NOT NULL DEFAULT 'dirt', ADD `plotGridSize` INT NOT NULL DEFAULT '0', ADD `plotDepth` INT NOT NULL DEFAULT '5', ADD `hordeNightClosedHours` VARCHAR(5) NOT NULL DEFAULT '00-00'")
+	doSQL("ALTER TABLE `locations` ADD `watchPlayers` TINYINT(1) NOT NULL DEFAULT '0'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)
