@@ -2980,7 +2980,7 @@ function gmsg_server()
 			help = {}
 			help[1] = " {#}remove zombies before bloodmoon\n"
 			help[1] = help[1] .. " {#}leave zombies before bloodmoon\n"
-			help[2] = "If you have Stompy's BC mod, the bot can despawn all zombies server wide at 9pm before bloodmoon starts.\n"
+			help[2] = "If you have Stompy's BC mod, the bot can despawn all zombies server wide a few minutes before bloodmoon starts.  It may trigger more than once.\n"
 
 			if botman.registerHelp then
 				tmp.command = help[1]

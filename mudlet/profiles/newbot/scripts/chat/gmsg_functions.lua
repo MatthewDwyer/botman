@@ -1257,6 +1257,14 @@ function gmsg(line, ircid)
 		return true
 	end
 
+	if debug then dbug("debug entering gmsg_misc") end
+	result = gmsg_misc()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_misc") end
+		return true
+	end
+
 	if debug then dbug("debug entering gmsg_mail") end
 	result = gmsg_mail()
 
@@ -1294,14 +1302,6 @@ function gmsg(line, ircid)
 
 	if result then
 		if debug then dbug("debug ran command in gmsg_hotspots") end
-		return true
-	end
-
-	if debug then dbug("debug entering gmsg_trial_code") end
-	result = gmsg_trial_code()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_trial_code") end
 		return true
 	end
 
@@ -1369,24 +1369,6 @@ function gmsg(line, ircid)
 		return true
 	end
 
-	if debug then dbug("debug entering gmsg_misc") end
-	result = gmsg_misc()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_misc") end
-		return true
-	end
-
-	if debug then dbug("debug entering gmsg_pms") end
-	result = gmsg_pms()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_pms") end
-		return true
-	end
-
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-
 	if server.coppi then
 		if server.coppiRelease == "Mod Coppis command additions Light" or tonumber(server.coppiVersion) > 4.4 then
 			if debug then dbug("debug entering gmsg_coppi_new") end
@@ -1402,13 +1384,19 @@ function gmsg(line, ircid)
 		return true
 	end
 
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-
 	if debug then dbug("debug entering gmsg_stompy") end
 	result = gmsg_stompy()
 
 	if result then
 		if debug then dbug("debug ran command in gmsg_stompy") end
+		return true
+	end
+
+	if debug then dbug("debug entering gmsg_trial_code") end
+	result = gmsg_trial_code()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_trial_code") end
 		return true
 	end
 

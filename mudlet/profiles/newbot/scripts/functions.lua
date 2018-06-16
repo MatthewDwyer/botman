@@ -672,7 +672,7 @@ function isLocationOpen(loc)
 
 	-- check the location for opening and closing times
 	if tonumber(locations[loc].dayClosed) > 0 then
-		if ((server.gameDay + 7 - locations[loc].dayClosed) % 7 == 0) then
+		if ((server.gameDay + server.hordeNight - locations[loc].dayClosed) % server.hordeNight == 0) then
 			return false, false
 		end
 	end

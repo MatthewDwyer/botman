@@ -50,22 +50,24 @@ function llp(line)
 			players[llpid].removedClaims = 0
 		end
 
-		if botman.dbConnected then
-			conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. llpid .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z .. " AND remove > 1")
-			conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. llpid .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z)
-		end
+		if tonumber(y) > 0 then
+			if botman.dbConnected then
+				conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. llpid .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z .. " AND remove > 1")
+				conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. llpid .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z)
+			end
 
-		if accessLevel(llpid) > 3 then
-			region = getRegion(x, z)
-			loc, reset = inLocation(x, z)
+			if accessLevel(llpid) > 3 then
+				region = getRegion(x, z)
+				loc, reset = inLocation(x, z)
 
-			if (resetRegions[region]) or reset or players[llpid].removeClaims == true then
-				if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove) VALUES (" .. llpid .. "," .. x .. "," .. y .. "," .. z .. ",1) ON DUPLICATE KEY UPDATE remove = 1") end
+				if (resetRegions[region]) or reset or players[llpid].removeClaims == true then
+					if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove) VALUES (" .. llpid .. "," .. x .. "," .. y .. "," .. z .. ",1) ON DUPLICATE KEY UPDATE remove = 1") end
+				else
+					if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. x .. "," .. y .. "," .. z .. ")") end
+				end
 			else
 				if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. x .. "," .. y .. "," .. z .. ")") end
 			end
-		else
-			if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. x .. "," .. y .. "," .. z .. ")") end
 		end
 	end
 end

@@ -53,7 +53,7 @@ function gameTimeTrigger(line)
 		server.delayReboot = false
 	end
 
-	if (botman.hordeNightToday and tonumber(server.gameHour) == 21 and tonumber(server.gameMinute) > 55 and server.despawnZombiesBeforeBloodMoon and server.stompy) then
+	if (botman.hordeNightToday and tonumber(server.gameHour) == 21 and tonumber(server.gameMinute) > 45 and server.despawnZombiesBeforeBloodMoon and server.stompy) then
 		send("bc-remove /type=EntityZombie")
 		send("bc-remove /type=EntityZombieCrawl")
 	end

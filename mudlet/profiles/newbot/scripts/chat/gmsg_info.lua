@@ -1193,11 +1193,11 @@ function gmsg_info()
 
 		if ((chatvars.words[1] == "when" or chatvars.words[1] == "next") and chatvars.words[2] == "reboot") then
 			if server.delayReboot then
-				if (server.gameDay % 7 == 0) then
+				if (server.gameDay % server.hordeNight == 0) then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The reboot will happen after bloodmoon. Admins can force it with " .. server.commandPrefix .. "reboot now.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.")
+						irc_chat(chatvars.ircAlias, "The reboot will happen after bloodmoon. Admins can force it with " .. server.commandPrefix .. "reboot now.")
 					end
 				end
 

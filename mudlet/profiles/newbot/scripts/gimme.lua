@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local debug, pickCounter
+local debug, pickCounter -- todo: finish coding pickCounter to try to prevent any infinite loopies
 
 debug = false -- this should be false unless testing
 

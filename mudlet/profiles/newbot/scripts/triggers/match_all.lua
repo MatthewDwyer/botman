@@ -191,17 +191,13 @@ function matchAll(line)
 			if string.find(line, "type=EntityPlayer") then
 				temp = string.split(line, ",")
 
-				for i=1,table.maxn(temp),1 do
-					if string.find(tmp[i], "name=") then
-						pname = string.sub(temp[1], string.find(temp[i], "=") + 1)
-						pid = LookupPlayer(string.trim(pname))
+				pname = string.sub(temp[2], string.find(temp[2], "=") + 1)
+				pid = LookupPlayer(string.trim(pname))
 
-						if pid ~= 0 then
-							send("fdl " .. pid)
+				if pid ~= 0 then
+					send("fdl " .. pid)
 
-							irc_chat(server.ircAlerts, "Fixed death loop for player " ..  igplayers[pid].name)
-						end
-					end
+					irc_chat(server.ircAlerts, "Fixed death loop for player " ..  igplayers[pid].name)
 				end
 			end
 		end
@@ -526,23 +522,25 @@ function matchAll(line)
 				players[llpid].removedClaims = 0
 			end
 
-			if botman.dbConnected then
-				conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3] .. " AND remove > 1")
-				conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3])
-			end
+			if tonumber(coords[2]) > 0 then
+				if botman.dbConnected then
+					conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3] .. " AND remove > 1")
+					conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3])
+				end
 
-			if accessLevel(llpid) > 3 then
-				region = getRegion(coords[1], coords[3])
+				if accessLevel(llpid) > 3 then
+					region = getRegion(coords[1], coords[3])
 
-				loc, reset = inLocation(coords[1], coords[3])
+					loc, reset = inLocation(coords[1], coords[3])
 
-				if (resetRegions[region]) or reset or players[llpid].removeClaims == true then
-					if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ",1) ON DUPLICATE KEY UPDATE remove = 1") end
+					if (resetRegions[region]) or reset or players[llpid].removeClaims == true then
+						if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ",1) ON DUPLICATE KEY UPDATE remove = 1") end
+					else
+						if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")") end
+					end
 				else
 					if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")") end
 				end
-			else
-				if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")") end
 			end
 		end
 	end
@@ -697,6 +695,7 @@ function matchAll(line)
 
 		if string.find(line, "Executing command 'llp") and string.find(line, server.botsIP) then
 			echoConsole = true
+			conn:execute("DELETE FROM keystones WHERE x = 0 AND y = 0 AND z = 0")
 		end
 
 		if string.find(line, "Executing command 'ban list'") and string.find(line, server.botsIP) then

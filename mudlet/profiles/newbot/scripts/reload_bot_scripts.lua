@@ -424,11 +424,6 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	server.nextCodeReload = "/scripts/chat/gmsg_pms.lua"
-	checkScript(homedir .. "/scripts/chat/gmsg_pms.lua")
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
 	server.nextCodeReload = "/scripts/chat/gmsg_resets.lua"
 	checkScript(homedir .. "/scripts/chat/gmsg_resets.lua")
 
