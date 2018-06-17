@@ -39,7 +39,7 @@ function gmsg_misc()
 	end
 
 
-	local function cmd_AcceptIRCInvite()
+	local function cmd_AcceptIRCInvite() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}accept"
@@ -67,7 +67,7 @@ function gmsg_misc()
 			end
 		end
 
-		if chatvars.words[1] == "accept" and chatvars.words[2] == nil then
+		if chatvars.words[1] == "accept" and chatvars.words[2] ~= nil then
 			if (chatvars.playername == "Server") then
 				irc_chat(chatvars.ircAlias, "This command is ingame only.")
 				botman.faultyChat = false
@@ -100,7 +100,7 @@ function gmsg_misc()
 	end
 
 
-	local function cmd_AddCustomCommand()
+	local function cmd_AddCustomCommand() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}add command {command} message {custom message}"
@@ -158,7 +158,7 @@ function gmsg_misc()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message required.[-]")
 				else
-					irc_chat(server.ircMain, "Message required.")
+					irc_chat(chatvars.ircAlias, "Message required.")
 				end
 
 				botman.faultyChat = false
@@ -169,7 +169,7 @@ function gmsg_misc()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Command required.[-]")
 				else
-					irc_chat(server.ircMain, "Command required.")
+					irc_chat(chatvars.ircAlias, "Command required.")
 				end
 
 				botman.faultyChat = false
@@ -186,7 +186,7 @@ function gmsg_misc()
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You added the command: " .. server.commandPrefix .. cmd .. ".[-]")
 			else
-				irc_chat(server.ircMain, "You added the command: " .. server.commandPrefix .. cmd)
+				irc_chat(chatvars.ircAlias, "You added the command: " .. server.commandPrefix .. cmd)
 			end
 
 			-- reload from the database
@@ -351,7 +351,7 @@ function gmsg_misc()
 	end
 
 
-	local function cmd_Bk()
+	local function cmd_Bk() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}bk {bookmark number}"
@@ -408,6 +408,12 @@ function gmsg_misc()
 
 					cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
 					teleport(cmd, chatvars.playerid)
+
+					if players[row.steam] then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is " .. players[row.steam].name .. "'s bookmark " .. row.note .. ".[-]")
+					else
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is " .. playersArchived[row.steam].name .. "'s bookmark " .. row.note .. ".[-]")
+					end
 				end
 			end
 
@@ -417,7 +423,7 @@ function gmsg_misc()
 	end
 
 
-	local function cmd_Bookmark()
+	local function cmd_Bookmark() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}bookmark {message}"
@@ -472,7 +478,7 @@ function gmsg_misc()
 	end
 
 
-	local function cmd_ListCustomCommands()
+	local function cmd_ListCustomCommands() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}custom commands"
@@ -500,7 +506,7 @@ function gmsg_misc()
 			end
 		end
 
-		if (chatvars.words[1] == "custom" and chatvars.words[2] == "commands") then
+		if (chatvars.words[1] == "custom" and chatvars.words[2] == "commands") or string.find(chatvars.command, "list custom commands") then
 			cursor,errorString = conn:execute("SELECT * FROM customMessages")
 			row = cursor:fetch({}, "a")
 
@@ -508,13 +514,13 @@ function gmsg_misc()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There are no custom commands.[-]")
 				else
-					irc_chat(server.ircMain, "There are no custom commands.")
+					irc_chat(chatvars.ircAlias, "There are no custom commands.")
 				end
 			else
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Custom commands:[-]")
 				else
-					irc_chat(server.ircMain, "Custom commands:")
+					irc_chat(chatvars.ircAlias, "Custom commands:")
 				end
 			end
 
@@ -522,7 +528,7 @@ function gmsg_misc()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. row.command .. "[-]")
 				else
-					irc_chat(server.ircMain, server.commandPrefix .. row.command)
+					irc_chat(chatvars.ircAlias, server.commandPrefix .. row.command)
 				end
 
 				row = cursor:fetch(row, "a")
@@ -534,7 +540,7 @@ function gmsg_misc()
 	end
 
 
-	local function cmd_GetRegionName()
+	local function cmd_GetRegionName() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}get region {x coordinate} {z coordinate}"
@@ -567,7 +573,7 @@ function gmsg_misc()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Integer coordinates expected for x and z eg. /get region 123 456[-]")
 				else
-					irc_chat(server.ircMain, "Integer coordinates expected for x and z eg. /get region 123 456")
+					irc_chat(chatvars.ircAlias, "Integer coordinates expected for x and z eg. /get region 123 456")
 				end
 			else
 				result = getRegion(chatvars.words[3], chatvars.words[4])
@@ -575,7 +581,7 @@ function gmsg_misc()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The region at xPos " .. chatvars.words[3] .. " zPos " .. chatvars.words[4] .. " is " .. result .. "[-]")
 				else
-					irc_chat(server.ircMain, "The region at (x) " .. chatvars.words[3] .. " (z) " .. chatvars.words[4] .. " is " .. result)
+					irc_chat(chatvars.ircAlias, "The region at (x) " .. chatvars.words[3] .. " (z) " .. chatvars.words[4] .. " is " .. result)
 				end
 			end
 
@@ -585,7 +591,7 @@ function gmsg_misc()
 	end
 
 
-	local function cmd_InvitePlayerToIRC()
+	local function cmd_InvitePlayerToIRC() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}invite {player}"
@@ -666,7 +672,9 @@ function gmsg_misc()
 	end
 
 
-	local function cmd_ListBookmarks()
+	local function cmd_ListBookmarks() -- tested
+		local playerName, pname, pid
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}list bookmarks {player}"
@@ -695,41 +703,81 @@ function gmsg_misc()
 			end
 		end
 
-		if chatvars.words[1] == "list" and (chatvars.words[2] == "bookmarks") then
-			pname = string.sub(chatvars.command, string.find(chatvars.command, "bookmarks ") + 10)
-			pname = stripQuotes(string.trim(pname))
-			pid = LookupPlayer(pname)
+		if chatvars.words[1] == "list" and chatvars.words[2] == "bookmarks" then
+			if chatvars.words[3] == nil and chatvars.accessLevel < 3 then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player name required.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Player name required.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if chatvars.accessLevel < 3 then
+				pname = string.sub(chatvars.command, string.find(chatvars.command, "bookmarks ") + 10)
+				pname = stripQuotes(string.trim(pname))
+				pid = LookupPlayer(pname)
+			else
+				pname = players[chatvars.playerid].name
+				pid = chatvars.playerid
+			end
 
 			if pid == 0 then
 				pid = LookupArchivedPlayer(pname)
+
+				if pid ~= 0 then
+					playerName = playersArchived[pid].name
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found with that name.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "No player found with that name.")
+					end
+
+					botman.faultyChat = false
+					return true
+				end
+			else
+				playerName = players[pid].name
 			end
 
 			if (chatvars.accessLevel > 2) then
 				pid = chatvars.playerid
 			end
 
-			if (pid == 0) then
+			cursor,errorString = conn:execute("select * from bookmarks where steam = " .. pid)
+
+			if cursor:numrows() == 0 then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found with that name.[-]")
+					if pid == chatvars.playerid then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have no bookmarks.[-]")
+					else
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have no bookmarks.[-]")
+					end
 				else
-					irc_chat(chatvars.ircAlias, "No player found with that name.")
+					if pid == chatvars.playerid then
+						irc_chat(chatvars.ircAlias, "You have no bookmarks.")
+					else
+						irc_chat(chatvars.ircAlias, playerName .. " has no bookmarks.")
+					end
 				end
 
 				botman.faultyChat = false
 				return true
-			else
-				cursor,errorString = conn:execute("select * from bookmarks where steam = " .. pid)
-				row = cursor:fetch({}, "a")
+			end
 
-				while row do
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]#" .. row.id .. " " .. row.x .. " " .. row.y .. " " .. row.z .. " " .. row.note .. "[-]")
-					else
-						irc_chat(chatvars.ircAlias, "#" .. row.id .. " " .. row.x .. " " .. row.y .. " " .. row.z .. " " .. row.note)
-					end
+			row = cursor:fetch({}, "a")
 
-					row = cursor:fetch(row, "a")
+			while row do
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]#" .. row.id .. " " .. row.x .. " " .. row.y .. " " .. row.z .. " " .. row.note .. "[-]")
+				else
+					irc_chat(chatvars.ircAlias, "#" .. row.id .. " " .. row.x .. " " .. row.y .. " " .. row.z .. " " .. row.note)
 				end
+
+				row = cursor:fetch(row, "a")
 			end
 
 			botman.faultyChat = false
@@ -738,7 +786,7 @@ function gmsg_misc()
 	end
 
 
-	local function cmd_RemoveCustomCommand()
+	local function cmd_RemoveCustomCommand() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}remove command {command}"
@@ -781,7 +829,7 @@ function gmsg_misc()
 				end
 			end
 
-			cmd = string.sub(chatvars.commandOld, string.find(chatvars.command, "command") + 9)
+			cmd = string.sub(chatvars.commandOld, string.find(chatvars.command, "command") + 8)
 
 			if cmd ~= nil then
 				conn:execute("DELETE FROM customMessages WHERE command = '" .. escape(cmd) .. "'")
@@ -790,13 +838,13 @@ function gmsg_misc()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You removed the command " .. server.commandPrefix .. cmd .. ".[-]")
 				else
-					irc_chat(server.ircMain, "You removed the command: " .. server.commandPrefix .. cmd)
+					irc_chat(chatvars.ircAlias, "You removed the command: " .. server.commandPrefix .. cmd)
 				end
 			else
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Command required.[-]")
 				else
-					irc_chat(server.ircMain, "Command required.")
+					irc_chat(chatvars.ircAlias, "Command required.")
 				end
 			end
 
@@ -806,7 +854,7 @@ function gmsg_misc()
 	end
 
 
-	local function cmd_Yes()
+	local function cmd_Yes() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}yes"
@@ -854,6 +902,7 @@ function gmsg_misc()
 				players[chatvars.playerid].botQuestion = ""
 				players[chatvars.playerid].botQuestionID = nil
 				players[chatvars.playerid].botQuestionValue = nil
+
 				botman.faultyChat = false
 				return true
 			end
@@ -865,6 +914,7 @@ function gmsg_misc()
 				players[chatvars.playerid].botQuestion = ""
 				players[chatvars.playerid].botQuestionID = nil
 				players[chatvars.playerid].botQuestionValue = nil
+
 				botman.faultyChat = false
 				return true
 			end
@@ -876,6 +926,14 @@ function gmsg_misc()
 				players[chatvars.playerid].botQuestion = ""
 				players[chatvars.playerid].botQuestionID = nil
 				players[chatvars.playerid].botQuestionValue = nil
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if players[chatvars.playerid].botQuestion == "pay player" then
+				payPlayer()
+
 				botman.faultyChat = false
 				return true
 			end

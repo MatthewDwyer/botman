@@ -5571,7 +5571,6 @@ function gmsg_admin()
 					end
 				end
 			end
-
 			-- return player to previously recorded x y z
 			if (igplayers[tmp.id]) then
 				if players[tmp.id].timeout or players[tmp.id].botTimeout then
@@ -6303,7 +6302,7 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_SetViewArrestReason()
+	local function cmd_SetViewArrestReason() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}prisoner {player name} arrested {reason for arrest}\n"
@@ -6333,25 +6332,14 @@ function gmsg_admin()
 		end
 
 		if (chatvars.words[1] == "prisoner") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
-			end
-
 			reason = nil
 
 			if string.find(chatvars.command, "arrested") then
 				prisoner = string.sub(chatvars.command, string.find(chatvars.command, "prisoner ") + 9, string.find(chatvars.command, "arrested") -1)
-				reason = string.sub(chatvars.commandOld, string.find(chatvars.command, "arrested ") + 9)
+
+				if chatvars.accessLevel < 3 then
+					reason = string.sub(chatvars.commandOld, string.find(chatvars.command, "arrested ") + 9)
+				end
 			else
 				prisoner = string.sub(chatvars.command, string.find(chatvars.command, "prisoner ") + 9)
 			end
@@ -6394,7 +6382,7 @@ function gmsg_admin()
 			end
 
 			if players[prisonerid].prisoner then
-				if reason ~= nil then
+				if reason ~= nil and tonumber(chatvars.accessLevel) < 3 then
 					players[prisonerid].prisonReason = reason
 					if botman.dbConnected then conn:execute("UPDATE players SET prisonReason = '" .. escape(reason) .. "' WHERE steam = " .. prisonerid) end
 
@@ -6406,15 +6394,31 @@ function gmsg_admin()
 				else
 					if players[prisonerid].prisonReason ~= nil then
 						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. prisoner .. " was arrested for " .. players[prisonerid].prisonReason .. "[-]")
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. prisoner .. " was arrested for " .. players[prisonerid].prisonReason .. "[-]")
+
+							if players[prisonerid].bail > 0 then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bail is set at " .. players[prisonerid].bail .. " " .. server.moneyPlural .. "[-]")
+							end
 						else
 							irc_chat(chatvars.ircAlias, prisoner .. " was arrested for " .. players[prisonerid].prisonReason)
+
+							if players[prisonerid].bail > 0 then
+								irc_chat(chatvars.ircAlias, "Bail is set at " .. players[prisonerid].bail .. " " .. server.moneyPlural)
+							end
 						end
 					else
 						if (chatvars.playername ~= "Server") then
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] No reason is recorded for " .. prisoner .. "'s arrest.[-]")
+
+							if players[prisonerid].bail > 0 then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bail is set at " .. players[prisonerid].bail .. " " .. server.moneyPlural .. "[-]")
+							end
 						else
 							irc_chat(chatvars.ircAlias, "No reason is recorded for " .. prisoner .. "'s arrest.")
+
+							if players[prisonerid].bail > 0 then
+								irc_chat(chatvars.ircAlias, "Bail is set at " .. players[prisonerid].bail .. " " .. server.moneyPlural)
+							end
 						end
 					end
 				end
@@ -7912,9 +7916,30 @@ function gmsg_admin()
 			end
 
 			if (chatvars.words[1] == "watch") then
-				pname = string.sub(chatvars.command, string.find(chatvars.command, "watch ") + 6)
-				pname = string.trim(pname)
-				id = LookupPlayer(pname)
+				if chatvars.words[2] == "everyone" then -- including staff! :O
+					if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 2419200) end
+					if botman.dbConnected then conn:execute("UPDATE playersArchived SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 2419200) end
+
+					for k,v in pairs(igplayers) do
+						if players[k].accessLevel > 2 then
+							players[k].watchPlayer = true
+							players[k].watchPlayerTimer = os.time() + 2419200 -- 1 month
+						end
+					end
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Everyone is being watched right now.  The tinfoil hat does nothing![-]")
+					else
+						irc_chat(chatvars.ircAlias, "Everyone is being watched right now.  The tinfoil hat does nothing!")
+					end
+
+					botman.faultyChat = false
+					return true
+				else
+					pname = string.sub(chatvars.command, string.find(chatvars.command, "watch ") + 6)
+					pname = string.trim(pname)
+					id = LookupPlayer(pname)
+				end
 
 				if id == 0 then
 					id = LookupArchivedPlayer(pname)
@@ -7940,19 +7965,19 @@ function gmsg_admin()
 				if not isArchived then
 					players[id].watchPlayer = true
 					players[id].watchPlayerTimer = os.time() + 259200 -- 3 days
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admins will be alerted whenever " .. playerName ..  " enters a base.[-]")
-					end
 
 					if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. id) end
 				else
 					playersArchived[id].watchPlayer = true
 					playersArchived[id].watchPlayerTimer = os.time() + 259200 -- 3 days
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admins will be alerted whenever " .. playerName ..  " enters a base.[-]")
-					end
 
 					if botman.dbConnected then conn:execute("UPDATE playersArchived SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. id) end
+				end
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admins will be alerted whenever " .. playerName ..  " enters a base.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Admins will be alerted whenever " .. playerName ..  " enters a base.")
 				end
 			end
 
@@ -7999,17 +8024,15 @@ function gmsg_admin()
 				if not isArchived then
 					players[id].watchPlayer = false
 					if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. id) end
-
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playerName ..  " will no longer be watched.[-]")
-					end
 				else
 					playersArchived[id].watchPlayer = false
 					if botman.dbConnected then conn:execute("UPDATE playersArchived SET watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. id) end
+				end
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playerName ..  " will no longer be watched.[-]")
-					end
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playerName ..  " will not be watched.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Player " .. playerName ..  " will not be watched.")
 				end
 			end
 

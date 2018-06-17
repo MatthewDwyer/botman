@@ -4773,20 +4773,6 @@ if debug then dbug("debug server") end
 
 	if debug then dbug("debug server end of remote commands") end
 
-	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
-		botman.faultyChat = false
-		return false
-	end
-	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-
-	-- if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		-- irc_chat(chatvars.ircAlias, ".")
-		-- irc_chat(chatvars.ircAlias, "Server In-Game Only:")
-		-- irc_chat(chatvars.ircAlias, "========================")
-		-- irc_chat(chatvars.ircAlias, ".")
-	-- end
-
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Server commands help registered ****")
 		dbug("Server commands help registered")

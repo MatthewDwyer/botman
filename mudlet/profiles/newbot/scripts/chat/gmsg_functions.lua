@@ -734,7 +734,7 @@ function gmsg(line, ircid)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-	if not chatvars.playername then
+	if chatvars.playername == "" then
 		chatvars.command = line
 		chatvars.playername = "Server"
 		line = "Server: " .. line

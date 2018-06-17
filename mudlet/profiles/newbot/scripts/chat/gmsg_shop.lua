@@ -1560,17 +1560,6 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 		return result
 	end
 
-if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
-
-	if (chatvars.words[1] == "yes" and chatvars.words[2] == nil) then
-		if players[chatvars.playerid].botQuestion == "pay player" then
-			payPlayer()
-
-			botman.faultyChat = false
-			return true
-		end
-	end
-
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Shop commands help registered ****")
 		dbug("Shop commands help registered")

@@ -572,6 +572,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if currentLocation ~= false then
 		igplayers[steam].currentLocationPVP = locations[currentLocation].pvp
+		igplayers[steam].inLocation = currentLocation
 		players[steam].inLocation = currentLocation
 
 		resetZone = locations[currentLocation].resetZone
@@ -581,6 +582,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 	else
 		players[steam].inLocation = ""
+		igplayers[steam].inLocation = ""
 	end
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
@@ -822,6 +824,11 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if igplayers[steam].alertLocation == "" and currentLocation ~= false then
 		if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]Welcome to " .. currentLocation .. "[-]") .. "')") end
 		igplayers[steam].alertLocation = currentLocation
+
+		-- if locations[currentLocation].watchPlayers and tonumber(playerAccessLevel) > 2 then
+			-- irc_chat(server.ircAlerts, name .. " entered location " .. currentLocation)
+			-- alertAdmins(name " has entered " .. currentLocation, "warn")
+		-- end
 	end
 
 

@@ -558,7 +558,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			if ircid then
 				if players[ircid].accessLevel < 3 then
-					irc_chat(name, v.name .. " " .. public .. " " .. active .. " xyz " .. v.x .. " " .. v.y .. " " .. v.z .. " category " .. v.locationCategory)
+					if v.locationCategory ~= "" then
+						irc_chat(name, v.name .. " " .. public .. " " .. active .. " xyz " .. v.x .. " " .. v.y .. " " .. v.z .. " category " .. v.locationCategory)
+					else
+						irc_chat(name, v.name .. " " .. public .. " " .. active .. " xyz " .. v.x .. " " .. v.y .. " " .. v.z)
+					end
 				else
 					if public == "public" then
 						irc_chat(name, v.name)

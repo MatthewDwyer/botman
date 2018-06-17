@@ -2672,6 +2672,7 @@ end
 function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam] = {}
 	igplayers[steam].afk = os.time() + 900
+	igplayers[steam].alertLocation = ""
 	igplayers[steam].alertRemovedClaims = false
 	igplayers[steam].belt = ""
 	igplayers[steam].checkNewPlayer = true
@@ -2690,6 +2691,7 @@ function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam].highPingCount = 0
 	igplayers[steam].id = entityid
 	igplayers[steam].illegalInventory = false
+	igplayers[steam].inLocation = ""
 	igplayers[steam].inventory = ""
 	igplayers[steam].inventoryLast = ""
 	igplayers[steam].killTimer = 0

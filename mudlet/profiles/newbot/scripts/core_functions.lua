@@ -1579,6 +1579,10 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].illegalInventory = false
 	end
 
+	if (igplayers[steam].inLocation == nil) then
+		igplayers[steam].inLocation = ""
+	end
+
 	if (igplayers[steam].inventory == nil) then
 		igplayers[steam].inventory = ""
 	end

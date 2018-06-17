@@ -265,16 +265,17 @@ function gmsg_locations()
 
 
 	local function cmd_Lobby()
-		local playerName, isArchived
+		local playerName, isArchived, lobby
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}lobby {player name}"
-			help[2] = "If the lobby location exists, send the player to it. You can also do this to offline players, they will be moved to the lobby when they rejoin."
+			help[2] = "If the lobby location exists, send the player to it. You can also do this to offline players, they will be moved to the lobby when they rejoin.\n"
+			help[2] = help[2] .. "If location spawn exists and lobby does not, spawn is the lobby location."
 
 			if botman.registerHelp then
 				tmp.command = help[1]
-				tmp.keywords = "locat,lobby,tele,tp,start,play,new"
+				tmp.keywords = "locat,lobby,spawn,tele,tp,start,play,new"
 				tmp.accessLevel = 2
 				tmp.description = help[2]
 				tmp.notes = ""
@@ -309,6 +310,20 @@ function gmsg_locations()
 				end
 			end
 
+			if not locations["lobby"] and not locations["spawn"] then
+
+			end
+
+			-- use spawn as a substitute for lobby
+			if locations["spawn"] then
+				lobby = "spawn"
+			end
+
+			-- if lobby exists, use it
+			if locations["lobby"] then
+				lobby = "lobby"
+			end
+
 			pname = string.sub(chatvars.command, string.find(chatvars.command, "lobby ") + 6)
 			pname = string.trim(pname)
 			id = LookupPlayer(pname)
@@ -328,27 +343,27 @@ function gmsg_locations()
 			if (id ~= 0) then
 				-- if the player is ingame, send them to the lobby otherwise flag it to happen when they rejoin
 				if (igplayers[id]) then
-					cmd = "tele " .. id .. " " .. locations["spawnpoint1"].x .. " " .. locations["spawnpoint1"].y .. " " .. locations["spawnpoint1"].z
+					cmd = "tele " .. id .. " " .. locations[lobby].x .. " " .. locations[lobby].y .. " " .. locations[lobby].z
 					teleport(cmd, id)
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " has been sent to the lobby.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. players[id].name .. " has been sent to " .. lobby .. ".[-]")
 					else
-						irc_chat(chatvars.ircAlias, "Player " .. players[id].name .. " has been sent to the lobby.")
+						irc_chat(chatvars.ircAlias, "Player " .. players[id].name .. " has been sent to " .. lobby .. ".")
 					end
 				else
 					if not isArchived then
 						players[id].lobby = true
-						conn:execute("UPDATE players set location = 'lobby' WHERE steam = " .. id)
+						conn:execute("UPDATE players set location = '" .. lobby .. "' WHERE steam = " .. id)
 					else
 						playersArchived[id].lobby = true
-						conn:execute("UPDATE playersArchived set location = 'lobby' WHERE steam = " .. id)
+						conn:execute("UPDATE playersArchived set location = '" .. lobby .. "' WHERE steam = " .. id)
 					end
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. playerName .. " will spawn in the lobby next time they connect to the server.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. playerName .. " will spawn at " .. lobby .. " next time they connect to the server.[-]")
 					else
-						irc_chat(chatvars.ircAlias, playerName .. " will spawn in the lobby next time they connect to the server.")
+						irc_chat(chatvars.ircAlias, playerName .. " will spawn at " .. lobby .. " next time they connect to the server.")
 					end
 				end
 			else
@@ -1363,7 +1378,7 @@ function gmsg_locations()
 			end
 		end
 
-		if (chatvars.words[1] == "location" and string.find(chatvars.command, " close") and chatvars.words[2] ~= "add") then
+		if (chatvars.words[1] == "location" and string.find(chatvars.command, " close") and chatvars.words[2] ~= "add" and not string.find(chatvars.command, "day closed")) then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -1583,7 +1598,7 @@ function gmsg_locations()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}location {name} day closed {0-7}"
-			help[2] = "Block and remove players from the location on a set day. 7 = day 7"
+			help[2] = "Block and remove players from the location on a set day. Disable this feature by setting it to 0."
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -1648,16 +1663,7 @@ function gmsg_locations()
 				return true
 			end
 
-			if tonumber(chatvars.number) < 0 or tonumber(chatvars.number) > 7 then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Closed day outside of range 0 to 7.[-]")
-				else
-					irc_chat(chatvars.ircAlias, "Closed day outside of range 0 to 7.")
-				end
-
-				botman.faultyChat = false
-				return true
-			end
+			chatvars.number = math.abs(chatvars.number)
 
 			locations[loc].dayClosed = chatvars.number
 			conn:execute("UPDATE locations SET dayClosed = " .. chatvars.number .. " WHERE name = '" .. escape(loc) .. "'")
@@ -2735,6 +2741,85 @@ function gmsg_locations()
 	end
 
 
+	local function cmd_ToggleLocationWatchPlayers()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}location {name} watch\n"
+			help[1] = help[1] .. " {#}location {name} stop watching\n"
+			help[2] = "Set a location to report player activity regardless of other player watch settings, or not.  The default is to not watch players.\n"
+			help[2] = help[2] .. "Use this setting to be alerted whenever a player enters/exits a watched location or their inventory changes while in it."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "locat,watch,play"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "locat") or string.find(chatvars.command, "watch") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "location" and (string.find(chatvars.command, "watch") or string.find(chatvars.command, "stop watching")) then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if string.find(chatvars.command, "stop watch") then
+				loc = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "stop w") - 2)
+			else
+				loc = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "watch") - 2)
+			end
+
+			if locations[loc] then
+				if string.find(chatvars.command, "stop watch") then
+					locations[loc].watch = false
+					conn:execute("UPDATE locations set watchPlayers = 0 WHERE name = '" .. escape(loc) .. "'")
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will not be watched in location " .. loc .. " unless individually watched.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Players not will be watched in location " .. loc .. " unless individually watched")
+					end
+				else
+					locations[loc].watch = true
+					conn:execute("UPDATE locations set watchPlayers = 1 WHERE name = '" .. escape(loc) .. "'")
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will be watched in location " .. loc .. ".[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Players will be watched in location " .. loc)
+					end
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleLocationWaypoints()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -3006,6 +3091,33 @@ function gmsg_locations()
 
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_AddLocation()
+
+	if result then
+		if debug then dbug("debug cmd_AddLocation triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ListCategories()
+
+	if result then
+		if debug then dbug("debug cmd_ListCategories triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ListLocations()
+
+	if result then
+		if debug then dbug("debug cmd_ListLocations triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_Lobby()
 
 	if result then
@@ -3033,10 +3145,55 @@ function gmsg_locations()
 
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_LocationEndsHere()
+
+	if result then
+		if debug then dbug("debug cmd_LocationEndsHere triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_LocationInfo()
+
+	if result then
+		if debug then dbug("debug cmd_LocationInfo triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_LocationRandom()
+
+	if result then
+		if debug then dbug("debug cmd_LocationRandom triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_LocationSetReset()
 
 	if result then
 		if debug then dbug("debug cmd_LocationSetReset triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_MoveLocation()
+
+	if result then
+		if debug then dbug("debug cmd_MoveLocation triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ProtectLocation()
+
+	if result then
+		if debug then dbug("debug cmd_ProtectLocation triggered") end
 		return result
 	end
 
@@ -3064,78 +3221,6 @@ function gmsg_locations()
 
 	if result then
 		if debug then dbug("debug cmd_SetClearLocationCategory triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ToggleLocationAllowBase()
-
-	if result then
-		if debug then dbug("debug cmd_ToggleLocationAllowBase triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ToggleLocationEnabled()
-
-	if result then
-		if debug then dbug("debug cmd_ToggleLocationEnabled triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ToggleLocationPVP()
-
-	if result then
-		if debug then dbug("debug cmd_ToggleLocationPVP triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ToggleLocationPrivate()
-
-	if result then
-		if debug then dbug("debug cmd_ToggleLocationPrivate triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ToggleLocationSafe()
-
-	if result then
-		if debug then dbug("debug cmd_ToggleLocationSafe triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ToggleShowLocationEnterExitMessage()
-
-	if result then
-		if debug then dbug("debug cmd_ToggleShowLocationEnterExitMessage triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ToggleLocationReturns()
-
-	if result then
-		if debug then dbug("debug cmd_ToggleLocationReturns triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ToggleLocationWaypoints()
-
-	if result then
-		if debug then dbug("debug cmd_ToggleLocationWaypoints triggered") end
 		return result
 	end
 
@@ -3231,97 +3316,91 @@ function gmsg_locations()
 
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
-	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
-		return false
-	end
-	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-
-	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
-		irc_chat(chatvars.ircAlias, ".")
-		irc_chat(chatvars.ircAlias, "Location In-Game Only:")
-		irc_chat(chatvars.ircAlias, "========================")
-		irc_chat(chatvars.ircAlias, ".")
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_AddLocation()
-
-	if result then
-		if debug then dbug("debug cmd_AddLocation triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ListCategories()
-
-	if result then
-		if debug then dbug("debug cmd_ListCategories triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ListLocations()
-
-	if result then
-		if debug then dbug("debug cmd_ListLocations triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_LocationEndsHere()
-
-	if result then
-		if debug then dbug("debug cmd_LocationEndsHere triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_LocationInfo()
-
-	if result then
-		if debug then dbug("debug cmd_LocationInfo triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_LocationRandom()
-
-	if result then
-		if debug then dbug("debug cmd_LocationRandom triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_MoveLocation()
-
-	if result then
-		if debug then dbug("debug cmd_MoveLocation triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ProtectLocation()
-
-	if result then
-		if debug then dbug("debug cmd_ProtectLocation triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
 	result = cmd_SetTP()
 
 	if result then
 		if debug then dbug("debug cmd_SetTP triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLocationAllowBase()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationAllowBase triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLocationEnabled()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationEnabled triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLocationPrivate()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationPrivate triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLocationPVP()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationPVP triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLocationReturns()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationReturns triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLocationSafe()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationSafe triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLocationWatchPlayers()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationWatchPlayers triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLocationWaypoints()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationWaypoints triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleShowLocationEnterExitMessage()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleShowLocationEnterExitMessage triggered") end
 		return result
 	end
 
@@ -3346,14 +3425,14 @@ function gmsg_locations()
 	-- look for command in locations table
 
 	-- if a location called spawn exists and lobby does not, substitute lobby with spawn
-	if chatvars.command == "spawn" then
+	if chatvars.words[1] == "spawn" then
 		if locations["lobby"] and not locations["spawn"] then
 			chatvars.command = "lobby"
 		end
 	end
 
 	-- if a location called lobby exists and spawn does not, substitute spawn with lobby
-	if chatvars.command == "lobby" then
+	if chatvars.words[1] == "lobby" then
 		if locations["spawn"] and not locations["lobby"] then
 			chatvars.command = "spawn"
 		end

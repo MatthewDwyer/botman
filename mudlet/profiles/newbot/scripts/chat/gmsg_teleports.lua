@@ -1108,7 +1108,7 @@ function gmsg_teleports()
 					end
 				end
 			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have used all your returns.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport somewhere first.[-]")
 			end
 
 			botman.faultyChat = false
