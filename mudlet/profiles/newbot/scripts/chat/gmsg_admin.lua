@@ -1201,6 +1201,13 @@ function gmsg_admin()
 			unknownPlayer = false
 			playerName = "Not Sure (unknown player)"
 
+			-- someone did ban remove instead of unban so we'll fix their command for them.
+			if string.find(chatvars.command, "ban remove") then
+				pname = string.sub(chatvars.command, string.find(chatvars.command, "remove ") + 7)
+				chatvars.words[1] = "unban"
+				chatvars.command = "unban " .. pname
+			end
+
 			if string.find(chatvars.command, "reason") then
 				reason = string.sub(chatvars.commandOld, string.find(chatvars.command, "reason ") + 7)
 			end

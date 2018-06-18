@@ -65,7 +65,7 @@ function gmsg_locations()
 				return true
 			end
 
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "add ") + 4)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "add ") + 4)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -423,8 +423,7 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = ""
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "reset ") + 6)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "reset ") + 6)
 			locationName = string.trim(locationName)
 
 			loc = LookupLocation(locationName)
@@ -495,8 +494,7 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = ""
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "clear") - 2)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "clear") - 2)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -563,7 +561,7 @@ function gmsg_locations()
 				return true
 			end
 
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "end") - 2)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "end") - 2)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -626,7 +624,7 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -740,7 +738,7 @@ function gmsg_locations()
 				return true
 			end
 
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "random") - 2)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "random") - 2)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -800,8 +798,7 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = ""
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "reset ") + 6)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "reset ") + 6)
 			locationName = string.trim(locationName)
 
 			loc = LookupLocation(locationName)
@@ -872,7 +869,7 @@ function gmsg_locations()
 				return true
 			end
 
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "move ") + 5)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "move ") + 5)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -993,8 +990,7 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = ""
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "remove ") + 7)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "remove ") + 7)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -2787,12 +2783,14 @@ function gmsg_locations()
 			end
 
 			if string.find(chatvars.command, "stop watch") then
-				loc = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "stop w") - 2)
+				loc = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, " stop w") - 1)
 			else
-				loc = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "watch") - 2)
+				loc = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, " watch ") - 1)
 			end
 
-			if locations[loc] then
+			loc = LookupLocation(loc)
+
+			if loc ~= nil then
 				if string.find(chatvars.command, "stop watch") then
 					locations[loc].watch = false
 					conn:execute("UPDATE locations set watchPlayers = 0 WHERE name = '" .. escape(loc) .. "'")

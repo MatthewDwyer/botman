@@ -8,16 +8,17 @@
 --]]
 
 function FifteenSecondTimer()
+	if botman.botDisabled then
+		send("gt")
+		return
+	end
+
 	if botman.botOffline then
 		return
 	end
 
 	if tonumber(botman.playersOnline) == 0 then
 		send("gt")
-	end
-
-	if botman.botDisabled then
-		return
 	end
 
 	if customFifteenSecondTimer ~= nil then

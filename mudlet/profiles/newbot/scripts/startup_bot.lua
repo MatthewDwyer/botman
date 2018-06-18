@@ -145,7 +145,11 @@ function login()
 	if type(server) ~= "table" then
 		server = {}
 		getAllPlayers = true
-		botman.botOffline = true
+
+		if not botman.botDisabled then
+			botman.botOffline = true
+		end
+
 		botman.scheduledRestartPaused = false
 		botman.scheduledRestartForced = false
 		botman.scheduledRestart = false
@@ -176,13 +180,13 @@ function login()
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		botman.botStarted = os.time()
-		initBot()
+		initBot() -- this lives in edit_me.lua
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
-		openDB()
+		openDB() -- this lives in edit_me.lua
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
-		openBotsDB()
+		openBotsDB() -- this lives in edit_me.lua
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
-		initDB()
+		initDB() -- this lives in mysql.lua
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		botman.dbConnected = isDBConnected()
 		botman.db2Connected = isDBBotsConnected()

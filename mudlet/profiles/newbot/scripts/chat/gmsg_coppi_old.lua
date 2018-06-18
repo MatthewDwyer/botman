@@ -1541,8 +1541,14 @@ function gmsg_coppi_old()
 		tmp.long = 5
 
 		for i=2,chatvars.wordCount,1 do
-			if chatvars.words[i] == "wide" then
+			if chatvars.words[i] == "wide" or chatvars.words[i] == "width"  then
 				tmp.width = chatvars.words[i+1]
+
+				-- allow for width of 1
+				tmp.width = math.abs(tmp.width)
+				if tmp.width > 0 then tmp.width = tmp.width - 1 end
+
+				-- default to same height
 				tmp.tall = tmp.width
 			end
 
@@ -1554,16 +1560,24 @@ function gmsg_coppi_old()
 				tmp.block = chatvars.words[i+1]
 			end
 
-			if chatvars.words[i] == "tall" or chatvars.words[i] == "deep" then
+			if chatvars.words[i] == "tall" or chatvars.words[i] == "deep" or chatvars.words[i] == "height" or chatvars.words[i] == "hieght" then
 				tmp.tall = chatvars.words[i+1]
+
+				-- allow for height of 1
+				tmp.tall = math.abs(tmp.tall)
+				if tmp.tall > 0 then tmp.tall = tmp.tall - 1 end
 			end
 
-			if chatvars.words[i] == "base" then
+			if chatvars.words[i] == "base" or chatvars.words[i] == "floor" or chatvars.words[i] == "bottom" then
 				tmp.base = chatvars.words[i+1]
 			end
 
-			if chatvars.words[i] == "long" then
+			if chatvars.words[i] == "long" or chatvars.words[i] == "length" then
 				tmp.long = chatvars.words[i+1]
+
+				-- allow for length of 1
+				tmp.long = math.abs(tmp.long)
+				if tmp.long > 0 then tmp.long = tmp.long - 1 end
 			end
 
 			if chatvars.words[i] == "up" or chatvars.words[i] == "room" then

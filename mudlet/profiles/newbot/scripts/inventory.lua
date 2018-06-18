@@ -48,9 +48,7 @@ function CheckInventory()
 
 		if v.inLocation ~= "" then
 			if locations[v.inLocation].watchPlayers and tmp.playerAccessLevel > 2 then
-				tmp.locationWatched = true
-			else
-				tmp.locationWatched = false
+				tmp.watchPlayer = true
 			end
 		end
 
@@ -75,12 +73,7 @@ function CheckInventory()
 			if (tmp.watchPlayer == true) then
 				tmp.flags = "|WAT|" -- watched
 			end
-
-			if tmp.locationWatched and tmp.playerAccessLevel > 2 then
-				tmp.flags = "|WAT|"
-			end
 		end
-
 
 		if v.raiding == true then
 			tmp.flags = tmp.flags .. "RAID " .. v.raidingBase .. "|"
@@ -332,7 +325,7 @@ function CheckInventory()
 						end
 					end
 
-					if (players[k].watchPlayer == true) then
+					if (players[k].watchPlayer or tmp.watchPlayer) then
 						cursor,errorString = conn:execute("SELECT * FROM memRestrictedItems where item = '" .. escape(b.item) .. "' and action = 'watch'")
 						row = cursor:fetch({}, "a")
 						if row then
@@ -341,7 +334,7 @@ function CheckInventory()
 							end
 						end
 
-						if tonumber(tmp.delta) > 30 and tmp.newPlayer == true and not string.find(tmp.newItems, b.item, nil, true) then
+						if tonumber(tmp.delta) > 0 and tmp.newPlayer == true and not string.find(tmp.newItems, b.item, nil, true) then
 							tmp.newItems = tmp.newItems .. b.item .. " (" .. tmp.delta .. "), "
 						end
 
@@ -366,7 +359,7 @@ function CheckInventory()
 
 			if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
 
-			if (tmp.watchPlayer == true) and not server.disableWatchAlerts then
+			if (players[k].watchPlayer) and not server.disableWatchAlerts then
 				if tmp.newItems ~= "" then
 					alertAdmins("Watched player " .. v.id .. " " .. v.name .. " " .. tmp.newItems)
 				end
@@ -379,7 +372,7 @@ function CheckInventory()
 				invTemp[k] = items
 
 				if tmp.inventoryChanged == true then
-					if players[k].timeOnServer == nil or v.watchPlayer == true or v.raiding == true then
+					if players[k].timeOnServer == nil or v.watchPlayer or v.raiding or tmp.watchPlayer then
 						for q, w in pairs(changes) do
 							irc_chat(server.ircWatch, string.trim(tmp.flags .. " " .. v.name .. "  " .. w[1] .. "  " .. w[2] .. "  [ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)) .. " ]")
 						end

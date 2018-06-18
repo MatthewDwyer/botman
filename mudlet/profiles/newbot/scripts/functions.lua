@@ -754,7 +754,7 @@ function scanForPossibleHackersNearby(steam, world)
 					message("say [" .. server.alertColour .. "]" .. msg .. "[-]")
 					irc_chat(server.ircAlerts, msg)
 				else
-					timeoutPlayer(k, "auto by bot for a non-zero hacker score", false)
+					timeoutPlayer(k, "reported by player and found with a non-zero hacker score", false)
 				end
 			end
 		end

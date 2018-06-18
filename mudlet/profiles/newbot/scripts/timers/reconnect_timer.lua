@@ -37,10 +37,6 @@ function reconnectTimer()
 	end
 
 	if tonumber(botman.botOfflineCount) < 1 then
-		if not botman.botOffline then
-			botman.botConnectedTimestamp = os.time()
-		end
-
 		botman.botOffline = true
 		botman.botOfflineTimestamp = os.time()
 

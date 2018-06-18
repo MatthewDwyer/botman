@@ -573,7 +573,6 @@ function gmsg(line, ircid)
 	  -- region = "r.0.3.7",
 	  -- wordCount = 4,
 	  -- accessLevel = 0,
-	  -- gmsg = "2017-10-26T06:14:38 5760.786 INF Chat: 'Smegz0r': /tp 5000 -1 5000",
 	  -- intX = 197,
 	  -- numbers = {
 		-- "5000",
@@ -629,7 +628,6 @@ function gmsg(line, ircid)
 
 	if debug then
 		display("line " .. line)
-		dbug("gmsg " .. line)
 
 		if ircid ~= nil then
 			dbug("ircid " .. ircid)
@@ -644,7 +642,6 @@ function gmsg(line, ircid)
 	chatvars.restrictedCommand = false
 	chatvars.timestamp = os.time()
 	botman.ExceptionCount = 0
-	chatvars.gmsg = line
 	chatvars.oldLine = line
 	chatvars.playerid = 0
 	chatvars.accessLevel = 99
@@ -776,7 +773,7 @@ function gmsg(line, ircid)
 
 		ircMsg = server.gameDate .. " " .. chatvars.command
 	else
-		if string.find(chatvars.gmsg, "'Server':", nil, true) and not string.find(line, "-irc:") then
+		if string.find(chatvars.oldLine, "'Server':", nil, true) and not string.find(line, "-irc:") then
 			chatvars.playername = "Server"
 			botman.faultyChat = false
 		end
@@ -921,7 +918,7 @@ function gmsg(line, ircid)
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	-- don't process any chat coming from irc or death messages
-	if string.find(chatvars.gmsg, "-irc:", nil, true) or (chatvars.playername == "Server" and (string.find(chatvars.gmsg, "died") or string.find(chatvars.gmsg, "eliminated"))) then
+	if string.find(chatvars.oldLine, "-irc:", nil, true) or (chatvars.playername == "Server" and (string.find(chatvars.oldLine, "died") or string.find(chatvars.oldLine, "eliminated"))) then
 		botman.faultyChat = false
 		return true
 	end
@@ -1015,10 +1012,15 @@ function gmsg(line, ircid)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-		if (chatvars.words[1] == "pause" or chatvars.words[1] == "paws") and chatvars.words[2] == "bot" and chatvars.accessLevel == 0 then
-			message("say [" .. server.warnColour .. "] " .. server.botName .. " is now running in safe mode.  Most commands are disabled.[-]")
-			irc_chat(server.ircMain, "The bot is running in safe mode.  To exit safe mode type " .. server.commandPrefix .. "start bot")
-			botman.botDisabled = true
+		if (chatvars.words[1] == "unpause" or chatvars.words[1] == "unpaws" or chatvars.words[1] == "enable") and chatvars.words[2] == "bot" and chatvars.words[3] == nil and chatvars.accessLevel == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is no longer paused.[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, "The bot is no longer paused.")
+			end
+
+			message("say [" .. server.warnColour .. "]The bot is now accepting commands again! :D[-]")
+			botman.botDisabled = false
 
 			if tonumber(chatvars.playerid) > 0 then
 				players[chatvars.playerid].lastCommand = chatvars.command
@@ -1032,9 +1034,16 @@ function gmsg(line, ircid)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-		if (chatvars.words[1] == "unpause" or chatvars.words[1] == "unpaws") and chatvars.words[2] == "bot" and chatvars.accessLevel == 0 then
-			message("say [" .. server.warnColour .. "]The bot has exited safe mode.[-]")
-			botman.botDisabled = false
+		if (chatvars.words[1] == "pause" or chatvars.words[1] == "paws" or chatvars.words[1] == "disable") and chatvars.words[2] == "bot" and chatvars.words[3] == nil and chatvars.accessLevel == 0 then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.botName .. " is now paused.  Most commands are disabled. To unpause it type " .. server.commandPrefix .. "unpause bot.[-]")
+			else
+				irc_chat(players[chatvars.ircid].ircAlias, server.botName .. " is now paused.  Most commands are disabled. To unpause it type cmd " .. server.commandPrefix .. "unpause bot.")
+			end
+
+			message("say [" .. server.warnColour .. "] " .. server.botName .. " is now paused.  Most commands are disabled.[-]")
+			irc_chat(server.ircMain, "The bot is now paused.  To unpause it type cmd " .. server.commandPrefix .. "unpause bot.")
+			botman.botDisabled = true
 
 			if tonumber(chatvars.playerid) > 0 then
 				players[chatvars.playerid].lastCommand = chatvars.command
@@ -1126,24 +1135,6 @@ function gmsg(line, ircid)
 		end
 	end
 
-	if debug then dbug("debug entering gmsg_unslashed") end
-	result = gmsg_unslashed()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_unslashed") end
-		return true
-	end
-
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-
-	if debug then dbug("debug entering gmsg_info") end
-	result = gmsg_info()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_info") end
-		return true
-	end
-
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.playername ~= "Server") then
@@ -1212,6 +1203,51 @@ function gmsg(line, ircid)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
+	if botman.botDisabled then
+		if (chatvars.playername ~= "Server") then
+			for i=1,chatvars.wordCount,1 do
+				word = chatvars.words[i]
+				if word == "bot" or word == "bot?" or word == "bot!" then
+					if (chatvars.accessLevel > 0) then
+						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]The bot is currently disabled and not accepting most commands.[-]")
+					else
+						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]The bot is currently disabled.  To enable it again type " .. server.commandPrefix .. "unpause bot[-]")
+					end
+
+					botman.faultyChat = false
+					return true
+				end
+			end
+		else
+			if (chatvars.accessLevel > 2) then
+				irc_chat(players[chatvars.ircid].ircAlias, "The bot is currently disabled.  To enable it again type cmd " .. server.commandPrefix .. "unpause bot")
+				botman.faultyChat = false
+				return true
+			end
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if debug then dbug("debug entering gmsg_unslashed") end
+	result = gmsg_unslashed()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_unslashed") end
+		return true
+	end
+
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
+	if debug then dbug("debug entering gmsg_info") end
+	result = gmsg_info()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_info") end
+		return true
+	end
+
 	if not result then
 		if not result and debug then dbug("debug entering gmsg_custom") end
 		result = gmsg_custom()
@@ -1220,40 +1256,43 @@ function gmsg(line, ircid)
 
 	-- If you want to override any commands in the sections below, create commands in gmsg_custom.lua or call them from within it making sure to match the commands keywords.
 
-	if debug then dbug("debug entering gmsg_bot") end
-	result = gmsg_bot()
+	if debug then dbug("debug entering gmsg_base") end
+	result = gmsg_base()
 
 	if result then
-		if debug then dbug("debug ran command in gmsg_bot") end
+		if debug then dbug("debug ran command in gmsg_base") end
 		return true
 	end
 
-	if debug then dbug("debug entering gmsg_fun") end
-	result = gmsg_fun()
+	if debug then dbug("debug entering gmsg_locations") end
+	result = gmsg_locations()
 
 	if result then
-		if debug then dbug("debug ran command in gmsg_fun") end
+		if debug then dbug("debug ran command in gmsg_locations") end
 		return true
 	end
 
-	if botman.botDisabled then
-		if (chatvars.playername ~= "Server") then
-			if (chatvars.accessLevel > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]The bot is currently running in safe mode and not accepting most commands.[-]")
-			else
-				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]The bot is running in safe mode.  To exit safe mode type " .. server.commandPrefix .. "start bot[-]")
-			end
+	if debug then dbug("debug entering gmsg_teleports") end
+	result = gmsg_teleports()
 
-			botman.faultyChat = false
-			return true
-		else
-			if (chatvars.accessLevel > 2) then
-				irc_chat(players[chatvars.ircid].ircAlias, "The bot is running in safe mode.  To exit safe mode type " .. server.commandPrefix .. "start bot")
-				botman.faultyChat = false
-				return true
-			end
-		end
+	if result then
+		if debug then dbug("debug ran command in gmsg_teleports") end
+		return true
+	end
 
+	if debug then dbug("debug entering gmsg_waypoints") end
+	result = gmsg_waypoints()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_waypoints") end
+		return true
+	end
+
+	if debug then dbug("debug entering gmsg_shop") end
+	result = gmsg_shop()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_shop") end
 		return true
 	end
 
@@ -1273,19 +1312,11 @@ function gmsg(line, ircid)
 		return true
 	end
 
-	if debug then dbug("debug entering gmsg_base") end
-	result = gmsg_base()
+	if debug then dbug("debug entering gmsg_hotspots") end
+	result = gmsg_hotspots()
 
 	if result then
-		if debug then dbug("debug ran command in gmsg_base") end
-		return true
-	end
-
-	if debug then dbug("debug entering gmsg_admin") end
-	result = gmsg_admin()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_admin") end
+		if debug then dbug("debug ran command in gmsg_hotspots") end
 		return true
 	end
 
@@ -1297,11 +1328,35 @@ function gmsg(line, ircid)
 		return true
 	end
 
-	if debug then dbug("debug entering gmsg_hotspots") end
-	result = gmsg_hotspots()
+	if debug then dbug("debug entering gmsg_villages") end
+	result = gmsg_villages()
 
 	if result then
-		if debug then dbug("debug ran command in gmsg_hotspots") end
+		if debug then dbug("debug ran command in gmsg_villages") end
+		return true
+	end
+
+	if debug then dbug("debug entering gmsg_bot") end
+	result = gmsg_bot()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_bot") end
+		return true
+	end
+
+	if debug then dbug("debug entering gmsg_fun") end
+	result = gmsg_fun()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_fun") end
+		return true
+	end
+
+	if debug then dbug("debug entering gmsg_admin") end
+	result = gmsg_admin()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_admin") end
 		return true
 	end
 
@@ -1313,51 +1368,11 @@ function gmsg(line, ircid)
 		return true
 	end
 
-	if debug then dbug("debug entering gmsg_shop") end
-	result = gmsg_shop()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_shop") end
-		return true
-	end
-
 	if debug then dbug("debug entering gmsg_tracker") end
 	result = gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug ran command in gmsg_tracker") end
-		return true
-	end
-
-	if debug then dbug("debug entering gmsg_teleports") end
-	result = gmsg_teleports()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_teleports") end
-		return true
-	end
-
-	if debug then dbug("debug entering gmsg_villages") end
-	result = gmsg_villages()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_villages") end
-		return true
-	end
-
-	if debug then dbug("debug entering gmsg_waypoints") end
-	result = gmsg_waypoints()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_waypoints") end
-		return true
-	end
-
-	if debug then dbug("debug entering gmsg_locations") end
-	result = gmsg_locations()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_locations") end
 		return true
 	end
 
@@ -1373,15 +1388,20 @@ function gmsg(line, ircid)
 		if server.coppiRelease == "Mod Coppis command additions Light" or tonumber(server.coppiVersion) > 4.4 then
 			if debug then dbug("debug entering gmsg_coppi_new") end
 			result = gmsg_coppi_new()
+
+			if result then
+				if debug then dbug("debug ran command in gmsg_coppi_new") end
+				return true
+			end
 		else
 			if debug then dbug("debug entering gmsg_coppi_old") end
 			result = gmsg_coppi_old()
-		end
-	end
 
-	if result then
-		if debug then dbug("debug ran command in gmsg_coppi") end
-		return true
+			if result then
+				if debug then dbug("debug ran command in gmsg_coppi_old") end
+				return true
+			end
+		end
 	end
 
 	if debug then dbug("debug entering gmsg_stompy") end

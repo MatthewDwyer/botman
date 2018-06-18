@@ -8,7 +8,11 @@
 --]]
 
 function TenSecondTimer()
-	if botman.botOffline or botman.botDisabled then
+	if botman.botDisabled then
+		return
+	end
+
+	if botman.botOffline then
 		return
 	end
 

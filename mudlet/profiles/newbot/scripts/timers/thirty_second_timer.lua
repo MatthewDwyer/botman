@@ -12,6 +12,10 @@ function thirtySecondTimer()
 
 	windowMessage(server.windowDebug, "30 second timer\n")
 
+	if botman.botDisabled then
+		return
+	end
+
 	if customThirtySecondTimer ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua
 		if customThirtySecondTimer() then
@@ -19,7 +23,7 @@ function thirtySecondTimer()
 		end
 	end
 
-	if botman.botDisabled or botman.botOffline then
+	if botman.botOffline then
 		return
 	end
 
