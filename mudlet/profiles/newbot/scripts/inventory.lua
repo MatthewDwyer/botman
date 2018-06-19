@@ -11,9 +11,6 @@
 function CheckInventory()
 	local temp, table1, table2, items, d1, changes, debug, tmp, max, search, k, v
 
-	-- newPlayer, ban, timeout, move, newItems, reason, moveTo, moveReason, banReason, timeoutReason, flag, dbFlag, badItemsFound
-	-- flags, delta, playerAccessLevel, inventoryChanged
-
 	debug = false
 
 	if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
@@ -76,7 +73,7 @@ function CheckInventory()
 		end
 
 		if v.raiding == true then
-			tmp.flags = tmp.flags .. "RAID " .. v.raidingBase .. "|"
+			tmp.flags = tmp.flags .. " at base of " .. v.raidingBase .. "|"
 			tmp.dbFlag = "R"
 		end
 
@@ -264,7 +261,11 @@ function CheckInventory()
 							end
 
 							if row.action == "watch" then
-								irc_chat(server.ircWatch, "Player " .. v.name .. " has " .. b.quantity .. " of " .. b.item)
+								if v.inLocation ~= "" then
+									irc_chat(server.ircWatch, "Player " .. v.name .. " in " .. v.inLocation .. " " .. " has " .. b.quantity .. " of " .. b.item .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos))
+								else
+									irc_chat(server.ircWatch, "Player " .. v.name .. " " .. " has " .. b.quantity .. " of " .. b.item .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos))
+								end
 							end
 						end
 					end
@@ -374,12 +375,20 @@ function CheckInventory()
 				if tmp.inventoryChanged == true then
 					if players[k].timeOnServer == nil or v.watchPlayer or v.raiding or tmp.watchPlayer then
 						for q, w in pairs(changes) do
-							irc_chat(server.ircWatch, string.trim(tmp.flags .. " " .. v.name .. "  " .. w[1] .. "  " .. w[2] .. "  [ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)) .. " ]")
+							if v.inLocation ~= "" then
+								irc_chat(server.ircWatch, string.trim(tmp.flags .. " " .. v.name .. " in " .. v.inLocation .. " " .. w[1] .. "  " .. w[2] .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)))
+							else
+								irc_chat(server.ircWatch, string.trim(tmp.flags .. " " .. v.name .. "  " .. w[1] .. "  " .. w[2] .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)))
+							end
 						end
 					else
 						if tmp.playerAccessLevel > 2 and tonumber(players[k].timeOnServer) < tonumber(server.newPlayerTimer)  then
 							for q, w in pairs(changes) do
-								irc_chat(server.ircWatch, string.trim(tmp.flags .. " " .. v.name .. "  " .. w[1] .. "   " .. w[2] .. "  [ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)) .. " ]")
+								if v.inLocation ~= "" then
+									irc_chat(server.ircWatch, string.trim(tmp.flags .. " " .. v.name .. " in " .. v.inLocation .. " " .. w[1] .. "   " .. w[2] .. "  @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)))
+								else
+									irc_chat(server.ircWatch, string.trim(tmp.flags .. " " .. v.name .. "  " .. w[1] .. "   " .. w[2] .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)))
+								end
 							end
 						end
 					end
@@ -400,7 +409,11 @@ function CheckInventory()
 		if not server.allowOverstacking and (server.gameType ~= "cre") then
 			if (players[k].overstack == true) and (tmp.playerAccessLevel > 2 or botman.ignoreAdmins == false) then
 				message("pm " .. k .. " [" .. server.chatColour .. "]You are overstacking items in your inventory - " .. players[k].overstackItems .. "[-]")
-				irc_chat(server.ircWatch, v.name .. " is overstacking " .. players[k].overstackItems)
+				if v.inLocation ~= "" then
+					irc_chat(server.ircWatch, v.name .. " is overstacking " .. players[k].overstackItems .. " in " .. v.inLocation .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos))
+				else
+					irc_chat(server.ircWatch, v.name .. " is overstacking " .. players[k].overstackItems .. "  at " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos))
+				end
 			end
 
 			if (tonumber(players[k].overstackScore) == 2) and (players[k].botTimeout == false) then

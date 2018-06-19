@@ -300,7 +300,8 @@ function gmsg_coppi_new()
 			help[2] = help[2] .. " {#}dig up (makes a 5x5 room)\n"
 			help[2] = help[2] .. " {#}dig up (or room) wide 5 tall 10 (makes a 10x10 room)\n"
 			help[2] = help[2] .. " {#}fill east base 70 wide 2 tall 10 long 50 block steelBlock\n"
-			help[2] = help[2] .. " {#}fill bedrock wide 2 block 1\n"
+			help[2] = help[2] .. " {#}fill bedrock wide 2 block stone\n"
+			help[2] = help[2] .. " {#}fill {saved prefab} block stone\n"
 			help[2] = help[2] .. ".\n"
 			help[2] = help[2] .. "You can repeat the last command with /again and change direction with /again west\n"
 			help[2] = help[2] .. "."
@@ -346,11 +347,17 @@ function gmsg_coppi_new()
 				return true
 			end
 
+			tmp.prefab = ""
 			tmp.base = chatvars.intY - 1
 			tmp.tall = chatvars.intY + 5
 			tmp.block = "air"
+			tmp.direction = ""
 			tmp.width = 5
 			tmp.long = 5
+
+			if prefabCopies[chatvars.playerid .. chatvars.words[2]] then
+				tmp.prefab = chatvars.playerid .. chatvars.words[2]
+			end
 
 			for i=2,chatvars.wordCount,1 do
 				if chatvars.words[i] == "wide" or chatvars.words[i] == "width"  then
@@ -362,6 +369,10 @@ function gmsg_coppi_new()
 
 					-- default to same height
 					tmp.tall = tmp.width
+				end
+
+				if chatvars.words[i] == "prefab" then
+					tmp.prefab = chatvars.playerid .. chatvars.words[i+1]
 				end
 
 				if chatvars.words[i] == "replace" then
@@ -421,6 +432,51 @@ function gmsg_coppi_new()
 				end
 			end
 
+			if tmp.prefab ~= "" then
+				prefabCopies[chatvars.playerid .. "bottemp"] = {}
+				prefabCopies[chatvars.playerid .. "bottemp"].owner = chatvars.playerid
+				prefabCopies[chatvars.playerid .. "bottemp"].name = "bottemp"
+				prefabCopies[chatvars.playerid .. "bottemp"].x1 = prefabCopies[tmp.prefab].x1
+				prefabCopies[chatvars.playerid .. "bottemp"].x2 = prefabCopies[tmp.prefab].x2
+				prefabCopies[chatvars.playerid .. "bottemp"].y1 = prefabCopies[tmp.prefab].y1
+				prefabCopies[chatvars.playerid .. "bottemp"].y2 = prefabCopies[tmp.prefab].y2
+				prefabCopies[chatvars.playerid .. "bottemp"].z1 = prefabCopies[tmp.prefab].z1
+				prefabCopies[chatvars.playerid .. "bottemp"].z2 = prefabCopies[tmp.prefab].z2
+
+				send("cp-pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+
+				if chatvars.words[1] == "dig" then
+					if tmp.newblock then
+						send("cp-prepblock " .. tmp.newblock .. " air " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].z2 .. " 0")
+					else
+						send("cp-pblock air " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].z2)
+					end
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
+				else
+					if tmp.newblock then
+						send("cp-prepblock " .. tmp.newblock .. " " .. tmp.block .. " " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].z2 .. " 0")
+					else
+						send("cp-pblock " .. tmp.block .. " " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].z2)
+					end
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
+				end
+
+				--botman.lastBlockCommandOwner = chatvars.playerid
+
+				botman.faultyChat = false
+				return true
+			end
+
 			if tmp.direction == "bedrock" then
 				prefabCopies[chatvars.playerid .. "bottemp"] = {}
 				prefabCopies[chatvars.playerid .. "bottemp"].owner = chatvars.playerid
@@ -461,7 +517,7 @@ function gmsg_coppi_new()
 					end
 				end
 
-				botman.lastBlockCommandOwner = chatvars.playerid
+				--botman.lastBlockCommandOwner = chatvars.playerid
 
 				botman.faultyChat = false
 				return true
@@ -494,7 +550,7 @@ function gmsg_coppi_new()
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 
-				botman.lastBlockCommandOwner = chatvars.playerid
+				--botman.lastBlockCommandOwner = chatvars.playerid
 
 				botman.faultyChat = false
 				return true
@@ -527,7 +583,7 @@ function gmsg_coppi_new()
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 
-				botman.lastBlockCommandOwner = chatvars.playerid
+				--botman.lastBlockCommandOwner = chatvars.playerid
 
 				botman.faultyChat = false
 				return true
@@ -560,7 +616,7 @@ function gmsg_coppi_new()
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 
-				botman.lastBlockCommandOwner = chatvars.playerid
+				--botman.lastBlockCommandOwner = chatvars.playerid
 
 				botman.faultyChat = false
 				return true
@@ -593,7 +649,7 @@ function gmsg_coppi_new()
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 
-				botman.lastBlockCommandOwner = chatvars.playerid
+				--botman.lastBlockCommandOwner = chatvars.playerid
 
 				botman.faultyChat = false
 				return true
@@ -626,7 +682,7 @@ function gmsg_coppi_new()
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 
-				botman.lastBlockCommandOwner = chatvars.playerid
+				--botman.lastBlockCommandOwner = chatvars.playerid
 
 				botman.faultyChat = false
 				return true
@@ -659,7 +715,7 @@ function gmsg_coppi_new()
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 
-				botman.lastBlockCommandOwner = chatvars.playerid
+				--botman.lastBlockCommandOwner = chatvars.playerid
 
 				botman.faultyChat = false
 				return true
@@ -757,7 +813,7 @@ function gmsg_coppi_new()
 				metrics.telnetCommands = metrics.telnetCommands + 2
 			end
 
-			botman.lastBlockCommandOwner = chatvars.playerid
+			--botman.lastBlockCommandOwner = chatvars.playerid
 
 			botman.faultyChat = false
 			return true
@@ -1091,7 +1147,7 @@ function gmsg_coppi_new()
 				metrics.telnetCommands = metrics.telnetCommands + 2
 			end
 
-			botman.lastBlockCommandOwner = chatvars.playerid
+			--botman.lastBlockCommandOwner = chatvars.playerid
 
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A prefab called " .. tmp.prefab .. " should have spawned.  If it didn't either the prefab isn't called " .. tmp.prefab .. " or it doesn't exist.[-]")
 
@@ -1361,7 +1417,7 @@ function gmsg_coppi_new()
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 
-				botman.lastBlockCommandOwner = chatvars.playerid
+				--botman.lastBlockCommandOwner = chatvars.playerid
 
 				if chatvars.words[4] == "up" then
 					prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 = prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number
@@ -2187,29 +2243,13 @@ function gmsg_coppi_new()
 				return true
 			end
 
-			--if chatvars.words[2] == "save" then
-				send("cp-prender " .. chatvars.playerid .. "bottemp" .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1  .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1)
+			send("cp-prender " .. chatvars.playerid .. "bottemp" .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1  .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1)
 
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 
-				--botman.faultyChat = false
-				--return true
-			--end
-
-			-- if botman.lastBlockCommandOwner == chatvars.playerid then
-				-- send("cp-pundo")
-
-				-- if botman.getMetrics then
-					-- metrics.telnetCommands = metrics.telnetCommands + 1
-				-- end
-
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Block undo command (pundo) sent. If it didn't work you don't have an undo available.[-]")
-			-- else
-				-- message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]No undo available.  Use " .. server.commandPrefix .. "undo save.[-]")
-			-- end
-
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Block undo command (pundo) sent. If it didn't work you don't have an undo available.[-]")
 			botman.faultyChat = false
 			return true
 		end

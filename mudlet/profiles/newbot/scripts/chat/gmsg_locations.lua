@@ -2785,7 +2785,7 @@ function gmsg_locations()
 			if string.find(chatvars.command, "stop watch") then
 				loc = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, " stop w") - 1)
 			else
-				loc = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, " watch ") - 1)
+				loc = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, " watch") - 1)
 			end
 
 			loc = LookupLocation(loc)
