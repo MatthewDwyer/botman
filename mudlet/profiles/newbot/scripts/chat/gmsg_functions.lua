@@ -471,6 +471,24 @@ function gmsg_who(playerid, number)
 end
 
 
+function logAlerts(alertTime, alertLine)
+	if botman.webdavFolderWriteable == false then
+		return
+	end
+
+	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
+	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
+	botman.webdavFolderWriteable = false
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_alertLog.txt", "a")
+	file:write(alertTime .. "; " .. string.trim(alertLine) .. "\n")
+	file:close()
+
+	botman.webdavFolderWriteable = true
+end
+
+
 function logCommand(commandTime, commandLine)
 	local commandPosition
 	local playerName = chatvars.playername

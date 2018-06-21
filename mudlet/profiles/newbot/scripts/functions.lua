@@ -752,7 +752,7 @@ function scanForPossibleHackersNearby(steam, world)
 					end
 
 					message("say [" .. server.alertColour .. "]" .. msg .. "[-]")
-					irc_chat(server.ircAlerts, msg)
+					irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " " .. msg)
 				else
 					timeoutPlayer(k, "reported by player and found with a non-zero hacker score", false)
 				end
@@ -1783,7 +1783,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 		end
 
 		irc_chat(server.ircMain, "[BANNED] Player " .. steam .. " " .. playerName .. " has been banned for " .. duration .. " " .. reason)
-		irc_chat(server.ircAlerts, "[BANNED] Player " .. steam .. " " .. playerName .. " has been banned for " .. duration .. " " .. reason)
+		irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Player " .. steam .. " " .. playerName .. " has been banned for " .. duration .. " " .. reason)
 		alertAdmins("Player " .. playerName .. " has been banned for " .. duration .. " " .. reason)
 
 		-- add to bots db
@@ -1837,7 +1837,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 				end
 
 				irc_chat(server.ircMain, "[BANNED] Player " .. k .. " " .. players[k].name .. " has been banned for " .. duration .. " same IP as banned player")
-				irc_chat(server.ircAlerts, "[BANNED] Player " .. k .. " " .. players[k].name .. " has been banned for " .. duration .. " same IP as banned player")
+				irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Player " .. k .. " " .. players[k].name .. " has been banned for " .. duration .. " same IP as banned player")
 				alertAdmins("Player " .. players[k].name .. " has been banned for " .. duration .. " same IP as banned player")
 
 				-- add to bots db
@@ -1850,7 +1850,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 		-- handle unknown steam id
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. steam .. " has has been banned for " .. duration .. " for " .. escape(reason) .. "'," .. steam .. ")") end
 		irc_chat(server.ircMain, "[BANNED] Unknown player " .. steam .. " has been banned for " .. duration .. " " .. reason)
-		irc_chat(server.ircAlerts, "[BANNED] Unknown player " .. steam .. " has been banned for " .. duration .. " " .. reason)
+		irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Unknown player " .. steam .. " has been banned for " .. duration .. " " .. reason)
 
 		-- add to bots db
 		if botman.db2Connected then
@@ -1890,10 +1890,7 @@ function arrest(steam, reason, bail, releaseTime)
 		igplayers[steam].xPosOld = math.floor(igplayers[steam].xPos)
 		igplayers[steam].yPosOld = math.floor(igplayers[steam].yPos)
 		igplayers[steam].zPosOld = math.floor(igplayers[steam].zPos)
-		-- igplayers[steam].xPosLastOK = locations["prison"].x
-		-- igplayers[steam].yPosLastOK = locations["prison"].y
-		-- igplayers[steam].zPosLastOK = locations["prison"].z
-		irc_chat(server.ircAlerts, players[steam].name .. " has been sent to prison for " .. reason .. " at " .. igplayers[steam].xPosOld .. " " .. igplayers[steam].yPosOld .. " " .. igplayers[steam].zPosOld)
+		irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " " .. players[steam].name .. " has been sent to prison for " .. reason .. " at " .. igplayers[steam].xPosOld .. " " .. igplayers[steam].yPosOld .. " " .. igplayers[steam].zPosOld)
 		setChatColour(steam)
 	else
 		players[steam].prisonxPosOld = math.floor(players[steam].xPos)
@@ -1902,7 +1899,7 @@ function arrest(steam, reason, bail, releaseTime)
 		players[steam].xPosOld = math.floor(players[steam].xPos)
 		players[steam].yPosOld = math.floor(players[steam].yPos)
 		players[steam].zPosOld = math.floor(players[steam].zPos)
-		irc_chat(server.ircAlerts, players[steam].name .. " has been sent to prison for " .. reason .. " at " .. players[steam].xPosOld .. " " .. players[steam].yPosOld .. " " .. players[steam].zPosOld)
+		irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " " .. players[steam].name .. " has been sent to prison for " .. reason .. " at " .. players[steam].xPosOld .. " " .. players[steam].yPosOld .. " " .. players[steam].zPosOld)
 	end
 
 	players[steam].bail = bail
@@ -1973,7 +1970,7 @@ function timeoutPlayer(steam, reason, bot)
 		end
 
 		message("say [" .. server.chatColour .. "]Sending player " .. players[steam].name .. " to timeout for " .. reason .. "[-]")
-		irc_chat(server.ircAlerts, "[TIMEOUT] Player " .. steam .. " " .. players[steam].name .. " has been sent to timeout for " .. reason)
+		irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [TIMEOUT] Player " .. steam .. " " .. players[steam].name .. " has been sent to timeout for " .. reason)
 	end
 end
 
@@ -2324,7 +2321,7 @@ function CheckBlacklist(steam, ip)
 
 		if (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			irc_chat(server.ircMain, "Blacklisted IP detected. " .. players[steam].name)
-			irc_chat(server.ircAlerts, "Blacklisted IP detected. " .. players[steam].name)
+			irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " blacklisted IP detected. " .. players[steam].name)
 		end
 
 		players[steam].china = true
@@ -2349,7 +2346,7 @@ function CheckBlacklist(steam, ip)
 
 		if server.blacklistResponse == 'ban' and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			irc_chat(server.ircMain, "Blacklisted player " .. players[steam].name .. " banned.")
-			irc_chat(server.ircAlerts, "Blacklisted player " .. players[steam].name .. " banned.")
+			irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " blacklisted player " .. players[steam].name .. " banned.")
 			banPlayer(steam, "10 years", "blacklisted", "")
 			connBots:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined and banned. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. ip  .. "'," .. steam .. ")")
 		end
@@ -2399,14 +2396,14 @@ function readDNS(steam)
 					if server.blacklistResponse ~= 'nothing' and accessLevel(steam) > 2 then
 						if v.action == "ban" or v.action == "" then
 							irc_chat(server.ircMain, "Player " .. players[steam].name .. " banned. Detected proxy " .. v.scanString)
-							irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " banned. Detected proxy " .. v.scanString)
+							irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " player " .. players[steam].name .. " banned. Detected proxy " .. v.scanString)
 							banPlayer(steam, "10 years", "Banned proxy. Contact us to get unbanned and whitelisted.", "")
 							banned = true
 						else
 							if players[steam].exiled == 0 then
 								players[steam].exiled = 1
 								irc_chat(server.ircMain, "Player " .. players[steam].name .. " exiled. Detected proxy " .. v.scanString)
-								irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " exiled. Detected proxy " .. v.scanString)
+								irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " player " .. players[steam].name .. " exiled. Detected proxy " .. v.scanString)
 								exiled = true
 							end
 						end
@@ -2433,7 +2430,7 @@ function readDNS(steam)
 			a,b = string.find(ln, "%s(%w+)")
 			country = string.sub(ln, a + 1)
 			if players[steam].country ~= "" and players[steam].country ~= country and (players[steam].country == "CN" or players[steam].country == "HK" or country == "CN" or country == "HK") and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
-				irc_chat(server.ircAlerts, "Possible proxy detected! Country changed! " .. steam .. " " .. players[steam].name .. " " .. players[steam].IP .. " old country " .. players[steam].country .. " new " .. country)
+				irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " possible proxy detected! Country changed! " .. steam .. " " .. players[steam].name .. " " .. players[steam].IP .. " old country " .. players[steam].country .. " new " .. country)
 				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (0,0,0'" .. botman.serverTime .. "','proxy','Suspected proxy used by " .. escape(players[steam].name) .. " " .. players[steam].IP .. " old country " .. players[steam].country .. " new " .. country .. "," .. steam .. ")") end
 				proxy = true
 			else
@@ -2445,7 +2442,7 @@ function readDNS(steam)
 		if (country == "CN" or country == "HK") and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			-- China detected. Add ip range to IPBlacklist table
 			irc_chat(server.ircMain, "Chinese IP detected. " .. players[steam].name .. " " .. players[steam].IP)
-			irc_chat(server.ircAlerts, "Chinese IP detected. " .. players[steam].name .. " " .. players[steam].IP)
+			irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " Chinese IP detected. " .. players[steam].name .. " " .. players[steam].IP)
 			players[steam].china = true
 			players[steam].ircTranslate = true
 
@@ -2453,14 +2450,14 @@ function readDNS(steam)
 				if players[steam].exiled == 0 then
 					players[steam].exiled = 1
 					irc_chat(server.ircMain, "Chinese player " .. players[steam].name .. " exiled.")
-					irc_chat(server.ircAlerts, "Chinese player " .. players[steam].name .. " exiled.")
+					irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " Chinese player " .. players[steam].name .. " exiled.")
 					exiled = true
 				end
 			end
 
 			if server.blacklistResponse == 'ban' and not banned and accessLevel(steam) > 2 then
 				irc_chat(server.ircMain, "Chinese player " .. players[steam].name .. " banned.")
-				irc_chat(server.ircAlerts, "Chinese player " .. players[steam].name .. " banned.")
+				irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " Chinese player " .. players[steam].name .. " banned.")
 				banPlayer(steam, "10 years", "blacklisted", "")
 				banned = true
 			end
@@ -2500,7 +2497,7 @@ function readDNS(steam)
 	if blacklistedCountries[country] and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 		if server.blacklistResponse == 'ban' and not banned then
 			irc_chat(server.ircMain, "Player " .. players[steam].name .. " banned. Blacklisted country " .. country)
-			irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " banned. Blacklisted country " .. country)
+			irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " player " .. players[steam].name .. " banned. Blacklisted country " .. country)
 			banPlayer(steam, "10 years", "Sorry, your country has been blacklisted :(", "")
 			banned = true
 		end
@@ -2509,7 +2506,7 @@ function readDNS(steam)
 			if players[steam].exiled == 0 then
 				players[steam].exiled = 1
 				irc_chat(server.ircMain, "Player " .. players[steam].name .. " exiled. Blacklisted country " .. country)
-				irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " exiled. Blacklisted country " .. country)
+				irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " player " .. players[steam].name .. " exiled. Blacklisted country " .. country)
 				exiled = true
 			end
 		end
@@ -2517,7 +2514,7 @@ function readDNS(steam)
 
 	if server.whitelistCountries ~= '' and not whitelistedCountries[country] and (not (whitelist[steam] or players[steam].donor)) and not banned and accessLevel(steam) > 2 then
 		irc_chat(server.ircMain, "Player " .. players[steam].name .. " temp banned 1 month. Country not on whitelist " .. country)
-		irc_chat(server.ircAlerts, "Player " .. players[steam].name .. " temp banned 1 month. Country not on whitelist " .. country)
+		irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " player " .. players[steam].name .. " temp banned 1 month. Country not on whitelist " .. country)
 		banPlayer(steam, "1 month", "Sorry, this server uses a whitelist.", "")
 		banned = true
 	end

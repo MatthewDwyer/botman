@@ -261,26 +261,74 @@ function nextID(table, idfield)
 end
 
 
-function dbBaseDefend(steam, base)
--- experimental
--- TODO: update with the new automatic trader-esk ejector
-	local cursor, errorString,row, dist
+function autoBaseDefend(raider, baseOwner, whichBase)
+	-- experimental base protection like trader protection.  Teleports out in a random direction.
+	local dist, protected
 
-	dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, players[base].homeX, players[base].homeZ)
+	dist = 10000
+	protected = false
 
-	if dist < server.baseSize then
-		cursor,errorString = conn:execute("SELECT x, y, z FROM tracker WHERE steam = " .. steam .." AND (abs(x - " .. players[base].homeX .. ") > " .. server.baseSize .. " AND abs(z - " .. players[base].homeZ .. ") > " .. server.baseSize .. ")  AND (abs(x - " .. players[base].homeX .. ") < " .. server.baseSize + 40 .. " AND abs(z - " .. players[base].homeZ .. ") < " .. server.baseSize + 40 .. ") ORDER BY trackerid DESC Limit 0, 50")
-		row = cursor:fetch({}, "a")
-		while row do
-			cmd = ("tele " .. steam .. " " .. row.x .. " -1 " .. row.z)
-			teleport(cmd, steam)
+	if whichBase == 1 then
+		dist = distancexz(igplayers[raider].xPos, igplayers[raider].zPos, players[baseOwner].homeX, players[baseOwner].homeZ)
 
-			if true then
-				return
+		if players[baseOwner].protect then
+			protected = true
+		end
+	else
+		dist = distancexz(igplayers[raider].xPos, igplayers[raider].zPos, players[baseOwner].home2X, players[baseOwner].home2Z)
+
+		if players[baseOwner].protect2 then
+			protected = true
+		end
+	end
+
+	if dist < server.baseSize and protected then
+		tmp = {}
+		tmp.side = rand(4)
+		tmp.offset = rand(50)
+
+		if tmp.side == 1 then
+			tmp.x = players[baseOwner].homeX - (server.baseSize + 10 + tmp.offset)
+			tmp.z = players[baseOwner].homeZ
+		end
+
+		if tmp.side == 2 then
+			tmp.x = players[baseOwner].homeX + (server.baseSize + 10 + tmp.offset)
+			tmp.z = players[baseOwner].homeZ
+		end
+
+		if tmp.side == 3 then
+			tmp.x = players[baseOwner].homeX
+			tmp.x = players[baseOwner].homeZ - (server.baseSize + 10 + tmp.offset)
+		end
+
+		if tmp.side == 4 then
+			tmp.x = players[baseOwner].homeX
+			tmp.x = players[baseOwner].homeZ + (server.baseSize + 10 + tmp.offset)
+		end
+
+		tmp.cmd = "tele " .. raider .. " " .. tmp.x .. " -1 " .. tmp.z
+		teleport(tmp.cmd, raider)
+
+		if whichBase == 1 then
+			irc_chat(server.ircAlerts, "base protection triggered for base1 of " .. players[baseOwner].name .. " " .. baseOwner .. " against " .. players[raider].name .. " " .. raider)
+
+			if igplayers[baseOwner] and not pvpZone(players[baseOwner].homeX, players[baseOwner].homeZ) then
+				message("pm " .. baseOwner .. " [" .. server.chatColour .. "]" .. igplayers[raider].name .. " has been ejected from your 1st base.[-]")
 			end
 
-			row = cursor:fetch(row, "a")
+			alertAdmins(igplayers[raider].name .. " has been ejected from " .. players[baseOwner].name  .."'s 1st base.")
+		else
+			irc_chat(server.ircAlerts, "base protection triggered for base2 of " .. players[baseOwner].name .. " " .. baseOwner .. " against " .. players[raider].name .. " " .. raider)
+
+			if igplayers[baseOwner] and not pvpZone(players[baseOwner].home2X, players[baseOwner].home2Z) then
+				message("pm " .. baseOwner .. " [" .. server.chatColour .. "]" .. igplayers[raider].name .. " has been ejected from your 2nd base.[-]")
+			end
+
+			alertAdmins(igplayers[raider].name .. " has been ejected from " .. players[baseOwner].name  .."'s 2nd base.")
 		end
+
+		message("pm " .. raider .. " [" .. server.chatColour .. "]You are too close to a protected player base.  The base owner needs to add you to their friends list by typing " .. server.commandPrefix .. "friend " .. igplayers[raider].name .. "[-]")
 	end
 end
 
@@ -349,7 +397,6 @@ end
 function closeDB()
 	conn:close()
 	connBots:close()
-	--env:close()
 
 	botman.dbConnected = false
 	botman.dbBotsConnected = false
@@ -702,9 +749,10 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `hordeNight` INT NOT NULL DEFAULT '7'")
 	doSQL("ALTER TABLE `server` ADD `hideUnknownCommand` TINYINT(1) NOT NULL DEFAULT '0', ADD `beQuietBot` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `gimmeResetTimer` INT NOT NULL DEFAULT '120', ADD `shopResetGameOrRealDays` TINYINT(1) NOT NULL DEFAULT '0', ADD `zombieKillRewardDonors` FLOAT NOT NULL DEFAULT '3'")
-	doSQL("ALTER TABLE `server` ADD `allowFamilySteamKeys` TINYINT(1) NOT NULL DEFAULT '1'") --todo: add commands and check and join for mismatched steam keys
+	doSQL("ALTER TABLE `server` ADD `allowFamilySteamKeys` TINYINT(1) NOT NULL DEFAULT '1'") --todo: add commands and check for mismatched steam keys
 	doSQL("ALTER TABLE `server` ADD `checkLevelHack` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `despawnZombiesBeforeBloodMoon` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `optOutGlobalBots` TINYINT(1) NOT NULL DEFAULT '0'") -- todo code
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 

@@ -198,7 +198,7 @@ function freeReservedSlot(accessLevel, steam)
 		if igplayers[row.steam] then
 			kickedSomeone = true
 			kick(row.steam, "Sorry, you have been kicked to make room for a reserved slot :(")
-			irc_chat(server.ircAlerts, "Player " .. players[row.steam].name ..  " was kicked from a reserved slot to let " .. players[steam].name .. " join.")
+			irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " player " .. players[row.steam].name ..  " was kicked from a reserved slot to let " .. players[steam].name .. " join.")
 			conn:execute("DELETE FROM reservedSlots WHERE steam = " .. row.steam)
 			botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
 
@@ -216,7 +216,7 @@ function freeReservedSlot(accessLevel, steam)
 			if igplayers[row.steam] then
 				kickedSomeone = true
 				kick(row.steam, "Sorry, you have been kicked to make room for an admin :O")
-				irc_chat(server.ircAlerts, "Player " .. players[row.steam].name ..  " was kicked from a reserved slot to make room for admin " .. players[steam].name .. ".")
+				irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " player " .. players[row.steam].name ..  " was kicked from a reserved slot to make room for admin " .. players[steam].name .. ".")
 				conn:execute("DELETE FROM reservedSlots WHERE steam = " .. row.steam)
 				botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
 
@@ -320,7 +320,7 @@ function playerConnected(line)
 		alertAdmins("A player was kicked using an admin's name! " .. tmp.entityid .. " " .. tmp.player, "alert")
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','impersonated admin','Player joined posing as an admin " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.IP .. "'," .. tmp.steamOwner .. ")") end
 		irc_chat(server.ircMain, "!!  Player joined with admin's name but a different steam key !! " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
-		irc_chat(server.ircAlerts, "!!  Player joined with admin's name but a different steam key !! " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
+		irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " player joined with admin's name but a different steam key " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
 		return
 	end
 
@@ -363,10 +363,9 @@ function playerConnected(line)
 		fixMissingPlayer(tmp.steam, tmp.steamOwner)
 
 		irc_chat(server.ircMain, "###  New player joined " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid .. " ###")
-		irc_chat(server.ircAlerts, "New player joined")
-		irc_chat(server.ircAlerts, line:gsub("%,", ""))
+		irc_chat(server.ircAlerts, "New player joined " .. botman.serverTime .. " " .. server.gameDate .. " " .. line:gsub("%,", ""))
 		irc_chat(server.ircWatch, server.gameDate .. " " .. tmp.steam .. " " .. tmp.player .. " new player connected")
-		logChat(botman.serverTime, "Server", "New player joined " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
+		logChat(botman.serverTime, "Server", "New player joined " .. botman.serverTime .. " " .. server.gameDate .. " " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
 
 		alertAdmins("New player joined " .. tmp.entityid .. " " .. tmp.player, "warn")
 
@@ -374,6 +373,7 @@ function playerConnected(line)
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','new player','New player joined " .. escape(tmp.player) .. " steam: " .. tmp.steam .. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid .. "'," .. tmp.steam .. ")") end
 	else
 		irc_chat(server.ircMain, server.gameDate .. " " .. tmp.steam .. " " .. tmp.player .. " connected")
+		irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " " .. tmp.steam .. " " .. tmp.player .. " connected")
 		logChat(botman.serverTime, "Server", tmp.steam .. " " .. tmp.player .. " connected")
 
 		if players[tmp.steam].watchPlayer then
@@ -413,7 +413,7 @@ function playerConnected(line)
 			cursor,errorString = connBots:execute("SELECT count(steam) as pendingBans FROM bans WHERE (Steam = " .. tmp.steam .. " or Steam = " .. tmp.steamOwner .. ") and GBLBan = 1 and GBLBanVetted = 0")
 			row = cursor:fetch({}, "a")
 			if tonumber(row.pendingBans) > 0 then
-				irc_chat(server.ircMain, "ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")
+				irc_chat(server.ircAlerts, "ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")
 				players[tmp.steam].pendingBans = row.pendingBans
 				alertAdmins("ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.", "alert")
 			end

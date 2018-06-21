@@ -75,8 +75,9 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
 
-		irc_chat(server.ircMain, server.gameDate .. " " .. steam .. " " .. players[steam].name .. " disconnected")
-		logChat(botman.serverTime, "Server", steam .. " " .. players[steam].name .. " disconnected")
+		irc_chat(server.ircMain, botman.serverTime .. " " .. server.gameDate .. " " .. steam .. " " .. players[steam].name .. " disconnected")
+		irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " " .. steam .. " " .. players[steam].name .. " disconnected")
+		logChat(botman.serverTime, "Server", botman.serverTime .. " " .. server.gameDate .. " " .. steam .. " " .. players[steam].name .. " disconnected")
 
 		if players[steam].watchPlayer then
 			irc_chat(server.ircWatch, server.gameDate .. " " .. steam .. " " .. players[steam].name .. " disconnected")

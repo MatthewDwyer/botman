@@ -1270,7 +1270,7 @@ function gmsg_info()
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are at " .. chatvars.intX .. xdir .. chatvars.intZ .. zdir .. " at a height of " .. chatvars.intY .. "[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in region r." .. x .. "." .. z .. ".7[-]")
 
-			if (pvpZone(chatvars.intX, chatvars.intZ) == false) or (server.gameType ~= "pvp") or chatvars.accessLevel < 3 then
+			if (pvpZone(chatvars.intX, chatvars.intZ) == false) or chatvars.accessLevel < 3 then
 				for k, v in pairs(igplayers) do
 					dist = distancexz(chatvars.intX, chatvars.intZ, v.xPos, v.zPos)
 

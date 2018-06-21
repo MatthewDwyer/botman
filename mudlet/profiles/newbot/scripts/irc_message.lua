@@ -402,6 +402,13 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
+	if string.find(msg, "restore admin") then
+		gmsg(server.commandPrefix .. "restore admin", ircid)
+		return
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
 	if (words[1] == "location" and words[2] == "categories") then
 		if tablelength(locationCategories) == 0 then
 			irc_chat(name, "There are no location categories.")

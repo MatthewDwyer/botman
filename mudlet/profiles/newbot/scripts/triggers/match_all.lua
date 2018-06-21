@@ -714,22 +714,31 @@ function matchAll(line)
 			pid = words[1]
 			pid = LookupPlayer(pid)
 
+			x = math.floor(igplayers[pid].xPos)
+			y = math.floor(igplayers[pid].yPos)
+			z = math.floor(igplayers[pid].zPos)
+
 			if string.find(line, "isUnderGround=True") and accessLevel(pid) > 2 then
 				igplayers[pid].noclip = true
 
 				if igplayers[pid].noclipX == 0 and igplayers[pid].noclipZ == 0 then
-					igplayers[pid].noclipX = math.floor(igplayers[pid].xPos)
-					igplayers[pid].noclipY = math.floor(igplayers[pid].yPos)
-					igplayers[pid].noclipZ = math.floor(igplayers[pid].zPos)
+					igplayers[pid].noclipX = x
+					igplayers[pid].noclipY = y
+					igplayers[pid].noclipZ = z
 				else
 					-- dist is horizontal distance travelled since last detection
-					dist = distancexyz(igplayers[pid].noclipX,igplayers[pid].noclipY,igplayers[pid].noclipZ,math.floor(igplayers[pid].xPos),math.floor(igplayers[pid].yPos),math.floor(igplayers[pid].zPos))
+					dist = distancexyz(x, y, z, igplayers[pid].noclipX, igplayers[pid].noclipY, igplayers[pid].noclipZ)
+
+					-- update coords
+					igplayers[pid].noclipX = x
+					igplayers[pid].noclipY = y
+					igplayers[pid].noclipZ = z
 
 					if igplayers[pid].noclipCount == nil then
 						igplayers[pid].noclipCount = 1
 					end
 
-					if tonumber(dist) > 5 then
+					if tonumber(dist) > 30 then
 						igplayers[pid].hackerDetection = "noclipping"
 
 						if players[pid].newPlayer then
@@ -742,34 +751,36 @@ function matchAll(line)
 							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
 						end
 
-						alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].noclipZ .. " " .. igplayers[pid].noclipY .. " " .. igplayers[pid].noclipZ .. "[-]", "warn")
-						irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].noclipX .. " " .. igplayers[pid].noclipY .. " " .. igplayers[pid].noclipZ)
-						irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].noclipX .. " " .. igplayers[pid].noclipY .. " " .. igplayers[pid].noclipZ)
+						alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. "[-]", "warn")
+						irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z)
+						irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z)
 					else
-						if igplayers[pid].noclipX == math.floor(igplayers[pid].xPos) and igplayers[pid].noclipY == math.floor(igplayers[pid].yPos) and igplayers[pid].noclipZ == math.floor(igplayers[pid].zPos) and players[pid].newPlayer then
+						if igplayers[pid].noclipX == x and igplayers[pid].noclipY == y and igplayers[pid].noclipZ == z then
 							if igplayers[pid].lastHackerAlert == nil then
 								igplayers[pid].lastHackerAlert = os.time()
 
-								alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].noclipZ .. " " .. igplayers[pid].noclipY .. " " .. igplayers[pid].noclipZ .. "[-]", "warn")
-								irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].noclipX .. " " .. igplayers[pid].noclipY .. " " .. igplayers[pid].noclipZ)
-								irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].noclipX .. " " .. igplayers[pid].noclipY .. " " .. igplayers[pid].noclipZ)
+								irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z)
+								irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z)
+								alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. "[-]", "warn")
 							end
 
-							if os.time() - igplayers[pid].lastHackerAlert > 120 then
-								alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].noclipZ .. " " .. igplayers[pid].noclipY .. " " .. igplayers[pid].noclipZ .. "[-]", "warn")
-								irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].noclipX .. " " .. igplayers[pid].noclipY .. " " .. igplayers[pid].noclipZ)
+							if tonumber(os.time() - igplayers[pid].lastHackerAlert) > 120 then
+								igplayers[pid].lastHackerAlert = os.time()
+								irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].sessionCount .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist))
+								alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z ..  " moved " .. string.format("%d", dist) .. "[-]", "warn")
 							end
 						end
 					end
 
 					igplayers[pid].noclipCount = tonumber(igplayers[pid].noclipCount) + 1
-					igplayers[pid].noclipX = math.floor(igplayers[pid].xPos)
-					igplayers[pid].noclipY = math.floor(igplayers[pid].yPos)
-					igplayers[pid].noclipZ = math.floor(igplayers[pid].zPos)
 				end
 			else
 				igplayers[pid].noclip = false
-				igplayers[pid].noclipCount = 0
+
+				-- update coords anyway
+				igplayers[pid].noclipX = x
+				igplayers[pid].noclipY = y
+				igplayers[pid].noclipZ = z
 			end
 
 			deleteLine()
@@ -800,7 +811,7 @@ function matchAll(line)
 						-- distance of travel horizontally
 						dist = distancexz(igplayers[pid].flyingX,igplayers[pid].flyingZ,math.floor(igplayers[pid].xPos),math.floor(igplayers[pid].zPos))
 
-						if tonumber(dist) > 5 then
+						if tonumber(dist) > 30 then
 							if players[pid].newPlayer then
 								if tonumber(players[pid].ping) > 150 then
 									players[pid].hackerScore = tonumber(players[pid].hackerScore) + 40
@@ -829,7 +840,20 @@ function matchAll(line)
 								alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " may be flying (count: " .. igplayers[pid].flyCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. math.floor(igplayers[pid].xPos) .. " " .. math.floor(igplayers[pid].yPos) .. " " .. math.floor(igplayers[pid].zPos) .. "[-]", "warn")
 							end
 						else
+							if igplayers[pid].flyingX == math.floor(igplayers[pid].xPos) and igplayers[pid].flyingY == math.floor(igplayers[pid].yPos) and igplayers[pid].flyingZ == math.floor(igplayers[pid].zPos) then
+								if igplayers[pid].lastHackerAlert == nil then
+									igplayers[pid].lastHackerAlert = os.time()
 
+									alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].flyingX .. " " .. igplayers[pid].flyingY .. " " .. igplayers[pid].flyingZ .. "[-]", "warn")
+									irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].flyingX .. " " .. igplayers[pid].flyingY .. " " .. igplayers[pid].flyingZ)
+									irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].flyingX .. " " .. igplayers[pid].flyingY .. " " .. igplayers[pid].flyingZ)
+								end
+
+								if os.time() - igplayers[pid].lastHackerAlert > 120 then
+									alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].flyingX .. " " .. igplayers[pid].flyingY .. " " .. igplayers[pid].flyingZ .. "[-]", "warn")
+									irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. igplayers[pid].flyingX .. " " .. igplayers[pid].flyingY .. " " .. igplayers[pid].flyingZ)
+								end
+							end
 						end
 					end
 				end
@@ -1200,7 +1224,7 @@ function matchAll(line)
 			metrics.telnetCommandLag = lag
 		end
 
-		if tonumber(lag) > 6 then
+		if tonumber(lag) > 7 then
 			server.lagged = true
 		end
 

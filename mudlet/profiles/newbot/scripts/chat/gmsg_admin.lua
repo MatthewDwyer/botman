@@ -5455,6 +5455,47 @@ function gmsg_admin()
 	end
 
 
+	local function cmd_RestoreAdmin()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}restore admin"
+			help[2] = "Use this command if you have used {#}test as player, and you want to get your admin status back now."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "test,play,admin,rest"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "rest") or string.find(chatvars.command, "admin") or string.find(chatvars.command, "remo"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "restore" and chatvars.words[2] == "admin" then
+			if chatvars.ircid ~= 0 then
+				if botman.dbConnected then conn:execute("UPDATE miscQueue SET timerDelay = now() WHERE steam = " .. chatvars.ircid) end
+			else
+				if botman.dbConnected then conn:execute("UPDATE miscQueue SET timerDelay = now() WHERE steam = " .. chatvars.playerid) end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ReturnPlayer()
 		local playerName, isArchived
 
@@ -6556,10 +6597,13 @@ function gmsg_admin()
 
 
 	local function cmd_TestAsPlayer()
+		local cmd, restoreDelay, pid
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
-			help[1] = " {#}test as player"
-			help[2] = "Remove your admin status for 5 minutes.  After 5 minutes your admin status will be restored and any bans against you removed."
+			help[1] = " {#}test as player {optional number in seconds}"
+			help[2] = "Remove your admin status for 5 minutes.  After 5 minutes your admin status will be restored and any bans against you removed.\n"
+			help[2] = help[2] .. "If you provide a number, your admin will instead be restored after that many seconds incase you need longer or shorter than the default 5 minutes."
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -6567,7 +6611,7 @@ function gmsg_admin()
 				tmp.accessLevel = 2
 				tmp.description = help[2]
 				tmp.notes = ""
-				tmp.ingameOnly = 1
+				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -6591,29 +6635,49 @@ function gmsg_admin()
 					return true
 				end
 			else
-				irc_chat(chatvars.ircAlias, "This command is ingame only.")
-				botman.faultyChat = false
-				return true
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
 			end
 
-			local cmd
+			if chatvars.ircid ~= 0 then
+				pid = chatvars.ircid
+			else
+				pid = chatvars.playerid
+			end
 
-			cmd = string.format("ban remove %s", chatvars.playerid)
-			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 299) .. "')") end
+			restoreDelay = 300
 
-			cmd = string.format("admin add %s %s", chatvars.playerid, chatvars.accessLevel)
-			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 300) .. "')") end
+			if chatvars.number ~= nil then
+				restoreDelay = math.abs(chatvars.number)
+			end
 
-			cmd = string.format("pm %s [%s]Your admin status is restored.[-]", chatvars.playerid, server.chatColour)
-			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 301) .. "')") end
+			cmd = string.format("ban remove %s", pid)
+			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. pid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + restoreDelay) .. "')") end
 
-			send("admin remove " .. chatvars.playerid)
+			cmd = string.format("admin add %s %s", pid, chatvars.accessLevel)
+			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. pid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + restoreDelay) .. "')") end
+
+			cmd = string.format("pm %s [%s]Your admin status is restored.[-]", pid, server.chatColour)
+			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. pid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + restoreDelay) .. "')") end
+
+			send("admin remove " .. pid)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
-			message(string.format("pm %s [%s]Your admin status has been temporarily removed.  You are now a player.  You will regain admin in 5 minutes.  Good luck![-]", chatvars.playerid, server.chatColour))
+			if (chatvars.playername ~= "Server") then
+				message(string.format("pm %s [%s]Your admin status has been temporarily removed.  You are now a player.  You will regain admin in " .. restoreDelay .. " seconds.  Good luck![-]", pid, server.chatColour))
+			else
+				irc_chat(chatvars.ircAlias, "Your admin status has been temporarily removed.  You are now a player.  You will regain admin in " .. restoreDelay .. " seconds.  Good luck!")
+
+				if igplayers[pid] then
+					message(string.format("pm %s [%s]Your admin status has been temporarily removed.  You are now a player.  You will regain admin in " .. restoreDelay .. " seconds.  Good luck![-]", pid, server.chatColour))
+				end
+			end
 
 			botman.faultyChat = false
 			return true
@@ -9137,6 +9201,15 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_ResetStackSizes triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_RestoreAdmin()
+
+	if result then
+		if debug then dbug("debug cmd_RestoreAdmin triggered") end
 		return result
 	end
 
