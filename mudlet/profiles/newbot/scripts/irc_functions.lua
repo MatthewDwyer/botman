@@ -930,6 +930,15 @@ function irc_players(name)
 
 		if tonumber(players[k].hackerScore) > 0 then
 			flags = flags .. "[HACKER]"
+
+			if v.flying then
+				flags = flags .. "[FLYING " .. v.flyingHeight .. "]"
+			end
+
+			if v.noclip then
+				flags = flags .. "[NOCLIP]"
+			end
+
 			if sort == 999 then sort = 0 end
 		end
 

@@ -1038,8 +1038,14 @@ function gmsg_teleports()
 				end
 			end
 
-			-- reject if not an admin and pvpTeleportCooldown or returnCooldown is > zero
+			-- reject if not an admin and pvpTeleportCooldown or returnCooldown is > zero or player is in timeout
 			if tonumber(chatvars.accessLevel) > 2 then
+				if (players[chatvars.playerid].timeout or players[chatvars.playerid].botTimeout) then
+					message(string.format("pm %s [%s]You are in timeout.", chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+
 				if (players[chatvars.playerid].returnCooldown - os.time() > 0) then
 					message(string.format("pm %s [%s]You must wait %s before you are allowed to use return.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].returnCooldown - os.time())))
 					botman.faultyChat = false

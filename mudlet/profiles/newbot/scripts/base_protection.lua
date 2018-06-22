@@ -75,7 +75,7 @@ function baseProtection(steam, posX, posY, posZ)
 
 									if (dist < 20) then
 										alertAdmins("Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s base")
-										irc_chat(server.ircMain, server.gameDate .. " Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s base")
+										irc_chat(server.ircAlerts, server.gameDate .. " Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s base")
 									end
 
 									players[steam].lastBaseRaid = os.time()
@@ -170,7 +170,7 @@ function baseProtection(steam, posX, posY, posZ)
 
 									if (dist < 20) then
 										alertAdmins("Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s 2nd base teleport.")
-										irc_chat(server.ircMain, server.gameDate .. " Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s 2nd base teleport")
+										irc_chat(server.ircAlerts, server.gameDate .. " Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s 2nd base teleport")
 									end
 
 									players[steam].lastBaseRaid = os.time()

@@ -231,7 +231,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		players[steam].exiled = 0
 
 		irc_chat(server.ircMain, "###  New player joined " .. player .. " steam: " .. steam.. " id: " .. id .. " ###")
-		irc_chat(server.ircAlerts, "New player joined " .. botman.serverTime .. " " .. server.gameDate .. " " .. line:gsub("%,", ""))
+		irc_chat(server.ircAlerts, "New player joined " .. server.gameDate .. " " .. line:gsub("%,", ""))
 
 		if botman.dbConnected then
 			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(posX) .. "," .. math.floor(posY) .. "," .. math.floor(posZ) .. ",'" .. botman.serverTime .. "','new player','New player joined " .. name .. " steam: " .. steam.. " id: " .. id .. "'," .. steam .. ")")
@@ -409,7 +409,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 							if playerAccessLevel > 2 then
 								irc_chat(server.ircMain, botman.serverTime .. " Player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
-								irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
+								irc_chat(server.ircAlerts, server.gameDate .. " player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
 
 								igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
 								players[steam].watchPlayer = true
@@ -478,7 +478,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				igplayers[steam].teleCooldown = 1000
 
 				irc_chat(server.ircMain, "Player " .. steam .. " name: " .. name .. "'s death recorded at " .. igplayers[steam].deadX .. " " .. igplayers[steam].deadY .. " " .. igplayers[steam].deadZ)
-				irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " player " .. steam .. " name: " .. name .. "'s death recorded at " .. igplayers[steam].deadX .. " " .. igplayers[steam].deadY .. " " .. igplayers[steam].deadZ)
+				irc_chat(server.ircAlerts, server.gameDate .. " player " .. steam .. " name: " .. name .. "'s death recorded at " .. igplayers[steam].deadX .. " " .. igplayers[steam].deadY .. " " .. igplayers[steam].deadZ)
 
 				message("say [" .. server.chatColour .. "]" .. name .. " has died.[-]")
 
@@ -529,7 +529,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	-- hacker detection
 	if tonumber(level) - tonumber(igplayers[steam].oldLevel) > 50 and not admin then
 		alertAdmins(id .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel), "alert")
-		irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " " .. steam .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel))
+		irc_chat(server.ircAlerts, server.gameDate .. " " .. steam .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel))
 	end
 
 	if server.checkLevelHack then
@@ -823,11 +823,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if igplayers[steam].alertLocation == "" and currentLocation ~= false then
 		if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]Welcome to " .. currentLocation .. "[-]") .. "')") end
 		igplayers[steam].alertLocation = currentLocation
-
-		-- if locations[currentLocation].watchPlayers and tonumber(playerAccessLevel) > 2 then
-			-- irc_chat(server.ircAlerts, name .. " entered location " .. currentLocation)
-			-- alertAdmins(name " has entered " .. currentLocation, "warn")
-		-- end
 	end
 
 
@@ -1090,7 +1085,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		if (intY < 30000) then
 			igplayers[steam].tp = 1
 			igplayers[steam].hackerTPScore = 0
-			send("tele " .. steam .. " " .. intX .. " " .. 50000 .. " " .. intZ)
+			send("tele " .. steam .. " " .. intX .. " " .. 60000 .. " " .. intZ)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1101,6 +1096,31 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		deleteLine()
 		return
 	end
+
+	-- emergency return from timeout
+	if (not players[steam].timeout and not  players[steam].botTimeout) and intY > 1000 then --  and playerAccessLevel > 2
+		igplayers[steam].tp = 1
+		igplayers[steam].hackerTPScore = 0
+
+		if players[steam].yPosTimeout == 0 then
+			send("tele " .. steam .. " " .. intX .. " -1 " .. intZ)
+		else
+			send("tele " .. steam .. " " .. players[steam].xPosTimeout .. " " .. players[steam].yPosTimeout .. " " .. players[steam].zPosTimeout)
+		end
+
+		players[steam].xPosTimeout = 0
+		players[steam].yPosTimeout = 0
+		players[steam].zPosTimeout = 0
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
+		faultyPlayerinfo = false
+		deleteLine()
+		return
+	end
+
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 

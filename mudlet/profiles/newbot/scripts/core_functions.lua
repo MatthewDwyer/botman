@@ -1553,10 +1553,26 @@ function fixMissingIGPlayer(steam)
 
 	if igplayers[steam].flying == nil then
 		igplayers[steam].flying = false
+	end
+
+	if igplayers[steam].flyCount == nil then
 		igplayers[steam].flyCount = 0
+	end
+
+	if igplayers[steam].flyingX == nil then
 		igplayers[steam].flyingX = 0
+	end
+
+	if igplayers[steam].flyingY == nil then
 		igplayers[steam].flyingY = 0
+	end
+
+	if igplayers[steam].flyingZ == nil then
 		igplayers[steam].flyingZ = 0
+	end
+
+	if igplayers[steam].flyingHeight == nil then
+		igplayers[steam].flyingHeight = 0
 	end
 
 	if (igplayers[steam].greet == nil) then
@@ -1613,9 +1629,21 @@ function fixMissingIGPlayer(steam)
 
 	if igplayers[steam].noclip == nil then
 		igplayers[steam].noclip = false
+	end
+
+	if igplayers[steam].noclipCount == nil then
 		igplayers[steam].noclipCount = 0
+	end
+
+	if igplayers[steam].noclipX == nil then
 		igplayers[steam].noclipX = 0
+	end
+
+	if igplayers[steam].noclipY == nil then
 		igplayers[steam].noclipY = 0
+	end
+
+	if igplayers[steam].noclipZ == nil then
 		igplayers[steam].noclipZ = 0
 	end
 
@@ -1661,11 +1689,26 @@ function fixMissingIGPlayer(steam)
 
 	if igplayers[steam].spawnedInWorld == nil then
 		igplayers[steam].spawnedInWorld = true
+	end
+
+	if igplayers[steam].spawnedReason == nil then
 		igplayers[steam].spawnedReason = "fake reason"
+	end
+
+	if igplayers[steam].spawnChecked == nil then
 		igplayers[steam].spawnChecked = true
+	end
+
+	if igplayers[steam].spawnPending == nil then
 		igplayers[steam].spawnPending = false
-		igplayers[steam].spawnedCoordsOld = "0 0 0"
+	end
+
+	if igplayers[steam].spawnedCoords == nil then
 		igplayers[steam].spawnedCoords = "0 0 0"
+	end
+
+	if igplayers[steam].spawnedCoordsOld == nil then
+		igplayers[steam].spawnedCoordsOld = "0 0 0"
 	end
 
 	if (igplayers[steam].steamOwner == nil) then

@@ -1100,7 +1100,7 @@ function gmsg_admin()
 			prisoner = players[prisonerid].name
 
 			if (players[prisonerid]) then
-				if (players[prisonerid].timeout == true) then
+				if (players[prisonerid].timeout or players[prisonerid].botTimeout) then
 					if (chatvars.playername ~= "Server") then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. prisoner .. " is in timeout. " .. server.commandPrefix .. "return them first[-]")
 					else
@@ -3199,7 +3199,7 @@ function gmsg_admin()
 				return true
 			end
 
-			if (players[chatvars.playerid].timeout == true) then
+			if (players[chatvars.playerid].timeout or players[chatvars.playerid].botTimeout) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in timeout. You cannot " .. server.commandPrefix .. "goto anywhere until you are released.[-]")
 				botman.faultyChat = false
 				return true
@@ -4652,7 +4652,7 @@ function gmsg_admin()
 				return true
 			end
 
-			if (players[chatvars.playerid].timeout == true) then
+			if (players[chatvars.playerid].timeout or players[chatvars.playerid].botTimeout) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in timeout. You cannot go anywhere until you are released for safety reasons.[-]")
 				botman.faultyChat = false
 				return true
@@ -4958,7 +4958,7 @@ function gmsg_admin()
 				end
 			end
 
-			if (players[prisonerid].timeout == true or players[prisonerid].botTimeout == true) then
+			if (players[prisonerid].timeout or players[prisonerid].botTimeout) then
 				if not isArchived then
 					players[prisonerid].timeout = false
 					players[prisonerid].botTimeout = false
@@ -5583,7 +5583,7 @@ function gmsg_admin()
 			end
 
 			if tmp.id == chatvars.playerid then
-				if (players[tmp.id].timeout == true and chatvars.accessLevel > 2) then
+				if (players[tmp.id].timeout or players[tmp.id].botTimeout) and chatvars.accessLevel > 2 then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in timeout. You cannot release yourself.[-]")
 					botman.faultyChat = false
 					return true
@@ -5591,13 +5591,13 @@ function gmsg_admin()
 			end
 
 			if not isArchived then
-				if players[tmp.id].timeout == false and players[tmp.id].prisoner and ((tmp.id ~= chatvars.playerid and chatvars.accessLevel > 2) or chatvars.playerid == players[id].pvpVictim) then
+				if (not players[tmp.id].timeout and not players[tmp.id].botTimeout) and players[tmp.id].prisoner and ((tmp.id ~= chatvars.playerid and chatvars.accessLevel > 2) or chatvars.playerid == players[id].pvpVictim) then
 					gmsg(server.commandPrefix .. "release " .. tmp.id)
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if playersArchived[tmp.id].timeout == false and playersArchived[tmp.id].prisoner and ((tmp.id ~= chatvars.playerid and chatvars.accessLevel > 2) or chatvars.playerid == playersArchived[id].pvpVictim) then
+				if (not players[tmp.id].timeout and not players[tmp.id].botTimeout) and playersArchived[tmp.id].prisoner and ((tmp.id ~= chatvars.playerid and chatvars.accessLevel > 2) or chatvars.playerid == playersArchived[id].pvpVictim) then
 					gmsg(server.commandPrefix .. "release " .. tmp.id)
 					botman.faultyChat = false
 					return true
@@ -6816,7 +6816,7 @@ function gmsg_admin()
 			end
 
 			-- then teleport the player to timeout
-			send("tele " .. tmp.id .. " " .. players[tmp.id].xPosTimeout .. " 50000 " .. players[tmp.id].zPosTimeout)
+			send("tele " .. tmp.id .. " " .. players[tmp.id].xPosTimeout .. " 60000 " .. players[tmp.id].zPosTimeout)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1

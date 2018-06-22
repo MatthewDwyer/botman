@@ -73,7 +73,7 @@ function CheckInventory()
 		end
 
 		if v.raiding == true then
-			tmp.flags = tmp.flags .. " at base of " .. v.raidingBase .. "|"
+			tmp.flags = tmp.flags .. " at base of " .. v.raidingBase .. " " .. players[v.raidingBase].name .. " "
 			tmp.dbFlag = "R"
 		end
 
@@ -188,7 +188,7 @@ function CheckInventory()
 				players[k].canTeleport = false
 
 				irc_chat(server.ircMain, "Exiling " .. v.name .. " detected with bad inventory while raiding.")
-				irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " exiling " .. v.name .. " detected with bad inventory while raiding.")
+				irc_chat(server.ircAlerts, server.gameDate .. " exiling " .. v.name .. " detected with bad inventory while raiding.")
 			end
 
 			if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
@@ -376,18 +376,18 @@ function CheckInventory()
 					if players[k].timeOnServer == nil or v.watchPlayer or v.raiding or tmp.watchPlayer then
 						for q, w in pairs(changes) do
 							if v.inLocation ~= "" then
-								irc_chat(server.ircWatch, string.trim(tmp.flags .. " " .. v.name .. " in " .. v.inLocation .. " " .. w[1] .. "  " .. w[2] .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)))
+								irc_chat(server.ircWatch, string.trim(v.name .. " " .. tmp.flags .. " in " .. v.inLocation .. " " .. w[1] .. "  " .. w[2] .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)))
 							else
-								irc_chat(server.ircWatch, string.trim(tmp.flags .. " " .. v.name .. "  " .. w[1] .. "  " .. w[2] .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)))
+								irc_chat(server.ircWatch, string.trim(v.name .. " " .. tmp.flags .. " " .. w[1] .. "  " .. w[2] .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)))
 							end
 						end
 					else
 						if tmp.playerAccessLevel > 2 and tonumber(players[k].timeOnServer) < tonumber(server.newPlayerTimer)  then
 							for q, w in pairs(changes) do
 								if v.inLocation ~= "" then
-									irc_chat(server.ircWatch, string.trim(tmp.flags .. " " .. v.name .. " in " .. v.inLocation .. " " .. w[1] .. "   " .. w[2] .. "  @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)))
+									irc_chat(server.ircWatch, string.trim(v.name .. " " .. tmp.flags .. " in " .. v.inLocation .. " " .. w[1] .. "   " .. w[2] .. "  @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)))
 								else
-									irc_chat(server.ircWatch, string.trim(tmp.flags .. " " .. v.name .. "  " .. w[1] .. "   " .. w[2] .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)))
+									irc_chat(server.ircWatch, string.trim(v.name .. " " .. tmp.flags .. " " .. w[1] .. "   " .. w[2] .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos)))
 								end
 							end
 						end
@@ -429,7 +429,7 @@ function CheckInventory()
 				message("say [" .. server.chatColour .. "]" .. v.name .. " is in timeout for ignoring overstack warnings.[-]")
 				message("pm " .. k .. " [" .. server.chatColour .. "]You are still overstacking items. You will stay in timeout until you are not overstacking.[-]")
 				irc_chat(server.ircWatch, "[TIMEOUT] " .. k .. " " .. v.name .. " is in timeout for overstacking the following " .. players[k].overstackItems)
-				irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [TIMEOUT] " .. k .. " " .. v.name .. " is in timeout for overstacking the following " .. players[k].overstackItems)
+				irc_chat(server.ircAlerts, server.gameDate .. " [TIMEOUT] " .. k .. " " .. v.name .. " is in timeout for overstacking the following " .. players[k].overstackItems)
 
 				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. ",'" .. botman.serverTime .. "','timeout','Player " .. escape(v.name) .. " is in timeout for overstacking the following " .. escape(players[k].overstackItems) .. "'," .. k .. ")")
 			end
@@ -441,7 +441,7 @@ function CheckInventory()
 
 				message("say [" .. server.chatColour .. "]Banning player " .. v.name .. " 1 year for suspected inventory cheating.[-]")
 				irc_chat(server.ircMain, "[BANNED] Player " .. k .. " " .. v.name .. " has has been banned for " .. tmp.banReason .. ".")
-				irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Player " .. k .. " " .. v.name .. " has has been banned for 1 year for " .. tmp.banReason .. ".")
+				irc_chat(server.ircAlerts, server.gameDate .. " [BANNED] Player " .. k .. " " .. v.name .. " has has been banned for 1 year for " .. tmp.banReason .. ".")
 				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. k .. " " .. escape(v.name) .. " has has been banned for 1 year for " .. escape(tmp.banReason) .. ".'," .. k .. ")")
 
 				if botman.db2Connected then
@@ -470,7 +470,7 @@ function CheckInventory()
 			if tmp.playerAccessLevel > 2 then players[k].silentBob = true end
 			players[k].canTeleport = false
 			irc_chat(server.ircMain, "Moving player " .. k .. " " .. v.name .. " to " .. tmp.moveTo .. " for " .. tmp.moveReason .. ".")
-			irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " moving player " .. k .. " " .. v.name .. " to " .. tmp.moveTo .. " for " .. tmp.moveReason .. ".")
+			irc_chat(server.ircAlerts, server.gameDate .. " moving player " .. k .. " " .. v.name .. " to " .. tmp.moveTo .. " for " .. tmp.moveReason .. ".")
 			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. ",'" .. botman.serverTime .. "','exile','Player " .. k .. " " .. escape(v.name) .. " has has been exiled to " .. escape(tmp.moveTo) .. " for " .. escape(tmp.moveReason) .. ".'," .. k .. ")")
 		end
 
@@ -493,7 +493,7 @@ function CheckInventory()
 					message("pm " .. k .. " [" .. server.chatColour .. "]You must drop them if you wish to return to the game.[-]")
 
 					irc_chat(server.ircMain, v.name .. " detected with uncraftable " .. tmp.badItemsFound)
-					irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " " .. v.name .. " detected with uncraftable " .. tmp.badItemsFound)
+					irc_chat(server.ircAlerts, server.gameDate .. " " .. v.name .. " detected with uncraftable " .. tmp.badItemsFound)
 					conn:execute("INSERT INTO events (x, y, z, serverTime, type, event) VALUES (" .. math.floor(igplayers[k].xPos) .. "," .. math.ceil(igplayers[k].yPos) .. "," .. math.floor(igplayers[k].zPos) .. ",'" .. botman.serverTime .. "','timeout','Player " .. escape(v.name) .. " detected with uncraftable inventory " .. escape(tmp.badItemsFound) .. "')")
 
 					if botman.db2Connected then

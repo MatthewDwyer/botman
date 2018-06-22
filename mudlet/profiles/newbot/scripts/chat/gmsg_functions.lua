@@ -472,7 +472,8 @@ end
 
 
 function logAlerts(alertTime, alertLine)
-	if botman.webdavFolderWriteable == false then
+	-- don't log base protection alerts
+	if botman.webdavFolderWriteable == false or string.find(alertLine, "base protection") then
 		return
 	end
 
@@ -521,7 +522,7 @@ end
 
 
 function logChat(chatTime, chatLine)
-	if chatvars == nil then
+	if chatvars == nil or string.trim(chatLine) == "Server" then
 		return
 	end
 
