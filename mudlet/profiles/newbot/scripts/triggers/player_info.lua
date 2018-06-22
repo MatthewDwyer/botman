@@ -27,7 +27,7 @@ function playerInfo(faultyInfo)
 	local resetZone = false
 	local ping, dist, IP, hotspot, currentLocation
 	local skipTPtest = false
-	local badData = false
+	local badData = false -- no biscuit!
 
 	debug = false -- should be false unless testing
 
@@ -1098,7 +1098,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	end
 
 	-- emergency return from timeout
-	if (not players[steam].timeout and not  players[steam].botTimeout) and intY > 1000 then --  and playerAccessLevel > 2
+	if (not players[steam].timeout and not  players[steam].botTimeout) and intY > 1000 and playerAccessLevel > 2 then
 		igplayers[steam].tp = 1
 		igplayers[steam].hackerTPScore = 0
 

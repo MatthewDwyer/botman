@@ -15,10 +15,6 @@ local debug
 -- enable debug to see where the code is stopping. Any error will be after the last debug line.
 debug = false -- should be false unless testing
 
-if botman.debugAll then
-	debug = true -- this should be true
-end
-
 -- Fisher-Yates shuffle from http://santos.nfshost.com/shuffling.html
 local function shuffle(t)
   for i = 1, #t - 1 do
@@ -130,6 +126,10 @@ function gmsg_coppi_new()
 	calledFunction = "gmsg_coppi_new"
 	result = false
 	tmp = {}
+
+	if botman.debugAll then
+		debug = true -- this should be true
+	end
 
 -- ################## coppi's command functions ##################
 
@@ -471,8 +471,6 @@ function gmsg_coppi_new()
 					end
 				end
 
-				--botman.lastBlockCommandOwner = chatvars.playerid
-
 				botman.faultyChat = false
 				return true
 			end
@@ -517,8 +515,6 @@ function gmsg_coppi_new()
 					end
 				end
 
-				--botman.lastBlockCommandOwner = chatvars.playerid
-
 				botman.faultyChat = false
 				return true
 			end
@@ -550,8 +546,6 @@ function gmsg_coppi_new()
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 
-				--botman.lastBlockCommandOwner = chatvars.playerid
-
 				botman.faultyChat = false
 				return true
 			end
@@ -582,8 +576,6 @@ function gmsg_coppi_new()
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
-
-				--botman.lastBlockCommandOwner = chatvars.playerid
 
 				botman.faultyChat = false
 				return true
@@ -682,8 +674,6 @@ function gmsg_coppi_new()
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 
-				--botman.lastBlockCommandOwner = chatvars.playerid
-
 				botman.faultyChat = false
 				return true
 			end
@@ -714,8 +704,6 @@ function gmsg_coppi_new()
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
-
-				--botman.lastBlockCommandOwner = chatvars.playerid
 
 				botman.faultyChat = false
 				return true
@@ -923,7 +911,7 @@ function gmsg_coppi_new()
 			end
 		end
 
-		if (chatvars.words[1] == "list" or chatvars.words[1] == "li") and chatvars.words[2] ~= nil and chatvars.words[3] == nil then
+		if (chatvars.words[1] == "list" or chatvars.words[1] == "li") and chatvars.words[2] ~= "saves" and chatvars.words[2] ~= nil and chatvars.words[3] == nil then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -955,7 +943,7 @@ function gmsg_coppi_new()
 	end
 
 
-	local function cmd_ListSaves()
+	local function cmd_ListSaves() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}list saves {optional player name}"
@@ -984,7 +972,7 @@ function gmsg_coppi_new()
 			end
 		end
 
-		if chatvars.words[1] == "list" and chatvars.words[2] == "saves" and chatvars.words[3] ~= nil then
+		if chatvars.words[1] == "list" and chatvars.words[2] == "saves" then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -999,27 +987,45 @@ function gmsg_coppi_new()
 				end
 			end
 
-			tmp.name = string.sub(chatvars.command, string.find(chatvars.command, "saves ") + 7)
-			tmp.name = string.trim(tmp.name)
-			tmp.pid = LookupPlayer(tmp.name)
+			tmp.pid = 0
 
-			if tmp.pid == 0 then
-				tmp.pid = chatvars.playerid
-				tmp.name = chatvars.playername
-			else
-				tmp.pid = LookupArchivedPlayer(tmp.name)
-				tmp.name = playersArchived[tmp.pid].name
+			if chatvars.words[3] ~= nil then
+				tmp.name = string.sub(chatvars.command, string.find(chatvars.command, "saves") + 7)
+				tmp.name = string.trim(tmp.name)
+				tmp.pid = LookupPlayer(tmp.name)
+
+				if tmp.pid == 0 then
+					tmp.pid = LookupArchivedPlayer(tmp.name)
+
+					if tmp.pid ~= 0 then
+						tmp.name = playersArchived[tmp.pid].name
+					end
+				else
+					tmp.name = players[tmp.pid].name
+				end
 			end
 
 			if botman.dbConnected then
-				cursor,errorString = conn:execute("select * from prefabCopies where owner = " .. tmp.pid)
-				row = cursor:fetch({}, "a")
+				if tmp.pid ~= 0 then
+					cursor,errorString = conn:execute("select * from prefabCopies where owner = " .. tmp.pid)
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Saved prefabs created by " .. tmp.name .. ":[-]")
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Saved prefabs created by " .. tmp.name .. ":[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Saved prefabs created by " .. tmp.name)
+					end
 				else
-					irc_chat(chatvars.ircAlias, "Saved prefabs created by " .. tmp.name)
+					cursor,errorString = conn:execute("select * from prefabCopies order by name")
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Saved prefabs:[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Saved prefabs:")
+					end
+
 				end
+
+				row = cursor:fetch({}, "a")
 
 				if not row then
 					if (chatvars.playername ~= "Server") then
@@ -1030,10 +1036,18 @@ function gmsg_coppi_new()
 				end
 
 				while row do
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Name: " .. row.name .. " coords P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. " P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2 .. "[-]")
+					if tmp.pid == 0 then
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[row.owner].name .. ": " .. row.name .. "  P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "   P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2 .. "[-]")
+						else
+							irc_chat(chatvars.ircAlias, players[row.owner].name .. ": " .. row.name .. "  P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "  P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2)
+						end
 					else
-						irc_chat(chatvars.ircAlias, "Name: " .. row.name .. " coords P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. " P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2)
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.name .. "  P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "   P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2 .. "[-]")
+						else
+							irc_chat(chatvars.ircAlias, row.name .. "   P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "  P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2)
+						end
 					end
 
 					row = cursor:fetch(row, "a")
@@ -1147,8 +1161,6 @@ function gmsg_coppi_new()
 				metrics.telnetCommands = metrics.telnetCommands + 2
 			end
 
-			--botman.lastBlockCommandOwner = chatvars.playerid
-
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A prefab called " .. tmp.prefab .. " should have spawned.  If it didn't either the prefab isn't called " .. tmp.prefab .. " or it doesn't exist.[-]")
 
 			botman.faultyChat = false
@@ -1157,7 +1169,7 @@ function gmsg_coppi_new()
 	end
 
 
-	local function cmd_MakeMaze()
+	local function cmd_MakeMaze() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}make maze (default maze 20 x 20)\n"
@@ -1189,7 +1201,7 @@ function gmsg_coppi_new()
 		end
 
 		if chatvars.words[1] == "make" and chatvars.words[2] == "maze" then
-			if (chatvars.playername ~= "Server") then
+				if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 					botman.faultyChat = false
@@ -1416,8 +1428,6 @@ function gmsg_coppi_new()
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
-
-				--botman.lastBlockCommandOwner = chatvars.playerid
 
 				if chatvars.words[4] == "up" then
 					prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 = prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number

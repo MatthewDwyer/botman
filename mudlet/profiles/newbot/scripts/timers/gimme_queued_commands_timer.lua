@@ -45,6 +45,12 @@ function miscCommandsTimer()
 				if igplayers[row.steam] then
 					teleport(row.command, row.steam)
 				end
+			else
+				send(row.command)
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
 			end
 
 			conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)

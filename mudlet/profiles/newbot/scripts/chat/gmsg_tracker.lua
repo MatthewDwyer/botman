@@ -14,14 +14,14 @@ local filter = ""
 
 debug = false -- should be false unless testing
 
-if botman.debugAll then
-	debug = true -- this should be true
-end
-
 function gmsg_tracker()
 	calledFunction = "gmsg_tracker"
 	result = false
 	tmp = {}
+
+	if botman.debugAll then
+		debug = true -- this should be true
+	end
 
 -- ################## tracker command functions ##################
 

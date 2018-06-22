@@ -13,14 +13,14 @@ local skipHelp = false
 
 debug = false -- should be false unless testing
 
-if botman.debugAll then
-	debug = true -- this should be true
-end
-
 function gmsg_fun()
 	calledFunction = "gmsg_fun"
 	result = false
 	tmp = {}
+
+	if botman.debugAll then
+		debug = true -- this should be true
+	end
 
 -- ################## Fun command functions ##################
 
@@ -72,8 +72,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_FixGimme()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -137,9 +137,9 @@ function gmsg_fun()
 			botman.faultyChat = false
 			return true
 		end
-	end	
-	
-	
+	end
+
+
 	local function cmd_PlaceBounty()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -219,9 +219,9 @@ function gmsg_fun()
 			botman.faultyChat = false
 			return true
 		end
-	end	
-	
-	
+	end
+
+
 	local function cmd_PlayGimme()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -316,8 +316,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_PlayGimmeHell()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -448,8 +448,8 @@ function gmsg_fun()
 			end
 		end
 	end
-	
-	
+
+
 	local function cmd_Poke()
 		-- Annoy the bot
 		if string.find(chatvars.words[1], "poke") and chatvars.words[2] ==  nil then
@@ -482,8 +482,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_QuitWithMessage()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -525,8 +525,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_RageQuit()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -613,8 +613,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_ResetGimme()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -664,8 +664,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_ResetGimmeHell()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -723,8 +723,8 @@ function gmsg_fun()
 			end
 		end
 	end
-	
-	
+
+
 	local function cmd_Santa()
 		-- HO
 		-- HO
@@ -1103,8 +1103,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_SetGimmeCooldown()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1176,8 +1176,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_SetGimmeResetTimer()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1261,8 +1261,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_Suicide()
 		-- Suicide is painless
 		-- It has a cooldown to stop players M.A.S.Hing it
@@ -1319,8 +1319,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_ToggleDogeMode()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1363,8 +1363,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_ToggleGimmeGame()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1424,8 +1424,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_ToggleGimmeZombies()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1486,8 +1486,8 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
-	
+
+
 	local function cmd_ToggleShowHideGimmeMessages()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1548,7 +1548,7 @@ function gmsg_fun()
 			return true
 		end
 	end
-	
+
 
 	local function cmd_ViewPlayerBounty()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then

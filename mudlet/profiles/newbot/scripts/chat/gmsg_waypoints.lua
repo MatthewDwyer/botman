@@ -13,10 +13,6 @@ local skipHelp = false
 
 debug = false -- should be false unless testing
 
-if botman.debugAll then
-	debug = true -- this should be true
-end
-
 function activateWaypointTunnel()
 	message("pm " .. tmp.steam .. " [" .. server.chatColour .. "]Chevron Seven is LOCKED![-]")
 	conn:execute("UPDATE waypoints SET linked = " .. tmp.wp1id .. " WHERE id = " .. tmp.wp2id)
@@ -29,6 +25,10 @@ function gmsg_waypoints()
 	calledFunction = "gmsg_waypoints"
 	result = false
 	tmp = {}
+
+	if botman.debugAll then
+		debug = true -- this should be true
+	end
 
 -- ################## waypoint command functions ##################
 

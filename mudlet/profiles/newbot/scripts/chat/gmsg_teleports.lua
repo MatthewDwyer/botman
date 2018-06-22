@@ -13,14 +13,14 @@ local skipHelp = false
 
 debug = false -- should be false unless testing
 
-if botman.debugAll then
-	debug = true -- this should be true
-end
-
 function gmsg_teleports()
 	calledFunction = "gmsg_teleports"
 	result = false
 	tmp = {}
+
+	if botman.debugAll then
+		debug = true -- this should be true
+	end
 
 -- ################## teleport command functions ##################
 

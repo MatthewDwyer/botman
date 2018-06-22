@@ -11,12 +11,12 @@ local counter, status, debug, n, help
 
 debug = false -- should be false unless testing
 
-if botman.debugAll then
-	debug = true -- this should be true
-end
-
 function gmsg_mail()
 	local playerName, isArchived
+
+	if botman.debugAll then
+		debug = true -- this should be true
+	end
 
 	calledFunction = "gmsg_mail"
 

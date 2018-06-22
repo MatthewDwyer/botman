@@ -16,14 +16,14 @@ local skipHelp = false
 -- enable debug to see where the code is stopping. Any error will be somewhere after the last successful debug line.
 debug = false -- should be false unless testing
 
-if botman.debugAll then
-	debug = true -- this should be true
-end
-
 function gmsg_server()
 	calledFunction = "gmsg_server"
 	result = false
 	tmp = {}
+
+	if botman.debugAll then
+		debug = true -- this should be true
+	end
 
 -- ################## server command functions ##################
 

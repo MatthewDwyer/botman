@@ -13,16 +13,16 @@ local skipHelp = false
 
 debug = false -- should be false unless testing
 
-if botman.debugAll then
-	debug = true -- this should be true
-end
-
 local note, pname, pid, debug, result, help
 
 function gmsg_misc()
 	calledFunction = "gmsg_misc"
 	result = false
 	tmp = {}
+
+	if botman.debugAll then
+		debug = true -- this should be true
+	end
 
 -- ################## Miscellaneous command functions ##################
 

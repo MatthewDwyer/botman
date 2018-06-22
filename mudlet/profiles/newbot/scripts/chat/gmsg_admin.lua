@@ -22,14 +22,14 @@ local runyear, runmonth, runday, runhour, runminute, runseconds, seenTimestamp
 -- enable debug to see where the code is stopping. Any error will be after the last debug line.
 debug = false -- should be false unless testing
 
-if botman.debugAll then
-	debug = true -- this should be true
-end
-
 function gmsg_admin()
 	calledFunction = "gmsg_admin"
 	result = false
 	tmp = {}
+
+	if botman.debugAll then
+		debug = true -- this should be true
+	end
 
 -- ################## Admin command functions ##################
 

@@ -13,14 +13,14 @@ local skipHelp = false
 
 debug = false -- should be false unless testing
 
-if botman.debugAll then
-	debug = true -- this should be true
-end
-
 function gmsg_friends()
 	calledFunction = "gmsg_friends"
 	result = false
 	tmp = {}
+
+	if botman.debugAll then
+		debug = true -- this should be true
+	end
 
 -- ################## Friend command functions ##################
 

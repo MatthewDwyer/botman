@@ -94,11 +94,11 @@ function baseProtection(steam, posX, posY, posZ)
 								end
 
 								alertAdmins(igplayers[steam].name .. " has been ejected from " .. v.name  .."'s 1st base.")
+								dist = distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.homeX, v.homeZ)
 
-								if distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.homeX, v.homeZ) < tonumber(v.protectSize) then
-
+								if dist > size then
 									message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to a protected player base. The base owner needs to add you to their friends list by typing " .. server.commandPrefix .. "friend " .. igplayers[steam].name .. "[-]")
-									cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " -1 " .. igplayers[steam].zPosLastOK
+									cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK
 
 									teleport(cmd, steam)
 								else
@@ -198,10 +198,11 @@ function baseProtection(steam, posX, posY, posZ)
 								end
 
 								alertAdmins(igplayers[steam].name .. " has been ejected from " .. v.name  .."'s 2nd base.")
+								dist = distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.home2X, v.home2Z)
 
-								if distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.home2X, v.home2Z) < tonumber(v.protect2Size) then
+								if dist > size then
 									message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to a protected player base.  The base owner needs to add you to their friends list by typing " .. server.commandPrefix .. "friend " .. igplayers[steam].name .. "[-]")
-									cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " -1 " .. igplayers[steam].zPosLastOK
+									cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK
 
 									teleport(cmd, steam)
 								else
@@ -237,11 +238,12 @@ function baseProtection(steam, posX, posY, posZ)
 
 					if tonumber(dist) < tonumber(size) then
 						igplayers[steam].raiding = true
+						dist = distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.x, v.z)
 
 						-- do the base protection magic
-						if distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.x, v.z) < tonumber(size) then
+						if dist > size then
 							message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to " .. k .. ".[-]")
-							cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " -1 " .. igplayers[steam].zPosLastOK
+							cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK
 							igplayers[steam].lastTP = cmd
 							teleport(cmd, steam)
 						else

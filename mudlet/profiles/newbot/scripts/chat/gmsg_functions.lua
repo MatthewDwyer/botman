@@ -12,10 +12,6 @@ local debug, result, x, z, id, pname, noWaypoint, temp, chatStringStart, cmd, ms
 -- enable debug to see where the code is stopping. Any error will be after the last debug line.
 debug = false -- should be false unless testing
 
-if botman.debugAll then
-	debug = true -- this should be true
-end
-
 function day7(steam)
 	if (server.gameDay % server.hordeNight == 0) then
 		if steam ~= nil then
@@ -558,6 +554,10 @@ end
 
 function gmsg(line, ircid)
 	result = false
+
+	if botman.debugAll then
+		debug = true -- this should be true
+	end
 
 	-- Hi there! ^^  Welcome to the function that parses player chat.  It builds a lua table called chatvars filled with lots of info
 	-- about the current line of player chat.  This fuction essentially pre-processes the line so that later code that chatvars is passed to
