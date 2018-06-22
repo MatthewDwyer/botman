@@ -8,7 +8,7 @@
 --]]
 
 function miscCommandsTimer()
-	local cursor, errorString, row
+	local cursor, errorString, row, temp
 
 	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
 		return
@@ -21,24 +21,24 @@ function miscCommandsTimer()
 
 		if row then
 			if string.find(row.command, "admin add") then
+				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been given admin.")
+
+				temp = string.split(row.command, " ")
+				setChatColour(row.steam, temp[4])
 				send(row.command)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
-
-				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been given admin.")
-				setChatColour(row.steam)
 			end
 
 			if string.find(row.command, "ban remove") then
+				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been unbanned.")
 				send(row.command)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
-
-				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been unbanned.")
 			end
 
 			if string.find(row.command, "tele ") then
@@ -79,6 +79,11 @@ function miscCommandsTimer()
 							end
 						else
 							send(row.command)
+
+							if string.find(row.command, "admin add") then
+								temp = string.split(row.command, " ")
+								setChatColour(row.steam, temp[4])
+							end
 
 							if botman.getMetrics then
 								metrics.telnetCommands = metrics.telnetCommands + 1

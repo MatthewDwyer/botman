@@ -1537,7 +1537,7 @@ function gmsg_coppi_new()
 			help[2] = "Set the default chat colour for a class of player.  You can also set chat colour for a named player.\n"
 			help[2] = help[2] .. "eg. {#}set player joe chat colour B0E0E6\n"
 			help[2] = help[2] .. "To disable automatic chat colouring, set it to white which is FFFFFF\n"
-			help[2] = help[2] .. "To reset everyone to white type {#}reset chat colour"
+			help[2] = help[2] .. "To reset everyone to white type {#}reset chat colour everyone"
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -1580,30 +1580,78 @@ function gmsg_coppi_new()
 			tmp.target = chatvars.words[2]
 			tmp.namedPlayer = false
 
-			if chatvars.words[1] == "reset" then
-				for k,v in pairs(players) do
-					v.chatColour = "FFFFFF"
-				end
-
-				for k,v in pairs(playersArchived) do
-					v.chatColour = "FFFFFF"
-				end
-
-				for k,v in pairs(igplayers) do
-					send("cp-cpc " .. k .. " FFFFFF 1")
-
-					if botman.getMetrics then
-						metrics.telnetCommands = metrics.telnetCommands + 1
+			if string.find(chatvars.command, "reset chat colo") and chatvars.words[4] ~= nil then
+				if chatvars.words[4] == "everyone" or chatvars.words[4] == "all" then
+					for k,v in pairs(players) do
+						v.chatColour = "FFFFFF"
 					end
-				end
 
-				if botman.dbConnected then conn:execute("UPDATE players SET chatColour = 'FFFFFF'") end
-				if botman.dbConnected then conn:execute("UPDATE playersArchived SET chatColour = 'FFFFFF'") end
+					for k,v in pairs(playersArchived) do
+						v.chatColour = "FFFFFF"
+					end
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Everyone's stored chat colour is white, but players will still be coloured if any player classes are coloured (eg. donors).[-]")
+					for k,v in pairs(igplayers) do
+						send("cp-cpc " .. k .. " FFFFFF 1")
+
+						if botman.getMetrics then
+							metrics.telnetCommands = metrics.telnetCommands + 1
+						end
+					end
+
+					if botman.dbConnected then conn:execute("UPDATE players SET chatColour = 'FFFFFF'") end
+					if botman.dbConnected then conn:execute("UPDATE playersArchived SET chatColour = 'FFFFFF'") end
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Everyone's stored chat colour is white, but players will still be coloured if any player classes are coloured (eg. donors).[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Everyone's stored chat colour is white, but players will still be coloured if any player classes are coloured (eg. donors).")
+					end
 				else
-					irc_chat(chatvars.ircAlias, "Everyone's stored chat colour is white, but players will still be coloured if any player classes are coloured (eg. donors).")
+					tmp.name = chatvars.words[4]
+					tmp.pid = LookupPlayer(tmp.name)
+
+					if tmp.pid == 0 then
+						tmp.pid = LookupArchivedPlayer(tmp.name)
+
+						if tmp.pid ~= 0 then
+							if (chatvars.playername ~= "Server") then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[tmp.pid].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
+							else
+								irc_chat(chatvars.ircAlias, "Player " .. playersArchived[tmp.pid].name .. " was archived. Get them to rejoin the server, then repeat this command.")
+							end
+						else
+							if (chatvars.playername ~= "Server") then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. tmp.name .. "[-]")
+							else
+								irc_chat(chatvars.ircAlias, "No player found called " .. tmp.name)
+							end
+						end
+
+						botman.faultyChat = false
+						return true
+					else
+						tmp.name = players[tmp.pid].name
+					end
+
+					if tmp.pid ~= 0 then
+						send("cp-cpc " .. tmp.pid .. " FFFFFF 1")
+
+						if botman.getMetrics then
+							metrics.telnetCommands = metrics.telnetCommands + 1
+						end
+
+						players[tmp.pid].chatColour = tmp.colour
+						if botman.dbConnected then conn:execute("UPDATE players SET chatColour = 'FFFFFF' WHERE steam = " .. tmp.pid) end
+
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. tmp.name ..  "'s name is now coloured coloured [FFFFFF]white[-][-]")
+						else
+							irc_chat(chatvars.ircAlias, tmp.name ..  "'s name is now coloured white")
+						end
+
+						botman.faultyChat = false
+						return true
+					end
 				end
 
 				botman.faultyChat = false
@@ -1669,7 +1717,7 @@ function gmsg_coppi_new()
 			end
 
 			if tmp.target == "player" then
-				if tmp.namedPlayer ~= nil then
+				if tmp.namedPlayer then
 					tmp.name = string.sub(chatvars.command, string.find(chatvars.command, " player ") + 8, string.find(chatvars.command, " chat ") - 1)
 					tmp.pid = LookupPlayer(tmp.name)
 

@@ -602,8 +602,41 @@ function savePlayers()
 end
 
 
-function setChatColour(steam)
-	if accessLevel(steam) > 3 and accessLevel(steam) < 11 then
+function setChatColour(steam, level)
+	local access
+
+	if players[steam].prisoner then
+		if string.upper(server.chatColourPrisoner) ~= "FFFFFF" then
+			send("cpc " .. steam .. " " .. server.chatColourPrisoner .. " 1")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
+			return -- force prison colour
+		end
+	end
+
+	access = accessLevel(steam)
+
+	if level ~= nil then
+		access = tonumber(level)
+	end
+
+	-- change the colour of the player's name
+	if players[steam].chatColour ~= "" then
+		if string.upper(string.sub(players[steam].chatColour, 1, 6)) ~= "FFFFFF" then
+			send("cpc " .. steam .. " " .. stripAllQuotes(players[steam].chatColour) .. " 1")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+
+			return
+		end
+	end
+
+	if (access > 3 and access < 11) then
 		send("cpc " .. steam .. " " .. server.chatColourDonor .. " 1")
 
 		if botman.getMetrics then
@@ -611,7 +644,7 @@ function setChatColour(steam)
 		end
 	end
 
-	if accessLevel(steam) == 0 then
+	if access == 0 then
 		send("cpc " .. steam .. " " .. server.chatColourOwner .. " 1")
 
 		if botman.getMetrics then
@@ -619,7 +652,7 @@ function setChatColour(steam)
 		end
 	end
 
-	if accessLevel(steam) == 1 then
+	if access == 1 then
 		send("cpc " .. steam .. " " .. server.chatColourAdmin .. " 1")
 
 		if botman.getMetrics then
@@ -627,7 +660,7 @@ function setChatColour(steam)
 		end
 	end
 
-	if accessLevel(steam) == 2 then
+	if access == 2 then
 		send("cpc " .. steam .. " " .. server.chatColourMod .. " 1")
 
 		if botman.getMetrics then
@@ -635,7 +668,7 @@ function setChatColour(steam)
 		end
 	end
 
-	if accessLevel(steam) == 90 then
+	if access == 90 then
 		send("cpc " .. steam .. " " .. server.chatColourPlayer .. " 1")
 
 		if botman.getMetrics then
@@ -643,16 +676,8 @@ function setChatColour(steam)
 		end
 	end
 
-	if accessLevel(steam) == 99 then
+	if access == 99 then
 		send("cpc " .. steam .. " " .. server.chatColourNewPlayer .. " 1")
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
-	end
-
-	if players[steam].prisoner then
-		send("cpc " .. steam .. " " .. server.chatColourPrisoner .. " 1")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1

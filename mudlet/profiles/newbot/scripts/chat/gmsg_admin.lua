@@ -173,14 +173,14 @@ function gmsg_admin()
 			else
 				-- remove the steamid from the admins table
 				if not isArchived then
-					owners[players[id].steam] = nil
-					admins[players[id].steam] = nil
-					mods[players[id].steam] = nil
+					owners[id] = nil
+					admins[id] = nil
+					mods[id] = nil
 					players[id].accessLevel = 90
 				else
-					owners[playersArchived[id].steam] = nil
-					admins[playersArchived[id].steam] = nil
-					mods[playersArchived[id].steam] = nil
+					owners[id] = nil
+					admins[id] = nil
+					mods[id] = nil
 					playersArchived[id].accessLevel = 90
 				end
 
@@ -191,6 +191,8 @@ function gmsg_admin()
 					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 			end
+
+			setChatColour(id)
 
 			botman.faultyChat = false
 			return true
@@ -661,6 +663,8 @@ function gmsg_admin()
 					irc_chat(chatvars.ircAlias, playerName .. " no longer has donor status.")
 				end
 			end
+
+			setChatColour(tmp.id)
 
 			botman.faultyChat = false
 			return true
@@ -6678,6 +6682,13 @@ function gmsg_admin()
 					message(string.format("pm %s [%s]Your admin status has been temporarily removed.  You are now a player.  You will regain admin in " .. restoreDelay .. " seconds.  Good luck![-]", pid, server.chatColour))
 				end
 			end
+
+			-- force an early retirement
+			owners[pid] = nil
+			admins[pid] = nil
+			mods[pid] = nil
+			players[pid].accessLevel = 90
+			setChatColour(pid)
 
 			botman.faultyChat = false
 			return true
