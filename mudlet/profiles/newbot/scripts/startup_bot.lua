@@ -291,6 +291,9 @@ function login()
 		storeBotmanINI()
 	end
 
+	-- load the server API key if it exists
+	readAPI()
+
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	-- join the irc server

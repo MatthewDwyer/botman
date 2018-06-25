@@ -168,14 +168,15 @@ function readServerVote(steam)
 		end
 
 		if ln == "1" then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Thanks for voting for us!  Your reward should spawn beside you.[-]")
-			send("se " .. steam .. " " .. botman.sc_General)
-			file:close()
-
 			-- claim the vote
 			url = "https://7daystodie-servers.com/api/?action=post&object=votes&element=claim&key=" .. serverAPI .. "&steamid=" .. steam
 			os.remove(homedir .. "/temp/voteClaim.txt")
 			downloadFile(homedir .. "/temp/voteClaim.txt", url)
+
+			-- reward the player.  Good Player!  Have a biscuit.
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Thanks for voting for us!  Your reward should spawn beside you.[-]")
+			send("se " .. players[steam].id .. " sc_General")
+			file:close()
 
 			return
 		end
@@ -197,10 +198,8 @@ function checkServerVote(steam)
 
 	if serverAPI ~= nil then
 		url = "https://7daystodie-servers.com/api/?object=votes&element=claim&key=" .. serverAPI .. "&steamid=" .. steam
-
 		os.remove(homedir .. "/temp/voteCheck.txt")
 		downloadFile(homedir .. "/temp/voteCheck.txt", url)
-
 		tempTimer( 5, [[ readServerVote("]] .. steam .. [[") ]] )
 	end
 end

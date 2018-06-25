@@ -821,6 +821,9 @@ function reloadBotScripts(skipTables, silent)
 		end
 	end
 
+	-- load the server API key if it exists
+	readAPI()
+
 	server.reloadCodeSuccess = true
 
 if (debug) then display("debug reloadBotScripts end \n") end

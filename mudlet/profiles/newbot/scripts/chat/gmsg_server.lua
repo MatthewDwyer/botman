@@ -2070,7 +2070,7 @@ function gmsg_server()
 				return true
 			end
 
-			server.serverAPI = chatvars.wordsOld[4]
+			serverAPI = chatvars.wordsOld[4]
 			writeAPI()
 
 			if (chatvars.playername ~= "Server") then
