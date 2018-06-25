@@ -16,9 +16,13 @@ function teleTrigger(line)
 
 	if string.find(line, "tele ") and string.find(line, "by Telnet") then
 		cmd = string.sub(line, string.find(line, "tele "), string.find(line, "by Telnet") - 2)
-		-- the first part of the split is tele, 2nd part is the player being teleported
-		cmd = string.split(cmd, " ")
-		cmd[2] = stripQuotes(cmd[2])
+		-- the first player is the player being teleported
+		player = string.match(cmd, "\"(.*)\"%s")
+
+		if player == nil then
+			player = string.split(cmd, " ")
+			player = stripQuotes(player[2])
+		end
 
 		id = LookupPlayer(cmd[2], "all")
 		igplayers[id].tp = 1
@@ -31,9 +35,13 @@ function teleTrigger(line)
 	if string.find(line, " from ") then
 		if string.find(line, "teleportplayer") then
 			cmd = string.sub(line, string.find(line, "teleportplayer "), string.find(line, "from") - 2)
-			-- the first part of the split is tele, 2nd part is the player being teleported
-			cmd = string.split(cmd, " ")
-			cmd[2] = stripQuotes(cmd[2])
+			-- the first player is the player being teleported
+			player = string.match(cmd, "\"(.*)\"%s")
+
+			if player == nil then
+				player = string.split(cmd, " ")
+				player = stripQuotes(player[2])
+			end
 
 			id = LookupPlayer(cmd[2], "all")
 			igplayers[id].tp = 1
@@ -45,11 +53,16 @@ function teleTrigger(line)
 
 		if string.find(line, "tele ") then
 			cmd = string.sub(line, string.find(line, "tele "), string.find(line, "from") - 2)
-			-- the first part of the split is tele, 2nd part is the player being teleported
-			cmd = string.split(cmd, " ")
-			cmd[2] = stripQuotes(cmd[2])
+			-- the first player is the player being teleported
 
-			id = LookupPlayer(cmd[2], "all")
+			player = string.match(cmd, "\"(.*)\"%s")
+
+			if player == nil then
+				player = string.split(cmd, " ")
+				player = stripQuotes(player[2])
+			end
+
+			id = LookupPlayer(player, "all")
 			igplayers[id].tp = 1
 			igplayers[id].hackserTPScore = 0
 			igplayers[id].spawnPending = true

@@ -56,6 +56,8 @@ function teleport(cmd, steam, justTeleport)
 
 	igplayers[steam].tp = 1
 	igplayers[steam].hackerTPScore = 0
+	igplayers[steam].spawnPending = true
+	igplayers[steam].lastTPTimestamp = os.time()
 
 	send(cmd)
 

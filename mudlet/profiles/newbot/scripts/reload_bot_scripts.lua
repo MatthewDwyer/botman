@@ -723,7 +723,7 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 end
 
 
-function reloadBotScripts(skipTables)
+function reloadBotScripts(skipTables, silent)
 	-- disable some stuff we no longer use
 	disableTrigger("le")
 	disableTimer("GimmeReset")
@@ -745,7 +745,11 @@ function reloadBotScripts(skipTables)
 	local chatColour, k, v
 
 	server.reloadCodeSuccess = false
-	tempTimer( 3, [[ reportReloadCode() ]] )
+
+	if silent == nil then
+		tempTimer( 3, [[ reportReloadCode() ]] )
+	end
+
 	disableTimer("ReloadScripts")
 
 	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -799,9 +803,8 @@ function reloadBotScripts(skipTables)
 
 			fixMissingServer()
 			registerBot()
-
 			botman.webdavFolderExists = true
-			--botman.webdavFolderWriteable = true
+
 			if botman.chatlogPath == nil or botman.chatlogPath == "" then
 				botman.chatlogPath = webdavFolder
 				if botman.dbConnected then conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'") end

@@ -154,8 +154,41 @@ function writeAPI()
 end
 
 
-function readServerVote()
-	-- TODO:  FINISH HIM!
+function readServerVote(steam)
+	local file, ln, url, result
+
+	file = io.open(homedir .. "/temp/voteCheck.txt", "r")
+
+	for ln in file:lines() do
+		if ln == "0" then
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Reward?  For what?  You haven't voted today!  You can claim your reward after voting.[-]")
+			file:close()
+
+			return
+		end
+
+		if ln == "1" then
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Thanks for voting for us!  Your reward should spawn beside you.[-]")
+			send("se " .. steam .. " " .. botman.sc_General)
+			file:close()
+
+			-- claim the vote
+			url = "https://7daystodie-servers.com/api/?action=post&object=votes&element=claim&key=" .. serverAPI .. "&steamid=" .. steam
+			os.remove(homedir .. "/temp/voteClaim.txt")
+			downloadFile(homedir .. "/temp/voteClaim.txt", url)
+
+			return
+		end
+
+		if ln == "2" then
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Thanks for voting today.  You have already claimed your reward.  Vote for us tomorrow and you can claim another reward then.[-]")
+			file:close()
+
+			return
+		end
+	end
+
+	file:close()
 end
 
 

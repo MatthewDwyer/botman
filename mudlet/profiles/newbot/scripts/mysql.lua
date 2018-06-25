@@ -819,6 +819,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `locations` ADD `coolDownTimer` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `locations` ADD `plot` TINYINT(1) NOT NULL DEFAULT '0', ADD `plotWallBock` VARCHAR(20) NOT NULL DEFAULT 'bedrock', ADD `plotFillBlock` VARCHAR(20) NOT NULL DEFAULT 'dirt', ADD `plotGridSize` INT NOT NULL DEFAULT '0', ADD `plotDepth` INT NOT NULL DEFAULT '5', ADD `hordeNightClosedHours` VARCHAR(5) NOT NULL DEFAULT '00-00'")
 	doSQL("ALTER TABLE `locations` ADD `watchPlayers` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `customMessages` CHANGE `message` `message` VARCHAR(500) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)

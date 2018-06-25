@@ -55,8 +55,10 @@ function oneHourTimer()
 		if botman.dbBotsConnected then connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID) end
 	end
 
-	-- fix any problems with player records
-	for k,v in pairs(players) do
-		fixMissingPlayer(k)
-	end
+	reloadBotScripts(true, true)
+
+	-- -- fix any problems with player records
+	-- for k,v in pairs(players) do
+		-- fixMissingPlayer(k)
+	-- end
 end

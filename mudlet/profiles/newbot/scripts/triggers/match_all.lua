@@ -1236,6 +1236,12 @@ function matchAll(line)
 	end
 
 
+	-- store the entity number for sc_General
+	if string.find(line, " - sc_General") then
+		botman.sc_General = number
+	end
+
+
 	if string.find(line, "bot_RemoveInvalidItems") then
 		removeInvalidItems()
 		return

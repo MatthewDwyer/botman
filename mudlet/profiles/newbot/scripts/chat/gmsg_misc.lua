@@ -478,6 +478,56 @@ function gmsg_misc()
 	end
 
 
+	local function cmd_ClaimVote()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}claim vote"
+			help[2] = "Claim your reward for voting for the server at 7daystodie-servers.com\n"
+			help[2] = help[2] .. "Can only be claimed once per day."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "claim,vote,reward,server"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "vote") or string.find(chatvars.command, "reward") or string.find(chatvars.command, "claim"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "claim" and chatvars.words[2] == "vote" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 99) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				irc_chat(chatvars.ircAlias, "This command is ingame only.")
+				botman.faultyChat = false
+				return true
+			end
+
+			checkServerVote(chatvars.playerid)
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ListCustomCommands() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1018,6 +1068,15 @@ if debug then dbug("debug misc") end
 
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_Bk()
+
+	if result then
+		if debug then dbug("debug cmd_Bk triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_Bookmark()
 
 	if result then
@@ -1027,10 +1086,10 @@ if debug then dbug("debug misc") end
 
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 
-	result = cmd_Bk()
+	result = cmd_ClaimVote()
 
 	if result then
-		if debug then dbug("debug cmd_Bk triggered") end
+		if debug then dbug("debug cmd_ClaimVote triggered") end
 		return result
 	end
 
