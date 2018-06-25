@@ -24,7 +24,7 @@ function teleTrigger(line)
 			player = stripQuotes(player[2])
 		end
 
-		id = LookupPlayer(cmd[2], "all")
+		id = LookupPlayer(player, "all")
 		igplayers[id].tp = 1
 		igplayers[id].hackerTPScore = 0
 		igplayers[id].spawnPending = true
@@ -43,7 +43,7 @@ function teleTrigger(line)
 				player = stripQuotes(player[2])
 			end
 
-			id = LookupPlayer(cmd[2], "all")
+			id = LookupPlayer(player, "all")
 			igplayers[id].tp = 1
 			igplayers[id].hackerTPScore = 0
 			igplayers[id].spawnPending = true
