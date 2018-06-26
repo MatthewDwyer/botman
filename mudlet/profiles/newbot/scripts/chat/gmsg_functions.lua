@@ -1404,31 +1404,23 @@ function gmsg(line, ircid)
 	end
 
 	if server.coppi then
-		if server.coppiRelease == "Mod Coppis command additions Light" or tonumber(server.coppiVersion) > 4.4 then
-			if debug then dbug("debug entering gmsg_coppi_new") end
-			result = gmsg_coppi_new()
+		if debug then dbug("debug entering gmsg_coppi") end
+		result = gmsg_coppi()
 
-			if result then
-				if debug then dbug("debug ran command in gmsg_coppi_new") end
-				return true
-			end
-		else
-			if debug then dbug("debug entering gmsg_coppi_old") end
-			result = gmsg_coppi_old()
-
-			if result then
-				if debug then dbug("debug ran command in gmsg_coppi_old") end
-				return true
-			end
+		if result then
+			if debug then dbug("debug ran command in gmsg_coppi") end
+			return true
 		end
 	end
 
-	if debug then dbug("debug entering gmsg_stompy") end
-	result = gmsg_stompy()
+	if server.stompy then
+		if debug then dbug("debug entering gmsg_stompy") end
+		result = gmsg_stompy()
 
-	if result then
-		if debug then dbug("debug ran command in gmsg_stompy") end
-		return true
+		if result then
+			if debug then dbug("debug ran command in gmsg_stompy") end
+			return true
+		end
 	end
 
 	if debug then dbug("debug entering gmsg_trial_code") end

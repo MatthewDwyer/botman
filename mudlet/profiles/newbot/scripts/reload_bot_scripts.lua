@@ -369,13 +369,8 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	server.nextCodeReload = "/scripts/chat/gmsg_coppi_old.lua"
-	checkScript(homedir .. "/scripts/chat/gmsg_coppi_old.lua")
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
-	server.nextCodeReload = "/scripts/chat/gmsg_coppi_new.lua"
-	checkScript(homedir .. "/scripts/chat/gmsg_coppi_new.lua")
+	server.nextCodeReload = "/scripts/chat/gmsg_coppi.lua"
+	checkScript(homedir .. "/scripts/chat/gmsg_coppi.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
