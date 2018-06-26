@@ -3423,7 +3423,7 @@ function gmsg_locations()
 	-- look for command in locations table
 
 	-- if a location called spawn exists and lobby does not, substitute lobby with spawn
-	if chatvars.words[1] == "spawn" then
+	if chatvars.words[1] == "spawn" and chatvars.words[2] == nil then
 		if locations["lobby"] and not locations["spawn"] then
 			chatvars.command = "lobby"
 		end

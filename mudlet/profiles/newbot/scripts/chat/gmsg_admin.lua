@@ -5623,6 +5623,7 @@ function gmsg_admin()
 					end
 				end
 			end
+
 			-- return player to previously recorded x y z
 			if (igplayers[tmp.id]) then
 				if players[tmp.id].timeout or players[tmp.id].botTimeout then
@@ -5660,12 +5661,12 @@ function gmsg_admin()
 				else
 					if tmp.loc ~= nil then
 						tmp.cmd = "tele " .. tmp.id .. " " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z
-						players[chatvars.playerid].xPosOld = 0
-						players[chatvars.playerid].yPosOld = 0
-						players[chatvars.playerid].zPosOld = 0
-						players[chatvars.playerid].xPosOld2 = 0
-						players[chatvars.playerid].yPosOld2 = 0
-						players[chatvars.playerid].zPosOld2 = 0
+						players[tmp.id].xPosOld = 0
+						players[tmp.id].yPosOld = 0
+						players[tmp.id].zPosOld = 0
+						players[tmp.id].xPosOld2 = 0
+						players[tmp.id].yPosOld2 = 0
+						players[tmp.id].zPosOld2 = 0
 
 						teleport(tmp.cmd, tmp.id)
 
@@ -5675,7 +5676,7 @@ function gmsg_admin()
 							irc_chat(chatvars.ircAlias, "Returning " .. players[tmp.id].name .. " to " .. tmp.loc)
 						end
 					else
-						if tonumber(players[chatvars.playerid].yPosOld) == 0 and tonumber(players[chatvars.playerid].yPosOld2) == 0 then
+						if tonumber(players[tmp.id].yPosOld) == 0 and tonumber(players[tmp.id].yPosOld2) == 0 then
 							if (chatvars.playername ~= "Server") then
 								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.id].name .. " has no returns.[-]")
 							else
@@ -5686,27 +5687,27 @@ function gmsg_admin()
 							return true
 						end
 
-						if tonumber(players[chatvars.playerid].yPosOld2) ~= 0 then
+						if tonumber(players[tmp.id].yPosOld2) ~= 0 then
 							-- the player has teleported within the same location so they are returning to somewhere in that location
-							cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPosOld2 .. " " .. players[chatvars.playerid].yPosOld2 .. " " .. players[chatvars.playerid].zPosOld2
-							teleport(cmd, chatvars.playerid)
+							cmd = "tele " .. tmp.id .. " " .. players[tmp.id].xPosOld2 .. " " .. players[tmp.id].yPosOld2 .. " " .. players[tmp.id].zPosOld2
+							teleport(cmd, tmp.id)
 
-							players[chatvars.playerid].xPosOld2 = 0
-							players[chatvars.playerid].yPosOld2 = 0
-							players[chatvars.playerid].zPosOld2 = 0
+							players[tmp.id].xPosOld2 = 0
+							players[tmp.id].yPosOld2 = 0
+							players[tmp.id].zPosOld2 = 0
 
-							conn:execute("UPDATE players SET xPosOld2 = 0, yPosOld2 = 0, zPosOld2 = 0 WHERE steam = " .. chatvars.playerid)
+							conn:execute("UPDATE players SET xPosOld2 = 0, yPosOld2 = 0, zPosOld2 = 0 WHERE steam = " .. tmp.id)
 						else
 							-- the player has teleported from outside their current location so they are returning to there.
-							cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPosOld .. " " .. players[chatvars.playerid].yPosOld .. " " .. players[chatvars.playerid].zPosOld
-							teleport(cmd, chatvars.playerid)
+							cmd = "tele " .. tmp.id .. " " .. players[tmp.id].xPosOld .. " " .. players[tmp.id].yPosOld .. " " .. players[tmp.id].zPosOld
+							teleport(cmd, tmp.id)
 
-							players[chatvars.playerid].xPosOld = 0
-							players[chatvars.playerid].yPosOld = 0
-							players[chatvars.playerid].zPosOld = 0
-							igplayers[chatvars.playerid].lastLocation = ""
+							players[tmp.id].xPosOld = 0
+							players[tmp.id].yPosOld = 0
+							players[tmp.id].zPosOld = 0
+							igplayers[tmp.id].lastLocation = ""
 
-							conn:execute("UPDATE players SET xPosOld = 0, yPosOld = 0, zPosOld = 0 WHERE steam = " .. chatvars.playerid)
+							conn:execute("UPDATE players SET xPosOld = 0, yPosOld = 0, zPosOld = 0 WHERE steam = " .. tmp.id)
 						end
 
 						if (chatvars.playername ~= "Server") then
