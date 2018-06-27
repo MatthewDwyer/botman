@@ -626,6 +626,10 @@ function gmsg_admin()
 				if chatvars.ircid ~= 0 then
 					irc_chat(chatvars.ircAlias, playerName .. " donor status expires on " .. os.date("%d-%b-%Y",  tmp.expiry))
 				end
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. playerName .. " is now a donor until " .. os.date("%d-%b-%Y",  tmp.expiry) .. ".[-]")
+				end
 			else
 				-- remove a donor
 

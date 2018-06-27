@@ -748,15 +748,16 @@ function gmsg_base()
 			help = {}
 			help[1] = " {#}unprotectbase {player name}\n"
 			help[1] = help[1] .. " {#}unprotectbase2 {player name}"
-			help[2] = "Disable base protection for a player."
+			help[2] = "Disable base protection for a player.\n"
+			help[2] = help[2] .. "Only admins can specify a player name.  Everyone else can only use this command on their own bases."
 
 			if botman.registerHelp then
 				tmp.command = help[1]
 				tmp.keywords = "base,home,prot"
-				tmp.accessLevel = 2
+				tmp.accessLevel = 99
 				tmp.description = help[2]
 				tmp.notes = ""
-				tmp.ingameOnly = 1
+				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -772,53 +773,45 @@ function gmsg_base()
 			end
 		end
 
-		if (chatvars.words[1] == "unprotectbase" or chatvars.words[1] == "unprotectbase2") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
-			end
+		if string.find(chatvars.command, "unprotectbase") or string.find(chatvars.command, "unprotect base") then
+			id = chatvars.playerid
 
-			pname = string.sub(chatvars.command, string.find(chatvars.command, "unprotectbase") + 14)
-			pname = string.trim(pname)
-
-			if (pname == nil or pname == "") then
-				botman.faultyChat = false
-				return true
-			end
-
-			id = LookupPlayer(pname)
-
-			if id == 0 then
-				id = LookupArchivedPlayer(pname)
-
-				if id == 0 then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
-					else
-						irc_chat(chatvars.ircAlias, "No player found called " .. pname)
-					end
+			if (chatvars.accessLevel < 3) then
+				if string.find(chatvars.command, "base 2") then
+					pname = string.sub(chatvars.command, string.find(chatvars.command, "base 2") + 7)
 				else
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
-					else
-						irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.")
-					end
+					pname = string.sub(chatvars.command, string.find(chatvars.command, "base") + 5)
 				end
 
-				botman.faultyChat = false
-				return true
+				pname = string.trim(pname)
+
+				if (pname ~= "") then
+					id = LookupPlayer(pname)
+
+					if id == 0 then
+						id = LookupArchivedPlayer(pname)
+
+						if id == 0 then
+							if (chatvars.playername ~= "Server") then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. pname .. "[-]")
+							else
+								irc_chat(chatvars.ircAlias, "No player found called " .. pname)
+							end
+						else
+							if (chatvars.playername ~= "Server") then
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.[-]")
+							else
+								irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server, then repeat this command.")
+							end
+						end
+
+						botman.faultyChat = false
+						return true
+					end
+				end
 			end
 
-			if (chatvars.words[1] == "unprotectbase") then
+			if not (string.find(chatvars.command, "base2") or string.find(chatvars.command, "base 2")) then
 				if (players[id]) then players[id].protect = false end
 				if botman.dbConnected then conn:execute("UPDATE players SET protect = 0 WHERE steam = " .. id) end
 
@@ -827,13 +820,21 @@ function gmsg_base()
 					connBots:execute("UPDATE players SET protect = 0 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 				end
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .."'s base is no longer protected[-]")
+				if id ~= chatvars.playerid then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .."'s base is no longer protected[-]")
+					else
+						irc_chat(server.ircMain, players[id].name .."'s base is no longer protected.")
+					end
 				else
-					irc_chat(server.ircMain, players[id].name .."'s base is no longer protected.")
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your bot base protection has been removed.  It is only protected now if you placed claims there.[-]")
+					else
+						irc_chat(server.ircMain, "Your bot base protection has been removed.  It is only protected now if you placed claims there.")
+					end
 				end
 			else
-				if (players[id].donor == true or (accessLevel(id) < 3)) then
+				if (players[id].donor or accessLevel(id) < 3) then
 					if (players[id]) then players[id].protect2 = false end
 					if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. id) end
 
@@ -842,10 +843,18 @@ function gmsg_base()
 						connBots:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 					end
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .."'s 2nd base is no longer protected[-]")
+					if id ~= chatvars.playerid then
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .."'s 2nd base is no longer protected[-]")
+						else
+							irc_chat(server.ircMain, players[id].name .."'s 2nd base is no longer protected.")
+						end
 					else
-						irc_chat(server.ircMain, players[id].name .."'s 2nd base is no longer protected.")
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your bot base protection has been removed from your 2nd base.  It is only protected now if you placed claims there.[-]")
+						else
+							irc_chat(server.ircMain, "Your bot base protection has been removed from your 2nd base.  It is only protected now if you placed claims there.")
+						end
 					end
 				else
 					if (chatvars.playername ~= "Server") then
