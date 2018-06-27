@@ -696,7 +696,7 @@ function gmsg_fun()
 
 		if chatvars.words[1] == "reset" and (chatvars.words[2] == "gimmehell" or chatvars.words[2] == "gimmearena") then
 			if (chatvars.playername == "Server") then
-				resetGimmeHell()
+				resetGimmeArena()
 				irc_chat(server.ircMain, "The Gimme Arena game has been reset.")
 
 				botman.faultyChat = false
@@ -704,13 +704,10 @@ function gmsg_fun()
 			end
 
 			if arenaPlayers[chatvars.playerid] or (chatvars.accessLevel < 3) then
-				dist = distancexyz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].yPos, igplayers[chatvars.playerid].zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z)
-				if (dist < locations["arena"].size + 5) or (chatvars.accessLevel < 3) then
-					resetGimmeHell()
+				resetGimmeArena()
 
-					botman.faultyChat = false
-					return true
-				end
+				botman.faultyChat = false
+				return true
 			else
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only an arena participant or an admin can stop an active game.[-]")
