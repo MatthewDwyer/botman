@@ -2600,6 +2600,105 @@ function readDNS(steam)
 end
 
 
+function resetPlayer(steam)
+	-- reset many values in the player table for a specific player but leave others alone such as donor status.
+
+	players[steam].alertMapLimit = false
+	players[steam].alertPrison = true
+	players[steam].alertPVP = true
+	players[steam].alertReset = true
+	players[steam].atHome = false
+	players[steam].baseCooldown = 0
+	players[steam].bedX = 0
+	players[steam].bedY = 0
+	players[steam].bedZ = 0
+	players[steam].block = false
+	players[steam].botTimeout = false
+	players[steam].botQuestion = "" -- used for storing the last question the bot asked the player.
+	players[steam].bountyReason = ""
+	players[steam].cash = 0
+	players[steam].chatColour = "FFFFFF"
+	players[steam].commandCooldown = 0
+	players[steam].country = ""
+	players[steam].denyRights = false
+	players[steam].exiled = 0
+	players[steam].exit2X = 0
+	players[steam].exit2Y = 0
+	players[steam].exit2Z = 0
+	players[steam].exitX = 0
+	players[steam].exitY = 0
+	players[steam].exitZ = 0
+	players[steam].GBLCount = 0
+	players[steam].gimmeCooldown = 0
+	players[steam].gimmeCount = 0
+	players[steam].hackerScore = 0
+	players[steam].home2X = 0
+	players[steam].home2Y = 0
+	players[steam].home2Z = 0
+	players[steam].homeX = 0
+	players[steam].homeY = 0
+	players[steam].homeZ = 0
+	players[steam].ignorePlayer = false -- exclude player from checks like inventory, flying, teleporting etc.
+	players[steam].maxWaypoints = server.maxWaypoints
+	players[steam].mute = false
+	players[steam].overstack = false
+	players[steam].overstackItems = ""
+	players[steam].overstackScore = 0
+	players[steam].overstackTimeout = false
+	players[steam].packCooldown = 0
+	players[steam].pendingBans = 0
+	players[steam].permanentBan = false
+	players[steam].prisoner = false
+	players[steam].prisonReason = ""
+	players[steam].prisonReleaseTime = 0
+	players[steam].prisonxPosOld = 0
+	players[steam].prisonyPosOld = 0
+	players[steam].prisonzPosOld = 0
+	players[steam].protect = false
+	players[steam].protect2 = false
+	players[steam].protect2Size = server.baseSize
+	players[steam].protectSize = server.baseSize
+	players[steam].pvpTeleportCooldown = 0
+	players[steam].raiding = false
+	players[steam].relogCount = 0
+	players[steam].removeClaims = false
+	players[steam].reserveSlot = false
+	players[steam].returnCooldown = 0
+	players[steam].silentBob = false
+	players[steam].teleCooldown = 0
+	players[steam].timeout = false
+	players[steam].tokens = 0
+	players[steam].VACBanned = false
+	players[steam].walkies = false
+	players[steam].watchPlayer = false
+	players[steam].waypoint2X = 0
+	players[steam].waypoint2Y = 0
+	players[steam].waypoint2Z = 0
+	players[steam].waypointsLinked = false
+	players[steam].waypointX = 0
+	players[steam].waypointY = 0
+	players[steam].waypointZ = 0
+	players[steam].waypointCooldown = server.waypointCooldown
+	players[steam].whitelisted = false
+	players[steam].xPos = 0
+	players[steam].xPosOld = 0
+	players[steam].xPosOld2 = 0
+	players[steam].yPos = 0
+	players[steam].yPosOld = 0
+	players[steam].yPosOld2 = 0
+	players[steam].zPos = 0
+	players[steam].zPosOld = 0
+	players[steam].zPosOld2 = 0
+
+	conn:execute("DELETE FROM waypoints WHERE steam = " .. steam)
+	conn:execute("DELETE FROM hotspots WHERE owner = " .. steam)
+
+	updatePlayer(steam)
+
+	return true
+end
+
+
 function initNewPlayer(steam, player, entityid, steamOwner)
 	if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, steamOwner) VALUES (" .. steam .. "," .. entityid .. ",'" .. escape(player) .. "'," .. steamOwner .. ")") end
 
