@@ -116,7 +116,7 @@ function gmsg_misc()
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "add") or string.find(chatvars.command, "command"))) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "add") or string.find(chatvars.command, "command") or string.find(chatvars.command, "custom"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -544,7 +544,7 @@ function gmsg_misc()
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "add") or string.find(chatvars.command, "command"))) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "add") or string.find(chatvars.command, "command") or string.find(chatvars.command, "custom"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -852,7 +852,7 @@ function gmsg_misc()
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "remove") or string.find(chatvars.command, "dele") or string.find(chatvars.command, "command"))) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "remove") or string.find(chatvars.command, "dele") or string.find(chatvars.command, "command") or string.find(chatvars.command, "custom"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1163,8 +1163,8 @@ if debug then dbug("debug misc") end
 	end
 
 	-- if the command matches a custom command, do the command.
-	if customMessages[cmd] then
-		cursor,errorString = conn:execute("select * from customMessages where command = '" .. escape(cmd) .. "'")
+	if customMessages[chatvars.words[1]] then
+		cursor,errorString = conn:execute("select * from customMessages where command = '" .. escape(chatvars.words[1]) .. "'")
 		row = cursor:fetch({}, "a")
 
 		if row then
