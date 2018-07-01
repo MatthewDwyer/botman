@@ -48,7 +48,7 @@ function gmsg_waypoints()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "way") or string.find(chatvars.command, "clear") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "way") or string.find(chatvars.command, "clear")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -162,7 +162,7 @@ function gmsg_waypoints()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "way")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -240,7 +240,7 @@ function gmsg_waypoints()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "way")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -307,7 +307,7 @@ function gmsg_waypoints()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "way")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -391,7 +391,7 @@ function gmsg_waypoints()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "way")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, " " .. help[1])
 
 				if not shortHelp then
@@ -678,7 +678,7 @@ function gmsg_waypoints()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "way") then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "way")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -909,7 +909,7 @@ function gmsg_waypoints()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "way")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1011,7 +1011,7 @@ function gmsg_waypoints()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "way") or string.find(chatvars.command, "time") or string.find(chatvars.command, "cool") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "way") or string.find(chatvars.command, "time") or string.find(chatvars.command, "cool")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1078,7 +1078,7 @@ function gmsg_waypoints()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "way") or string.find(chatvars.command, "cost") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "way") or string.find(chatvars.command, "cost")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1145,7 +1145,7 @@ function gmsg_waypoints()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "way") or string.find(chatvars.command, "cost") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "way") or string.find(chatvars.command, "cost")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1212,7 +1212,7 @@ function gmsg_waypoints()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "way")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1362,7 +1362,7 @@ function gmsg_waypoints()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "way")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then

@@ -40,7 +40,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if (string.find(chatvars.words[1], "tele") and string.find(chatvars.command, "delete")) then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "delete"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -118,7 +118,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "priv") or string.find(chatvars.command, "publ") or string.find(chatvars.command, "set") or string.find(chatvars.command, "togg") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "priv") or string.find(chatvars.command, "publ") or string.find(chatvars.command, "set") or string.find(chatvars.command, "togg"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -227,7 +227,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "able") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "able"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -336,7 +336,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "way") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "way"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -432,7 +432,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if (string.find(chatvars.words[1], "tele") or string.find(chatvars.command, "set tele")) and string.find(chatvars.command, "owner") then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.words[1], "tele") or string.find(chatvars.command, "set tele") or string.find(chatvars.command, "owner"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -538,7 +538,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp") or string.find(chatvars.command, "able") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp") or string.find(chatvars.command, "able"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -630,7 +630,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "tp"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -690,7 +690,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "delay") or string.find(chatvars.command, "time") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "delay") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -756,7 +756,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "fetch") or string.find(chatvars.command, "player") then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "fetch") or string.find(chatvars.command, "player"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -878,7 +878,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "pack") or string.find(chatvars.command, "revive") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "pack") or string.find(chatvars.command, "revive"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -961,7 +961,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "stuck") or string.find(chatvars.command, "tele") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "stuck") or string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1011,7 +1011,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "return") or string.find(chatvars.command, "tele") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "return") or string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1141,7 +1141,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "tele")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1228,7 +1228,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "start") or string.find(chatvars.command, "size") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "start") or string.find(chatvars.command, "size"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1298,7 +1298,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "end") or string.find(chatvars.command, "size") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "end") or string.find(chatvars.command, "size"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1374,7 +1374,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "acc") or string.find(chatvars.command, "lev") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "acc") or string.find(chatvars.command, "lev"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1542,7 +1542,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "start") or string.find(chatvars.command, "opentp") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "start") or string.find(chatvars.command, "opentp"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1641,7 +1641,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or string.find(chatvars.command, "end") or string.find(chatvars.command, "closetp") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "tele") or string.find(chatvars.command, "end") or string.find(chatvars.command, "closetp"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1743,7 +1743,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "tp" or chatvars.words[1] == "tele") then
+			if (chatvars.words[1] == "help" and (chatvars.words[1] == "tp" or chatvars.words[1] == "tele")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2102,7 +2102,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "p2p" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "able") or string.find(chatvars.command, "p2p"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2171,7 +2171,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "enable" or chatvars.words[1] == "allow" or chatvars.words[1] == "disable" or chatvars.words[1] == "disallow") and chatvars.words[2] == "teleporting" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "able") or string.find(chatvars.command, "allow") or string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2241,7 +2241,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "returns" and chatvars.words[3] == nil then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "able") or string.find(chatvars.command, "returns"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2381,7 +2381,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "tele") or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "tele")) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
