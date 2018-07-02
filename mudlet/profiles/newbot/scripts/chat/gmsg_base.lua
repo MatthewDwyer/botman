@@ -1026,13 +1026,26 @@ function gmsg_base()
 
 
 	local function cmd_ToggleBaseTeleport()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable base (or home) teleport"
+			help[2] = "Enable or disable the home or base teleport command (except for staff)."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "base,able,home"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if chatvars.words[1] == "help" and (string.find(chatvars.command, "home") or string.find(chatvars.command, "base") or string.find(chatvars.command, "able")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable base (or home) teleport")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "disable base (or home) teleport")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Enable or disable the home or base teleport command (except for staff).")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1085,13 +1098,27 @@ function gmsg_base()
 	local function cmd_Base()
 		local dist1, dist2, wait
 
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}home/base\n"
+			help[1] = help[1] .. " {#}home2/base2"
+			help[2] = "Teleport back to your first or second base. A timer and/or a cost may apply."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "base,tele,home"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "home (or base)")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "home2 (or base2)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Teleport back to your first or second base. A timer and/or a cost may apply.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1099,7 +1126,7 @@ function gmsg_base()
 			end
 		end
 
-		if (chatvars.words[1] == "base" or chatvars.words[1] == "home" or chatvars.words[1] == "base2" or chatvars.words[1] == "home2") and chatvars.words[2] == nil and (chatvars.playerid ~= 0) then
+		if (chatvars.words[1] == "base" or chatvars.words[1] == "home" or chatvars.words[1] == "base2" or chatvars.words[1] == "home2") and chatvars.words[2] == nil then
 			if isServerHardcore(chatvars.playerid) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is disabled.[-]")
 				botman.faultyChat = false
@@ -1267,13 +1294,26 @@ function gmsg_base()
 
 
 	local function cmd_SetBaseForPlayer()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}setbase/sethome {player name}"
+			help[2] = "Set a player's first base for them where you are standing."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,base,tele,home"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "setbase {player name}")
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "sethome {player name}")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Set a player's first base for them where you are standing.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1281,9 +1321,15 @@ function gmsg_base()
 			end
 		end
 
-		if ((chatvars.words[1] == "setbase" or chatvars.words[1] == "sethome" and chatvars.words[2] ~= nil) and not players[chatvars.playerid].prisoner) and (chatvars.playerid ~= 0) then
+		if ((chatvars.words[1] == "setbase" or chatvars.words[1] == "sethome" and chatvars.words[2] ~= nil) and not players[chatvars.playerid].prisoner) then
 			if (chatvars.accessLevel > 2) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Type setbase without anything after it.[-]")
+				botman.faultyChat = false
+				return true
+			end
+
+			if (chatvars.playername == "Server") then
+				irc_chat(chatvars.ircAlias, "This command is ingame only.")
 				botman.faultyChat = false
 				return true
 			end
@@ -1360,7 +1406,7 @@ function gmsg_base()
 			end
 		end
 
-		if ((chatvars.words[1] == "setbase2" or chatvars.words[1] == "sethome2" and chatvars.words[2] ~= nil) and not players[chatvars.playerid].prisoner) and (chatvars.playerid ~= 0) then
+		if ((chatvars.words[1] == "setbase2" or chatvars.words[1] == "sethome2" and chatvars.words[2] ~= nil) and not players[chatvars.playerid].prisoner) then
 			if (chatvars.accessLevel > 2) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Type setbase2 without anything after it.[-]")
 				botman.faultyChat = false
@@ -1428,12 +1474,26 @@ function gmsg_base()
 
 
 	local function cmd_TestBase()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}test base"
+			help[2] = "Turn your own base protection against you for 30 seconds to test that it works."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "test,base,home"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "test base")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Turn your own base protection against you for 30 seconds to test that it works.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1441,7 +1501,13 @@ function gmsg_base()
 			end
 		end
 
-		if (chatvars.words[1] == "test" and chatvars.words[2] == "base") and (chatvars.playerid ~= 0) then
+		if (chatvars.words[1] == "test" and chatvars.words[2] == "base") then
+			if (chatvars.playername == "Server") then
+				irc_chat(chatvars.ircAlias, "This command is ingame only.")
+				botman.faultyChat = false
+				return true
+			end
+
 			if players[chatvars.playerid].protect == false and players[chatvars.playerid].protect2 == false then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You don't have base protection established now.  Type " .. server.commandPrefix .. "protect at your base or " .. server.commandPrefix .. "protect2 at your 2nd base to set it up first.[-]")
 				botman.faultyChat = false
@@ -1460,14 +1526,28 @@ function gmsg_base()
 
 
 	local function cmd_PauseBaseProtection()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}pause"
+			help[2] = "Pause your base protection.\n"
+			help[2] = help[2] .. "Only works on your base(s) if you are within 100 metres of them and automatically resumes if you move away or leave the server.\n"
+			help[2] = help[2] .. "This allows players who you haven't friended access to your base with you present."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "pause,base,home,prot"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "pause")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Pause your base protection.")
-					irc_chat(chatvars.ircAlias, "Only works on your base(s) if you are within 100 metres of them and automatically resumes if you move away or leave the server.")
-					irc_chat(chatvars.ircAlias, "This allows players who you haven't friended access to your base with you present.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1475,7 +1555,13 @@ function gmsg_base()
 			end
 		end
 
-		if ((chatvars.words[1] == "pause" or chatvars.words[1] == "paws") and chatvars.words[2] == nil) and (chatvars.playerid ~= 0) then
+		if ((chatvars.words[1] == "pause" or chatvars.words[1] == "paws") and chatvars.words[2] == nil) then
+			if (chatvars.playername == "Server") then
+				irc_chat(chatvars.ircAlias, "This command is ingame only.")
+				botman.faultyChat = false
+				return true
+			end
+
 			pname = igplayers[chatvars.playerid].name
 
 			if (players[chatvars.playerid].protect == false) then
@@ -1500,12 +1586,26 @@ function gmsg_base()
 
 
 	local function cmd_UnpauseBaseProtection()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}resume/unpause"
+			help[2] = "Re-activate your base protection."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "pause,base,home,prot"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and string.find(chatvars.command, "home") or string.find(chatvars.command, "base")) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "resume or unpause")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Re-activate your base protection.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1513,8 +1613,13 @@ function gmsg_base()
 			end
 		end
 
-		if (chatvars.words[1] == "resume" or chatvars.words[1] == "unpaws" or chatvars.words[1] == "unpause") and chatvars.words[2] == nil and (chatvars.playerid ~= 0) then
-			pname = igplayers[chatvars.playerid].name
+		if (chatvars.words[1] == "resume" or chatvars.words[1] == "unpaws" or chatvars.words[1] == "unpause") and chatvars.words[2] == nil then
+			if (chatvars.playername == "Server") then
+				irc_chat(chatvars.ircAlias, "This command is ingame only.")
+				botman.faultyChat = false
+				return true
+			end
+
 			players[chatvars.playerid].protectPaused = nil
 			players[chatvars.playerid].protect2Paused = nil
 
@@ -1548,12 +1653,26 @@ function gmsg_base()
 
 
 	local function cmd_TogglePVPProtection()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable pvp protect"
+			help[2] = "By default base protection is disabled where pvp rules apply. You can change that by enabling it."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "pvp,base,home,prot"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pvp") or string.find(chatvars.command, "prot") or string.find(chatvars.command, "able"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "enable/disable pvp protect")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "By default base protection is disabled where pvp rules apply. You can change that by enabling it.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1603,13 +1722,27 @@ function gmsg_base()
 
 
 	local function cmd_ToggleBaseProtection()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable base protection"
+			help[2] = "Base protection can be turned off server wide.  Players can still use claim blocks for protection.\n"
+			help[2] = help[2] .. "Not the same as {#}enable/disable pvp protect which is specifically for allowing the bot's base protection in PVP rules."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,base,home,prot"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "base") or string.find(chatvars.command, "prot"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "disable base protection")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Base protection can be turned off server wide.  Players can still use claim blocks for protection.")
-					irc_chat(chatvars.ircAlias, "Not the same as " .. server.commandPrefix .. "enable/disable pvp protect which is specifically for allowing the bot's base protection in PVP rules.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1659,12 +1792,26 @@ function gmsg_base()
 
 
 	local function cmd_SetBaseCooldownTimer()
-		if chatvars.showHelp and not skipHelp then
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set base cooldown {number in seconds} (default is 2400 or 40 minutes)"
+			help[2] = "The {#}base or {#}home command can have a time delay between uses.  Donors wait half as long.  If you set it to 0 there is no wait time."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,base,home,cool,time"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
 			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "cool") or string.find(chatvars.command, "timer"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "set base cooldown {number in seconds} (default is 2400 or 40 minutes)")
+				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "The " .. server.commandPrefix .. "base or " .. server.commandPrefix .. "home command can have a time delay between uses.  Donors wait half as long.  If you set it to 0 there is no wait time.")
+					irc_chat(chatvars.ircAlias, help[2])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
