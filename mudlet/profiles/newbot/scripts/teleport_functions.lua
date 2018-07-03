@@ -22,7 +22,7 @@ function prepareTeleport(steam, cmd)
 		igplayers[steam].hackerTPScore = 0
 
 		-- record the player's current x y z
-		if tonumber(players[steam].accessLevel) < 3 or (players[steam].inLocation ~= "prison") then
+		if tonumber(players[steam].accessLevel) < 3 or (string.lower(players[steam].inLocation) ~= "prison") then
 			players[steam].xPosOld = math.floor(players[steam].xPos)
 			players[steam].yPosOld = math.floor(players[steam].yPos)
 			players[steam].zPosOld = math.floor(players[steam].zPos)
@@ -99,6 +99,11 @@ end
 function randomTP(playerid, location, forced)
 	local r, rows, row, rowCount
 
+	if not locations[location] then
+		-- Lua is case sensitive and location didn't match any keys so do a lookup on it (not case sensitive) and return the correct cased key name
+		location = LookupLocation(location)
+	end
+
 	if botman.dbConnected then
 		cursor,errorString = conn:execute("select * from locationSpawns where location='" .. location .. "'")
 		rows = tonumber(cursor:numrows())
@@ -129,7 +134,8 @@ function randomTP(playerid, location, forced)
 	row = cursor:fetch({}, "a")
 	cmd = "tele " .. playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
 
-	if location == "lobby" then
+	-- handle new player's being moved to lobby or spawn on first arrival.
+	if (string.lower(location) == "lobby" or string.lower(location) == "spawn") and players[playerid].location ~= "" then
 		teleport(cmd, playerid)
 	else
 		if tonumber(server.playerTeleportDelay) == 0 or forced or tonumber(players[playerid].accessLevel) < 2 then --  or not igplayers[playerid].currentLocationPVP
