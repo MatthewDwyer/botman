@@ -215,29 +215,31 @@ function everyMinute()
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	-- report excessive falling blocks
-	for k,v in pairs(fallingBlocks) do
-		if tonumber(v.count) > 99 then
-			irc_chat(server.ircAlerts, v.count .. " blocks fell off the world in region " .. k .. " ( " .. v.x .. " " .. v.y .. " " .. v.z .. " )")
-			alertAdmins(v.count .. " blocks fell off the world in region " .. k .. " ( " .. v.x .. " " .. v.y .. " " .. v.z .. " )", "warn")
+	if tonumber(server.dropMiningWarningThreshold) > 0 then
+		for k,v in pairs(fallingBlocks) do
+			if tonumber(v.count) > tonumber(server.dropMiningWarningThreshold) then
+				irc_chat(server.ircAlerts, v.count .. " blocks fell off the world in region " .. k .. " ( " .. v.x .. " " .. v.y .. " " .. v.z .. " )")
+				alertAdmins(v.count .. " blocks fell off the world in region " .. k .. " ( " .. v.x .. " " .. v.y .. " " .. v.z .. " )", "warn")
 
-			playerList = ""
+				playerList = ""
 
-			-- players near the falling blocks
-			for a, b in pairs(igplayers) do
-				dist = distancexz(v.x, v.z, b.xPos, b.zPos)
+				-- players near the falling blocks
+				for a, b in pairs(igplayers) do
+					dist = distancexz(v.x, v.z, b.xPos, b.zPos)
 
-				if tonumber(dist) < 200 then
-					if playerList == "" then
-						playerList = b.name .. " (" .. string.format("%d", dist) .. ")"
-					else
-						playerList = playerList .. ", " .. b.name .. " (" .. string.format("%d", dist) .. ")"
+					if tonumber(dist) < 300 then
+						if playerList == "" then
+							playerList = b.name .. " (" .. string.format("%d", dist) .. ")"
+						else
+							playerList = playerList .. ", " .. b.name .. " (" .. string.format("%d", dist) .. ")"
+						end
 					end
 				end
-			end
 
-			if playerList ~= "" then
-				alertAdmins("Players near falling blocks and (distance): " .. playerList, "warn")
-				irc_chat(server.ircAlerts, "Players near falling blocks and (distance): " .. playerList)
+				if playerList ~= "" then
+					irc_chat(server.ircAlerts, "Players near falling blocks and (distance): " .. playerList)
+					alertAdmins("Players near falling blocks and (distance): " .. playerList, "warn")
+				end
 			end
 		end
 	end

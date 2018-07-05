@@ -1236,9 +1236,9 @@ function matchAll(line)
 	end
 
 
-	-- store the entity number for sc_General
-	if string.find(line, " - sc_General") then
-		botman.sc_General = number
+	if string.find(line, "Playername or entity ID not found.") then
+		deleteLine()
+		return
 	end
 
 

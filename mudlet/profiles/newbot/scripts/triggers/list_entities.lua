@@ -67,32 +67,6 @@ function listEntities(line, mod)
 		zedDead=0
 		zedHealth = string.sub(temp[14], string.find(temp[14], "health=") + 7)
 
-		if zedName == "EntityFallingBlock" then
-			zedX = string.trim(string.sub(temp[3], 7))
-			zedY = string.trim(temp[4])
-			zedZ = string.trim(string.sub(temp[5], 1, string.len(temp[5]) - 1))
-
-			zedX = math.floor(zedX)
-			zedY = math.floor(zedY)
-			zedZ = math.floor(zedZ)
-
-			temp = getRegion(zedX,zedZ)
-			if not fallingBlocks[temp] then
-				fallingBlocks[temp] = {}
-				fallingBlocks[temp].count = 1
-				fallingBlocks[temp].x = zedX
-				fallingBlocks[temp].y = zedY
-				fallingBlocks[temp].z = zedZ
-			else
-				fallingBlocks[temp].count = fallingBlocks[temp].count + 1
-				fallingBlocks[temp].x = zedX
-				fallingBlocks[temp].y = zedY
-				fallingBlocks[temp].z = zedZ
-			end
-
-			return
-		end
-
 		if temp[13] == " dead=False" then
 			-- don't despawn players with zombie in their name xD
 			if not string.find(line, "EntityPlayer") then

@@ -2810,11 +2810,11 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].zPosOld = 0
 	players[steam].zPosOld2 = 0
 
-	if locations["spawn"] then
+	if locations["spawn"] or locations["Spawn"] then
 		players[steam].location = "spawn"
 	end
 
-	if locations["lobby"] then
+	if locations["lobby"] or locations["Lobby"] then
 		players[steam].location = "lobby"
 	end
 

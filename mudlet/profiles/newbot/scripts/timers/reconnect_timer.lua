@@ -34,9 +34,14 @@ function reconnectTimer()
 		botman.botOfflineCount = 2
 		reconnect()
 		irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
+		return
 	end
 
 	if tonumber(botman.botOfflineCount) < 1 then
+		if not botman.botOffline then
+			botman.botConnectedTimestamp = os.time()
+		end
+
 		botman.botOffline = true
 		botman.botOfflineTimestamp = os.time()
 
@@ -45,6 +50,7 @@ function reconnectTimer()
 			botman.botOfflineCount = 2
 			reconnect()
 			irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
+			return
 		else
 			if tonumber(botman.botOfflineCount) < -6 then
 				if server.allowBotRestarts then
@@ -55,6 +61,7 @@ function reconnectTimer()
 					botman.botOfflineCount = 2
 					reconnect()
 					irc_chat(server.ircMain, "Bot is offline - attempting reconnection (2 minute delay).")
+					return
 				end
 			end
 		end

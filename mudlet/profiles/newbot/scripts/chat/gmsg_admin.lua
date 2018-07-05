@@ -6163,11 +6163,78 @@ function gmsg_admin()
 	end
 
 
+	local function cmd_SetDropMiningWarningThreshold()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set drop mining warning {number of blocks} (default is 99)"
+			help[2] = "Set how many blocks can fall off the world every minute before the bot alerts admins to it.\n"
+			help[2] = help[2] .. "Disable by setting it to 0"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,drop,mining,alert,warn"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "drop") or string.find(chatvars.command, "mining") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if string.find(chatvars.command, "set drop mining warning") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			server.dropMiningWarningThreshold = math.abs(math.floor(chatvars.number))
+			if botman.dbConnected then conn:execute("UPDATE server SET dropMiningWarningThreshold = " .. server.dropMiningWarningThreshold) end
+
+			if server.dropMiningWarningThreshold > 0 then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will alert admins to drop mining over " .. server.dropMiningWarningThreshold .. " blocks dropped per minute.[-]")
+				else
+					message("say [" .. server.chatColour .. "]The bot will alert admins to drop mining over " .. server.dropMiningWarningThreshold .. " blocks dropped per minute.[-]")
+				end
+			else
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will not alert on drop mining.[-]")
+				else
+					message("say [" .. server.chatColour .. "]The bot will not alert on drop mining.[-]")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_SetFeralHordeNight()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set feral horde night {day number} (default is 7)"
-			help[2] = "Set which day is horde night.  This is needed if your horde nights are not every 7 days.\n"
+			help[2] = "Set which day is horde night.  This is needed if your horde nights are not every 7 days."
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -6202,7 +6269,7 @@ function gmsg_admin()
 			return true
 		end
 
-		if (chatvars.command == "set feral horde night") then
+		if string.find(chatvars.command, "set feral horde night") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 0) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -9340,6 +9407,15 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_SendPlayerToPlayer triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetDropMiningWarningThreshold()
+
+	if result then
+		if debug then dbug("debug cmd_SetDropMiningWarningThreshold triggered") end
 		return result
 	end
 

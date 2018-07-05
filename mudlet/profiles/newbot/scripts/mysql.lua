@@ -9,7 +9,6 @@
 
 
 -- useful reference: luapower.com/mysql
--- locals and cursor updated
 
 mysql = require "luasql.mysql"
 local debug = false
@@ -753,6 +752,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `checkLevelHack` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `despawnZombiesBeforeBloodMoon` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `optOutGlobalBots` TINYINT(1) NOT NULL DEFAULT '0'") -- todo code
+	doSQL("ALTER TABLE `server` ADD `dropMiningWarningThreshold` INT NOT NULL DEFAULT '99'")
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
