@@ -324,6 +324,8 @@ function matchAll(line)
 		if string.find(line, "reason: JoinMultiplayer") then
 			tmp.spawnedReason = "joined"
 			igplayers[tmp.pid].spawnChecked = true
+			irc_chat(server.ircMain, "Player " .. tmp.pid .. " " .. igplayers[tmp.pid].name .. " spawned at " .. igplayers[tmp.pid].spawnedXPos .. " " .. igplayers[tmp.pid].spawnedYPos .. " " .. igplayers[tmp.pid].spawnedZPos)
+			irc_chat(server.ircAlerts, "Player " .. tmp.pid .. " " .. igplayers[tmp.pid].name .. " spawned at " .. igplayers[tmp.pid].spawnedXPos .. " " .. igplayers[tmp.pid].spawnedYPos .. " " .. igplayers[tmp.pid].spawnedZPos)
 		end
 
 		if string.find(line, "reason: Teleport") then
@@ -334,6 +336,14 @@ function matchAll(line)
 			else
 				igplayers[tmp.pid].spawnChecked = false
 			end
+
+			--if accessLevel(tmp.pid) > 2 then
+				-- dist = distancexz(igplayers[tmp.pid].spawnedXPos, igplayers[tmp.pid].spawnedXPos, igplayers[tmp.pid].xPos, igplayers[tmp.pid].zPos)
+
+				-- if dist > 100 then
+					-- irc_chat(server.ircAlerts, "Player " .. tmp.pid .. " " .. igplayers[tmp.pid].name .. " teleported to x " .. igplayers[tmp.pid].spawnedXPos .. " y " .. igplayers[tmp.pid].spawnedYPos .. " z " .. igplayers[tmp.pid].spawnedZPos .. " from x " .. igplayers[tmp.pid].xPos .. " y " .. igplayers[tmp.pid].yPos ..  " z " .. igplayers[tmp.pid].zPos .. " distance " .. string.format("%d", dist))
+				-- end
+			--end
 		end
 
 		igplayers[tmp.pid].spawnPending = false

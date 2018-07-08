@@ -314,6 +314,9 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if players[steam].location ~= "" and tonumber(igplayers[steam].teleCooldown) < 1 then
 		-- spawn the player at location
 		if (locations[players[steam].location]) then
+			irc_chat(server.ircMain, "Player " .. steam .. " " .. name .. " is being moved to " .. players[steam].location)
+			irc_chat(server.ircAlerts, "Player " .. steam .. " " .. name .. " is being moved to " .. players[steam].location)
+
 			message(string.format("pm %s [%s]You are being moved to %s[-]", steam, server.chatColour, players[steam].location))
 			randomTP(steam, players[steam].location, true)
 
