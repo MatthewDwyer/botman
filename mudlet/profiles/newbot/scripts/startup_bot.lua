@@ -147,7 +147,7 @@ function login()
 		getAllPlayers = true
 
 		if not botman.botDisabled then
-			botman.botOffline = true
+			botman.botOffline = false
 		end
 
 		botman.scheduledRestartPaused = false

@@ -357,7 +357,7 @@ function gmsg_coppi()
 			tmp.prefab = ""
 			tmp.base = chatvars.intY - 1
 			tmp.tall = chatvars.intY + 5
-			tmp.block = "air"
+			tmp.block = chatvars.words[3]
 			tmp.direction = ""
 			tmp.width = 5
 			tmp.long = 5
@@ -2309,7 +2309,7 @@ function gmsg_coppi()
 				return true
 			end
 
-			if not igplayers[chatvars.playerid].undoPrefab then
+			if igplayers[chatvars.playerid].undoPrefab then
 				send(prefix .. "prender " .. chatvars.playerid .. "bottemp" .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1  .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1)
 			else
 				send("pundo")

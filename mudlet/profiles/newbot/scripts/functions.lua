@@ -1757,14 +1757,14 @@ end
 
 
 function banPlayer(steam, duration, reason, issuer, localOnly)
-	local id, tmp, admin, belt, pack, equipment, country, isArchived, playerName
+	local id, tmp, admin, belt, pack, equipment, country, isArchived, playerName, owner
 
 	admin = 0
 	playerName = "Not Sure" -- placeholder in case we're banning a steam ID that hasn't played here yet.
 	isArchived = false
 
 	if not players[steam] then
-		id = LookupArchivedPlayer(steam)
+		id, owner = LookupArchivedPlayer(steam)
 
 		if not (id == 0) then
 			playerName = playersArchived[id].name
@@ -1799,10 +1799,10 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 	tmp = steam
 	-- if there is no player with steamid steam, try looking it up incase we got their name instead of their steam
 	if not players[steam] then
-		steam = LookupPlayer(string.trim(steam))
+		steam, owner = LookupPlayer(string.trim(steam))
 
 		if steam == 0 then
-			steam = LookupArchivedPlayer(string.trim(steam))
+			steam,owner = LookupArchivedPlayer(string.trim(steam))
 		end
 
 		-- restore the original steam value if nothing matched as we may be banning someone who's never played here.
@@ -1847,21 +1847,21 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 		if botman.db2Connected and not localOnly then
 			if players[steam] then
 				if tonumber(players[steam].pendingBans) > 0 then
-					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin, GBLBan, GBLBanActive) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(players[steam].timeOnServer) + tonumber(players[steam].playtime) .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].zombies .. ",'" .. players[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "',1,1)")
+					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin, GBLBan, GBLBanActive, level) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(players[steam].timeOnServer) + tonumber(players[steam].playtime) .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].zombies .. ",'" .. players[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "',1,1," .. players[steam].level .. ")")
 					irc_chat(server.ircMain, "Player " .. steam .. " " .. players[steam].name .. " has been globally banned.")
 					message("say [" .. server.alertColourColour .. "]" .. players[id].name .. " has been globally banned.[-]")
 				else
-					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(players[steam].timeOnServer) + tonumber(players[steam].playtime) .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].zombies .. ",'" .. players[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "')")
+					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin, level) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(players[steam].timeOnServer) + tonumber(players[steam].playtime) .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].zombies .. ",'" .. players[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "'," .. players[steam].country .. ")")
 				end
 			end
 
 			if playersArchived[steam] then
 				if tonumber(playersArchived[steam].pendingBans) > 0 then
-					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin, GBLBan, GBLBanActive) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(playersArchived[steam].timeOnServer) + tonumber(playersArchived[steam].playtime) .. "," .. playersArchived[steam].score .. "," .. playersArchived[steam].playerKills .. "," .. playersArchived[steam].zombies .. ",'" .. playersArchived[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "',1,1)")
+					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin, GBLBan, GBLBanActive, level) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(playersArchived[steam].timeOnServer) + tonumber(playersArchived[steam].playtime) .. "," .. playersArchived[steam].score .. "," .. playersArchived[steam].playerKills .. "," .. playersArchived[steam].zombies .. ",'" .. playersArchived[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "',1,1," .. playersArchived[steam].level .. ")")
 					irc_chat(server.ircMain, "Player " .. steam .. " " .. playerName .. " has been globally banned.")
 					message("say [" .. server.alertColourColour .. "]" .. playerName .. " has been globally banned.[-]")
 				else
-					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(playersArchived[steam].timeOnServer) + tonumber(playersArchived[steam].playtime) .. "," .. playersArchived[steam].score .. "," .. playersArchived[steam].playerKills .. "," .. playersArchived[steam].zombies .. ",'" .. playersArchived[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "')")
+					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin, level) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(playersArchived[steam].timeOnServer) + tonumber(playersArchived[steam].playtime) .. "," .. playersArchived[steam].score .. "," .. playersArchived[steam].playerKills .. "," .. playersArchived[steam].zombies .. ",'" .. playersArchived[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "'," .. playersArchived[steam].level .. ")")
 				end
 			end
 		end
@@ -1899,7 +1899,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 
 				-- add to bots db
 				if botman.db2Connected then
-					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin) VALUES ('" .. escape("MISSING") .. "'," .. k .. ",'" .. escape("same IP as banned player") .. "'," .. tonumber(players[k].timeOnServer) + tonumber(players[k].playtime) .. "," .. players[k].score .. "," .. players[k].playerKills .. "," .. players[k].zombies .. ",'" .. players[k].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "')")
+					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin, level) VALUES ('" .. escape("MISSING") .. "'," .. k .. ",'" .. escape("same IP as banned player") .. "'," .. tonumber(players[k].timeOnServer) + tonumber(players[k].playtime) .. "," .. players[k].score .. "," .. players[k].playerKills .. "," .. players[k].zombies .. ",'" .. players[k].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "'," .. players[k].level .. ")")
 				end
 			end
 		end

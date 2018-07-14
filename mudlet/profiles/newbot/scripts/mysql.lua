@@ -830,6 +830,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `bans` ADD `GBLBanReason` VARCHAR(255) NOT NULL DEFAULT ''", true)
 	doSQL("ALTER TABLE `bans` ADD `GBLBanVetted` TINYINT(1) NOT NULL DEFAULT '0',  ADD `GBLBanActive` TINYINT(1) NOT NULL DEFAULT '0'", true)
 	doSQL("ALTER TABLE `players` ADD `VACBanned` TINYINT(1) NOT NULL DEFAULT '0'", true)
+	doSQL("ALTER TABLE `bans` ADD `level` INT NOT NULL DEFAULT '0'", true)
 
 	-- change the primary key of table bans from steam to id (an auto incrementing integer field) if the id field does not exist.
 	cursor,errorString = connBots:execute("SHOW COLUMNS FROM `bans` LIKE 'id'")

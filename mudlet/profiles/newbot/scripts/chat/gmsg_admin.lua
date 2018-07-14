@@ -1154,7 +1154,7 @@ function gmsg_admin()
 
 
 	local function cmd_BanUnbanPlayer() --tested
-		local id, pname, reason, duration, rows, cursor, errorString, playerName, unknownPlayer
+		local steam, owner, pname, reason, duration, rows, cursor, errorString, playerName, unknownPlayer
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1253,28 +1253,38 @@ function gmsg_admin()
 			end
 
 			pname = string.trim(pname)
-			id = LookupPlayer(pname)
+			steam, owner = LookupPlayer(pname)
 
-			if id == 0 then
-				id = LookupArchivedPlayer(pname)
-				if not (id == 0) then
-					playerName = playersArchived[id].name
+			if steam == 0 then
+				steam, owner = LookupArchivedPlayer(pname)
+				if not (steam == 0) then
+					playerName = playersArchived[steam].name
 				else
 					unknownPlayer = true
 
 					if isValidSteamID(pname) then
-						id = pname
+						steam = pname
+						owner = pname
 					end
 				end
 			else
-				playerName = players[id].name
+				playerName = players[steam].name
 			end
 
 			if chatvars.words[1] == "unban" then
-				send("ban remove " .. id)
+				send("ban remove " .. steam)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+
+				if steam ~= owner then
+					-- also unban the owner id
+					send("ban remove " .. owner)
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
 				end
 
 				if (chatvars.playername ~= "Server") then
@@ -1284,7 +1294,7 @@ function gmsg_admin()
 				end
 
 				-- also delete the ban record in the shared bots database.  If the player was global banned from here, this will remove that ban as well.
-				connBots:execute("DELETE FROM bans where steam = " .. id .. " AND botID = " .. server.botID)
+				connBots:execute("DELETE FROM bans where steam = " .. steam .. " OR steam = " .. owner .. " AND botID = " .. server.botID)
 
 				botman.faultyChat = false
 				return true
@@ -1292,7 +1302,7 @@ function gmsg_admin()
 
 			if chatvars.words[1] == "ban" then
 				-- don't ban if player is an admin :O
-				if accessLevel(id) < 3 then
+				if accessLevel(steam) < 3 then
 					if (chatvars.playername ~= "Server") then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You what?  You want to ban one of your own admins?   [DENIED][-]")
 					else
@@ -1306,12 +1316,12 @@ function gmsg_admin()
 
 			if chatvars.words[1] ~= "gblban" then
 				-- issue a local ban
-				banPlayer(id, duration, reason, chatvars.playerid)
+				banPlayer(steam, duration, reason, chatvars.playerid)
 			else
 				-- issue a global ban
-				if id ~= 0 then
+				if steam ~= 0 then
 					-- don't ban if player is an admin :O
-					if accessLevel(id) < 3 then
+					if accessLevel(steam) < 3 then
 						if (chatvars.playername ~= "Server") then
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You what?  You want to global ban one of your own admins?   [DENIED][-]")
 						else
@@ -1323,22 +1333,22 @@ function gmsg_admin()
 					end
 				end
 
-				cursor,errorString = connBots:execute("SELECT * FROM bans where steam = " .. id .. " AND botID = " .. server.botID)
+				cursor,errorString = connBots:execute("SELECT * FROM bans where steam = " .. steam .. " or steam = " .. owner .. " AND botID = " .. server.botID)
 				rows = cursor:numrows()
 
 				if rows == 0 then
-					connBots:execute("INSERT INTO bans (steam, reason, GBLBan, GBLBanReason, botID) VALUES (" .. id .. ",'" .. escape(reason) .. "',1,'" .. escape(reason) .. "'," .. server.botID .. ")")
+					connBots:execute("INSERT INTO bans (steam, reason, GBLBan, GBLBanReason, botID) VALUES (" .. steam .. ",'" .. escape(reason) .. "',1,'" .. escape(reason) .. "'," .. server.botID .. ")")
 					-- issue a local ban as well
-					banPlayer(id, duration, reason, chatvars.playerid)
+					banPlayer(steam, duration, reason, chatvars.playerid)
 				else
-					connBots:execute("UPDATE bans set GBLBan = 1, GBLBanReason = '" .. escape(reason) .. "' WHERE steam = " .. id .. " AND botID = " .. server.botID)
+					connBots:execute("UPDATE bans set GBLBan = 1, GBLBanReason = '" .. escape(reason) .. "' WHERE steam = " .. steam .. " or steam = " .. owner .. " AND botID = " .. server.botID)
 				end
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. playerName .. " with steam id " .. id .. " has been submitted to the global ban list for approval.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. playerName .. " with steam id " .. steam .. " has been submitted to the global ban list for approval.[-]")
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Until approved, it will only raise an alert when the player joins another server.[-]")
 				else
-					irc_chat(chatvars.ircAlias, playerName .. " with steam id " .. id .. " has been submitted to the global ban list for approval.")
+					irc_chat(chatvars.ircAlias, playerName .. " with steam id " .. steam .. " has been submitted to the global ban list for approval.")
 					irc_chat(chatvars.ircAlias, "Until approved, it will only raise an alert when the player joins another server.")
 				end
 			end
@@ -1572,7 +1582,7 @@ function gmsg_admin()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}archive players"
-			help[2] = "Archive players that haven't played more than 2 minutes, aren't staff, banned, or a donor.\n"
+			help[2] = "Archive players that haven't played in 60 days, aren't staff, banned, or a donor.\n"
 			help[2] = help[2] .. "This should speed the bot up on servers that have seen thousands of players over time as the bot won't need to search so many player records.\n"
 			help[2] = help[2] .. "Archived players are still accessible and searchable but are removed from the main players table.  If a player comes back they are automatically restored from the archive."
 
@@ -1614,9 +1624,9 @@ function gmsg_admin()
 			end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players (except staff) who have not played in more than 2 months will be archived.  The bot may become un-responsive during this time.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players (except staff) who have not played in 60 days will be archived.  The bot may become un-responsive during this time.[-]")
 			else
-				irc_chat(chatvars.ircAlias, "Players (except staff) who have not played in more than 2 months will be archived.  The bot may become un-responsive during this time.")
+				irc_chat(chatvars.ircAlias, "Players (except staff) who have not played in 60 days will be archived.  The bot may become un-responsive during this time.")
 			end
 
 			tempTimer( 10, [[send("lkp")]] )

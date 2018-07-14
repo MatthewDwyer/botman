@@ -23,11 +23,11 @@ function endListPlayers(line)
 			-- we could schedule something to happen when no players are online
 		end
 
-		if tonumber(server.botID) > 0 then
-			for k,v in pairs(igplayers) do
-				insertBotsPlayer(k)
-			end
-		end
+		-- if tonumber(server.botID) > 0 then
+			-- for k,v in pairs(igplayers) do
+				-- insertBotsPlayer(k)
+			-- end
+		-- end
 
 		botman.listPlayers = false
 	end

@@ -32,8 +32,8 @@ function reconnectTimer()
 	if os.time() - botman.lastTelnetTimestamp > 300 then
 		botman.lastTelnetTimestamp = os.time() -- reset this to make it sleep 5 minutes
 		botman.botOfflineCount = 2
-		reconnect()
 		irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
+		reconnect()
 		return
 	end
 
@@ -44,9 +44,8 @@ function reconnectTimer()
 		if math.abs(os.time() - botman.botConnectedTimestamp) < 600 then -- 600
 			dbug("Bot is offline - attempting reconnection.")
 			botman.botOfflineCount = 2
-
-			reconnect()
 			irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
+			reconnect()
 			return
 		else
 			if tonumber(botman.botOfflineCount) < -6 then
@@ -56,9 +55,8 @@ function reconnectTimer()
 				else
 					dbug("Bot is offline - attempting reconnection (2 minute delay).")
 					botman.botOfflineCount = 2
-
-					reconnect()
 					irc_chat(server.ircMain, "Bot is offline - attempting reconnection (2 minute delay).")
+					reconnect()
 					return
 				end
 			end

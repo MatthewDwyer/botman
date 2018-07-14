@@ -101,6 +101,9 @@ function everyMinute()
 		-- save the igplayer to players
 		savePlayerData(k)
 
+		-- add or update the player record in the bots shared database
+		insertBotsPlayer(k)
+
 		if (v.killTimer == nil) then
 			v.killTimer = 0
 		end

@@ -379,10 +379,10 @@ end
 
 function LookupPlayer(search, match)
 	-- try to find the player amoung those who are playing right now
-	local id, k, v, test
+	local steam, owner, k, v, test
 
 	if string.trim(search) == "" then
-		return 0
+		return 0, 0
 	end
 
 	-- if the search is a steam ID, don't bother walking through the list of in game players, just check that it is a member of the lua table igplayers
@@ -405,37 +405,37 @@ function LookupPlayer(search, match)
 	for k, v in pairs(igplayers) do
 		if match == "code" then
 			if tonumber(search) == tonumber(players[k].ircInvite) then
-				return k
+				return k, v.steamOwner
 			end
 		else
 			if search == v.id then
 				-- matched the player id
-				return k
+				return k, v.steamOwner
 			end
 
-			if k == search then
-				-- matched the steam id
-				return k
+			if k == search or v.steamOwner == search then
+				-- matched the steam id or steamOwner id
+				return k, v.steamOwner
 			end
 
 			if (v.name ~= nil) then
 				if match == "all" then
 					-- look for an exact match
 					if (search == string.lower(v.name)) then
-						return k
+						return k, v.steamOwner
 					end
 
 					if (v.ircAlias ~= nil) and (search == string.lower(v.ircAlias)) then
-						return k
+						return k, v.steamOwner
 					end
 				else
 					-- if it contains the search it is a match
 					if (search == string.lower(v.name)) or (string.find(string.lower(v.name), search, nil, true)) then
-						return k
+						return k, v.steamOwner
 					end
 
 					if (string.find(v.id, search)) then
-						return k
+						return k, v.steamOwner
 					end
 				end
 			end
@@ -443,10 +443,10 @@ function LookupPlayer(search, match)
 	end
 
 	-- no matches so try again but including all players
-	id = LookupOfflinePlayer(search, match)
+	steam, owner = LookupOfflinePlayer(search, match)
 
-	-- if id isn't 0 we found a match
-	return id
+	-- if steam isn't 0 we found a match
+	return steam, owner
 end
 
 
@@ -454,7 +454,7 @@ function LookupOfflinePlayer(search, match)
 	local k, v, test
 
 	if string.trim(search) == "" then
-		return 0
+		return 0, 0
 	end
 
 	-- if the search is a steam ID, don't bother walking through the list of players, just check that it is a member of the lua table players
@@ -462,7 +462,7 @@ function LookupOfflinePlayer(search, match)
 		test = tonumber(search)
 		if (test ~= nil) then
 			if players[test] then
-				return test
+				return test, players[test].steamOwner
 			end
 		end
 	end
@@ -477,36 +477,37 @@ function LookupOfflinePlayer(search, match)
 	for k, v in pairs(players) do
 		if match == "code" then
 			if tonumber(search) == tonumber(players[k].ircInvite) then
-				return k
+				return k, v.steamOwner
 			end
 		else
 			if (v.name ~= nil) then
 				if match == "all" then
 					if (search == string.lower(v.name)) then
-						return k
+						return k, v.steamOwner
 					end
 
 					if (v.ircAlias ~= nil) and (search == string.lower(v.ircAlias)) then
-						return k
+						return k, v.steamOwner
 					end
 				else
 					if (search == string.lower(v.name)) or (string.find(string.lower(v.name), search, nil, true)) then
-						return k
+						return k, v.steamOwner
 					end
 				end
 			end
 
 			if search == v.id then
-				return k
+				return k, v.steamOwner
 			end
 
-			if k == search then
-				return k
+			if k == search or v.steamOwner == search then
+				return k, v.steamOwner
 			end
 		end
 	end
 
-	return 0
+	-- got to here so no match found
+	return 0, 0
 end
 
 
@@ -514,7 +515,7 @@ function LookupArchivedPlayer(search, match)
 	local k, v, test
 
 	if string.trim(search) == "" then
-		return 0
+		return 0, 0
 	end
 
 	-- if the search is a steam ID, don't bother walking through the list of players, just check that it is a member of the lua table playersArchived
@@ -537,36 +538,37 @@ function LookupArchivedPlayer(search, match)
 	for k, v in pairs(playersArchived) do
 		if match == "code" then
 			if tonumber(search) == tonumber(playersArchived[k].ircInvite) then
-				return k
+				return k, v.steamOwner
 			end
 		else
 			if (v.name ~= nil) then
 				if match == "all" then
 					if (search == string.lower(v.name)) then
-						return k
+						return k, v.steamOwner
 					end
 
 					if (v.ircAlias ~= nil) and (search == string.lower(v.ircAlias)) then
-						return k
+						return k, v.steamOwner
 					end
 				else
 					if (search == string.lower(v.name)) or (string.find(string.lower(v.name), search, nil, true)) then
-						return k
+						return k, v.steamOwner
 					end
 				end
 			end
 
 			if search == v.id then
-				return k
+				return k, v.steamOwner
 			end
 
-			if k == search then
-				return k
+			if k == search or v.steamOwner == search then
+				return k, v.steamOwner
 			end
 		end
 	end
 
-	return 0
+	-- got to here so no match found
+	return 0, 0
 end
 
 
