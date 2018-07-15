@@ -17,6 +17,23 @@
 -- 2017-12-06T21:57:32 139674.910 INF Executing command 'lps 295' by Telnet from 158.69.250.118:60713
 -- Skill from: entityid=295, athletics=51, healthNut=0, sexualTyranosaurus=1, scavenging=23, fastEddie=0, qualityJoe=1, treasureHunter=0, clothingArmor=7, bluntWeapons=17, pummelPete=1, breakingAndEntering=0, bladeWeapons=20, knifeGuy=0, decapitator=0, miningTools=75, miner69er=4, constructionTools=64, workbench=1, concreteMixing=1, steelSmithing=1, chemistryStation=0, badMechanic=3, pistols=1, theOutlaw=0, deadShot=0, shotguns=1, boomStick=0, splatterGun=0, rifles=1, betterLeadThanDead=0, archery=23, medicine=2, craftSkillWeapons=6, macheteCraftingName=0, craftSkillTools=6, craftSkillGuns=0, 9mmRoundCrafting=0, 44MagnumRoundCrafting=0, shotgunShellCrafting=0, 762mmRoundCrafting=0, craftSkillScience=6, electricBasicsName=0, electricTriggersName=0, electricTrapsMeleeName=0, electricTrapsRangedName=0, electricGeneratorName=0, electricBatteryBankName=0, doItYourselfName=0, craftSkillArmor=0, craftSkillMiscellaneous=0, paintMagazineDecorations=0, paintMagazineFaux=1, paintMagazineMasonry=0, paintMagazineMetal=1, paintMagazineWallCoverings=1, paintMagazineWoodAndRoofing=0, theSurvivor=4, theCamel=2, quickerCrafting=0, theFixer=0, barter=32, secretStash=1.
 
+function flagAdminsForRemoval()
+	local k,v
+
+	for k,v in pairs(owners) do
+		v.remove = true
+	end
+
+	for k,v in pairs(admins) do
+		v.remove = true
+	end
+
+	for k,v in pairs(mods) do
+		v.remove = true
+	end
+end
+
+
 function removeOldStaff()
 	if getAdminList then
 		-- abort if getAdminList is true as that means there's been a fault in the telnet data
@@ -26,19 +43,19 @@ function removeOldStaff()
 	local k,v
 
 	for k,v in pairs(owners) do
-		if not staffList[k] then
+		if v.remove then
 			owners[k] = nil
 		end
 	end
 
 	for k,v in pairs(admins) do
-		if not staffList[k] then
+		if v.remove then
 			admins[k] = nil
 		end
 	end
 
 	for k,v in pairs(mods) do
-		if not staffList[k] then
+		if v.remove then
 			mods[k] = nil
 		end
 	end
@@ -489,16 +506,19 @@ function matchAll(line)
 
 		if number == 0 then
 			owners[pid] = {}
+			owners[pid].remove = false
 			staffList[pid] = {}
 		end
 
 		if number == 1 then
 			admins[pid] = {}
+			admins[pid].remove = false
 			staffList[pid] = {}
 		end
 
 		if number == 2 then
 			mods[pid] = {}
+			mods[pid].remove = false
 			staffList[pid] = {}
 		end
 
@@ -977,6 +997,14 @@ function matchAll(line)
 				conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
 			end
 
+			return
+		end
+	end
+
+
+	if string.find(line, "Executing command 'admin list'") and server.botsIP then
+		if string.find(line, server.botsIP) then
+			flagAdminsForRemoval()
 			return
 		end
 	end

@@ -4835,6 +4835,123 @@ function gmsg_admin()
 	end
 
 
+	local function cmd_PootaterPlayer() --tested
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}poop {player name}"
+			help[2] = "Make a player shit potatoes everywhere coz potatoes."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "poo,play,buff,pot"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "poo") or string.find(chatvars.command, "player"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "poop") then
+			if locations["poop"] then -- There's a location called poop?  AWESOME!
+				botman.faultyChat = false
+				return false
+			end
+
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if (chatvars.words[2] ~= nil) then
+				pname = chatvars.words[2]
+				id = LookupPlayer(pname)
+
+				if id == 0 then
+					id = LookupArchivedPlayer(pname)
+
+					if not (id == 0) then
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
+						else
+							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server and repeat this command.")
+						end
+
+						botman.faultyChat = false
+						return true
+					else
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+						else
+							irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+						end
+
+						botman.faultyChat = false
+						return true
+					end
+				end
+			end
+
+			if not igplayers[id] then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. igplayers[id].name .. " is not playing right now and can't catch shit.[-]")
+				else
+					irc_chat(chatvars.ircAlias, igplayers[id].name .. " is not playing right now and can't catch shit.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if accessLevel(id) < 3 then
+				message("pm " .. id .. " [" .. server.alertColour .. "]" .. players[chatvars.playerid].name .. " cast poop on you.  It is super effective.[-]")
+			end
+
+			r = rand(30,10)
+
+			message("say [" .. server.chatColour .. "]" .. players[id].name .. " ate a bad potato and is shitting potatoes everywhere![-]")
+
+			for i = 1, r do
+				cmd = "give " .. id .. " potato 1"
+				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. id .. ")")
+			end
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 2
+			end
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Boil em, mash em, stick em in " .. players[id].name .. ".[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Boil em, mash em, stick em in " .. players[id].name)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ReadClaims()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -9309,6 +9426,15 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_PlayerIsNotNew triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_PootaterPlayer()
+
+	if result then
+		if debug then dbug("debug cmd_PootaterPlayer triggered") end
 		return result
 	end
 
