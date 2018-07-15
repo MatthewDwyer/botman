@@ -1413,6 +1413,16 @@ function gmsg(line, ircid)
 		end
 	end
 
+	if server.djkrose then
+		if debug then dbug("debug entering gmsg_djkrose") end
+		result = gmsg_djkrose()
+
+		if result then
+			if debug then dbug("debug ran command in gmsg_djkrose") end
+			return true
+		end
+	end
+
 	if server.stompy then
 		if debug then dbug("debug entering gmsg_stompy") end
 		result = gmsg_stompy()

@@ -1279,107 +1279,6 @@ function gmsg_coppi()
 	end
 
 
-	local function cmd_MarkOutArea()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
-			help = {}
-			help[1] = " {#}mark {name} start/end or p1/p2"
-			help[2] = "Mark out a named area to be used in other block or prefab commands\n"
-			help[2] = help[2] .. "You can save it with {#}save {name} and recall it with {#}load prefab {name}\n"
-			help[2] = help[2] .. "Mark two opposite corners of the area you wish to copy.  Move up or down between corners to add volume or stay at the same height to mark out a flat area."
-
-			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "mark,start,end,coppi"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
-				registerHelp(tmp)
-			end
-
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "mark") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "copy"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, help[1])
-
-				if not shortHelp then
-					irc_chat(chatvars.ircAlias, help[2])
-					irc_chat(chatvars.ircAlias, ".")
-				end
-
-				chatvars.helpRead = true
-			end
-		end
-
-		if chatvars.words[1] == "mark" and (chatvars.words[3] == "start" or chatvars.words[3] == "end" or chatvars.words[3] == "p1" or chatvars.words[3] == "p2") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
-
-				irc_chat(chatvars.ircAlias, "You can only use this command ingame.")
-				botman.faultyChat = false
-				return true
-			end
-
-			if not prefabCopies[chatvars.playerid .. chatvars.words[2]] then
-				prefabCopies[chatvars.playerid .. chatvars.words[2]] = {}
-
-				if chatvars.words[3] == "start" or chatvars.words[3] == "p1" then
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].owner = chatvars.playerid
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].name = chatvars.words[2]
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 = chatvars.intX
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 = chatvars.intY -1
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 = chatvars.intZ
-
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.words[2] .. " end[-]")
-					if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'" .. escape(chatvars.words[2]) .. "'," .. chatvars.intX .. "," .. chatvars.intY -1 .. "," .. chatvars.intZ .. ")") end
-				else
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].owner = chatvars.playerid
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].name = chatvars.words[2]
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 = chatvars.intX
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 = chatvars.intY -1
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 = chatvars.intZ
-
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.words[2] .. " start[-]")
-					if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x2, y2, z2) VALUES (" .. chatvars.playerid .. ",'" .. escape(chatvars.words[2]) .. "'," .. chatvars.intX .. "," .. chatvars.intY -1 .. "," .. chatvars.intZ .. ")") end
-				end
-			else
-				if chatvars.words[3] == "start" or chatvars.words[3] == "p1" then
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].owner = chatvars.playerid
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].name = chatvars.words[2]
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 = chatvars.intX
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 = chatvars.intY -1
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 = chatvars.intZ
-
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.words[2] .. " end[-]")
-					if botman.dbConnected then conn:execute("UPDATE prefabCopies SET x1 = " .. chatvars.intX .. ", y1 = " .. chatvars.intY -1 .. ", z1 = " .. chatvars.intZ .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[2]) .. "'") end
-				else
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].owner = chatvars.playerid
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].name = chatvars.words[2]
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 = chatvars.intX
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 = chatvars.intY -1
-					prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 = chatvars.intZ
-
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.words[2] .. " start[-]")
-					if botman.dbConnected then conn:execute("UPDATE prefabCopies SET x2 = " .. chatvars.intX .. ", y2 = " .. chatvars.intY -1 .. ", z2 = " .. chatvars.intZ .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[2]) .. "'") end
-				end
-			end
-
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]When done save it with " .. server.commandPrefix .. "save " .. chatvars.words[2] .. "[-]")
-
-			botman.faultyChat = false
-			return true
-		end
-	end
-
-
 	local function cmd_MoveBlock()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -2475,15 +2374,6 @@ function gmsg_coppi()
 
 	if result then
 		if debug then dbug("debug cmd_ListSaves triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_MarkOutArea()
-
-	if result then
-		if debug then dbug("debug cmd_MarkOutArea triggered") end
 		return result
 	end
 

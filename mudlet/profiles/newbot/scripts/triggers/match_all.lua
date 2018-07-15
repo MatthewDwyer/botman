@@ -1065,6 +1065,14 @@ function matchAll(line)
 		return
 	end
 
+	-- detect djkrose's scripting mod
+	if string.find(line, "Mod djkrose's Scripting Mod:") then
+		server.djkrose = true
+		temp = string.split(line, ":")
+		server.djkroseVersion = temp[2]
+		return
+	end
+
 	-- detect SDX mods
 	if string.find(line, "Mod SDX:") or string.find(line, "SDX: ") and not server.SDXDetected then
 		server.SDXDetected = true
