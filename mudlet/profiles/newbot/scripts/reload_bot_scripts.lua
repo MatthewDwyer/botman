@@ -97,8 +97,8 @@ function unpackScripts()
 	runBeforeBotUpdate()
 
 	os.execute("unzip -X -o \"" .. homedir .. "\"/temp/scripts.zip -d \"" .. homedir .. "\"")
-	tempTimer( 3, [[ reloadBotScripts(true) ]] )
-	tempTimer( 60, [[ reloadBotScripts(true) ]] ) -- while not strictly necessary it does seem to fix lingering issues after an update most of the time.
+	tempTimer( 3, [[ reloadBotScripts(true, true) ]] )
+	tempTimer( 60, [[ reloadBotScripts(true, true, true) ]] ) -- while not strictly necessary it does seem to fix lingering issues after an update most of the time.
 
 	tempTimer( 6, [[ loadPlayers() ]] )
 	tempTimer( 8, [[ loadPlayersArchived() ]] )
@@ -718,14 +718,10 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 end
 
 
-function reloadBotScripts(skipTables, silent)
+function reloadBotScripts(skipTables, skipFetchData, silent)
 	-- disable some stuff we no longer use
 	disableTrigger("le")
 	disableTimer("GimmeReset")
-
-	if not server.botsIP then
-		send("pm IPCHECK")
-	end
 
 	if exists("Every10Seconds", "timer") == 0 then
 	  permTimer("Every10Seconds", "", 10.0, [[TenSecondTimer()]])
@@ -741,7 +737,7 @@ function reloadBotScripts(skipTables, silent)
 
 	server.reloadCodeSuccess = false
 
-	if silent == nil then
+	if not silent then
 		tempTimer( 3, [[ reportReloadCode() ]] )
 	end
 
@@ -773,7 +769,7 @@ function reloadBotScripts(skipTables, silent)
 
 	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
-			if skipTables ~= nil then
+			if skipTables then
 	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 				-- force a reload of the lua tables in case new fields have been added so they get initialised with default values.
 				loadTables(true) -- passing true tells loadTables to not reload the players table.
@@ -805,10 +801,16 @@ function reloadBotScripts(skipTables, silent)
 				if botman.dbConnected then conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'") end
 			end
 
-			send("version")
-			send("gg")
-			send("teleh")
-			send("se")
+			if not skipFetchData then
+				tempTimer( 5, [[send("version")]] )
+				tempTimer( 10, [[send("gg")]] )
+				tempTimer( 15, [[send("teleh")]] )
+				tempTimer( 20, [[send("se")]] )
+			end
+
+			if not botman.sysDisconnectionID then
+				botman.sysDisconnectionID = registerAnonymousEventHandler("sysDisconnectionEvent", "onSysDisconnection")
+			end
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 3

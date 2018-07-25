@@ -1002,6 +1002,20 @@ function gmsg(line, ircid)
 		if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) then
 			players[chatvars.playerid].lastCommand = chatvars.command
 			players[chatvars.playerid].lastChatLine = chatvars.oldLine -- used for storing the telnet line from the last command
+
+			if players[chatvars.playerid].commandCooldown == 0 or (os.time() - players[chatvars.playerid].commandCooldown >= server.commandCooldown) then
+				players[chatvars.playerid].commandCooldown = os.time()
+			else
+				if chatvars.accessLevel > 2 then
+					-- warn the player once about the command cooldown after that silently ignore the command if its spammed too soon.
+					if not igplayers[chatvars.playerid].commandSpamAlert then
+						igplayers[chatvars.playerid].commandSpamAlert = true
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can do 1 command every " .. server.commandCooldown .. " seconds. To repeat your last command just type " .. server.commandPrefix .."[-]")
+					end
+
+					return true
+				end
+			end
 		end
 	end
 
@@ -1199,6 +1213,19 @@ function gmsg(line, ircid)
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "fix" and chatvars.words[2] == "bot" and chatvars.words[3] == nil) or string.find(chatvars.command, "fix all the things") then
+		if (chatvars.accessLevel > 1) then
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			else
+				if not chatvars.showHelp then
+					irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
 		if (chatvars.playername ~= "Server") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Fixing bot.  Please wait.. If this doesn't fix it, doing this again probably won't either.[-]")
 		else
@@ -1561,8 +1588,9 @@ function gmsg(line, ircid)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
+	botman.registerHelp	= false
+
 	if chatvars.words[1] == "register" and chatvars.words[2] == "help" then
-		botman.registerHelp	= false
 		result = true
 	end
 

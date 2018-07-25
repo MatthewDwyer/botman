@@ -6357,6 +6357,74 @@ function gmsg_admin()
 	end
 
 
+	local function cmd_SetCommandCooldown()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set command cooldown {seconds} (default 0)"
+			help[2] = "You can add a delay between player commands to the bot.  Does not apply to staff.  This helps to slow down command abuse."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,comm,cool,delay"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "command") or string.find(chatvars.command, "cool") or string.find(chatvars.command, "delay") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "command" and (chatvars.words[3] == "cooldown" or chatvars.words[3] == "delay" or chatvars.words[3] == "timer") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number == nil then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Number required eg. " .. server.commandPrefix .. "set return cooldown 10[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Number required  eg. " .. server.commandPrefix .. "set return cooldown 10")
+				end
+			else
+				chatvars.number = math.abs(chatvars.number)
+
+				server.commandCooldown = chatvars.number
+				if botman.dbConnected then conn:execute("UPDATE server SET commandCooldown = " .. server.commandCooldown) end
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players must wait " .. server.commandCooldown .. " seconds between commands to the bot.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Players must wait " .. server.commandCooldown .. " seconds between commands to the bot.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_SetFeralHordeNight()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -9552,6 +9620,15 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_SetDropMiningWarningThreshold triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetCommandCooldown()
+
+	if result then
+		if debug then dbug("debug cmd_SetCommandCooldown triggered") end
 		return result
 	end
 

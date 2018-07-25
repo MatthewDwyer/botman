@@ -7,6 +7,13 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+onSysDisconnection = function ()
+	botman.botOfflineCount = 1
+	botman.botOffline = true
+	botman.lastTelnetTimestamp = os.time()
+end
+
+
 function sleep(s)
 	dbug("sleeping " .. s)
 
@@ -88,11 +95,40 @@ function checkVACBan(steam)
 end
 
 
+function reloadBot(getAllPlayers)
+	-- send several commands to the server to gather info.  Each command is sent 5 seconds apart to slow down the telnet spam.
+
+	tempTimer( 1, [[send("pm IPCHECK")]] )
+
+	-- got the time?  Hey that's a nice watch.  Can I have it?
+	tempTimer( 3, [[send("gt")]] )
+
+	tempTimer( 5, [[send("admin list")]] )
+	tempTimer( 10, [[send("version")]] )
+
+	if getAllPlayers then
+		tempTimer( 15, [[send("lkp")]] )
+	else
+		tempTimer( 15, [[send("lkp -online")]] )
+	end
+
+	tempTimer( 20, [[send("gg")]] )
+	tempTimer( 25, [[send("ban list")]] )
+	tempTimer( 30, [[send("teleh")]] )
+	tempTimer( 35, [[registerBot()]] )
+
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 8
+	end
+end
+
+
 function reloadCode()
 	tempTimer(5, [[ reloadStartup() ]] )
 
 	dofile(homedir .. "/scripts/reload_bot_scripts.lua")
-	reloadBotScripts(true)
+	-- reload the bot's code. Skip reloading the players table and don't announce that the code has been reloaded.
+	reloadBotScripts(true, true)
 end
 
 
@@ -2248,7 +2284,7 @@ function newDay()
 		if not restarting then
 			-- reload the bot's code.  This may help fix a few issues with slow performance but its more likely due to other stuff the reload does.
 			dofile(homedir .. "/scripts/reload_bot_scripts.lua")
-			reloadBotScripts(true)
+			reloadBotScripts(true, false, true)
 		end
 
 		status = "Server is UP"

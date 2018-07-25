@@ -753,6 +753,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `despawnZombiesBeforeBloodMoon` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `optOutGlobalBots` TINYINT(1) NOT NULL DEFAULT '0'") -- todo code
 	doSQL("ALTER TABLE `server` ADD `dropMiningWarningThreshold` INT NOT NULL DEFAULT '99'")
+	doSQL("ALTER TABLE `server` ADD `webPanelPort` INT NOT NULL DEFAULT '8080'")
 
 if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 

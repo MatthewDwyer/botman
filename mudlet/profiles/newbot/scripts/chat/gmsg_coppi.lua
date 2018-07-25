@@ -138,6 +138,11 @@ function gmsg_coppi()
 		suffix = ""
 	end
 
+	if server.csmm then
+		prefix = ""
+		suffix = ""
+	end
+
 -- ################## coppi's command functions ##################
 
 	local function cmd_AddRemoveTraderProtection()

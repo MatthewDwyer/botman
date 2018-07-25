@@ -95,7 +95,7 @@ function gmsg_djkrose()
 			help[1] = " {#}import {named area}\n"
 			help[1] = help[1] .. "Optional extras: replace, empty, face {0-3}"
 			help[2] = help[2] .. "This command requires that you have previously marked out an area to be exported using the {#}mark command.\n"
-			help[2] = "Your can rotate the prefab with face. 0 = unmodified 1 = 90° right 2 = 180° right 3 = 270° right.\n"
+			help[2] = help[2] .. "You can rotate the prefab with face. 0 = unmodified 1 = 90° right 2 = 180° right 3 = 270° right.\n"
 			help[2] = help[2] .. "Add 'replace' if you want to replace the original prefab or it will spawn at your current position and elevation.\n"
 			help[2] = help[2] .. "Add 'empty' if you don't want to restore the contents of containers.  Note: Currently this only works if the container has been destroyed."
 

@@ -934,6 +934,27 @@ function matchAll(line)
 	end
 
 
+	-- detect CSMM Patrons Mod
+	if string.find(line, "Mod CSMM Patrons") then
+		server.coppi = true
+		server.csmm = true
+
+		temp = string.split(line, ":")
+		server.coppiRelease = temp[1]
+		server.coppiVersion = temp[2]
+
+		if server.hideCommands then
+			send("tcch " .. server.commandPrefix)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+		end
+
+		return
+	end
+
+
 	-- detect Coppi's Mod
 	if string.find(line, "Mod Coppis command additions") then
 		server.coppi = true
@@ -1295,6 +1316,15 @@ function matchAll(line)
 
 
 	if string.find(line, "Version mismatch") then
+		irc_chat(server.ircAlerts, line)
+		return
+	end
+
+
+	if string.find(line, "ERR EXCEPTION:") and string.find(line, "Cannot expand this MemoryStream") and not botman.serverErrorReported then
+		-- report memory error
+		botman.serverErrorReported = true
+		irc_chat(server.ircAlerts, "Server error detected.")
 		irc_chat(server.ircAlerts, line)
 		return
 	end

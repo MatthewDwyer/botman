@@ -11,4 +11,7 @@ function tenMinuteTimer()
 	if customTenMinuteTimer ~= nil then
 		customTenMinuteTimer()
 	end
+
+	-- save the penguins! er I mean world!
+	send("sa")
 end

@@ -17,10 +17,6 @@ function FifteenSecondTimer()
 		return
 	end
 
-	if tonumber(botman.playersOnline) == 0 then
-		send("gt")
-	end
-
 	if customFifteenSecondTimer ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua
 		if customFifteenSecondTimer() then

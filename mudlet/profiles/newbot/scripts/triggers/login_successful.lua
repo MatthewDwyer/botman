@@ -12,13 +12,11 @@ function loginSuccessful(line)
 	if relogCount == nil then relogCount = 0 end
 
 	if string.find(line, "Logon successful.") then
-		botman.botOfflineCount = 2
+		botman.botOfflineCount = 1
 		relogCount = relogCount + 1
 
 		botman.botOffline = false
 		botman.botConnectedTimestamp = os.time() -- used to measure how long the bot has been offline so we can slow down how often it tries to reconnect.
-
-		getServerData()
 
 		if relogCount > 6 then
 			irc_chat(server.ircMain, "Server has crashed.  Please manually restart it.")

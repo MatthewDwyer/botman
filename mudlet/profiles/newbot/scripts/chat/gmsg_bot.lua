@@ -499,39 +499,7 @@ function gmsg_bot()
 				irc_chat(chatvars.ircAlias, "Refreshing admins, bans, server config from server.")
 			end
 
-			send("lkp -online")
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-
-			send("version")
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-
-			--tempTimer( 4, [[message("say [" .. server.chatColour .. "]Reading admin list[-]")]] )
-			tempTimer( 4, [[send("admin list")]] )
-
-			--tempTimer( 6, [[message("say [" .. server.chatColour .. "]Reading bans[-]")]] )
-			tempTimer( 6, [[send("ban list")]] )
-
-			--tempTimer( 8, [[message("say [" .. server.chatColour .. "]Reading server config[-]")]] )
-			tempTimer( 8, [[send("gg")]] )
-
-			--tempTimer( 10, [[message("say [" .. server.chatColour .. "]Reading claims[-]")]])
-			tempTimer( 10, [[send("llp)]] )
-
-			tempTimer( 13, [[send("pm IPCHECK")]] )
-			--tempTimer( 13, [[message("say [" .. server.chatColour .. "]Reload complete.[-]")]] )
-
-			tempTimer( 15, [[send("teleh")]] )
-			tempTimer( 20, [[registerBot()]] )
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 6
-			end
+			reloadBot()
 
 			botman.faultyChat = false
 			return true

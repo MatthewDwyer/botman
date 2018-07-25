@@ -49,8 +49,6 @@ function checkData()
 		login()
 	end
 
-	send("gt")
-
 	if tablelength(shopCategories) == 0 then
 		loadShopCategories()
 	end
@@ -67,8 +65,7 @@ function checkData()
 	end
 
 	if not botman.customMudlet then
-		irc_chat(name, "You appear to not be using the custom Mudlet build by TheFae or an old version. The latest version adds several nice automation features and better IRC support. You can get here https://github.com/itsTheFae/FaesMudlet2")
-		return
+		irc_chat(server.ircMain, "You appear to not be using the custom Mudlet build by TheFae or an old version. The latest version adds several nice automation features and better IRC support. You can get here https://github.com/itsTheFae/FaesMudlet2")
 	end
 
 	if tablelength(owners) == 0 then
@@ -88,36 +85,7 @@ function getServerData(getAllPlayers)
 		return
 	end
 
-	--read mods
-	send("version")
-
-	-- got the time?  Hey that's a nice watch.  Can I have it?
-	send("gt")
-
-	--read the ban list
-	tempTimer( 4, [[send("ban list")]] )
-
-	--list known players
-	if getAllPlayers then
-		tempTimer( 6, [[send("lkp")]] )
-	else
-		tempTimer( 6, [[send("lkp -online")]] )
-	end
-
-	--get the bot's IP
-	tempTimer( 10, [[send("pm IPCHECK")]] )
-
-	--read gg
-	tempTimer( 12, [[send("gg")]] )
-
-	--list the zombies
-	tempTimer( 15, [[send("se")]] )
-
-	--read admin list
-	tempTimer( 18, [[send("admin list")]] )
-
-	--register the bot in the bots database
-	tempTimer( 20, [[registerBot()]] )
+	reloadBot(getAllPlayers)
 
 	if benchmarkBot then
 		dbug("function getServerData elapsed time: " .. string.format("%.2f", os.clock() - benchStart))
@@ -162,24 +130,32 @@ function login()
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	if reloadBotScripts == nil then
-		dofile(homedir .. "/scripts/reload_bot_scripts.lua")
-		reloadBotScripts()
-	end
-
-	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
-
 	tempTimer( 120, [[checkData()]] )
 	stackLimits = {}
 
 	if (botman.botStarted == nil) then
-		registerAnonymousEventHandler("sysExitEvent", "onSysExit")
-		registerAnonymousEventHandler("sysIrcStatusMessage", "ircStatusMessage")
+		botman.botStarted = os.time()
+
+		if reloadBotScripts == nil then
+			dofile(homedir .. "/scripts/reload_bot_scripts.lua")
+			reloadBotScripts()
+		end
+
+		if not botman.sysExitID then
+			botman.sysExitID = registerAnonymousEventHandler("sysExitEvent", "onSysExit")
+		end
+
+		if not botman.sysIrcStatusMessageID then
+			botman.sysIrcStatusMessageID = registerAnonymousEventHandler("sysIrcStatusMessage", "ircStatusMessage")
+		end
+
+		if not botman.sysDisconnectionID then
+			botman.sysDisconnectionID = registerAnonymousEventHandler("sysDisconnectionEvent", "onSysDisconnection")
+		end
 
 		modVersions = {}
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
-		botman.botStarted = os.time()
 		initBot() -- this lives in edit_me.lua
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		openDB() -- this lives in edit_me.lua
@@ -273,6 +249,7 @@ function login()
 		botman.nextRebootTest = nil
 		botman.initError = false
 		startLogging(true)
+
 		getServerData(getAllPlayers)
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end

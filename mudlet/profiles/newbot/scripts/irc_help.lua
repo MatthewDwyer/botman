@@ -10,7 +10,7 @@
 
 function irc_HelpAccess()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 
 	irc_chat(irc_params.name, "Access Levels:")
 	irc_chat(irc_params.name, "==============")
@@ -31,7 +31,7 @@ function irc_commands()
 	calledFunction = "irc_commands"
 
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 
 	-- help visible to all
 	irc_chat(irc_params.name, "Commands that output to IRC:")
@@ -40,6 +40,7 @@ function irc_commands()
 	irc_chat(irc_params.name, "help (display this list)")
 	irc_chat(irc_params.name, "help manual (New to the bot and IRC?  Read this.)")
 	irc_chat(irc_params.name, "help setup (Stuff to do when the bot is new.)")
+	irc_chat(irc_params.name, "help irc (View a different list of IRC command help including ingame commands that refer to IRC.)")
 
 	irc_chat(irc_params.name, "fps (display current server performance metrics)")
 	irc_chat(irc_params.name, "say {something} to talk to players ingame")
@@ -116,7 +117,6 @@ function irc_commands()
 	irc_chat(irc_params.name, "list help {optional section} (eg. admin, server). Short help, just a list.")
 	irc_chat(irc_params.name, "command help {optional section} (eg. admin, server). Longer help with info.")
 	irc_chat(irc_params.name, "Commands are divided into sections eg. admin, server, locations etc.")
-	irc_chat(irc_params.name, "You can view section specific help using list help or command help for any of the following sections:")
 	irc_chat(irc_params.name, ".")
 
 	return
@@ -125,10 +125,8 @@ end
 
 function irc_Manual()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 
---irc_chat(irc_params.name, "")
---irc_chat(irc_params.name, string.format("", ))
 	irc_chat(irc_params.name, string.format("Hi %s! Here is a quick guide on getting started with your bot on IRC.", irc_params.name))
 	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "If you have just arrived and you are using the web clients, Shout or The Lounge, you will love them :)")
@@ -201,7 +199,7 @@ end
 function irc_Setup()
 	-- TODO:  Finish this
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 
 	irc_chat(irc_params.name, "When running the bot for the first time, there are several setup tasks to do and some mod requirements.")
 	irc_chat(irc_params.name, "The bot requires Alloc's mod to function. Many very nice extra features rely on Coppi's mod.  The bot also provides growing support for other mods")
@@ -221,7 +219,7 @@ end
 
 function irc_HelpTopics()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 	if (accessLevel(id) > 2) then return end
 
 	irc_chat(irc_params.name, "Commands by topic:")
@@ -243,12 +241,12 @@ end
 
 function irc_HelpServer()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 	if (accessLevel(id) > 2) then return end
 
 	irc_chat(irc_params.name, "Customising the bot and server")
 	irc_chat(irc_params.name, "==============================")
-	irc_chat(irc_params.name, "reset bot (Do after a wipe. BE CAREFUL. This will make the bot forgot things like bases.)")
+	irc_chat(irc_params.name, "reset bot (Do after a wipe. BE CAREFUL. This will make the bot forget map specific things like locations and bases.)")
 	irc_chat(irc_params.name, "server ip {internet address of server} (to view just type server)")
 	irc_chat(irc_params.name, "server ip:port pass {telnet password} (point the bot to a new 7 Days server)")
 	irc_chat(irc_params.name, "set irc server ip:port (point the bot to a new irc server).")
@@ -260,7 +258,7 @@ end
 
 function irc_HelpCSI()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 	if (accessLevel(id) > 2) then return end
 
 	irc_chat(irc_params.name, "Forensic Investigative Tools")
@@ -278,7 +276,7 @@ end
 
 function irc_HelpAnnouncements()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 	if (accessLevel(id) > 2) then return end
 
 	irc_chat(irc_params.name, "Announcements Management")
@@ -293,7 +291,7 @@ end
 
 function irc_HelpCustomCommands()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 	if (accessLevel(id) > 2) then return end
 
 	irc_chat(irc_params.name, "Custom Commands")
@@ -310,7 +308,7 @@ end
 
 function irc_HelpBadItems()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 	if (accessLevel(id) > 2) then return end
 
 	irc_chat(irc_params.name, "Bad Item (uncraftable) Management")
@@ -329,7 +327,7 @@ end
 
 function irc_HelpCommands()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 	if (accessLevel(id) > 2) then return end
 
 	irc_chat(irc_params.name, "Remote server commands:")
@@ -337,36 +335,36 @@ function irc_HelpCommands()
 	irc_chat(irc_params.name, "Most ingame commands can be done from IRC by putting cmd infront.  These commands do require a slash.")
 	irc_chat(irc_params.name, "If an ingame command does not support running from IRC you will get 'Unknown command'.")
 	irc_chat(irc_params.name, "For the full list type list help or for detailed help type command help. If you know the section you want add that eg list help server.")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "arrest {playername}")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "release {playername}")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "gimme gimme")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "gimme off")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "gimme on")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "gimme peace")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "gimme reset")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "reset gimmearena")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "exclude admins")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "include admins")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "tele {teleport} enable")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "tele {teleport} disable")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "tele {teleport} delete")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "tele {teleport} owner {playername}")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "tele {teleport} private")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "tele {teleport} public")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "set base size {size} {playername}")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "protect {playername}")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "unprotect {playername}")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "resettimers {playername}")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "sendhome {playername}")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "timeout {playername}")
-	irc_chat(irc_params.name, "cmd " .. server.commandPrefix .. "return {playername}")
+	irc_chat(irc_params.name, "cmd {#}arrest {playername}")
+	irc_chat(irc_params.name, "cmd {#}release {playername}")
+	irc_chat(irc_params.name, "cmd {#}gimme gimme")
+	irc_chat(irc_params.name, "cmd {#}gimme off")
+	irc_chat(irc_params.name, "cmd {#}gimme on")
+	irc_chat(irc_params.name, "cmd {#}gimme peace")
+	irc_chat(irc_params.name, "cmd {#}gimme reset")
+	irc_chat(irc_params.name, "cmd {#}reset gimmearena")
+	irc_chat(irc_params.name, "cmd {#}exclude admins")
+	irc_chat(irc_params.name, "cmd {#}include admins")
+	irc_chat(irc_params.name, "cmd {#}tele {teleport} enable")
+	irc_chat(irc_params.name, "cmd {#}tele {teleport} disable")
+	irc_chat(irc_params.name, "cmd {#}tele {teleport} delete")
+	irc_chat(irc_params.name, "cmd {#}tele {teleport} owner {playername}")
+	irc_chat(irc_params.name, "cmd {#}tele {teleport} private")
+	irc_chat(irc_params.name, "cmd {#}tele {teleport} public")
+	irc_chat(irc_params.name, "cmd {#}set base size {size} {playername}")
+	irc_chat(irc_params.name, "cmd {#}protect {playername}")
+	irc_chat(irc_params.name, "cmd {#}unprotect {playername}")
+	irc_chat(irc_params.name, "cmd {#}resettimers {playername}")
+	irc_chat(irc_params.name, "cmd {#}sendhome {playername}")
+	irc_chat(irc_params.name, "cmd {#}timeout {playername}")
+	irc_chat(irc_params.name, "cmd {#}return {playername}")
 	irc_chat(irc_params.name, ".")
 end
 
 
 function irc_HelpMOTD()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 	if (accessLevel(id) > 2) then return end
 
 	irc_chat(irc_params.name, "Message Of The Day Management")
@@ -380,7 +378,7 @@ end
 
 function irc_HelpWatchlist()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 	if (accessLevel(id) > 2) then return end
 
 	irc_chat(irc_params.name, "Watchlist Management")
@@ -396,7 +394,7 @@ end
 
 function irc_HelpDonors()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 	if (accessLevel(id) > 2) then return end
 
 	irc_chat(irc_params.name, "Donor Management")
@@ -410,7 +408,7 @@ end
 
 function irc_HelpShop()
 	local id
-	id = LookupOfflinePlayer(irc_params.name, "all")
+	id = LookupIRCAlias(irc_params.name)
 	if (accessLevel(id) > 2) then return end
 
 	irc_chat(irc_params.name, "Shop Manglement")
