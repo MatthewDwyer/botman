@@ -78,7 +78,7 @@ function sendCommand(command, api, outputFile)
 			end
 
 			if string.find(command, "lpb") then
-				api = "executeconsolecommand?command=lp&"
+				api = "executeconsolecommand?command=" .. command .. "&"
 				outputFile = "lpb.txt"
 			end
 
@@ -92,13 +92,13 @@ function sendCommand(command, api, outputFile)
 				outputFile = "mem.txt"
 			end
 
-			if command == "pgd" then
-				api = "executeconsolecommand?command=pgd&"
+			if string.find(command, "pgd") then
+				api = "executeconsolecommand?command=" .. command .. "&"
 				outputFile = "pgd.txt"
 			end
 
-			if command == "pug" then
-				api = "executeconsolecommand?command=pug&"
+			if string.find(command, "pug") then
+				api = "executeconsolecommand?command=" .. command .. "&"
 				outputFile = "pug.txt"
 			end
 
