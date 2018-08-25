@@ -59,7 +59,7 @@ function teleport(cmd, steam, justTeleport)
 	igplayers[steam].spawnPending = true
 	igplayers[steam].lastTPTimestamp = os.time()
 
-	send(cmd)
+	sendCommand(cmd)
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 1

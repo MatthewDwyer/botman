@@ -9,9 +9,13 @@
 
 function tenMinuteTimer()
 	if customTenMinuteTimer ~= nil then
-		customTenMinuteTimer()
+		-- read the note on overriding bot code in custom/custom_functions.lua
+		if customTenMinuteTimer then
+			return
+		end
 	end
 
-	-- save the penguins! er I mean world!
-	send("sa")
+	if relogCount > 5 then
+		irc_chat(server.ircMain, "The bot is having trouble staying connected to the server.  The server may require a restart.")
+	end
 end

@@ -28,7 +28,7 @@ function gmsg_misc()
 
 	-- votecrate for Deadlights server
 	if chatvars.words[1] == "votecrate" then
-		send("cvc " .. chatvars.playerid)
+		sendCommand("cvc " .. chatvars.playerid)
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1

@@ -34,7 +34,7 @@ function listEntities(line, mod)
 				if locations[loc].killZombies then
 					if string.find(zedNameLower, "zombie") or string.find(zedNameLower, "animal") or string.find(zedNameLower, "bandit") then
 						if (not string.find(zedNameLower, "chicken")) and (not string.find(zedNameLower, "rabbit")) and (not string.find(zedNameLower, "stag")) and (zedName ~= "animalBoar") then
-							send("removeentity " .. zedID)
+							sendCommand("removeentity " .. zedID)
 
 							if botman.getMetrics then
 								metrics.telnetCommands = metrics.telnetCommands + 1
@@ -77,7 +77,7 @@ function listEntities(line, mod)
 						if string.find(zedNameLower, "zombie") or string.find(zedNameLower, "animal") or string.find(zedNameLower, "bandit") then
 							if (not string.find(zedNameLower, "chicken")) and (not string.find(zedNameLower, "rabbit")) and (not string.find(zedNameLower, "stag")) and (zedName ~= "animalBoar") then
 								if not server.lagged then
-									send("removeentity " .. zedID)
+									sendCommand("removeentity " .. zedID)
 
 									if botman.getMetrics then
 										metrics.telnetCommands = metrics.telnetCommands + 1

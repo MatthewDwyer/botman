@@ -234,7 +234,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "The server time is " .. botman.serverTime)
 			irc_chat(name, "The game time is " .. server.gameDate)
 
-			irc_chat(name, "The server map should be here http://" .. server.IP .. ":" .. server.ServerPort + 12)
+			irc_chat(name, "The server map should be here http://" .. server.IP .. ":" .. server.webPanelPort + 2)
 
 			if server.updateBranch ~= '' then
 				irc_chat(name, "The bot is running code from the " .. server.updateBranch .. " branch")
@@ -1493,8 +1493,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (players[ircid].accessLevel > 2) then
-		return
+		return -- GET OUT!
 	end
+
+-- ########### Staff only beyond here ###########
 
 	if players[ircid].ircAuthenticated == false then
 		if requireLogin(name) then
@@ -1585,7 +1587,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: remove location category")
-		irc_chat(name, "")
+		irc_chat(name, "Remove a location category. It is also removed from all locations currently assigned to it.")
 		irc_chat(name, ".")
 	end
 
@@ -1612,7 +1614,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: run report")
-		irc_chat(name, "")
+		irc_chat(name, "View a report on server performance including how long the command lag is.  The report recalculates continuously until stopped by typing stop report.")
 		irc_chat(name, ".")
 	end
 
@@ -1644,7 +1646,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: stop report")
-		irc_chat(name, "")
+		irc_chat(name, "Stop the running report.")
 		irc_chat(name, ".")
 	end
 
@@ -1660,7 +1662,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: unmute irc {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Allow a player to use bot commands on IRC again.")
 		irc_chat(name, ".")
 	end
 
@@ -1681,7 +1683,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: mute irc {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Block a player from commanding the bot on IRC.")
 		irc_chat(name, ".")
 	end
 
@@ -1702,7 +1704,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: sql {a select statement}")
-		irc_chat(name, "")
+		irc_chat(name, "Run a select query on the bot's database and view the output.  It is limited to 100 records by default.  Specify a different limit if you want more.")
+		irc_chat(name, "Only select queries are permitted.  This is mainly intended for debugging purposes.")
+		irc_chat(name, "Only server owners can use this command.")
 		irc_chat(name, ".")
 	end
 
@@ -1750,7 +1754,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: set irc server {IP:Port}")
-		irc_chat(name, "")
+		irc_chat(name, "The bot will connect to the IRC server that you specify.  If the IP and port are wrong, you will need to join the server and issue same command in-game but with a valid IP and port.")
+		irc_chat(name, "Only server owners can use this command.")
 		irc_chat(name, ".")
 	end
 
@@ -1779,7 +1784,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: set server ip {server IP} port {telnet port} pass {telnet password}")
-		irc_chat(name, "")
+		irc_chat(name, "Make the bot join a different 7 Days to Die server.  All parts are required even if they are not changing.")
+		irc_chat(name, "Only server owners can use this command.")
 		irc_chat(name, ".")
 	end
 
@@ -1833,7 +1839,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: restart bot")
-		irc_chat(name, "")
+		irc_chat(name, "If your bot's server or the bot's launcher script monitors the bot's process ID, you can command the bot to shut down and restart itself.  This can help to fix temporary problems with the bot.")
+		irc_chat(name, "All bots hosted at botmanhosting or hosted by Smegz0r can be restarted this way.  The command is disabled by default.")
 		irc_chat(name, ".")
 	end
 
@@ -1865,7 +1872,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: check disk")
-		irc_chat(name, "")
+		irc_chat(name, "View basic information about disk usage on the server hosting the bot.")
 		irc_chat(name, ".")
 	end
 
@@ -1878,7 +1885,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: command prefix {new in-game command prefix}")
-		irc_chat(name, "")
+		irc_chat(name, "Change the in-game command prefix to something else.  The default is /.  The bot can automatically change to ! if it detects some other server managers.")
+		irc_chat(name, "If there is a command clash between the bot and another manager or mod, you should use this command.  The only symbol that cannot be used is the other slash.")
 		irc_chat(name, ".")
 	end
 
@@ -1898,7 +1906,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(server.ircMain, "Ingame bot commands must now start with a " .. tmp.prefix)
 			message("say [" .. server.chatColour .. "]Commands now begin with a " .. server.commandPrefix .. ". To use commands such as who type " .. server.commandPrefix .. "who.[-]")
 
-			send("tcch " .. tmp.prefix)
+			sendCommand("tcch " .. tmp.prefix)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1909,7 +1917,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(server.ircMain, "Ingame bot commands do not use a prefix and can be typed in public chat.")
 			message("say [" .. server.chatColour .. "]Bot commands are now just text.  To use commands such as who simply type who.[-]")
 
-			send("tcch")
+			sendCommand("tcch")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1922,21 +1930,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
-		irc_chat(name, "Command: test lottery")
-		irc_chat(name, "")
-		irc_chat(name, ".")
-	end
-
-	if words[1] == "test" and words[2] == "lottery" and words[3] == nil then
-		drawLottery(ircid)
-		return
-	end
-
-	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
-
-	if displayIRCHelp then
 		irc_chat(name, "Command: server settings {optional filter}")
-		irc_chat(name, "")
+		irc_chat(name, "View current settings in the bot, organised by category.  You can view a specific category if you type it after settings.")
+		irc_chat(name, "The categories are: chat, shop, teleports, security, waypoints, misc, games, irc, mods.")
+		irc_chat(name, "The displayed settings may not be a complete list as the bot is still under development and new settings are added frequently.")
 		irc_chat(name, ".")
 	end
 
@@ -2108,9 +2105,6 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, "Voting is disabled.")
 			end
 		end
-
-	-- if server.restrictIRC ~= nil then file:write("restrictIRC=" .. trueFalse(server.restrictIRC) .. "\n") end
-
 
 		if filter == "all" or filter == "irc" then
 			irc_chat(name, "---")
@@ -2501,7 +2495,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "---")
 
 			if server.allocs then
-				irc_chat(name, "Alloc's mod version is " .. server.allocsVersion)
+				irc_chat(name, "Alloc's Server Fixes " .. server.allocsServerFixes)
+				irc_chat(name, "Alloc's Command Extensions " .. server.allocsCommandExtensions)
+				irc_chat(name, "Alloc's Map " .. server.allocsMap)
 			else
 				irc_chat(name, "ALERT!  Alloc's mod is not installed!  The bot can't function without it.  Grab it here http://botman.nz/Botman_Mods.zip")
 			end
@@ -2528,7 +2524,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: new players")
-		irc_chat(name, "")
+		irc_chat(name, "List new players that have joined in the last 24 hours.  To see further back, add a number eg: new players 5 will give you the last 5 days.")
 		irc_chat(name, ".")
 	end
 
@@ -2596,7 +2592,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: check dns {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Make the bot do a DNS lookup on any player.  Mainly useful if a player of interest is already in the game before the bot joined.  Otherwise the bot will check their DNS only when the player re-logs.")
 		irc_chat(name, ".")
 	end
 
@@ -2657,7 +2653,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: view slots")
-		irc_chat(name, "")
+		irc_chat(name, "View information about the bot's reserved slots and who is occupying them.")
 		irc_chat(name, ".")
 	end
 
@@ -2688,7 +2684,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: show inventory")
-		irc_chat(name, "")
+		irc_chat(name, "View historic inventory movement of a player.  They do not need to be playing right now.")
+		irc_chat(name, "Full example.. show inventory player Joe xpos 100 zpos 200 days 2 range 50 item tnt qty 20")
+		irc_chat(name, "You can grab the coords from any player by adding, near john (for example)")
+		irc_chat(name, "Defaults: days = 1, range = 100km, xpos = 0, zpos = 0")
+		irc_chat(name, "Optional: player (or near) joe, days 1, hours 1, range 50, item tin, qty 10, xpos 0, zpos 0, session 1")
+		irc_chat(name, "Currently this command always reports up to the current time.  Later you will be able to specify an end date and time.")
 		irc_chat(name, ".")
 	end
 
@@ -2821,7 +2822,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: announcements")
-		irc_chat(name, "")
+		irc_chat(name, "View the rolling announcements.")
 		irc_chat(name, ".")
 	end
 
@@ -2850,7 +2851,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: add announcement")
-		irc_chat(name, "")
+		irc_chat(name, "Add a new rolling announcement.")
 		irc_chat(name, ".")
 	end
 
@@ -2869,7 +2870,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: delete announcement")
-		irc_chat(name, "")
+		irc_chat(name, "If you type 'announcements' you will see a numbered list of rolling announcements.  To delete a specific announcement type its number at the end of this command.")
+		irc_chat(name, "eg. delete announcement 3")
 		irc_chat(name, ".")
 	end
 
@@ -2895,7 +2897,13 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: who visited")
-		irc_chat(name, "")
+		irc_chat(name, "See who visited a player location or base.")
+		irc_chat(name, "Example with defaults:  who visited player smeg days 1 range 10 height 4")
+		irc_chat(name, "Example with coords:  who visited x 0 y 100 z 0 height 5 days 1 range 20")
+		irc_chat(name, "Another example:  who visited player smeg base")
+		irc_chat(name, "Another example:  who visited bed smeg")
+		irc_chat(name, "Setting hours will reset days to zero")
+		irc_chat(name, "Defaults: days = 1 or hours = 0, range = 10")
 		irc_chat(name, ".")
 	end
 
@@ -3015,12 +3023,18 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
-		irc_chat(name, "Command: pay")
-		irc_chat(name, "")
+		irc_chat(name, "Command: pay {player} {amount of {monies}}")
+		irc_chat(name, "eg. pay joe 1000.  Joe will receive 1000 {monies} and will be alerted with a private message.  You will also see a confirmation message that you have paid them.")
+		irc_chat(name, "Only owners and level 1 admins can do this on IRC.")
 		irc_chat(name, ".")
 	end
 
 	if (words[1] == "pay") then
+		if (players[ircid].accessLevel > 1) then
+			irc_chat(name, "Restricted command.")
+			return
+		end
+
 		name1 = words[2]
 		name1 = string.trim(name1)
 		pid = LookupPlayer(name1)
@@ -3195,7 +3209,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			echoConsole = false
 		end
 
-		if msg == "se" or msg == "webpermission list" or msg == "ban list" or msg == "le" or string.sub(msg, 1, 3) == "lpf" or string.sub(msg, 1, 3) == "lpb" or string.sub(msg, 1, 3) == "lps" or msg == "SystemInfo" or msg == "traderlist" or msg == "gg" or msg == "ggs" or msg == "version" or string.sub(msg, 1, 3) == "li " or string.sub(msg, 1, 3) == "si " or string.sub(msg, 1, 3) == "llp" then
+		if msg == "se" or msg == "webpermission list" or msg == "ban list" or msg == "lp" or msg == "le" or string.sub(msg, 1, 3) == "lpf" or string.sub(msg, 1, 3) == "lpb" or string.sub(msg, 1, 3) == "lps" or msg == "SystemInfo" or msg == "traderlist" or msg == "gg" or msg == "version" or string.sub(msg, 1, 3) == "li " or string.sub(msg, 1, 3) == "si " or string.sub(msg, 1, 4) == "help" then
 			echoConsole = false
 			echoConsoleTo = name
 			echoConsoleTrigger = ""
@@ -3205,10 +3219,18 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 		end
 
-		send(msg)
+		if server.useAllocsWebAPI then
+			conQueue[name] = {}
+			conQueue[name].ircUser = name
+			conQueue[name].command = msg
+		end
 
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
+		if msg ~= "lp" then
+			sendCommand(msg)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		end
 
 		return
@@ -4082,7 +4104,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, players[pid].name .. " has been added as a server owner.")
 			irc_chat(name, ".")
 
-			send("admin add " .. pid .. " 0")
+			sendCommand("admin add " .. pid .. " 0")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -4111,7 +4133,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, players[pid].name .. " is no longer a server owner.")
 			irc_chat(name, ".")
 
-			send("admin remove " .. pid)
+			sendCommand("admin remove " .. pid)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -4140,7 +4162,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, players[pid].name .. " has been added as a server admin.")
 			irc_chat(name, ".")
 
-			send("admin add " .. pid .. " 1")
+			sendCommand("admin add " .. pid .. " 1")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -4170,7 +4192,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, players[pid].name .. " is no longer a server admin.")
 			irc_chat(name, ".")
 
-			send("admin remove " .. pid)
+			sendCommand("admin remove " .. pid)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -4222,7 +4244,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		if (pid ~= 0) then
 			conn:execute("UPDATE players SET permanentBan = 0 WHERE steam = " .. pid)
-			send("ban remove " .. pid)
+			sendCommand("ban remove " .. pid)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -4629,11 +4651,38 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (words[1] == "li" and words[2] ~= nil) then
 		ircListItems = ircid
-		send("li " .. words[2])
+		sendCommand("li " .. words[2])
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
 		end
+
+		return
+	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: list prefabs {optional partial name of a prefab}")
+		irc_chat(name, "Lists of all the prefabs known to the server or a filtered list if you specify part of a prefab name.")
+		irc_chat(name, ".")
+	end
+
+	if (words[1] == "list" and words[2] == "prefabs") then
+		ircListItems = ircid
+		ircListItemsFilter = ""
+
+		if words[3] ~= nil then
+			ircListItemsFilter = string.lower(words[3])
+		end
+
+		sendCommand("bc-go prefabs")
+
+		if botman.getMetrics then
+			metrics.telnetCommands = metrics.telnetCommands + 1
+		end
+
+		return
 	end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
@@ -4836,7 +4885,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (words[1] == "blacklist" or words[1] == "ban" and words[2] == "remove" and players[ircid].accessLevel < 3) then
 		pid = LookupPlayer(words[3])
 		if pid ~= 0 then
-			send("ban remove " .. pid)
+			sendCommand("ban remove " .. pid)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -5140,7 +5189,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (words[1] == "list" and words[2] == "entities") then
 		if botman.lastListEntities == nil then
 			irc_chat(name, "Entities have not yet been scanned.  A scan has been actioned now. Repeat your command for the list.")
-			send("le")
+			sendCommand("le")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -5167,7 +5216,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		if minutes > 1 then
 			irc_chat(name, "It has been more than two minutes since the last entity scan.  A scan has been actioned now. Repeat your command for the list.")
-			send("le")
+			sendCommand("le")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -5178,7 +5227,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		if days==0 and hours==0 and minutes==0 and seconds==0 then
 			irc_chat(name, "Entities need to be re-scanned.  A scan has been actioned now. Repeat your command for the list.")
-			send("le")
+			sendCommand("le")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1

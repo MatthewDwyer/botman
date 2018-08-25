@@ -523,9 +523,9 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. players[playerid].cash .. " " .. server.moneyPlural .. " remaining.[-]")
 
 			if server.stompy then
-				send("bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number)
+				sendCommand("bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number)
 			else
-				send("give " .. playerid .. " " .. shopItem .. " " .. number)
+				sendCommand("give " .. playerid .. " " .. shopItem .. " " .. number)
 			end
 
 			if botman.getMetrics then

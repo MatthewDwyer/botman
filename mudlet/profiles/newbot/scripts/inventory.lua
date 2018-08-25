@@ -318,7 +318,7 @@ function CheckInventory()
 
 						-- list beds for this player if they drop 1 bed
 						if b.item == "bedroll" and tmp.delta == -1 and server.coppi then
-							send("lpb " .. k)
+							sendCommand("lpb " .. k)
 
 							if botman.getMetrics then
 								metrics.telnetCommands = metrics.telnetCommands + 1
@@ -346,7 +346,7 @@ function CheckInventory()
 								players[k].keystones = 0
 
 								if not server.lagged then
-									send("llp " .. k)
+									sendCommand("llp " .. k)
 
 									if botman.getMetrics then
 										metrics.telnetCommands = metrics.telnetCommands + 1
@@ -578,5 +578,7 @@ function readInventorySlot()
 		igplayers[invCheckID].equipment = igplayers[invCheckID].equipment .. slot .. "," .. item .. "," .. quality .. "|"
 	end
 
-	deleteLine()
+	if not server.useAllocsWebAPI then
+		deleteLine()
+	end
 end

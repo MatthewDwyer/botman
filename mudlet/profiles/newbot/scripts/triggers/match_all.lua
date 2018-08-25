@@ -7,15 +7,6 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
--- 2017-12-06T21:53:48 139450.416 INF Executing command 'traderlist' by Telnet from 158.69.250.118:60713
--- traderlist: [1] Position, pos_x=714, pos_y=108, pos_z=1197, closed=True
--- traderlist: [1] Size, size_x=41, size_y=24, size_z=43, closed=True
--- traderlist: [1] Protection, protection_x=61, protection_y=24, protection_z=63, closed=True
--- traderlist: [1] TeleportCenter, teleportCenter_x=0, teleportCenter_y=1, teleportCenter_z=1, closed=True
--- traderlist: [1] TeleportSize, teleportSize_x=40, teleportSize_y=24, teleportSize_z=41, closed=True
-
--- 2017-12-06T21:57:32 139674.910 INF Executing command 'lps 295' by Telnet from 158.69.250.118:60713
--- Skill from: entityid=295, athletics=51, healthNut=0, sexualTyranosaurus=1, scavenging=23, fastEddie=0, qualityJoe=1, treasureHunter=0, clothingArmor=7, bluntWeapons=17, pummelPete=1, breakingAndEntering=0, bladeWeapons=20, knifeGuy=0, decapitator=0, miningTools=75, miner69er=4, constructionTools=64, workbench=1, concreteMixing=1, steelSmithing=1, chemistryStation=0, badMechanic=3, pistols=1, theOutlaw=0, deadShot=0, shotguns=1, boomStick=0, splatterGun=0, rifles=1, betterLeadThanDead=0, archery=23, medicine=2, craftSkillWeapons=6, macheteCraftingName=0, craftSkillTools=6, craftSkillGuns=0, 9mmRoundCrafting=0, 44MagnumRoundCrafting=0, shotgunShellCrafting=0, 762mmRoundCrafting=0, craftSkillScience=6, electricBasicsName=0, electricTriggersName=0, electricTrapsMeleeName=0, electricTrapsRangedName=0, electricGeneratorName=0, electricBatteryBankName=0, doItYourselfName=0, craftSkillArmor=0, craftSkillMiscellaneous=0, paintMagazineDecorations=0, paintMagazineFaux=1, paintMagazineMasonry=0, paintMagazineMetal=1, paintMagazineWallCoverings=1, paintMagazineWoodAndRoofing=0, theSurvivor=4, theCamel=2, quickerCrafting=0, theFixer=0, barter=32, secretStash=1.
 
 function flagAdminsForRemoval()
 	local k,v
@@ -68,9 +59,9 @@ function matchAll(line)
 	local fields, values, x, y, z, id, loc, reset, steam, k, v, rows, tmp
 
 	-- set counter to help detect the bot going offline
-	botman.botOfflineCount = 2
+	botman.botOfflineCount = 0
 	botman.botOffline = false
-	botman.lastTelnetTimestamp = os.time()
+	botman.lastServerResponseTimestamp = os.time()
 
 	if botman.botDisabled then
 		return
@@ -163,15 +154,6 @@ function matchAll(line)
 	end
 
 
-	if string.find(line, "pm IPCHECK") then
-		temp = string.sub(line, string.find(line, "from ") + 5)
-		server.botsIP = string.sub(temp, 1, string.find(temp, ":") - 1)
-
-		deleteLine()
-		return
-	end
-
-
 	if customMatchAll ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua
 		if customMatchAll(line) then
@@ -191,7 +173,7 @@ function matchAll(line)
 		if string.find(line, "WRN DENSITYMISMATCH") then
 			fixChunkDensity = nil
 			temp = string.split(line, "\;")
-			send("rcd " .. temp[2] .. " " .. temp[4] .. " fix")
+			sendCommand("rcd " .. temp[2] .. " " .. temp[4] .. " fix")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -212,7 +194,7 @@ function matchAll(line)
 				pid = LookupPlayer(string.trim(pname))
 
 				if pid ~= 0 then
-					send("fdl " .. pid)
+					sendCommand("fdl " .. pid)
 
 					irc_chat(server.ircAlerts, "Fixed death loop for player " ..  igplayers[pid].name)
 				end
@@ -249,7 +231,7 @@ function matchAll(line)
 
 
 	if (string.sub(line, 1, 4) == os.date("%Y")) then
-		if botman.readGG then
+		if botman.readGG and not server.useAllocsWebAPI then
 			botman.readGG = false
 		end
 
@@ -263,6 +245,9 @@ function matchAll(line)
 
 			if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies WHERE remove = 1") end
 			loadGimmeZombies()
+
+			if botman.dbConnected then conn:execute("DELETE FROM otherEntities WHERE remove = 1") end
+			loadOtherEntities()
 
 			if botman.dbConnected then
 				cursor,errorString = conn:execute("SELECT Count(entityID) as maxZeds from gimmeZombies")
@@ -460,7 +445,7 @@ function matchAll(line)
 			server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
 
 			if tonumber(server.reservedSlots) > 0 then
-				send("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+				sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -471,7 +456,7 @@ function matchAll(line)
 				server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
 
 				if tonumber(server.reservedSlots) > 0 then
-					send("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+					sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
 
 					if botman.getMetrics then
 						metrics.telnetCommands = metrics.telnetCommands + 1
@@ -619,11 +604,11 @@ function matchAll(line)
 			reason = string.trim(temp[5])
 
 			if botman.dbConnected then
-				conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "','" .. bannedTo .. "')")
+				conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. bannedTo .. "', '%Y-%m-%d %H:%i:%s'))")
 
 				if players[steam] then
 					-- also insert the steam owner (will only work if the steam id is different)
-					conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. players[steam].steamOwner .. ",'" .. escape(reason) .. "','" .. bannedTo .. "')")
+					conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. players[steam].steamOwner .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. bannedTo .. "', '%Y-%m-%d %H:%i:%s'))")
 				end
 			end
 		end
@@ -772,13 +757,9 @@ function matchAll(line)
 						igplayers[pid].hackerDetection = "noclipping"
 
 						if players[pid].newPlayer then
-							if tonumber(players[pid].ping) > 150 then
-								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 40
-							else
-								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 25
-							end
-						else
 							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
+						else
+							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 10
 						end
 
 						alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. "[-]", "warn")
@@ -853,13 +834,9 @@ function matchAll(line)
 
 						if tonumber(dist) > 30 then
 							if players[pid].newPlayer then
-								if tonumber(players[pid].ping) > 150 then
-									players[pid].hackerScore = tonumber(players[pid].hackerScore) + 40
-								else
-									players[pid].hackerScore = tonumber(players[pid].hackerScore) + 25
-								end
-							else
 								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 20
+							else
+								players[pid].hackerScore = tonumber(players[pid].hackerScore) + 10
 							end
 						end
 
@@ -944,7 +921,7 @@ function matchAll(line)
 		server.coppiVersion = temp[2]
 
 		if server.hideCommands then
-			send("tcch " .. server.commandPrefix)
+			sendCommand("tcch " .. server.commandPrefix)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -964,7 +941,7 @@ function matchAll(line)
 		server.coppiVersion = temp[2]
 
 		if server.hideCommands then
-			send("tcch " .. server.commandPrefix)
+			sendCommand("tcch " .. server.commandPrefix)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -980,7 +957,23 @@ function matchAll(line)
 		server.allocs = true
 
 		temp = string.split(line, ":")
-		server.allocsVersion = temp[2]
+		server.allocsServerFixes = temp[2]
+
+		return
+	end
+
+
+	if string.find(line, "Mod Allocs command extensions") then
+		temp = string.split(line, ":")
+		server.allocsCommandExtensions = temp[2]
+
+		return
+	end
+
+
+	if string.find(line, "Mod Allocs MapRendering") then
+		temp = string.split(line, ":")
+		server.allocsMap = temp[2]
 
 		return
 	end
@@ -989,6 +982,7 @@ function matchAll(line)
 	if (string.find(line, "please specify one of the entities")) then
 		-- flag all the zombies for removal so we can detect deleted zeds
 		if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET remove = 1") end
+		if botman.dbConnected then conn:execute("UPDATE otherEntities SET remove = 1") end
 
 		getZombies = true
 		return
@@ -1046,16 +1040,19 @@ function matchAll(line)
 	end
 
 
-	if string.find(line, "DropOnDeath =") then
+	if string.find(line, "HideCommandExecutionLog =") then
 		if (not botman.readGG) and server.botsIP then
 			botman.badServerConfig = true
-			irc_chat(server.ircMain, "ALERT! It appears that the server config setting HideCommandExecutionLog is not set to 0")
-			irc_chat(server.ircMain, "If any telnet traffic is hidden from the bot, important features will not work.  Please set it to 0")
+
+			if server.HideCommandExecutionLog then
+				if tonumber(server.HideCommandExecutionLog) > 1 then
+					irc_chat(server.ircMain, "ALERT! It appears that the server config setting HideCommandExecutionLog is not set to 0 or 1")
+					irc_chat(server.ircMain, "If any telnet traffic is hidden from the bot, important features will not work.  Please set it to 0 or 1")
+				end
+			end
 		else
 			botman.badServerConfig = false
 		end
-
-		return
 	end
 
 
@@ -1071,7 +1068,6 @@ function matchAll(line)
 
 
 	-- detect server version
-	-- Game version: Alpha 16 (b105) Compatibility Version: Alpha 16
 	if string.find(line, "Game version:") then
 		server.gameVersion = string.trim(string.sub(line, string.find(line, "Game version:") + 14, string.find(line, "Compatibility") - 2))
 		if botman.dbConnected then conn:execute("UPDATE server SET gameVersion = '" .. escape(server.gameVersion) .. "'") end
@@ -1145,6 +1141,11 @@ function matchAll(line)
 
 	if botman.readGG or botman.badServerConfig then
 		number = tonumber(string.match(line, " (%d+)"))
+
+		if (string.find(line, "HideCommandExecutionLog =")) then
+			server.HideCommandExecutionLog = number
+			return
+		end
 
 		if (string.find(line, "MaxSpawnedZombies set to")) then
 			server.MaxSpawnedZombies = number
@@ -1245,7 +1246,7 @@ function matchAll(line)
 				server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
 
 				if server.reservedSlots > 0 then
-					send("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+					sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
 
 					if botman.getMetrics then
 						metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1256,7 +1257,7 @@ function matchAll(line)
 					server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
 
 					if tonumber(server.reservedSlots) > 0 then
-						send("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+						sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
 
 						if botman.getMetrics then
 							metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1328,6 +1329,5 @@ function matchAll(line)
 		irc_chat(server.ircAlerts, line)
 		return
 	end
-
 end
 

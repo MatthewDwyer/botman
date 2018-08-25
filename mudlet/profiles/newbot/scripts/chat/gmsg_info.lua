@@ -803,14 +803,14 @@ function gmsg_info()
 					irc_chat(chatvars.ircAlias, server.botName .. " has been online " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.")
 				end
 
-				if gameTick < 0 then
+				if server.uptime < 0 then
 					if (chatvars.playername ~= "Server") then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server uptime is unknown due to a server fault. Ask and admin to reboot the server.[-]")
 					else
 						irc_chat(chatvars.ircAlias, "Server uptime is unknown due to a server fault. Ask and admin to reboot the server.")
 					end
 				else
-					diff = gameTick
+					diff = server.uptime
 					days = math.floor(diff / 86400)
 
 					if (days > 0) then

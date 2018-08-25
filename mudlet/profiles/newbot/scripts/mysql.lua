@@ -55,7 +55,7 @@ end
 function initBotsData()
 	local IP, country
 
-if debug then display("initBotsData start\n") end
+	if debug then display("initBotsData start\n") end
 
 	-- insert players in bots db
 	for k, v in pairs(players) do
@@ -72,23 +72,23 @@ if debug then display("initBotsData start\n") end
 		end
 	end
 
-if debug then display("initBotsData end\n") end
+	if debug then display("initBotsData end\n") end
 end
 
 
 function cleanupBotsData()
-if debug then display("cleanupBotsData start\n") end
+	if debug then display("cleanupBotsData start\n") end
 
 	if botman.db2Connected then
 		connBots:execute("UPDATE players set online = 0 WHERE server = '" .. escape(server.serverName) .. "'")
 	end
 
-if debug then display("cleanupBotsData end\n") end
+	if debug then display("cleanupBotsData end\n") end
 end
 
 
 function registerBot()
-if debug then display("registerBot start\n") end
+	if debug then display("registerBot start\n") end
 
 	-- the server table in bots db should have 1 unique record for each server.  We achieve this by picking a random number and testing the server table
 	-- to see if it is present.  We keep trying random numbers till we find an unused one then we insert a record into the servers table for this server.
@@ -131,7 +131,7 @@ if debug then display("registerBot start\n") end
 		insertBotsPlayer(k)
 	end
 
-if debug then display("registerBot end\n") end
+	if debug then display("registerBot end\n") end
 end
 
 
@@ -142,7 +142,11 @@ function insertBotsPlayer(steam)
 
 	if tonumber(server.botID) > 0 then
 		-- insert or update player in bots db
-		connBots:execute("INSERT INTO players (botID, server, steam, ip, name, online, level, zombies, score, playerKills, deaths, timeOnServer, playtime, country, ping) VALUES (" .. server.botID .. ",'" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].IP .. "','" .. escape(players[steam].name) .. "', 1," .. players[steam].level .. "," .. players[steam].zombies .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].deaths .. "," .. players[steam].timeOnServer .. "," .. igplayers[steam].sessionPlaytime .. ",'" .. players[steam].country .. "'," .. players[steam].ping .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].IP .. "', name = '" .. escape(players[steam].name) .. "', online = 1, level = " .. players[steam].level .. ", zombies = " .. players[steam].zombies .. ", score = " .. players[steam].score .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. ", timeOnServer  = " .. players[steam].timeOnServer .. ", playtime = " .. igplayers[steam].sessionPlaytime .. ", country = '" .. players[steam].country .. "', ping = " .. players[steam].ping)
+		if players[steam].IP then
+			connBots:execute("INSERT INTO players (botID, server, steam, ip, name, online, level, zombies, score, playerKills, deaths, timeOnServer, playtime, country, ping) VALUES (" .. server.botID .. ",'" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].IP .. "','" .. escape(players[steam].name) .. "', 1," .. players[steam].level .. "," .. players[steam].zombies .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].deaths .. "," .. players[steam].timeOnServer .. "," .. igplayers[steam].sessionPlaytime .. ",'" .. players[steam].country .. "'," .. players[steam].ping .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].IP .. "', name = '" .. escape(players[steam].name) .. "', online = 1, level = " .. players[steam].level .. ", zombies = " .. players[steam].zombies .. ", score = " .. players[steam].score .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. ", timeOnServer  = " .. players[steam].timeOnServer .. ", playtime = " .. igplayers[steam].sessionPlaytime .. ", country = '" .. players[steam].country .. "', ping = " .. players[steam].ping)
+		else
+			connBots:execute("INSERT INTO players (botID, server, steam, name, online, level, zombies, score, playerKills, deaths, timeOnServer, playtime, country, ping) VALUES (" .. server.botID .. ",'" .. escape(server.serverName) .. "'," .. steam .. ",'" .. escape(players[steam].name) .. "', 1," .. players[steam].level .. "," .. players[steam].zombies .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].deaths .. "," .. players[steam].timeOnServer .. "," .. igplayers[steam].sessionPlaytime .. ",'" .. players[steam].country .. "'," .. players[steam].ping .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].IP .. "', name = '" .. escape(players[steam].name) .. "', online = 1, level = " .. players[steam].level .. ", zombies = " .. players[steam].zombies .. ", score = " .. players[steam].score .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. ", timeOnServer  = " .. players[steam].timeOnServer .. ", playtime = " .. igplayers[steam].sessionPlaytime .. ", country = '" .. players[steam].country .. "', ping = " .. players[steam].ping)
+		end
 	end
 end
 
@@ -374,7 +378,7 @@ end
 
 
 function initDB()
-if debug then display("initDB start") end
+	if debug then display("initDB start") end
 	alterTables()
 
 	conn:execute("TRUNCATE TABLE ircQueue")
@@ -389,7 +393,7 @@ if debug then display("initDB start") end
 
 	getServerFields()
 	getPlayerFields()
-if debug then display("initDB end") end
+	if debug then display("initDB end") end
 end
 
 
@@ -558,7 +562,7 @@ function alterTables()
 	local benchStart = os.clock()
 	local sql
 
-if debug then display("alterTables start\n") end
+	if debug then display("alterTables start\n") end
 
 	-- These are here to make it easier to update other bots while the bot is in development.
 	-- After each sql statement is processed, they are stored in the table altertables which is checked so that each statement is only ever run once.
@@ -640,7 +644,7 @@ if debug then display("alterTables start\n") end
 	doSQL("ALTER TABLE `players` ADD `VACBanned` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `bountyReason` VARCHAR(100) NOT NULL DEFAULT ''")
 
-if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
+	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
 	-- changes to server table
 	doSQL("ALTER TABLE `server` ADD COLUMN `teleportCost` INT NOT NULL DEFAULT '200'")
@@ -754,8 +758,11 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `server` ADD `optOutGlobalBots` TINYINT(1) NOT NULL DEFAULT '0'") -- todo code
 	doSQL("ALTER TABLE `server` ADD `dropMiningWarningThreshold` INT NOT NULL DEFAULT '99'")
 	doSQL("ALTER TABLE `server` ADD `webPanelPort` INT NOT NULL DEFAULT '8080'")
+	doSQL("ALTER TABLE `server` ADD `allocsWebAPIUser` VARCHAR(100) NOT NULL DEFAULT '', ADD `allocsWebAPIPassword` VARCHAR(100) NOT NULL DEFAULT '', ADD `useAllocsWebAPI` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `defaultWatchTimer` INT NOT NULL DEFAULT '259200")
+	doSQL("ALTER TABLE `server` ADD `archivePlayersLastSeenDays` INT NOT NULL DEFAULT '60")
 
-if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
+	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
 	-- misc table changes
 	doSQL("ALTER TABLE `friends` ADD `autoAdded` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -821,6 +828,8 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	doSQL("ALTER TABLE `locations` ADD `plot` TINYINT(1) NOT NULL DEFAULT '0', ADD `plotWallBock` VARCHAR(20) NOT NULL DEFAULT 'bedrock', ADD `plotFillBlock` VARCHAR(20) NOT NULL DEFAULT 'dirt', ADD `plotGridSize` INT NOT NULL DEFAULT '0', ADD `plotDepth` INT NOT NULL DEFAULT '5', ADD `hordeNightClosedHours` VARCHAR(5) NOT NULL DEFAULT '00-00'")
 	doSQL("ALTER TABLE `locations` ADD `watchPlayers` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `customMessages` CHANGE `message` `message` VARCHAR(500) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL")
+	doSQL("ALTER TABLE `otherEntities` ADD `remove` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `locations` ADD `isRound` TINYINT(1) NOT NULL DEFAULT '1'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)
@@ -855,7 +864,7 @@ if (debug) then display("debug alterTables line " .. debugger.getinfo(1).current
 	-- fix a bad choice of primary keys. Won't touch players again since it won't complete if a field exists which it then adds.
 	migratePlayers()
 
-if debug then display("alterTables end") end
+	if debug then display("alterTables end") end
 
 	if benchmarkBot then
 		display("function alterTables elapsed time: " .. string.format("%.2f", os.clock() - benchStart))

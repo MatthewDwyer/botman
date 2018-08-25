@@ -7,10 +7,28 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+
 onSysDisconnection = function ()
-	botman.botOfflineCount = 1
+	botman.botOfflineCount = 0
 	botman.botOffline = true
-	botman.lastTelnetTimestamp = os.time()
+	botman.lastServerResponseTimestamp = os.time()
+	botman.botOfflineTimestamp = os.time()
+end
+
+
+function getBotsIP()
+	local file, ln
+
+	os.remove(homedir .. "/temp/botsIP.txt")
+	os.execute("dig +short myip.opendns.com @resolver1.opendns.com > " .. homedir .. "/temp/botsIP.txt")
+
+	file = io.open(homedir .. "/temp/botsIP.txt", "r")
+
+	for ln in file:lines() do
+		server.botsIP = ln
+	end
+
+	file:close()
 end
 
 
@@ -34,7 +52,7 @@ function processConnectQueue(steam)
 			if string.sub(row.command, 1, 3) == "pm " or string.sub(row.command, 1, 3) == "say" then
 				message(row.command)
 			else
-				send(row.command)
+				sendCommand(row.command)
 			end
 
 			if botman.getMetrics then
@@ -97,25 +115,25 @@ end
 
 function reloadBot(getAllPlayers)
 	-- send several commands to the server to gather info.  Each command is sent 5 seconds apart to slow down the telnet spam.
-
-	tempTimer( 1, [[send("pm IPCHECK")]] )
-
-	-- got the time?  Hey that's a nice watch.  Can I have it?
-	tempTimer( 3, [[send("gt")]] )
-
-	tempTimer( 5, [[send("admin list")]] )
-	tempTimer( 10, [[send("version")]] )
-
-	if getAllPlayers then
-		tempTimer( 15, [[send("lkp")]] )
-	else
-		tempTimer( 15, [[send("lkp -online")]] )
+	if not server.botsIP then
+		getBotsIP()
 	end
 
-	tempTimer( 20, [[send("gg")]] )
-	tempTimer( 25, [[send("ban list")]] )
-	tempTimer( 30, [[send("teleh")]] )
-	tempTimer( 35, [[registerBot()]] )
+	-- got the time?  Hey that's a nice watch.  Can I have it?
+	tempTimer( 3, [[sendCommand("gt")]] )
+
+	tempTimer( 5, [[sendCommand("admin list")]] )
+	tempTimer( 10, [[sendCommand("version")]] )
+
+	if getAllPlayers then
+		tempTimer( 15, [[sendCommand("lkp")]] )
+	else
+		tempTimer( 15, [[sendCommand("lkp -online")]] )
+	end
+
+	tempTimer( 20, [[sendCommand("gg")]] )
+	tempTimer( 25, [[sendCommand("ban list")]] )
+	tempTimer( 30, [[registerBot()]] )
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 8
@@ -211,7 +229,7 @@ function readServerVote(steam)
 
 			-- reward the player.  Good Player!  Have a biscuit.
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Thanks for voting for us!  Your reward should spawn beside you.[-]")
-			send("se " .. players[steam].id .. " sc_General")
+			sendCommand("se " .. players[steam].id .. " sc_General")
 			file:close()
 
 			return
@@ -576,13 +594,12 @@ function collectSpawnableItemsList()
 		conn:execute("UPDATE shop SET validated = 1")
 	end
 
-	send("li a")
-	send("li e")
-	send("li i")
-	send("li o")
-	send("li u")
-
-	send("pm bot_RemoveInvalidItems")
+	sendCommand("li a")
+	tempTimer( 10, [[sendCommand("li e"))]] )
+	tempTimer( 20, [[sendCommand("li i"))]] )
+	tempTimer( 30, [[sendCommand("li o"))]] )
+	tempTimer( 40, [[sendCommand("li u"))]] )
+	tempTimer( 50, [[sendCommand("pm bot_RemoveInvalidItems"))]] )
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 6
@@ -675,7 +692,7 @@ function setChatColour(steam, level)
 
 	if players[steam].prisoner then
 		if string.upper(server.chatColourPrisoner) ~= "FFFFFF" then
-			send("cpc " .. steam .. " " .. server.chatColourPrisoner .. " 1")
+			sendCommand("cpc " .. steam .. " " .. server.chatColourPrisoner .. " 1")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -694,7 +711,7 @@ function setChatColour(steam, level)
 	-- change the colour of the player's name
 	if players[steam].chatColour ~= "" then
 		if string.upper(string.sub(players[steam].chatColour, 1, 6)) ~= "FFFFFF" then
-			send("cpc " .. steam .. " " .. stripAllQuotes(players[steam].chatColour) .. " 1")
+			sendCommand("cpc " .. steam .. " " .. stripAllQuotes(players[steam].chatColour) .. " 1")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -705,7 +722,7 @@ function setChatColour(steam, level)
 	end
 
 	if (access > 3 and access < 11) then
-		send("cpc " .. steam .. " " .. server.chatColourDonor .. " 1")
+		sendCommand("cpc " .. steam .. " " .. server.chatColourDonor .. " 1")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -713,7 +730,7 @@ function setChatColour(steam, level)
 	end
 
 	if access == 0 then
-		send("cpc " .. steam .. " " .. server.chatColourOwner .. " 1")
+		sendCommand("cpc " .. steam .. " " .. server.chatColourOwner .. " 1")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -721,7 +738,7 @@ function setChatColour(steam, level)
 	end
 
 	if access == 1 then
-		send("cpc " .. steam .. " " .. server.chatColourAdmin .. " 1")
+		sendCommand("cpc " .. steam .. " " .. server.chatColourAdmin .. " 1")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -729,7 +746,7 @@ function setChatColour(steam, level)
 	end
 
 	if access == 2 then
-		send("cpc " .. steam .. " " .. server.chatColourMod .. " 1")
+		sendCommand("cpc " .. steam .. " " .. server.chatColourMod .. " 1")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -737,7 +754,7 @@ function setChatColour(steam, level)
 	end
 
 	if access == 90 then
-		send("cpc " .. steam .. " " .. server.chatColourPlayer .. " 1")
+		sendCommand("cpc " .. steam .. " " .. server.chatColourPlayer .. " 1")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -745,7 +762,7 @@ function setChatColour(steam, level)
 	end
 
 	if access == 99 then
-		send("cpc " .. steam .. " " .. server.chatColourNewPlayer .. " 1")
+		sendCommand("cpc " .. steam .. " " .. server.chatColourNewPlayer .. " 1")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1240,7 +1257,7 @@ function restrictedCommandMessage()
 		if r == 11 then return("Give up.  You aren't using this command.") end
 
 		if r == 12 then
-			send("give " .. igplayers[chatvars.playerid].id .. " turd 1")
+			sendCommand("give " .. igplayers[chatvars.playerid].id .. " turd 1")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1259,9 +1276,152 @@ end
 
 function downloadHandler(event, ...)
    if event == "sysDownloadDone" then
-      finishDownload(...)
+		if string.find(..., "version.txt") then
+			finishDownload(...)
+			return
+		end
+
+		botman.lastServerResponseTimestamp = os.time()
+
+		if customAPIHandler ~= nil then
+			-- read the note on overriding bot code in custom/custom_functions.lua
+			if customAPIHandler(...) then
+				return
+			end
+		end
+
+		if string.find(..., "adminList.txt") then
+			-- read admin list
+			readAPI_AdminList()
+			return
+		end
+
+		if string.find(..., "banList.txt") then
+			-- read ban list
+			readAPI_BanList()
+			return
+		end
+
+		if string.find(..., "bc-go.txt", nil, true) then
+			-- read bc-go from Stompy's BC mod to get a list of game objects
+			readAPI_BCGo()
+			return
+		end
+
+		if string.find(..., "bc-time.txt", nil, true) then
+			-- read bc-time from Stompy's BC mod to get current server real time
+			readAPI_BCTime()
+			return
+		end
+
+		if string.find(..., "command.txt") then
+			-- read output of API command
+			readAPI_Command()
+			return
+		end
+
+		if string.find(..., "gg.txt") then
+			-- read gg
+			readAPI_GG()
+			return
+		end
+
+		if string.find(..., "help.txt") then
+			-- read help
+			readAPI_Help() -- help! help!
+			return
+		end
+
+		if string.find(..., "hostiles.txt") then
+			-- read hostiles
+			readAPI_Hostiles() -- GRR!  ARGH!
+			return
+		end
+
+		if string.find(..., "installedMods.txt") then
+			-- read version
+			readAPI_Version()
+			return
+		end
+
+		if string.find(..., "inventories.txt") then
+			-- read inventories
+			readAPI_Inventories()
+			return
+		end
+
+		if string.find(..., "le.txt") then
+			-- read le
+			readAPI_LE()
+			return
+		end
+
+		if string.find(..., "li.txt") then
+			-- read li
+			readAPI_LI()
+			return
+		end
+
+		if string.find(..., "lkp.txt") then
+			-- read lkp
+			readAPI_LKP()
+			return
+		end
+
+		if string.find(..., "llp.txt") then
+			-- read llp
+			readAPI_LLP()
+			return
+		end
+
+		if string.find(..., "lpf.txt") then
+			-- read lpf
+			readAPI_LPF()
+			return
+		end
+
+		if string.find(..., "mem.txt") then
+			-- read mem
+			readAPI_MEM()
+			return
+		end
+
+		if string.find(..., "pgd.txt") then
+			-- read pgd
+			readAPI_PGD()
+			return
+		end
+
+		if string.find(..., "playersOnline.txt") then
+			-- read players online
+			readAPI_PlayersOnline()
+			return
+		end
+
+		if string.find(..., "pug.txt") then
+			-- read pug
+			readAPI_PUG()
+			return
+		end
+
+		if string.find(..., "se.txt") then
+			-- read se
+			readAPI_SE()
+			return
+		end
+
    elseif event == "sysDownloadError" then
-	   failDownload(...)
+	   failDownload(event, ...) -- Oh no!  Critical failure!
+	end
+end
+
+
+function failDownload(event, filePath)
+	if string.find(filePath, "Forbidden") then
+		dbug("webtoken password has been reset")
+		server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+		conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+		sendCommand("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 	end
 end
 
@@ -1275,11 +1435,6 @@ function finishDownload(filePath)
 		codeBranch = file:read "*a"
 		file:close()
 	end
-end
-
-
-function failDownload(filePath)
-
 end
 
 
@@ -1394,7 +1549,7 @@ function atHome(steam)
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Dinner's on the floor.[-]")
 			r = rand(5)
 			if r == 1 then
-				send("give " .. steam .. " canDogfood 1")
+				sendCommand("give " .. steam .. " canDogfood 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1402,7 +1557,7 @@ function atHome(steam)
 			end
 
 			if r == 2 then
-				send("give " .. steam .. " canCatfood 1")
+				sendCommand("give " .. steam .. " canCatfood 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1410,7 +1565,7 @@ function atHome(steam)
 			end
 
 			if r == 3 then
-				send("give " .. steam .. " femur 1")
+				sendCommand("give " .. steam .. " femur 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1418,7 +1573,7 @@ function atHome(steam)
 			end
 
 			if r == 4 then
-				send("give " .. steam .. " vegetableStew 1")
+				sendCommand("give " .. steam .. " vegetableStew 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1426,7 +1581,7 @@ function atHome(steam)
 			end
 
 			if r == 5 then
-				send("give " .. steam .. " meatStew 1")
+				sendCommand("give " .. steam .. " meatStew 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1781,7 +1936,7 @@ function kick(steam, reason)
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','kick','Player " .. steam .. " " .. escape(players[steam].name) .. " kicked for " .. escape(reason) .. "'," .. steam .. ")") end
 	end
 
-	send("kick " .. steam .. " " .. " \"" .. reason .. "\"")
+	sendCommand("kick " .. steam .. " " .. " \"" .. reason .. "\"")
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1845,7 +2000,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 		if steam == 0 then steam = tmp end
 	end
 
-	send("ban add " .. steam .. " " .. duration .. " \"" .. reason .. "\"")
+	sendCommand("ban add " .. steam .. " " .. duration .. " \"" .. reason .. "\"")
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1902,7 +2057,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 			end
 		end
 
-		send("llp " .. steam)
+		sendCommand("llp " .. steam)
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1911,7 +2066,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 		-- Look for and also ban ingame players with the same IP
 		for k,v in pairs(igplayers) do
 			if v.IP == players[steam].IP and k ~= steam and v.IP ~= "" then
-				send("ban add " .. k .. " " .. duration .. " \"same IP as banned player\"")
+				sendCommand("ban add " .. k .. " " .. duration .. " \"same IP as banned player\"")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -2056,7 +2211,7 @@ function timeoutPlayer(steam, reason, bot)
 		igplayers[steam].tp = 1
 		igplayers[steam].hackerTPScore = 0
 
-		send("tele " .. steam .. " " .. players[steam].xPosTimeout .. " 60000 " .. players[steam].zPosTimeout)
+		sendCommand("tele " .. steam .. " " .. players[steam].xPosTimeout .. " 60000 " .. players[steam].zPosTimeout)
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -2076,7 +2231,7 @@ function checkRegionClaims(x, z)
 		row = cursor:fetch({}, "a")
 		while row do
 			if row.remove == "1" then
-				send("rlp " .. row.x .. " " .. row.y .. " " .. row.z)
+				sendCommand("rlp " .. row.x .. " " .. row.y .. " " .. row.z)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -2187,7 +2342,7 @@ function startReboot()
 	-- add a random delay to mess with dupers
 	local rnd = rand(5)
 
-	send("sa")
+	sendCommand("sa")
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 1
@@ -2226,11 +2381,7 @@ function finishReboot()
 	end
 
 	botman.ignoreAdmins = true
-	send("shutdown")
-
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 1
-	end
+	server.uptime = 0
 
 	-- flag all players as offline
 	connBots:execute("UPDATE players SET online = 0 WHERE botID = " .. server.botID)
@@ -2243,6 +2394,12 @@ function finishReboot()
 	conn:execute("TRUNCATE TABLE memTracker")
 	conn:execute("TRUNCATE TABLE commandQueue")
 	conn:execute("TRUNCATE TABLE gimmeQueue")
+
+	sendCommand("shutdown")
+
+	if botman.getMetrics then
+		metrics.telnetCommands = metrics.telnetCommands + 1
+	end
 end
 
 
@@ -2826,7 +2983,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].VACBanned = false
 	players[steam].walkies = false
 	players[steam].watchPlayer = true
-	players[steam].watchPlayerTimer = os.time() + 2419200 -- stop watching in one month.  it will stop earlier once they are upgraded from new player status
+	players[steam].watchPlayerTimer = os.time() + server.defaultWatchTimer
 	players[steam].waypoint2X = 0
 	players[steam].waypoint2Y = 0
 	players[steam].waypoint2Z = 0
@@ -2940,50 +3097,20 @@ function fixMissingStuff()
 	lfs.mkdir(homedir .. "/chatlogs")
 
 	if not isFile(homedir .. "/custom/gmsg_custom.lua") then
-		file = io.open(homedir .. "/custom/gmsg_custom.lua", "a")
-		file:write("function gmsg_custom()\n")
-		file:write("	calledFunction = \"gmsg_custom\"\n")
-		file:write("	\-\- ###################  do not allow remote commands beyond this point ################\n")
-		file:write("	if (chatvars.playerid == nil) then\n")
-		file:write("		botman.faultyChat = false\n")
-		file:write("		return false\n")
-		file:write("	end\n")
-		file:write("	\-\- ####################################################################################\n")
-		file:write("	if (chatvars.words[1] == \"test\" and chatvars.words[2] == \"command\") then\n")
-		file:write("		message(\"pm \" .. chatvars.playerid .. \" [\" .. server.chatColour .. \"]This is a sample command in gmsg_custom.lua in the scripts folder.[-]\")\n")
-		file:write("		botman.faultyChat = false\n")
-		file:write("		return true\n")
-		file:write("	end\n")
-		file:write("end\n")
-		file:close()
+		os.execute("wget http://www.botman.nz/gmsg_custom.lua -P \"" .. homedir .. "\"/custom/")
 	end
 
 	if not isFile(homedir .. "/custom/customIRC.lua") then
-		file = io.open(homedir .. "/custom/customIRC.lua", "a")
-		file:write("\-\- Any code you put in here is accessed via bot commands on IRC not ingame.\n")
-		file:write("\-\- This code is not replaced by bot updates.\n")
-		file:write("function customIRC(name, words, wordsOld, msgLower)\n")
-		file:write("local ircid\n")
-		file:write("ircid = LookupOfflinePlayer(name, \"all\")\n")
-		file:write("if (words[1] == \"debug\" and words[2] == \"on\") then\n")
-		file:write("server.enableWindowMessages = true\n")
-		file:write("irc_chat(name, \"Debugging ON\")\n")
-		file:write("return true\n")
-		file:write("end\n")
-		file:write("if (words[1] == \"debug\" and words[2] == \"off\") then\n")
-		file:write("server.enableWindowMessages = false\n")
-		file:write("irc_chat(name, \"Debugging OFF\")\n")
-		file:write("return true\n")
-		file:write("end\n")
-		file:write("return false\n")
-		file:write("end\n")
-		file:close()
+		os.execute("wget http://www.botman.nz/customIRC.lua -P \"" .. homedir .. "\"/custom/")
 	end
 
+	if not isFile(homedir .. "/custom/custom_functions.lua") then
+		os.execute("wget http://www.botman.nz/custom_functions.lua -P \"" .. homedir .. "\"/custom/")
+	end
 
 	if type(gimmeZombies) ~= "table" then
 		gimmeZombies = {}
-		send("se")
+		sendCommand("se")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1

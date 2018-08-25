@@ -11,8 +11,25 @@ function twoMinuteTimer()
 	-- to fix a weird bug where the bot would stop responding to chat but could be woken up by irc chatter we send the bot a wake up call
 	irc_chat(server.ircBotName, "Keep alive")
 
+	writeBotmanINI()
+
 	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
 		return
+	end
+
+	if tonumber(botman.playersOnline) > 0 then
+		-- save the penguins! er I mean world!
+		sendCommand("sa")
+
+		if server.scanErrors and server.coppi then
+			for k,v in pairs(igplayers) do
+				sendCommand("rcd " .. math.floor(v.xPos) .. " " .. math.floor(v.zPos))
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+		end
 	end
 
 	if customTwoMinuteTimer ~= nil then
@@ -23,16 +40,6 @@ function twoMinuteTimer()
 	end
 
 	removeBadPlayerRecords()
-
-	if server.scanErrors and server.coppi then
-		for k,v in pairs(igplayers) do
-			send("rcd " .. math.floor(v.xPos) .. " " .. math.floor(v.zPos))
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-		end
-	end
 
 	-- logout anyone on irc who hasn't typed anything and their session has expired
 	for k,v in pairs(players) do

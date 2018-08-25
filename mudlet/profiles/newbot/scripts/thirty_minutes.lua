@@ -12,7 +12,9 @@ function ThirtyMinuteTimer()
 	windowMessage(server.windowDebug, "half hour timer\n")
 
 	-- save the world (and the kitties)
-	send("sa")
+	if not botman.botOffline then
+		sendCommand("sa")
+	end
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 1

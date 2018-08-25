@@ -32,7 +32,7 @@ function gameTimeTrigger(line)
 			server.delayReboot = false
 		end
 
-		if not server.delayReboot and botman.scheduledRestart then
+		if not server.delayReboot and botman.scheduledRestart and tonumber(server.feralRebootDelay) > 0 then
 			message("say [" .. server.chatColour .. "]Feral hordes run today so the server will reboot tomorrow.[-]")
 			server.delayReboot = true
 		end
@@ -54,8 +54,8 @@ function gameTimeTrigger(line)
 	end
 
 	if (botman.hordeNightToday and tonumber(server.gameHour) == 21 and tonumber(server.gameMinute) > 45 and server.despawnZombiesBeforeBloodMoon and server.stompy) then
-		send("bc-remove /type=EntityZombie")
-		send("bc-remove /type=EntityZombieCrawl")
+		sendCommand("bc-remove /type=EntityZombie")
+		sendCommand("bc-remove /type=EntityZombieCrawl")
 	end
 
 	if (tonumber(server.gameHour) == 0 and server.allowLottery == true) then
@@ -110,5 +110,7 @@ function gameTimeTrigger(line)
 		end
 	end
 
-	deleteLine()
+	if not server.useAllocsWebAPI then
+		deleteLine()
+	end
 end

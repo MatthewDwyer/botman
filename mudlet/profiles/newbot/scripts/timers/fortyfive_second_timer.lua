@@ -46,7 +46,7 @@ function fortyfiveSecondTimer()
 					v.claimPass = 2
 				else
 					if server.enableTimedClaimScan then
-						send("llp " .. k .. " parseable")
+						sendCommand("llp " .. k)
 
 						if botman.getMetrics then
 							metrics.telnetCommands = metrics.telnetCommands + 1

@@ -70,6 +70,13 @@ function pvpPolice(line)
 	igplayers[victimID].deadY = igplayers[victimID].yPos
 	igplayers[victimID].deadZ = igplayers[victimID].zPos
 
+	if customPVP ~= nil then
+		-- read the note on overriding bot code in custom/custom_functions.lua
+		if customPVP(line, killerID, victimID) then
+			return
+		end
+	end
+
 	if (killerName == victimName) then
 		if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
 
@@ -91,7 +98,7 @@ function pvpPolice(line)
 		if (r == 12) then message("say [" .. server.chatColour .. "]" .. killerName .. " added a new stain to the floor.[-]") end
 		if (r == 13) then message("say [" .. server.chatColour .. "]ISIS got nothing on " .. killerName .. "'s suicide bomber skillz.[-]") end
 		if (r == 14) then message("say [" .. server.chatColour .. "]" .. killerName .. " reached a new low with that death. Six feet under.[-]") end
-		if (r == 15) then message("say [" .. server.chatColour .. "]" .. killerName .. " needs clean undies after that one.[-]") end
+		if (r == 15) then message("say [" .. server.chatColour .. "]" .. killerName .. " needs to work on their throw.[-]") end
 		if (r == 16) then message("say [" .. server.chatColour .. "]" .. killerName .. " is really good at faking their own death! So realistic.[-]") end
 		if (r == 17) then message("pm " .. killerID .. " [" .. server.chatColour .. "][  Wasted!  ][-]") end
 		if (r == 18) then message("say [" .. server.chatColour .. "]Some say " .. killerName .. " isn't very good at this.[-]") end
@@ -123,36 +130,32 @@ function pvpPolice(line)
 
 				players[killerID].pvpBounty = 200
 			else
-				r = rand(29)
+				r = rand(25)
 				if r == 1 then message("say [" .. server.chatColour .. "]" .. killerName .. " once again asserts their dominance in the world.[-]") end
 				if r == 2 then message("say [" .. server.chatColour .. "]" .. killerName .. " strikes a mighty blow against " .. victimName .. "![-]") end
 				if r == 3 then message("say [" .. server.chatColour .. "]" .. killerName .. " fluked that one! " .. victimName .. " will be pissed.[-]") end
 				if r == 4 then message("say [" .. server.chatColour .. "]" .. killerName .. " dispatched " .. victimName .. " with a little too much enthusiasm. Medics have been called to consume the body.[-]") end
-				if r == 5 then message("say [" .. server.chatColour .. "]" .. killerName .. " ripped " .. victimName .. " a new asshole.[-]") end
-				if r == 6 then message("say [" .. server.chatColour .. "]Player " .. killerName .. " is on fire metaphorically speaking. " .. victimName .. " is too.. for real.[-]") end
-				if r == 7 then message("say [" .. server.chatColour .. "]" .. killerName .. " is really asking for it with another spectacular kill.[-]") end
-				if r == 8 then message("say [" .. server.chatColour .. "]" .. killerName .. " sent " .. victimName .. " a heart stopping, high velocity gift.  Right between the eyes.[-]") end
-				if r == 9 then message("say [" .. server.chatColour .. "]" .. victimName .. " walked right into that one![-]") end
-				if r == 10 then message("say [" .. server.chatColour .. "]" .. victimName .. " forgot their flame proof underwear, or infact any underwear.[-]") end
-				if r == 11 then message("say [" .. server.chatColour .. "]" .. victimName .. " spread themselves too thin in that fight.  Anyone got a broom and shovel?[-]") end
-				if r == 12 then message("say [" .. server.chatColour .. "]" .. victimName .. " impaled themselves on " .. killerName .. "'s mighty sword! .. I said mighty not erect![-]") end
-				if r == 13 then message("say [" .. server.chatColour .. "]Sadly " .. victimName .. " lost that fight.  Well I'm sad, I had " .. t .. " " .. server.moneyPlural .. " riding on him. :([-]") end
-				if r == 14 then message("say [" .. server.chatColour .. "]" .. victimName .. " enters the space program with a bang.. and a thud.. and another.  Oh and there's a leg.[-]") end
-				if r == 15 then message("say [" .. server.chatColour .. "]" .. killerName .. " cut " .. victimName .. " a new asshole!  I guess that makes " .. victimName .. " their own twin?[-]") end
-				if r == 16 then message("say [" .. server.chatColour .. "]" .. killerName .. " cut " .. victimName .. " a new asshole!  " .. victimName .. " is an even bigger asshole now! ^^[-]") end
-				if r == 17 then message("say [" .. server.chatColour .. "]" .. killerName .. " is slicing and dicing up the competition![-]") end
-				if r == 18 then message("say [" .. server.chatColour .. "]" .. killerName .. " makes mince meat of " .. victimName .. "! Gather round boys!  We're havin a BBQ with a side of WTF covered in OMG sauce![-]") end
-				if r == 19 then message("say [" .. server.chatColour .. "]Gordon Bennet! " .. killerName .. " is racing towards the lead with another masterfull kill.[-]") end
-				if r == 20 then message("say [" .. server.chatColour .. "]That was a feeble effort by " .. victimName .. ".[-]") end
-				if r == 21 then message("say [" .. server.chatColour .. "]" .. victimName .. " will need to move faster next time.. because they just lost both legs below the knee![-]") end
-				if r == 22 then message("say [" .. server.chatColour .. "]" .. killerName .. " made new garden furniture from " .. victimName .. "'s corpse.[-]") end
-				if r == 23 then message("say [" .. server.chatColour .. "]" .. killerName .. " has a new trophy head! " .. victimName .. "'s head is pretty ugly but it'll do.[-]") end
-				if r == 24 then message("say [" .. server.chatColour .. "]" .. killerName .. " has meat on the menu again with a slice of " .. victimName .. " and a few unrecognisable gibblets.[-]") end
-				if r == 25 then message("say [" .. server.chatColour .. "]" .. victimName .. " should have taken up knitting, its safer.[-]") end
-				if r == 26 then message("say [" .. server.chatColour .. "]" .. victimName .. " is in pieces over that one!  Caution: choking hazard.  Keep away from children under 3.[-]") end
-				if r == 27 then message("say [" .. server.chatColour .. "]" .. victimName .. " proves once again that you shouldn't borrow sugar from " .. killerName .. ".[-]") end
-				if r == 28 then message("say [" .. server.chatColour .. "]" .. victimName .. " needs a new hobby. " .. killerName .. " needs a dry clean.[-]") end
-				if r == 29 then message("say [" .. server.chatColour .. "]Oops " .. killerName .. " did it again.[-]") end
+				if r == 5 then message("say [" .. server.chatColour .. "]Player " .. killerName .. " is on fire metaphorically speaking. " .. victimName .. " is too.. for real.[-]") end
+				if r == 6 then message("say [" .. server.chatColour .. "]" .. killerName .. " is really asking for it with another spectacular kill.[-]") end
+				if r == 7 then message("say [" .. server.chatColour .. "]" .. killerName .. " sent " .. victimName .. " a heart stopping, high velocity gift.  Right between the eyes.[-]") end
+				if r == 8 then message("say [" .. server.chatColour .. "]" .. victimName .. " walked right into that one![-]") end
+				if r == 9 then message("say [" .. server.chatColour .. "]" .. victimName .. " forgot their flame proof underwear.[-]") end
+				if r == 10 then message("say [" .. server.chatColour .. "]" .. victimName .. " spread themselves too thin in that fight.  Anyone got a broom and shovel?[-]") end
+				if r == 11 then message("say [" .. server.chatColour .. "]Sadly " .. victimName .. " lost that fight.  Well I'm sad, I had " .. t .. " " .. server.moneyPlural .. " riding on him. :([-]") end
+				if r == 12 then message("say [" .. server.chatColour .. "]" .. victimName .. " enters the space program with a bang.. and a thud.. and another.  Oh and there's a leg.[-]") end
+				if r == 13 then message("say [" .. server.chatColour .. "]" .. killerName .. " is slicing and dicing up the competition![-]") end
+				if r == 14 then message("say [" .. server.chatColour .. "]" .. killerName .. " makes mince meat of " .. victimName .. "[-]") end
+				if r == 15 then message("say [" .. server.chatColour .. "]Gordon Bennet! " .. killerName .. " is racing towards the lead with another masterfull kill.[-]") end
+				if r == 16 then message("say [" .. server.chatColour .. "]That was a feeble effort by " .. victimName .. ".[-]") end
+				if r == 17 then message("say [" .. server.chatColour .. "]" .. victimName .. " will need to move faster next time.. because they just lost both legs below the knee![-]") end
+				if r == 18 then message("say [" .. server.chatColour .. "]" .. killerName .. " made new garden furniture from " .. victimName .. "'s corpse.[-]") end
+				if r == 19 then message("say [" .. server.chatColour .. "]" .. killerName .. " has a new trophy head! " .. victimName .. "'s head is pretty ugly but it'll do.[-]") end
+				if r == 20 then message("say [" .. server.chatColour .. "]" .. killerName .. " has meat on the menu again with a slice of " .. victimName .. " and a few unrecognisable gibblets.[-]") end
+				if r == 21 then message("say [" .. server.chatColour .. "]" .. victimName .. " should have taken up knitting, its safer.[-]") end
+				if r == 22 then message("say [" .. server.chatColour .. "]" .. victimName .. " is in pieces over that one!  Caution: choking hazard.  Keep away from children under 3.[-]") end
+				if r == 23 then message("say [" .. server.chatColour .. "]" .. victimName .. " proves once again that you shouldn't borrow sugar from " .. killerName .. ".[-]") end
+				if r == 24 then message("say [" .. server.chatColour .. "]" .. victimName .. " needs a new hobby. " .. killerName .. " needs a dry clean.[-]") end
+				if r == 25 then message("say [" .. server.chatColour .. "]Oops " .. killerName .. " did it again.[-]") end
 
 				if server.allowBank and tonumber(players[victimID].pvpBounty) > 0 then
 					message("pm " .. killerID .. " [" .. server.chatColour .. "]You won the bounty on " .. victimName .. "![-]")

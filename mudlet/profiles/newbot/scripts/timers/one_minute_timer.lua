@@ -7,6 +7,8 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug
+
 
 function savePlayerData(steam)
 	--dbug("savePlayerData " .. steam)
@@ -34,7 +36,7 @@ end
 
 
 function everyMinute()
-	local words, word, rday, rhour, rmin, k,v, debug
+	local words, word, rday, rhour, rmin, k, v
 	local diff, days, hours, restartTime, zombiePlayers, tempDate, playerList
 
 	windowMessage(server.windowDebug, "60 second timer\n")
@@ -44,24 +46,8 @@ function everyMinute()
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
-	-- special test for bot offline incase the main test fails to trigger
-	if botman.lastTelnetTimestamp == nil then
-		botman.lastTelnetTimestamp = os.time()
-	end
-
-	if os.time() - botman.lastTelnetTimestamp > 300 then
-		botman.lastTelnetTimestamp = os.time() -- reset this to make it sleep 5 minutes
-		botman.botOfflineCount = 2
-		reconnect()
-		irc_chat(server.ircMain, "Bot is offline - reconnecting.")
-	end
-
-	writeBotmanINI()
-
-	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
-
 	zombiePlayers = {}
-	diff = gameTick
+	diff = server.uptime
 	days = math.floor(diff / 86400)
 
 	if (days > 0) then
@@ -146,7 +132,7 @@ function everyMinute()
 			end
 
 			-- check how many claims they have placed
-			send("llp " .. k .. " parseable")
+			sendCommand("llp " .. k)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -199,7 +185,7 @@ function everyMinute()
 		botman.rebootTimerID = nil
 		rebootTimerDelayID = nil
 
-		send("sa")
+		sendCommand("sa")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -210,7 +196,7 @@ function everyMinute()
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
-	if (botman.playersOnline == 0 and gameTick < 0) and (scheduledReboot ~= true) and server.allowReboot == true then
+	if (botman.playersOnline == 0 and server.uptime < 0) and (scheduledReboot ~= true) and server.allowReboot == true then
 		botman.rebootTimerID = tempTimer( 60, [[startReboot()]] )
 		scheduledReboot = true
 	end
@@ -251,10 +237,12 @@ function everyMinute()
 	fallingBlocks = {}
 
 	if (server.scanZombies or server.scanEntities) and not server.lagged then
-		send("le")
+		if not server.useAllocsWebAPI then
+			sendCommand("le")
 
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
 		end
 	end
 
@@ -270,7 +258,14 @@ end
 function oneMinuteTimer()
 	local k, v, days, hours, minutes, tempDate
 
+	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
+	debug = false
+
+if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
 	fixMissingStuff()
+
+if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	tempDate = os.date("%Y-%m-%d", os.time())
 
@@ -284,8 +279,18 @@ function oneMinuteTimer()
 		newBotDay()
 	end
 
+if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
 	botman.botDate = os.date("%Y-%m-%d", os.time())
 	botman.botTime = os.date("%H:%M:%S", os.time())
+
+if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+	if tonumber(botman.playersOnline) <= 0 then
+		sendCommand("mem")
+	end
+
+if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	if botman.botDisabled or botman.botOffline or server.lagged then
 		return
@@ -298,35 +303,45 @@ function oneMinuteTimer()
 		end
 	end
 
+if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
 	everyMinute()
+
+if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	if tablelength(players) == 0 then
 		gatherServerData()
 		return
 	end
 
-	if server.coppi then
-		for k, v in pairs(igplayers) do
-			if players[k].autoFriend ~= "NA" then
-				send("lpf " .. k)
+	if tonumber(botman.playersOnline) > 0 then
+		if server.coppi then
+			if server.useAllocsWebAPI then
+				sendCommand("lpf")
+			else
+				for k, v in pairs(igplayers) do
+					if players[k].autoFriend ~= "NA" then
+						sendCommand("lpf " .. k)
 
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
+						if botman.getMetrics then
+							metrics.telnetCommands = metrics.telnetCommands + 1
+						end
+					end
 				end
 			end
 		end
-	end
 
-	if tonumber(server.maxPrisonTime) > 0 then
-		-- check for players to release from prison
-		for k,v in pairs(igplayers) do
-			if tonumber(players[k].prisonReleaseTime) < os.time() and players[k].prisoner and tonumber(players[k].prisonReleaseTime) > 0 then
-				gmsg(server.commandPrefix .. "release " .. k)
-			else
-				if players[k].prisoner then
-					if players[k].prisonReleaseTime - os.time() < 86164 then
-						days, hours, minutes = timeRemaining(players[k].prisonReleaseTime)
-						message("pm " .. k .. " [" .. server.chatColour .. "]You will be released in about " .. days .. " days " .. hours .. " hours and " .. minutes .. " minutes.[-]")
+		if tonumber(server.maxPrisonTime) > 0 then
+			-- check for players to release from prison
+			for k,v in pairs(igplayers) do
+				if tonumber(players[k].prisonReleaseTime) < os.time() and players[k].prisoner and tonumber(players[k].prisonReleaseTime) > 0 then
+					gmsg(server.commandPrefix .. "release " .. k)
+				else
+					if players[k].prisoner then
+						if players[k].prisonReleaseTime - os.time() < 86164 then
+							days, hours, minutes = timeRemaining(players[k].prisonReleaseTime)
+							message("pm " .. k .. " [" .. server.chatColour .. "]You will be released in about " .. days .. " days " .. hours .. " hours and " .. minutes .. " minutes.[-]")
+						end
 					end
 				end
 			end

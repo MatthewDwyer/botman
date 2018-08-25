@@ -15,6 +15,7 @@ function lpTrigger(line)
 	end
 
 	botman.listPlayers = true
+	relogCount = 0
 
 	if string.find(string.sub(line, 1, 19), os.date("%Y")) then
 		-- 2016-09-11T04:14:28
@@ -31,7 +32,9 @@ function lpTrigger(line)
 		end
 	end
 
-	deleteLine()
+	if not server.useAllocsWebAPI then
+		deleteLine()
+	end
 
 	if tonumber(botman.serverHour) == tonumber(server.botRestartHour) and server.allowBotRestarts then
 		uptime = math.floor((os.difftime(os.time(), botman.botStarted) / 3600))

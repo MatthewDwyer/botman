@@ -31,26 +31,15 @@ function collectBan(line)
 		hr = hr + 12
 	end
 
-	--display(temp)
-
 	bannedTo = temp[4] .. " " .. escape(temp[5]) .. " " .. escape(string.sub(temp[6], 1, 2))
-
-	--dbugi("bannedTo -" .. bannedTo .. "-")
-
-	expiryDate = yr .. "-" .. mth .. "-" .. dy .. " " .. hr .. ":" .. min .. ":" .. sec
-	--dbugi("expiryDate -" .. expiryDate .. "-")
-
+	expiryDate = yr .. mth .. dy .. " " .. hr .. ":" .. min .. ":" .. sec
 	steam = temp[1]
-	--dbugi("steam -" .. steam .. "-")
 	reason = string.sub(line, string.find(line, "reason:") + 8)
-	--dbugi("reason -" .. reason .. "-")
-
-	--dbugi("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "','" .. expiryDate .. "'")
 
 	if reason ~= nil then
-		if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "','" .. expiryDate .. "'") end
+		if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. expiryDate .. "', '%Y%m%d %H:%i:%s')") end
 	else
-		if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. expiryDate .. "'") end
+		if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",STR_TO_DATE('" .. expiryDate .. "', '%Y%m%d %H:%i:%s')") end
 	end
 
 	if botman.db2Connected then

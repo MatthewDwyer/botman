@@ -49,18 +49,22 @@ function checkData()
 		login()
 	end
 
+	if server.botsIP == nil then
+		getBotsIP()
+	end
+
 	if tablelength(shopCategories) == 0 then
 		loadShopCategories()
 	end
 
 	if tonumber(server.ServerPort) == 0 then
-		send("gg")
+		sendCommand("gg", "executeconsolecommand?command=gg&", "gg.txt")
 	end
 
 	if (botman.playersOnline > 0) then
 		if tablelength(igplayers) == 0 then
 			igplayers = {}
-			send("lp")
+			sendCommand("lp", "getplayersonline/?", "playersOnline.txt")
 		end
 	end
 
@@ -69,7 +73,7 @@ function checkData()
 	end
 
 	if tablelength(owners) == 0 then
-		send("admin list")
+		sendCommand("admin list", "executeconsolecommand?command=admin list&", "adminList.txt")
 	end
 
 	if benchmarkBot then
@@ -141,16 +145,28 @@ function login()
 			reloadBotScripts()
 		end
 
-		if not botman.sysExitID then
+		if botman.sysExitID == nil then
 			botman.sysExitID = registerAnonymousEventHandler("sysExitEvent", "onSysExit")
+
+			if botman.sysExitID == nil then
+				botman.sysExitID = 0
+			end
 		end
 
-		if not botman.sysIrcStatusMessageID then
+		if botman.sysIrcStatusMessageID == nil then
 			botman.sysIrcStatusMessageID = registerAnonymousEventHandler("sysIrcStatusMessage", "ircStatusMessage")
+
+			if botman.sysIrcStatusMessageID == nil then
+				botman.sysIrcStatusMessageID = 0
+			end
 		end
 
-		if not botman.sysDisconnectionID then
+		if botman.sysDisconnectionID == nil then
 			botman.sysDisconnectionID = registerAnonymousEventHandler("sysDisconnectionEvent", "onSysDisconnection")
+
+			if botman.sysDisconnectionID == nil then
+				botman.sysDisconnectionID = 0
+			end
 		end
 
 		modVersions = {}
@@ -169,7 +185,7 @@ function login()
 		botman.initError = true
 		botman.serverTime = ""
 		botman.feralWarning = false
-		botman.playersOnline = -1
+		botman.playersOnline = 0
 		botman.userHome = string.sub(homedir, 1, string.find(homedir, ".config") - 2)
 		loadServer()
 		botman.ignoreAdmins	= true

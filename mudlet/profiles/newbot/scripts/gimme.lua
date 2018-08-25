@@ -73,17 +73,17 @@ function setupArenaPlayers(pid)
 
 			-- give arena players stuff
 			if server.stompy then
-				send("bc-give " .. k .. " firstAidBandage /c=1 /silent")
-				send("bc-give " .. k .. " spint /c=1 /silent")
-				send("bc-give " .. k .. " beer /c=1 /silent")
-				send("bc-give " .. k .. " turd /c=1 /silent")
-				send("bc-give " .. k .. " trapSpikesNew 5")
+				sendCommand("bc-give " .. k .. " firstAidBandage /c=1 /silent")
+				sendCommand("bc-give " .. k .. " spint /c=1 /silent")
+				sendCommand("bc-give " .. k .. " beer /c=1 /silent")
+				sendCommand("bc-give " .. k .. " turd /c=1 /silent")
+				sendCommand("bc-give " .. k .. " trapSpikesNew 3")
 			else
-				send("give " .. k .. " firstAidBandage 1")
-				send("give " .. k .. " splint 1")
-				send("give " .. k .. " beer 1")
-				send("give " .. k .. " turd 1")
-				send("give " .. k .. " trapSpikesNew 5")
+				sendCommand("give " .. k .. " firstAidBandage 1")
+				sendCommand("give " .. k .. " splint 1")
+				sendCommand("give " .. k .. " beer 1")
+				sendCommand("give " .. k .. " turd 1")
+				sendCommand("give " .. k .. " trapSpikesNew 3")
 			end
 
 			if botman.getMetrics then
@@ -91,9 +91,9 @@ function setupArenaPlayers(pid)
 			end
 
 			if server.stompy then
-				send("bc-give " .. k .. " boneShiv /c=1 /q=600 /silent")
+				sendCommand("bc-give " .. k .. " boneShiv /c=1 /q=600 /silent")
 			else
-				send("give " .. k .. " boneShiv 1")
+				sendCommand("give " .. k .. " boneShiv 1")
 			end
 
 			if botman.getMetrics then
@@ -268,7 +268,7 @@ function gimme(pid)
 
 	if botman.maxGimmeZombies == nil then
 		-- the gimmeZombies table is empty so run se to fill it.
-		send("se")
+		sendCommand("se")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -786,15 +786,15 @@ function gimme(pid)
 
 		if qual ~= 0 then
 			if server.stompy then
-				send("bc-give " .. pid .. " " .. prize .. " /c=" .. qty .. " /q=" .. quality)
+				sendCommand("bc-give " .. pid .. " " .. prize .. " /c=" .. qty .. " /q=" .. quality)
 			else
-				send("give " .. pid .. " " .. prize .. " " .. qty .. " " .. quality)
+				sendCommand("give " .. pid .. " " .. prize .. " " .. qty .. " " .. quality)
 			end
 		else
 			if server.stompy then
-				send("bc-give " .. pid .. " " .. prize .. " /c=" .. qty)
+				sendCommand("bc-give " .. pid .. " " .. prize .. " /c=" .. qty)
 			else
-				send("give " .. pid .. " " .. prize .. " " .. qty)
+				sendCommand("give " .. pid .. " " .. prize .. " " .. qty)
 			end
 		end
 
@@ -915,9 +915,9 @@ function gimme(pid)
 		for k, v in pairs(igplayers) do
 			if (k ~= pid) then
 				if server.stompy then
-					send("bc-give " .. k .. " " .. prize .. " /c=1")
+					sendCommand("bc-give " .. k .. " " .. prize .. " /c=1")
 				else
-					send("give " .. k .. " " .. prize .. " 1")
+					sendCommand("give " .. k .. " " .. prize .. " 1")
 				end
 
 				if botman.getMetrics then
@@ -1092,7 +1092,7 @@ function gimme(pid)
 		end
 
 		if server.stompy then
-			send("bc-give " .. pid .. " trophy /c=1")
+			sendCommand("bc-give " .. pid .. " trophy /c=1")
 		else
 			cmd = "give " .. pid .. " trophy 1"
 		end
@@ -1112,7 +1112,7 @@ function gimme(pid)
 			message("pm " .. pid .. " [" .. server.chatColour .. "]" .. pname .. " won a care package via air drop.  Gee I hope the pilot knows where the drop zone is![-]")
 		end
 
-		send("spawnairdrop")
+		sendCommand("spawnairdrop")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1271,7 +1271,7 @@ function gimme(pid)
 		if (specialDay == "valentine") then
 			z = rand(4)
 			if z == 1 then
-				send("give " .. pid .. " yellowflower 1")
+				sendCommand("give " .. pid .. " yellowflower 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1279,7 +1279,7 @@ function gimme(pid)
 			end
 
 			if z == 2 then
-				send("give " .. pid .. " plantChrysanthemum 1")
+				sendCommand("give " .. pid .. " plantChrysanthemum 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1287,7 +1287,7 @@ function gimme(pid)
 			end
 
 			if z == 3 then
-				send("give " .. pid .. " goldenrod 1")
+				sendCommand("give " .. pid .. " goldenrod 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1295,7 +1295,7 @@ function gimme(pid)
 			end
 
 			if z == 4 then
-				send("give " .. pid .. " cotton 1")
+				sendCommand("give " .. pid .. " cotton 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1

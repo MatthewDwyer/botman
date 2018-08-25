@@ -15,29 +15,33 @@ function endListPlayers(line)
 		return
 	end
 
-	if botman.listPlayers and not botman.listEntities then
-		botman.playersOnline = tonumber(string.match(line, "%d+"))
-		playerConnectCounter = botman.playersOnline
+	if not server.useAllocsWebAPI then
+		if botman.listPlayers and not botman.listEntities then
+			botman.playersOnline = tonumber(string.match(line, "%d+"))
+			playerConnectCounter = botman.playersOnline
 
-		if (botman.playersOnline == 0) then
-			-- we could schedule something to happen when no players are online
+			if (botman.playersOnline == 0) then
+				-- we could schedule something to happen when no players are online
+			end
+
+			-- if tonumber(server.botID) > 0 then
+				-- for k,v in pairs(igplayers) do
+					-- insertBotsPlayer(k)
+				-- end
+			-- end
+
+			botman.listPlayers = false
 		end
 
-		-- if tonumber(server.botID) > 0 then
-			-- for k,v in pairs(igplayers) do
-				-- insertBotsPlayer(k)
-			-- end
-		-- end
+		if botman.listEntities then
+			botman.listEntities = false
+		end
 
-		botman.listPlayers = false
+		-- reset relogCount as we have established that the server is talking to us
+		relogCount = 0
+
+		deleteLine()
 	end
-
-	if botman.listEntities then
-		botman.listEntities = false
-	end
-
-	-- reset relogCount as we have established that the server is talking to us
-	relogCount = 0
 
 
 	if tonumber(server.reservedSlots) > 0 then
@@ -65,6 +69,4 @@ function endListPlayers(line)
 		server.reservedSlotsUsed = 0
 		botman.dbReservedSlotsUsed = 0
 	end
-
-	deleteLine()
 end

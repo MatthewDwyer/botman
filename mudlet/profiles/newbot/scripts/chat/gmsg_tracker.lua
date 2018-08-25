@@ -748,7 +748,7 @@ function gmsg_tracker()
 			row = cursor:fetch({}, "a")
 
 			if row then
-				send("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z)
+				sendCommand("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -813,7 +813,7 @@ function gmsg_tracker()
 			row = cursor:fetch({}, "a")
 
 			if row then
-				send("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z)
+				sendCommand("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1

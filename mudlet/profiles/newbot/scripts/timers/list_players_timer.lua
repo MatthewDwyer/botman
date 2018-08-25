@@ -21,7 +21,13 @@ function listPlayers()
 	server.scanZombies = false
 
 	if tonumber(botman.playersOnline) ~= 0 then
-		send("lp")
+		if server.useAllocsWebAPI then
+			url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getplayersonline/?adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+			os.remove(homedir .. "/temp/playersOnline.txt")
+			downloadFile(homedir .. "/temp/playersOnline.txt", url)
+		else
+			send("lp")
+		end
 	end
 
 	if botman.getMetrics then

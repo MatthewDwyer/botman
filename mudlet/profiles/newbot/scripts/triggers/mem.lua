@@ -14,6 +14,10 @@ function memTrigger(line)
 
 	local time, fps, heap, heapMax, chunks, cgo, ply, zom, ent, items, k, v
 
+	if not server.useAllocsWebAPI or tonumber(botman.playersOnline) <= 0 then
+		relogCount = 0
+	end
+
 	if (string.find(line, "Heap:")) then
 		time = string.sub(line, string.find(line, "Time:") + 6, string.find(line, "FPS:") - 3)
 		fps = tonumber(string.sub(line, string.find(line, "FPS:") + 5, string.find(line, "Heap:") - 2))
@@ -25,12 +29,13 @@ function memTrigger(line)
 		zom = string.sub(line, string.find(line, "Zom:") + 5, string.find(line, "Ent:") - 2)
 		ent = string.sub(line, string.find(line, "Ent:") + 5, string.find(line, "Items:") - 2)
 		items = string.sub(line, string.find(line, "Items:") + 7, string.find(line, "CO:") - 2)
+		server.fps = tonumber(fps)
+		botman.playersOnline = tonumber(ply)
+		server.uptime = math.floor(time * 60)
 
-		server.fps = fps
-		if botman.dbConnected then conn:execute("INSERT INTO performance (serverdate, gametime, fps, heap, heapMax, chunks, cgo, players, zombies, entities, items) VALUES ('" .. botman.serverTime .. "'," .. time .. "," .. fps .. "," .. heap .. "," .. heapMax .. "," .. chunks .. "," .. cgo .. "," .. ply .. "," .. zom .. ",'" .. ent .. "'," .. items .. ")") end
-
-		-- some servers don't show the gt command in telnet, only the game time. We read the tick count here as well so we always have that info.
-		gameTickCountTrigger(line)
+		if botman.dbConnected then
+			conn:execute("INSERT INTO performance (serverdate, gametime, fps, heap, heapMax, chunks, cgo, players, zombies, entities, items) VALUES ('" .. botman.serverTime .. "'," .. time .. "," .. fps .. "," .. heap .. "," .. heapMax .. "," .. chunks .. "," .. cgo .. "," .. ply .. "," .. zom .. ",'" .. ent .. "'," .. items .. ")")
+		end
 
 		if botman.getMetrics then
 			if metrics == nil then

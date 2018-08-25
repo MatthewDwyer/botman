@@ -7,6 +7,130 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+
+function sendCommand(command, api, outputFile)
+	-- send the command to the server via Allocs web API if enabled otherwise use telnet
+
+	-- any commands that must be sent via telnet, trap and send them first.
+	-- if command == "pm IPCHECK" then
+		-- send(command)
+		-- return
+	-- end
+
+	--display("sent " .. command)
+
+	if server.useAllocsWebAPI and not string.find(command, "webtokens ") then
+		-- fix missing api and outputFile for some commands
+		if api == nil or api == "" then
+			if command == "admin list" then
+				api = "executeconsolecommand?command=admin list&"
+				outputFile = "adminList.txt"
+			end
+
+			if command == "ban list" then
+				api = "executeconsolecommand?command=ban list&"
+				outputFile = "banList.txt"
+			end
+
+			if command == "bc-go prefabs" then -- this is used to read server ticks and grab the players online.
+				api = "executeconsolecommand?command=" .. command .. "&"
+				outputFile = "bc-go.txt"
+			end
+
+			if command == "bc-time" then -- this is used to read server ticks and grab the players online.
+				api = "executeconsolecommand?command=bc-time&"
+				outputFile = "time.txt"
+			end
+
+			if command == "gg" then
+				api = "executeconsolecommand?command=gg&"
+				outputFile = "gg.txt"
+			end
+
+			if string.sub(command, 1, 4) == "help" then
+				api = "executeconsolecommand?command=" .. command .. "&"
+				outputFile = "help.txt"
+			end
+
+			if command == "le" then
+				api = "executeconsolecommand?command=" .. command .. "&"
+				outputFile = "le.txt"
+			end
+
+			if string.sub(command, 1, 3) == "li " then
+				api = "executeconsolecommand?command=" .. command .. "&"
+				outputFile = "li.txt"
+			end
+
+			if string.find(command, "lkp") then
+				api = "executeconsolecommand?command=" .. command .. "&"
+				outputFile = "lkp.txt"
+			end
+
+			if string.find(command, "llp") then
+				api = "executeconsolecommand?command=" .. command .. "&"
+				outputFile = "llp.txt"
+			end
+
+			if command == "lp" then
+				api = "getplayersonline/?"
+				outputFile = "playersOnline.txt"
+			end
+
+			if string.find(command, "lpb") then
+				api = "executeconsolecommand?command=lp&"
+				outputFile = "lpb.txt"
+			end
+
+			if string.find(command, "lpf") then
+				api = "executeconsolecommand?command=" .. command .. "&"
+				outputFile = "lpf.txt"
+			end
+
+			if command == "mem" then -- this is used to read server time, grab the players online and some performance metrics.
+				api = "executeconsolecommand?command=mem&"
+				outputFile = "mem.txt"
+			end
+
+			if command == "pgd" then
+				api = "executeconsolecommand?command=pgd&"
+				outputFile = "pgd.txt"
+			end
+
+			if command == "pug" then
+				api = "executeconsolecommand?command=pug&"
+				outputFile = "pug.txt"
+			end
+
+			if string.sub(command, 1,3) == "se " then
+				api = "executeconsolecommand?command=" .. command .. "&"
+				outputFile = "se.txt"
+			end
+
+			if command == "version" then
+				api = "executeconsolecommand?command=version&"
+				outputFile = "installedMods.txt"
+			end
+
+			-- this must be last.  It is a catch-all for anything not matched above.
+			if api == nil then
+				api = "executeconsolecommand?command=" .. command .. "&"
+				outputFile = "command.txt"
+			end
+		end
+
+		url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/" .. api .. "adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+
+		if outputFile then
+			os.remove(homedir .. "/temp/" .. outputFile)
+			downloadFile(homedir .. "/temp/" .. outputFile, url)
+		end
+	else
+		send(command)
+	end
+end
+
+
 function trueFalse(value)
 	-- translate Lua true false to its string version
 	if value == false then
@@ -34,6 +158,17 @@ function alertAdmins(msg, alert)
 			message("pm " .. k .. " [" .. msgColour .. "]" .. msg .. "[-]")
 		end
 	end
+end
+
+
+function stripMatching(value, search)
+	if value == true or value == false then
+		return value
+	end
+
+	value = string.trim(value)
+	value = string.gsub(value, search, "")
+	return value
 end
 
 
@@ -177,59 +312,51 @@ function message(msg, steam)
 	-- parse msg and enclose the actual message in double quotes
 	local words, word, skip
 
+	msg = msg:gsub("{#}", server.commandPrefix)
+
+	if steam then
+		msg = msg:gsub("{player}", players[steam].name)
+	end
+
+	msg = msg:gsub("{server}", server.serverName)
+	msg = msg:gsub("{money}", server.moneyName)
+	msg = msg:gsub("{monies}", server.moneyPlural)
+
+	-- break the chat line into words
 	words = {}
 	for word in msg:gmatch("%S+") do
-		skip = false
-
-		if string.find(msg, "{") then
-			-- look for placeholders and substitute with real values.
-			if word == "{player}" then
-				if steam then
-					word = players[steam].name
-				end
-
-				table.insert(words, word)
-				skip = true
-			end
-
-			if word == "{server}" then
-				word = server.serverName
-
-				table.insert(words, word)
-				skip = true
-			end
-
-			if word == "{money}" then
-				word = server.moneyName
-
-				table.insert(words, word)
-				skip = true
-			end
-
-			if word == "{monies}" then
-				word = server.moneyPlural
-
-				table.insert(words, word)
-				skip = true
-			end
-		end
-
-		if not skip then
-			table.insert(words, word)
-		end
+		table.insert(words, word)
 	end
 
-	if words[1] == "say" then
+	if string.sub(msg, 1, 4) == "say " then
 		-- say the message in public chat
-		send("say \"" .. string.sub(msg, 5) .. "\"")
+		if server.useAllocsWebAPI then
+			url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=say \"" .. string.sub(msg, 5) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+
+			os.remove(homedir .. "/temp/dummy.txt")
+			downloadFile(homedir .. "/temp/dummy.txt", url)
+		else
+			send("say \"" .. string.sub(msg, 5) .. "\"")
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+		end
 	else
 		if players[words[2]].exiled ~= 1 then
-			send("pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"")
-		end
-	end
+			if server.useAllocsWebAPI then
+				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
 
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 1
+				os.remove(homedir .. "/temp/dummy.txt")
+				downloadFile(homedir .. "/temp/dummy.txt", url)
+			else
+				send("pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"")
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+		end
 	end
 end
 
@@ -874,7 +1001,7 @@ end
 
 function say(message)
 	-- just a catcher for old code
-	send(message)
+	sendCommand(message)
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 1
@@ -941,21 +1068,30 @@ function accessLevel(pid)
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
 	if owners[pid] then
-		players[pid].accessLevel = 0
+		if players[pid] then
+			players[pid].accessLevel = 0
+		end
+
 		return 0
 	end
 
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
 	if admins[pid] then
-		players[pid].accessLevel = 1
+		if players[pid] then
+			players[pid].accessLevel = 1
+		end
+
 		return 1
 	end
 
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
 	if mods[pid] then
-		players[pid].accessLevel = 2
+		if players[pid] then
+			players[pid].accessLevel = 2
+		end
+
 		return 2
 	end
 
@@ -1252,7 +1388,7 @@ function fixMissingPlayer(steam)
 
 	if (players[steam].watchPlayerTimer == nil) then
 		if players[steam].watchPlayer then
-			players[steam].watchPlayerTimer = os.time() + 259200 -- 3 days
+			players[steam].watchPlayerTimer = os.time() + server.defaultWatchTimer
 		else
 			players[steam].watchPlayerTimer = 0
 		end

@@ -275,7 +275,7 @@ function gmsg_server()
 			end
 
 			tmp = string.sub(line, string.find(line, "command") + 8)
-			send(tmp)
+			sendCommand(tmp)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -404,7 +404,7 @@ function gmsg_server()
 				botman.rebootTimerID = nil
 				rebootTimerDelayID = nil
 
-				send("sa")
+				sendCommand("sa")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -519,6 +519,78 @@ function gmsg_server()
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player access levels have been over-ridden! Minimum access level is now " .. chatvars.number .. ".[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Player access levels have been over-ridden! Minimum access level is now " .. chatvars.number .. ".")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_SetArchivePlayersThreshold()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set archive players day {number (days) default is 60}"
+			help[2] = "The bot will archive players who haven't played in 60 days except for admins.  You can disable this feature by setting it to 0.\n"
+			help[2] = help[2] .. "The bot will archive players at startup or if you use the command {#}archive players."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,set,arch,day,play,seen"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "arch") or string.find(chatvars.command, "play") or string.find(chatvars.command, "seen"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "archive" and chatvars.words[3] == "players" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number ~= nil then
+				chatvars.number = math.abs(math.floor(chatvars.number))
+				server.archivePlayersLastSeenDays = chatvars.number
+				conn:execute("UPDATE server SET archivePlayersLastSeenDays = " .. chatvars.number)
+
+				if chatvars.number == 0 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will not be archived.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Players will not be archived.")
+					end
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who are not admins and haven't played in " .. server.archivePlayersLastSeenDays .. " days will be archived when the bot starts up.  You can force it now with {#}archive players.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]If you have a lot of players it will make the bot unresponsive for a short time.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Players who are not admins and haven't played in " .. chatvars.number .. " days will be archived when the bot starts up.  You can force it now with {#}archive players.")
+						irc_chat(chatvars.ircAlias, "If you have a lot of players it will make the bot unresponsive for a short time.")
+					end
 				end
 			end
 
@@ -1037,7 +1109,7 @@ function gmsg_server()
 					return true
 				end
 
-				send("sg MaxSpawnedAnimals " .. chatvars.number)
+				sendCommand("sg MaxSpawnedAnimals " .. chatvars.number)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1185,7 +1257,7 @@ function gmsg_server()
 			if chatvars.number ~= nil then
 				chatvars.number = math.abs(math.floor(chatvars.number))
 
-				send("sg ServerMaxPlayerCount " .. chatvars.number)
+				sendCommand("sg ServerMaxPlayerCount " .. chatvars.number)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1346,7 +1418,7 @@ function gmsg_server()
 					return true
 				end
 
-				send("sg MaxSpawnedZombies " .. chatvars.number)
+				sendCommand("sg MaxSpawnedZombies " .. chatvars.number)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1856,14 +1928,14 @@ function gmsg_server()
 
 				if server.reservedSlots == 0 then
 					if tonumber(server.ServerMaxPlayerCount) > tonumber(server.maxPlayers) then
-						send("sg ServerMaxPlayerCount " .. server.maxPlayers) -- remove the extra slot that ensures reserved slot players can join in one go when server full
+						sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers) -- remove the extra slot that ensures reserved slot players can join in one go when server full
 
 						if botman.getMetrics then
 							metrics.telnetCommands = metrics.telnetCommands + 1
 						end
 					else
 						if tonumber(server.ServerMaxPlayerCount) <= tonumber(server.maxPlayers) then
-							send("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add the extra slot that ensures reserved slot players can join in one go when server full
+							sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add the extra slot that ensures reserved slot players can join in one go when server full
 
 							if botman.getMetrics then
 								metrics.telnetCommands = metrics.telnetCommands + 1
@@ -2567,41 +2639,41 @@ function gmsg_server()
 				end
 			end
 
-			send("webpermission add web.map 2000")
-			send("webpermission add webapi.getplayersOnline 2000")
-			send("webpermission add webapi.getstats 2000")
-			send("webpermission add webapi.getlandclaims 1000")
+			sendCommand("webpermission add web.map 2000")
+			sendCommand("webpermission add webapi.getplayersOnline 2000")
+			sendCommand("webpermission add webapi.getstats 2000")
+			sendCommand("webpermission add webapi.getlandclaims 1000")
 
 			if string.find(chatvars.command, "no hostiles") then
-				send("webpermission add webapi.gethostilelocation 2")
+				sendCommand("webpermission add webapi.gethostilelocation 2")
 			else
-				send("webpermission add webapi.gethostilelocation 2000")
+				sendCommand("webpermission add webapi.gethostilelocation 2000")
 			end
 
 			if string.find(chatvars.command, "no animals") then
-				send("webpermission add webapi.getanimalslocation 2")
+				sendCommand("webpermission add webapi.getanimalslocation 2")
 			else
-				send("webpermission add webapi.getanimalslocation 2000")
+				sendCommand("webpermission add webapi.getanimalslocation 2000")
 			end
 
 			if string.find(chatvars.command, "show players") then
-				send("webpermission add webapi.viewallplayers 2000")
+				sendCommand("webpermission add webapi.viewallplayers 2000")
 				irc_chat(chatvars.ircAlias, "webapi.getplayerslocation 2000")
 			else
-				send("webpermission add webapi.viewallplayers 2")
+				sendCommand("webpermission add webapi.viewallplayers 2")
 				irc_chat(chatvars.ircAlias, "webapi.getplayerslocation 2")
 			end
 
 			if string.find(chatvars.command, "show claims") then
-				send("webpermission add webapi.viewallclaims 2000")
+				sendCommand("webpermission add webapi.viewallclaims 2000")
 			else
-				send("webpermission add webapi.viewallclaims 2")
+				sendCommand("webpermission add webapi.viewallclaims 2")
 			end
 
 			if string.find(chatvars.command, "show inventory") then
-				send("webpermission add webapi.getplayerinventory 2000")
+				sendCommand("webpermission add webapi.getplayerinventory 2000")
 			else
-				send("webpermission add webapi.getplayerinventory 2")
+				sendCommand("webpermission add webapi.getplayerinventory 2")
 			end
 
 			if botman.getMetrics then
@@ -2612,6 +2684,88 @@ function gmsg_server()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The map permissions have been set.[-]")
 			else
 				irc_chat(chatvars.ircAlias, "The map permissions have been set.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_SetWebPanelPort() -- tested
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set web panel port {port of server's control panel/web panel}"
+			help[2] = "Alloc's web map is always +2 above this port but the bot can't discover the port number on its own."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,web,port"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "web"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "set" and chatvars.words[2] == "web" and chatvars.words[3] == "panel" and chatvars.words[4] == "port") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number == nil then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Port number between 1 and 65535 expected.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Port number between 1 and 65535 expected.")
+				end
+
+				botman.faultyChat = false
+				return true
+			else
+				chatvars.number = math.abs(chatvars.number)
+			end
+
+			if tonumber(chatvars.number) > 65535 then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Valid ports range from 1 to 65535.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Valid ports range from 1 to 65535.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			server.webPanelPort = chatvars.number
+			conn:execute("UPDATE server SET webPanelPort = " .. chatvars.number)
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]You set the web panel port to " .. chatvars.number .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "You set the web panel port to " .. chatvars.number)
 			end
 
 			botman.faultyChat = false
@@ -4350,6 +4504,15 @@ if debug then dbug("debug server") end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_SetArchivePlayersThreshold()
+
+	if result then
+		if debug then dbug("debug cmd_SetArchivePlayersThreshold triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_SetBailCost()
 
 	if result then
@@ -4588,6 +4751,15 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetupAllocsWebMap triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetWebPanelPort()
+
+	if result then
+		if debug then dbug("debug cmd_SetWebPanelPort triggered") end
 		return result
 	end
 

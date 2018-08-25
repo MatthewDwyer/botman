@@ -56,9 +56,9 @@ function gmsg_fun()
 		if (chatvars.words[1] == "waiter" or chatvars.words[1] == "beer" and chatvars.words[2] == nil) then
 			if string.find(inLocation(chatvars.intX, chatvars.intZ), "beer") then
 				if server.stompy then
-					send("bc-give " .. chatvars.playerid .. " beer /c=1")
+					sendCommand("bc-give " .. chatvars.playerid .. " beer /c=1")
 				else
-					send("give " .. chatvars.playerid .. " beer 1")
+					sendCommand("give " .. chatvars.playerid .. " beer 1")
 				end
 
 				if botman.getMetrics then
@@ -125,7 +125,7 @@ function gmsg_fun()
 
 			gimmeZombies = {}
 			if botman.dbConnected then conn:execute("TRUNCATE gimmeZombies") end
-			send("se")
+			sendCommand("se")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -256,7 +256,7 @@ function gmsg_fun()
 		if (chatvars.words[1] == "gimmie" or chatvars.words[1] == "gimme") and chatvars.words[2] == nil then
 			if (server.allowGimme) then
 				if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
-					send("se")
+					sendCommand("se")
 
 					if botman.getMetrics then
 						metrics.telnetCommands = metrics.telnetCommands + 1
@@ -367,7 +367,7 @@ function gmsg_fun()
 			end
 
 			if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
-				send("se")
+				sendCommand("se")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -732,19 +732,19 @@ function gmsg_fun()
 			if (not players[chatvars.playerid].santa) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HO HO HO  Merry Christmas!  Press e now, don't let the Grinch steal Christmas.[-]")
 				if server.stompy then
-					send("bc-give " .. chatvars.playerid .. " shades /c=1 /silent")
-					send("bc-give " .. chatvars.playerid .. " turd /c=1 /silent")
-					send("bc-give " .. chatvars.playerid .. " beer /c=1 /silent")
-					send("bc-give " .. chatvars.playerid .. " coalOre /c=1 /silent")
-					send("bc-give " .. chatvars.playerid .. " pipeBomb /c=1 /silent")
-					send("bc-give " .. chatvars.playerid .. " splint /c=1 /silent")
+					sendCommand("bc-give " .. chatvars.playerid .. " shades /c=1 /silent")
+					sendCommand("bc-give " .. chatvars.playerid .. " turd /c=1 /silent")
+					sendCommand("bc-give " .. chatvars.playerid .. " beer /c=1 /silent")
+					sendCommand("bc-give " .. chatvars.playerid .. " coalOre /c=1 /silent")
+					sendCommand("bc-give " .. chatvars.playerid .. " pipeBomb /c=1 /silent")
+					sendCommand("bc-give " .. chatvars.playerid .. " splint /c=1 /silent")
 				else
-					send ("give " .. chatvars.playerid .. " shades 1")
-					send ("give " .. chatvars.playerid .. " turd 1")
-					send ("give " .. chatvars.playerid .. " beer 2")
-					send ("give " .. chatvars.playerid .. " coalOre 1")
-					send ("give " .. chatvars.playerid .. " pipeBomb 1")
-					send ("give " .. chatvars.playerid .. " splint 1")
+					sendCommand("give " .. chatvars.playerid .. " shades 1")
+					sendCommand("give " .. chatvars.playerid .. " turd 1")
+					sendCommand("give " .. chatvars.playerid .. " beer 2")
+					sendCommand("give " .. chatvars.playerid .. " coalOre 1")
+					sendCommand("give " .. chatvars.playerid .. " pipeBomb 1")
+					sendCommand("give " .. chatvars.playerid .. " splint 1")
 				end
 
 				if botman.getMetrics then
@@ -754,9 +754,9 @@ function gmsg_fun()
 				r = rand(2)
 				if r == 1 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " firstAidBandage /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " firstAidBandage /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " firstAidBandage 1")
+						sendCommand("give " .. chatvars.playerid .. " firstAidBandage 1")
 					end
 
 					if botman.getMetrics then
@@ -766,9 +766,9 @@ function gmsg_fun()
 
 				if r == 2 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " firstAidKit /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " firstAidKit /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " firstAidKit 1")
+						sendCommand("give " .. chatvars.playerid .. " firstAidKit 1")
 					end
 
 					if botman.getMetrics then
@@ -781,9 +781,9 @@ function gmsg_fun()
 				r = rand(26)
 				if r == 1 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canBeef /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canBeef /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canBeef 1")
+						sendCommand("give " .. chatvars.playerid .. " canBeef 1")
 					end
 
 					if botman.getMetrics then
@@ -793,9 +793,9 @@ function gmsg_fun()
 
 				if r == 2 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canBoiledWater /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canBoiledWater /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canBoiledWater 1")
+						sendCommand("give " .. chatvars.playerid .. " canBoiledWater 1")
 					end
 
 					if botman.getMetrics then
@@ -805,9 +805,9 @@ function gmsg_fun()
 
 				if r == 3 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canCatfood /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canCatfood /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canCatfood 1")
+						sendCommand("give " .. chatvars.playerid .. " canCatfood 1")
 					end
 
 					if botman.getMetrics then
@@ -817,9 +817,9 @@ function gmsg_fun()
 
 				if r == 4 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canChicken /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canChicken /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canChicken 1")
+						sendCommand("give " .. chatvars.playerid .. " canChicken 1")
 					end
 
 					if botman.getMetrics then
@@ -829,9 +829,9 @@ function gmsg_fun()
 
 				if r == 5 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canChilli /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canChilli /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canChili 1")
+						sendCommand("give " .. chatvars.playerid .. " canChili 1")
 					end
 
 					if botman.getMetrics then
@@ -841,9 +841,9 @@ function gmsg_fun()
 
 				if r == 6 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " candle /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " candle /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " candle 1")
+						sendCommand("give " .. chatvars.playerid .. " candle 1")
 					end
 
 					if botman.getMetrics then
@@ -853,9 +853,9 @@ function gmsg_fun()
 
 				if r == 7 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " candleStick /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " candleStick /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " candleStick 1")
+						sendCommand("give " .. chatvars.playerid .. " candleStick 1")
 					end
 
 					if botman.getMetrics then
@@ -865,9 +865,9 @@ function gmsg_fun()
 
 				if r == 8 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " candleTable /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " candleTable /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " candleTable 1")
+						sendCommand("give " .. chatvars.playerid .. " candleTable 1")
 					end
 
 					if botman.getMetrics then
@@ -877,9 +877,9 @@ function gmsg_fun()
 
 				if r == 9 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " candleWall /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " candleWall /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " candleWall 1")
+						sendCommand("give " .. chatvars.playerid .. " candleWall 1")
 					end
 
 					if botman.getMetrics then
@@ -889,9 +889,9 @@ function gmsg_fun()
 
 				if r == 10 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canDogfood /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canDogfood /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canDogfood 1")
+						sendCommand("give " .. chatvars.playerid .. " canDogfood 1")
 					end
 
 					if botman.getMetrics then
@@ -901,9 +901,9 @@ function gmsg_fun()
 
 				if r == 11 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " candyTin /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " candyTin /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " candyTin 1")
+						sendCommand("give " .. chatvars.playerid .. " candyTin 1")
 					end
 
 					if botman.getMetrics then
@@ -913,9 +913,9 @@ function gmsg_fun()
 
 				if r == 12 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canEmpty /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canEmpty /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canEmpty 1")
+						sendCommand("give " .. chatvars.playerid .. " canEmpty 1")
 					end
 
 					if botman.getMetrics then
@@ -925,9 +925,9 @@ function gmsg_fun()
 
 				if r == 13 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canHam /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canHam /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canHam 1")
+						sendCommand("give " .. chatvars.playerid .. " canHam 1")
 					end
 
 					if botman.getMetrics then
@@ -937,9 +937,9 @@ function gmsg_fun()
 
 				if r == 14 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canLamb /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canLamb /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canLamb 1")
+						sendCommand("give " .. chatvars.playerid .. " canLamb 1")
 					end
 
 					if botman.getMetrics then
@@ -949,9 +949,9 @@ function gmsg_fun()
 
 				if r == 15 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canMiso /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canMiso /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canMiso 1")
+						sendCommand("give " .. chatvars.playerid .. " canMiso 1")
 					end
 
 					if botman.getMetrics then
@@ -961,9 +961,9 @@ function gmsg_fun()
 
 				if r == 16 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canMurkyWater /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canMurkyWater /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canMurkyWater 1")
+						sendCommand("give " .. chatvars.playerid .. " canMurkyWater 1")
 					end
 
 					if botman.getMetrics then
@@ -973,9 +973,9 @@ function gmsg_fun()
 
 				if r == 17 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canPasta /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canPasta /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canPasta 1")
+						sendCommand("give " .. chatvars.playerid .. " canPasta 1")
 					end
 
 					if botman.getMetrics then
@@ -985,9 +985,9 @@ function gmsg_fun()
 
 				if r == 18 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canPears /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canPears /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canPears 1")
+						sendCommand("give " .. chatvars.playerid .. " canPears 1")
 					end
 
 					if botman.getMetrics then
@@ -997,9 +997,9 @@ function gmsg_fun()
 
 				if r == 19 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canPeas /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canPeas /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canPeas 1")
+						sendCommand("give " .. chatvars.playerid .. " canPeas 1")
 					end
 
 					if botman.getMetrics then
@@ -1009,9 +1009,9 @@ function gmsg_fun()
 
 				if r == 20 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canSalmon /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canSalmon /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canSalmon 1")
+						sendCommand("give " .. chatvars.playerid .. " canSalmon 1")
 					end
 
 					if botman.getMetrics then
@@ -1021,9 +1021,9 @@ function gmsg_fun()
 
 				if r == 21 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canSoup /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canSoup /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canSoup 1")
+						sendCommand("give " .. chatvars.playerid .. " canSoup 1")
 					end
 
 					if botman.getMetrics then
@@ -1033,9 +1033,9 @@ function gmsg_fun()
 
 				if r == 22 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canStock /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canStock /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canStock 1")
+						sendCommand("give " .. chatvars.playerid .. " canStock 1")
 					end
 
 					if botman.getMetrics then
@@ -1045,9 +1045,9 @@ function gmsg_fun()
 
 				if r == 23 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " canTuna /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " canTuna /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " canTuna 1")
+						sendCommand("give " .. chatvars.playerid .. " canTuna 1")
 					end
 
 					if botman.getMetrics then
@@ -1057,9 +1057,9 @@ function gmsg_fun()
 
 				if r == 24 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " gasCan /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " gasCan /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " gasCan 1")
+						sendCommand("give " .. chatvars.playerid .. " gasCan 1")
 					end
 
 					if botman.getMetrics then
@@ -1069,9 +1069,9 @@ function gmsg_fun()
 
 				if r == 25 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " gasCanSchematic /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " gasCanSchematic /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " gasCanSchematic 1")
+						sendCommand("give " .. chatvars.playerid .. " gasCanSchematic 1")
 					end
 
 					if botman.getMetrics then
@@ -1081,9 +1081,9 @@ function gmsg_fun()
 
 				if r == 26 then
 					if server.stompy then
-						send("bc-give " .. chatvars.playerid .. " mineCandyTin /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " mineCandyTin /c=1 /silent")
 					else
-						send ("give " .. chatvars.playerid .. " mineCandyTin 1")
+						sendCommand("give " .. chatvars.playerid .. " mineCandyTin 1")
 					end
 
 					if botman.getMetrics then
@@ -1303,7 +1303,7 @@ function gmsg_fun()
 					end
 				end
 
-				send("kill " .. chatvars.playerid)
+				sendCommand("kill " .. chatvars.playerid)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1

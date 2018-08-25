@@ -1,7 +1,7 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
     Copyright (C) 2017  Matthew Dwyer
-	           This copyright applies to the Lua source code in this Mudlet profile.
+	           This copyright applies to the Lua source code in this Mudlet profile
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
@@ -210,7 +210,7 @@ function nextReboot(steam)
 		botman.scheduledRestartTimestamp = os.time()
 	end
 
-	if tonumber(gameTick) < 0 then
+	if tonumber(server.uptime) < 0 then
 		if steam == nil then
 			message("say [" .. server.chatColour .. "]The server needs a reboot now to fix a fault.[-]")
 		else
@@ -228,7 +228,7 @@ function nextReboot(steam)
 				timeRemaining = botman.scheduledRestartTimestamp - os.time()
 			end
 		else
-			timeRemaining = (tonumber(server.maxServerUptime) * 3600) - gameTick + 900
+			timeRemaining = (tonumber(server.maxServerUptime) * 3600) - server.uptime + 900
 		end
 
 		diff = timeRemaining
@@ -776,9 +776,12 @@ function gmsg(line, ircid)
 	botman.faultyChat = true
 
 	if string.find(line, " command 'pm") and not string.find(line, "' from client") then
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 		botman.faultyChat = false
 		return true
 	end
+
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if string.find(line, " command 'pm") and string.find(line, "' from client") then
 		msg = string.sub(line, string.find(line, "command 'pm") + 12, string.find(line, "' from client") - 1)
@@ -792,6 +795,8 @@ function gmsg(line, ircid)
 
 		ircMsg = server.gameDate .. " " .. chatvars.command
 	else
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
 		if string.find(chatvars.oldLine, "'Server':", nil, true) and not string.find(line, "-irc:") then
 			chatvars.playername = "Server"
 			botman.faultyChat = false

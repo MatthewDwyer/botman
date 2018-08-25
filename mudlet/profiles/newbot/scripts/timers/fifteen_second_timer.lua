@@ -8,15 +8,6 @@
 --]]
 
 function FifteenSecondTimer()
-	if botman.botDisabled then
-		send("gt")
-		return
-	end
-
-	if botman.botOffline then
-		return
-	end
-
 	if customFifteenSecondTimer ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua
 		if customFifteenSecondTimer() then
@@ -24,14 +15,12 @@ function FifteenSecondTimer()
 		end
 	end
 
-	-- run a quick test to prove or disprove that we are still connected to the database.
-	-- there is a rare instance where we lose the connection for unknown reasons.
-
+	-- run a quick test to prove or disprove that we are still connected to the database incase we've fallen off :O
 	if not botman.dbConnected then
 		openDB()
 	end
 
-	-- this looks weird but its the only way that works
+	-- force a re-test of the connection to the bot's database
 	botman.dbConnected = false
 	botman.dbConnected = isDBConnected()
 
@@ -39,40 +28,7 @@ function FifteenSecondTimer()
 		openBotsDB()
 	end
 
+	-- force a re-test of the connection to the shared database called bots
 	botman.db2Connected = false
 	botman.db2Connected = isDBBotsConnected()
-
-	if server.lagged then
-		return
-	end
-
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 1
-	end
-
-	if tonumber(botman.playersOnline) < 10 then
-		if server.coppi then
-			for k,v in pairs(igplayers) do
-				if tonumber(players[k].accessLevel) > 2 and not players[k].newPlayer then
-					if server.scanNoclip then
-						-- check for noclipped players
-						send("pug " .. k)
-
-						if botman.getMetrics then
-							metrics.telnetCommands = metrics.telnetCommands + 1
-						end
-					end
-
-					if not server.playersCanFly then
-						-- check for flying players
-						send("pgd " .. k)
-
-						if botman.getMetrics then
-							metrics.telnetCommands = metrics.telnetCommands + 1
-						end
-					end
-				end
-			end
-		end
-	end
 end

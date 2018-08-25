@@ -1045,10 +1045,10 @@ function irc_uptime(name)
 
 	irc_chat(name, server.botName .. " has been online " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
 
-	if gameTick < 0 then
+	if server.uptime < 0 then
 		irc_chat(name, "Server uptime is uncertain")
 	else
-		diff = gameTick
+		diff = server.uptime
 		days = math.floor(diff / 86400)
 
 		if (days > 0) then

@@ -29,6 +29,13 @@ function playerInfo(faultyInfo)
 	local skipTPtest = false
 	local badData = false -- no biscuit!
 
+	if customPlayerInfo ~= nil then
+		-- read the note on overriding bot code in custom/custom_functions.lua
+		if customPlayerInfo(line) then
+			return
+		end
+	end
+
 	debug = false -- should be false unless testing
 
 if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
@@ -311,7 +318,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if players[steam].location ~= "" and tonumber(igplayers[steam].teleCooldown) < 1 then
+	if players[steam].location ~= "" and igplayers[steam].spawnedInWorld then
 		-- spawn the player at location
 		if (locations[players[steam].location]) then
 			irc_chat(server.ircMain, "Player " .. steam .. " " .. name .. " is being moved to " .. players[steam].location)

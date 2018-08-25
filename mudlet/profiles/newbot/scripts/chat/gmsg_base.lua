@@ -513,7 +513,7 @@ function gmsg_base()
 			end
 		end
 
-		if (chatvars.words[1] == "protect" or chatvars.words[1] == "protect2") and chatvars.words[2] ~= "village" then
+		if (chatvars.words[1] == "protect" or chatvars.words[1] == "protect2") and chatvars.words[2] ~= "village" and chatvars.words[2] ~= "location" then
 			if server.disableBaseProtection or pvpZone(chatvars.intX, chatvars.intZ) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base protection is disabled on this server.  Use claim blocks instead.[-]")
 				botman.faultyChat = false
@@ -581,7 +581,7 @@ function gmsg_base()
 				dist = distancexz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].zPos, players[id].home2X, players[id].home2Z)
 			end
 
-			if (chatvars.words[1] == "protect") then
+			if chatvars.words[1] == "protect" then
 				if (tonumber(dist) <  tonumber(players[id].protectSize) + 1) then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are too close to the base, but just walk away and I will set it when you are far enough away.[-]")
 					igplayers[chatvars.playerid].alertBaseExit = true
@@ -1135,7 +1135,7 @@ function gmsg_base()
 
 			if server.coppi then
 				-- update the coordinates of the players bedroll
-				send("lpb " .. chatvars.playerid)
+				sendCommand("lpb " .. chatvars.playerid)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1

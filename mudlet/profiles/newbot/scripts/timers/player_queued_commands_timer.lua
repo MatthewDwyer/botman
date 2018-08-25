@@ -10,7 +10,7 @@
 function playerQueuedCommands()
 	local cursor, errorString, row, k, v, a, b
 
-	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
+	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected or not botman.arenaCount then
 		return
 	end
 
@@ -35,7 +35,7 @@ function playerQueuedCommands()
 							message("pm " .. players[b.id].id .. " [" .. server.chatColour .. "]Here comes the BOSS!")
 						end
 
-						send(row.command)
+						sendCommand(row.command)
 
 						if botman.getMetrics then
 							metrics.telnetCommands = metrics.telnetCommands + 1
@@ -59,7 +59,7 @@ function playerQueuedCommands()
 
 			if tonumber(row.steam) == 0 then
 				if (string.sub(row.command, 1, 2) ~= "se") and (string.sub(row.command, 1, 3) ~= "say") and (string.sub(row.command, 1, 2) ~= "pm") and (row.command ~= "reset") then
-					send(row.command)
+					sendCommand(row.command)
 
 					if botman.getMetrics then
 						metrics.telnetCommands = metrics.telnetCommands + 1
@@ -85,7 +85,7 @@ function playerQueuedCommands()
 					if (igplayers[row.steam].deadX == nil) then
 
 						if string.sub(row.command, 1, 2) == "se" then
-							send(row.command)
+							sendCommand(row.command)
 
 							if botman.getMetrics then
 								metrics.telnetCommands = metrics.telnetCommands + 1
@@ -99,7 +99,7 @@ function playerQueuedCommands()
 					end
 				else
 					if string.sub(row.command, 1, 2) == "se" then
-						send(row.command)
+						sendCommand(row.command)
 
 						if botman.getMetrics then
 							metrics.telnetCommands = metrics.telnetCommands + 1

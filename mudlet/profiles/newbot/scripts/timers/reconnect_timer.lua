@@ -15,7 +15,7 @@ function reconnectTimer()
 	end
 
 	if botman.botOfflineCount == nil then
-		botman.botOfflineCount = 1
+		botman.botOfflineCount = 0
 	end
 
 	if botman.botOffline == nil then
@@ -23,49 +23,40 @@ function reconnectTimer()
 	end
 
 	if botman.botOffline then
-		botman.botOfflineCount = tonumber(botman.botOfflineCount) - 1
+		botman.botOfflineCount = tonumber(botman.botOfflineCount) + 1
 	end
 
 	-- special extra test for bot offline
-	if botman.lastTelnetTimestamp == nil then
-		botman.lastTelnetTimestamp = os.time()
+	if botman.lastServerResponseTimestamp == nil then
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
-	if os.time() - botman.lastTelnetTimestamp > 300 then
-		botman.lastTelnetTimestamp = os.time() -- reset this to make it sleep 5 minutes
-		botman.botOfflineCount = 1
-		irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
+	if botman.botOffline == false and (os.time() - botman.lastServerResponseTimestamp > 120) then
+		-- haven't communicated with the server in 1 minute but the bot thinks it is connected so force Mudlet to reconnect as it may have fallen
+		-- off and failed to notice.
 		reconnect()
 		return
 	end
 
-	if tonumber(botman.botOfflineCount) < 1 then
---		botman.botOffline = true
-
-		if tonumber(botman.botOfflineCount) == 0 then
-			botman.botOfflineTimestamp = os.time()
+	if botman.botOfflineCount > 2 and (os.time() - botman.botConnectedTimestamp > 1800) then
+		if server.allowBotRestarts then
+			restartBot()
+			return
 		end
+	end
 
-		if math.abs(os.time() - botman.botOfflineTimestamp) < 600 then -- 600
-			dbug("Bot is offline - attempting reconnection.")
-			botman.botOfflineCount = 1
+	if botman.botOfflineCount > 0 then
+		if botman.botOfflineCount < 16 then
 			irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
 			reconnect()
-			return
 		else
-			if tonumber(botman.botOfflineCount) < -6 then
-				if server.allowBotRestarts then
-					restartBot()
-					return
-				else
-					dbug("Bot is offline - attempting reconnection (2 minute delay).")
-					botman.botOfflineCount = 1
-					irc_chat(server.ircMain, "Bot is offline - attempting reconnection (2 minute delay).")
-					reconnect()
-					return
-				end
+			if (botman.botOfflineCount % 20 == 0) then
+				irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
+				reconnect()
 			end
 		end
+
+		return
 	end
 
 	if ircGetChannels ~= nil then

@@ -97,7 +97,7 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player left','Player disconnected " .. escape(players[steam].name) .. " " .. steam .. " Owner " .. players[steam].steamOwner .. " " .. players[steam].id .. "'," .. players[steam].steamOwner .. ")") end
 
 		-- check how many claims they have placed
-		send("llp " .. steam)
+		sendCommand("llp " .. steam)
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1

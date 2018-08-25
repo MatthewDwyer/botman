@@ -11,12 +11,15 @@
 function gatherServerData()
 	-- read a bunch of info from the server.  The bot will capture it elsewhere.
 
-	send("lkp -online")
-	tempTimer( 3, [[send("version")]] )
-	tempTimer( 4, [[send("gg")]] )
-	tempTimer( 6, [[send("pm IPCHECK")]] )
-	tempTimer( 8, [[send("admin list")]] )
-	tempTimer( 10, [[send("ban list")]] )
+	if not server.botsIP then
+		getBotsIP()
+	end
+
+	sendCommand("lkp -online")
+	tempTimer( 5, [[sendCommand("version")]] )
+	tempTimer( 10, [[sendCommand("gg")]] )
+	tempTimer( 20, [[sendCommand("admin list")]] )
+	tempTimer( 25, [[sendCommand("ban list")]] )
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 5

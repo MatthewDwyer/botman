@@ -26,13 +26,13 @@ function timedCommandsTimer()
 		windowMessage(server.windowDebug, "running timed command (" .. row.id .. ") " .. row.command .. "\n")
 
 		if (row.command ~= "DoneInventory") then
-		
+
 			if igplayers[row.steam] == nil then
 				conn:execute("delete from commandQueue where steam = " .. row.steam)
 				return
 			end
 
-			send(row.command)
+			sendCommand(row.command)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1

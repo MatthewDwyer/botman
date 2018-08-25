@@ -11,6 +11,9 @@ local tmp, debug, pname, pid, result, help
 local shortHelp = false
 local skipHelp = false
 
+-- enable debug to see where the code is stopping. Any error will be somewhere after the last successful debug line.
+debug = false -- should be false unless testing
+
 function gmsg_bot()
 	calledFunction = "gmsg_bot"
 	result = false
@@ -1247,7 +1250,7 @@ function gmsg_bot()
 					irc_chat(server.ircMain, "Ingame bot commands must now start with a " .. tmp.prefix)
 				end
 
-				send("tcch " .. tmp.prefix)
+				sendCommand("tcch " .. tmp.prefix)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1262,7 +1265,7 @@ function gmsg_bot()
 					irc_chat(server.ircMain, "Ingame bot commands do not use a prefix such as /  Instead just type the commands as words.")
 				end
 
-				send("tcch")
+				sendCommand("tcch")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1962,6 +1965,91 @@ function gmsg_bot()
 	end
 
 
+	local function cmd_ToggleUseAllocsWebAPI() -- tested
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}use telnet (this is the default now but the API is planned to become the new default soon)\n"
+			help[1] = help[1] .. " {#}use api"
+			help[2] = help[2] .. "The bot communicates with the server using telnet.  It can use Allocs web API instead.\n"
+			help[2] = help[2] .. "If you get no response to {#}use api, type {#}reload bot, and try again."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,togg,on,off,able,web,api"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "web") or string.find(chatvars.command, "api") or string.find(chatvars.command, "telnet"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "use" and (chatvars.words[2] == "telnet" or string.find(chatvars.command, "api")) then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[2] == "telnet" then
+				server.useAllocsWebAPI = false
+				conn:execute("UPDATE server set useAllocsWebAPI = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will connect to the server using telnet.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The bot will connect to the server using telnet.")
+				end
+			else
+				if tonumber(server.allocsMap) < 26 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This feature requires Allocs MapRendering and Webinterface version 26.  Your version is " .. server.allocsMap .. ".  Please update your copy of Alloc's mod.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "This feature requires Allocs MapRendering and Webinterface version 26.  Your version is " .. server.allocsMap .. ".  Please update your copy of Alloc's mod.")
+					end
+
+					botman.faultyChat = false
+					return true
+				end
+
+				-- the message must be sent first because we change the webtoken password next which would block the message.
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will connect to the server using Alloc's web API.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The bot will connect to the server using Alloc's web API.")
+				end
+
+				server.useAllocsWebAPI = true
+				server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+				conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+				sendCommand("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_UpdateCode()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -2311,6 +2399,15 @@ function gmsg_bot()
 
 	if result then
 		if debug then dbug("debug cmd_ToggleLagCheck triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleUseAllocsWebAPI()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleUseAllocsWebAPI triggered") end
 		return result
 	end
 

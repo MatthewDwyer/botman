@@ -8,11 +8,7 @@
 --]]
 
 function TenSecondTimer()
-	if botman.botDisabled then
-		return
-	end
-
-	if botman.botOffline then
+	if botman.botDisabled or botman.botOffline then
 		return
 	end
 
@@ -28,7 +24,7 @@ function TenSecondTimer()
 		if not botman.botOffline and not botman.botDisabled then
 			if server.enableLagCheck then
 				botman.lagCheckTime = os.time()
-				send("pm LagCheck " .. os.time())
+				sendCommand("pm LagCheck " .. os.time())
 			end
 
 			if botman.getMetrics then
@@ -41,33 +37,33 @@ function TenSecondTimer()
 
 			server.lagged = false
 		end
-	end
+	else
+		if server.coppi and tonumber(botman.playersOnline) > 0 then
+			if server.scanNoclip then
+				sendCommand("pug")
 
-	if botman.botOffline or botman.botDisabled or server.lagged then
-		return
-	end
-
-	if server.coppi then
-		-- here we only test new players for flying/clipping
-		-- we'll test everyone else on either the 15 second or 30 second timer depending on how many are playing now
-		for k,v in pairs(igplayers) do
-			if players[k].newPlayer then
-				if server.scanNoclip then
-					-- check for noclipped players
-					send("pug " .. k)
-
-					if botman.getMetrics then
-						metrics.telnetCommands = metrics.telnetCommands + 1
-					end
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
+			end
 
-				if not server.playersCanFly then
-					-- check for flying players
-					send("pgd " .. k)
+			if not server.playersCanFly then
+				sendCommand("pgd")
 
-					if botman.getMetrics then
-						metrics.telnetCommands = metrics.telnetCommands + 1
-					end
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
+				end
+			end
+		end
+
+		if (server.scanZombies or server.scanEntities) then
+			if server.useAllocsWebAPI then
+				 url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/gethostilelocation/?adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+				 os.remove(homedir .. "/temp/hostiles.txt")
+				 downloadFile(homedir .. "/temp/hostiles.txt", url)
+
+				if botman.getMetrics then
+					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 			end
 		end

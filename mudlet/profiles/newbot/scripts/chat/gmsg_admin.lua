@@ -163,8 +163,10 @@ function gmsg_admin()
 					end
 
 					message("say [" .. server.chatColour .. "]" .. playerName .. " has been given admin powers[-]")
-					send("ban remove " .. id)
-					send("admin add " .. id .. " " .. number)
+
+
+					sendCommand("ban remove " .. id)
+					sendCommand("admin add " .. id .. " " .. number)
 
 					if botman.getMetrics then
 						metrics.telnetCommands = metrics.telnetCommands + 2
@@ -185,7 +187,8 @@ function gmsg_admin()
 				end
 
 				message("say [" .. server.chatColour .. "]" .. playerName .. "'s admin powers have been revoked[-]")
-				send("admin remove " .. id)
+
+				sendCommand("admin remove " .. id)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -608,7 +611,7 @@ function gmsg_admin()
 				if botman.dbConnected then conn:execute("INSERT INTO whitelist (steam) VALUES (" .. tmp.id .. ")") end
 
 				-- remove any ban against them
-				send("ban remove " .. tmp.id)
+				sendCommand("ban remove " .. tmp.id)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1220,16 +1223,16 @@ function gmsg_admin()
 				reason = string.sub(chatvars.commandOld, string.find(chatvars.command, "reason ") + 7)
 			end
 
-			if not string.find(chatvars.command, "reason") and not string.find(chatvars.command, "time") then
+			if not string.find(chatvars.command, " reason ") and not string.find(chatvars.command, " time ") then
 				pname = string.sub(chatvars.command, string.find(chatvars.command, "ban ") + 4)
 			end
 
 			if string.find(chatvars.command, "reason") then
-				pname = string.sub(chatvars.command, string.find(chatvars.command, "ban ") + 4, string.find(chatvars.command, "reason") - 2)
+				pname = string.sub(chatvars.command, string.find(chatvars.command, "ban ") + 4, string.find(chatvars.command, " reason ") - 1)
 
 				if chatvars.words[1] ~= "gblban" then
-					if string.find(chatvars.command, " time") then
-						pname = string.sub(chatvars.command, string.find(chatvars.command, "ban ") + 4, string.find(chatvars.command, "time") - 2)
+					if string.find(chatvars.command, " time ") then
+						pname = string.sub(chatvars.command, string.find(chatvars.command, "ban ") + 4, string.find(chatvars.command, " time ") - 1)
 					end
 				else
 					if string.find(chatvars.command, "gblban add") then
@@ -1242,10 +1245,12 @@ function gmsg_admin()
 
 			if string.find(chatvars.command, "time") then
 				if string.find(chatvars.command, "reason") then
-					duration = string.sub(chatvars.command, string.find(chatvars.command, "time ") + 5, string.find(chatvars.command, "reason") - 2)
+					duration = string.sub(chatvars.command, string.find(chatvars.command, "time ") + 5, string.find(chatvars.command, " reason ") - 1)
 				else
 					duration = string.sub(chatvars.command, string.find(chatvars.command, "time ") + 5)
 				end
+
+				pname = string.sub(chatvars.command, string.find(chatvars.command, "ban ") + 4, string.find(chatvars.command, " time ") - 1)
 			end
 
 			if chatvars.words[1] == "unban" then
@@ -1272,7 +1277,7 @@ function gmsg_admin()
 			end
 
 			if chatvars.words[1] == "unban" then
-				send("ban remove " .. steam)
+				sendCommand("ban remove " .. steam)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1280,7 +1285,7 @@ function gmsg_admin()
 
 				if steam ~= owner then
 					-- also unban the owner id
-					send("ban remove " .. owner)
+					sendCommand("ban remove " .. owner)
 
 					if botman.getMetrics then
 						metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1552,7 +1557,7 @@ function gmsg_admin()
 				return true
 			end
 
-			send("buffplayer " .. id .. " burning") -- yeah baby!
+			sendCommand("buffplayer " .. id .. " burning") -- yeah baby!
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1629,7 +1634,7 @@ function gmsg_admin()
 				irc_chat(chatvars.ircAlias, "Players (except staff) who have not played in 60 days will be archived.  The bot may become un-responsive during this time.")
 			end
 
-			tempTimer( 10, [[send("lkp")]] )
+			tempTimer( 10, [[sendCommand("lkp")]] )
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1842,7 +1847,7 @@ function gmsg_admin()
 				return true
 			end
 
-			send("buffplayer " .. id .. " redTeaCooling")  -- chill dude
+			sendCommand("buffplayer " .. id .. " redTeaCooling")  -- chill dude
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -1941,15 +1946,15 @@ function gmsg_admin()
 				return true
 			end
 
-			send("buffplayer " .. id .. " cured")
-			send("debuffplayer " .. id .. " dysentery")  -- It's Debuffy The Zombie Slayer! :D
-			send("debuffplayer " .. id .. " dysentery2")
-			send("debuffplayer " .. id .. " foodPoisoning")
-			send("debuffplayer " .. id .. " infection")
-			send("debuffplayer " .. id .. " infection1")
-			send("debuffplayer " .. id .. " infection2")
-			send("debuffplayer " .. id .. " infection3")
-			send("debuffplayer " .. id .. " infection4")
+			sendCommand("buffplayer " .. id .. " cured")
+			sendCommand("debuffplayer " .. id .. " dysentery")  -- It's Debuffy The Zombie Slayer! :D
+			sendCommand("debuffplayer " .. id .. " dysentery2")
+			sendCommand("debuffplayer " .. id .. " foodPoisoning")
+			sendCommand("debuffplayer " .. id .. " infection")
+			sendCommand("debuffplayer " .. id .. " infection1")
+			sendCommand("debuffplayer " .. id .. " infection2")
+			sendCommand("debuffplayer " .. id .. " infection3")
+			sendCommand("debuffplayer " .. id .. " infection4")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 9
@@ -2907,9 +2912,9 @@ function gmsg_admin()
 		if chatvars.words[1] == "give" and (string.find(chatvars.words[2], "claim") or string.find(chatvars.words[2], "key") or string.find(chatvars.words[2], "lcb")) then
 			if players[chatvars.playerid].removedClaims > 0 then
 				if server.stompy then
-					send("bc-give " .. chatvars.playerid .. " keystoneBlock /c=" .. players[chatvars.playerid].removedClaims)
+					sendCommand("bc-give " .. chatvars.playerid .. " keystoneBlock /c=" .. players[chatvars.playerid].removedClaims)
 				else
-					send("give " .. chatvars.playerid .. " keystoneBlock " .. players[chatvars.playerid].removedClaims)
+					sendCommand("give " .. chatvars.playerid .. " keystoneBlock " .. players[chatvars.playerid].removedClaims)
 				end
 
 				if botman.getMetrics then
@@ -2988,16 +2993,16 @@ function gmsg_admin()
 			for k, v in pairs(igplayers) do
 				if tmp.quality then
 					if server.stompy then
-						send("bc-give " .. k .. " " .. chatvars.wordsOld[3] .. " /c=" .. tmp.quantity .. " /q=" .. tmp.quality)
+						sendCommand("bc-give " .. k .. " " .. chatvars.wordsOld[3] .. " /c=" .. tmp.quantity .. " /q=" .. tmp.quality)
 					else
-						send("give " .. v.id .. " " .. chatvars.wordsOld[3] .. " " .. tmp.quantity .. " " .. tmp.quality)
+						sendCommand("give " .. v.id .. " " .. chatvars.wordsOld[3] .. " " .. tmp.quantity .. " " .. tmp.quality)
 						message(string.format("pm %s [%s]>FREE< STUFF!  Press e to pick up some %s now. =D[-]", k, server.chatColour, chatvars.wordsOld[3]))
 					end
 				else
 					if server.stompy then
-						send("bc-give " .. k .. " " .. chatvars.wordsOld[3] .. " /c=" .. tmp.quantity)
+						sendCommand("bc-give " .. k .. " " .. chatvars.wordsOld[3] .. " /c=" .. tmp.quantity)
 					else
-						send("give " .. v.id .. " " .. chatvars.wordsOld[3] .. " " .. tmp.quantity)
+						sendCommand("give " .. v.id .. " " .. chatvars.wordsOld[3] .. " " .. tmp.quantity)
 						message(string.format("pm %s [%s]>FREE< STUFF!  Press e to pick up some %s now. =D[-]", k, server.chatColour, chatvars.wordsOld[3]))
 					end
 				end
@@ -3110,17 +3115,17 @@ function gmsg_admin()
 				if tmp.quality then
 					if server.stompy then
 					dbug("bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity .. " /q=" .. tmp.quality)
-						send("bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity .. " /q=" .. tmp.quality)
+						sendCommand("bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity .. " /q=" .. tmp.quality)
 					else
-						send("give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity .. " " .. tmp.quality)
+						sendCommand("give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity .. " " .. tmp.quality)
 						message(string.format("pm %s [%s]>FREE< STUFF!  Press e to pick up some %s now. =D[-]", tmp.id, server.chatColour, tmp.item))
 					end
 				else
 					if server.stompy then
 					dbug("bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity)
-						send("bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity)
+						sendCommand("bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity)
 					else
-						send("give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity)
+						sendCommand("give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity)
 						message(string.format("pm %s [%s]>FREE< STUFF!  Press e to pick up some %s now. =D[-]", tmp.id, server.chatColour, tmp.item))
 					end
 				end
@@ -3353,7 +3358,7 @@ function gmsg_admin()
 				return true
 			end
 
-			send("buffplayer " .. id .. " firstAid")
+			sendCommand("buffplayer " .. id .. " firstAid")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -4218,7 +4223,7 @@ function gmsg_admin()
 			if botman.registerHelp then
 				tmp.command = help[1]
 				tmp.keywords = "list,staff,admin"
-				tmp.accessLevel = 99
+				tmp.accessLevel = 2
 				tmp.description = help[2]
 				tmp.notes = ""
 				tmp.ingameOnly = 0
@@ -4238,6 +4243,20 @@ function gmsg_admin()
 		end
 
 		if (chatvars.words[1] == "list" and (chatvars.words[2] == "staff" or chatvars.words[2] == "admins") or (chatvars.words[1] == "admins" or chatvars.words[1] == "staff") and chatvars.words[3] == nil) then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
 			listStaff(chatvars.playerid)
 
 			botman.faultyChat = false
@@ -4478,8 +4497,8 @@ function gmsg_admin()
 				return true
 			end
 
-			send("debuffplayer " .. id .. " sprainedLeg")
-			send("debuffplayer " .. id .. " brokenLeg")
+			sendCommand("debuffplayer " .. id .. " sprainedLeg")
+			sendCommand("debuffplayer " .. id .. " brokenLeg")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 2
@@ -4730,7 +4749,7 @@ function gmsg_admin()
 				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(playersArchived[id].xPos) .. " " .. math.ceil(playersArchived[id].yPos - 20) .. " " .. math.floor(playersArchived[id].zPos - igplayers[chatvars.playerid].followDistance)
 			end
 
-			send(cmd)
+			sendCommand(cmd)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -4997,7 +5016,7 @@ function gmsg_admin()
 
 			-- run llp
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reading claims[-]")
-			send("llp")
+			sendCommand("llp")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -5267,7 +5286,7 @@ function gmsg_admin()
 
 			if igplayers[prisonerid] then
 				if players[prisonerid].chatColour ~= "" then
-					send("cpc " .. prisonerid .. " " .. players[prisonerid].chatColour .. " 1")
+					sendCommand("cpc " .. prisonerid .. " " .. players[prisonerid].chatColour .. " 1")
 
 					if botman.getMetrics then
 						metrics.telnetCommands = metrics.telnetCommands + 1
@@ -5342,7 +5361,7 @@ function gmsg_admin()
 		if (chatvars.words[1] == "reload" or chatvars.words[1] == "refresh" or chatvars.words[1] == "update") and chatvars.words[2] == "admins" then
 			-- run admin list
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reading admin list[-]")
-			send("admin list")
+			sendCommand("admin list")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -5434,13 +5453,15 @@ function gmsg_admin()
 					if botman.dbConnected then conn:execute("UPDATE playersArchived SET removeClaims = 1 WHERE steam = " .. id) end
 				end
 
+				if botman.dbConnected then conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. id) end
+
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I will remove all of player " .. playerName .. "'s claims when their chunks are loaded.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "I will remove all of player " .. playerName .. "'s claims when their chunks are loaded.")
 				end
 
-				send("llp " .. id)
+				sendCommand("llp " .. id)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -6081,7 +6102,7 @@ function gmsg_admin()
 					if (players[id].homeX == 0 and players[id].homeZ == 0) then
 						if server.coppi then
 							prepareTeleport(id, "")
-							send("teleh " .. id)
+							sendCommand("teleh " .. id)
 
 							if botman.getMetrics then
 								metrics.telnetCommands = metrics.telnetCommands + 1
@@ -6827,6 +6848,73 @@ function gmsg_admin()
 	end
 
 
+	local function cmd_SetWatchPlayerTimer()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set watch timer {number in seconds}"
+			help[2] = "When a new player joins, in-game admins will be messaged when the player adds or removes inventory.  They will automatically stop being watched after a delay.  The default is 3 days.\n"
+			help[2] = help[2] .. "You can also set a different watch duration for an individual player.\n"
+			help[2] = help[2] .. "1 hour = 3,600  1 day = 86,400  1 week = 604,800  4 weeks = 2,419,200\n"
+			help[2] = help[2] .. "This timer is in real time not game time or time played."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,watch,player,timer"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "watch") or string.find(chatvars.command, "inven"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "watch" and chatvars.words[3] == "timer" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number ~= nil then
+				chatvars.number = math.abs(chatvars.number)
+			else
+				chatvars.number = 259200 -- 3 days in seconds.  Time flies!
+			end
+
+			server.defaultWatchTimer = chatvars.number
+			conn:execute("UPDATE server SET defaultWatchTimer = " .. chatvars.number)
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A player's inventory will be reported live for " .. chatvars.number .. " seconds from when inventory watching starts for them.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ShitPlayer() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -6921,10 +7009,10 @@ function gmsg_admin()
 
 			r = rand(10)
 
-			send("buffplayer " .. id .. " dysentery")
+			sendCommand("buffplayer " .. id .. " dysentery")
 
 			for i = 1, r do
-				send("give " .. igplayers[id].id .. " turd 1")
+				sendCommand("give " .. igplayers[id].id .. " turd 1")
 			end
 
 			message("pm " .. id .. " [" .. server.chatColour .. "]Hey " .. players[id].name .. "! You dropped something.[-]")
@@ -7012,7 +7100,7 @@ function gmsg_admin()
 			cmd = string.format("pm %s [%s]Your admin status is restored.[-]", pid, server.chatColour)
 			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. pid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + restoreDelay) .. "')") end
 
-			send("admin remove " .. pid)
+			sendCommand("admin remove " .. pid)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -7172,7 +7260,7 @@ function gmsg_admin()
 			end
 
 			-- then teleport the player to timeout
-			send("tele " .. tmp.id .. " " .. players[tmp.id].xPosTimeout .. " 60000 " .. players[tmp.id].zPosTimeout)
+			sendCommand("tele " .. tmp.id .. " " .. players[tmp.id].xPosTimeout .. " 60000 " .. players[tmp.id].zPosTimeout)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -8331,8 +8419,8 @@ function gmsg_admin()
 				for k,v in pairs(players) do
 					if v.newPlayer == true then
 						v.watchPlayer = true
-						v.watchPlayerTimer = os.time() + 2419200 -- 1 month or until not new
-						if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 2419200 .. " WHERE steam = " .. k) end
+						v.watchPlayerTimer = os.time() + server.defaultWatchTimer
+						if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + server.defaultWatchTimer .. " WHERE steam = " .. k) end
 					end
 				end
 
@@ -8344,13 +8432,13 @@ function gmsg_admin()
 
 			if (chatvars.words[1] == "watch") then
 				if chatvars.words[2] == "everyone" then -- including staff! :O
-					if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 2419200) end
-					if botman.dbConnected then conn:execute("UPDATE playersArchived SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 2419200) end
+					if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + server.defaultWatchTimer) end
+					if botman.dbConnected then conn:execute("UPDATE playersArchived SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + server.defaultWatchTimer) end
 
 					for k,v in pairs(igplayers) do
 						if players[k].accessLevel > 2 then
 							players[k].watchPlayer = true
-							players[k].watchPlayerTimer = os.time() + 2419200 -- 1 month
+							players[k].watchPlayerTimer = os.time() + server.defaultWatchTimer
 						end
 					end
 
@@ -8391,14 +8479,14 @@ function gmsg_admin()
 
 				if not isArchived then
 					players[id].watchPlayer = true
-					players[id].watchPlayerTimer = os.time() + 259200 -- 3 days
+					players[id].watchPlayerTimer = os.time() + server.defaultWatchTimer
 
-					if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. id) end
+					if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + server.defaultWatchTimer .. " WHERE steam = " .. id) end
 				else
 					playersArchived[id].watchPlayer = true
-					playersArchived[id].watchPlayerTimer = os.time() + 259200 -- 3 days
+					playersArchived[id].watchPlayerTimer = os.time() + server.defaultWatchTimer
 
-					if botman.dbConnected then conn:execute("UPDATE playersArchived SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. id) end
+					if botman.dbConnected then conn:execute("UPDATE playersArchived SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + server.defaultWatchTimer .. " WHERE steam = " .. id) end
 				end
 
 				if (chatvars.playername ~= "Server") then
@@ -8890,7 +8978,7 @@ function gmsg_admin()
 				return true
 			end
 
-			send("buffplayer " .. id .. " stewWarming")
+			sendCommand("buffplayer " .. id .. " stewWarming")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -8987,7 +9075,7 @@ function gmsg_admin()
 			if chatvars.words[2] == "add" then
 				whitelist[id] = {}
 				if botman.dbConnected then conn:execute("INSERT INTO whitelist (steam) VALUES (" .. id .. ")") end
-				send("ban remove " .. id)
+				sendCommand("ban remove " .. id)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -9674,6 +9762,15 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_SetViewArrestReason triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetWatchPlayerTimer()
+
+	if result then
+		if debug then dbug("debug cmd_SetWatchPlayerTimer triggered") end
 		return result
 	end
 

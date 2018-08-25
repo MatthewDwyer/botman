@@ -9,7 +9,6 @@
 
 local nameTest
 
-
 function initReservedSlots()
 	local k, v, cursor,errorString, row, isStaff, canReserve
 
@@ -468,7 +467,7 @@ function playerConnected(line)
 
 	if server.coppi then
 		if players[tmp.steam].mute then
-			send("mpc " .. tmp.steam .. " true")
+			sendCommand("mpc " .. tmp.steam .. " true")
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -477,7 +476,7 @@ function playerConnected(line)
 
 		if players[tmp.steam].chatColour ~= "" then
 			if string.upper(string.sub(players[tmp.steam].chatColour, 1, 6)) ~= "FFFFFF" then
-				send("cpc " .. tmp.steam .. " " .. stripAllQuotes(players[tmp.steam].chatColour) .. " 1")
+				sendCommand("cpc " .. tmp.steam .. " " .. stripAllQuotes(players[tmp.steam].chatColour) .. " 1")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -539,7 +538,7 @@ function playerConnected(line)
 
 	if server.coppi then
 		-- limit ingame chat length to block chat bombs.
-		send("pcml " .. tmp.steam .. " 300")
+		sendCommand("pcml " .. tmp.steam .. " 300")
 
 		if botman.getMetrics then
 			metrics.telnetCommands = metrics.telnetCommands + 1
@@ -571,9 +570,10 @@ function playerConnected(line)
 		players[tmp.steam].watchPlayer = false
 		players[tmp.steam].watchPlayerTimer = 0
 		if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. tmp.steam) end
+		irc_chat(server.ircAlerts, "Inventory watching of player " .. tmp.player .. " has expired. They will no longer be watched.")
 	end
 
-	send("lkp " .. tmp.steam)
+	sendCommand("lkp " .. tmp.steam)
 
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 1

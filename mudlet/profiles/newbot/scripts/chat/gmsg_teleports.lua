@@ -915,25 +915,39 @@ function gmsg_teleports()
 				if cursor:numrows() > 0 then
 					row = cursor:fetch({}, "a")
 					cmd = ("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z)
-					players[chatvars.playerid].deathX = 0
-					players[chatvars.playerid].deathY = 0
-					players[chatvars.playerid].deathZ = 0
 
-					-- first record their current x y z
-					savePosition(chatvars.playerid)
-
-					teleport(cmd, chatvars.playerid)
-
-					if tonumber(server.packCost) > 0 and (chatvars.accessLevel > 3) then
-						players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.packCost
-						conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid)
-						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. server.packCost .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")
+					if server.HideCommandExecutionLog then
+						if tonumber(server.HideCommandExecutionLog) > 0 then
+							cmd = ("tele " .. chatvars.playerid .. " " .. row.x .. " -1 " .. row.z)
+						end
 					end
-				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry I am unable to find a spot close to your pack to send you there.[-]")
+
 					players[chatvars.playerid].deathX = 0
 					players[chatvars.playerid].deathY = 0
 					players[chatvars.playerid].deathZ = 0
+				else
+					cmd = ("tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].deathX .. " " .. players[chatvars.playerid].deathY .. " " .. players[chatvars.playerid].deathZ)
+
+					if server.HideCommandExecutionLog then
+						if tonumber(server.HideCommandExecutionLog) > 0 then
+							cmd = ("tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].deathX .. " -1 " .. players[chatvars.playerid].deathZ)
+						end
+					end
+
+					players[chatvars.playerid].deathX = 0
+					players[chatvars.playerid].deathY = 0
+					players[chatvars.playerid].deathZ = 0
+				end
+
+				-- first record their current x y z
+				savePosition(chatvars.playerid)
+
+				teleport(cmd, chatvars.playerid)
+
+				if tonumber(server.packCost) > 0 and (chatvars.accessLevel > 3) then
+					players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.packCost
+					conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid)
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. server.packCost .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")
 				end
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have not died since you last revived.[-]")

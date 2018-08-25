@@ -37,6 +37,9 @@ function oneHourTimer()
 		botman.webdavFolderExists = false
 	end
 
+	-- nuke the error log .xsession-errors to prevent Mudlet filling up the harddrive with crap
+	os.execute(">~/.xsession-errors")
+
 	if botman.botOffline then
 		status "Server is OFFLINE"
 	end

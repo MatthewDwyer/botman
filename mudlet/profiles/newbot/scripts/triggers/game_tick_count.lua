@@ -8,44 +8,49 @@
 --]]
 
 function gameTickCountTrigger(line)
-	if botman.botDisabled then
+	-- no longer setting server.uptime this way
+	if true then
 		return
 	end
 
-	local diff, days, hours
+	-- if botman.botDisabled then
+		-- return
+	-- end
 
-	-- grab the tick counter
-	test = string.sub(line, string.find(line, ":") + 7, string.find(line, " INF"))
-	gameTick = tonumber(test)
+	-- local diff, days, hours
 
-	if botman.nextRebootTest ~= nil and os.time() < botman.nextRebootTest then
-		return
-	end
+	-- -- grab the tick counter
+	-- test = string.sub(line, string.find(line, ":") + 7, string.find(line, " INF"))
+	-- gameTick = tonumber(test)
 
-	if gameTick > 0 then
-		server.uptime = gameTick
-	else
-		server.uptime = os.time() - botman.botStarted
-	end
+	-- if botman.nextRebootTest ~= nil and os.time() < botman.nextRebootTest then
+		-- return
+	-- end
 
-	if gameTick < 0 and botman.scheduledRestart == false and server.allowReboot == true then
-		gmsg(server.commandPrefix .. "reboot server in 5 minutes", 0)
-		message("say [" .. server.chatColour .. "]A fault has been detected. A reboot should fix it.[-]")
-	end
+	-- if gameTick > 0 then
+		-- server.uptime = gameTick
+	-- else
+		-- server.uptime = os.time() - botman.botStarted
+	-- end
 
-	diff = gameTick
-	days = math.floor(diff / 86400)
+	-- if gameTick < 0 and botman.scheduledRestart == false and server.allowReboot == true then
+		-- gmsg(server.commandPrefix .. "reboot server in 5 minutes", 0)
+		-- message("say [" .. server.chatColour .. "]A fault has been detected. A reboot should fix it.[-]")
+	-- end
 
-	if (days > 0) then
-		diff = diff - (days * 86400)
-	end
+	-- diff = gameTick
+	-- days = math.floor(diff / 86400)
 
-	hours = math.floor(diff / 3600)
+	-- if (days > 0) then
+		-- diff = diff - (days * 86400)
+	-- end
 
-	if (days * 24) + hours >= tonumber(server.maxServerUptime) and botman.scheduledRestart == false and server.allowReboot == true then
-		message("say [" .. server.chatColour .. "]The server will reboot in 15 minutes.[-]")
-		botman.scheduledRestartPaused = false
-		botman.scheduledRestart = true
-		botman.scheduledRestartTimestamp = os.time() + 900
-	end
+	-- hours = math.floor(diff / 3600)
+
+	-- if (days * 24) + hours >= tonumber(server.maxServerUptime) and botman.scheduledRestart == false and server.allowReboot == true then
+		-- message("say [" .. server.chatColour .. "]The server will reboot in 15 minutes.[-]")
+		-- botman.scheduledRestartPaused = false
+		-- botman.scheduledRestart = true
+		-- botman.scheduledRestartTimestamp = os.time() + 900
+	-- end
 end

@@ -24,7 +24,7 @@ function updateBot(forced, steam)
 	end
 
 	if not server.botsIP then
-		send("pm IPCHECK")
+		getBotsIP()
 	end
 
 	if server.updateBranch ~= "" then
@@ -83,6 +83,8 @@ function checkScriptVersion(forced)
 			end
 		end
 	end
+
+	file:close()
 end
 
 
@@ -189,6 +191,10 @@ function fixTables()
 
 	if type(fallingBlocks) ~= "table" then
 		fallingBlocks = {}
+	end
+
+	if type(conQueue) ~= "table" then
+		conQueue = {}
 	end
 end
 
@@ -345,6 +351,9 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 
 	server.nextCodeReload = "/scripts/update.lua"
 	checkScript(homedir .. "/scripts/update.lua")
+
+	server.nextCodeReload = "/scripts/webAPI_functions.lua"
+	checkScript(homedir .. "/scripts/webAPI_functions.lua")
 
 if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -688,7 +697,6 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	enableTrigger("InventoryOwner")
 	enableTrigger("Spam")
 	enableTrigger("Game Time")
-	enableTrigger("GameTickCount")
 	enableTrigger("Logon Successful")
 	enableTrigger("Collect Ban")
 	enableTrigger("Unban player")
@@ -722,6 +730,7 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 	-- disable some stuff we no longer use
 	disableTrigger("le")
 	disableTimer("GimmeReset")
+	disableTrigger("GameTickCount")
 
 	if exists("Every10Seconds", "timer") == 0 then
 	  permTimer("Every10Seconds", "", 10.0, [[TenSecondTimer()]])
@@ -802,10 +811,9 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 			end
 
 			if not skipFetchData then
-				tempTimer( 5, [[send("version")]] )
-				tempTimer( 10, [[send("gg")]] )
-				tempTimer( 15, [[send("teleh")]] )
-				tempTimer( 20, [[send("se")]] )
+				tempTimer( 5, [[sendCommand("version")]] )
+				tempTimer( 10, [[sendCommand("gg")]] )
+				tempTimer( 15, [[sendCommand("se")]] )
 			end
 
 			if not botman.sysDisconnectionID then

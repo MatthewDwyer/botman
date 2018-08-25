@@ -25,7 +25,7 @@ function miscCommandsTimer()
 
 				temp = string.split(row.command, " ")
 				setChatColour(row.steam, temp[4])
-				send(row.command)
+				sendCommand(row.command)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -34,7 +34,7 @@ function miscCommandsTimer()
 
 			if string.find(row.command, "ban remove") then
 				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been unbanned.")
-				send(row.command)
+				sendCommand(row.command)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -46,7 +46,7 @@ function miscCommandsTimer()
 					teleport(row.command, row.steam)
 				end
 			else
-				send(row.command)
+				sendCommand(row.command)
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -78,7 +78,7 @@ function miscCommandsTimer()
 								teleport(row.command, row.steam)
 							end
 						else
-							send(row.command)
+							sendCommand(row.command)
 
 							if string.find(row.command, "admin add") then
 								temp = string.split(row.command, " ")
@@ -123,7 +123,7 @@ function gimmeQueuedCommands()
 					row2 = cursor2:fetch({}, "a")
 
 					if row2 then
-						send(row2.command)
+						sendCommand(row2.command)
 
 						if botman.getMetrics then
 							metrics.telnetCommands = metrics.telnetCommands + 1

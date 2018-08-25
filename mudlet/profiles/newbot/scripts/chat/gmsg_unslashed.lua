@@ -67,10 +67,6 @@ function gmsg_unslashed()
 		end
 	end
 
-
-	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
-	debug = false
-
 	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
 	-- ###################  do not allow remote commands beyond this point ################
@@ -86,6 +82,7 @@ function gmsg_unslashed()
 
 	-- ###################  do not allow the bot to respond to itself ################
 	if string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and chatvars.playername == "Server" then
+	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 		botman.faultyChat = false
 		return true
 	end
@@ -230,7 +227,7 @@ function gmsg_unslashed()
 
 			if (r == 6) then
 				message("say [" .. server.chatColour .. "]What we've got here is failure to communicate.[-]")
-				send("mpc " .. chatvars.playerid .. " true")
+				sendCommand("mpc " .. chatvars.playerid .. " true")
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1
@@ -266,6 +263,7 @@ function gmsg_unslashed()
 		if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
 		if (chatvars.playername ~= "Server") then
+		if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 			for i=1,chatvars.wordCount,1 do
 				word = chatvars.words[i]
 
@@ -464,7 +462,7 @@ function gmsg_unslashed()
 			if (r == 2) then r = 3 end
 			if (r == 5) then r = 6 end
 
-			send("se " .. igplayers[chatvars.playerid].id .. " " .. r)
+			sendCommand("se " .. igplayers[chatvars.playerid].id .. " " .. r)
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
