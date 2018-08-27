@@ -2695,8 +2695,9 @@ function gmsg_server()
 	local function cmd_SetWebPanelPort() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
-			help[1] = " {#}set web panel port {port of server's control panel/web panel}"
-			help[2] = "Alloc's web map is always +2 above this port but the bot can't discover the port number on its own."
+			help[1] = " {#}set web panel port {port of server's control panel/web panel}\n"
+			help[1] = help[1] .. "or {#}set api port {number}"
+			help[2] = "The bot needs to be told the port for Alloc's web map. If you give it the wrong port and API support is enabled or you enable that later, the bot will try that port and the ports +/- 2 above and below it."
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -2720,7 +2721,7 @@ function gmsg_server()
 			end
 		end
 
-		if (chatvars.words[1] == "set" and chatvars.words[2] == "web" and chatvars.words[3] == "panel" and chatvars.words[4] == "port") then
+		if (chatvars.words[1] == "set" and (chatvars.words[2] == "web" or chatvars.words[2] == "control") and chatvars.words[3] == "panel" and chatvars.words[4] == "port") or (chatvars.words[1] == "set" and chatvars.words[2] == "api" and chatvars.words[3] == "port") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 0) then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
@@ -2759,13 +2760,29 @@ function gmsg_server()
 				return true
 			end
 
+			if server.useAllocsWebAPI then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The web API will now be re-tested because the port has changed.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The web API will now be re-tested because the port has changed.")
+				end
+			end
+
 			server.webPanelPort = chatvars.number
+			botman.oldAPIPort = server.webPanelPort
+			botman.testAPIPort = nil
 			conn:execute("UPDATE server SET webPanelPort = " .. chatvars.number)
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]You set the web panel port to " .. chatvars.number .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You set the web panel port to " .. chatvars.number .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, "You set the web panel port to " .. chatvars.number)
+			end
+
+			if server.useAllocsWebAPI then
+				-- verify that the web API is working for us
+				tempTimer( 2, [[message("pm APITEST testing")]] )
+				tempTimer( 5, [[checkAPIWorking()]] )
 			end
 
 			botman.faultyChat = false

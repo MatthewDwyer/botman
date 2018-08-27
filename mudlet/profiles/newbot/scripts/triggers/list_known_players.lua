@@ -37,7 +37,7 @@ function listKnownPlayers(line)
 
 	if not igplayers[tmp.steam] and players[tmp.steam] then
 		-- acrchive players that haven't played in 60 days and aren't an admin
-		if (os.time() - seenTimestamp > 5184000) and (accessLevel(tmp.steam) > 3) then
+		if (os.time() - seenTimestamp > 86400 * server.archivePlayersLastSeenDays) and (accessLevel(tmp.steam) > 3) then
 			conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. tmp.steam)
 			conn:execute("DELETE FROM players WHERE steam = " .. tmp.steam)
 			players[tmp.steam] = nil

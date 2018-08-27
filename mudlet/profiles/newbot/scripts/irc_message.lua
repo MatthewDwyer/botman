@@ -7,8 +7,6 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
---/mode #haven2 +f [5000t#b]:1
-
 local ircid, pid, login, name1, name2, words, wordsOld, words2, wordCount, word2Count, result, msgLower, counter, xpos, zpos, debug, tmp, k, v, filter, temp
 local displayIRCHelp, number, numberCount, numbers = {}
 
@@ -3057,7 +3055,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: set player {name} cash {value}")
-		irc_chat(name, "")
+		irc_chat(name, "Reset a player's cash to a specific amount to fix stuff-ups.")
 		irc_chat(name, ".")
 	end
 
@@ -3095,7 +3093,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: claims")
-		irc_chat(name, "")
+		irc_chat(name, "List all of the claims on the server or a specific player's claims.")
 		irc_chat(name, ".")
 	end
 
@@ -3152,7 +3150,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: cmd {normal ingame command}")
-		irc_chat(name, "")
+		irc_chat(name, "Use an in-game command from IRC.  The command is identical to how you use it in-game except you prefix it with cmd.  eg.  cmd /uptime.  Not all in-game commands allow you to use them from IRC and will tell you if you can't use them.")
 		irc_chat(name, ".")
 	end
 
@@ -3197,7 +3195,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: con {console command}")
-		irc_chat(name, "")
+		irc_chat(name, "Send a console command to the server.  If you don't see the console output on IRC it will be a command that the bot doesn't pipe back to IRC.  The command will still be ran.  This feature is restricted to server owners.")
 		irc_chat(name, ".")
 	end
 
@@ -3241,7 +3239,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: villagers")
-		irc_chat(name, "")
+		irc_chat(name, "List all of the villagers.  It also shows who are the mayors.")
 		irc_chat(name, ".")
 	end
 
@@ -3265,7 +3263,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: base cooldown {seconds}")
-		irc_chat(name, "")
+		irc_chat(name, "Set a timer between uses of the {#}base or {#}home command.  Donors wait half as long.")
 		irc_chat(name, ".")
 	end
 
@@ -3290,7 +3288,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: set rules {new rules}")
-		irc_chat(name, "")
+		irc_chat(name, "Change the server rules.")
 		irc_chat(name, ".")
 	end
 
@@ -3309,7 +3307,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: motd")
-		irc_chat(name, "")
+		irc_chat(name, "View the message of the day.  You can clear it with motd clear.")
 		irc_chat(name, ".")
 	end
 
@@ -3338,7 +3336,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: set motd {message}")
-		irc_chat(name, "")
+		irc_chat(name, "Change the message of the day.")
 		irc_chat(name, ".")
 	end
 
@@ -3357,7 +3355,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: list tables")
-		irc_chat(name, "")
+		irc_chat(name, "List the bot's tables.")
 		irc_chat(name, ".")
 	end
 
@@ -3370,7 +3368,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: show table {table name}")
-		irc_chat(name, "")
+		irc_chat(name, "View the contents of one of the bot's tables.  Not all tables will display but you'll soon work out which ones you can view.")
 		irc_chat(name, ".")
 	end
 
@@ -3456,7 +3454,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: reset bot keep money")
-		irc_chat(name, "")
+		irc_chat(name, "Make the bot forget map specific information but remember the player cash.  Use this command after a map wipe.")
 		irc_chat(name, ".")
 	end
 
@@ -3477,6 +3475,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		return
 	else
 		resetbotCount = 0
+	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: reset bot")
+		irc_chat(name, "Make the bot forget map specific information.  Use this command after a map wipe.")
+		irc_chat(name, ".")
 	end
 
 	if (words[1] == "reset") and (words[2] == "bot") and (players[ircid].accessLevel == 0) then
@@ -3502,7 +3508,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: stop translating {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Stop sending a player's in-game chat to Google for translating.")
 		irc_chat(name, ".")
 	end
 
@@ -3530,7 +3536,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: translate {player}")
-		irc_chat(name, "")
+		irc_chat(name, "This command only works if a Linux utility called trans is installed.  It uses Google Translate so I no longer use it since I don't want to risk a huge bill from Google.  It worked great when I used to use it.")
 		irc_chat(name, ".")
 	end
 
@@ -3557,7 +3563,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: stealth translate {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Only translate a player's in-game chat to IRC.")
 		irc_chat(name, ".")
 	end
 
@@ -3584,7 +3590,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: open shop")
-		irc_chat(name, "")
+		irc_chat(name, "Enable the shop so player's can buy stuff and spend their hard earned {monies}.")
 		irc_chat(name, ".")
 	end
 
@@ -3602,7 +3608,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: close shop")
-		irc_chat(name, "")
+		irc_chat(name, "Disable the shop.  You'll soon see who can't live without it xD")
 		irc_chat(name, ".")
 	end
 
@@ -3649,7 +3655,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: shop price {item} {new price}")
-		irc_chat(name, "")
+		irc_chat(name, "Change the price of an item in the shop.")
 		irc_chat(name, ".")
 	end
 
@@ -3672,7 +3678,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: shop max {item} {max stock level}")
-		irc_chat(name, "")
+		irc_chat(name, "Set the maximum quantity of an item for sale in the shop.")
 		irc_chat(name, ".")
 	end
 
@@ -3695,7 +3701,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: shop restock {item} {quantity}")
-		irc_chat(name, "")
+		irc_chat(name, "Increase the quantity of an item in the shop.")
 		irc_chat(name, ".")
 	end
 
@@ -3723,7 +3729,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: shop add category {category name} code {short code}")
-		irc_chat(name, "")
+		irc_chat(name, "Add a new category to the shop, such as weapons.")
 		irc_chat(name, ".")
 	end
 
@@ -3752,7 +3758,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: shop remove category {category name}")
-		irc_chat(name, "")
+		irc_chat(name, "Remove a category from the shop.")
 		irc_chat(name, ".")
 	end
 
@@ -3774,7 +3780,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: shop change category {old category} to {new category}")
-		irc_chat(name, "")
+		irc_chat(name, "Rename a shop category.  All of its items will move to the new category.")
 		irc_chat(name, ".")
 	end
 
@@ -3812,7 +3818,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: inv {player}")
-		irc_chat(name, "")
+		irc_chat(name, "View the current or last known inventory of a player.")
 		irc_chat(name, ".")
 	end
 
@@ -3839,7 +3845,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: list villagers {name of village}")
-		irc_chat(name, "")
+		irc_chat(name, "List all of the village members of a specific village.")
 		irc_chat(name, ".")
 	end
 
@@ -3864,7 +3870,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: list {optional player} bases")
-		irc_chat(name, "")
+		irc_chat(name, "List all of the player bases or just those of one player.")
 		irc_chat(name, ".")
 	end
 
@@ -3895,7 +3901,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: add bad item {item name}")
-		irc_chat(name, "")
+		irc_chat(name, "Add an item to the bad items list.")
 		irc_chat(name, ".")
 	end
 
@@ -3917,7 +3923,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: remove bad item {item name}")
-		irc_chat(name, "")
+		irc_chat(name, "Remove an item from the bad items list.")
 		irc_chat(name, ".")
 	end
 
@@ -3939,7 +3945,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: near player {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Lists players, bases and locations near a player or coordinate.")
+		irc_chat(name, "Usage: near player {name}")
+		irc_chat(name, "optional: range {number}")
+		irc_chat(name, "optional: Instead of player use xpos {number} zpos {number}")
 		irc_chat(name, ".")
 	end
 
@@ -4007,7 +4016,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: info {player}")
-		irc_chat(name, "")
+		irc_chat(name, "View info about a player including links to some 7 Days related websites and the player's DNS record.")
 		irc_chat(name, ".")
 	end
 
@@ -4039,7 +4048,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: add donor {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Give a player donor status.  They get a few special privileges but it is not play to win.  There are no game items included.")
 		irc_chat(name, ".")
 	end
 
@@ -4064,7 +4073,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: remove donor {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Remove a player's donor status.")
 		irc_chat(name, ".")
 	end
 
@@ -4089,7 +4098,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: add owner {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Give a player owner status which is the highest admin status in the bot and server.")
 		irc_chat(name, ".")
 	end
 
@@ -4118,7 +4127,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: remove owner {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Remove an owner so they are just a regular player.")
 		irc_chat(name, ".")
 	end
 
@@ -4147,7 +4156,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: add admin {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Give a player admin status.   Note:  This gives them level 1 admin status only.")
 		irc_chat(name, ".")
 	end
 
@@ -4176,7 +4185,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: remove admin {player}")
-		irc_chat(name, "")
+		irc_chat(name, "OUT!  Remove an admin.  They become a player again.")
 		irc_chat(name, ".")
 	end
 
@@ -4206,7 +4215,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: permaban {jackass}")
-		irc_chat(name, "")
+		irc_chat(name, "Ban and permanban a player. Not currently used by the bot, but the ban works.")
 		irc_chat(name, ".")
 	end
 
@@ -4234,7 +4243,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: remove permaban {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Unban a player and remove their permaban status. Not currently used by the bot, but it will unban them.")
 		irc_chat(name, ".")
 	end
 
@@ -4266,7 +4275,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: add player {player} login {name} pass {password}")
-		irc_chat(name, "")
+		irc_chat(name, "Authorise a player to login to the bot here on IRC.  They can login with login {name} pass {password}.  They must not use that in any public channels, only in private with the bot or the bot will destroy their login.")
 		irc_chat(name, ".")
 	end
 
@@ -4302,7 +4311,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: player {player one} unfriend {player two}")
-		irc_chat(name, "")
+		irc_chat(name, "Make a player no longer friends with another player.  Does not change friend status done through the game's own friend system.")
 		irc_chat(name, ".")
 	end
 
@@ -4333,7 +4342,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: player {player one} friend {player two}")
-		irc_chat(name, "")
+		irc_chat(name, "Make friends.  No not you!  Make a player friends with another player.")
 		irc_chat(name, ".")
 	end
 
@@ -4364,7 +4373,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: friends {player}")
-		irc_chat(name, "")
+		irc_chat(name, "View all of the friends of a player known to the bot or the game.")
 		irc_chat(name, ".")
 	end
 
@@ -4387,7 +4396,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: players")
-		irc_chat(name, "")
+		irc_chat(name, "Get a list of all of the players (except archived players).")
 		irc_chat(name, ".")
 	end
 
@@ -4400,7 +4409,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: archived players")
-		irc_chat(name, "")
+		irc_chat(name, "Get a list of all the players that have been archived.")
 		irc_chat(name, ".")
 	end
 
@@ -4413,7 +4422,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: player {name}")
-		irc_chat(name, "")
+		irc_chat(name, "View the permanent record for a player.")
 		irc_chat(name, ".")
 	end
 
@@ -4445,7 +4454,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: igplayer {name}")
-		irc_chat(name, "")
+		irc_chat(name, "View the bot's record for a player that is currently on the server.")
 		irc_chat(name, ".")
 	end
 
@@ -4488,7 +4497,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: stop watching {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Stop getting in-game messages about a player every time their inventory changes or they get too close to a base.")
 		irc_chat(name, ".")
 	end
 
@@ -4514,7 +4523,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: donors")
-		irc_chat(name, "")
+		irc_chat(name, "List all of the donors.")
 		irc_chat(name, ".")
 	end
 
@@ -4568,7 +4577,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: teleports")
-		irc_chat(name, "")
+		irc_chat(name, "List all of the teleports.  These are not locations or waypoints.  They are special teleports that players step onto in-game to get automatically teleported somewhere.")
 		irc_chat(name, ".")
 	end
 
@@ -4612,7 +4621,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: prisoners")
-		irc_chat(name, "")
+		irc_chat(name, "List all of the current prisoners. If a reason was recorded, that will be shown too.")
 		irc_chat(name, ".")
 	end
 
@@ -4645,7 +4654,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: li {item name}")
-		irc_chat(name, "")
+		irc_chat(name, "List game items.  eg. li boots, will list all items with boots in their name.")
 		irc_chat(name, ".")
 	end
 
@@ -4689,7 +4698,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: status {player}")
-		irc_chat(name, "")
+		irc_chat(name, "View some info about a player's bases and donor status.")
 		irc_chat(name, ".")
 	end
 
@@ -4713,7 +4722,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: shop add item {item name} category {category} price {price} stock {max stock}")
-		irc_chat(name, "")
+		irc_chat(name, "Add an item to the shop.")
 		irc_chat(name, ".")
 	end
 
@@ -4755,7 +4764,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: empty shop")
-		irc_chat(name, "")
+		irc_chat(name, "Completely empty the shop so you can start fresh.")
 		irc_chat(name, ".")
 	end
 
@@ -4773,7 +4782,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: shop remove item {item name}")
-		irc_chat(name, "")
+		irc_chat(name, "Remove an item from the shop.")
 		irc_chat(name, ".")
 	end
 
@@ -4795,7 +4804,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: add command {command} access {minimum access level} message {private message}")
-		irc_chat(name, "")
+		irc_chat(name, "Add a custom command.  At the moment these are just a private message.  Later more actions will be possible.")
 		irc_chat(name, ".")
 	end
 
@@ -4833,7 +4842,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: remove command {command}")
-		irc_chat(name, "")
+		irc_chat(name, "Delete a custom command.")
 		irc_chat(name, ".")
 	end
 
@@ -4856,7 +4865,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: blacklist add {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Add a player to the bot's blacklist.  The bot will ban them for 10 years.")
 		irc_chat(name, ".")
 	end
 
@@ -4878,7 +4887,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: ban remove {player}")
-		irc_chat(name, "")
+		irc_chat(name, "Unban a player.")
 		irc_chat(name, ".")
 	end
 
@@ -4900,15 +4909,17 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: list event {event type}")
-		irc_chat(name, "")
+		irc_chat(name, "Several events are logged and can be searched with list event. Select from any of the following or add a player name or steam ID.")
+		irc_chat(name, "eg. list event ban. Matching events in the last day are displayed.  To see more days add a number eg. list event ban 5")
 		irc_chat(name, ".")
 	end
 
 	if words[1] == "list" and string.find(words[2], "event") then
 		if words[3] == nil then
 			-- display command help
-			irc_chat(name, "Several events are logged and can be searched with list event. Select from any of the following or add a player name or steam ID.")
+			irc_chat(name, "Several events are logged and can be searched with list event. Search for an event and/or add a player name or steam ID.")
 			irc_chat(name, "eg. list event ban. Matching events in the last day are displayed.  To see more days add a number eg. list event ban 5")
+			irc_chat(name, "For a list of events that can be searched for, just type list event.")
 			irc_chat(name, ".")
 
 			cursor,errorString = conn:execute("SELECT DISTINCT type from events order by type")
@@ -4941,7 +4952,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: search player {name}")
-		irc_chat(name, "")
+		irc_chat(name, "Search for a player by name.  It will list any players that match your search.")
 		irc_chat(name, ".")
 	end
 
@@ -4962,7 +4973,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: list duplicate players")
-		irc_chat(name, "")
+		irc_chat(name, "Get a list of all players with the same name. Useful for fixing issues.")
 		irc_chat(name, ".")
 	end
 
@@ -4986,7 +4997,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: add proxy {text to match} action {ban or exile}")
-		irc_chat(name, "")
+		irc_chat(name, "Add a proxy for the bot to scan for and what action to take when it sees it.")
 		irc_chat(name, ".")
 	end
 
@@ -5055,7 +5066,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: remove proxy {text}")
-		irc_chat(name, "")
+		irc_chat(name, "Remove a proxy.")
 		irc_chat(name, ".")
 	end
 
@@ -5082,7 +5093,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: list proxies")
-		irc_chat(name, "")
+		irc_chat(name, "View all of the proxies that the bot checks for, how many hits each has had and what action the bot takes when it sees one.")
 		irc_chat(name, ".")
 	end
 
@@ -5108,7 +5119,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: list regions")
-		irc_chat(name, "")
+		irc_chat(name, "List all of the regions that contain a player base. Does not take into account parts of bases that cross into other regions.")
 		irc_chat(name, ".")
 	end
 
@@ -5163,7 +5174,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: list restricted items")
-		irc_chat(name, "")
+		irc_chat(name, "View the list of restricted items.  These are items that new players aren't allowed.")
 		irc_chat(name, ".")
 	end
 
@@ -5182,7 +5193,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: list entities")
-		irc_chat(name, "")
+		irc_chat(name, "List all of entities currently in the world.")
 		irc_chat(name, ".")
 	end
 
@@ -5255,7 +5266,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: near entity {entity ID}")
-		irc_chat(name, "")
+		irc_chat(name, "View a list of players, bases and locations near a specific entity.")
 		irc_chat(name, ".")
 	end
 
@@ -5289,7 +5300,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: help {command}")
-		irc_chat(name, "")
+		irc_chat(name, "View help for an in-game command.  You will see help for any commands that match your search based on keywords.")
 		irc_chat(name, ".")
 	end
 

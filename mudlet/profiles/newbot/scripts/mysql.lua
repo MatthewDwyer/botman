@@ -543,6 +543,16 @@ end
 
 local function doSQL(sql, botsDB)
 	local shortSQL = string.sub(sql, 1, 1000) -- truncate the sql to 1000 chars
+	local newSQL
+
+	-- make sure that all changes to the players table are mirrored to playersArchived.
+	if string.find(sql, "ALTER TABLE `players`", nil, true) and not botsDB then
+		newSQL = sql
+		newSQL = newSQL:gsub("`players`", "`playersArchived`")
+
+		-- apply the altered sql to the playersArchived table
+		conn:execute(newSQL)
+	end
 
 	if not statements[shortSQL] then
 		statements[shortSQL] = {}
@@ -761,6 +771,7 @@ function alterTables()
 	doSQL("ALTER TABLE `server` ADD `allocsWebAPIUser` VARCHAR(100) NOT NULL DEFAULT '', ADD `allocsWebAPIPassword` VARCHAR(100) NOT NULL DEFAULT '', ADD `useAllocsWebAPI` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `defaultWatchTimer` INT NOT NULL DEFAULT '259200")
 	doSQL("ALTER TABLE `server` ADD `archivePlayersLastSeenDays` INT NOT NULL DEFAULT '60")
+	doSQL("ALTER TABLE `server` CHANGE `webPanelPort` `webPanelPort` INT(11) NOT NULL DEFAULT '0")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 

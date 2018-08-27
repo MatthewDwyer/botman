@@ -8,6 +8,56 @@
 --]]
 
 
+function checkAPIWorking()
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/dummy.txt", "size")
+
+	-- if the API is working a file called dummy.txt will not be empty.
+	if fileSize == nil or fileSize == 0 then
+		-- oh no!  it's empty! maybe its 2 above or below?  Let's find out :D
+		if not botman.testAPIPort then
+			-- re-test 2 above the port we were given
+			botman.testAPIPort = botman.oldAPIPort + 2
+		else
+			if botman.testAPIPort == botman.oldAPIPort + 2 then
+				-- welp that didn't work.  Lets test 2 below the port we were given
+				botman.testAPIPort = botman.oldAPIPort - 2
+			else
+				-- well shit.  We can't find the API.  Stop testing and give up.
+				botman.testAPIPort = nil
+			end
+		end
+
+		if botman.testAPIPort then
+			server.webPanelPort = botman.testAPIPort
+
+			-- verify that the web API is working for us
+			tempTimer( 2, [[message("pm APITEST testing")]] )
+			tempTimer( 5, [[checkAPIWorking()]] )
+			return
+		else
+			server.useAllocsWebAPI = false
+			server.webPanelPort = botman.oldAPIPort
+			conn:execute("UPDATE server set useAllocsWebAPI = 0")
+
+			alertAdmins("API FAILED! The bot is using telnet. Check your server's web panel port and set it with {#}set web panel port {port number}.  It should be set to 2 below your web map's port and is called ControlPanelPort in your server config.", "alert")
+			irc_chat(chatvars.ircAlias, "API FAILED! The bot is using telnet.  Check your server's web panel port and set it with {#}set web panel port {port number}, then re-try {#}use api.  It should be set to 2 below your web map's port and is called ControlPanelPort in your server config.")
+		end
+	else
+		if botman.testAPIPort then
+			-- yay! we found the API.  Update the webPanelPort. Those silly humans!
+			conn:execute("UPDATE server SET webPanelPort = " .. botman.testAPIPort)
+			botman.testAPIPort = nil
+		end
+
+		-- report our success
+		alertAdmins("The bot is now using Alloc's web API to communicate with the server.")
+		irc_chat(chatvars.ircAlias, "The bot is now using Alloc's web API to communicate with the server.")
+	end
+end
+
+
 function API_PlayerInfo(data)
 	-- EDIT THIS FUNCTION WITH CARE.  This function is central to player management.  Some lines need to be run before others.
 	-- Lua will stop execution wherever it strikes a fault (usually trying to use a non-existing variable)
@@ -1813,6 +1863,15 @@ function readAPI_LKP()
 
 	file = io.open(homedir .. "/temp/lkp.txt", "r")
 
+	--	first flag everyone except staff as notInLKP.  We will remove that flag as we find them in LKP.
+	for k,v in pairs(players) do
+		if tonumber(v.accessLevel) > 3 then
+			v.notInLKP = true
+		else
+			v.notInLKP = false
+		end
+	end
+
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
 		data = string.split(result.result, "\r\n")
@@ -1867,6 +1926,7 @@ function readAPI_LKP()
 							players[steamID].name = name
 							players[steamID].playtime = playtime
 							players[steamID].seen = seen
+							players[steamID].notInLKP = false
 
 							if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steamID .. "," .. gameID .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "', name = '" .. escape(name) .. "', id = " .. gameID) end
 						end
@@ -1876,16 +1936,15 @@ function readAPI_LKP()
 
 						if tonumber(server.archivePlayersLastSeenDays) > 0 then
 							-- acrchive players that haven't played in 60 days and aren't an admin
-							if (os.time() - seenTimestamp) > 86400 * server.archivePlayersLastSeenDays and (accessLevel(steamID) > 3) then
-								-- add missing fields and give them default values
-								fixMissingPlayer(steamID)
-
+							if ((os.time() - seenTimestamp) > 86400 * server.archivePlayersLastSeenDays or seen == "0001-01-01 00:00") and (accessLevel(steamID) > 3) then
 								conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. steamID)
 								conn:execute("DELETE FROM players WHERE steam = " .. steamID)
 								players[steamID] = nil
 								loadPlayersArchived(steamID)
 							end
 						end
+					else
+						players[steamID].notInLKP = false
 					end
 				end
 			end
@@ -1893,6 +1952,16 @@ function readAPI_LKP()
 	end
 
 	file:close()
+
+	--	Everyone except staff who is still flagged notInLKP gets archived as well.
+	for k,v in pairs(players) do
+		if tonumber(v.accessLevel) > 3 and v.notInLKP then
+			conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. k)
+			conn:execute("DELETE FROM players WHERE steam = " .. k)
+			players[k] = nil
+			loadPlayersArchived(k)
+		end
+	end
 end
 
 

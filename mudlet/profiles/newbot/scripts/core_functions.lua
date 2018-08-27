@@ -233,6 +233,12 @@ function stripAllQuotes(name)
 end
 
 
+function exists(name)
+    if type(name)~="string" then return false end
+    return os.rename(name,name) and true or false
+end
+
+
 function isFile(name)
     if type(name)~="string" then return false end
     if not isDir(name) then
@@ -343,7 +349,22 @@ function message(msg, steam)
 			end
 		end
 	else
-		if players[words[2]].exiled ~= 1 then
+		if players[words[2]] then
+			if players[words[2]].exiled ~= 1 then
+				if server.useAllocsWebAPI then
+					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+
+					os.remove(homedir .. "/temp/dummy.txt")
+					downloadFile(homedir .. "/temp/dummy.txt", url)
+				else
+					send("pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"")
+
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
+					end
+				end
+			end
+		else
 			if server.useAllocsWebAPI then
 				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
 

@@ -316,16 +316,12 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 
 	if tonumber(botman.playersOnline) > 0 then
 		if server.coppi then
-			if server.useAllocsWebAPI then
-				sendCommand("lpf")
-			else
-				for k, v in pairs(igplayers) do
-					if players[k].autoFriend ~= "NA" then
-						sendCommand("lpf " .. k)
+			for k, v in pairs(igplayers) do
+				if players[k].autoFriend ~= "NA" then
+					sendCommand("lpf " .. k)
 
-						if botman.getMetrics then
-							metrics.telnetCommands = metrics.telnetCommands + 1
-						end
+					if botman.getMetrics then
+						metrics.telnetCommands = metrics.telnetCommands + 1
 					end
 				end
 			end
