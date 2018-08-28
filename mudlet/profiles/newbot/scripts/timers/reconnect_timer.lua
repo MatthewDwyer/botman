@@ -26,16 +26,12 @@ function reconnectTimer()
 		botman.botOfflineCount = tonumber(botman.botOfflineCount) + 1
 	end
 
-	-- special extra test for bot offline
 	if botman.lastServerResponseTimestamp == nil then
 		botman.lastServerResponseTimestamp = os.time()
 	end
 
-	if botman.botOffline == false and (os.time() - botman.lastServerResponseTimestamp > 120) then
-		-- haven't communicated with the server in 1 minute but the bot thinks it is connected so force Mudlet to reconnect as it may have fallen
-		-- off and failed to notice.
-		reconnect()
-		return
+	if botman.lastTelnetResponseTimestamp == nil then
+		botman.lastTelnetResponseTimestamp = os.time()
 	end
 
 	if botman.botOfflineCount > 2 and (os.time() - botman.botConnectedTimestamp > 1800) then

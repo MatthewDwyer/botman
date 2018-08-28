@@ -1456,6 +1456,14 @@ end
 
 function readAPI_AdminList()
 	local file, ln, result, data, index, count, temp, level, steam, con, q
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/adminList.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	flagAdminsForRemoval()
 	staffList = {}
@@ -1538,6 +1546,14 @@ end
 function readAPI_BanList()
 	local file, ln, result, data, k, v, temp, con, q
 	local bannedTo, steam, reason
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/banList.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/banList.txt", "r")
 
@@ -1589,6 +1605,14 @@ end
 
 function readAPI_BCGo()
 	local file, ln, result, data, k, v, a, b
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/bc-go.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/bc-go.txt", "r")
 
@@ -1621,6 +1645,14 @@ end
 
 function readAPI_BCTime()
 	local file, ln, result, data
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/bc-time.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/bc-time.txt", "r")
 
@@ -1639,12 +1671,33 @@ end
 
 function readAPI_Command()
 	local file, ln, result, curr, totalPlayersOnline, temp, data, k, v, getData
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/command.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/command.txt", "r")
-	getData = false
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
+
+		for con, q in pairs(conQueue) do
+			if (q.command == result.command) or (q.command == result.command .. " " .. result.parameters) then
+				if string.find(result.result, "\r\n") then
+					data = string.split(result.result, "\r\n")
+
+					for k,v in pairs(data) do
+						irc_chat(q.ircUser, data[k])
+					end
+				else
+					irc_chat(q.ircUser, result.result)
+				end
+			end
+		end
 
 		if string.sub(result.result, 1, 4) == "Day " then
 			gameTimeTrigger(stripMatching(result.result, "\\r\\n"))
@@ -1672,11 +1725,25 @@ function readAPI_Command()
 	end
 
 	file:close()
+
+	for con, q in pairs(conQueue) do
+		if q.command == result.command then
+			conQueue[con] = nil
+		end
+	end
 end
 
 
 function readAPI_GG()
 	local file, ln, result, data, k, v, con, q
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/gg.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/gg.txt", "r")
 
@@ -1711,6 +1778,14 @@ end
 
 function readAPI_Help()
 	local file, ln, result, data, k, v, con, q
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/help.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/help.txt", "r")
 
@@ -1740,6 +1815,14 @@ end
 function readAPI_Inventories()
 	local file, ln, result, data, k, v, index, count, steam, playerName
 	local slot, quantity, quality, itemName
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/inventories.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/inventories.txt", "r")
 
@@ -1791,10 +1874,30 @@ function readAPI_Inventories()
 					igplayers[steam].equipment = igplayers[steam].equipment .. slot .. "," .. itemName .. "," .. quality .. "|"
 				end
 			end
+
+			for con, q in pairs(conQueue) do
+				if string.sub(q.command, 1, 3) == "si " then
+					if string.find(q.command, steam) or string.find(q.command, playerName) then
+						irc_chat(q.ircUser, "Current inventory for " .. steam .. " " .. playerName)
+						irc_chat(q.ircUser, "Belt")
+						irc_chat(q.ircUser, igplayers[steam].belt)
+						irc_chat(q.ircUser, "Bag")
+						irc_chat(q.ircUser, igplayers[steam].bag)
+						irc_chat(q.ircUser, "Equipment")
+						irc_chat(q.ircUser, igplayers[steam].equipment)
+					end
+				end
+			end
 		end
 	end
 
 	file:close()
+
+	for con, q in pairs(conQueue) do
+		if q.command == result.command then
+			conQueue[con] = nil
+		end
+	end
 
 	CheckInventory()
 	tempTimer( 2, [[CheckClaimsRemoved()]] )
@@ -1803,6 +1906,14 @@ end
 
 function readAPI_Hostiles()
 	local file, ln, result, temp, data, k, v, cursor, errorString
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/hostiles.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/hostiles.txt", "r")
 
@@ -1817,18 +1928,13 @@ function readAPI_Hostiles()
 					if not server.lagged then
 						sendCommand("removeentity " .. v.id)
 
---						display("despawned " .. v.name)
-
 						if botman.getMetrics then
 							metrics.telnetCommands = metrics.telnetCommands + 1
 						end
 					end
 				end
 			end
-
-
 		end
-
 	end
 
 	file:close()
@@ -1836,14 +1942,36 @@ end
 
 
 function readAPI_LE()
+-- todo this isn't finished although I am using Allocs list hostiles api for what this was mainly used for.
 	local file, ln, result, temp, data, k, v, getData, entityID, entity, cursor, errorString
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/le.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/le.txt", "r")
-	getData = false
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
 		data = string.split(result.result, "\r\n")
+
+		for con, q in pairs(conQueue) do
+			if q.command == result.command then
+				if string.find(result.result, "\r\n") then
+					data = string.split(result.result, "\r\n")
+
+					for k,v in pairs(data) do
+						irc_chat(q.ircUser, data[k])
+					end
+				else
+					irc_chat(q.ircUser, result.result)
+				end
+			end
+		end
 
 		for k,v in pairs(data) do
 
@@ -1852,6 +1980,12 @@ function readAPI_LE()
 	end
 
 	file:close()
+
+	for con, q in pairs(conQueue) do
+		if q.command == result.command then
+			conQueue[con] = nil
+		end
+	end
 end
 
 
@@ -1860,6 +1994,14 @@ function readAPI_LKP()
 	local name, gameID, steamID, IP, playtime, seen, p1, p2
 	local pattern = "(%d+)-(%d+)-(%d+) (%d+):(%d+)"
 	local runyear, runmonth, runday, runhour, runminute, seenTimestamp, tmp
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/lkp.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/lkp.txt", "r")
 
@@ -1967,12 +2109,44 @@ end
 
 function readAPI_LI()
 	local file, ln, result, temp, data, k, v, getData, entityID, entity, cursor, errorString
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/li.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/li.txt", "r")
-	getData = false
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
+
+		for con, q in pairs(conQueue) do
+			if string.sub(q.command, 1, 3) == "li " then
+				if string.find(result.result, "\r\n") then
+					data = string.split(result.result, "\r\n")
+
+					for k,v in pairs(data) do
+						irc_chat(q.ircUser, data[k])
+					end
+				else
+					irc_chat(q.ircUser, result.result)
+				end
+
+				file:close()
+
+				for con, q in pairs(conQueue) do
+					if string.sub(q.command, 1, 3) == "li " then
+						conQueue[con] = nil
+					end
+				end
+
+				return
+			end
+		end
+
 		data = string.split(result.result, "\r\n")
 
 		for k,v in pairs(data) do
@@ -1994,11 +2168,34 @@ end
 function readAPI_LLP()
 	local file, ln, result, temp, coords, data, k, v, a, b, cursor, errorString
 	local steam, expired, x, y, z, keystones, region, loc, reset, noPlayer
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/llp.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/llp.txt", "r")
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
+
+		for con, q in pairs(conQueue) do
+			if string.find(q.command, result.command) then
+				if string.find(result.result, "\r\n") then
+					data = string.split(result.result, "\r\n")
+
+					for k,v in pairs(data) do
+						irc_chat(q.ircUser, data[k])
+					end
+				else
+					irc_chat(q.ircUser, result.result)
+				end
+			end
+		end
+
 		data = string.split(result.result, "\r\n")
 
 		for k,v in pairs(data) do
@@ -2070,11 +2267,25 @@ function readAPI_LLP()
 	end
 
 	file:close()
+
+	for con, q in pairs(conQueue) do
+		if string.sub(q.command, 1, 3) == "llp" then
+			conQueue[con] = nil
+		end
+	end
 end
 
 
 function readAPI_LPB()
 	local file, ln, result, data, k, v, temp, pid, con, q
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/lpb.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/lpb.txt", "r")
 
@@ -2125,6 +2336,14 @@ end
 
 function readAPI_LPF()
 	local file, ln, result, data, k, v, con, q
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/lpf.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/lpf.txt", "r")
 
@@ -2134,7 +2353,7 @@ function readAPI_LPF()
 
 		for k,v in pairs(data) do
 			for con, q in pairs(conQueue) do
-				if string.sub(q.command, 1, 3) == "lpb" then
+				if string.sub(q.command, 1, 3) == "lpf" then
 					irc_chat(q.ircUser, data[k])
 				end
 			end
@@ -2147,7 +2366,7 @@ function readAPI_LPF()
 	file:close()
 
 	for con, q in pairs(conQueue) do
-		if string.sub(q.command, 1, 3) == "lpb" then
+		if string.sub(q.command, 1, 3) == "lpf" then
 			conQueue[con] = nil
 		end
 	end
@@ -2156,6 +2375,14 @@ end
 
 function readAPI_PlayersOnline()
 	local file, ln, result, index, totalPlayersOnline, con, q
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/playersOnline.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/playersOnline.txt", "r")
 
@@ -2187,6 +2414,14 @@ end
 
 function readAPI_PGD()
 	local file, ln, result, data, k, v
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/pgd.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/pgd.txt", "r")
 
@@ -2206,6 +2441,14 @@ end
 
 function readAPI_PUG()
 	local file, ln, result, data, k, v
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/pug.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/pug.txt", "r")
 
@@ -2225,6 +2468,14 @@ end
 
 function readAPI_SE()
 	local file, ln, result, temp, data, k, v, getData, entityID, entity, cursor, errorString
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/se.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/se.txt", "r")
 	getData = false
@@ -2291,21 +2542,58 @@ end
 
 function readAPI_MEM()
 	local file, ln, result, data
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/mem.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/mem.txt", "r")
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
+
+		for con, q in pairs(conQueue) do
+			if q.command == result.command then
+				if string.find(result.result, "\r\n") then
+					data = string.split(result.result, "\r\n")
+
+					for k,v in pairs(data) do
+						irc_chat(q.ircUser, data[k])
+					end
+				else
+					irc_chat(q.ircUser, result.result)
+				end
+			end
+		end
+
 		data = stripMatching(result.result, "\\r\\n")
 		memTrigger(data)
 	end
 
 	file:close()
+
+	for con, q in pairs(conQueue) do
+		if q.command == result.command then
+			conQueue[con] = nil
+		end
+	end
 end
 
 
 function readAPI_Version()
 	local file, ln, result, data, k, v
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/installedMods.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or fileSize == 0 then
+		return
+	end
 
 	modVersions = {}
 	server.alloc = false

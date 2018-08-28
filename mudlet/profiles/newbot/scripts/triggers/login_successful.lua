@@ -20,4 +20,7 @@ function loginSuccessful(line)
 		botman.getMetrics = false
 		metrics = nil
 	end
+
+	-- we need to know that we can actually send telnet commands.  Simply being able to login doesn't mean telnet is working. We pick on gt because it is a 1 line response.
+	tempTimer(5, [[ send("gt") ]])
 end

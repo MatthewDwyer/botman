@@ -59,9 +59,11 @@ function matchAll(line)
 	local fields, values, x, y, z, id, loc, reset, steam, k, v, rows, tmp
 
 	-- set counter to help detect the bot going offline
-	botman.botOfflineCount = 0
-	botman.botOffline = false
-	botman.lastServerResponseTimestamp = os.time()
+	if not server.useAllocsWebAPI then
+		botman.botOfflineCount = 0
+		botman.botOffline = false
+		botman.lastTelnetResponseTimestamp = os.time()
+	end
 
 	if botman.botDisabled then
 		return

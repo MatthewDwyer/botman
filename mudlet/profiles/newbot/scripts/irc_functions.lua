@@ -51,8 +51,6 @@ function joinIRCServer()
 		ircSetChannel(server.ircMain)
 		ircSaveSessionConfigs()
 	end
-
-	--tempTimer( 10, [[ircWhoIs(Smegz0r)]] )
 end
 
 

@@ -130,6 +130,11 @@ function login()
 		botman.initReservedSlots = true
 		botman.webdavFolderWriteable = true
 		server.lagged = false
+		botman.botConnectedTimestamp = os.time()
+		botman.botOfflineCount = 0
+		botman.botOffline = false
+		botman.lastServerResponseTimestamp = os.time()
+		botman.lastTelnetResponseTimestamp = os.time()
 	end
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -169,6 +174,7 @@ function login()
 			end
 		end
 
+		tempRegexTrigger("^(.*)$", [[updateBotOnlineStatus()]])
 		modVersions = {}
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end

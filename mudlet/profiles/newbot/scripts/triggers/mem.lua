@@ -14,10 +14,6 @@ function memTrigger(line)
 
 	local time, fps, heap, heapMax, chunks, cgo, ply, zom, ent, items, k, v
 
-	if not server.useAllocsWebAPI or tonumber(botman.playersOnline) <= 0 then
-		relogCount = 0
-	end
-
 	if (string.find(line, "Heap:")) then
 		time = string.sub(line, string.find(line, "Time:") + 6, string.find(line, "FPS:") - 3)
 		fps = tonumber(string.sub(line, string.find(line, "FPS:") + 5, string.find(line, "Heap:") - 2))

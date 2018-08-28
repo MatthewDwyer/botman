@@ -12,7 +12,15 @@ onSysDisconnection = function ()
 	botman.botOfflineCount = 0
 	botman.botOffline = true
 	botman.lastServerResponseTimestamp = os.time()
+	botman.lastTelnetResponseTimestamp = os.time()
 	botman.botOfflineTimestamp = os.time()
+end
+
+
+function updateBotOnlineStatus()
+	botman.botOfflineCount = 0
+	botman.botOffline = false
+	botman.lastTelnetResponseTimestamp = os.time()
 end
 
 

@@ -18,6 +18,12 @@ function gameTimeTrigger(line)
 
 	for word in line:gmatch("%w+") do table.insert(words, word) end
 
+	if server.useAllocsWebAPI then
+		-- we successfully sent a command to telnet so reset relogCount.
+		-- If we can't talk to it, after several relog attempts we'll message IRC to let someone know there's a problem with telnet.
+		relogCount = 0
+	end
+
 	server.gameDate = string.trim(line)
 	server.gameDay = words[2]
 	server.gameHour = tonumber(words[3])
