@@ -772,6 +772,7 @@ function alterTables()
 	doSQL("ALTER TABLE `server` ADD `defaultWatchTimer` INT NOT NULL DEFAULT '259200")
 	doSQL("ALTER TABLE `server` ADD `archivePlayersLastSeenDays` INT NOT NULL DEFAULT '60")
 	doSQL("ALTER TABLE `server` CHANGE `webPanelPort` `webPanelPort` INT(11) NOT NULL DEFAULT '0")
+	doSQL("ALTER TABLE `server` ADD `playersLastArchived` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 

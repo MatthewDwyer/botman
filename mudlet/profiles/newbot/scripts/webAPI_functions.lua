@@ -8,6 +8,17 @@
 --]]
 
 
+function getAPILog()
+-- NOTE:  This can't work in practice because there is currently no way to know the current line number of the log.
+-- Alloc must add a last log line number query to his API.
+
+		 -- url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getlog/?firstline=50&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+		 -- os.remove(homedir .. "/temp/log.txt")
+		 -- downloadFile(homedir .. "/temp/log.txt", url)
+
+end
+
+
 function checkAPIWorking()
 	local fileSize
 
@@ -1563,23 +1574,25 @@ function readAPI_BanList()
 
 		for k,v in pairs(data) do
 			if k > 2 and v ~= "" then
-				temp = string.split(v, " - ")
+				if v ~= "" then
+					temp = string.split(v, " - ")
 
-				bannedTo = string.trim(temp[3] .. " " .. temp[4])
-				steam = string.trim(temp[6])
-				reason = ""
+					bannedTo = string.trim(temp[3] .. " " .. temp[4])
+					steam = string.trim(temp[6])
+					reason = ""
 
-				if temp[8] then
-					reason = string.trim(temp[8])
-				end
+					if temp[8] then
+						reason = string.trim(temp[8])
+					end
 
-				if botman.dbConnected then
-					conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. bannedTo .. "', '%Y-%m-%d %H:%i:%s'))")
-				end
+					if botman.dbConnected then
+						conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. bannedTo .. "', '%Y-%m-%d %H:%i:%s'))")
+					end
 
-				for con, q in pairs(conQueue) do
-					if q.command == "ban list" then
-						irc_chat(q.ircUser, data[k])
+					for con, q in pairs(conQueue) do
+						if q.command == "ban list" then
+							irc_chat(q.ircUser, data[k])
+						end
 					end
 				end
 			else
@@ -1623,14 +1636,16 @@ function readAPI_BCGo()
 		data = yajl.to_value(result.result)
 
 		for k,v in pairs(data) do
-			for a,b in pairs(v) do
-				if ircListItems ~= nil then
-					if ircListItemsFilter ~= "" then
-						if string.find(string.lower(b), ircListItemsFilter, nil, true) then
+			if v ~= "" then
+				for a,b in pairs(v) do
+					if ircListItems ~= nil then
+						if ircListItemsFilter ~= "" then
+							if string.find(string.lower(b), ircListItemsFilter, nil, true) then
+								irc_chat(players[ircListItems].ircAlias, b)
+							end
+						else
 							irc_chat(players[ircListItems].ircAlias, b)
 						end
-					else
-						irc_chat(players[ircListItems].ircAlias, b)
 					end
 				end
 			end
@@ -1727,7 +1742,7 @@ function readAPI_Command()
 	file:close()
 
 	for con, q in pairs(conQueue) do
-		if q.command == result.command then
+		if (q.command == result.command) or (q.command == result.command .. " " .. result.parameters) then
 			conQueue[con] = nil
 		end
 	end
@@ -1760,7 +1775,9 @@ function readAPI_GG()
 				end
 			end
 
-			matchAll(v)
+			if v ~= "" then
+				matchAll(v)
+			end
 		end
 
 		botman.readGG = false
@@ -1840,51 +1857,43 @@ function readAPI_Inventories()
 			igplayers[steam].equipment = ""
 
 			for k,v in pairs(result[index].belt) do
-				slot = k
+				if v ~= "" then
+					slot = k
 
-				if type(v) == "table" then
-					quantity = v.count
-					quality = v.quality
-					itemName = v.name
+					if type(v) == "table" then
+						quantity = v.count
+						quality = v.quality
+						itemName = v.name
 
-					igplayers[steam].inventory = igplayers[steam].inventory .. quantity .. "," .. itemName .. "," .. quality .. "|"
-					igplayers[steam].belt = igplayers[steam].belt .. slot .. "," .. quantity .. "," .. itemName .. "," .. quality .. "|"
+						igplayers[steam].inventory = igplayers[steam].inventory .. quantity .. "," .. itemName .. "," .. quality .. "|"
+						igplayers[steam].belt = igplayers[steam].belt .. slot .. "," .. quantity .. "," .. itemName .. "," .. quality .. "|"
+					end
 				end
 			end
 
 			for k,v in pairs(result[index].bag) do
-				slot = k
+				if v ~= "" then
+					slot = k
 
-				if type(v) == "table" then
-					quantity = v.count
-					quality = v.quality
-					itemName = v.name
+					if type(v) == "table" then
+						quantity = v.count
+						quality = v.quality
+						itemName = v.name
 
-					igplayers[steam].inventory = igplayers[steam].inventory .. quantity .. "," .. itemName .. "," .. quality .. "|"
-					igplayers[steam].pack = igplayers[steam].pack .. slot .. "," .. quantity .. "," .. itemName .. "," .. quality .. "|"
+						igplayers[steam].inventory = igplayers[steam].inventory .. quantity .. "," .. itemName .. "," .. quality .. "|"
+						igplayers[steam].pack = igplayers[steam].pack .. slot .. "," .. quantity .. "," .. itemName .. "," .. quality .. "|"
+					end
 				end
 			end
 
 			for k,v in pairs(result[index].equipment) do
-				slot = k
+				if v ~= "" then
+					slot = k
 
-				if type(v) == "table" then
-					quality = v.quality
-					itemName = v.name
-					igplayers[steam].equipment = igplayers[steam].equipment .. slot .. "," .. itemName .. "," .. quality .. "|"
-				end
-			end
-
-			for con, q in pairs(conQueue) do
-				if string.sub(q.command, 1, 3) == "si " then
-					if string.find(q.command, steam) or string.find(q.command, playerName) then
-						irc_chat(q.ircUser, "Current inventory for " .. steam .. " " .. playerName)
-						irc_chat(q.ircUser, "Belt")
-						irc_chat(q.ircUser, igplayers[steam].belt)
-						irc_chat(q.ircUser, "Bag")
-						irc_chat(q.ircUser, igplayers[steam].bag)
-						irc_chat(q.ircUser, "Equipment")
-						irc_chat(q.ircUser, igplayers[steam].equipment)
+					if type(v) == "table" then
+						quality = v.quality
+						itemName = v.name
+						igplayers[steam].equipment = igplayers[steam].equipment .. slot .. "," .. itemName .. "," .. quality .. "|"
 					end
 				end
 			end
@@ -1894,7 +1903,7 @@ function readAPI_Inventories()
 	file:close()
 
 	for con, q in pairs(conQueue) do
-		if q.command == result.command then
+		if (q.command == result.command) or (q.command == result.command .. " " .. result.parameters) then
 			conQueue[con] = nil
 		end
 	end
@@ -1921,15 +1930,17 @@ function readAPI_Hostiles()
 		result = yajl.to_value(ln)
 
 		for k,v in pairs(result) do
-			loc = inLocation(v.position.x, v.position.z)
+			if v ~= "" then
+				loc = inLocation(v.position.x, v.position.z)
 
-			if loc ~= false then
-				if locations[loc].killZombies then
-					if not server.lagged then
-						sendCommand("removeentity " .. v.id)
+				if loc ~= false then
+					if locations[loc].killZombies then
+						if not server.lagged then
+							sendCommand("removeentity " .. v.id)
 
-						if botman.getMetrics then
-							metrics.telnetCommands = metrics.telnetCommands + 1
+							if botman.getMetrics then
+								metrics.telnetCommands = metrics.telnetCommands + 1
+							end
 						end
 					end
 				end
@@ -1942,8 +1953,8 @@ end
 
 
 function readAPI_LE()
--- todo this isn't finished although I am using Allocs list hostiles api for what this was mainly used for.
-	local file, ln, result, temp, data, k, v, getData, entityID, entity, cursor, errorString
+--TODO:  Not finished
+	local file, ln, result, temp, data, k, v, entityID, entity, cursor, errorString,  con, q
 	local fileSize
 
 	fileSize = lfs.attributes (homedir .. "/temp/le.txt", "size")
@@ -1957,7 +1968,6 @@ function readAPI_LE()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		data = string.split(result.result, "\r\n")
 
 		for con, q in pairs(conQueue) do
 			if q.command == result.command then
@@ -1973,16 +1983,12 @@ function readAPI_LE()
 			end
 		end
 
-		for k,v in pairs(data) do
-
-		end
-
 	end
 
 	file:close()
 
 	for con, q in pairs(conQueue) do
-		if q.command == result.command then
+		if (q.command == result.command) or (q.command == result.command .. " " .. result.parameters) then
 			conQueue[con] = nil
 		end
 	end
@@ -2019,77 +2025,87 @@ function readAPI_LKP()
 		data = string.split(result.result, "\r\n")
 
 		for k,v in pairs(data) do
-			-- gather the data for the current player
-			temp = string.split(v, ", ")
-			p1, p2 = string.find(temp[1], ". ")
-			name = string.sub(temp[1], p2+1)
-			gameID = string.match(temp[2], "=(-?%d+)")
-			steamID = string.match(temp[3], "=(-?%d+)")
+			if v ~= "" then
+				-- gather the data for the current player
+				temp = string.split(v, ", ")
+				p1, p2 = string.find(temp[1], ". ")
+				name = string.sub(temp[1], p2+1)
+				gameID = string.match(temp[2], "=(-?%d+)")
+				steamID = string.match(temp[3], "=(-?%d+)")
 
-			p1, p2 = string.find(temp[5], "ip=")
-			IP = string.sub(temp[5], p2+1)
+				p1, p2 = string.find(temp[5], "ip=")
+				IP = string.sub(temp[5], p2+1)
 
-			p1, p2 = string.find(temp[6], "playtime=")
-			playtime = string.match(string.sub(temp[6], p2+1), "(-?%d+) ")
+				p1, p2 = string.find(temp[6], "playtime=")
+				playtime = string.match(string.sub(temp[6], p2+1), "(-?%d+) ")
 
-			p1, p2 = string.find(temp[7], "seen=")
-			seen = string.sub(temp[7], p2+1)
+				p1, p2 = string.find(temp[7], "seen=")
+				seen = string.sub(temp[7], p2+1)
 
-			-- skip if no valid gameID
-			if tonumber(gameID) > 0 then
-				-- skip archived players
-				if not playersArchived[steamID] then
-					tmp = {}
-					tmp.runyear, tmp.runmonth, tmp.runday, tmp.runhour, tmp.runminute = seen:match(pattern)
-					seenTimestamp = os.time({year = tmp.runyear, month = tmp.runmonth, day = tmp.runday, hour = tmp.runhour, min = tmp.runminute, 0})
+				-- skip if no valid gameID
+				if tonumber(gameID) > 0 then
+					-- skip archived players
+					if not playersArchived[steamID] then
+						tmp = {}
+						tmp.runyear, tmp.runmonth, tmp.runday, tmp.runhour, tmp.runminute = seen:match(pattern)
+						seenTimestamp = os.time({year = tmp.runyear, month = tmp.runmonth, day = tmp.runday, hour = tmp.runhour, min = tmp.runminute, 0})
 
-					-- initially skip ingame players as this section is for archiving players we haven't seen for months
-					if not igplayers[steamID] then
-						-- make sure the player record exists so we can add missing players and archive them in one pass
-						if not players[steamID] then
-							players[steamID] = {}
+						-- initially skip ingame players as this section is for archiving players we haven't seen for months
+						if not igplayers[steamID] then
+							-- make sure the player record exists so we can add missing players and archive them in one pass
+							if not players[steamID] then
+								players[steamID] = {}
 
-							if gameID ~= "-1" then
-								players[steamID].id = gameID
+								if gameID ~= "-1" then
+									players[steamID].id = gameID
+								end
+
+								players[steamID].name = name
+								players[steamID].steam = steamID
+								players[steamID].playtime = playtime
+								players[steamID].seen = seen
+
+								if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steamID .. "," .. gameID .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "'") end
+							else
+								-- update the player record since it already exists
+								if gameID ~= "-1" then
+									players[steamID].id = gameID
+								end
+
+								players[steamID].name = name
+								players[steamID].playtime = playtime
+								players[steamID].seen = seen
+								players[steamID].notInLKP = false
+
+								if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steamID .. "," .. gameID .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "', name = '" .. escape(name) .. "', id = " .. gameID) end
 							end
 
-							players[steamID].name = name
-							players[steamID].steam = steamID
-							players[steamID].playtime = playtime
-							players[steamID].seen = seen
+							-- add missing fields and give them default values
+							fixMissingPlayer(steamID)
 
-							if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steamID .. "," .. gameID .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "'") end
+							-- don't archive if we have already archived players today.  This is mainly to prevent the bot being tied up every time someone commands it to run lkp.
+							if os.time() - server.playersLastArchived > 86400 then
+								if tonumber(server.archivePlayersLastSeenDays) > 0 then
+									-- acrchive players that haven't played in 60 days and aren't an admin
+									if ((os.time() - seenTimestamp) > 86400 * server.archivePlayersLastSeenDays or seen == "0001-01-01 00:00") and (accessLevel(steamID) > 3) then
+										conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. steamID)
+										conn:execute("DELETE FROM players WHERE steam = " .. steamID)
+										players[steamID] = nil
+										loadPlayersArchived(steamID)
+									end
+								end
+							end
 						else
-							-- update the player record since it already exists
-							if gameID ~= "-1" then
-								players[steamID].id = gameID
-							end
-
-							players[steamID].name = name
-							players[steamID].playtime = playtime
-							players[steamID].seen = seen
 							players[steamID].notInLKP = false
-
-							if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steamID .. "," .. gameID .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "', name = '" .. escape(name) .. "', id = " .. gameID) end
 						end
-
-						-- add missing fields and give them default values
-						fixMissingPlayer(steamID)
-
-						if tonumber(server.archivePlayersLastSeenDays) > 0 then
-							-- acrchive players that haven't played in 60 days and aren't an admin
-							if ((os.time() - seenTimestamp) > 86400 * server.archivePlayersLastSeenDays or seen == "0001-01-01 00:00") and (accessLevel(steamID) > 3) then
-								conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. steamID)
-								conn:execute("DELETE FROM players WHERE steam = " .. steamID)
-								players[steamID] = nil
-								loadPlayersArchived(steamID)
-							end
-						end
-					else
-						players[steamID].notInLKP = false
 					end
 				end
 			end
+		end
+
+		if os.time() - server.playersLastArchived > 86400 then
+			server.playersLastArchived = os.time()
+			conn:execute("UPDATE server SET playersLastArchived = current_timestamp")
 		end
 	end
 
@@ -2108,7 +2124,7 @@ end
 
 
 function readAPI_LI()
-	local file, ln, result, temp, data, k, v, getData, entityID, entity, cursor, errorString
+	local file, ln, result, temp, data, k, v, entityID, entity, cursor, errorString, con, q
 	local fileSize
 
 	fileSize = lfs.attributes (homedir .. "/temp/li.txt", "size")
@@ -2134,39 +2150,22 @@ function readAPI_LI()
 				else
 					irc_chat(q.ircUser, result.result)
 				end
-
-				file:close()
-
-				for con, q in pairs(conQueue) do
-					if string.sub(q.command, 1, 3) == "li " then
-						conQueue[con] = nil
-					end
-				end
-
-				return
 			end
 		end
-
-		data = string.split(result.result, "\r\n")
-
-		for k,v in pairs(data) do
-			if ircListItems then
-				irc_chat(players[ircListItems].ircAlias, string.trim(v))
-			else
-				message("pm " .. playerListItems .. " [" .. server.chatColour .. "]" .. string.trim(v) .. "[-]")
-			end
-		end
-
-		ircListItems = nil
-		playerListItems = nil
 	end
 
 	file:close()
+
+	for con, q in pairs(conQueue) do
+		if (q.command == result.command) or (q.command == result.command .. " " .. result.parameters) then
+			conQueue[con] = nil
+		end
+	end
 end
 
 
 function readAPI_LLP()
-	local file, ln, result, temp, coords, data, k, v, a, b, cursor, errorString
+	local file, ln, result, temp, coords, data, k, v, a, b, cursor, errorString, con, q
 	local steam, expired, x, y, z, keystones, region, loc, reset, noPlayer
 	local fileSize
 
@@ -2199,66 +2198,69 @@ function readAPI_LLP()
 		data = string.split(result.result, "\r\n")
 
 		for k,v in pairs(data) do
-			temp = string.split(v, "\r\n")
-			for a,b in pairs(temp) do
-				if string.find(b, "Player ") then
-					steam = string.sub(b, 9, string.find(b, ')\"') - 1)
-					steam = string.sub(steam, - 17)
-					expired = not string.find(b, ": True,") -- it's Opposite Day!
-					noPlayer = false
+			if v ~= "" then
+				temp = string.split(v, "\r\n")
 
-					if not players[steam] then
-						noPlayer = true
-					else
-						if players[steam].removedClaims == nil then
-							players[steam].removedClaims = 0
+				for a,b in pairs(temp) do
+					if string.find(b, "Player ") then
+						steam = string.sub(b, 9, string.find(b, ')\"') - 1)
+						steam = string.sub(steam, - 17)
+						expired = not string.find(b, ": True,") -- it's Opposite Day!
+						noPlayer = false
+
+						if not players[steam] then
+							noPlayer = true
+						else
+							if players[steam].removedClaims == nil then
+								players[steam].removedClaims = 0
+							end
 						end
 					end
-				end
 
-				if string.find(b, "owns ") and string.find(b, " keystones") then
-					keystones = string.sub(b, string.find(b, "owns ") + 5, string.find(b, " keystones") - 1)
-					if not noPlayer then
-						players[steam].keystones = keystones
-					end
-				end
-
-				if string.find(b, "   (", nil, true) then
-					b = string.sub(b, 5, string.len(b) -1)
-					coords = string.split(b, ",")
-					x = tonumber(coords[1])
-					y = tonumber(coords[2])
-					z = tonumber(coords[3])
-
-					if tonumber(y) > 0 then
-						if botman.dbConnected then
-							conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. steam .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z .. " AND remove > 1")
-							conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. steam .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z)
+					if string.find(b, "owns ") and string.find(b, " keystones") then
+						keystones = string.sub(b, string.find(b, "owns ") + 5, string.find(b, " keystones") - 1)
+						if not noPlayer then
+							players[steam].keystones = keystones
 						end
+					end
 
-						if accessLevel(steam) > 3 then
-							region = getRegion(x, z)
-							loc, reset = inLocation(x, z)
+					if string.find(b, "   (", nil, true) then
+						b = string.sub(b, 5, string.len(b) -1)
+						coords = string.split(b, ",")
+						x = tonumber(coords[1])
+						y = tonumber(coords[2])
+						z = tonumber(coords[3])
 
-							if not noPlayer then
-								if (resetRegions[region]) or reset or players[steam].removeClaims == true then
-									if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. ",1) ON DUPLICATE KEY UPDATE remove = 1," .. dbBool(expired) .. ")") end
+						if tonumber(y) > 0 then
+							if botman.dbConnected then
+								conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. steam .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z .. " AND remove > 1")
+								conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. steam .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z)
+							end
+
+							if accessLevel(steam) > 3 then
+								region = getRegion(x, z)
+								loc, reset = inLocation(x, z)
+
+								if not noPlayer then
+									if (resetRegions[region]) or reset or players[steam].removeClaims == true then
+										if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. ",1) ON DUPLICATE KEY UPDATE remove = 1," .. dbBool(expired) .. ")") end
+									else
+										if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ")") end
+									end
+
+									if expired then
+										-- try to remove the expired claim
+										sendCommand("rlp " .. x .. " " .. y .. " " .. z)
+									end
 								else
-									if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ")") end
-								end
-
-								if expired then
-									-- try to remove the expired claim
-									sendCommand("rlp " .. x .. " " .. y .. " " .. z)
+									if expired then
+										-- try to remove the expired claim
+										sendCommand("rlp " .. x .. " " .. y .. " " .. z)
+									end
 								end
 							else
-								if expired then
-									-- try to remove the expired claim
-									sendCommand("rlp " .. x .. " " .. y .. " " .. z)
-								end
+								if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ")") end
 							end
-						else
-							if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ")") end
 						end
 					end
 				end
@@ -2269,7 +2271,7 @@ function readAPI_LLP()
 	file:close()
 
 	for con, q in pairs(conQueue) do
-		if string.sub(q.command, 1, 3) == "llp" then
+		if (q.command == result.command) or (q.command == result.command .. " " .. result.parameters) then
 			conQueue[con] = nil
 		end
 	end
@@ -2300,25 +2302,27 @@ function readAPI_LPB()
 				end
 			end
 
-			if not string.find(v, "The player") then
-				temp = string.split(data, ": ")
-				pid = temp[1]
-				temp = string.split(temp[2], ", ")
+			if v ~= "" then
+				if not string.find(v, "The player") then
+					temp = string.split(data, ": ")
+					pid = temp[1]
+					temp = string.split(temp[2], ", ")
 
-				players[pid].bedX = temp[1]
-				players[pid].bedY = temp[2]
-				players[pid].bedZ = temp[3]
-				if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. temp[1] .. ", bedY = " .. temp[2] .. ", bedZ = " .. temp[3].. " WHERE steam = " .. pid) end
+					players[pid].bedX = temp[1]
+					players[pid].bedY = temp[2]
+					players[pid].bedZ = temp[3]
+					if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. temp[1] .. ", bedY = " .. temp[2] .. ", bedZ = " .. temp[3].. " WHERE steam = " .. pid) end
 
-				display("UPDATE players SET bedX = " .. temp[1] .. ", bedY = " .. temp[2] .. ", bedZ = " .. temp[3].. " WHERE steam = " .. pid)
-			else
-				pid = string.sub(v, 11, string.find(v, " does ") - 1)
-				players[pid].bedX = 0
-				players[pid].bedY = 0
-				players[pid].bedZ = 0
-				if botman.dbConnected then conn:execute("UPDATE players SET bedX = 0, bedY = 0, bedZ = 0 WHERE steam = " .. pid) end
+					display("UPDATE players SET bedX = " .. temp[1] .. ", bedY = " .. temp[2] .. ", bedZ = " .. temp[3].. " WHERE steam = " .. pid)
+				else
+					pid = string.sub(v, 11, string.find(v, " does ") - 1)
+					players[pid].bedX = 0
+					players[pid].bedY = 0
+					players[pid].bedZ = 0
+					if botman.dbConnected then conn:execute("UPDATE players SET bedX = 0, bedY = 0, bedZ = 0 WHERE steam = " .. pid) end
 
-				display("UPDATE players SET bedX = 0, bedY = 0, bedZ = 0 WHERE steam = " .. pid)
+					display("UPDATE players SET bedX = 0, bedY = 0, bedZ = 0 WHERE steam = " .. pid)
+				end
 			end
 		end
 
@@ -2327,7 +2331,7 @@ function readAPI_LPB()
 	file:close()
 
 	for con, q in pairs(conQueue) do
-		if string.sub(q.command, 1, 3) == "lpb" then
+		if (q.command == result.command) or (q.command == result.command .. " " .. result.parameters) then
 			conQueue[con] = nil
 		end
 	end
@@ -2358,15 +2362,16 @@ function readAPI_LPF()
 				end
 			end
 
-			getFriends(v)
+			if not string.find(v, "Player") and v ~= "" then
+				getFriends(v)
+			end
 		end
-
 	end
 
 	file:close()
 
 	for con, q in pairs(conQueue) do
-		if string.sub(q.command, 1, 3) == "lpf" then
+		if (q.command == result.command) or (q.command == result.command .. " " .. result.parameters) then
 			conQueue[con] = nil
 		end
 	end
@@ -2430,7 +2435,9 @@ function readAPI_PGD()
 		data = string.split(result.result, "\r\n")
 
 		for k,v in pairs(data) do
-			matchAll(v)
+			if v ~= "" then
+				matchAll(v)
+			end
 		end
 
 	end
@@ -2457,11 +2464,41 @@ function readAPI_PUG()
 		data = string.split(result.result, "\r\n")
 
 		for k,v in pairs(data) do
-			matchAll(v)
+			if v ~= "" then
+				matchAll(v)
+			end
 		end
 
 	end
 
+	file:close()
+end
+
+
+function readAPI_ReadLog()
+-- this works but knowing what the current log line number on the server is is critical or this is a waste of time.
+	local file, ln, result, temp, data, k, v
+	local uptime, date, time, msg
+
+	file = io.open(homedir .. "/temp/log.txt", "r")
+
+	for ln in file:lines() do
+		result = yajl.to_value(ln)
+
+		botman.lastLogLine = result.lastLine
+
+		for k,v in pairs(result.entries) do
+			uptime = v.uptime
+			date = v.date
+			time = v.time
+			msg = v.msg
+
+			matchAll(msg, date, time)
+		end
+	end
+
+--	server.serverTime = date .. " " .. string.sub(time, 1, 5)
+--	server.uptime = math.floor(time * 60)
 	file:close()
 end
 
@@ -2501,17 +2538,19 @@ function readAPI_SE()
 				getData = true
 			else
 				if getData then
-					temp = string.split(v, "-")
+					if v ~= "" then
+						temp = string.split(v, "-")
 
-					entityID = string.trim(temp[1])
-					entity = string.trim(temp[2])
+						entityID = string.trim(temp[1])
+						entity = string.trim(temp[2])
 
-					if string.find(v, "ombie") then
-						if botman.dbConnected then conn:execute("INSERT INTO gimmeZombies (zombie, entityID) VALUES ('" .. entity .. "'," .. entityID .. ") ON DUPLICATE KEY UPDATE remove = 0") end
-						updateGimmeZombies(entityID, entity)
-					else
-						if botman.dbConnected then conn:execute("INSERT INTO otherEntities (entity, entityID) VALUES ('" .. entity .. "'," .. entityID .. ") ON DUPLICATE KEY UPDATE remove = 0") end
-						updateOtherEntities(entityID, entity)
+						if string.find(v, "ombie") then
+							if botman.dbConnected then conn:execute("INSERT INTO gimmeZombies (zombie, entityID) VALUES ('" .. entity .. "'," .. entityID .. ") ON DUPLICATE KEY UPDATE remove = 0") end
+							updateGimmeZombies(entityID, entity)
+						else
+							if botman.dbConnected then conn:execute("INSERT INTO otherEntities (entity, entityID) VALUES ('" .. entity .. "'," .. entityID .. ") ON DUPLICATE KEY UPDATE remove = 0") end
+							updateOtherEntities(entityID, entity)
+						end
 					end
 				end
 			end
@@ -2533,7 +2572,7 @@ function readAPI_SE()
 	file:close()
 
 	for con, q in pairs(conQueue) do
-		if q.command == "se" then
+		if (q.command == result.command) or (q.command == result.command .. " " .. result.parameters) then
 			conQueue[con] = nil
 		end
 	end
@@ -2541,7 +2580,7 @@ end
 
 
 function readAPI_MEM()
-	local file, ln, result, data
+	local file, ln, result, data, con, q
 	local fileSize
 
 	fileSize = lfs.attributes (homedir .. "/temp/mem.txt", "size")
@@ -2585,7 +2624,7 @@ end
 
 
 function readAPI_Version()
-	local file, ln, result, data, k, v
+	local file, ln, result, data, k, v, con, q
 	local fileSize
 
 	fileSize = lfs.attributes (homedir .. "/temp/installedMods.txt", "size")
@@ -2619,7 +2658,9 @@ function readAPI_Version()
 				end
 			end
 
-			matchAll(v)
+			if v ~= "" then
+				matchAll(v)
+			end
 		end
 
 	end

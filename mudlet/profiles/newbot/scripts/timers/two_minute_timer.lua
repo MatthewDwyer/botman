@@ -19,7 +19,9 @@ function twoMinuteTimer()
 
 	if tonumber(botman.playersOnline) > 0 then
 		-- save the penguins! er I mean world!
-		sendCommand("sa")
+		if not botman.serverRebooting then
+			sendCommand("sa")
+		end
 
 		if server.scanErrors and server.coppi then
 			for k,v in pairs(igplayers) do

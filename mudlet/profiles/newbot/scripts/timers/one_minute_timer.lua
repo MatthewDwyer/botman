@@ -172,7 +172,7 @@ function everyMinute()
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
-	if tonumber(botman.playersOnline) == 0 and botman.scheduledRestart and server.allowReboot then
+	if tonumber(botman.playersOnline) == 0 and botman.scheduledRestart and server.allowReboot and not botman.serverRebooting then
 		irc_chat(server.ircMain, "A reboot is scheduled and nobody is on so the server is rebooting now.")
 		botman.scheduledRestart = false
 		botman.scheduledRestartTimestamp = os.time()
@@ -196,7 +196,7 @@ function everyMinute()
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
-	if (botman.playersOnline == 0 and server.uptime < 0) and (scheduledReboot ~= true) and server.allowReboot == true then
+	if (botman.playersOnline == 0 and server.uptime < 0) and (scheduledReboot ~= true) and server.allowReboot and not botman.serverRebooting then
 		botman.rebootTimerID = tempTimer( 60, [[startReboot()]] )
 		scheduledReboot = true
 	end

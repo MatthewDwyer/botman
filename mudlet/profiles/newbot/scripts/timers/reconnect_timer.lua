@@ -34,15 +34,24 @@ function reconnectTimer()
 		botman.lastTelnetResponseTimestamp = os.time()
 	end
 
-	if botman.botOfflineCount > 2 and (os.time() - botman.botConnectedTimestamp > 1800) then
+	if tonumber(botman.playersOnline) > 0 and (os.time() - botman.lastTelnetResponseTimestamp > 90 or botman.botOffline) then
+		reconnect()
+	end
+
+	if (os.time() - botman.lastTelnetResponseTimestamp > 310) then
+		reconnect()
+		return
+	end
+
+	if tonumber(botman.botOfflineCount) > 2 and (os.time() - botman.botConnectedTimestamp > 1800) then
 		if server.allowBotRestarts then
 			restartBot()
 			return
 		end
 	end
 
-	if botman.botOfflineCount > 0 then
-		if botman.botOfflineCount < 16 then
+	if tonumber(botman.botOfflineCount) > 0 then
+		if tonumber(botman.botOfflineCount) < 16 then
 			irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
 			reconnect()
 		else

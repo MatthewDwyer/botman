@@ -562,6 +562,11 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	server.nextCodeReload = "/scripts/timers/ten_minute_timer.lua"
 	checkScript(homedir .. "/scripts/timers/ten_minute_timer.lua")
 
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/timers/five_minute_timer.lua"
+	checkScript(homedir .. "/scripts/timers/five_minute_timer.lua")
+
 	server.nextCodeReload = ""
 if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -707,19 +712,22 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	enableTrigger("llp")
 	enableTrigger("Chat")
 
+	enableTimer("Every10Seconds")
+	enableTimer("Every15Seconds")
 	enableTimer("EveryHalfMinute")
+	enableTimer("Every45Seconds")
 	enableTimer("OneMinuteTimer")
-	enableTimer("listPlayers")
+	enableTimer("TwoMinuteTimer")
+	enableTimer("five_minute_timer")
+	enableTimer("ten_minute_timer")
+	enableTimer("ThirtyMinuteTimer")
 	enableTimer("OneHourTimer")
+	enableTimer("listPlayers")
 	enableTimer("Reconnect")
 	enableTimer("TimedCommands")
-	enableTimer("ThirtyMinuteTimer")
 	enableTimer("PlayerQueuedCommands")
 	enableTimer("GimmeQueuedCommands")
 	enableTimer("ircQueue")
-	enableTimer("Every45Seconds")
-	enableTimer("Every15Seconds")
-	enableTimer("Every10Seconds")
 	enableTimer("TrackPlayer")
 	enableTimer("messageQueue")
 if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -734,6 +742,14 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 
 	if exists("Every10Seconds", "timer") == 0 then
 	  permTimer("Every10Seconds", "", 10.0, [[TenSecondTimer()]])
+	end
+
+	if exists("five_minute_timer", "timer") == 0 then
+	  permTimer("five_minute_timer", "", 300.0, [[FiveMinuteTimer()]])
+	end
+
+	if exists("ten_minute_timer", "timer") == 0 then
+	  permTimer("ten_minute_timer", "", 600.0, [[TenMinuteTimer()]])
 	end
 
 	enableTimer("Every10Seconds")

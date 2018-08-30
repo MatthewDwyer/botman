@@ -53,7 +53,7 @@ function removeOldStaff()
 end
 
 
-function matchAll(line)
+function matchAll(line, logDate, logTime)
 	local pname, pid, number, died, coords, words, temp, msg
 	local dy, mth, yr, hr, min, sec, pm, reason, timestamp, banDate
 	local fields, values, x, y, z, id, loc, reset, steam, k, v, rows, tmp
@@ -232,41 +232,42 @@ function matchAll(line)
 	end
 
 
-	if (string.sub(line, 1, 4) == os.date("%Y")) then
-		if botman.readGG and not server.useAllocsWebAPI then
-			botman.readGG = false
-		end
+	if not server.useAllocsWebAPI then
+		if (string.sub(line, 1, 4) == os.date("%Y")) then
+			if botman.readGG then
+				botman.readGG = false
+			end
 
-		if echoConsole then
-			echoConsole = false
-			echoConsoleTo = nil
-		end
+			if echoConsole then
+				echoConsole = false
+				echoConsoleTo = nil
+			end
 
-		if getZombies then
-			getZombies = nil
+			if getZombies then
+				getZombies = nil
 
-			if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies WHERE remove = 1") end
-			loadGimmeZombies()
+				if botman.dbConnected then conn:execute("DELETE FROM gimmeZombies WHERE remove = 1") end
+				loadGimmeZombies()
 
-			if botman.dbConnected then conn:execute("DELETE FROM otherEntities WHERE remove = 1") end
-			loadOtherEntities()
+				if botman.dbConnected then conn:execute("DELETE FROM otherEntities WHERE remove = 1") end
+				loadOtherEntities()
 
-			if botman.dbConnected then
-				cursor,errorString = conn:execute("SELECT Count(entityID) as maxZeds from gimmeZombies")
-				row = cursor:fetch({}, "a")
-				botman.maxGimmeZombies = tonumber(row.maxZeds)
+				if botman.dbConnected then
+					cursor,errorString = conn:execute("SELECT Count(entityID) as maxZeds from gimmeZombies")
+					row = cursor:fetch({}, "a")
+					botman.maxGimmeZombies = tonumber(row.maxZeds)
+				end
+			end
+
+			if collectBans then
+				collectBans = false
 			end
 		end
 
-		if collectBans then
-			collectBans = false
+		if echoConsole then
+			line = line:gsub(",", "") -- strip out commas
+			irc_chat(echoConsoleTo, line)
 		end
-	end
-
-
-	if echoConsole then
-		line = line:gsub(",", "") -- strip out commas
-		irc_chat(echoConsoleTo, line)
 	end
 
 
@@ -340,14 +341,6 @@ function matchAll(line)
 			else
 				igplayers[tmp.pid].spawnChecked = false
 			end
-
-			--if accessLevel(tmp.pid) > 2 then
-				-- dist = distancexz(igplayers[tmp.pid].spawnedXPos, igplayers[tmp.pid].spawnedXPos, igplayers[tmp.pid].xPos, igplayers[tmp.pid].zPos)
-
-				-- if dist > 100 then
-					-- irc_chat(server.ircAlerts, "Player " .. tmp.pid .. " " .. igplayers[tmp.pid].name .. " teleported to x " .. igplayers[tmp.pid].spawnedXPos .. " y " .. igplayers[tmp.pid].spawnedYPos .. " z " .. igplayers[tmp.pid].spawnedZPos .. " from x " .. igplayers[tmp.pid].xPos .. " y " .. igplayers[tmp.pid].yPos ..  " z " .. igplayers[tmp.pid].zPos .. " distance " .. string.format("%d", dist))
-				-- end
-			--end
 		end
 
 		igplayers[tmp.pid].spawnPending = false
@@ -355,9 +348,11 @@ function matchAll(line)
 	end
 
 
-	if string.find(line, "Executing command 'gg'") then
-		if string.find(line, server.botsIP) then
-			botman.readGG = true
+	if not server.useAllocsWebAPI then
+		if string.find(line, "Executing command 'gg'") then
+			if string.find(line, server.botsIP) then
+				botman.readGG = true
+			end
 		end
 	end
 
@@ -472,251 +467,252 @@ function matchAll(line)
 	end
 
 
-	if getAdminList then
-		if string.sub(line, 1, 3) ~= "   " or string.find(line, 1, 8) == "Total of" then
-			getAdminList = nil
-			removeOldStaff()
+	if not server.useAllocsWebAPI then
+		if getAdminList then
+			if string.sub(line, 1, 3) ~= "   " or string.find(line, 1, 8) == "Total of" then
+				getAdminList = nil
+				removeOldStaff()
+
+				deleteLine()
+				return
+			end
+		end
+
+		if getAdminList then
+			temp = string.split(line, ":")
+			temp[1] = string.trim(temp[1])
+			temp[2] = string.trim(string.sub(temp[2], 1, 18))
+
+			number = tonumber(temp[1])
+			pid = temp[2]
+
+			if number == 0 then
+				owners[pid] = {}
+				owners[pid].remove = false
+				staffList[pid] = {}
+			end
+
+			if number == 1 then
+				admins[pid] = {}
+				admins[pid].remove = false
+				staffList[pid] = {}
+			end
+
+			if number == 2 then
+				mods[pid] = {}
+				mods[pid].remove = false
+				staffList[pid] = {}
+			end
+
+			if players[pid] then
+				players[pid].accessLevel = tonumber(number)
+				players[pid].newPlayer = false
+				players[pid].silentBob = false
+				players[pid].walkies = false
+				players[pid].timeout = false
+				players[pid].botTimeout = false
+				players[pid].prisoner = false
+				players[pid].exiled = 2
+				players[pid].canTeleport = true
+				players[pid].enableTP = true
+				players[pid].botHelp = true
+				players[pid].hackerScore = 0
+
+				if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. number .. " WHERE steam = " .. pid) end
+				if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. pid .. "," .. number .. ")") end
+			end
+
+			return
+		end
+
+
+		if llpid ~= nil then
+			if string.sub(line, 1, 4) == "   (" then
+				coords = string.split(string.sub(line, 5, string.len(line) - 1), ",")
+
+				if players[llpid].removedClaims == nil then
+					players[llpid].removedClaims = 0
+				end
+
+				if tonumber(coords[2]) > 0 then
+					if botman.dbConnected then
+						conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3] .. " AND remove > 1")
+						conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3])
+					end
+
+					if accessLevel(llpid) > 3 then
+						region = getRegion(coords[1], coords[3])
+
+						loc, reset = inLocation(coords[1], coords[3])
+
+						if (resetRegions[region]) or reset or players[llpid].removeClaims == true then
+							if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ",1) ON DUPLICATE KEY UPDATE remove = 1") end
+						else
+							if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")") end
+						end
+					else
+						if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")") end
+					end
+				end
+			end
+		end
+
+
+		if playerListItems ~= nil then
+			if string.find(line, "Listed ") then
+				playerListItems = nil
+			end
 
 			deleteLine()
 			return
 		end
-	end
 
 
-	if getAdminList then
-		temp = string.split(line, ":")
-		temp[1] = string.trim(temp[1])
-		temp[2] = string.trim(string.sub(temp[2], 1, 18))
-
-		number = tonumber(temp[1])
-		pid = temp[2]
-
-		if number == 0 then
-			owners[pid] = {}
-			owners[pid].remove = false
-			staffList[pid] = {}
-		end
-
-		if number == 1 then
-			admins[pid] = {}
-			admins[pid].remove = false
-			staffList[pid] = {}
-		end
-
-		if number == 2 then
-			mods[pid] = {}
-			mods[pid].remove = false
-			staffList[pid] = {}
-		end
-
-		if players[pid] then
-			players[pid].accessLevel = tonumber(number)
-			players[pid].newPlayer = false
-			players[pid].silentBob = false
-			players[pid].walkies = false
-			players[pid].timeout = false
-			players[pid].botTimeout = false
-			players[pid].prisoner = false
-			players[pid].exiled = 2
-			players[pid].canTeleport = true
-			players[pid].enableTP = true
-			players[pid].botHelp = true
-			players[pid].hackerScore = 0
-
-			if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. number .. " WHERE steam = " .. pid) end
-			if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. pid .. "," .. number .. ")") end
-		end
-
-		return
-	end
-
-
-	if llpid ~= nil then
-		if string.sub(line, 1, 4) == "   (" then
-			coords = string.split(string.sub(line, 5, string.len(line) - 1), ",")
-
-			if players[llpid].removedClaims == nil then
-				players[llpid].removedClaims = 0
+		if ircListItems ~= nil then
+			if string.sub(string.trim(line), 1, 5) == "Slot " then
+				ircListItems = nil
 			end
 
-			if tonumber(coords[2]) > 0 then
+			deleteLine()
+			return
+		end
+
+
+		if ircListItems ~= nil then
+			if string.sub(line,1,4) == "    " and string.sub(line,5,5) ~= " " then
+				irc_chat(players[ircListItems].ircAlias, string.trim(line))
+			end
+		end
+
+
+		if playerListItems ~= nil then
+			if string.sub(line,1,4) == "    " and string.sub(line,5,5) ~= " " then
+				message("pm " .. playerListItems .. " [" .. server.chatColour .. "]" .. string.trim(line) .. "[-]")
+			end
+		end
+
+
+		-- collect the ban list
+		if collectBans then
+			if not string.find(line, "banned until") then
+				temp = string.split(line, "-")
+				bannedTo = string.trim(temp[1] .. "-" .. temp[2] .. "-" .. temp[3])
+				steam = string.trim(temp[4])
+				reason = string.trim(temp[5])
+
 				if botman.dbConnected then
-					conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3] .. " AND remove > 1")
-					conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3])
-				end
+					conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. bannedTo .. "', '%Y-%m-%d %H:%i:%s'))")
 
-				if accessLevel(llpid) > 3 then
-					region = getRegion(coords[1], coords[3])
-
-					loc, reset = inLocation(coords[1], coords[3])
-
-					if (resetRegions[region]) or reset or players[llpid].removeClaims == true then
-						if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ",1) ON DUPLICATE KEY UPDATE remove = 1") end
-					else
-						if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")") end
+					if players[steam] then
+						-- also insert the steam owner (will only work if the steam id is different)
+						conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. players[steam].steamOwner .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. bannedTo .. "', '%Y-%m-%d %H:%i:%s'))")
 					end
-				else
-					if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")") end
 				end
 			end
 		end
-	end
 
 
-	if playerListItems ~= nil then
-		if string.find(line, "Listed ") then
-			playerListItems = nil
-		end
-
-		deleteLine()
-		return
-	end
-
-
-	if ircListItems ~= nil then
-		if string.sub(string.trim(line), 1, 5) == "Slot " then
-			ircListItems = nil
-		end
-
-		deleteLine()
-		return
-	end
-
-
-	if ircListItems ~= nil then
-		if string.sub(line,1,4) == "    " and string.sub(line,5,5) ~= " " then
-			irc_chat(players[ircListItems].ircAlias, string.trim(line))
-		end
-	end
-
-
-	if playerListItems ~= nil then
-		if string.sub(line,1,4) == "    " and string.sub(line,5,5) ~= " " then
-			message("pm " .. playerListItems .. " [" .. server.chatColour .. "]" .. string.trim(line) .. "[-]")
-		end
-	end
-
-
-	-- collect the ban list
-	if collectBans then
-		if not string.find(line, "banned until") then
-			temp = string.split(line, "-")
-			bannedTo = string.trim(temp[1] .. "-" .. temp[2] .. "-" .. temp[3])
-			steam = string.trim(temp[4])
-			reason = string.trim(temp[5])
-
-			if botman.dbConnected then
-				conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. bannedTo .. "', '%Y-%m-%d %H:%i:%s'))")
-
-				if players[steam] then
-					-- also insert the steam owner (will only work if the steam id is different)
-					conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. players[steam].steamOwner .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. bannedTo .. "', '%Y-%m-%d %H:%i:%s'))")
-				end
-			end
-		end
-	end
-
-
-	-- get zombies into table gimmeZombies
-	if getZombies ~= nil then
-		if string.find(line, "ombie") then
-			temp = string.split(line, "-")
-
-			local entityID = string.trim(temp[1])
-			local zombie = string.trim(temp[2])
-
-			if botman.dbConnected then conn:execute("INSERT INTO gimmeZombies (zombie, entityID) VALUES ('" .. zombie .. "'," .. entityID .. ") ON DUPLICATE KEY UPDATE remove = 0") end
-			updateGimmeZombies(entityID, zombie)
-		else
-			if (string.sub(line, 1, 4) ~= os.date("%Y")) then
+		-- get zombies into table gimmeZombies
+		if getZombies ~= nil then
+			if string.find(line, "ombie") then
 				temp = string.split(line, "-")
 
 				local entityID = string.trim(temp[1])
-				local entity = string.trim(temp[2])
+				local zombie = string.trim(temp[2])
 
-				if botman.dbConnected then conn:execute("INSERT INTO otherEntities (entity, entityID) VALUES ('" .. entity .. "'," .. entityID .. ")") end
-				updateOtherEntities(entityID, entity)
+				if botman.dbConnected then conn:execute("INSERT INTO gimmeZombies (zombie, entityID) VALUES ('" .. zombie .. "'," .. entityID .. ") ON DUPLICATE KEY UPDATE remove = 0") end
+				updateGimmeZombies(entityID, zombie)
+			else
+				if (string.sub(line, 1, 4) ~= os.date("%Y")) then
+					temp = string.split(line, "-")
+
+					local entityID = string.trim(temp[1])
+					local entity = string.trim(temp[2])
+
+					if botman.dbConnected then conn:execute("INSERT INTO otherEntities (entity, entityID) VALUES ('" .. entity .. "'," .. entityID .. ")") end
+					updateOtherEntities(entityID, entity)
+				end
 			end
 		end
-	end
 
 
-	if botman.listItems and playerListItems == nil then
-		if string.find(line, " matching items.") then
-			botman.listItems = false
-		else
-			if botman.dbConnected then
-				temp = string.trim(line)
-				conn:execute("INSERT INTO spawnableItems (itemName) VALUES ('" .. escape(temp) .. "')")
+		if botman.listItems and playerListItems == nil then
+			if string.find(line, " matching items.") then
+				botman.listItems = false
+			else
+				if botman.dbConnected then
+					temp = string.trim(line)
+					conn:execute("INSERT INTO spawnableItems (itemName) VALUES ('" .. escape(temp) .. "')")
+				end
 			end
 		end
-	end
 
 
-	if echoConsoleTo ~= nil then
-		if string.find(line, "Executing command 'webpermission list") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+		if echoConsoleTo ~= nil then
+			if string.find(line, "Executing command 'webpermission list") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'lpf") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'lpf") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'lpb") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'lpb") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'lps") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'lps") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'SystemInfo") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'SystemInfo") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'traderlist") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'traderlist") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'help") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'help") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'version") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'version") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'li ") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'li ") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'se'") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'se'") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'si ") and string.find(line, server.botsIP) and string.find(line, echoConsoleTrigger) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'si ") and string.find(line, server.botsIP) and string.find(line, echoConsoleTrigger) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'gg'") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'gg'") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'ggs'") and string.find(line, server.botsIP) then
-			echoConsole = true
-		end
+			if string.find(line, "Executing command 'ggs'") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 
-		if string.find(line, "Executing command 'llp") and string.find(line, server.botsIP) then
-			echoConsole = true
-			conn:execute("DELETE FROM keystones WHERE x = 0 AND y = 0 AND z = 0")
-		end
+			if string.find(line, "Executing command 'llp") and string.find(line, server.botsIP) then
+				echoConsole = true
+				conn:execute("DELETE FROM keystones WHERE x = 0 AND y = 0 AND z = 0")
+			end
 
-		if string.find(line, "Executing command 'ban list'") and string.find(line, server.botsIP) then
-			echoConsole = true
+			if string.find(line, "Executing command 'ban list'") and string.find(line, server.botsIP) then
+				echoConsole = true
+			end
 		end
 	end
 
@@ -886,256 +882,66 @@ function matchAll(line)
 	-- infrequent telnet events below here
 	-- ===================================
 
-	if string.find(line, "Executing command 'le'") then
-		if string.find(line, server.botsIP) then
-			botman.listEntities = true
-			botman.lastListEntities = os.time()
-			conn:execute("TRUNCATE memEntities")
-		end
-
-		deleteLine()
-		return
-	end
-
-
-	if string.find(line, "Executing command 'li ") then
-		if string.find(line, server.botsIP) and playerListItems == nil then
-			botman.listItems = true
-		end
-
-		deleteLine()
-		return
-	end
-
-
-	if string.sub(line, 1, 4) == "Mod " then
-		modVersions[line] = {}
-	end
-
-
-	-- detect CSMM Patrons Mod
-	if string.find(line, "Mod CSMM Patrons") then
-		server.coppi = true
-		server.csmm = true
-
-		temp = string.split(line, ":")
-		server.coppiRelease = temp[1]
-		server.coppiVersion = temp[2]
-
-		if server.hideCommands then
-			sendCommand("tcch " .. server.commandPrefix)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-		end
-
-		return
-	end
-
-
-	-- detect Coppi's Mod
-	if string.find(line, "Mod Coppis command additions") then
-		server.coppi = true
-
-		temp = string.split(line, ":")
-		server.coppiRelease = temp[1]
-		server.coppiVersion = temp[2]
-
-		if server.hideCommands then
-			sendCommand("tcch " .. server.commandPrefix)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-		end
-
-		return
-	end
-
-
-	-- detect Alloc's Mod
-	if string.find(line, "Mod Allocs server fixes") then
-		server.allocs = true
-
-		temp = string.split(line, ":")
-		server.allocsServerFixes = temp[2]
-
-		return
-	end
-
-
-	if string.find(line, "Mod Allocs command extensions") then
-		temp = string.split(line, ":")
-		server.allocsCommandExtensions = temp[2]
-
-		return
-	end
-
-
-	if string.find(line, "Mod Allocs MapRendering") then
-		temp = string.split(line, ":")
-		server.allocsMap = temp[2]
-
-		return
-	end
-
-
-	if (string.find(line, "please specify one of the entities")) then
-		-- flag all the zombies for removal so we can detect deleted zeds
-		if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET remove = 1") end
-		if botman.dbConnected then conn:execute("UPDATE otherEntities SET remove = 1") end
-
-		getZombies = true
-		return
-	end
-
-
-	if string.find(line, "command 'rcd") then
-		if string.find(line, server.botsIP) then
-			fixChunkDensity = true
-		end
-
-		deleteLine()
-		return
-	end
-
-
-	if string.find(line, "Executing command 'version'") and server.botsIP then
-		if string.find(line, server.botsIP) then
-			modVersions = {}
-			server.alloc = false
-			server.coppi = false
-			server.stompy = false
-			server.SDXDetected = false
-			server.ServerToolsDetected = false
-
-			if botman.dbConnected then
-				conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
+	if not server.useAllocsWebAPI then
+		if string.find(line, "Executing command 'le'") then
+			if string.find(line, server.botsIP) then
+				botman.listEntities = true
+				botman.lastListEntities = os.time()
+				conn:execute("TRUNCATE memEntities")
 			end
 
+			deleteLine()
 			return
 		end
-	end
 
 
-	if string.find(line, "Executing command 'admin list'") and server.botsIP then
-		if string.find(line, server.botsIP) then
-			flagAdminsForRemoval()
+		if string.find(line, "Executing command 'li ") then
+			if string.find(line, server.botsIP) and playerListItems == nil then
+				botman.listItems = true
+			end
+
+			deleteLine()
 			return
 		end
-	end
 
 
-	if (string.find(line, "Banned until -")) then
-		collectBans = true
-		conn:execute("TRUNCATE bans")
-		return
-	end
+		if string.find(line, "Executing command 'version'") and server.botsIP then
+			if string.find(line, server.botsIP) then
+				modVersions = {}
+				server.alloc = false
+				server.coppi = false
+				server.stompy = false
+				server.SDXDetected = false
+				server.ServerToolsDetected = false
 
-
-	-- update owners, admins and mods
-	if string.find(line, "Level: SteamID (Player name if online)", nil, true) then
-		getAdminList = true
-		staffList = {}
-		return
-	end
-
-
-	if string.find(line, "HideCommandExecutionLog =") then
-		if (not botman.readGG) and server.botsIP then
-			botman.badServerConfig = true
-
-			if server.HideCommandExecutionLog then
-				if tonumber(server.HideCommandExecutionLog) > 1 then
-					irc_chat(server.ircMain, "ALERT! It appears that the server config setting HideCommandExecutionLog is not set to 0 or 1")
-					irc_chat(server.ircMain, "If any telnet traffic is hidden from the bot, important features will not work.  Please set it to 0 or 1")
+				if botman.dbConnected then
+					conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
 				end
+
+				return
 			end
-		else
-			botman.badServerConfig = false
 		end
-	end
 
 
-	if string.find(line, "INF Server shutting down!") then
-		saveLuaTables()
-		return
-	end
-
-	if string.find(line, "ERROR: unknown command 'pug'") then
-		server.scanNoclip = false
-		return
-	end
+		if string.find(line, "Executing command 'admin list'") and server.botsIP then
+			if string.find(line, server.botsIP) then
+				flagAdminsForRemoval()
+				return
+			end
+		end
 
 
-	-- detect server version
-	if string.find(line, "Game version:") then
-		server.gameVersion = string.trim(string.sub(line, string.find(line, "Game version:") + 14, string.find(line, "Compatibility") - 2))
-		if botman.dbConnected then conn:execute("UPDATE server SET gameVersion = '" .. escape(server.gameVersion) .. "'") end
-		return
-	end
-
-	-- detect Stompy's API mod
-	if string.find(line, "Mod Bad Company Manager:") then
-		server.stompy = true
-		temp = string.split(line, ":")
-		server.stompyVersion = temp[2]
-		return
-	end
-
-	-- detect djkrose's scripting mod
-	if string.find(line, "Mod djkrose's Scripting Mod:") then
-		server.djkrose = true
-		temp = string.split(line, ":")
-		server.djkroseVersion = temp[2]
-		return
-	end
-
-	-- detect SDX mods
-	if string.find(line, "Mod SDX:") or string.find(line, "SDX: ") and not server.SDXDetected then
-		server.SDXDetected = true
-		if botman.dbConnected then conn:execute("UPDATE server SET SDXDetected = 1") end
-		return
-	end
-
-	-- detect server tools
-	if string.find(line, "Mod Server Tools:") or string.find(line, "mod 'Server Tools'") and not server.ServerToolsDetected then
-		server.ServerToolsDetected = true
-		if botman.dbConnected then conn:execute("UPDATE server SET ServerToolsDetected = 1") end
-		return
-	end
-
-	-- detect CBSM
-	if string.find(line, "pm CBSM") and server.CBSMFriendly then
-		if server.commandPrefix == "/" then
-			message("say [" .. server.chatColour .. "]CBSM detected.  Bot commands now begin with a ! to not clash with CBSM commands.[-]")
-			message("say [" .. server.chatColour .. "]To use bot commands such as /who you must now type !who[-]")
-			server.commandPrefix = "!"
-			if botman.dbConnected then conn:execute("UPDATE server SET commandPrefix = '!'") end
+		if (string.find(line, "Banned until -")) then
+			collectBans = true
+			conn:execute("TRUNCATE bans")
 			return
 		end
-	end
 
 
-	if server.coppi then
-		-- player bed
-		if string.sub(line, 1, 11) == "PlayerBed: " then
-			local name = string.sub(line, 12, string.find(line, " at ") - 1)
-			steam = LookupPlayer(name)
-
-			if steam then
-				local split = string.split(string.sub(line, string.find(line, " at ") + 4), ",")
-				x = string.trim(split[1])
-				y = string.trim(split[2])
-				z = string.trim(split[3])
-
-				players[steam].bedX = x
-				players[steam].bedY = y
-				players[steam].bedZ = z
-				if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. x .. ", bedY = " .. y .. ", bedZ = " .. z .. " WHERE steam = " .. steam) end
-			end
-
+		-- update owners, admins and mods
+		if string.find(line, "Level: SteamID (Player name if online)", nil, true) then
+			getAdminList = true
+			staffList = {}
 			return
 		end
 	end
@@ -1275,6 +1081,198 @@ function matchAll(line)
 			server.MaxSpawnedZombies = number
 			-- If we detect this line it means we are receiving data from the server so we set a flag to let us know elsewhere that we got server data ok.
 			serverDataLoaded = true
+			return
+		end
+	end
+
+
+	if string.sub(line, 1, 4) == "Mod " then
+		modVersions[line] = {}
+	end
+
+
+	-- detect CSMM Patrons Mod
+	if string.find(line, "Mod CSMM Patrons") then
+		server.coppi = true
+		server.csmm = true
+
+		temp = string.split(line, ":")
+		server.coppiRelease = temp[1]
+		server.coppiVersion = temp[2]
+
+		if server.hideCommands then
+			sendCommand("tcch " .. server.commandPrefix)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+		end
+
+		return
+	end
+
+
+	-- detect Coppi's Mod
+	if string.find(line, "Mod Coppis command additions") then
+		server.coppi = true
+
+		temp = string.split(line, ":")
+		server.coppiRelease = temp[1]
+		server.coppiVersion = temp[2]
+
+		if server.hideCommands then
+			sendCommand("tcch " .. server.commandPrefix)
+
+			if botman.getMetrics then
+				metrics.telnetCommands = metrics.telnetCommands + 1
+			end
+		end
+
+		return
+	end
+
+
+	-- detect Alloc's Mod
+	if string.find(line, "Mod Allocs server fixes") then
+		server.allocs = true
+
+		temp = string.split(line, ":")
+		server.allocsServerFixes = temp[2]
+
+		return
+	end
+
+
+	if string.find(line, "Mod Allocs command extensions") then
+		temp = string.split(line, ":")
+		server.allocsCommandExtensions = temp[2]
+
+		return
+	end
+
+
+	if string.find(line, "Mod Allocs MapRendering") then
+		temp = string.split(line, ":")
+		server.allocsMap = temp[2]
+
+		return
+	end
+
+
+	if (string.find(line, "please specify one of the entities")) then
+		-- flag all the zombies for removal so we can detect deleted zeds
+		if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET remove = 1") end
+		if botman.dbConnected then conn:execute("UPDATE otherEntities SET remove = 1") end
+
+		getZombies = true
+		return
+	end
+
+
+	if string.find(line, "command 'rcd") then
+		if string.find(line, server.botsIP) then
+			fixChunkDensity = true
+		end
+
+		deleteLine()
+		return
+	end
+
+
+	if string.find(line, "HideCommandExecutionLog =") then
+		if (not botman.readGG) and server.botsIP then
+			botman.badServerConfig = true
+
+			if server.HideCommandExecutionLog then
+				if tonumber(server.HideCommandExecutionLog) > 1 then
+					irc_chat(server.ircMain, "ALERT! It appears that the server config setting HideCommandExecutionLog is not set to 0 or 1")
+					irc_chat(server.ircMain, "If any telnet traffic is hidden from the bot, important features will not work.  Please set it to 0 or 1")
+				end
+			end
+		else
+			botman.badServerConfig = false
+		end
+	end
+
+
+	if string.find(line, "INF Server shutting down!") then
+		saveLuaTables()
+		return
+	end
+
+	if string.find(line, "ERROR: unknown command 'pug'") then
+		server.scanNoclip = false
+		return
+	end
+
+
+	-- detect server version
+	if string.find(line, "Game version:") then
+		server.gameVersion = string.trim(string.sub(line, string.find(line, "Game version:") + 14, string.find(line, "Compatibility") - 2))
+		if botman.dbConnected then conn:execute("UPDATE server SET gameVersion = '" .. escape(server.gameVersion) .. "'") end
+		return
+	end
+
+	-- detect Stompy's API mod
+	if string.find(line, "Mod Bad Company Manager:") then
+		server.stompy = true
+		temp = string.split(line, ":")
+		server.stompyVersion = temp[2]
+		return
+	end
+
+	-- detect djkrose's scripting mod
+	if string.find(line, "Mod djkrose's Scripting Mod:") then
+		server.djkrose = true
+		temp = string.split(line, ":")
+		server.djkroseVersion = temp[2]
+		return
+	end
+
+	-- detect SDX mods
+	if string.find(line, "Mod SDX:") or string.find(line, "SDX: ") and not server.SDXDetected then
+		server.SDXDetected = true
+		if botman.dbConnected then conn:execute("UPDATE server SET SDXDetected = 1") end
+		return
+	end
+
+	-- detect server tools
+	if string.find(line, "Mod Server Tools:") or string.find(line, "mod 'Server Tools'") and not server.ServerToolsDetected then
+		server.ServerToolsDetected = true
+		if botman.dbConnected then conn:execute("UPDATE server SET ServerToolsDetected = 1") end
+		return
+	end
+
+	-- detect CBSM
+	if string.find(line, "pm CBSM") and server.CBSMFriendly then
+		if server.commandPrefix == "/" then
+			message("say [" .. server.chatColour .. "]CBSM detected.  Bot commands now begin with a ! to not clash with CBSM commands.[-]")
+			message("say [" .. server.chatColour .. "]To use bot commands such as /who you must now type !who[-]")
+			server.commandPrefix = "!"
+			if botman.dbConnected then conn:execute("UPDATE server SET commandPrefix = '!'") end
+			return
+		end
+	end
+
+
+	if server.coppi then
+		-- player bed
+		if string.sub(line, 1, 11) == "PlayerBed: " then
+			local name = string.sub(line, 12, string.find(line, " at ") - 1)
+			steam = LookupPlayer(name)
+
+			if steam then
+				local split = string.split(string.sub(line, string.find(line, " at ") + 4), ",")
+				x = string.trim(split[1])
+				y = string.trim(split[2])
+				z = string.trim(split[3])
+
+				players[steam].bedX = x
+				players[steam].bedY = y
+				players[steam].bedZ = z
+				if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. x .. ", bedY = " .. y .. ", bedZ = " .. z .. " WHERE steam = " .. steam) end
+			end
+
 			return
 		end
 	end

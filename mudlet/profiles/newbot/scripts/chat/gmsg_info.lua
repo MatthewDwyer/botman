@@ -25,6 +25,70 @@ function gmsg_info()
 
 -- ################## info command functions ##################
 
+	local function cmd_BotInfo()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}bot info"
+			help[2] = "Displays info about the bot."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "info,bot"
+				tmp.accessLevel = 99
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if chatvars.words[1] == "bot" and chatvars.words[2] == "info" or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "bot" and chatvars.words[2] == "info" then
+			if (chatvars.playername ~= "Server") then
+				-- bot name
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is called " .. server.botName .. "[-]")
+
+				-- API or telnet
+				if server.useAllocsWebAPI then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is using Alloc's web API to command the server.[-]")
+				else
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is using telnet to command the server.[-]")
+				end
+
+				-- code branch
+				if server.updateBranch ~= '' then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is running code from the " .. server.updateBranch .. " branch.[-]")
+				end
+
+				-- code version
+				if server.botVersion ~= '' then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot version is " .. server.botVersion .. "[-]")
+				end
+
+				-- bot updates enabled or not
+				if server.updateBot then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot checks for new code daily.[-]")
+				else
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bot updates are set to happen manually using the {#}update code command[-]")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ListNewPlayers()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1642,6 +1706,15 @@ function gmsg_info()
 
 	if chatvars.showHelpSections then
 		irc_chat(chatvars.ircAlias, "info")
+	end
+
+	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_BotInfo()
+
+	if result then
+		if debug then dbug("debug cmd_BotInfo triggered") end
+		return result
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end

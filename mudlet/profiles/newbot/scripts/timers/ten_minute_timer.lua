@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-function tenMinuteTimer()
+function TenMinuteTimer()
 	if customTenMinuteTimer ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua
 		if customTenMinuteTimer then

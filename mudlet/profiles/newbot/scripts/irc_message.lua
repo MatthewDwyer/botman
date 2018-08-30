@@ -248,6 +248,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, "The bot version is " .. server.botVersion)
 			end
 
+			if server.useAllocsWebAPI then
+				irc_chat(name, "The bot is using Alloc's API to send commands.")
+			else
+				irc_chat(name, "The bot is using telnet to send commands.")
+			end
+
 			irc_chat(name, "Command prefix is " .. server.commandPrefix)
 
 			if not server.allocs then

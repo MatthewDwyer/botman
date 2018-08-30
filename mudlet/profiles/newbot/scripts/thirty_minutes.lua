@@ -12,7 +12,7 @@ function ThirtyMinuteTimer()
 	windowMessage(server.windowDebug, "half hour timer\n")
 
 	-- save the world (and the kitties)
-	if not botman.botOffline then
+	if not botman.botOffline and not botman.serverRebooting then
 		sendCommand("sa")
 	end
 

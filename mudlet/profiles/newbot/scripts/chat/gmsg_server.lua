@@ -85,9 +85,21 @@ function gmsg_server()
 
 			if (botman.rebootTimerID ~= nil) then killTimer(botman.rebootTimerID) end
 			if (rebootTimerDelayID ~= nil) then killTimer(rebootTimerDelayID) end
+			if (rebootCountDown1 ~= nil) then killTimer(rebootCountDown1) end
+			if (rebootCountDown2 ~= nil) then killTimer(rebootCountDown2) end
+			if (rebootCountDown3 ~= nil) then killTimer(rebootCountDown3) end
+			if (rebootCountDown4 ~= nil) then killTimer(rebootCountDown4) end
+			if (rebootCountDown5 ~= nil) then killTimer(rebootCountDown5) end
+			if (rebootCountDown6 ~= nil) then killTimer(rebootCountDown6) end
+			if (rebootCountDown7 ~= nil) then killTimer(rebootCountDown7) end
+			if (rebootCountDown8 ~= nil) then killTimer(rebootCountDown8) end
+			if (rebootCountDown9 ~= nil) then killTimer(rebootCountDown9) end
+			if (rebootCountDown10 ~= nil) then killTimer(rebootCountDown10) end
+			if (rebootCountDown11 ~= nil) then killTimer(rebootCountDown11) end
 
 			botman.rebootTimerID = nil
 			rebootTimerDelayID = nil
+			botman.serverRebooting = false
 
 			message("say [" .. server.chatColour .. "]A server reboot has been cancelled.[-]")
 

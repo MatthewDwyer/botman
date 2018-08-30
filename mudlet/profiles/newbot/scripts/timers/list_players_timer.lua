@@ -41,7 +41,7 @@ function listPlayers()
 		end
 
 		if not server.delayReboot then
-			if (botman.scheduledRestartTimestamp - os.time() < 0) then
+			if (botman.scheduledRestartTimestamp - os.time() < 0) and not botman.serverRebooting then
 				startReboot()
 			else
 				if (botman.scheduledRestartTimestamp - os.time() > 11) and (botman.scheduledRestartTimestamp - os.time() < 61) then
@@ -52,17 +52,17 @@ function listPlayers()
 				if (botman.scheduledRestartTimestamp - os.time() < 12) and not botman.finalCountdown then
 					botman.finalCountdown = true
 
-					tempTimer( 1, [[message("say [" .. server.alertColour .. "]10[-]")]] )
-					tempTimer( 2, [[message("say [" .. server.alertColour .. "]9[-]")]] )
-					tempTimer( 3, [[message("say [" .. server.alertColour .. "]8[-]")]] )
-					tempTimer( 4, [[message("say [" .. server.alertColour .. "]7[-]")]] )
-					tempTimer( 5, [[message("say [" .. server.alertColour .. "]6[-]")]] )
-					tempTimer( 6, [[message("say [" .. server.alertColour .. "]5[-]")]] )
-					tempTimer( 7, [[message("say [" .. server.alertColour .. "]4[-]")]] )
-					tempTimer( 8, [[message("say [" .. server.alertColour .. "]3[-]")]] )
-					tempTimer( 9, [[message("say [" .. server.alertColour .. "]2[-]")]] )
-					tempTimer( 10, [[message("say [" .. server.alertColour .. "]1[-]")]] )
-					tempTimer( 11, [[message("say [" .. server.alertColour .. "]Rebooting..[-]")]] )
+					rebootCountDown1 = tempTimer( 1, [[message("say [" .. server.alertColour .. "]10[-]")]] )
+					rebootCountDown2 = tempTimer( 2, [[message("say [" .. server.alertColour .. "]9[-]")]] )
+					rebootCountDown3 = tempTimer( 3, [[message("say [" .. server.alertColour .. "]8[-]")]] )
+					rebootCountDown4 = tempTimer( 4, [[message("say [" .. server.alertColour .. "]7[-]")]] )
+					rebootCountDown5 = tempTimer( 5, [[message("say [" .. server.alertColour .. "]6[-]")]] )
+					rebootCountDown6 = tempTimer( 6, [[message("say [" .. server.alertColour .. "]5[-]")]] )
+					rebootCountDown7 = tempTimer( 7, [[message("say [" .. server.alertColour .. "]4[-]")]] )
+					rebootCountDown8 = tempTimer( 8, [[message("say [" .. server.alertColour .. "]3[-]")]] )
+					rebootCountDown9 = tempTimer( 9, [[message("say [" .. server.alertColour .. "]2[-]")]] )
+					rebootCountDown10 = tempTimer( 10, [[message("say [" .. server.alertColour .. "]1[-]")]] )
+					rebootCountDown11 = tempTimer( 11, [[message("say [" .. server.alertColour .. "]Rebooting..[-]")]] )
 				end
 			end
 		end

@@ -14,6 +14,10 @@ onSysDisconnection = function ()
 	botman.lastServerResponseTimestamp = os.time()
 	botman.lastTelnetResponseTimestamp = os.time()
 	botman.botOfflineTimestamp = os.time()
+
+	if tonumber(botman.playersOnline) < 0 then
+		botman.playersOnline = 0
+	end
 end
 
 
@@ -2347,6 +2351,8 @@ end
 
 
 function startReboot()
+	botman.serverRebooting = true
+
 	-- add a random delay to mess with dupers
 	local rnd = rand(5)
 
@@ -2366,6 +2372,19 @@ function clearRebootFlags()
 	botman.scheduledRestartTimestamp = os.time()
 	botman.scheduledRestartPaused = false
 	botman.scheduledRestartForced = false
+	botman.serverRebooting = false
+
+	rebootCountDown1 = nil
+	rebootCountDown2 = nil
+	rebootCountDown3 = nil
+	rebootCountDown4 = nil
+	rebootCountDown5 = nil
+	rebootCountDown6 = nil
+	rebootCountDown7 = nil
+	rebootCountDown8 = nil
+	rebootCountDown9 = nil
+	rebootCountDown10 = nil
+	rebootCountDown11 = nil
 end
 
 
@@ -2408,6 +2427,9 @@ function finishReboot()
 	if botman.getMetrics then
 		metrics.telnetCommands = metrics.telnetCommands + 1
 	end
+
+	-- check for bot updates
+	updateBot()
 end
 
 
