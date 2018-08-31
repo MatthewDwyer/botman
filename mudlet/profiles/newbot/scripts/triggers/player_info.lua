@@ -1091,7 +1091,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	igplayers[steam].regionZ = z
 
 	-- timeout
-	if (players[steam].timeout == true or players[steam].botTimeout == true) then
+	if (players[steam].timeout == true or players[steam].botTimeout == true) and igplayers[steam].spawnedInWorld then
 		if (intY < 30000) then
 			igplayers[steam].tp = 1
 			igplayers[steam].hackerTPScore = 0

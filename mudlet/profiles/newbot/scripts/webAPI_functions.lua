@@ -7,6 +7,9 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+-- enable debug to see where the code is stopping. Any error will be after the last debug line.
+local debug = false -- should be false unless testing
+
 
 function getAPILog()
 -- NOTE:  This can't work in practice because there is currently no way to know the current line number of the log.
@@ -1038,7 +1041,7 @@ function API_PlayerInfo(data)
 	igplayers[data.steamid].regionZ = z
 
 	-- timeout
-	if (players[data.steamid].timeout == true or players[data.steamid].botTimeout == true) then
+	if (players[data.steamid].timeout == true or players[data.steamid].botTimeout == true) and igplayers[data.steamid].spawnedInWorld then
 		if (intY < 30000) then
 			igplayers[data.steamid].tp = 1
 			igplayers[data.steamid].hackerTPScore = 0
@@ -1482,7 +1485,7 @@ function readAPI_AdminList()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		data = string.split(result.result, "\r\n")
+		data = splitCRLF(result.result)
 		count = table.maxn(data)
 
 		for con, q in pairs(conQueue) do
@@ -1523,7 +1526,6 @@ function readAPI_AdminList()
 				players[steam].silentBob = false
 				players[steam].walkies = false
 				players[steam].timeout = false
-				players[steam].botTimeout = false
 				players[steam].prisoner = false
 				players[steam].exiled = 2
 				players[steam].canTeleport = true
@@ -1533,6 +1535,10 @@ function readAPI_AdminList()
 
 				if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. level .. " WHERE steam = " .. steam) end
 				if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. steam .. "," .. level .. ")") end
+
+				if players[steam].botTimeout and igplayers[steam] then
+					gmsg(server.commandPrefix .. "return " .. v.name)
+				end
 			end
 
 			for con, q in pairs(conQueue) do
@@ -1570,7 +1576,7 @@ function readAPI_BanList()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		data = string.split(result.result, "\r\n")
+		data = splitCRLF(result.result)
 
 		for k,v in pairs(data) do
 			if k > 2 and v ~= "" then
@@ -1702,8 +1708,8 @@ function readAPI_Command()
 
 		for con, q in pairs(conQueue) do
 			if (q.command == result.command) or (q.command == result.command .. " " .. result.parameters) then
-				if string.find(result.result, "\r\n") then
-					data = string.split(result.result, "\r\n")
+				if string.find(result.result, "\n") then
+					data = splitCRLF(result.result)
 
 					for k,v in pairs(data) do
 						irc_chat(q.ircUser, data[k])
@@ -1714,14 +1720,21 @@ function readAPI_Command()
 			end
 		end
 
+		if string.find(result.command, "admin") and not string.find(result.command, "list") then
+			tempTimer( 1, [[sendCommand("admin list")]] )
+		end
+
 		if string.sub(result.result, 1, 4) == "Day " then
 			gameTimeTrigger(stripMatching(result.result, "\\r\\n"))
+			gameTimeTrigger(stripMatching(result.result, "\\n"))
 			file:close()
 			return
 		end
 
 		if string.sub(result.command, 1, 3) == "sg " then
-			matchAll(stripMatching(result.result, "\\r\\n"))
+			result.result = stripMatching(result.result, "\\r\\n")
+			result.result = stripMatching(result.result, "\\n")
+			matchAll(result.result)
 			file:close()
 			return
 		end
@@ -1764,7 +1777,7 @@ function readAPI_GG()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		data = string.split(result.result, "\r\n")
+		data = splitCRLF(result.result)
 
 		botman.readGG = true
 
@@ -1808,7 +1821,7 @@ function readAPI_Help()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		data = string.split(result.result, "\r\n")
+		data = splitCRLF(result.result)
 
 		for k,v in pairs(data) do
 			for con, q in pairs(conQueue) do
@@ -1830,6 +1843,8 @@ end
 
 
 function readAPI_Inventories()
+	if (debug) then dbug("debug readAPI_Inventories line " .. debugger.getinfo(1).currentline) end
+
 	local file, ln, result, data, k, v, index, count, steam, playerName
 	local slot, quantity, quality, itemName
 	local fileSize
@@ -1841,22 +1856,40 @@ function readAPI_Inventories()
 		return
 	end
 
+	if (debug) then dbug("debug readAPI_Inventories line " .. debugger.getinfo(1).currentline) end
+
 	file = io.open(homedir .. "/temp/inventories.txt", "r")
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
 		count = table.maxn(result)
 
+		if debug then display(result) end
+
 		for index=1, count, 1 do
+			if (debug) then dbug("debug readAPI_Inventories line " .. debugger.getinfo(1).currentline) end
+
 			steam = result[index].steamid
 			playerName = result[index].playername
 
+			if (debug) then
+				dbug("steam = " .. steam)
+				dbug("playerName = " .. playerName)
+			end
+
+			if (igplayers[steam].inventoryLast ~= igplayers[steam].inventory) then
+				igplayers[steam].inventoryLast = igplayers[steam].inventory
+			end
+
+			igplayers[steam].inventory = ""
 			igplayers[steam].oldBelt = igplayers[steam].belt
 			igplayers[steam].belt = ""
 			igplayers[steam].pack = ""
 			igplayers[steam].equipment = ""
 
 			for k,v in pairs(result[index].belt) do
+				if (debug) then dbug("debug readAPI_Inventories line " .. debugger.getinfo(1).currentline) end
+
 				if v ~= "" then
 					slot = k
 
@@ -1872,6 +1905,8 @@ function readAPI_Inventories()
 			end
 
 			for k,v in pairs(result[index].bag) do
+				if (debug) then dbug("debug readAPI_Inventories line " .. debugger.getinfo(1).currentline) end
+
 				if v ~= "" then
 					slot = k
 
@@ -1887,6 +1922,8 @@ function readAPI_Inventories()
 			end
 
 			for k,v in pairs(result[index].equipment) do
+				if (debug) then dbug("debug readAPI_Inventories line " .. debugger.getinfo(1).currentline) end
+
 				if v ~= "" then
 					slot = k
 
@@ -1896,6 +1933,12 @@ function readAPI_Inventories()
 						igplayers[steam].equipment = igplayers[steam].equipment .. slot .. "," .. itemName .. "," .. quality .. "|"
 					end
 				end
+			end
+
+			if debug then
+				dbug("belt = " .. igplayers[steam].belt)
+				dbug("bag = " .. igplayers[steam].pack)
+				dbug("inventory = " .. igplayers[steam].equipment)
 			end
 		end
 	end
@@ -1907,6 +1950,8 @@ function readAPI_Inventories()
 			conQueue[con] = nil
 		end
 	end
+
+	if (debug) then dbug("debug readAPI_Inventories line " .. debugger.getinfo(1).currentline) end
 
 	CheckInventory()
 	tempTimer( 2, [[CheckClaimsRemoved()]] )
@@ -1971,8 +2016,8 @@ function readAPI_LE()
 
 		for con, q in pairs(conQueue) do
 			if q.command == result.command then
-				if string.find(result.result, "\r\n") then
-					data = string.split(result.result, "\r\n")
+				if string.find(result.result, "\n") then
+					data = splitCRLF(result.result)
 
 					for k,v in pairs(data) do
 						irc_chat(q.ircUser, data[k])
@@ -2022,7 +2067,7 @@ function readAPI_LKP()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		data = string.split(result.result, "\r\n")
+		data = splitCRLF(result.result)
 
 		for k,v in pairs(data) do
 			if v ~= "" then
@@ -2141,8 +2186,8 @@ function readAPI_LI()
 
 		for con, q in pairs(conQueue) do
 			if string.sub(q.command, 1, 3) == "li " then
-				if string.find(result.result, "\r\n") then
-					data = string.split(result.result, "\r\n")
+				if string.find(result.result, "\n") then
+					data = splitCRLF(result.result)
 
 					for k,v in pairs(data) do
 						irc_chat(q.ircUser, data[k])
@@ -2183,8 +2228,8 @@ function readAPI_LLP()
 
 		for con, q in pairs(conQueue) do
 			if string.find(q.command, result.command) then
-				if string.find(result.result, "\r\n") then
-					data = string.split(result.result, "\r\n")
+				if string.find(result.result, "\n") then
+					data = splitCRLF(result.result)
 
 					for k,v in pairs(data) do
 						irc_chat(q.ircUser, data[k])
@@ -2195,11 +2240,11 @@ function readAPI_LLP()
 			end
 		end
 
-		data = string.split(result.result, "\r\n")
+		data = splitCRLF(result.result)
 
 		for k,v in pairs(data) do
 			if v ~= "" then
-				temp = string.split(v, "\r\n")
+				temp = splitCRLF(v)
 
 				for a,b in pairs(temp) do
 					if string.find(b, "Player ") then
@@ -2293,7 +2338,7 @@ function readAPI_LPB()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		data = string.split(result.result, "\r\n")
+		data = splitCRLF(result.result)
 
 		for k,v in pairs(data) do
 			for con, q in pairs(conQueue) do
@@ -2353,7 +2398,7 @@ function readAPI_LPF()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		data = string.split(result.result, "\r\n")
+		data = splitCRLF(result.result)
 
 		for k,v in pairs(data) do
 			for con, q in pairs(conQueue) do
@@ -2432,7 +2477,7 @@ function readAPI_PGD()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		data = string.split(result.result, "\r\n")
+		data = splitCRLF(result.result)
 
 		for k,v in pairs(data) do
 			if v ~= "" then
@@ -2461,7 +2506,7 @@ function readAPI_PUG()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		data = string.split(result.result, "\r\n")
+		data = splitCRLF(result.result)
 
 		for k,v in pairs(data) do
 			if v ~= "" then
@@ -2519,7 +2564,7 @@ function readAPI_SE()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		data = string.split(result.result, "\r\n")
+		data = splitCRLF(result.result)
 
 		for k,v in pairs(data) do
 			for con, q in pairs(conQueue) do
@@ -2597,8 +2642,8 @@ function readAPI_MEM()
 
 		for con, q in pairs(conQueue) do
 			if q.command == result.command then
-				if string.find(result.result, "\r\n") then
-					data = string.split(result.result, "\r\n")
+				if string.find(result.result, "\n") then
+					data = splitCRLF(result.result)
 
 					for k,v in pairs(data) do
 						irc_chat(q.ircUser, data[k])
@@ -2610,6 +2655,7 @@ function readAPI_MEM()
 		end
 
 		data = stripMatching(result.result, "\\r\\n")
+		data = stripMatching(result.result, "\\n")
 		memTrigger(data)
 	end
 
@@ -2649,7 +2695,7 @@ function readAPI_Version()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		data = string.split(result.result, "\r\n")
+		data = splitCRLF(result.result)
 
 		for k,v in pairs(data) do
 			for con, q in pairs(conQueue) do

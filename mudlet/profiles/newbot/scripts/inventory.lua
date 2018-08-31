@@ -7,11 +7,12 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+-- enable debug to see where the code is stopping. Any error will be after the last debug line.
+local debug = false -- should be false unless testing
+
 
 function CheckInventory()
-	local temp, table1, table2, items, d1, changes, debug, tmp, max, search, k, v
-
-	debug = false
+	local temp, table1, table2, items, d1, changes, tmp, max, search, k, v
 
 	if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
 
@@ -80,6 +81,7 @@ function CheckInventory()
 		if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
 
 		if (v.inventory ~= "") then
+			if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
 			table1 = string.split(v.inventory, "|")
 
 			max = table.maxn(table1)
@@ -477,6 +479,7 @@ function CheckInventory()
 		if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
 
 		if (not players[k].ignorePlayer) and (server.gameType ~= "cre") then
+			if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
 			if tmp.badItemsFound ~= "" then
 				v.illegalInventory = true
 
@@ -505,6 +508,8 @@ function CheckInventory()
 				end
 			end
 		end
+
+		if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
 
 		if players[k].botTimeout == true and v.illegalInventory == false and players[k].overstack == false then
 			players[k].silentBob = false

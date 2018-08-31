@@ -161,6 +161,21 @@ function alertAdmins(msg, alert)
 end
 
 
+function splitCRLF(value)
+	local splitter = "\r\n"
+
+	if value == true or value == false then
+		return value
+	end
+
+	if not string.find(value, "\r\n") then
+		splitter = "\n"
+	end
+
+	return string.split(value, splitter)
+end
+
+
 function stripMatching(value, search)
 	if value == true or value == false then
 		return value

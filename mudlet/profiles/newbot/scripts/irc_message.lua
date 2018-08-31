@@ -192,6 +192,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
+	if (words[1] == "use" and words[2] == "telnet") then
+		server.useAllocsWebAPI = false
+		conn:execute("UPDATE server set useAllocsWebAPI = 0")
+		irc_chat(name, "The bot will connect to the server using telnet.")
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
 	if displayIRCHelp then
 		irc_chat(name, "Command: reload code")
 		irc_chat(name, "Make the bot reload its code.  It also performs some maintenance tasks on the bot's data.")
