@@ -7276,6 +7276,77 @@ function gmsg_admin()
 	end
 
 
+	local function cmd_ToggleLevelHackAlert()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable level hack alert"
+			help[2] = "By default the bot will inform admins when a player's level increases massively in a very short time.  You can disable the message."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,level,hack,alert"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "level") or string.find(chatvars.command, "hack") or string.find(chatvars.command, "alert"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "level" and chatvars.words[3] == "hack" and chatvars.words[3] == "alert" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "disable" then
+				server.alertLevelHack = false
+				conn:execute("UPDATE server SET alertLevelHack = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will not alert admins when a player's level increases by a large amount.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The bot will not alert admins when a player's level increases by a large amount.")
+				end
+			else
+				server.alertLevelHack = true
+				conn:execute("UPDATE server SET alertLevelHack = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot alerts admins when a player's level increases by a large amount.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The bot alerts admins when a player's level increases by a large amount.")
+				end
+			end
+
+			irc_chat(chatvars.ircAlias, ".")
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleAirdropAlert()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -9798,6 +9869,15 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_TimeoutPlayer triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLevelHackAlert()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLevelHackAlert triggered") end
 		return result
 	end
 

@@ -2923,6 +2923,8 @@ end
 
 
 function initNewPlayer(steam, player, entityid, steamOwner)
+	local k, v
+
 	if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, steamOwner) VALUES (" .. steam .. "," .. entityid .. ",'" .. escape(player) .. "'," .. steamOwner .. ")") end
 
 	players[steam] = {}
@@ -3033,12 +3035,23 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].zPosOld = 0
 	players[steam].zPosOld2 = 0
 
+	-- flag the player to be sent to the lobby if a lobby or spawn location exists.
 	if locations["spawn"] or locations["Spawn"] then
 		players[steam].location = "spawn"
 	end
 
+	-- a location called lobby always overrides a location called spawn. Don't have both if you want lobby to be spawn.
 	if locations["lobby"] or locations["Lobby"] then
 		players[steam].location = "lobby"
+		return true
+	end
+
+	-- check for any locations that have been flagged as lobby.  We'll only use the first one we find so there's no point having multiples of them.
+	for k, v in pairs(locations) do
+		if v.lobby then
+			players[steam].location = k
+			return true
+		end
 	end
 
 	return true

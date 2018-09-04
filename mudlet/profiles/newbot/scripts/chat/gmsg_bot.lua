@@ -1965,6 +1965,77 @@ function gmsg_bot()
 	end
 
 
+	local function cmd_ToggleLogBotCommands()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable bot command log (disabled by default)"
+			help[2] = "For debugging purposes, commands sent to the server by the bot can be logged just like player commands but to its own log file.\n"
+			help[2] = help[2] .. "This will include sensitive information such as passwords so don't enable this if anyone has access to it that you don't want reading it.\n"
+			help[2] = help[2] .. "Only server owners can enable this log."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,able,comm,log"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "able") or string.find(chatvars.command, "log")) or string.find(chatvars.command, "bot")) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "bot" and chatvars.words[3] == "command" and chatvars.words[4] == "log" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "enable" then
+				server.logBotCommands = true
+				conn:execute("UPDATE server set logBotCommands = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Commands sent to the server by the bot will be logged.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Commands sent to the server by the bot will be logged.")
+				end
+			else
+				server.logBotCommands = false
+				conn:execute("UPDATE server set logBotCommands = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Commands from the bot will not be logged.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Commands from the bot will not be logged.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleUseAllocsWebAPI() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -2415,6 +2486,15 @@ function gmsg_bot()
 
 	if result then
 		if debug then dbug("debug cmd_ToggleLagCheck triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLogBotCommands()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLogBotCommands triggered") end
 		return result
 	end
 

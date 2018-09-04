@@ -23,9 +23,10 @@ end
 
 
 function checkAPIWorking()
-	local fileSize
+	local fileSize, ln, foundAPI
 
 	fileSize = lfs.attributes (homedir .. "/temp/dummy.txt", "size")
+	foundAPI = false
 
 	-- if the API is working a file called dummy.txt will not be empty.
 	if fileSize == nil or fileSize == 0 then
@@ -42,14 +43,50 @@ function checkAPIWorking()
 				botman.testAPIPort = nil
 			end
 		end
+	else
+		file = io.open(homedir .. "/temp/dummy.txt", "r")
 
-		if botman.testAPIPort then
-			server.webPanelPort = botman.testAPIPort
+		for ln in file:lines() do
+			if string.find(ln, "{\"command\"") then
+				foundAPI = true
 
-			-- verify that the web API is working for us
-			tempTimer( 2, [[message("pm APITEST testing")]] )
-			tempTimer( 5, [[checkAPIWorking()]] )
-			return
+				if botman.testAPIPort then
+					-- yay! we found the API.  Update the webPanelPort. Those silly humans!
+					conn:execute("UPDATE server SET webPanelPort = " .. botman.testAPIPort)
+					botman.testAPIPort = nil
+				end
+			else
+				-- oh no!  it's empty! maybe its 2 above or below?  Let's find out :D
+				if not botman.testAPIPort then
+					-- re-test 2 above the port we were given
+					botman.testAPIPort = botman.oldAPIPort + 2
+				else
+					if botman.testAPIPort == botman.oldAPIPort + 2 then
+						-- welp that didn't work.  Lets test 2 below the port we were given
+						botman.testAPIPort = botman.oldAPIPort - 2
+					else
+						-- well shit.  We can't find the API.  Stop testing and give up.
+						botman.testAPIPort = nil
+					end
+				end
+			end
+		end
+
+		file:close()
+	end
+
+	if botman.testAPIPort then
+		server.webPanelPort = botman.testAPIPort
+
+		-- verify that the web API is working for us
+		tempTimer( 2, [[message("pm APITEST testing")]] )
+		tempTimer( 5, [[checkAPIWorking()]] )
+		return
+	else
+		if foundAPI then
+			-- report our success
+			alertAdmins("The bot is now using Alloc's web API to communicate with the server.")
+			irc_chat(chatvars.ircAlias, "The bot is now using Alloc's web API to communicate with the server.")
 		else
 			server.useAllocsWebAPI = false
 			server.webPanelPort = botman.oldAPIPort
@@ -58,16 +95,6 @@ function checkAPIWorking()
 			alertAdmins("API FAILED! The bot is using telnet. Check your server's web panel port and set it with {#}set web panel port {port number}.  It should be set to 2 below your web map's port and is called ControlPanelPort in your server config.", "alert")
 			irc_chat(chatvars.ircAlias, "API FAILED! The bot is using telnet.  Check your server's web panel port and set it with {#}set web panel port {port number}, then re-try {#}use api.  It should be set to 2 below your web map's port and is called ControlPanelPort in your server config.")
 		end
-	else
-		if botman.testAPIPort then
-			-- yay! we found the API.  Update the webPanelPort. Those silly humans!
-			conn:execute("UPDATE server SET webPanelPort = " .. botman.testAPIPort)
-			botman.testAPIPort = nil
-		end
-
-		-- report our success
-		alertAdmins("The bot is now using Alloc's web API to communicate with the server.")
-		irc_chat(chatvars.ircAlias, "The bot is now using Alloc's web API to communicate with the server.")
 	end
 end
 
@@ -99,8 +126,6 @@ function API_PlayerInfo(data)
 
 	debug = false -- should be false unless testing
 
-	if  debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
-
 	-- Set debugPlayerInfo to the steam id or player name that you want to monitor.  If the player is not on the server, the bot will reset debugPlayerInfo to zero.
 	debugPlayerInfo = 0 -- should be 0 unless testing against a steam id
 
@@ -114,7 +139,7 @@ function API_PlayerInfo(data)
 	intY = posY
 	intZ = posZ
 
-	if  debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
 
 	position = posX .. posY .. posZ
 
@@ -128,8 +153,6 @@ function API_PlayerInfo(data)
 	end
 
 	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
-
-	if  debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
 
 	-- check for invalid or missing steamid.  kick if not passed
 	steamtest = tonumber(data.steamid)
@@ -146,8 +169,6 @@ function API_PlayerInfo(data)
 		return
 	end
 
-	if  debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
-
 	if (string.len(data.steamid) < 17) then
 		send ("kick " .. data.entityid)
 
@@ -160,8 +181,6 @@ function API_PlayerInfo(data)
 		faultyPlayerinfo = false
 		return
 	end
-
-	if  debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
 
 	-- add to in-game players table
 	if (igplayers[data.steamid] == nil) then
@@ -231,8 +250,6 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if  debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
-
 	if tonumber(data.ping) > 0 then
 		igplayers[data.steamid].ping = data.ping
 		players[data.steamid].ping = data.ping
@@ -262,10 +279,8 @@ function API_PlayerInfo(data)
 		CheckBlacklist(data.steamid, data.ip)
 	end
 
-	if  debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
-
 	-- ping kick
-	if not whitelist[data.steamid] and not players[data.steamid].donor and tonumber(playerAccessLevel) > 2 then
+	if (not whitelist[data.steamid]) and (not players[data.steamid].donor) and (playerAccessLevel > 2) then
 		if (server.pingKickTarget == "new" and players[data.steamid].newPlayer) or server.pingKickTarget == "all" then
 			if tonumber(data.ping) < tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
 				igplayers[data.steamid].highPingCount = tonumber(igplayers[data.steamid].highPingCount) - 1
@@ -511,18 +526,24 @@ function API_PlayerInfo(data)
 		igplayers[data.steamid].oldLevel = data.level
 	end
 
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+
 	-- hacker detection
-	if tonumber(data.level) - tonumber(igplayers[data.steamid].oldLevel) > 50 and not admin then
+	if tonumber(data.level) - tonumber(igplayers[data.steamid].oldLevel) > 50 and not admin and server.alertLevelHack then
 		alertAdmins(data.entityid .. " name: " .. data.name .. " detected possible level hacking!  Old level was " .. igplayers[data.steamid].oldLevel .. " new level is " .. data.level .. " an increase of " .. tonumber(data.level) - tonumber(igplayers[data.steamid].oldLevel), "alert")
 		irc_chat(server.ircAlerts, server.gameDate .. " " .. data.steamid .. " name: " .. data.name .. " detected possible level hacking!  Old level was " .. igplayers[data.steamid].oldLevel .. " new level is " .. data.level .. " an increase of " .. tonumber(data.level) - tonumber(igplayers[data.steamid].oldLevel))
 	end
 
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+
 	if server.checkLevelHack then
-		if tonumber(level) - tonumber(igplayers[data.steamid].oldLevel) > 50 and not admin then
+		if tonumber(data.level) - tonumber(igplayers[data.steamid].oldLevel) > 50 and not admin then
 			players[data.steamid].hackerScore = 10000
 			igplayers[data.steamid].hackerDetection = "Suspected level hack. (" .. data.level .. ") an increase of " .. tonumber(data.level) - tonumber(igplayers[data.steamid].oldLevel)
 		end
 	end
+
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
 
 	players[data.steamid].level = data.level
 	igplayers[data.steamid].level = data.level

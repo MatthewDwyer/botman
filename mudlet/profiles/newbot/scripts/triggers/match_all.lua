@@ -116,6 +116,7 @@ function matchAll(line, logDate, logTime)
 
 	if string.find(line, "WRN ") then -- ignore lines containing this.
 		if not string.find(line, "DENSITYMISMATCH") then
+
 			deleteLine()
 			return
 		end
@@ -167,6 +168,7 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "*** ERROR: Executing command 'admin'") then -- abort processing the admin list
 		-- abort reading admin list
 		getAdminList = nil
+
 		deleteLine()
 		return
 	end
@@ -792,7 +794,10 @@ function matchAll(line, logDate, logTime)
 				igplayers[pid].noclipZ = z
 			end
 
-			deleteLine()
+			if not server.useAllocsWebAPI then
+				deleteLine()
+			end
+
 			return
 		end
 
@@ -873,7 +878,10 @@ function matchAll(line, logDate, logTime)
 				end
 			end
 
-			deleteLine()
+			if not server.useAllocsWebAPI then
+				deleteLine()
+			end
+
 			return
 		end
 	end
@@ -1327,6 +1335,21 @@ function matchAll(line, logDate, logTime)
 		botman.serverErrorReported = true
 		irc_chat(server.ircAlerts, "Server error detected.")
 		irc_chat(server.ircAlerts, line)
+		return
+	end
+
+
+	if string.find(line, "INF World.Unload") then
+		botman.botOffline = true
+		return
+	end
+
+
+	if string.find(line, "INF Loading permissions file done") then
+		if not string.find(botman.lastBotCommand, "webtokens") then
+			sendCommand("admin list")
+		end
+
 		return
 	end
 end

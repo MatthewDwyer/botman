@@ -19,6 +19,8 @@ function sendCommand(command, api, outputFile)
 
 	--display("sent " .. command)
 
+	botman.lastBotCommand = command
+
 	if server.useAllocsWebAPI and not string.find(command, "webtokens ") then
 		-- fix missing api and outputFile for some commands
 		if api == nil or api == "" then
@@ -121,11 +123,19 @@ function sendCommand(command, api, outputFile)
 
 		url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/" .. api .. "adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
 
+		if server.logBotCommands then
+			logBotCommand(botman.serverTime, url)
+		end
+
 		if outputFile then
 			os.remove(homedir .. "/temp/" .. outputFile)
 			downloadFile(homedir .. "/temp/" .. outputFile, url)
 		end
 	else
+		if server.logBotCommands then
+			logBotCommand(botman.serverTime, command)
+		end
+
 		send(command)
 	end
 end
@@ -354,10 +364,19 @@ function message(msg, steam)
 		if server.useAllocsWebAPI then
 			url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=say \"" .. string.sub(msg, 5) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
 
+			if server.logBotCommands then
+				logBotCommand(botman.serverTime, url)
+			end
+
 			os.remove(homedir .. "/temp/dummy.txt")
 			downloadFile(homedir .. "/temp/dummy.txt", url)
 		else
-			send("say \"" .. string.sub(msg, 5) .. "\"")
+			msg = "say \"" .. string.sub(msg, 5) .. "\""
+			send(msg)
+
+			if server.logBotCommands then
+				logBotCommand(botman.serverTime, msg)
+			end
 
 			if botman.getMetrics then
 				metrics.telnetCommands = metrics.telnetCommands + 1
@@ -369,10 +388,19 @@ function message(msg, steam)
 				if server.useAllocsWebAPI then
 					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
 
+					if server.logBotCommands then
+						logBotCommand(botman.serverTime, url)
+					end
+
 					os.remove(homedir .. "/temp/dummy.txt")
 					downloadFile(homedir .. "/temp/dummy.txt", url)
 				else
-					send("pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"")
+					msg = "pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
+					send(msg)
+
+					if server.logBotCommands then
+						logBotCommand(botman.serverTime, msg)
+					end
 
 					if botman.getMetrics then
 						metrics.telnetCommands = metrics.telnetCommands + 1
@@ -383,10 +411,19 @@ function message(msg, steam)
 			if server.useAllocsWebAPI then
 				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
 
+				if server.logBotCommands then
+					logBotCommand(botman.serverTime, url)
+				end
+
 				os.remove(homedir .. "/temp/dummy.txt")
 				downloadFile(homedir .. "/temp/dummy.txt", url)
 			else
-				send("pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"")
+				msg = "pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
+				send(msg)
+
+				if server.logBotCommands then
+					logBotCommand(botman.serverTime, msg)
+				end
 
 				if botman.getMetrics then
 					metrics.telnetCommands = metrics.telnetCommands + 1

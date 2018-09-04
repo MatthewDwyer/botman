@@ -739,6 +739,7 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 	disableTrigger("le")
 	disableTimer("GimmeReset")
 	disableTrigger("GameTickCount")
+	disableTrigger("Reload admins")
 
 	if exists("Every10Seconds", "timer") == 0 then
 	  permTimer("Every10Seconds", "", 10.0, [[TenSecondTimer()]])

@@ -478,8 +478,30 @@ function logAlerts(alertTime, alertLine)
 	botman.webdavFolderWriteable = false
 
 	-- log the chat
-	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_alertLog.txt", "a")
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_alertlog.txt", "a")
 	file:write(alertTime .. "; " .. string.trim(alertLine) .. "\n")
+	file:close()
+
+	botman.webdavFolderWriteable = true
+end
+
+
+function logBotCommand(commandTime, commandLine)
+	if botman.webdavFolderWriteable == false or string.find(commandLine, "password") or string.find(commandLine, "invite code") or string.find(commandLine, "webtokens") then
+		return
+	end
+
+	if string.find(commandLine, "adminuser") then
+		commandLine = string.sub(commandLine, 1, string.find(commandLine, "adminuser") - 2)
+	end
+
+	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
+	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
+	botman.webdavFolderWriteable = false
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_botcommandlog.txt", "a")
+	file:write(commandTime .. "; " .. string.trim(commandLine) .. "\n")
 	file:close()
 
 	botman.webdavFolderWriteable = true

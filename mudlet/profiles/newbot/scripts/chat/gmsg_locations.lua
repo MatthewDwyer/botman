@@ -147,6 +147,8 @@ function gmsg_locations()
 
 
 	local function cmd_ListLocations()
+		local showLocation
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}locations"
@@ -177,6 +179,12 @@ function gmsg_locations()
 		if (chatvars.words[1] == "locations") then
 			for k, v in pairs(locations) do
 				status = ""
+
+				if v.hidden and chatvars.accessLevel > 2 then
+					showLocation = false
+				else
+					showLocation = true
+				end
 
 				if not isLocationOpen(k) then
 					status = "[CLOSED]"
@@ -224,7 +232,7 @@ function gmsg_locations()
 								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. v.name .. "[-]")
 							end
 						else
-							if v.active and tonumber(chatvars.accessLevel) <= v.accessLevel then
+							if v.active and tonumber(chatvars.accessLevel) <= v.accessLevel and showLocation then
 								if status ~= "" then
 									message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. v.name .. " - " .. status .. "[-]")
 								else
@@ -246,7 +254,7 @@ function gmsg_locations()
 								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. v.name .. "[-]")
 							end
 						else
-							if v.active and tonumber(chatvars.accessLevel) <= v.accessLevel then
+							if v.active and tonumber(chatvars.accessLevel) <= v.accessLevel and showLocation then
 								if status ~= "" then
 									message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. v.name .. " - " .. status .. "[-]")
 								else
@@ -2304,7 +2312,6 @@ function gmsg_locations()
 					else
 						irc_chat(chatvars.ircAlias, "Players cannot setbase in " .. locationName .. ".")
 					end
-
 				end
 			end
 
@@ -2323,7 +2330,7 @@ function gmsg_locations()
 			if botman.registerHelp then
 				tmp.command = help[1]
 				tmp.keywords = "locat,able,on,off"
-				tmp.accessLevel = 2
+				tmp.accessLevel = 1
 				tmp.description = help[2]
 				tmp.notes = ""
 				tmp.ingameOnly = 0
@@ -2344,13 +2351,13 @@ function gmsg_locations()
 
 		if chatvars.words[1] == "location" and (chatvars.words[2] == "enable" or chatvars.words[2] == "disable") then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
@@ -2391,7 +2398,173 @@ function gmsg_locations()
 					else
 						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now disabled.")
 					end
+				end
+			end
 
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ToggleLocationHidden()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}location hide/unhide {name}"
+			help[2] = "Flag the location as hidden or unhidden. Hidden locations are only shown to admins when using the {#}locations command."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "locat,hide"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "locat") or string.find(chatvars.command, "able") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "location" and (chatvars.words[2] == "hide" or chatvars.words[2] == "unhide") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			locationName = string.sub(chatvars.command, string.find(chatvars.command, "hide ") + 6)
+			locationName = string.trim(locationName)
+			loc = LookupLocation(locationName)
+
+			if (loc == nil) then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]That location does not exist.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				end
+			else
+				if chatvars.words[2] == "hide" then
+					locations[loc].hidden = true
+					conn:execute("UPDATE locations set hidden = 1 WHERE name = '" .. escape(locationName) .. "'")
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " is now hidden from players.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now hidden from players.")
+					end
+				else
+					locations[loc].hidden = false
+					conn:execute("UPDATE locations set hidden = 0 WHERE name = '" .. escape(locationName) .. "'")
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " can be seen by players.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " can be seen by players.")
+					end
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ToggleLocationIsLobby()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}location lobby/not lobby {name}"
+			help[2] = "Flag the location as the lobby or not the lobby. New players will be sent to this location when they spawn if it is flagged as lobby.  Only one location will be used so flagging more will not make them all the lobby.\n"
+			help[2] = help[2] .. "To do that use {#}set tp {location}.  This will add a random teleport destination for the location.  You can set as many as you want."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "locat,lobby"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "locat") or string.find(chatvars.command, "lobby") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "location" and (chatvars.words[2] == "lobby" or string.find(chatvars.command, "not lobby")) then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			locationName = string.sub(chatvars.command, string.find(chatvars.command, " lobby ") + 7)
+			locationName = string.trim(locationName)
+			loc = LookupLocation(locationName)
+
+			if (loc == nil) then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]That location does not exist.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				end
+			else
+				if chatvars.words[2] == "lobby" then
+					locations[loc].lobby = true
+					conn:execute("UPDATE locations set lobby = 1 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set lobby = 0 WHERE name <> '" .. escape(locationName) .. "'")
+
+					-- reload the locations table
+					loadLocations()
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " is now the lobby.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now the lobby.")
+					end
+				else
+					locations[loc].lobby = false
+					conn:execute("UPDATE locations set lobby = 0 WHERE name = '" .. escape(locationName) .. "'")
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " is no longer the lobby.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is no longer the lobby.")
+					end
 				end
 			end
 
@@ -3336,6 +3509,24 @@ function gmsg_locations()
 
 	if result then
 		if debug then dbug("debug cmd_ToggleLocationEnabled triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLocationHidden()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationHidden triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLocationIsLobby()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationIsLobby triggered") end
 		return result
 	end
 

@@ -76,9 +76,9 @@ function thirtySecondTimer()
 		-- scan player inventories
 		if not server.useAllocsWebAPI then
 			for k, v in pairs(igplayers) do
-				if (igplayers[k].killTimer == nil) then igplayers[k].killTimer = 9 end
+				if (v.killTimer == nil) then v.killTimer = 0 end
 
-				if tonumber(igplayers[k].killTimer) < 2 then
+				if tonumber(v.killTimer) < 2 then
 					cmd = "si " .. k
 					if botman.dbConnected then conn:execute("INSERT into commandQueue (command, steam) VALUES ('" .. cmd .. "'," .. k .. ")") end
 				end

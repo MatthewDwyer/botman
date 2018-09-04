@@ -537,7 +537,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	end
 
 	-- hacker detection
-	if tonumber(level) - tonumber(igplayers[steam].oldLevel) > 50 and not admin then
+	if tonumber(level) - tonumber(igplayers[steam].oldLevel) > 50 and not admin and server.alertLevelHack then
 		alertAdmins(id .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel), "alert")
 		irc_chat(server.ircAlerts, server.gameDate .. " " .. steam .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel))
 	end
@@ -598,7 +598,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if server.showLocationMessages then
 		if igplayers[steam].alertLocation ~= currentLocation and currentLocation ~= false then
-			if locations[currentLocation].public or playerAccessLevel < 3 then
+			if (locations[currentLocation].public) or playerAccessLevel < 3 then
 				message(string.format("pm %s [%s]Welcome to %s[-]", steam, server.chatColour, currentLocation))
 			end
 		end

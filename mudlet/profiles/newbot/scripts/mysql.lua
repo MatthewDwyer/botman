@@ -773,6 +773,8 @@ function alterTables()
 	doSQL("ALTER TABLE `server` ADD `archivePlayersLastSeenDays` INT NOT NULL DEFAULT '60")
 	doSQL("ALTER TABLE `server` CHANGE `webPanelPort` `webPanelPort` INT(11) NOT NULL DEFAULT '0")
 	doSQL("ALTER TABLE `server` ADD `playersLastArchived` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+	doSQL("ALTER TABLE `server` ADD `alertLevelHack` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `server` ADD `logBotCommands` TINYINT NOT NULL DEFAULT '0'")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -842,6 +844,7 @@ function alterTables()
 	doSQL("ALTER TABLE `customMessages` CHANGE `message` `message` VARCHAR(500) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL")
 	doSQL("ALTER TABLE `otherEntities` ADD `remove` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `locations` ADD `isRound` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `locations` ADD `lobby` TINYINT NOT NULL DEFAULT '0'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)
