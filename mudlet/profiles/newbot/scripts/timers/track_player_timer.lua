@@ -36,10 +36,6 @@ function trackPlayerTimer()
 
 					if row then
 						sendCommand("tele " .. k .. " " .. row.x .. " " .. row.y .. " " .. row.z)
-
-						if botman.getMetrics then
-							metrics.telnetCommands = metrics.telnetCommands + 1
-						end
 					end
 
 					while row do

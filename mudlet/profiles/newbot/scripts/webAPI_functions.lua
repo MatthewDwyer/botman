@@ -157,27 +157,15 @@ function API_PlayerInfo(data)
 	-- check for invalid or missing steamid.  kick if not passed
 	steamtest = tonumber(data.steamid)
 	if (steamtest == nil) then
-		send ("kick " .. data.entityid)
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
-
+		sendCommand("kick " .. data.entityid)
 		irc_chat(server.ircMain, "Player " .. data.name .. " kicked for invalid Steam ID: " .. data.steamid)
-
 		faultyPlayerinfo = false
 		return
 	end
 
 	if (string.len(data.steamid) < 17) then
-		send ("kick " .. data.entityid)
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
-
+		sendCommand("kick " .. data.entityid)
 		irc_chat(server.ircMain, "Player " .. data.name .. " kicked for invalid Steam ID: " .. data.steamid)
-
 		faultyPlayerinfo = false
 		return
 	end
@@ -229,7 +217,7 @@ function API_PlayerInfo(data)
 
 		players[data.steamid].watchPlayer = true
 		players[data.steamid].watchPlayerTimer = os.time() + 2419200 -- stop watching in one month or until no longer a new player
-		players[data.steamid].IP = data.ip
+		players[data.steamid].ip = data.ip
 		players[data.steamid].exiled = 0
 
 		irc_chat(server.ircMain, "###  New player joined " .. data.name .. " steam: " .. data.steamid.. " id: " .. data.entityid .. " ###")
@@ -274,7 +262,7 @@ function API_PlayerInfo(data)
 		admin = true
 	end
 
-	if data.ip ~= "" and players[data.steamid].IP == "" then
+	if data.ip ~= "" and players[data.steamid].ip == "" then
 		players[data.steamid].IP = data.ip
 		CheckBlacklist(data.steamid, data.ip)
 	end
@@ -783,7 +771,7 @@ function API_PlayerInfo(data)
 			rows = cursor:numrows()
 
 			if rows > 0 then
-				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. data.steamid .. ",'" .. escape("[" .. server.chatColour .. "]You have unread mail.  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')") end
+				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. data.steamid .. ",'" .. escape("[" .. server.chatColour .. "]NEW MAIL HAS ARRIVED!  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')") end
 			end
 		end
 
@@ -805,6 +793,8 @@ function API_PlayerInfo(data)
 
 		-- run commands from the connectQueue now that the player has spawned and hopefully paying attention to chat
 		tempTimer( 3, [[processConnectQueue("]].. data.steamid .. [[")]] )
+		-- also check for removed claims
+		tempTimer(10, [[CheckClaimsRemoved("]] .. data.steamid .. [[")]] )
 	end
 
 
@@ -847,11 +837,7 @@ function API_PlayerInfo(data)
 				-- teleport close to the player
 				igplayers[data.steamid].tp = 1
 				igplayers[data.steamid].hackerTPScore = 0
-				send("tele " .. data.steamid .. " " .. math.floor(igplayers[igplayers[data.steamid].following].xPos) .. " " .. math.ceil(igplayers[igplayers[data.steamid].following].yPos - 30) .. " " .. math.floor(igplayers[igplayers[data.steamid].following].zPos))
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
+				sendCommand("tele " .. data.steamid .. " " .. math.floor(igplayers[igplayers[data.steamid].following].xPos) .. " " .. math.ceil(igplayers[igplayers[data.steamid].following].yPos - 30) .. " " .. math.floor(igplayers[igplayers[data.steamid].following].zPos))
 			end
 		end
 	end
@@ -1053,7 +1039,7 @@ function API_PlayerInfo(data)
 
 	if (playerAccessLevel < 4) and server.enableRegionPM then
 		if (igplayers[data.steamid].region ~= "r." .. x .. "." .. z .. ".7rg") then
-			message("pm " .. data.steamid .. " [" .. server.chatColour .. "]Region r." .. x .. "." .. z .. ".7[-]")
+			message("pm " .. data.steamid .. " [" .. server.chatColour .. "]Region " .. x .. "." .. z .. "[-]")
 		end
 	end
 
@@ -1066,11 +1052,7 @@ function API_PlayerInfo(data)
 		if (intY < 30000) then
 			igplayers[data.steamid].tp = 1
 			igplayers[data.steamid].hackerTPScore = 0
-			send("tele " .. data.steamid .. " " .. intX .. " " .. 60000 .. " " .. intZ)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
+			sendCommand("tele " .. data.steamid .. " " .. intX .. " " .. 60000 .. " " .. intZ)
 		end
 
 		faultyPlayerinfo = false
@@ -1083,19 +1065,14 @@ function API_PlayerInfo(data)
 		igplayers[data.steamid].hackerTPScore = 0
 
 		if players[data.steamid].yPosTimeout == 0 then
-			send("tele " .. data.steamid .. " " .. intX .. " -1 " .. intZ)
+			sendCommand("tele " .. data.steamid .. " " .. intX .. " -1 " .. intZ)
 		else
-			send("tele " .. data.steamid .. " " .. players[data.steamid].xPosTimeout .. " " .. players[data.steamid].yPosTimeout .. " " .. players[data.steamid].zPosTimeout)
+			sendCommand("tele " .. data.steamid .. " " .. players[data.steamid].xPosTimeout .. " " .. players[data.steamid].yPosTimeout .. " " .. players[data.steamid].zPosTimeout)
 		end
 
 		players[data.steamid].xPosTimeout = 0
 		players[data.steamid].yPosTimeout = 0
 		players[data.steamid].zPosTimeout = 0
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
-
 		faultyPlayerinfo = false
 		return
 	end
@@ -1119,10 +1096,6 @@ function API_PlayerInfo(data)
 			message("pm " .. data.steamid .. " [" .. server.warnColour .. "]You have been moved to the center of the map.[-]")
 		else
 			send ("tele " .. data.steamid .. " " .. igplayers[data.steamid].xPosLastOK .. " " .. igplayers[data.steamid].yPosLastOK .. " " .. igplayers[data.steamid].zPosLastOK)
-		end
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
 		end
 
 		faultyPlayerinfo = false
@@ -1179,11 +1152,7 @@ function API_PlayerInfo(data)
 		if dist > 2 then
 			igplayers[data.steamid].tp = 1
 			igplayers[data.steamid].hackerTPScore = 0
-			send("tele " .. data.steamid .. " " .. players[data.steamid].prisonxPosOld .. " " .. players[data.steamid].prisonyPosOld .. " " .. players[data.steamid].prisonzPosOld)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
+			sendCommand("tele " .. data.steamid .. " " .. players[data.steamid].prisonxPosOld .. " " .. players[data.steamid].prisonyPosOld .. " " .. players[data.steamid].prisonzPosOld)
 		end
 
 		faultyPlayerinfo = false
@@ -1553,6 +1522,7 @@ function readAPI_AdminList()
 				players[steam].enableTP = true
 				players[steam].botHelp = true
 				players[steam].hackerScore = 0
+				players[steam].testAsPlayer = nil
 
 				if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. level .. " WHERE steam = " .. steam) end
 				if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. steam .. "," .. level .. ")") end
@@ -1742,7 +1712,7 @@ function readAPI_Command()
 		end
 
 		if string.find(result.command, "admin") and not string.find(result.command, "list") then
-			tempTimer( 1, [[sendCommand("admin list")]] )
+			tempTimer( 2, [[sendCommand("admin list")]] )
 		end
 
 		if string.sub(result.result, 1, 4) == "Day " then
@@ -1975,7 +1945,6 @@ function readAPI_Inventories()
 	if (debug) then dbug("debug readAPI_Inventories line " .. debugger.getinfo(1).currentline) end
 
 	CheckInventory()
-	tempTimer( 2, [[CheckClaimsRemoved()]] )
 end
 
 
@@ -2003,10 +1972,6 @@ function readAPI_Hostiles()
 					if locations[loc].killZombies then
 						if not server.lagged then
 							sendCommand("removeentity " .. v.id)
-
-							if botman.getMetrics then
-								metrics.telnetCommands = metrics.telnetCommands + 1
-							end
 						end
 					end
 				end
@@ -2232,7 +2197,7 @@ end
 
 function readAPI_LLP()
 	local file, ln, result, temp, coords, data, k, v, a, b, cursor, errorString, con, q
-	local steam, expired, x, y, z, keystones, region, loc, reset, noPlayer
+	local steam, x, y, z, keystoneCount, region, loc, reset, noPlayer
 	local fileSize
 
 	fileSize = lfs.attributes (homedir .. "/temp/llp.txt", "size")
@@ -2241,6 +2206,8 @@ function readAPI_LLP()
 	if fileSize == nil or fileSize == 0 then
 		return
 	end
+
+	conn:execute("DELETE FROM keystones WHERE x = 0 AND y = 0 AND z = 0")
 
 	file = io.open(homedir .. "/temp/llp.txt", "r")
 
@@ -2271,7 +2238,7 @@ function readAPI_LLP()
 					if string.find(b, "Player ") then
 						steam = string.sub(b, 9, string.find(b, ')\"') - 1)
 						steam = string.sub(steam, - 17)
-						expired = not string.find(b, ": True,") -- it's Opposite Day!
+						players[steam].claimsExpired = not string.find(b, ": True,") -- it's Opposite Day!
 						noPlayer = false
 
 						if not players[steam] then
@@ -2284,14 +2251,15 @@ function readAPI_LLP()
 					end
 
 					if string.find(b, "owns ") and string.find(b, " keystones") then
-						keystones = string.sub(b, string.find(b, "owns ") + 5, string.find(b, " keystones") - 1)
+						keystoneCount = string.sub(b, string.find(b, "owns ") + 5, string.find(b, " keystones") - 1)
 						if not noPlayer then
-							players[steam].keystones = keystones
+							players[steam].keystones = keystoneCount
 						end
 					end
 
-					if string.find(b, "   (", nil, true) then
-						b = string.sub(b, 5, string.len(b) -1)
+					if string.find(b, "location") then
+						b = string.sub(b, string.find(b, "location") + 9)
+
 						coords = string.split(b, ",")
 						x = tonumber(coords[1])
 						y = tonumber(coords[2])
@@ -2299,33 +2267,39 @@ function readAPI_LLP()
 
 						if tonumber(y) > 0 then
 							if botman.dbConnected then
-								conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. steam .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z .. " AND remove > 1")
 								conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. steam .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z)
 							end
 
-							if accessLevel(steam) > 3 then
+							if not keystones[x .. y .. z] then
+								keystones[x .. y .. z] = {}
+								keystones[x .. y .. z].x = x
+								keystones[x .. y .. z].y = y
+								keystones[x .. y .. z].z = z
+								keystones[x .. y .. z].steam = steam
+							end
+
+							keystones[x .. y .. z].expired = players[steam].claimsExpired
+							keystones[x .. y .. z].removed = 0
+
+							if players[steam].removeClaims then
+								keystones[x .. y .. z].remove = true
+							else
+								keystones[x .. y .. z].remove = false
+							end
+
+							if accessLevel(steam) > 2 then
 								region = getRegion(x, z)
 								loc, reset = inLocation(x, z)
 
 								if not noPlayer then
-									if (resetRegions[region]) or reset or players[steam].removeClaims == true then
-										if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. ",1) ON DUPLICATE KEY UPDATE remove = 1," .. dbBool(expired) .. ")") end
+									if (resetRegions[region] or reset or players[steam].removeClaims) and not players[steam].testAsPlayer then
+										if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove, removed, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. ", 1, 0," .. dbBool(players[steam].claimsExpired) .. ") ON DUPLICATE KEY UPDATE remove = 1, removed = 0, expired = " .. dbBool(players[steam].claimsExpired)) end
 									else
-										if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ")") end
-									end
-
-									if expired then
-										-- try to remove the expired claim
-										sendCommand("rlp " .. x .. " " .. y .. " " .. z)
-									end
-								else
-									if expired then
-										-- try to remove the expired claim
-										sendCommand("rlp " .. x .. " " .. y .. " " .. z)
+										if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(players[steam].claimsExpired) .. ")") end
 									end
 								end
 							else
-								if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ")") end
+								if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(players[steam].claimsExpired) .. ")") end
 							end
 						end
 					end
@@ -2378,16 +2352,12 @@ function readAPI_LPB()
 					players[pid].bedY = temp[2]
 					players[pid].bedZ = temp[3]
 					if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. temp[1] .. ", bedY = " .. temp[2] .. ", bedZ = " .. temp[3].. " WHERE steam = " .. pid) end
-
-					display("UPDATE players SET bedX = " .. temp[1] .. ", bedY = " .. temp[2] .. ", bedZ = " .. temp[3].. " WHERE steam = " .. pid)
 				else
 					pid = string.sub(v, 11, string.find(v, " does ") - 1)
 					players[pid].bedX = 0
 					players[pid].bedY = 0
 					players[pid].bedZ = 0
 					if botman.dbConnected then conn:execute("UPDATE players SET bedX = 0, bedY = 0, bedZ = 0 WHERE steam = " .. pid) end
-
-					display("UPDATE players SET bedX = 0, bedY = 0, bedZ = 0 WHERE steam = " .. pid)
 				end
 			end
 		end

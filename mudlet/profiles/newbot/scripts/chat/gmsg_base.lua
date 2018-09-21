@@ -1133,15 +1133,6 @@ function gmsg_base()
 				return true
 			end
 
-			if server.coppi then
-				-- update the coordinates of the players bedroll
-				sendCommand("lpb " .. chatvars.playerid)
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
-			end
-
 			if (chatvars.accessLevel > 2) and (not server.allowHomeTeleport or not server.allowTeleporting) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleporting home is disabled on this server.  Walking is good for you!  Running even more so :D[-]")
 				botman.faultyChat = false
@@ -1278,10 +1269,6 @@ function gmsg_base()
 
 			if tonumber(server.playerTeleportDelay) == 0 or tonumber(players[chatvars.playerid].accessLevel) < 3 then
 				teleport(cmd, chatvars.playerid)
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will be teleported to your base in " .. server.playerTeleportDelay .. " seconds.[-]")
 				if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end

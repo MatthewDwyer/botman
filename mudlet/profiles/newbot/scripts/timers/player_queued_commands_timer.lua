@@ -8,7 +8,7 @@
 --]]
 
 function playerQueuedCommands()
-	local cursor, errorString, row, k, v, a, b
+	local cursor, errorString, row, k, v, a, b, steam, command
 
 	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected or not botman.arenaCount then
 		return
@@ -28,6 +28,9 @@ function playerQueuedCommands()
 
 	if row then
 		while row do
+			steam = steam
+			command = command
+
 			if row.boss == true then
 				for k, v in pairs(igplayers) do
 					if distancexz(igplayers[k].xPos, igplayers[k].zPos, locations["arena"].x, locations["arena"].z) then
@@ -35,13 +38,8 @@ function playerQueuedCommands()
 							message("pm " .. players[b.id].id .. " [" .. server.chatColour .. "]Here comes the BOSS!")
 						end
 
-						sendCommand(row.command)
-
-						if botman.getMetrics then
-							metrics.telnetCommands = metrics.telnetCommands + 1
-						end
-
 						conn:execute("delete from playerQueue where id = " .. row.id)
+						sendCommand(command)
 						return
 					end
 				end
@@ -49,66 +47,54 @@ function playerQueuedCommands()
 				return
 			end
 
-			if tonumber(row.steam) > 0 then
-				if (not igplayers[row.steam]) then
+			if tonumber(steam) > 0 then
+				if (not igplayers[steam]) then
 					-- destroy the command without sending it
 					conn:execute("delete from playerQueue where id = " .. row.id)
 					return
 				end
 			end
 
-			if tonumber(row.steam) == 0 then
-				if (string.sub(row.command, 1, 2) ~= "se") and (string.sub(row.command, 1, 3) ~= "say") and (string.sub(row.command, 1, 2) ~= "pm") and (row.command ~= "reset") then
-					sendCommand(row.command)
+			if tonumber(steam) == 0 then
+				conn:execute("delete from playerQueue where id = " .. row.id)
 
-					if botman.getMetrics then
-						metrics.telnetCommands = metrics.telnetCommands + 1
-					end
+				if (string.sub(command, 1, 2) ~= "se") and (string.sub(command, 1, 3) ~= "say") and (string.sub(command, 1, 2) ~= "pm") and (command ~= "reset") then
+					sendCommand(command)
 				else
-					if row.command == "reset" then
+					if command == "reset" then
 						resetGimmeArena()
 					else
-						message(row.command)
+						message(command)
 					end
 				end
 
-				conn:execute("delete from playerQueue where id = " .. row.id)
 				return
 			end
 
-			if (distancexz(igplayers[row.steam].xPos, igplayers[row.steam].zPos, locations["arena"].x, locations["arena"].z ) > locations["arena"].size + 1 or igplayers[row.steam].deadX ~= nil) then
+			if (distancexz(igplayers[steam].xPos, igplayers[steam].zPos, locations["arena"].x, locations["arena"].z ) > locations["arena"].size + 1 or igplayers[steam].deadX ~= nil) then
 				-- destroy the command without sending it
 				conn:execute("delete from playerQueue where id = " .. row.id)
 				return
 			else
-				if (tonumber(row.steam) > 0) then
-					if (igplayers[row.steam].deadX == nil) then
+				conn:execute("delete from playerQueue where id = " .. row.id)
 
-						if string.sub(row.command, 1, 2) == "se" then
-							sendCommand(row.command)
-
-							if botman.getMetrics then
-								metrics.telnetCommands = metrics.telnetCommands + 1
-							end
+				if (tonumber(steam) > 0) then
+					if (igplayers[steam].deadX == nil) then
+						if string.sub(command, 1, 2) == "se" then
+							sendCommand(command)
 						else
-							 message(row.command)
+							 message(command)
 						end
 
-						conn:execute("delete from playerQueue where id = " .. row.id)
 						return
 					end
 				else
-					if string.sub(row.command, 1, 2) == "se" then
-						sendCommand(row.command)
-
-						if botman.getMetrics then
-							metrics.telnetCommands = metrics.telnetCommands + 1
-						end
+					if string.sub(command, 1, 2) == "se" then
+						sendCommand(command)
 					else
-						 message(row.command)
+						 message(command)
 					end
 
-					conn:execute("delete from playerQueue where id = " .. row.id)
 					return
 				end
 			end
@@ -116,6 +102,7 @@ function playerQueuedCommands()
 			row = cursor:fetch(row, "a")
 		end
 
+		-- we can probably remove this line but just incase none of the tests above delete it, we'll try to delete the row here too.
 		conn:execute("delete from playerQueue where id = " .. row.id)
 	end
 end

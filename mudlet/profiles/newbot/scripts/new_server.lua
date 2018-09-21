@@ -20,10 +20,6 @@ function gatherServerData()
 	tempTimer( 10, [[sendCommand("gg")]] )
 	tempTimer( 20, [[sendCommand("admin list")]] )
 	tempTimer( 25, [[sendCommand("ban list")]] )
-
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 5
-	end
 end
 
 

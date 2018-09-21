@@ -35,7 +35,7 @@ function memTrigger(line)
 
 		if botman.getMetrics then
 			if metrics == nil then
-				metrics = {}
+				metrics = {} -- Welcome to the metrics Neo
 				metrics.pass = 1
 			end
 
@@ -43,9 +43,9 @@ function memTrigger(line)
 				metrics.pass = 2
 				metrics.startTime = os.time()
 				metrics.endTime = metrics.startTime
-				metrics.telnetCommands = 0
-				metrics.telnetCommandLag = 0
-				metrics.telnetErrors = 0
+				metrics.commands = 0
+				metrics.commandLag = 0
+				metrics.errors = 0
 				metrics.telnetLines = 0
 				metrics.playersOnlineStart = botman.playersOnline
 				metrics.playersOnlineEnd = botman.playersOnline
@@ -97,10 +97,10 @@ function memTrigger(line)
 				irc_chat(metrics.reportTo, "---")
 				irc_chat(metrics.reportTo, "Metrics report")
 				irc_chat(metrics.reportTo, "Runtime: " .. metrics.endTime - metrics.startTime .. " seconds")
-				irc_chat(metrics.reportTo, "Commands run: " .. metrics.telnetCommands)
+				irc_chat(metrics.reportTo, "Commands run: " .. metrics.commands)
 				irc_chat(metrics.reportTo, "Telnet lines processed: " .. metrics.telnetLines)
-				irc_chat(metrics.reportTo, "Telnet error lines seen: " .. metrics.telnetErrors)
-				irc_chat(metrics.reportTo, "Telnet command lag: " .. metrics.telnetCommandLag)
+				irc_chat(metrics.reportTo, "Telnet error lines seen: " .. metrics.errors)
+				irc_chat(metrics.reportTo, "Telnet command lag: " .. metrics.commandLag)
 				irc_chat(metrics.reportTo, "Performance: FPS  |  HEAP  |  HEAPMAX  |  CHUNKS  |  CGO  |  PLAYERS  |  ZOMBIES  |  ENTITIES  |  ITEMS")
 				irc_chat(metrics.reportTo, "Performance At Start: " .. metrics.performanceAtStart)
 				irc_chat(metrics.reportTo, "Performance At End: " .. metrics.performanceAtEnd)
@@ -135,16 +135,14 @@ function memTrigger(line)
 				-- reset metrics for next pass
 				metrics.performanceAtStart = metrics.performanceAtEnd
 				metrics.performanceAtEnd = ""
-
 				metrics.playersStart = metrics.playersEnd
 				metrics.playersEnd = {}
-
 				metrics.startTime = os.time()
 				metrics.endTime = metrics.startTime
-				metrics.telnetCommands = 0
-				metrics.telnetErrors = 0
+				metrics.commands = 0
+				metrics.errors = 0
 				metrics.telnetLines = 0
-				metrics.telnetCommandLag = 0
+				metrics.commandLag = 0
 				metrics.playersOnlineStart = botman.playersOnline
 				metrics.playersOnlineEnd = botman.playersOnline
 			end

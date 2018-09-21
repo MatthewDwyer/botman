@@ -1332,7 +1332,7 @@ function gmsg_info()
 			if (tonumber(chatvars.intZ) < 0) then zdir = " south" else zdir = " north" end
 
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are at " .. chatvars.intX .. xdir .. chatvars.intZ .. zdir .. " at a height of " .. chatvars.intY .. "[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in region r." .. x .. "." .. z .. ".7[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in region r." .. x .. "." .. z .. ".7rg[-]")
 
 			if (pvpZone(chatvars.intX, chatvars.intZ) == false) or chatvars.accessLevel < 3 then
 				for k, v in pairs(igplayers) do

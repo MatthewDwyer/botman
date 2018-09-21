@@ -75,7 +75,7 @@ function matchAll(line, logDate, logTime)
 
 	if string.find(line, "StackTrace:") then -- ignore lines containing this.
 		if botman.getMetrics then
-			metrics.telnetErrors = metrics.telnetErrors + 1
+			metrics.errors = metrics.errors + 1
 		end
 
 		return
@@ -83,7 +83,7 @@ function matchAll(line, logDate, logTime)
 
 	if string.find(line, "ERR ") then -- ignore lines containing this.
 		if botman.getMetrics then
-			metrics.telnetErrors = metrics.telnetErrors + 1
+			metrics.errors = metrics.errors + 1
 		end
 
 		return
@@ -124,7 +124,7 @@ function matchAll(line, logDate, logTime)
 
 	if string.find(line, "NaN") then -- ignore lines containing this.
 		if botman.getMetrics then
-			metrics.telnetErrors = metrics.telnetErrors + 1
+			metrics.errors = metrics.errors + 1
 		end
 
 		deleteLine()
@@ -133,7 +133,7 @@ function matchAll(line, logDate, logTime)
 
 	if string.find(line, "Unbalanced") then -- ignore lines containing this.
 		if botman.getMetrics then
-			metrics.telnetErrors = metrics.telnetErrors + 1
+			metrics.errors = metrics.errors + 1
 		end
 
 		deleteLine()
@@ -147,9 +147,7 @@ function matchAll(line, logDate, logTime)
 
 	if string.find(line, "NullReferenceException:") then -- ignore lines containing this.
 		if botman.getMetrics then
-			metrics.telnetCommands = 0
-			metrics.telnetErrors = 0
-			metrics.telnetLines = metrics.telnetLines + 1
+			metrics.errors = metrics.errors + 1
 		end
 
 		deleteLine()
@@ -179,10 +177,6 @@ function matchAll(line, logDate, logTime)
 			temp = string.split(line, "\;")
 			sendCommand("rcd " .. temp[2] .. " " .. temp[4] .. " fix")
 
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-
 			deleteLine()
 			return
 		end
@@ -211,25 +205,21 @@ function matchAll(line, logDate, logTime)
 		return
 	end
 
+
 	-- grab the server time
-	if botman.serverTime == "" then
-		if string.find(line, "INF ") then
-			if string.find(string.sub(line, 1, 19), os.date("%Y")) then
-				botman.serverTime = string.sub(line, 1, 10) .. " " .. string.sub(line, 12, 16)
-				botman.serverHour = string.sub(line, 12, 13)
-				botman.serverMinute = string.sub(line, 15, 16)
-				specialDay = ""
+	if string.find(line, "INF ") then
+		if string.find(string.sub(line, 1, 19), os.date("%Y")) then
+			botman.serverTime = string.sub(line, 1, 10) .. " " .. string.sub(line, 12, 16)
+			botman.serverHour = string.sub(line, 12, 13)
+			botman.serverMinute = string.sub(line, 15, 16)
+			specialDay = ""
 
-				if (string.find(botman.serverTime, "02-14", 5, 10)) then specialDay = "valentine" end
-				if (string.find(botman.serverTime, "12-25", 5, 10)) then specialDay = "christmas" end
+			if (string.find(botman.serverTime, "02-14", 5, 10)) then specialDay = "valentine" end
+			if (string.find(botman.serverTime, "12-25", 5, 10)) then specialDay = "christmas" end
 
-				if server.dateTest == nil then
-					server.dateTest = string.sub(botman.serverTime, 1, 10)
-				end
+			if server.dateTest == nil then
+				server.dateTest = string.sub(botman.serverTime, 1, 10)
 			end
-
-			-- write to the log
-			logChat(botman.serverTime, "Server", "Bot starting up..")
 		end
 	end
 
@@ -445,10 +435,6 @@ function matchAll(line, logDate, logTime)
 
 			if tonumber(server.reservedSlots) > 0 then
 				sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			end
 		else
 			if tonumber(server.maxPlayers) ~= tonumber(server.ServerMaxPlayerCount) - 1 then
@@ -456,10 +442,6 @@ function matchAll(line, logDate, logTime)
 
 				if tonumber(server.reservedSlots) > 0 then
 					sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
-
-					if botman.getMetrics then
-						metrics.telnetCommands = metrics.telnetCommands + 1
-					end
 				end
 			end
 		end
@@ -519,44 +501,13 @@ function matchAll(line, logDate, logTime)
 				players[pid].enableTP = true
 				players[pid].botHelp = true
 				players[pid].hackerScore = 0
+				players[pid].testAsPlayer = nil
 
 				if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. number .. " WHERE steam = " .. pid) end
 				if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. pid .. "," .. number .. ")") end
 			end
 
 			return
-		end
-
-
-		if llpid ~= nil then
-			if string.sub(line, 1, 4) == "   (" then
-				coords = string.split(string.sub(line, 5, string.len(line) - 1), ",")
-
-				if players[llpid].removedClaims == nil then
-					players[llpid].removedClaims = 0
-				end
-
-				if tonumber(coords[2]) > 0 then
-					if botman.dbConnected then
-						conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3] .. " AND remove > 1")
-						conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. llpid .. " AND x = " .. coords[1] .. " AND y = " .. coords[2] .. " AND z = " .. coords[3])
-					end
-
-					if accessLevel(llpid) > 3 then
-						region = getRegion(coords[1], coords[3])
-
-						loc, reset = inLocation(coords[1], coords[3])
-
-						if (resetRegions[region]) or reset or players[llpid].removeClaims == true then
-							if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ",1) ON DUPLICATE KEY UPDATE remove = 1") end
-						else
-							if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")") end
-						end
-					else
-						if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. coords[1] .. "," .. coords[2] .. "," .. coords[3] .. ")") end
-					end
-				end
-			end
 		end
 
 
@@ -1063,10 +1014,6 @@ function matchAll(line, logDate, logTime)
 
 				if server.reservedSlots > 0 then
 					sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
-
-					if botman.getMetrics then
-						metrics.telnetCommands = metrics.telnetCommands + 1
-					end
 				end
 			else
 				if tonumber(server.maxPlayers) ~= tonumber(server.ServerMaxPlayerCount) - 1 then
@@ -1074,10 +1021,6 @@ function matchAll(line, logDate, logTime)
 
 					if tonumber(server.reservedSlots) > 0 then
 						sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
-
-						if botman.getMetrics then
-							metrics.telnetCommands = metrics.telnetCommands + 1
-						end
 					end
 				end
 			end
@@ -1110,10 +1053,6 @@ function matchAll(line, logDate, logTime)
 
 		if server.hideCommands then
 			sendCommand("tcch " .. server.commandPrefix)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
 		end
 
 		return
@@ -1130,10 +1069,6 @@ function matchAll(line, logDate, logTime)
 
 		if server.hideCommands then
 			sendCommand("tcch " .. server.commandPrefix)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
 		end
 
 		return
@@ -1234,6 +1169,14 @@ function matchAll(line, logDate, logTime)
 		server.djkrose = true
 		temp = string.split(line, ":")
 		server.djkroseVersion = temp[2]
+		return
+	end
+
+	-- detect Jims_Commands mod
+	if string.find(line, "Mod Jims_Commands") then
+		server.JimsCommands = true
+		temp = string.split(line, ":")
+		server.JimsCommandsVersion = temp[2]
 		return
 	end
 

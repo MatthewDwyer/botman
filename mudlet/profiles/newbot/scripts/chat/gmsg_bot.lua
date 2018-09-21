@@ -1251,10 +1251,6 @@ function gmsg_bot()
 				end
 
 				sendCommand("tcch " .. tmp.prefix)
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			else
 				server.commandPrefix = ""
 				conn:execute("UPDATE server SET commandPrefix = ''")
@@ -1266,10 +1262,6 @@ function gmsg_bot()
 				end
 
 				sendCommand("tcch")
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			end
 
 			botman.faultyChat = false
@@ -2036,6 +2028,75 @@ function gmsg_bot()
 	end
 
 
+	local function cmd_ToggleLogInventory()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable inventory log. (disabled by default)"
+			help[2] = "The bot logs inventory and inventory changes to the database all the time.  You can also have inventory changes recorded to a daily text file along with the other daily logs."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,able,inv,log"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "able") or string.find(chatvars.command, "log")) or string.find(chatvars.command, "inv")) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "inventory" and string.find(chatvars.words[3], "log") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "enable" then
+				server.logInventory = true
+				conn:execute("UPDATE server set logInventory = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Live inventory changes will also be logged to daily text files.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Live inventory changes will also be logged to daily text files.")
+				end
+			else
+				server.logInventory = false
+				conn:execute("UPDATE server set logInventory = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Live inventory changes will only be recorded in the database.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Live inventory changes will only be recorded in the database.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleUseAllocsWebAPI() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -2495,6 +2556,15 @@ function gmsg_bot()
 
 	if result then
 		if debug then dbug("debug cmd_ToggleLogBotCommands triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLogInventory()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLogInventory triggered") end
 		return result
 	end
 

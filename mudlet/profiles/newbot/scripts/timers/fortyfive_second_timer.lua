@@ -21,45 +21,40 @@ function fortyfiveSecondTimer()
 		end
 	end
 
-	conn:execute("UPDATE keystones SET removed = 1")
+	-- conn:execute("UPDATE keystones SET removed = 1")
 
-	for k, v in pairs(igplayers) do
-		if v.claimPass == nil then v.claimPass = 1 end
+	-- for k, v in pairs(igplayers) do
+		-- if v.claimPass == nil then v.claimPass = 1 end
 
-		if accessLevel(k) > 2 then
-			cursor,errorString = conn:execute("SELECT count(remove) as deleted FROM keystones WHERE steam = " .. k .. " AND remove = 2")
+		-- if accessLevel(k) > 2 then
+			-- cursor,errorString = conn:execute("SELECT count(remove) as deleted FROM keystones WHERE steam = " .. k .. " AND remove = 2")
 
-			if cursor then
-				row = cursor:fetch({}, "a")
+			-- if cursor then
+				-- row = cursor:fetch({}, "a")
 
-				if tonumber(row.deleted) > 0 then
-					players[k].removedClaims = players[k].removedClaims + tonumber(row.deleted)
-					players[k].alertRemovedClaims = true
-					conn:execute("DELETE FROM keystones WHERE steam = " .. k .. " AND remove = 2")
-				end
+				-- if tonumber(row.deleted) > 0 then
+					-- players[k].removedClaims = players[k].removedClaims + tonumber(row.deleted)
+					-- players[k].alertRemovedClaims = true
+					-- conn:execute("DELETE FROM keystones WHERE steam = " .. k .. " AND remove = 2")
+				-- end
 
-				if v.claimPass == 1 then
-					x = math.floor(v.xPos / 512)
-					z = math.floor(v.zPos / 512)
-					checkRegionClaims(x, z)
+				-- if v.claimPass == 1 then
+					-- x = math.floor(v.xPos / 512)
+					-- z = math.floor(v.zPos / 512)
+					-- checkRegionClaims(x, z)
 
-					v.claimPass = 2
-				else
-					if server.enableTimedClaimScan then
-						sendCommand("llp " .. k)
+					-- v.claimPass = 2
+				-- else
+					-- if server.enableTimedClaimScan then
+						-- sendCommand("llp " .. k)
+					-- end
 
-						if botman.getMetrics then
-							metrics.telnetCommands = metrics.telnetCommands + 1
-						end
-					end
-
-					v.claimPass = 1
-				end
-			end
-		else
-			x = math.floor(v.xPos / 512)
-			z = math.floor(v.zPos / 512)
-			--checkRegionClaims(x, z)
-		end
-	end
+					-- v.claimPass = 1
+				-- end
+			-- end
+		-- else
+			-- x = math.floor(v.xPos / 512)
+			-- z = math.floor(v.zPos / 512)
+		-- end
+	-- end
 end

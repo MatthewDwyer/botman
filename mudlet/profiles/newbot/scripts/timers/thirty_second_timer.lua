@@ -89,7 +89,6 @@ function thirtySecondTimer()
 		else
 			if tonumber(botman.playersOnline) > 0 then
 				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getplayerinventories/?adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
-
 				os.remove(homedir .. "/temp/inventories.txt")
 				downloadFile(homedir .. "/temp/inventories.txt", url)
 			end
@@ -100,10 +99,6 @@ function thirtySecondTimer()
 			if server.enableLagCheck then
 				botman.lagCheckTime = os.time()
 				sendCommand("pm LagCheck " .. os.time())
-			end
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 		else
 			if server.enableLagCheck then

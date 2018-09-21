@@ -87,6 +87,9 @@ function everyMinute()
 		-- save the igplayer to players
 		savePlayerData(k)
 
+		-- reload the player from the database so that we fill in any missing fields with default values
+		loadPlayers(k)
+
 		-- add or update the player record in the bots shared database
 		insertBotsPlayer(k)
 
@@ -132,18 +135,14 @@ function everyMinute()
 			end
 
 			-- check how many claims they have placed
-			sendCommand("llp " .. k)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
+			sendCommand("llp " .. k .. " parseable")
 
 			-- flag this ingame player record for deletion
 			zombiePlayers[k] = {}
 
 			if botman.db2Connected then
 				-- update player in bots db
-				connBots:execute("UPDATE players SET ip = '" .. players[k].IP .. "', name = '" .. escape(stripCommas(players[k].name)) .. "', online = 0 WHERE steam = " .. k .. " AND botID = " .. server.botID)
+				connBots:execute("UPDATE players SET ip = '" .. players[k].ip .. "', name = '" .. escape(stripCommas(players[k].name)) .. "', online = 0 WHERE steam = " .. k .. " AND botID = " .. server.botID)
 			end
 
 			if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
@@ -185,10 +184,16 @@ function everyMinute()
 		botman.rebootTimerID = nil
 		rebootTimerDelayID = nil
 
-		sendCommand("sa")
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
+		if not botMaintenance.lastSA then
+			botMaintenance.lastSA = os.time()
+			saveBotMaintenance()
+			sendCommand("sa")
+		else
+			if (os.time() - botMaintenance.lastSA) > 30 then
+				botMaintenance.lastSA = os.time()
+				saveBotMaintenance()
+				sendCommand("sa")
+			end
 		end
 
 		finishReboot()
@@ -239,10 +244,6 @@ function everyMinute()
 	if (server.scanZombies or server.scanEntities) and not server.lagged then
 		if not server.useAllocsWebAPI then
 			sendCommand("le")
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
 		end
 	end
 
@@ -251,7 +252,7 @@ function everyMinute()
 	-- save some server fields
 	if botman.dbConnected then conn:execute("UPDATE server SET lottery = " .. server.lottery .. ", date = '" .. server.dateTest .. "', ircBotName = '" .. server.ircBotName .. "'") end
 
-	if debug then dbug("debug one minute timer end") end
+	if debug then dbug("debug everyMinute end") end
 end
 
 
@@ -319,10 +320,6 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 			for k, v in pairs(igplayers) do
 				if players[k].autoFriend ~= "NA" then
 					sendCommand("lpf " .. k)
-
-					if botman.getMetrics then
-						metrics.telnetCommands = metrics.telnetCommands + 1
-					end
 				end
 			end
 		end
@@ -344,8 +341,16 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 		end
 	end
 
+if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
 	botHeartbeat()
 
 	-- check for timed events due to run
 	runTimedEvents()
+
+if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+	removeClaims()
+
+if debug then dbug("debug one minute timer end") end
 end

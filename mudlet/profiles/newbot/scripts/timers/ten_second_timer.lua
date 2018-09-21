@@ -26,10 +26,6 @@ function TenSecondTimer()
 				botman.lagCheckTime = os.time()
 				sendCommand("pm LagCheck " .. os.time())
 			end
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
 		else
 			if server.enableLagCheck then
 				botman.lagCheckTime = os.time()
@@ -41,18 +37,10 @@ function TenSecondTimer()
 		if server.coppi and tonumber(botman.playersOnline) > 0 then
 			if server.scanNoclip then
 				sendCommand("pug")
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			end
 
 			if not server.playersCanFly then
 				sendCommand("pgd")
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			end
 		end
 
@@ -62,9 +50,7 @@ function TenSecondTimer()
 				 os.remove(homedir .. "/temp/hostiles.txt")
 				 downloadFile(homedir .. "/temp/hostiles.txt", url)
 
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
+				metrics.commands = metrics.commands + 1
 			end
 		end
 	end

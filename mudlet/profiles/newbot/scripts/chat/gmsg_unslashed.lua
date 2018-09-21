@@ -228,11 +228,6 @@ function gmsg_unslashed()
 			if (r == 6) then
 				message("say [" .. server.chatColour .. "]What we've got here is failure to communicate.[-]")
 				sendCommand("mpc " .. chatvars.playerid .. " true")
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
-
 				tempTimer( 180, [[unmutePlayer("]] .. chatvars.playerid .. [[")]] )
 			end
 
@@ -463,11 +458,6 @@ function gmsg_unslashed()
 			if (r == 5) then r = 6 end
 
 			sendCommand("se " .. igplayers[chatvars.playerid].id .. " " .. r)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-
 			botman.faultyChat = false
 			return true
 		end
@@ -481,7 +471,6 @@ function gmsg_unslashed()
 		end
 
 		nextReboot()
-
 		botman.faultyChat = false
 		return true
 	end

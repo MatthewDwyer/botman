@@ -11,7 +11,7 @@
 -- /mode #channel +f [5000t#b]:1
 
 function ircQueueTimer()
-	local row1, row2, cursor1, cursor2, errorString
+	local row1, row2, cursor1, cursor2, errorString, name, command
 
 	if not botman.dbConnected or botman.ircQueueEmpty then
 		return
@@ -37,11 +37,13 @@ function ircQueueTimer()
 			row2 = cursor2:fetch({}, "a")
 
 			if row2 then
-				if row2.name ~= "#mudlet" then
-					sendIrc(row2.name, row2.command)
-				end
-
+				name = row2.name
+				command = row2.command
 				conn:execute("delete from ircQueue where id = " .. row2.id)
+
+				if name ~= "#mudlet" then
+					sendIrc(name, command)
+				end
 			end
 		end
 

@@ -35,11 +35,6 @@ function listEntities(line, mod)
 					if string.find(zedNameLower, "zombie") or string.find(zedNameLower, "animal") or string.find(zedNameLower, "bandit") then
 						if (not string.find(zedNameLower, "chicken")) and (not string.find(zedNameLower, "rabbit")) and (not string.find(zedNameLower, "stag")) and (zedName ~= "animalBoar") then
 							sendCommand("removeentity " .. zedID)
-
-							if botman.getMetrics then
-								metrics.telnetCommands = metrics.telnetCommands + 1
-							end
-
 							removedID = zedID
 						end
 					end
@@ -78,11 +73,6 @@ function listEntities(line, mod)
 							if (not string.find(zedNameLower, "chicken")) and (not string.find(zedNameLower, "rabbit")) and (not string.find(zedNameLower, "stag")) and (zedName ~= "animalBoar") then
 								if not server.lagged then
 									sendCommand("removeentity " .. zedID)
-
-									if botman.getMetrics then
-										metrics.telnetCommands = metrics.telnetCommands + 1
-									end
-
 									removedID = zedID
 								end
 							end

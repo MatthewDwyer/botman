@@ -67,10 +67,6 @@ function processConnectQueue(steam)
 				sendCommand(row.command)
 			end
 
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-
 			conn:execute("UPDATE connectQueue SET processed = 1 WHERE id = " .. row.id)
 			row = cursor:fetch(row, "a")
 		end
@@ -146,10 +142,6 @@ function reloadBot(getAllPlayers)
 	tempTimer( 20, [[sendCommand("gg")]] )
 	tempTimer( 25, [[sendCommand("ban list")]] )
 	tempTimer( 30, [[registerBot()]] )
-
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 8
-	end
 end
 
 
@@ -612,10 +604,6 @@ function collectSpawnableItemsList()
 	tempTimer( 30, [[sendCommand("li o"))]] )
 	tempTimer( 40, [[sendCommand("li u"))]] )
 	tempTimer( 50, [[sendCommand("pm bot_RemoveInvalidItems"))]] )
-
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 6
-	end
 end
 
 
@@ -705,11 +693,6 @@ function setChatColour(steam, level)
 	if players[steam].prisoner then
 		if string.upper(server.chatColourPrisoner) ~= "FFFFFF" then
 			sendCommand("cpc " .. steam .. " " .. server.chatColourPrisoner .. " 1")
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-
 			return -- force prison colour
 		end
 	end
@@ -724,61 +707,32 @@ function setChatColour(steam, level)
 	if players[steam].chatColour ~= "" then
 		if string.upper(string.sub(players[steam].chatColour, 1, 6)) ~= "FFFFFF" then
 			sendCommand("cpc " .. steam .. " " .. stripAllQuotes(players[steam].chatColour) .. " 1")
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-
 			return
 		end
 	end
 
 	if (access > 3 and access < 11) then
 		sendCommand("cpc " .. steam .. " " .. server.chatColourDonor .. " 1")
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
 	end
 
 	if access == 0 then
 		sendCommand("cpc " .. steam .. " " .. server.chatColourOwner .. " 1")
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
 	end
 
 	if access == 1 then
 		sendCommand("cpc " .. steam .. " " .. server.chatColourAdmin .. " 1")
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
 	end
 
 	if access == 2 then
 		sendCommand("cpc " .. steam .. " " .. server.chatColourMod .. " 1")
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
 	end
 
 	if access == 90 then
 		sendCommand("cpc " .. steam .. " " .. server.chatColourPlayer .. " 1")
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
 	end
 
 	if access == 99 then
 		sendCommand("cpc " .. steam .. " " .. server.chatColourNewPlayer .. " 1")
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
 	end
 end
 
@@ -1270,11 +1224,6 @@ function restrictedCommandMessage()
 
 		if r == 12 then
 			sendCommand("give " .. igplayers[chatvars.playerid].id .. " turd 1")
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-
 			return("I don't give a shit. That was a lie, but you're still not using this command.")
 		end
 
@@ -1562,42 +1511,22 @@ function atHome(steam)
 			r = rand(5)
 			if r == 1 then
 				sendCommand("give " .. steam .. " canDogfood 1")
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			end
 
 			if r == 2 then
 				sendCommand("give " .. steam .. " canCatfood 1")
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			end
 
 			if r == 3 then
 				sendCommand("give " .. steam .. " femur 1")
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			end
 
 			if r == 4 then
 				sendCommand("give " .. steam .. " vegetableStew 1")
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			end
 
 			if r == 5 then
 				sendCommand("give " .. steam .. " meatStew 1")
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			end
 		end
 	end
@@ -1949,11 +1878,6 @@ function kick(steam, reason)
 	end
 
 	sendCommand("kick " .. steam .. " " .. " \"" .. reason .. "\"")
-
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 1
-	end
-
 	botman.playersOnline = botman.playersOnline - 1
 	irc_chat(server.ircMain, "Player " .. players[steam].name .. " kicked. Reason: " .. reason)
 end
@@ -2014,10 +1938,6 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 
 	sendCommand("ban add " .. steam .. " " .. duration .. " \"" .. reason .. "\"")
 
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 1
-	end
-
 	-- grab their belt, pack and equipment
 	if players[steam] or playersArchived[steam] then
 		if not isArchived then
@@ -2069,20 +1989,10 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 			end
 		end
 
-		sendCommand("llp " .. steam)
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
-
 		-- Look for and also ban ingame players with the same IP
 		for k,v in pairs(igplayers) do
-			if v.IP == players[steam].IP and k ~= steam and v.IP ~= "" then
+			if v.ip == players[steam].ip and k ~= steam and v.ip ~= "" then
 				sendCommand("ban add " .. k .. " " .. duration .. " \"same IP as banned player\"")
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 
 				if botman.dbConnected then
 					cursor,errorString = conn:execute("SELECT * FROM inventoryTracker WHERE steam = " .. k .." ORDER BY inventoryTrackerid DESC LIMIT 1")
@@ -2222,37 +2132,30 @@ function timeoutPlayer(steam, reason, bot)
 		-- then teleport the player to timeout
 		igplayers[steam].tp = 1
 		igplayers[steam].hackerTPScore = 0
-
 		sendCommand("tele " .. steam .. " " .. players[steam].xPosTimeout .. " 60000 " .. players[steam].zPosTimeout)
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
-
 		message("say [" .. server.chatColour .. "]Sending player " .. players[steam].name .. " to timeout for " .. reason .. "[-]")
 		irc_chat(server.ircAlerts, server.gameDate .. " [TIMEOUT] Player " .. steam .. " " .. players[steam].name .. " has been sent to timeout for " .. reason)
 	end
 end
 
 
-function checkRegionClaims(x, z)
-	local cursor, errorString, row
+function removeClaims()
+	local k, v, a, b, dist
 
 	if botman.dbConnected then
-		cursor,errorString = conn:execute("SELECT * FROM keystones WHERE floor(x / 512) =  " .. x .. " AND floor(z / 512) = " .. z)
-		row = cursor:fetch({}, "a")
-		while row do
-			if row.remove == "1" then
-				sendCommand("rlp " .. row.x .. " " .. row.y .. " " .. row.z)
+		for k, v in pairs(keystones) do
 
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
+			if (v.remove and accessLevel(v.steam) > 2) and not players[v.steam].testAsPlayer then
+				for a, b in pairs(igplayers) do
+					dist = distancexz(v.x, v.z, b.xPos, b.zPos)
+
+					if dist < 100 and v.removed == 0 then
+						v.removed = 1
+						conn:execute("UPDATE keystones SET removed = 1 WHERE steam = " .. v.steam .. " AND x = " .. v.x .. " AND y = " .. v.y .. " AND z = " .. v.z)
+						sendCommand("rlp " .. v.x .. " " .. v.y .. " " .. v.z) -- BAM! and the claim is gone :D
+					end
 				end
-
-				conn:execute("UPDATE keystones SET remove = 2 WHERE steam = " .. row.steam .. " AND x = " .. row.x .. " AND y = " .. row.y .. " AND z = " .. row.z )
 			end
-
-			row = cursor:fetch(row, "a")
 		end
 	end
 end
@@ -2357,11 +2260,6 @@ function startReboot()
 	local rnd = rand(5)
 
 	sendCommand("sa")
-
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 1
-	end
-
 	botman.rebootTimerID = tempTimer( 10 + rnd, [[finishReboot()]] )
 end
 
@@ -2393,12 +2291,12 @@ function finishReboot()
 
 	tempTimer( 30, [[clearRebootFlags()]] )
 
-	if (botman.rebootTimerID ~= nil) then
+	if (botman.rebootTimerID) then
 		killTimer(botman.rebootTimerID)
 		botman.rebootTimerID = nil
 	end
 
-	if (rebootTimerDelayID ~= nil) then
+	if (rebootTimerDelayID) then
 		killTimer(rebootTimerDelayID)
 		rebootTimerDelayID = nil
 	end
@@ -2421,12 +2319,7 @@ function finishReboot()
 	conn:execute("TRUNCATE TABLE memTracker")
 	conn:execute("TRUNCATE TABLE commandQueue")
 	conn:execute("TRUNCATE TABLE gimmeQueue")
-
 	sendCommand("shutdown")
-
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 1
-	end
 
 	-- check for bot updates
 	updateBot()
@@ -2569,13 +2462,30 @@ function Translate(playerid, command, lang, override)
 end
 
 
-function CheckClaimsRemoved()
-	local k,v
+function CheckClaimsRemoved(steam)
+	local row, cursor, errorString
 
-	for k,v in pairs(igplayers) do
-		if players[k].alertRemovedClaims == true then
-			message("pm " .. k .. " [" .. server.chatColour .. "]You had expired claims or you placed claims in a restricted area and they have been automatically removed.  You can get them back by typing " .. server.commandPrefix .. "give claims.[-]")
-			players[k].alertRemovedClaims = false
+	cursor,errorString = conn:execute("SELECT count(remove) as deleted FROM keystones WHERE steam = " .. steam .. " AND removed = 1")
+	row = cursor:fetch({}, "a")
+
+	if row then
+		if tonumber(row.deleted) > 0 then
+			players[steam].removedClaims = players[steam].removedClaims + tonumber(row.deleted)
+			if botman.dbConnected then conn:execute("UPDATE players SET removedClaims = " .. players[steam].removedClaims .. " WHERE steam = " .. steam) end
+
+			cursor,errorString = conn:execute("SELECT * FROM keystones WHERE steam = " .. steam .. " AND removed = 1")
+			row = cursor:fetch({}, "a")
+
+			while row do
+				keystones[row.x .. row.y .. row.z] = nil
+				row = cursor:fetch(row, "a")
+			end
+
+			conn:execute("DELETE FROM keystones WHERE steam = " .. steam .. " AND removed = 1")
+
+			if not string.find(players[steam].lastCommand, "give") then
+				message("pm " .. steam .. " [" .. server.chatColour .. "]Some of your claims have been removed.  You can get them back by typing " .. server.commandPrefix .. "give claims.[-]")
+			end
 		end
 	end
 end
@@ -2710,8 +2620,8 @@ function readDNS(steam)
 			a,b = string.find(ln, "%s(%w+)")
 			country = string.sub(ln, a + 1)
 			if players[steam].country ~= "" and players[steam].country ~= country and (players[steam].country == "CN" or players[steam].country == "HK" or country == "CN" or country == "HK") and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
-				irc_chat(server.ircAlerts, server.gameDate .. " possible proxy detected! Country changed! " .. steam .. " " .. players[steam].name .. " " .. players[steam].IP .. " old country " .. players[steam].country .. " new " .. country)
-				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (0,0,0'" .. botman.serverTime .. "','proxy','Suspected proxy used by " .. escape(players[steam].name) .. " " .. players[steam].IP .. " old country " .. players[steam].country .. " new " .. country .. "," .. steam .. ")") end
+				irc_chat(server.ircAlerts, server.gameDate .. " possible proxy detected! Country changed! " .. steam .. " " .. players[steam].name .. " " .. players[steam].ip .. " old country " .. players[steam].country .. " new " .. country)
+				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (0,0,0'" .. botman.serverTime .. "','proxy','Suspected proxy used by " .. escape(players[steam].name) .. " " .. players[steam].ip .. " old country " .. players[steam].country .. " new " .. country .. "," .. steam .. ")") end
 				proxy = true
 			else
 				 players[steam].country = country
@@ -2721,8 +2631,8 @@ function readDNS(steam)
 		-- We consider HongKong to be China since Chinese players connect from there too.
 		if (country == "CN" or country == "HK") and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			-- China detected. Add ip range to IPBlacklist table
-			irc_chat(server.ircMain, "Chinese IP detected. " .. players[steam].name .. " " .. players[steam].IP)
-			irc_chat(server.ircAlerts, server.gameDate .. " Chinese IP detected. " .. players[steam].name .. " " .. players[steam].IP)
+			irc_chat(server.ircMain, "Chinese IP detected. " .. players[steam].name .. " " .. players[steam].ip)
+			irc_chat(server.ircAlerts, server.gameDate .. " Chinese IP detected. " .. players[steam].name .. " " .. players[steam].ip)
 			players[steam].china = true
 			players[steam].ircTranslate = true
 
@@ -2749,11 +2659,11 @@ function readDNS(steam)
 					ip2 = IPToInt(string.trim(split[2]))
 
 					-- check that player's IP is actually within the discovered IP range
-					IP = IPToInt(players[steam].IP)
+					IP = IPToInt(players[steam].ip)
 
 					if IP >= ip1 and IP <= ip2 then
 						irc_chat(server.ircMain, "Added new Chinese IP range " .. iprange .. " to blacklist")
-						connBots:execute("INSERT INTO IPBlacklist (StartIP, EndIP, Country, botID, steam, playerName, IP) VALUES (" .. ip1 .. "," .. ip2 .. "'" .. country .. "'," .. server.botID .. "," .. steam .. ",'" .. escape(players[steam].name) .. "','" .. escape(players[steam].IP) .. "')")
+						connBots:execute("INSERT INTO IPBlacklist (StartIP, EndIP, Country, botID, steam, playerName, IP) VALUES (" .. ip1 .. "," .. ip2 .. "'" .. country .. "'," .. server.botID .. "," .. steam .. ",'" .. escape(players[steam].name) .. "','" .. escape(players[steam].ip) .. "')")
 					end
 				end
 			end
@@ -2802,7 +2712,7 @@ function readDNS(steam)
 	if botman.dbConnected then
 		if server.blacklistResponse ~= 'nothing' and exiled and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			conn:execute("UPDATE players SET country = '" .. escape(country) .. "', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam)
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. players[steam].IP  .. "'," .. steam .. ")")
+			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. players[steam].ip  .. "'," .. steam .. ")")
 		end
 	end
 
@@ -2902,7 +2812,6 @@ function resetPlayer(steam)
 	players[steam].waypointY = 0
 	players[steam].waypointZ = 0
 	players[steam].waypointCooldown = server.waypointCooldown
-	players[steam].whitelisted = false
 	players[steam].xPos = 0
 	players[steam].xPosOld = 0
 	players[steam].xPosOld2 = 0
@@ -2948,6 +2857,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].commandCooldown = 0
 	players[steam].country = ""
 	players[steam].denyRights = false
+	players[steam].deaths = 0
 	players[steam].donor = false
 	players[steam].donorExpiry = os.time()
 	players[steam].donorLevel = 0
@@ -2965,7 +2875,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].homeZ = 0
 	players[steam].id = entityid
 	players[steam].ignorePlayer = false -- exclude player from checks like inventory, flying, teleporting etc.
-	players[steam].IP = ""
+	players[steam].ip = ""
 	players[steam].ircPass = ""
 	players[steam].ISP = ""
 	players[steam].lastBaseRaid = 0
@@ -3024,7 +2934,6 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].waypointY = 0
 	players[steam].waypointZ = 0
 	players[steam].waypointCooldown = server.waypointCooldown
-	players[steam].whitelisted = false
 	players[steam].xPos = 0
 	players[steam].xPosOld = 0
 	players[steam].xPosOld2 = 0
@@ -3154,10 +3063,6 @@ function fixMissingStuff()
 	if type(gimmeZombies) ~= "table" then
 		gimmeZombies = {}
 		sendCommand("se")
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
 	end
 
 	if benchmarkBot == nil then
@@ -3225,7 +3130,7 @@ function saveDisconnectedPlayer(steam)
 
 	if	botman.db2Connected then
 		-- insert or update player in bots db
-		connBots:execute("INSERT INTO players (server, steam, ip, name, online, botid) VALUES ('" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].IP .. "','" .. escape(players[steam].name) .. "',0," .. server.botID .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].IP .. "', name = '" .. escape(players[steam].name) .. "', online = 0")
+		connBots:execute("INSERT INTO players (server, steam, ip, name, online, botid) VALUES ('" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].ip .. "','" .. escape(players[steam].name) .. "',0," .. server.botID .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].ip .. "', name = '" .. escape(players[steam].name) .. "', online = 0")
 	end
 
 	initReservedSlots()

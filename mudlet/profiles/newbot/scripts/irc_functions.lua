@@ -35,7 +35,7 @@ function joinIRCServer()
 		table.insert(channels, server.ircWatch)
 
 		setIrcServer(server.ircServer, server.ircPort)
-		setIrcChannels( channels )
+		setIrcChannels(channels)
 		restartIrc()
 	else
 		ircSetHost(server.ircServer, server.ircPort)
@@ -54,7 +54,7 @@ function joinIRCServer()
 end
 
 
-function irc_chat(name, message)
+function irc_chat(name, msg)
 	local multilineText, k, v
 
 	-- Don't allow the bot to command itself
@@ -63,16 +63,16 @@ function irc_chat(name, message)
 	end
 
 	-- replace any placeholder text with actual values
-	message = message:gsub("{#}", server.commandPrefix)
+	msg = msg:gsub("{#}", server.commandPrefix)
 
-	multilineText = string.split(message, "\n")
+	multilineText = string.split(msg, "\n")
 
 	for k,v in pairs(multilineText) do
 		conn:execute("INSERT INTO ircQueue (name, command) VALUES ('" .. name .. "','" .. escape(v) .. "')")
 	end
 
 	if name == server.ircAlerts then
-		logAlerts(botman.serverTime, message)
+		logAlerts(botman.serverTime, msg)
 	end
 
 	botman.ircQueueEmpty = false
@@ -532,7 +532,7 @@ function irc_PlayerShortInfo()
 	irc_chat(irc_params.name, "PVP kills " .. players[irc_params.pid].playerKills)
 	irc_chat(irc_params.name, "Level " .. players[irc_params.pid].level)
 	irc_chat(irc_params.name, "Current Session " .. players[irc_params.pid].sessionCount)
-	irc_chat(irc_params.name, "IP https://www.whois.com/whois/" .. players[irc_params.pid].IP)
+	irc_chat(irc_params.name, "IP https://www.whois.com/whois/" .. players[irc_params.pid].ip)
 	irc_chat(irc_params.name, "Ping " .. players[irc_params.pid].ping .. " Country: " .. players[irc_params.pid].country)
 
 	if players[irc_params.pid].china then
@@ -734,11 +734,9 @@ end
 
 
 function listStaff(steam)
-	listOwners(steam, true)
-	message("pm " .. steam .. " ")
-	listAdmins(steam, true)
-	message("pm " .. steam .. " ")
-	listMods(steam, true)
+	listOwners(steam)
+	listAdmins(steam)
+	listMods(steam)
 end
 
 
@@ -945,9 +943,9 @@ function irc_players(name)
 		else
 			if players[id].ircAuthenticated == true then
 				if v.inLocation ~= "" then
-					line = "steam: " .. k .. "| id: " .. string.format("%d", v.id) .. "| score: " .. string.format("%d", v.score) .. "| PVP: " .. string.format("%d", v.playerKills) .. "| zeds: " .. string.format("%d", v.zombies) .. "| level: " .. v.level .. "| region r." .. x .. "." .. z .. ".7| name: " .. v.name  .. flags .. " in " .. v.inLocation .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos) .. "  " .. players[k].country .. "| ping: " .. v.ping .. "| Hacker score: " .. players[k].hackerScore
+					line = "steam: " .. k .. "| id: " .. string.format("%d", v.id) .. "| score: " .. string.format("%d", v.score) .. "| PVP: " .. string.format("%d", v.playerKills) .. "| zeds: " .. string.format("%d", v.zombies) .. "| level: " .. v.level .. "| region r." .. x .. "." .. z .. ".7rg| name: " .. v.name  .. flags .. " in " .. v.inLocation .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos) .. "  " .. players[k].country .. "| ping: " .. v.ping .. "| Hacker score: " .. players[k].hackerScore
 				else
-					line = "steam: " .. k .. "| id: " .. string.format("%d", v.id) .. "| score: " .. string.format("%d", v.score) .. "| PVP: " .. string.format("%d", v.playerKills) .. "| zeds: " .. string.format("%d", v.zombies) .. "| level: " .. v.level .. "| region r." .. x .. "." .. z .. ".7| name: " .. v.name  .. flags .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos) .. "  " .. players[k].country .. "| ping: " .. v.ping .. "| Hacker score: " .. players[k].hackerScore
+					line = "steam: " .. k .. "| id: " .. string.format("%d", v.id) .. "| score: " .. string.format("%d", v.score) .. "| PVP: " .. string.format("%d", v.playerKills) .. "| zeds: " .. string.format("%d", v.zombies) .. "| level: " .. v.level .. "| region r." .. x .. "." .. z .. ".7rg| name: " .. v.name  .. flags .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos) .. "  " .. players[k].country .. "| ping: " .. v.ping .. "| Hacker score: " .. players[k].hackerScore
 				end
 			else
 				line = "steam: " .. k .. " " .. v.name .. "| score: " .. string.format("%d", v.score) .. "| PVP: " .. string.format("%d", v.playerKills) .. "| zeds: " .. string.format("%d", v.zombies) .. " " .. flags .. "| ping: " .. v.ping .. "| Hacker score: " .. players[k].hackerScore

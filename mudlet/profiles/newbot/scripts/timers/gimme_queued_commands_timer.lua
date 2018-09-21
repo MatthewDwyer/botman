@@ -8,7 +8,7 @@
 --]]
 
 function miscCommandsTimer()
-	local cursor, errorString, row, temp
+	local cursor, errorString, row, temp, steam, command
 
 	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
 		return
@@ -20,40 +20,32 @@ function miscCommandsTimer()
 		row = cursor:fetch({}, "a")
 
 		if row then
-			if string.find(row.command, "admin add") then
-				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been given admin.")
+			steam = row.steam
+			command = row.command
 
-				temp = string.split(row.command, " ")
-				setChatColour(row.steam, temp[4])
-				sendCommand(row.command)
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
+			if string.find(command, "admin add") then
+				irc_chat(server.ircMain, "Player " .. players[steam].name .. " has been given admin.")
+				temp = string.split(command, " ")
+				setChatColour(steam, temp[4])
+				conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
+				sendCommand(command)
 			end
 
-			if string.find(row.command, "ban remove") then
-				irc_chat(server.ircMain, "Player " .. players[row.steam].name .. " has been unbanned.")
-				sendCommand(row.command)
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
+			if string.find(command, "ban remove") then
+				irc_chat(server.ircMain, "Player " .. players[steam].name .. " has been unbanned.")
+				conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
+				sendCommand(command)
 			end
 
-			if string.find(row.command, "tele ") then
-				if igplayers[row.steam] then
-					teleport(row.command, row.steam)
+			if string.find(command, "tele ") then
+				if igplayers[steam] then
+					conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
+					teleport(command, steam)
 				end
 			else
-				sendCommand(row.command)
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
+				conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
+				sendCommand(command)
 			end
-
-			conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
 		end
 	end
 
@@ -65,33 +57,33 @@ function miscCommandsTimer()
 
 		if row then
 			while row do
+				steam = row.steam
+				command = row.command
+
 				if row.delay - os.time() <= 0 then
-					if string.sub(row.command, 1, 3) == "pm " or string.sub(row.command, 1, 3) == "say" then
-						message(row.command)
+					if string.sub(command, 1, 3) == "pm " or string.sub(command, 1, 3) == "say" then
+						conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
+						message(command)
 
 						if string.find(row.command, "admin status") then
-							irc_chat(server.ircMain, "OH GOD NOOOO! " .. players[row.steam].name .. "'s admin status has been restored.")
+							irc_chat(server.ircMain, "OH GOD NOOOO! " .. players[steam].name .. "'s admin status has been restored.")
 						end
 					else
-						if string.find(row.command, "tele ") then
-							if igplayers[row.steam] then
-								teleport(row.command, row.steam)
+						if string.find(command, "tele ") then
+							if igplayers[steam] then
+								conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
+								teleport(command, steam)
 							end
 						else
-							sendCommand(row.command)
+							conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
+							sendCommand(command)
 
-							if string.find(row.command, "admin add") then
-								temp = string.split(row.command, " ")
-								setChatColour(row.steam, temp[4])
-							end
-
-							if botman.getMetrics then
-								metrics.telnetCommands = metrics.telnetCommands + 1
+							if string.find(command, "admin add") then
+								temp = string.split(command, " ")
+								setChatColour(steam, temp[4])
 							end
 						end
 					end
-
-					conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
 				end
 
 				row = cursor:fetch(row, "a")
@@ -102,7 +94,7 @@ end
 
 
 function gimmeQueuedCommands()
-	local pid, dist1, dist2, cursor1, cursor1, errorString, row1, row2
+	local cursor1, cursor1, errorString, row1, row2, command
 
 	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
 		return
@@ -123,13 +115,9 @@ function gimmeQueuedCommands()
 					row2 = cursor2:fetch({}, "a")
 
 					if row2 then
-						sendCommand(row2.command)
-
-						if botman.getMetrics then
-							metrics.telnetCommands = metrics.telnetCommands + 1
-						end
-
+						command = row2.command
 						conn:execute("DELETE FROM gimmeQueue WHERE id = " .. row2.id)
+						sendCommand(command)
 					end
 				end
 			end

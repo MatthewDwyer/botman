@@ -231,6 +231,7 @@ end
 function playerConnected(line)
 	local temp_table, temp, debug, commas, freeSlots, test, tmp
 	local timestamp = os.time()
+	local cursor, errorString, rows
 
 	debug = false
 	tmp = {}
@@ -284,16 +285,16 @@ function playerConnected(line)
 		tmp.entityid = string.sub(temp_table[2], string.find(temp_table[2], "entityid=") + 9, string.find(temp_table[2], ","))
 		if string.find(line, "steamOwner") then
 			tmp.steamOwner = string.sub(temp_table[5], string.find(temp_table[5], "steamOwner=") + 11)
-			tmp.IP = string.sub(temp_table[6], string.find(temp_table[6], "ip=") + 3)
-			tmp.IP = tmp.IP:gsub("::ffff:","")
+			tmp.ip = string.sub(temp_table[6], string.find(temp_table[6], "ip=") + 3)
+			tmp.ip = tmp.ip:gsub("::ffff:","")
 		else
 			tmp.steamOwner = tmp.steam
-			tmp.IP = string.sub(temp_table[5], string.find(temp_table[5], "ip=") + 3)
-			tmp.IP = tmp.IP:gsub("::ffff:","")
+			tmp.ip = string.sub(temp_table[5], string.find(temp_table[5], "ip=") + 3)
+			tmp.ip = tmp.ip:gsub("::ffff:","")
 		end
 	end
 
-	if tmp.IP == nil then tmp.IP = "" end
+	if tmp.ip == nil then tmp.ip = "" end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
@@ -304,11 +305,11 @@ function playerConnected(line)
 	end
 
 	-- log the player connection in events table
-	if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.IP .. "'," .. tmp.steamOwner .. ")") end
+	if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")") end
 
 	if	botman.db2Connected then
 		-- copy in bots db
-		connBots:execute("INSERT INTO events (server, serverTime, type, event, tmp.steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.IP .. "'," .. tmp.steamOwner .. ")")
+		connBots:execute("INSERT INTO events (server, serverTime, type, event, tmp.steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")")
 	end
 
 	lastPlayerConnected = tmp.player
@@ -317,7 +318,7 @@ function playerConnected(line)
 	if isReservedName(tmp.player, tmp.steam) then
 		kick(tmp.steam, "That name is reserved.  You cannot play as " .. tmp.player .. " here.")
 		alertAdmins("A player was kicked using an admin's name! " .. tmp.entityid .. " " .. tmp.player, "alert")
-		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','impersonated admin','Player joined posing as an admin " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.IP .. "'," .. tmp.steamOwner .. ")") end
+		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','impersonated admin','Player joined posing as an admin " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")") end
 		irc_chat(server.ircMain, "!!  Player joined with admin's name but a different steam key !! " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
 		irc_chat(server.ircAlerts, server.gameDate .. " player joined with admin's name but a different steam key " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
 		return
@@ -379,14 +380,23 @@ function playerConnected(line)
 			irc_chat(server.ircWatch, server.gameDate .. " " .. tmp.steam .. " " .. tmp.player .. " connected")
 		end
 
-		players[tmp.steam].IP = tmp.IP
+		players[tmp.steam].ip = tmp.ip
 
 		if tonumber(players[tmp.steam].hackerScore) > 99 then
 			players[tmp.steam].hackerScore = 90
 		end
 
-		--cmd = "llp " .. tmp.steam
-		--tempTimer( 5, [[send("]] .. cmd .. [[")]] )
+		cursor,errorString = conn:execute("SELECT count(steam) as result FROM miscQueue WHERE command like '%admin add%' and steam = " .. tmp.steam)
+		row = cursor:fetch({}, "a")
+
+		if tonumber(row.result) > 0 then
+			players[tmp.steam].testAsPlayer = true
+		else
+			players[tmp.steam].testAsPlayer = nil
+		end
+
+		cmd = "lpf " .. tmp.steam
+		tempTimer( 10, [[sendCommand("]] .. cmd .. [[")]] )
 	end
 
 	-- add to in-game players table
@@ -468,19 +478,11 @@ function playerConnected(line)
 	if server.coppi then
 		if players[tmp.steam].mute then
 			sendCommand("mpc " .. tmp.steam .. " true")
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
 		end
 
 		if players[tmp.steam].chatColour ~= "" then
 			if string.upper(string.sub(players[tmp.steam].chatColour, 1, 6)) ~= "FFFFFF" then
 				sendCommand("cpc " .. tmp.steam .. " " .. stripAllQuotes(players[tmp.steam].chatColour) .. " 1")
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			else
 				setChatColour(tmp.steam)
 			end
@@ -491,8 +493,8 @@ function playerConnected(line)
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
-	if tmp.IP ~= "" then
-		CheckBlacklist(tmp.steam, tmp.IP)
+	if tmp.ip ~= "" then
+		CheckBlacklist(tmp.steam, tmp.ip)
 	end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
@@ -539,10 +541,6 @@ function playerConnected(line)
 	if server.coppi then
 		-- limit ingame chat length to block chat bombs.
 		sendCommand("pcml " .. tmp.steam .. " 300")
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
 	end
 
 	if tonumber(players[tmp.steam].donorExpiry) < os.time() and players[tmp.steam].donor then
@@ -575,17 +573,15 @@ function playerConnected(line)
 
 	sendCommand("lkp " .. tmp.steam)
 
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 1
-	end
+	-- check how many claims they have placed
+	sendCommand("llp " .. tmp.steam .. " parseable")
 
 	if customPlayerConnected ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua
-		if customPlayerConnected(line, tmp.entityid, tmp.player, tmp.steam, tmp.steamOwner, tmp.IP) then
+		if customPlayerConnected(line, tmp.entityid, tmp.player, tmp.steam, tmp.steamOwner, tmp.ip) then
 			return
 		end
 	end
-
 
 	if debug then dbug("playerConnected end") end
 end

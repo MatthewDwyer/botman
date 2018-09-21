@@ -288,11 +288,6 @@ function gmsg_server()
 
 			tmp = string.sub(line, string.find(line, "command") + 8)
 			sendCommand(tmp)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-
 			botman.faultyChat = false
 			return true
 		end
@@ -416,14 +411,19 @@ function gmsg_server()
 				botman.rebootTimerID = nil
 				rebootTimerDelayID = nil
 
-				sendCommand("sa")
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
+				if not botMaintenance.lastSA then
+					botMaintenance.lastSA = os.time()
+					saveBotMaintenance()
+					sendCommand("sa")
+				else
+					if (os.time() - botMaintenance.lastSA) > 30 then
+						botMaintenance.lastSA = os.time()
+						saveBotMaintenance()
+						sendCommand("sa")
+					end
 				end
 
 				finishReboot()
-
 				botman.faultyChat = false
 				return true
 			end
@@ -1123,10 +1123,6 @@ function gmsg_server()
 
 				sendCommand("sg MaxSpawnedAnimals " .. chatvars.number)
 
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
-
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Max spawned animals is now " .. chatvars.number .. "[-]")
 				else
@@ -1268,13 +1264,7 @@ function gmsg_server()
 
 			if chatvars.number ~= nil then
 				chatvars.number = math.abs(math.floor(chatvars.number))
-
 				sendCommand("sg ServerMaxPlayerCount " .. chatvars.number)
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
-
 				server.maxPlayers = chatvars.number
 				conn:execute("UPDATE server SET maxPlayers = " .. chatvars.number)
 
@@ -1431,10 +1421,6 @@ function gmsg_server()
 				end
 
 				sendCommand("sg MaxSpawnedZombies " .. chatvars.number)
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Max spawned zombies is now " .. chatvars.number .. "[-]")
@@ -1941,17 +1927,9 @@ function gmsg_server()
 				if server.reservedSlots == 0 then
 					if tonumber(server.ServerMaxPlayerCount) > tonumber(server.maxPlayers) then
 						sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers) -- remove the extra slot that ensures reserved slot players can join in one go when server full
-
-						if botman.getMetrics then
-							metrics.telnetCommands = metrics.telnetCommands + 1
-						end
 					else
 						if tonumber(server.ServerMaxPlayerCount) <= tonumber(server.maxPlayers) then
 							sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add the extra slot that ensures reserved slot players can join in one go when server full
-
-							if botman.getMetrics then
-								metrics.telnetCommands = metrics.telnetCommands + 1
-							end
 						end
 					end
 				end
@@ -2686,10 +2664,6 @@ function gmsg_server()
 				sendCommand("webpermission add webapi.getplayerinventory 2000")
 			else
 				sendCommand("webpermission add webapi.getplayerinventory 2")
-			end
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 10
 			end
 
 			if (chatvars.playername ~= "Server") then

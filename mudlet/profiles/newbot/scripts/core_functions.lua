@@ -123,20 +123,36 @@ function sendCommand(command, api, outputFile)
 
 		url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/" .. api .. "adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
 
+		if outputFile == nil then
+			outputFile = "dummy.txt"
+		end
+
+		--if botman.dbConnected then conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(outputFile) .. "')") end
+
 		if server.logBotCommands then
 			logBotCommand(botman.serverTime, url)
 		end
 
-		if outputFile then
-			os.remove(homedir .. "/temp/" .. outputFile)
-			downloadFile(homedir .. "/temp/" .. outputFile, url)
+		os.remove(homedir .. "/temp/" .. outputFile)
+		downloadFile(homedir .. "/temp/" .. outputFile, url)
+
+		-- should be able to remove list later.  Just put it here to fix an issue with older bots updating and not having the metrics table.
+		if type(metrics) ~= "table" then
+			metrics = {}
+			metrics.commands = 0
+			metrics.commandLag = 0
+			metrics.errors = 0
+			metrics.telnetLines = 0
 		end
+
+		metrics.commands = metrics.commands + 1
 	else
 		if server.logBotCommands then
 			logBotCommand(botman.serverTime, command)
 		end
 
 		send(command)
+		metrics.commands = metrics.commands + 1
 	end
 end
 
@@ -363,13 +379,14 @@ function message(msg, steam)
 		-- say the message in public chat
 		if server.useAllocsWebAPI then
 			url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=say \"" .. string.sub(msg, 5) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+			if botman.dbConnected then conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')") end
 
-			if server.logBotCommands then
-				logBotCommand(botman.serverTime, url)
-			end
+			-- if server.logBotCommands then
+				-- logBotCommand(botman.serverTime, url)
+			-- end
 
-			os.remove(homedir .. "/temp/dummy.txt")
-			downloadFile(homedir .. "/temp/dummy.txt", url)
+			-- os.remove(homedir .. "/temp/dummy.txt")
+			-- downloadFile(homedir .. "/temp/dummy.txt", url)
 		else
 			msg = "say \"" .. string.sub(msg, 5) .. "\""
 			send(msg)
@@ -378,22 +395,21 @@ function message(msg, steam)
 				logBotCommand(botman.serverTime, msg)
 			end
 
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
+			metrics.commands = metrics.commands + 1
 		end
 	else
 		if players[words[2]] then
 			if players[words[2]].exiled ~= 1 then
 				if server.useAllocsWebAPI then
 					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+					if botman.dbConnected then conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')") end
 
-					if server.logBotCommands then
-						logBotCommand(botman.serverTime, url)
-					end
+					-- if server.logBotCommands then
+						-- logBotCommand(botman.serverTime, url)
+					-- end
 
-					os.remove(homedir .. "/temp/dummy.txt")
-					downloadFile(homedir .. "/temp/dummy.txt", url)
+					-- os.remove(homedir .. "/temp/dummy.txt")
+					-- downloadFile(homedir .. "/temp/dummy.txt", url)
 				else
 					msg = "pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
 					send(msg)
@@ -402,21 +418,20 @@ function message(msg, steam)
 						logBotCommand(botman.serverTime, msg)
 					end
 
-					if botman.getMetrics then
-						metrics.telnetCommands = metrics.telnetCommands + 1
-					end
+					metrics.commands = metrics.commands + 1
 				end
 			end
 		else
 			if server.useAllocsWebAPI then
 				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+				if botman.dbConnected then conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')") end
 
-				if server.logBotCommands then
-					logBotCommand(botman.serverTime, url)
-				end
+				-- if server.logBotCommands then
+					-- logBotCommand(botman.serverTime, url)
+				-- end
 
-				os.remove(homedir .. "/temp/dummy.txt")
-				downloadFile(homedir .. "/temp/dummy.txt", url)
+				-- os.remove(homedir .. "/temp/dummy.txt")
+				-- downloadFile(homedir .. "/temp/dummy.txt", url)
 			else
 				msg = "pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
 				send(msg)
@@ -426,7 +441,7 @@ function message(msg, steam)
 				end
 
 				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
+					metrics.commands = metrics.commands + 1
 				end
 			end
 		end
@@ -1075,11 +1090,6 @@ end
 function say(message)
 	-- just a catcher for old code
 	sendCommand(message)
-
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 1
-	end
-
 	return
 end
 
@@ -1322,6 +1332,10 @@ function fixMissingPlayer(steam)
 		players[steam].country = ""
 	end
 
+	if players[steam].deaths == nil then
+		players[steam].deaths = 0
+	end
+
 	if players[steam].denyRights == nil then
 		players[steam].denyRights = false
 	end
@@ -1354,8 +1368,8 @@ function fixMissingPlayer(steam)
 		players[steam].homeY = 0
 	end
 
-	if players[steam].IP == nil then
-		players[steam].IP = ""
+	if players[steam].ip == nil then
+		players[steam].ip = ""
 	end
 
 	if players[steam].ircAlias == nil then
@@ -1592,8 +1606,8 @@ function fixMissingArchivedPlayer(steam)
 		playersArchived[steam].homeY = 0
 	end
 
-	if playersArchived[steam].IP == nil then
-		playersArchived[steam].IP = ""
+	if playersArchived[steam].ip == nil then
+		playersArchived[steam].ip = ""
 	end
 
 	if playersArchived[steam].ircAlias == nil then

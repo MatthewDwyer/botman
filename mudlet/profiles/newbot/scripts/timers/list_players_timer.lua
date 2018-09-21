@@ -26,12 +26,8 @@ function listPlayers()
 			os.remove(homedir .. "/temp/playersOnline.txt")
 			downloadFile(homedir .. "/temp/playersOnline.txt", url)
 		else
-			send("lp")
+			sendCommand("lp")
 		end
-	end
-
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 1
 	end
 
 	if (botman.scheduledRestart == true and botman.scheduledRestartPaused == false) and server.allowReboot == true then
@@ -41,6 +37,38 @@ function listPlayers()
 		end
 
 		if not server.delayReboot then
+			if (botman.scheduledRestartTimestamp - os.time() < -120) and botman.serverRebooting and not botman.scheduledRestartPaused then
+				-- this is a special case reboot when the bot for whatever reason has failed to reboot the server as scheduled
+				tempTimer( 30, [[clearRebootFlags()]] )
+
+				if (botman.rebootTimerID) then
+					killTimer(botman.rebootTimerID)
+					botman.rebootTimerID = nil
+				end
+
+				if (rebootTimerDelayID) then
+					killTimer(rebootTimerDelayID)
+					rebootTimerDelayID = nil
+				end
+
+				botman.ignoreAdmins = true
+				server.uptime = 0
+
+				-- flag all players as offline
+				connBots:execute("UPDATE players SET online = 0 WHERE botID = " .. server.botID)
+
+				-- do some housekeeping
+				for k, v in pairs(players) do
+					v.botQuestion = ""
+				end
+
+				conn:execute("TRUNCATE TABLE memTracker")
+				conn:execute("TRUNCATE TABLE commandQueue")
+				conn:execute("TRUNCATE TABLE gimmeQueue")
+				sendCommand("shutdown")
+			end
+
+
 			if (botman.scheduledRestartTimestamp - os.time() < 0) and not botman.serverRebooting then
 				startReboot()
 			else

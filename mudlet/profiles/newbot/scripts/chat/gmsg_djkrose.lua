@@ -72,11 +72,6 @@ function gmsg_djkrose()
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]You haven't marked a prefab called " .. chatvars.words[2] .. ". Please do that first.[-]")
 			else
 				sendCommand("dj-export " .. chatvars.playerid .. chatvars.words[2] .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z2)
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
-
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You saved a prefab called " .. chatvars.words[2] .. ".[-]")
 			end
 
@@ -179,10 +174,6 @@ function gmsg_djkrose()
 					sendCommand("dj-import " .. tmp.prefab .. " " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " " .. tmp.face)
 				else
 					sendCommand("dj-import " .. tmp.prefab .. " /all " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " " .. tmp.face)
-				end
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
 				end
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The saved prefab called " .. chatvars.words[2] .. " has been imported.[-]")

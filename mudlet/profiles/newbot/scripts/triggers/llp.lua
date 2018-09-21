@@ -8,65 +8,104 @@
 --]]
 
 function llp(line)
-	local pos, temp, x, y, z, expired
+	local x, y, z, expired, archived, removeClaims, testing, keystoneCount, steam
 
-	if string.find(line, "Executing command 'llp ") then
-		llpid = string.sub(line, string.find(line, "llp") + 4, string.find(line, " by ") - 2)
-		players[llpid].keystones = 0
-		return
-	end
+	if string.find(line, "Player ") and string.find(line, "owns ") then
+		steam = string.sub(line, string.find(line, "7656"), string.find(line, "7656") + 16)
+		keystoneCount = string.sub(line, string.find(line, "owns ") + 5, string.find(line, " keystones") - 1)
 
-	-- depreciated in latest Allocs. Here for backwards compatibility
-	if string.find(line, "keystones (protected", nil, true) then
 		if string.find(line, "protected: True", nil, true) then
-			expired = 0
-		else
-			expired = 1
+			expired = false
 		end
 
-		llpid = string.sub(line, string.find(line, "7656"), string.find(line, "7656") + 16)
-		players[llpid].keystones = string.sub(line, string.find(line, "owns ") + 5, string.find(line, " keyst") - 1)
-		players[llpid].keystonesExpired = dbTrue(expired)
+		if string.find(line, "protected: False", nil, true) then
+			expired = true
+		end
 
-		if botman.dbConnected then
-			conn:execute("UPDATE players SET keystones = " .. players[llpid].keystones .. ", keystonesExpired = " .. expired .. " WHERE steam = " .. llpid)
-			conn:execute("UPDATE keystones SET expired = " .. expired .. " WHERE steam = " .. llpid)
+		if not players[steam] then
+			archived = true
+			playersArchived[steam].keystones = keystoneCount
+			playersArchived[steam].claimsExpired = expired
+
+			if playersArchived[steam].removedClaims == nil then
+				playersArchived[steam].removedClaims = 0
+			end
+
+			if botman.dbConnected then conn:execute("UPDATE players SET keystones = " .. playersArchived[steam].keystones .. ", claimsExpired = " .. dbBool(expired) .. " WHERE steam = " .. steam) end
+		else
+			archived = false
+			players[steam].keystones = keystoneCount
+			players[steam].claimsExpired = expired
+
+			if players[steam].removedClaims == nil then
+				players[steam].removedClaims = 0
+			end
+
+			if botman.dbConnected then conn:execute("UPDATE players SET keystones = " .. players[steam].keystones .. ", claimsExpired = " .. dbBool(expired) .. " WHERE steam = " .. steam) end
 		end
 	end
 
-	-- New format of output
+	-- Output of parseable
 	if string.find(line, "LandProtectionOf:") then
-		--LandProtectionOf: id=76561197983251951,  location=-99, 128, 192
-		temp = string.split(line, ",")
+		steam = string.sub(line, string.find(line, "7656"), string.find(line, "7656") + 16)
 
-		pos = string.find(temp[1], "=") + 1
-		llpid = string.sub(temp[1], pos)
+		coords = string.sub(line, string.find(line, "location") + 9)
+		coords = string.split(coords, ",")
+		x = tonumber(coords[1])
+		y = tonumber(coords[2])
+		z = tonumber(coords[3])
 
-		x = string.sub(temp[2], string.find(temp[2], "=") + 1)
-		y = temp[3]
-		z = temp[4]
+		if playersArchived[steam] then
+			if playersArchived[steam].removedClaims == nil then
+				playersArchived[steam].removedClaims = 0
+			end
 
-		if players[llpid].removedClaims == nil then
-			players[llpid].removedClaims = 0
+			expired = playersArchived[steam].claimsExpired
+			testing = playersArchived[steam].testAsPlayer
+			removeClaims = playersArchived[steam].removeClaims
+		else
+			if players[steam].removedClaims == nil then
+				players[steam].removedClaims = 0
+			end
+
+			expired = players[steam].claimsExpired
+			testing = players[steam].testAsPlayer
+			removeClaims = players[steam].removeClaims
 		end
 
 		if tonumber(y) > 0 then
 			if botman.dbConnected then
-				conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. llpid .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z .. " AND remove > 1")
-				conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. llpid .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z)
+				conn:execute("UPDATE keystones SET expired = " .. dbBool(expired) .. ", removed = 0, remove = " .. dbBool(removeClaims) .. " WHERE steam = " .. steam .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z)
 			end
 
-			if accessLevel(llpid) > 3 then
+			if not keystones[x .. y .. z] then
+				keystones[x .. y .. z] = {}
+				keystones[x .. y .. z].x = x
+				keystones[x .. y .. z].y = y
+				keystones[x .. y .. z].z = z
+				keystones[x .. y .. z].steam = steam
+			end
+
+			keystones[x .. y .. z].expired = expired
+			keystones[x .. y .. z].removed = 0
+
+			if removeClaims then
+				keystones[x .. y .. z].remove = true
+			else
+				keystones[x .. y .. z].remove = false
+			end
+
+			if accessLevel(steam) > 3 then
 				region = getRegion(x, z)
 				loc, reset = inLocation(x, z)
 
-				if (resetRegions[region]) or reset or players[llpid].removeClaims == true then
-					if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove) VALUES (" .. llpid .. "," .. x .. "," .. y .. "," .. z .. ",1) ON DUPLICATE KEY UPDATE remove = 1") end
+				if (resetRegions[region] or reset or removeClaims) and not testing then
+					if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired, remove, removed) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ",1,0) ON DUPLICATE KEY UPDATE expired = " .. dbBool(expired) .. ", remove = 1, removed = 0") end
 				else
-					if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. x .. "," .. y .. "," .. z .. ")") end
+					if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired, remove, removed) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ",0,0) ON DUPLICATE KEY UPDATE expired = " .. dbBool(expired) .. ", remove = 0, removed = 0") end
 				end
 			else
-				if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z) VALUES (" .. llpid .. "," .. x .. "," .. y .. "," .. z .. ")") end
+				if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired, remove, removed) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ",0,0) ON DUPLICATE KEY UPDATE expired = " .. dbBool(expired) .. ", remove = 0, removed = 0") end
 			end
 		end
 	end

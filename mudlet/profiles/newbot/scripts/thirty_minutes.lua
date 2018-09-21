@@ -13,11 +13,17 @@ function ThirtyMinuteTimer()
 
 	-- save the world (and the kitties)
 	if not botman.botOffline and not botman.serverRebooting then
-		sendCommand("sa")
-	end
-
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 1
+		if not botMaintenance.lastSA then
+			botMaintenance.lastSA = os.time()
+			saveBotMaintenance()
+			sendCommand("sa")
+		else
+			if (os.time() - botMaintenance.lastSA) > 30 then
+				botMaintenance.lastSA = os.time()
+				saveBotMaintenance()
+				sendCommand("sa")
+			end
+		end
 	end
 
 	-- check for new proxies

@@ -1,4 +1,8 @@
 function loginTrigger()
+	if type(botman) ~= "table" then
+		botman = {}
+	end
+
 	lastAction = "Login"
 	botman.botOfflineCount = 0
 	botman.botConnectedTimestamp = os.time()

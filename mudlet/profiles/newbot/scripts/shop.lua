@@ -145,43 +145,35 @@ function reindexShop(category)
 end
 
 
-function drawLottery(steam)
+function drawLottery(draw)
 	local winners, winnersCount, prizeDraw, x, rows, thing
 
 	if tonumber(server.lottery) == 0 then
 		return
 	end
 
+	if not draw then
+		draw = 0
+	end
+
 	winners = {}
 	winnersCount = 0
 
-	if steam ~= nil then
-		-- test lottery
-		prizeDraw = 500
-
-		conn:execute("INSERT INTO memLottery (steam, ticket) VALUES (" .. steam .. ",500)")
-		conn:execute("INSERT INTO lottery (steam, ticket) VALUES (" .. steam .. ",500)")
-		winnersCount = 1
+	for x=1,100,1 do
+		prizeDraw = rand(100)
 
 		cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE ticket = " .. prizeDraw)
 		rows = cursor:numrows()
-	else
-		for x=1,100,1 do
-			prizeDraw = rand(100)
 
-			cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE ticket = " .. prizeDraw)
-			rows = cursor:numrows()
-
-			if rows > 0 then
-				winnersCount = rows
-				break
-			end
+		if rows > 0 then
+			winnersCount = rows
+			break
 		end
 	end
 
 	message("say [" .. server.chatColour .. "]It's time for the daily lottery draw for " .. server.lottery .. " " .. server.moneyPlural .. "![-]")
 
-	if winnersCount > 0 then
+	if tonumber(winnersCount) > 0 then
 		prizeDraw = math.floor(server.lottery / winnersCount)
 
 		row = cursor:fetch({}, "a")
@@ -217,11 +209,11 @@ function drawLottery(steam)
 	else
 		if not server.beQuietBot then
 			r = rand(7)
+
 			if (r == 1) then message("say [" .. server.chatColour .. "]Nobody wins again![-]") end
 			if (r == 2) then
 				thing = PicknMix()
-				thing = PicknMix()
-				message("say [" .. server.chatColour .. "]Tonight's winner is.. " .. gimmeZimbies[thing].zombie .. "! Who gave that a ticket? O.o[-]")
+				message("say [" .. server.chatColour .. "]Tonight's winner is.. " .. gimmeZombies[thing].zombie .. "! Who gave that a ticket? O.o[-]")
 			end
 
 			if (r == 3) then
@@ -236,14 +228,31 @@ function drawLottery(steam)
 
 			if (r == 5) then
 				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]*CRASH*    BLUUUUEERGH!      AAAAH!  ZOMBIES!   *SCREAM!*[-]") .. "')")
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]CUT!  Go to commercials![-]") .. "')")
+				r = rand(6)
+				if (r == 1) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]ME! I win! IT'S MINE! :P[-]") .. "')") end
+				if (r == 2) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Dead! Congratulations.. oh.. nevermind.[-]") .. "')") end
+				if (r == 3) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]TAX! Oh no! They've found my little illegal gambling scam er.. establishment. D:[-]") .. "')") end
+				if (r == 4) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Being eaten by zombies! Poor guy :([-]") .. "')") end
+				if (r == 5) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]No one! HA! Suck it Nobody.[-]") .. "')") end
+				if (r == 6) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Sorry folks. Tonight's draw is cancelled.[-]") .. "')") end
 			end
 
 			if (r == 6) then
 				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody!  But he's won enough so we're doing a redraw![-]") .. "')")
-				tempTimer( 15, [[drawLottery()]] )
+
+				-- don't redraw more than once
+				if draw ~= 6 then
+					conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody!  But he's won enough so we're doing a redraw![-]") .. "')")
+					tempTimer( 15, [[drawLottery(]] .. r .. [[)]] )
+				else
+					r = rand(6)
+					if (r == 1) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Stop buying all of the tickets you dirty cheat![-]") .. "')") end
+					if (r == 2) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Oh hell no, not on my watch. *burns Nobody's ticket*[-]") .. "')") end
+					if (r == 3) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]God dammit! Nobody again.[-]") .. "')") end
+					if (r == 4) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody. Right! That's it you've had it. *BANG* Nobody died.[-]") .. "')") end
+					if (r == 5) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Stop gambling you lunatic![-]") .. "')") end
+					if (r == 6) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Not Nobody, please don't draw Nobody.. Ah crap![-]") .. "')") end
+				end
 			end
 
 			if (r == 7) then
@@ -523,13 +532,9 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. players[playerid].cash .. " " .. server.moneyPlural .. " remaining.[-]")
 
 			if server.stompy then
-				sendCommand("bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number)
+				sendCommand("bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number .. " /silent")
 			else
 				sendCommand("give " .. playerid .. " " .. shopItem .. " " .. number)
-			end
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
 			end
 
 			if server.stompy then

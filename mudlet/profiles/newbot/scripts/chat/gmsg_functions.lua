@@ -429,7 +429,7 @@ function gmsg_who(playerid, number)
 	if (tonumber(intZ) < 0) then zdir = " south" else zdir = " north" end
 
 	message("pm " .. playerid .. " [" .. server.chatColour .. "]You are at " .. intX .. xdir .. intZ .. zdir .. " at a height of " .. intY .. "[-]")
-	message("pm " .. playerid .. " [" .. server.chatColour .. "]You are in region r." .. x .. " " .. z .. ".7[-]")
+	message("pm " .. playerid .. " [" .. server.chatColour .. "]You are in region " .. x .. " " .. z .. "[-]")
 
 	if (pvpZone(igplayers[playerid].xPos, igplayers[playerid].zPos) ~= false) and chatvars.accessLevel > 2 then
 		return
@@ -450,7 +450,7 @@ function gmsg_who(playerid, number)
 						x = math.floor(v.xPos / 512)
 						z = math.floor(v.zPos / 512)
 
-						message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. " distance: " .. string.format("%d", dist) .. " region r." .. x .. "." .. z .. ".7 Hacker score: " .. players[k].hackerScore .. "[-]")
+						message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. " distance: " .. string.format("%d", dist) .. " region r." .. x .. "." .. z .. ".7rg Hacker score: " .. players[k].hackerScore .. "[-]")
 					else
 						if (players[playerid].watchPlayer == true) and accessLevel(v.steam) > 3 then
 							message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. "[-]")
@@ -568,6 +568,25 @@ function logChat(chatTime, chatLine)
 	-- log the chat
 	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_chatlog.txt", "a")
 	file:write(chatTime .. "; " .. playerName .. "; " .. chatPosition .. "; " .. string.trim(chatLine) .. "\n")
+	file:close()
+
+	botman.webdavFolderWriteable = true
+end
+
+
+function logInventoryChanges(steam, item, delta, x, y, z, session, flag)
+	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
+	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
+	botman.webdavFolderWriteable = false
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_inventory.txt", "a")
+	if delta > 0 then
+		file:write(botman.serverTime .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty +" .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; sess " .. session .. "; " .. flag .. "\n")
+	else
+		file:write(botman.serverTime .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty " .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; sess " .. session .. "; " .. flag .. "\n")
+	end
+
 	file:close()
 
 	botman.webdavFolderWriteable = true
@@ -894,7 +913,7 @@ function gmsg(line, ircid)
 			chatvars.accessLevel = tonumber(accessLevel(chatvars.playerid))
 			x = math.floor(chatvars.intX / 512)
 			z = math.floor(chatvars.intZ / 512)
-			chatvars.region = "r." .. x .. "." .. z .. ".7"
+			chatvars.region = "r." .. x .. "." .. z .. ".7rg"
 			zombies = tonumber(igplayers[chatvars.playerid].zombies)
 			chatvars.zombies = zombies
 		end

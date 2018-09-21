@@ -20,16 +20,22 @@ function twoMinuteTimer()
 	if tonumber(botman.playersOnline) > 0 then
 		-- save the penguins! er I mean world!
 		if not botman.serverRebooting then
-			sendCommand("sa")
+			if not botMaintenance.lastSA then
+				botMaintenance.lastSA = os.time()
+				saveBotMaintenance()
+				sendCommand("sa")
+			else
+				if (os.time() - botMaintenance.lastSA) > 30 then
+					botMaintenance.lastSA = os.time()
+					saveBotMaintenance()
+					sendCommand("sa")
+				end
+			end
 		end
 
 		if server.scanErrors and server.coppi then
 			for k,v in pairs(igplayers) do
 				sendCommand("rcd " .. math.floor(v.xPos) .. " " .. math.floor(v.zPos))
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
 			end
 		end
 	end

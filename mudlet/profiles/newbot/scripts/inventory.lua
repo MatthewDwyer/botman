@@ -304,6 +304,10 @@ function CheckInventory()
 					table.insert(changes, { b.item, tonumber(items[a].quantity) - tonumber(b.quantity) } )
 					conn:execute("INSERT INTO inventoryChanges (steam, item, delta, x, y, z, session, flag) VALUES (" .. k .. ",'" .. escape(b.item) .. "'," .. tonumber(items[a].quantity) - tonumber(b.quantity) .. "," .. math.floor(v.xPos) .. "," .. math.ceil(v.yPos) .. "," .. math.floor(v.zPos) .. "," .. players[k].sessionCount .. ",'" .. tmp.flag .. "')")
 
+					if server.logInventory then
+						logInventoryChanges(k, b.item, tonumber(items[a].quantity) - tonumber(b.quantity), math.floor(v.xPos), math.floor(v.yPos), math.floor(v.zPos),players[k].sessionCount, tmp.flag)
+					end
+
 					v.afk = os.time() + 900
 
 					if (items[a] == nil) then
@@ -321,10 +325,6 @@ function CheckInventory()
 						-- list beds for this player if they drop 1 bed
 						if b.item == "bedroll" and tmp.delta == -1 and server.coppi then
 							sendCommand("lpb " .. k)
-
-							if botman.getMetrics then
-								metrics.telnetCommands = metrics.telnetCommands + 1
-							end
 						end
 					end
 
@@ -344,17 +344,13 @@ function CheckInventory()
 						if (b.item == "keystoneBlock") and not string.find(tmp.newItems, b.item, nil, true) then
 							tmp.newItems = tmp.newItems .. "keystoneBlock (" .. tmp.delta .. "), "
 
-							if tonumber(tmp.delta) < 0 then
-								players[k].keystones = 0
+							-- if tonumber(tmp.delta) < 0 then
+								-- players[k].keystones = 0
 
-								if not server.lagged then
-									sendCommand("llp " .. k)
-
-									if botman.getMetrics then
-										metrics.telnetCommands = metrics.telnetCommands + 1
-									end
-								end
-							end
+								-- if not server.lagged then
+									-- sendCommand("llp " .. k)
+								-- end
+							-- end
 						end
 					end
 				end
@@ -461,13 +457,7 @@ function CheckInventory()
 
 		if (tmp.move == true and players[k].exiled ~= 1) and (server.gameType ~= "cre") then
 			message("say [" .. server.chatColour .. "]Sending player " .. v.name .. " to " .. tmp.moveTo .. " for " .. tmp.moveReason .. ".[-]")
-
 			teleport("tele " .. k .. " " .. locations[tmp.moveTo].x .. " " .. locations[tmp.moveTo].y + 1 .. " " .. locations[tmp.moveTo].z, k)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
-
 			players[k].exiled = 1
 			if tmp.playerAccessLevel > 2 then players[k].silentBob = true end
 			players[k].canTeleport = false

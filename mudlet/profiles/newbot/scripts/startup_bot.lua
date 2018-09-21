@@ -106,13 +106,13 @@ function login()
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	if type(botman) ~= "table" then
-		botman = {}
-	end
-
 	-- disable some stuff we no longer use
 	disableTrigger("le")
 	disableTimer("GimmeReset")
+
+	if type(botman) ~= "table" then
+		botman = {}
+	end
 
 	if type(server) ~= "table" then
 		server = {}
@@ -140,7 +140,6 @@ function login()
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	tempTimer( 120, [[checkData()]] )
-	stackLimits = {}
 
 	if (botman.botStarted == nil) then
 		botman.botStarted = os.time()
@@ -149,6 +148,9 @@ function login()
 			dofile(homedir .. "/scripts/reload_bot_scripts.lua")
 			reloadBotScripts()
 		end
+
+		-- this must come after reload_bot_scripts above.
+		fixTables()
 
 		if botman.sysExitID == nil then
 			botman.sysExitID = registerAnonymousEventHandler("sysExitEvent", "onSysExit")
@@ -175,7 +177,6 @@ function login()
 		end
 
 		tempRegexTrigger("^(.*)$", [[updateBotOnlineStatus()]])
-		modVersions = {}
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		initBot() -- this lives in edit_me.lua
@@ -186,6 +187,10 @@ function login()
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		initDB() -- this lives in mysql.lua
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+
+		-- nuke the memory tables to keep them minty fresh every time Mudlet starts
+		resetMySQLMemoryTables()
+
 		botman.dbConnected = isDBConnected()
 		botman.db2Connected = isDBBotsConnected()
 		botman.initError = true
@@ -227,10 +232,6 @@ function login()
 		if loadWindowLayout ~= nil then
 			loadWindowLayout()
 		end
-
-		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
-
-		fixTables()
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 

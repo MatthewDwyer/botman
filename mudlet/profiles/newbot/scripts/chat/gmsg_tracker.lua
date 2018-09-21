@@ -493,6 +493,7 @@ function gmsg_tracker()
 			if igplayers[chatvars.playerid].trackerStopped ~= nil then
 				if not igplayers[chatvars.playerid].trackerStopped then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Tracking stopped.[-]")
+
 				end
 			end
 
@@ -749,11 +750,6 @@ function gmsg_tracker()
 
 			if row then
 				sendCommand("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z)
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
-
 				igplayers[chatvars.playerid].atBase = row.steam
 				igplayers[chatvars.playerid].trackerID = row.trackerID
 
@@ -814,11 +810,6 @@ function gmsg_tracker()
 
 			if row then
 				sendCommand("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z)
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
-
 				igplayers[chatvars.playerid].atBase = row.steam
 				igplayers[chatvars.playerid].trackerID = row.trackerID
 

@@ -8,7 +8,7 @@
 --]]
 
 function messageQueueTimer()
-	local k, v, row, cursor, errorString
+	local k, v, row, cursor, errorString, sender, recipient, msg
 
 	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
 		return
@@ -26,8 +26,10 @@ function messageQueueTimer()
 		row = cursor:fetch({}, "a")
 
 		if row then
-			message("say [" .. server.chatColour .. "]" .. row.message .. "[-]")
+			msg = row.message
+
 			conn:execute("delete from messageQueue where id = " .. row.id)
+			message("say [" .. server.chatColour .. "]" .. msg .. "[-]")
 		end
 	end
 
@@ -39,17 +41,20 @@ function messageQueueTimer()
 			row = cursor:fetch({}, "a")
 
 			if row then
-				if tonumber(row.recipient) ~= 0 then
-					if tonumber(row.sender) ~= 0 then
-						message("pm " .. row.recipient .. " [" .. server.chatColour .. "]Message from " .. players[row.sender].name .. " " .. row.message .. "[-]")
+				msg = row.message
+				sender = row.sender
+				recipient = row.recipient
+				conn:execute("delete from messageQueue where id = " .. row.id)
+
+				if tonumber(recipient) ~= 0 then
+					if tonumber(sender) ~= 0 then
+						message("pm " .. recipient .. " [" .. server.chatColour .. "]Message from " .. players[sender].name .. " " .. msg .. "[-]")
 					else
-						message("pm " .. row.recipient .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")
+						message("pm " .. recipient .. " [" .. server.chatColour .. "]" .. msg .. "[-]")
 					end
 				else
-					message("say [" .. server.chatColour .. "]" .. row.message .. "[-]")
+					message("say [" .. server.chatColour .. "]" .. msg .. "[-]")
 				end
-
-				conn:execute("delete from messageQueue where id = " .. row.id)
 			end
 		end
 	end

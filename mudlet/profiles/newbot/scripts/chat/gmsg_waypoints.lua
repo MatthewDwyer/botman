@@ -720,7 +720,7 @@ function gmsg_waypoints()
 				-- mark the waypoint as shared so friends can use it.
 				waypoints[tmp.id].shared = true
 				conn:execute("UPDATE waypoints SET shared = 1 WHERE id = " .. tmp.id)
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your friends can now teleport to your waypoint by typing " .. server.commandPrefix .. "wp " .. waypoints[tmp.id].name .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your friends can now teleport to your waypoint by typing " .. server.commandPrefix .. "wp " .. players[chatvars.playerid].name .. " " .. waypoints[tmp.id].name .. "[-]")
 			end
 
 			botman.faultyChat = false

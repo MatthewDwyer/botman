@@ -11,6 +11,7 @@ function table.val_to_str ( v )
   end
 end
 
+
 function table.key_to_str ( k )
   if "string" == type( k ) and string.match( k, "^[_%a][_%a%d]*$" ) then
     return k
@@ -18,6 +19,7 @@ function table.key_to_str ( k )
     return "[" .. table.val_to_str( k ) .. "]"
   end
 end
+
 
 function dumpTable( tbl )
   local result, done = {}, {}
@@ -35,6 +37,20 @@ function dumpTable( tbl )
   file = io.open(homedir .. "/" .. "table_dump.txt", "a")
   file:write("{" .. table.concat( result, "," ) .. "}" .. "\n")
   file:close()
+end
+
+
+function loadBotMaintenance()
+	botMaintenance = {}
+
+	if isFile(homedir .. "/botMaintenance.lua") then
+		table.load(homedir .. "/botMaintenance.lua", botMaintenance)
+	end
+end
+
+
+function saveBotMaintenance()
+	table.save(homedir .. "/botMaintenance.lua", botMaintenance)
 end
 
 

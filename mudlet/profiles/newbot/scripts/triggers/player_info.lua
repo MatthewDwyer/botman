@@ -158,14 +158,8 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	-- check for invalid or missing steamid.  kick if not passed
 	steamtest = tonumber(steam)
 	if (steamtest == nil) then
-		send ("kick " .. id)
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
-
+		sendCommand("kick " .. id)
 		irc_chat(server.ircMain, "Player " .. name .. " kicked for invalid Steam ID: " .. steam)
-
 		faultyPlayerinfo = false
 		return
 	end
@@ -173,14 +167,8 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if (string.len(steam) < 17) then
-		send ("kick " .. id)
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
-
+		sendCommand("kick " .. id)
 		irc_chat(server.ircMain, "Player " .. name .. " kicked for invalid Steam ID: " .. steam)
-
 		faultyPlayerinfo = false
 		return
 	end
@@ -234,7 +222,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 		players[steam].watchPlayer = true
 		players[steam].watchPlayerTimer = os.time() + 2419200 -- stop watching in one month or until no longer a new player
-		players[steam].IP = IP
+		players[steam].ip = IP
 		players[steam].exiled = 0
 
 		irc_chat(server.ircMain, "###  New player joined " .. player .. " steam: " .. steam.. " id: " .. id .. " ###")
@@ -281,8 +269,8 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		admin = true
 	end
 
-	if IP ~= "" and players[steam].IP == "" then
-		players[steam].IP = IP
+	if IP ~= "" and players[steam].ip == "" then
+		players[steam].ip = IP
 		CheckBlacklist(steam, IP)
 	end
 
@@ -805,7 +793,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			rows = cursor:numrows()
 
 			if rows > 0 then
-				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]You have unread mail.  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')") end
+				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]NEW MAIL HAS ARRIVED!  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')") end
 			end
 		end
 
@@ -827,6 +815,8 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 		-- run commands from the connectQueue now that the player has spawned and hopefully paying attention to chat
 		tempTimer( 3, [[processConnectQueue("]].. steam .. [[")]] )
+		-- also check for removed claims
+		tempTimer(10, [[CheckClaimsRemoved("]] .. steam .. [[")]] )
 	end
 
 
@@ -869,11 +859,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				-- teleport close to the player
 				igplayers[steam].tp = 1
 				igplayers[steam].hackerTPScore = 0
-				send("tele " .. steam .. " " .. math.floor(igplayers[igplayers[steam].following].xPos) .. " " .. math.ceil(igplayers[igplayers[steam].following].yPos - 30) .. " " .. math.floor(igplayers[igplayers[steam].following].zPos))
-
-				if botman.getMetrics then
-					metrics.telnetCommands = metrics.telnetCommands + 1
-				end
+				sendCommand("tele " .. steam .. " " .. math.floor(igplayers[igplayers[steam].following].xPos) .. " " .. math.ceil(igplayers[igplayers[steam].following].yPos - 30) .. " " .. math.floor(igplayers[igplayers[steam].following].zPos))
 			end
 		end
 	end
@@ -1082,7 +1068,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if (playerAccessLevel < 4) and server.enableRegionPM then
 		if (igplayers[steam].region ~= "r." .. x .. "." .. z .. ".7rg") then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Region r." .. x .. "." .. z .. ".7[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Region " .. x .. "." .. z .. "[-]")
 		end
 	end
 
@@ -1095,11 +1081,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		if (intY < 30000) then
 			igplayers[steam].tp = 1
 			igplayers[steam].hackerTPScore = 0
-			send("tele " .. steam .. " " .. intX .. " " .. 60000 .. " " .. intZ)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
+			sendCommand("tele " .. steam .. " " .. intX .. " " .. 60000 .. " " .. intZ)
 		end
 
 		faultyPlayerinfo = false
@@ -1113,18 +1095,14 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		igplayers[steam].hackerTPScore = 0
 
 		if players[steam].yPosTimeout == 0 then
-			send("tele " .. steam .. " " .. intX .. " -1 " .. intZ)
+			sendCommand("tele " .. steam .. " " .. intX .. " -1 " .. intZ)
 		else
-			send("tele " .. steam .. " " .. players[steam].xPosTimeout .. " " .. players[steam].yPosTimeout .. " " .. players[steam].zPosTimeout)
+			sendCommand("tele " .. steam .. " " .. players[steam].xPosTimeout .. " " .. players[steam].yPosTimeout .. " " .. players[steam].zPosTimeout)
 		end
 
 		players[steam].xPosTimeout = 0
 		players[steam].yPosTimeout = 0
 		players[steam].zPosTimeout = 0
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
 
 		faultyPlayerinfo = false
 		deleteLine()
@@ -1146,14 +1124,10 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		igplayers[steam].hackerTPScore = 0
 
 		if not isDestinationAllowed(steam, igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK) then
-			send ("tele " .. steam .. " 1 -1 0") -- if we don't know where to send the player, send them to the middle of the map. This should only happen rarely.
+			sendCommand("tele " .. steam .. " 1 -1 0") -- if we don't know where to send the player, send them to the middle of the map. This should only happen rarely.
 			message("pm " .. steam .. " [" .. server.warnColour .. "]You have been moved to the center of the map.[-]")
 		else
-			send ("tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK)
-		end
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
+			sendCommand("tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK)
 		end
 
 		faultyPlayerinfo = false
@@ -1213,11 +1187,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		if dist > 2 then
 			igplayers[steam].tp = 1
 			igplayers[steam].hackerTPScore = 0
-			send("tele " .. steam .. " " .. players[steam].prisonxPosOld .. " " .. players[steam].prisonyPosOld .. " " .. players[steam].prisonzPosOld)
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 1
-			end
+			sendCommand("tele " .. steam .. " " .. players[steam].prisonxPosOld .. " " .. players[steam].prisonyPosOld .. " " .. players[steam].prisonzPosOld)
 		end
 
 		faultyPlayerinfo = false

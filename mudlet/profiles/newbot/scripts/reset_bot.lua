@@ -112,14 +112,8 @@ function ResetBot(keepTheMoney)
 	end
 
 	conn:execute(sql)
-
 	loadPlayers()
 	getServerData(true)
-
-	if botman.getMetrics then
-		metrics.telnetCommands = metrics.telnetCommands + 5
-	end
-
 	return true
 end
 

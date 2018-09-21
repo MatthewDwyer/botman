@@ -14,6 +14,28 @@ mysql = require "luasql.mysql"
 local debug = false
 local statements = {}
 
+
+function resetMySQLMemoryTables()
+	-- this resets auto incrementing key fields to 1
+	conn:execute("TRUNCATE TABLE APIQueue")
+	conn:execute("TRUNCATE TABLE commandQueue")
+	conn:execute("TRUNCATE TABLE gimmeQueue")
+	conn:execute("TRUNCATE TABLE ircQueue")
+	conn:execute("TRUNCATE TABLE list")
+	conn:execute("TRUNCATE TABLE memEntities")
+	conn:execute("TRUNCATE TABLE memIgnoredItems")
+	conn:execute("TRUNCATE TABLE memLottery")
+	conn:execute("TRUNCATE TABLE memRestrictedItems")
+	conn:execute("TRUNCATE TABLE memShop")
+	conn:execute("TRUNCATE TABLE memTracker")
+	conn:execute("TRUNCATE TABLE messageQueue")
+	conn:execute("TRUNCATE TABLE miscQueue")
+	conn:execute("TRUNCATE TABLE playerQueue")
+	-- we don't touch the reservedSlots memory table so that we can preserve it across restarts later
+	conn:execute("TRUNCATE TABLE searchResults")
+end
+
+
 function deleteTrackingData(keepDays)
 	-- to prevent the database collecting too much data, becoming slow and potentially filling the root partition
 	-- we periodically clear out old data.  The default is to keep the last 28 days.
@@ -59,10 +81,8 @@ function initBotsData()
 
 	-- insert players in bots db
 	for k, v in pairs(players) do
-		if v.IP == nil then
-			IP = ""
-		else
-			IP = v.IP
+		if v.ip == nil then
+			v.ip = ""
 		end
 
 		if v.country == nil then
@@ -142,10 +162,10 @@ function insertBotsPlayer(steam)
 
 	if tonumber(server.botID) > 0 then
 		-- insert or update player in bots db
-		if players[steam].IP then
-			connBots:execute("INSERT INTO players (botID, server, steam, ip, name, online, level, zombies, score, playerKills, deaths, timeOnServer, playtime, country, ping) VALUES (" .. server.botID .. ",'" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].IP .. "','" .. escape(players[steam].name) .. "', 1," .. players[steam].level .. "," .. players[steam].zombies .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].deaths .. "," .. players[steam].timeOnServer .. "," .. igplayers[steam].sessionPlaytime .. ",'" .. players[steam].country .. "'," .. players[steam].ping .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].IP .. "', name = '" .. escape(players[steam].name) .. "', online = 1, level = " .. players[steam].level .. ", zombies = " .. players[steam].zombies .. ", score = " .. players[steam].score .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. ", timeOnServer  = " .. players[steam].timeOnServer .. ", playtime = " .. igplayers[steam].sessionPlaytime .. ", country = '" .. players[steam].country .. "', ping = " .. players[steam].ping)
+		if players[steam].ip then
+			connBots:execute("INSERT INTO players (botID, server, steam, ip, name, online, level, zombies, score, playerKills, deaths, timeOnServer, playtime, country, ping) VALUES (" .. server.botID .. ",'" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].ip .. "','" .. escape(players[steam].name) .. "', 1," .. players[steam].level .. "," .. players[steam].zombies .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].deaths .. "," .. players[steam].timeOnServer .. "," .. igplayers[steam].sessionPlaytime .. ",'" .. players[steam].country .. "'," .. players[steam].ping .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].ip .. "', name = '" .. escape(players[steam].name) .. "', online = 1, level = " .. players[steam].level .. ", zombies = " .. players[steam].zombies .. ", score = " .. players[steam].score .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. ", timeOnServer  = " .. players[steam].timeOnServer .. ", playtime = " .. igplayers[steam].sessionPlaytime .. ", country = '" .. players[steam].country .. "', ping = " .. players[steam].ping)
 		else
-			connBots:execute("INSERT INTO players (botID, server, steam, name, online, level, zombies, score, playerKills, deaths, timeOnServer, playtime, country, ping) VALUES (" .. server.botID .. ",'" .. escape(server.serverName) .. "'," .. steam .. ",'" .. escape(players[steam].name) .. "', 1," .. players[steam].level .. "," .. players[steam].zombies .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].deaths .. "," .. players[steam].timeOnServer .. "," .. igplayers[steam].sessionPlaytime .. ",'" .. players[steam].country .. "'," .. players[steam].ping .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].IP .. "', name = '" .. escape(players[steam].name) .. "', online = 1, level = " .. players[steam].level .. ", zombies = " .. players[steam].zombies .. ", score = " .. players[steam].score .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. ", timeOnServer  = " .. players[steam].timeOnServer .. ", playtime = " .. igplayers[steam].sessionPlaytime .. ", country = '" .. players[steam].country .. "', ping = " .. players[steam].ping)
+			connBots:execute("INSERT INTO players (botID, server, steam, name, online, level, zombies, score, playerKills, deaths, timeOnServer, playtime, country, ping) VALUES (" .. server.botID .. ",'" .. escape(server.serverName) .. "'," .. steam .. ",'" .. escape(players[steam].name) .. "', 1," .. players[steam].level .. "," .. players[steam].zombies .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].deaths .. "," .. players[steam].timeOnServer .. "," .. igplayers[steam].sessionPlaytime .. ",'" .. players[steam].country .. "'," .. players[steam].ping .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].ip .. "', name = '" .. escape(players[steam].name) .. "', online = 1, level = " .. players[steam].level .. ", zombies = " .. players[steam].zombies .. ", score = " .. players[steam].score .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. ", timeOnServer  = " .. players[steam].timeOnServer .. ", playtime = " .. igplayers[steam].sessionPlaytime .. ", country = '" .. players[steam].country .. "', ping = " .. players[steam].ping)
 		end
 	end
 end
@@ -163,7 +183,7 @@ function updateBotsServerTable()
 	-- updated players on bots db
 	for k, v in pairs(igplayers) do
 		-- update player in bots db
-		connBots:execute("UPDATE players SET ip = '" .. players[k].IP .. "', name = '" .. escape(v.name) .. "', online = 1, level = " .. v.level .. ", zombies = " .. v.zombies .. ", score = " .. v.score .. ", playerKills = " .. v.playerKills .. ", deaths = " .. v.deaths .. ", timeOnServer  = " .. players[k].timeOnServer .. ", playtime = " .. v.sessionPlaytime .. ", country = '" .. players[k].country .. "', ping = " .. v.ping .. " WHERE steam = " .. k .. " AND botID = " .. server.botID)
+		connBots:execute("UPDATE players SET ip = '" .. players[k].ip .. "', name = '" .. escape(v.name) .. "', online = 1, level = " .. v.level .. ", zombies = " .. v.zombies .. ", score = " .. v.score .. ", playerKills = " .. v.playerKills .. ", deaths = " .. v.deaths .. ", timeOnServer  = " .. players[k].timeOnServer .. ", playtime = " .. v.sessionPlaytime .. ", country = '" .. players[k].country .. "', ping = " .. v.ping .. " WHERE steam = " .. k .. " AND botID = " .. server.botID)
 	end
 end
 
@@ -406,17 +426,6 @@ function closeDB()
 end
 
 
-function migrateWhitelist()
-	local k, v
-
-	for k,v in pairs(players) do
-		if v.whitelisted then
-			conn:execute("INSERT INTO Whitelist (steam) VALUES ('" .. k .. "')")
-		end
-	end
-end
-
-
 function importBlacklist()
 	local cursor, cursor2, errorString, row
 
@@ -623,6 +632,7 @@ function alterTables()
 	doSQL("CREATE TABLE `commandAccessRestrictions` (`id` int(11) NOT NULL, `functionName` varchar(100) NOT NULL DEFAULT '', `accessLevel` int(11) NOT NULL DEFAULT '3', PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE IF NOT EXISTS `customCommands_Detail` (`detailID` int(11) NOT NULL, `commandID` int(11) NOT NULL, `action` varchar(5) NOT NULL DEFAULT '' COMMENT 'say,give,tele,spawn,buff,cmd', `thing` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`detailID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE IF NOT EXISTS playersArchived LIKE players")
+	doSQL("CREATE TABLE `APIQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`URL` varchar(500) NOT NULL,`OutputFile` varchar(500) NOT NULL, PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 
 	-- changes to players table
 	doSQL("ALTER TABLE `players` ADD COLUMN `waypoint2X` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Y` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Z` INT NOT NULL DEFAULT '0', ADD COLUMN `waypointsLinked` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -653,6 +663,8 @@ function alterTables()
 	doSQL("ALTER TABLE `players` CHANGE `aliases` `aliases` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
 	doSQL("ALTER TABLE `players` ADD `VACBanned` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `bountyReason` VARCHAR(100) NOT NULL DEFAULT ''")
+	doSQL("ALTER TABLE `players` ADD `claimsExpired` TINYINT(1) NOT NULL DEFAULT '0'")
+
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -774,7 +786,20 @@ function alterTables()
 	doSQL("ALTER TABLE `server` CHANGE `webPanelPort` `webPanelPort` INT(11) NOT NULL DEFAULT '0")
 	doSQL("ALTER TABLE `server` ADD `playersLastArchived` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
 	doSQL("ALTER TABLE `server` ADD `alertLevelHack` TINYINT(1) NOT NULL DEFAULT '1'")
-	doSQL("ALTER TABLE `server` ADD `logBotCommands` TINYINT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `logBotCommands` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `logInventory` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `removeExpiredClaims` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` CHANGE `date` `date` VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT ''")
+	doSQL("ALTER TABLE `server` CHANGE `welcome` `welcome` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT ''")
+	doSQL("ALTER TABLE `server` CHANGE `MOTD` `MOTD` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT ''")
+	doSQL("ALTER TABLE `server` CHANGE `shopLocation` `shopLocation` VARCHAR(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT ''")
+	doSQL("ALTER TABLE `server` CHANGE `rules` `rules` VARCHAR(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT 'A zombie ate the server rules! Tell an admin.'")
+	doSQL("ALTER TABLE `server` CHANGE `botName` `botName` VARCHAR(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Bot'")
+	doSQL("ALTER TABLE `server` CHANGE `serverName` `serverName` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'New Server'")
+	doSQL("ALTER TABLE `server` CHANGE `website` `website` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT ''")
+	doSQL("ALTER TABLE `server` CHANGE `ircServer` `ircServer` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '127.0.0.1'")
+	doSQL("ALTER TABLE `server` CHANGE `serverGroup` `serverGroup` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT ''")
+	doSQL("ALTER TABLE `server` CHANGE `moneyName` `moneyName` VARCHAR(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Zenny|Zennies'")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -845,6 +870,8 @@ function alterTables()
 	doSQL("ALTER TABLE `otherEntities` ADD `remove` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `locations` ADD `isRound` TINYINT(1) NOT NULL DEFAULT '1'")
 	doSQL("ALTER TABLE `locations` ADD `lobby` TINYINT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `keystones` CHANGE `removed` `removed` INT(11) NOT NULL DEFAULT '0'")
+	doSQL("UPDATE `keystones` SET removed = 0") -- this is necessary to stop the bot giving everyone claims in error due to a table change.
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)

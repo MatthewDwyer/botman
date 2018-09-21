@@ -108,53 +108,97 @@ function unpackScripts()
 end
 
 
-function fixTables()
-	if type(igplayers) ~= "table" then
-		igplayers = {}
-	end
-
-	if type(owners) ~= "table" then
-		owners = {}
-	end
-
+function fixTables() -- waiter!  Where's my table!?
 	if type(admins) ~= "table" then
 		admins = {}
-	end
-
-	if type(bans) ~= "table" then
-		bans = {}
-	end
-
-	if type(mods) ~= "table" then
-		mods = {}
-	end
-
-	if type(friends) ~= "table" then
-		friends = {}
-	end
-
-	if type(invTemp) ~= "table" then
-		invTemp = {}
-	end
-
-	if type(hotspots) ~= "table" then
-		hotspots = {}
 	end
 
 	if type(badItems) ~= "table" then
 		badItems = {}
 	end
 
-	if type(restrictedItems) ~= "table" then
-		restrictedItems = {}
+	if type(bans) ~= "table" then
+		bans = {}
+	end
+
+	if type(botman) ~= "table" then
+		botman = {}
+	end
+
+	if type(conQueue) ~= "table" then
+		conQueue = {}
+	end
+
+	if type(customMessages) ~= "table" then
+		customMessages = {}
+	end
+
+	if type(botMaintenance) ~= "table" then
+		botMaintenance = {}
+	end
+
+	if type(fallingBlocks) ~= "table" then
+		fallingBlocks = {}
+	end
+
+	if type(friends) ~= "table" then
+		friends = {}
+	end
+
+	if type(gimmeZombies) ~= "table" then
+		gimmeZombies = {}
+	end
+
+	if type(hotspots) ~= "table" then
+		hotspots = {}
+	end
+
+	if type(igplayers) ~= "table" then
+		igplayers = {}
+	end
+
+	if type(invTemp) ~= "table" then
+		invTemp = {}
+	end
+
+	if type(keystones) ~= "table" then
+		keystones = {}
 	end
 
 	if type(lastHotspots) ~= "table" then
 		lastHotspots = {}
 	end
 
-	if type(villagers) ~= "table" then
-		villagers = {}
+	if type(metrics) ~= "table" then
+		metrics = {}
+		metrics.commands = 0
+		metrics.commandLag = 0
+		metrics.errors = 0
+		metrics.telnetLines = 0
+	end
+
+	if type(mods) ~= "table" then
+		mods = {}
+	end
+
+	if type(modVersions) ~= "table" then
+		modVersions = {}
+	end
+
+	if type(proxies) ~= "table" then
+		proxies = {}
+	end
+
+	if type(otherEntities) ~= "table" then
+		otherEntities = {}
+	end
+
+	if type(owners) ~= "table" then
+		owners = {}
+	end
+
+	if type(restrictedItems) ~= "table" then
+		restrictedItems = {}
 	end
 
 	if type(shopCategories) ~= "table" then
@@ -165,36 +209,16 @@ function fixTables()
 		stackLimits = {}
 	end
 
-	if type(customMessages) ~= "table" then
-		customMessages = {}
-	end
-
-	if type(proxies) ~= "table" then
-		proxies = {}
-	end
-
-	if type(gimmeZombies) ~= "table" then
-		gimmeZombies = {}
-	end
-
-	if type(otherEntities) ~= "table" then
-		otherEntities = {}
-	end
-
-	if type(waypoints) ~= "table" then
-		waypoints = {}
-	end
-
 	if type(staffList) ~= "table" then
 		staffList = {}
 	end
 
-	if type(fallingBlocks) ~= "table" then
-		fallingBlocks = {}
+	if type(villagers) ~= "table" then
+		villagers = {}
 	end
 
-	if type(conQueue) ~= "table" then
-		conQueue = {}
+	if type(waypoints) ~= "table" then
+		waypoints = {}
 	end
 end
 
@@ -230,8 +254,6 @@ end
 
 
 function refreshScripts()
-if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	-- scripts
@@ -355,7 +377,7 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	server.nextCodeReload = "/scripts/webAPI_functions.lua"
 	checkScript(homedir .. "/scripts/webAPI_functions.lua")
 
-if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	-- chat scripts
 	server.nextCodeReload = "/scripts/chat/gmsg_functions.lua"
@@ -481,9 +503,14 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	server.nextCodeReload = "/scripts/chat/gmsg_waypoints.lua"
 	checkScript(homedir .. "/scripts/chat/gmsg_waypoints.lua")
 
-if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	-- timers
+	server.nextCodeReload = "/scripts/timers/APITimer.lua"
+	checkScript(homedir .. "/scripts/timers/APITimer.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
 	server.nextCodeReload = "/scripts/timers/thirty_second_timer.lua"
 	checkScript(homedir .. "/scripts/timers/thirty_second_timer.lua")
 
@@ -568,7 +595,7 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	checkScript(homedir .. "/scripts/timers/five_minute_timer.lua")
 
 	server.nextCodeReload = ""
-if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	-- triggers
 	server.nextCodeReload = "/scripts/triggers/pvp.lua"
@@ -712,6 +739,7 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	enableTrigger("llp")
 	enableTrigger("Chat")
 
+	enableTimer("APITimer")
 	enableTimer("Every10Seconds")
 	enableTimer("Every15Seconds")
 	enableTimer("EveryHalfMinute")
@@ -730,7 +758,7 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	enableTimer("ircQueue")
 	enableTimer("TrackPlayer")
 	enableTimer("messageQueue")
-if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 end
 
 
@@ -753,7 +781,9 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 	  permTimer("ten_minute_timer", "", 600.0, [[TenMinuteTimer()]])
 	end
 
-	enableTimer("Every10Seconds")
+	if exists("APITimer", "timer") == 0 then
+	  permTimer("APITimer", "", 0.150, [[APITimer()]])
+	end
 
 	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -816,7 +846,7 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 			end
 
 			-- check the waypoints table and migrate the old waypoints to it if it is empty.
-			migrateWaypoints()
+			--migrateWaypoints()
 
 			fixMissingServer()
 			registerBot()
@@ -836,18 +866,37 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 			if not botman.sysDisconnectionID then
 				botman.sysDisconnectionID = registerAnonymousEventHandler("sysDisconnectionEvent", "onSysDisconnection")
 			end
-
-			if botman.getMetrics then
-				metrics.telnetCommands = metrics.telnetCommands + 3
-			end
 		end
 	end
 
 	-- load the server API key if it exists
 	readAPI()
 
+	-- Do some daily maintenance tasks
+	if server.dateTest then
+		if type(botMaintenance) ~= "table" then
+			botMaintenance = {}
+		end
+
+		-- run llp once per day but only when there are less than 11 players on. On busy servers this might cause llp to be run less often but we want to avoid server lag.
+		if not botMaintenance.lastLLP then
+			if botman.playersOnline < 11 then
+				botMaintenance.lastLLP = server.dateTest
+				saveBotMaintenance()
+				sendCommand("llp parseable")
+			end
+		else
+			if botMaintenance.lastLLP ~= server.dateTest then
+				if botman.playersOnline < 11 then
+					botMaintenance.lastLLP = server.dateTest
+					saveBotMaintenance()
+					sendCommand("llp parseable")
+				end
+			end
+		end
+	end
+
 	server.reloadCodeSuccess = true
 
-if (debug) then display("debug reloadBotScripts end \n") end
-
+	if (debug) then display("debug reloadBotScripts end \n") end
 end

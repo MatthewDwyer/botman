@@ -29,11 +29,6 @@ function gmsg_misc()
 	-- votecrate for Deadlights server
 	if chatvars.words[1] == "votecrate" then
 		sendCommand("cvc " .. chatvars.playerid)
-
-		if botman.getMetrics then
-			metrics.telnetCommands = metrics.telnetCommands + 1
-		end
-
 		botman.faultyChat = false
 		return true
 	end
@@ -520,7 +515,11 @@ function gmsg_misc()
 				return true
 			end
 
-			checkServerVote(chatvars.playerid)
+			if not server.JimsCommands then
+				checkServerVote(chatvars.playerid)
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This server is using {#}votecrate.  Please use that command instead of {#}claim vote.[-]")
+			end
 
 			botman.faultyChat = false
 			return true
