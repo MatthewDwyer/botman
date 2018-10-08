@@ -20,7 +20,7 @@ function playerInfo(faultyInfo)
 	faultyPlayerinfoLine = line
 
 	local debug, id, name, posX, posY, posZ, lastX, lastY, lastZ, lastDist, mapCenterDistance, regionX, regionZ, chunkX, chunkZ
-	local deaths, zombies, kills, score, level, steam, steamtest, admin, lastGimme, lastLogin, playerAccessLevel
+	local deaths, zombies, kills, score, level, steam, steamtest, admin, lastGimme, lastLogin, playerAccessLevel, temp
 	local xPosOld, yPosOld, zPosOld, rawPosition, rawRotation, outsideMap, outsideMapDonor, fields, values, flag
 	local timestamp = os.time()
 	local region = ""
@@ -306,21 +306,20 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if players[steam].location ~= "" and igplayers[steam].spawnedInWorld then
+	if players[steam].location ~= "" and igplayers[steam].spawnedInWorld and igplayers[steam].teleCooldown < 1 then
 		-- spawn the player at location
 		if (locations[players[steam].location]) then
-			irc_chat(server.ircMain, "Player " .. steam .. " " .. name .. " is being moved to " .. players[steam].location)
-			irc_chat(server.ircAlerts, "Player " .. steam .. " " .. name .. " is being moved to " .. players[steam].location)
-
-			message(string.format("pm %s [%s]You are being moved to %s[-]", steam, server.chatColour, players[steam].location))
-			randomTP(steam, players[steam].location, true)
-
+			temp = players[steam].location
+			irc_chat(server.ircMain, "Player " .. steam .. " " .. name .. " is being moved to " .. temp)
+			irc_chat(server.ircAlerts, "Player " .. steam .. " " .. name .. " is being moved to " .. temp)
 			players[steam].location = ""
 			if botman.dbConnected then conn:execute("UPDATE players SET location = '' WHERE steam = " .. steam) end
+
+			message(string.format("pm %s [%s]You are being moved to %s[-]", steam, server.chatColour, temp))
+			randomTP(steam, temp, true)
 		end
 
 		if (players[steam].location == "return player") then
-
 			if players[steam].xPosTimeout ~= 0 and players[steam].zPosTimeout ~= 0 then
 				cmd = "tele " .. steam .. " " .. players[steam].xPosTimeout .. " " .. players[steam].yPosTimeout .. " " .. players[steam].zPosTimeout
 				players[steam].xPosTimeout = 0
@@ -330,9 +329,9 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				cmd = "tele " .. steam .. " " .. players[steam].xPosOld .. " " .. players[steam].yPosOld .. " " .. players[steam].zPosOld
 			end
 
-			teleport(cmd, steam)
 			players[steam].location = ""
 			if botman.dbConnected then conn:execute("UPDATE players SET location = '' WHERE steam = " .. steam) end
+			teleport(cmd, steam)
 		end
 	end
 
@@ -525,15 +524,17 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	end
 
 	-- hacker detection
-	if tonumber(level) - tonumber(igplayers[steam].oldLevel) > 50 and not admin and server.alertLevelHack then
-		alertAdmins(id .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel), "alert")
-		irc_chat(server.ircAlerts, server.gameDate .. " " .. steam .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel))
-	end
+	if tonumber(igplayers[steam].oldLevel) ~= -1 then
+		if tonumber(level) - tonumber(igplayers[steam].oldLevel) > 50 and not admin and server.alertLevelHack then
+			alertAdmins(id .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel), "alert")
+			irc_chat(server.ircAlerts, server.gameDate .. " " .. steam .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel))
+		end
 
-	if server.checkLevelHack then
-		if tonumber(level) - tonumber(igplayers[steam].oldLevel) > 50 and not admin then
-			players[steam].hackerScore = 10000
-			igplayers[steam].hackerDetection = "Suspected level hack. (" .. level .. ") an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel)
+		if server.checkLevelHack then
+			if tonumber(level) - tonumber(igplayers[steam].oldLevel) > 50 and not admin then
+				players[steam].hackerScore = 10000
+				igplayers[steam].hackerDetection = "Suspected level hack. (" .. level .. ") an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel)
+			end
 		end
 	end
 
@@ -1454,9 +1455,9 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			igplayers[steam].greetdelay = 0
 		end
 
-		if tonumber(igplayers[steam].teleCooldown) > 100 then
-			igplayers[steam].teleCooldown = 0
-		end
+		-- if tonumber(igplayers[steam].teleCooldown) > 100 then
+			-- igplayers[steam].teleCooldown = 3
+		-- end
 	end
 
 	if (igplayers[steam].rawRotation ~= rawRotation) and rawRotation ~= nil then

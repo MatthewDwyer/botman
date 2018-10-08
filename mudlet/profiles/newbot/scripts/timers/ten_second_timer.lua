@@ -34,23 +34,21 @@ function TenSecondTimer()
 			server.lagged = false
 		end
 	else
-		if server.coppi and tonumber(botman.playersOnline) > 0 then
-			if server.scanNoclip then
-				sendCommand("pug")
+		if tonumber(botman.playersOnline) > 0 and tonumber(botman.playersOnline) < 25 then
+			if server.coppi and tonumber(botman.playersOnline) > 0 then
+				if server.scanNoclip then
+					sendCommand("pug")
+				end
+
+				if not server.playersCanFly then
+					sendCommand("pgd")
+				end
 			end
 
-			if not server.playersCanFly then
-				sendCommand("pgd")
-			end
-		end
-
-		if (server.scanZombies or server.scanEntities) then
-			if server.useAllocsWebAPI then
-				 url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/gethostilelocation/?adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
-				 os.remove(homedir .. "/temp/hostiles.txt")
-				 downloadFile(homedir .. "/temp/hostiles.txt", url)
-
-				metrics.commands = metrics.commands + 1
+			if (server.scanZombies or server.scanEntities) then
+				if server.useAllocsWebAPI then
+					sendCommand("gethostilelocation", "gethostilelocation/?", "hostiles.txt")
+				end
 			end
 		end
 	end

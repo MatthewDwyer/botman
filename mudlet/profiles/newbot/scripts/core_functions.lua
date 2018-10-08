@@ -104,7 +104,7 @@ function sendCommand(command, api, outputFile)
 				outputFile = "pug.txt"
 			end
 
-			if string.sub(command, 1,3) == "se " then
+			if string.sub(command, 1,3) == "se " or command == "se" then
 				api = "executeconsolecommand?command=" .. command .. "&"
 				outputFile = "se.txt"
 			end
@@ -127,8 +127,6 @@ function sendCommand(command, api, outputFile)
 			outputFile = "dummy.txt"
 		end
 
-		--if botman.dbConnected then conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(outputFile) .. "')") end
-
 		if server.logBotCommands then
 			logBotCommand(botman.serverTime, url)
 		end
@@ -149,6 +147,15 @@ function sendCommand(command, api, outputFile)
 	else
 		if server.logBotCommands then
 			logBotCommand(botman.serverTime, command)
+		end
+
+		-- should be able to remove list later.  Just put it here to fix an issue with older bots updating and not having the metrics table.
+		if type(metrics) ~= "table" then
+			metrics = {}
+			metrics.commands = 0
+			metrics.commandLag = 0
+			metrics.errors = 0
+			metrics.telnetLines = 0
 		end
 
 		send(command)
@@ -379,14 +386,10 @@ function message(msg, steam)
 		-- say the message in public chat
 		if server.useAllocsWebAPI then
 			url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=say \"" .. string.sub(msg, 5) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
-			if botman.dbConnected then conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')") end
 
-			-- if server.logBotCommands then
-				-- logBotCommand(botman.serverTime, url)
-			-- end
-
-			-- os.remove(homedir .. "/temp/dummy.txt")
-			-- downloadFile(homedir .. "/temp/dummy.txt", url)
+			if botman.dbConnected then
+				conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+			end
 		else
 			msg = "say \"" .. string.sub(msg, 5) .. "\""
 			send(msg)
@@ -402,14 +405,10 @@ function message(msg, steam)
 			if players[words[2]].exiled ~= 1 then
 				if server.useAllocsWebAPI then
 					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
-					if botman.dbConnected then conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')") end
 
-					-- if server.logBotCommands then
-						-- logBotCommand(botman.serverTime, url)
-					-- end
-
-					-- os.remove(homedir .. "/temp/dummy.txt")
-					-- downloadFile(homedir .. "/temp/dummy.txt", url)
+					if botman.dbConnected then
+						conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+					end
 				else
 					msg = "pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
 					send(msg)
@@ -424,14 +423,10 @@ function message(msg, steam)
 		else
 			if server.useAllocsWebAPI then
 				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
-				if botman.dbConnected then conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')") end
 
-				-- if server.logBotCommands then
-					-- logBotCommand(botman.serverTime, url)
-				-- end
-
-				-- os.remove(homedir .. "/temp/dummy.txt")
-				-- downloadFile(homedir .. "/temp/dummy.txt", url)
+				if botman.dbConnected then
+					conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+				end
 			else
 				msg = "pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
 				send(msg)
@@ -440,9 +435,7 @@ function message(msg, steam)
 					logBotCommand(botman.serverTime, msg)
 				end
 
-				if botman.getMetrics then
-					metrics.commands = metrics.commands + 1
-				end
+				metrics.commands = metrics.commands + 1
 			end
 		end
 	end
@@ -1360,12 +1353,20 @@ function fixMissingPlayer(steam)
 		players[steam].gimmeCooldown = 0
 	end
 
+	if players[steam].gimmeCount == nil then
+		players[steam].gimmeCount = 0
+	end
+
 	if players[steam].home2X == 0 and players[steam].home2Z == 0 then
 		players[steam].home2Y = 0
 	end
 
 	if players[steam].homeX == 0 and players[steam].homeZ == 0 then
 		players[steam].homeY = 0
+	end
+
+	if players[steam].inLocation == nil then
+		players[steam].inLocation = ""
 	end
 
 	if players[steam].ip == nil then
@@ -1411,6 +1412,10 @@ function fixMissingPlayer(steam)
 	if players[steam].lastLogout == nil then
 		players[steam].lastLogout = os.time()
 		players[steam].relogCount = 0
+	end
+
+	if players[steam].notInLKP == nil then
+		players[steam].notInLKP = false
 	end
 
 	if players[steam].overstackItems == nil then
@@ -1752,12 +1757,28 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].checkNewPlayer = true
 	end
 
+	if (igplayers[steam].chunkX == nil) then
+		igplayers[steam].chunkX = 0
+	end
+
+	if (igplayers[steam].chunkZ == nil) then
+		igplayers[steam].chunkZ = 0
+	end
+
 	if (igplayers[steam].claimPass == nil) then
 		igplayers[steam].claimPass = 0
 	end
 
 	if (igplayers[steam].connected == nil) then
 		igplayers[steam].connected = true
+	end
+
+	if (igplayers[steam].currentLocationPVP == nil) then
+		igplayers[steam].currentLocationPVP = false
+	end
+
+	if (igplayers[steam].deaths == nil) then
+		igplayers[steam].deaths = -1
 	end
 
 	if igplayers[steam].doge == nil then
@@ -1852,6 +1873,10 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].lastTPTimestamp = os.time()
 	end
 
+	if (igplayers[steam].level == nil) then
+		igplayers[steam].level = -1
+	end
+
 	if igplayers[steam].noclip == nil then
 		igplayers[steam].noclip = false
 	end
@@ -1876,6 +1901,14 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].notifyTP = false
 	end
 
+	if (igplayers[steam].oldBelt == nil) then
+		igplayers[steam].oldBelt = ""
+	end
+
+	if (igplayers[steam].oldLevel == nil) then
+		igplayers[steam].oldLevel = -1
+	end
+
 	if (igplayers[steam].pack == nil) then
 		igplayers[steam].pack = ""
 	end
@@ -1888,6 +1921,10 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].playGimme = false
 	end
 
+	if (igplayers[steam].playerKills == nil) then
+		igplayers[steam].playerKills = -1
+	end
+
 	if igplayers[steam].rawPosition == nil then
 		igplayers[steam].rawPosition = 0
 	end
@@ -1898,6 +1935,14 @@ function fixMissingIGPlayer(steam)
 
 	if (igplayers[steam].region == nil) then
 		igplayers[steam].region = ""
+	end
+
+	if (igplayers[steam].regionX == nil) then
+		igplayers[steam].regionX = 0
+	end
+
+	if (igplayers[steam].regionZ == nil) then
+		igplayers[steam].regionZ = 0
 	end
 
 	if igplayers[steam].reservedSlot == nil then
@@ -1968,6 +2013,10 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].xPosLastAlert = 0
 		igplayers[steam].yPosLastAlert = 0
 		igplayers[steam].zPosLastAlert = 0
+	end
+
+	if (igplayers[steam].zombies == nil) then
+		igplayers[steam].zombies = -1
 	end
 end
 

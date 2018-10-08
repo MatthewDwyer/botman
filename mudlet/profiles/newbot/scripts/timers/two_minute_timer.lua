@@ -23,12 +23,12 @@ function twoMinuteTimer()
 			if not botMaintenance.lastSA then
 				botMaintenance.lastSA = os.time()
 				saveBotMaintenance()
-				sendCommand("sa")
+				send("sa")
 			else
 				if (os.time() - botMaintenance.lastSA) > 30 then
 					botMaintenance.lastSA = os.time()
 					saveBotMaintenance()
-					sendCommand("sa")
+					send("sa")
 				end
 			end
 		end
@@ -62,5 +62,9 @@ function twoMinuteTimer()
 				end
 			end
 		end
+	end
+
+	if tonumber(botman.playersOnline) > 24 then
+		removeClaims()
 	end
 end

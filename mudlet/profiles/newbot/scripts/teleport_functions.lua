@@ -74,24 +74,8 @@ function teleport(cmd, steam, justTeleport)
 end
 
 
-function fallCatcher(steam, x, y, z)
--- this code is redundant :(
-	local coords, temp, dist, cmd
-
-	if accessLevel(steam) < 3 then
-		-- don't catch staff
-		return
-	end
-
-	if (y < 0 and igplayers[steam].sessionPlaytime > 5)  then
-		cmd = "tele " .. steam .. " " .. x .. " -1 " .. z
-		teleport(cmd, steam, true)
-	end
-end
-
-
 function randomTP(playerid, location, forced)
-	local r, rows, row, rowCount
+	local r, rows, row, rowCount, cmd, cursor, errorString
 
 	if not locations[location] then
 		-- Lua is case sensitive and location didn't match any keys so do a lookup on it (not case sensitive) and return the correct cased key name

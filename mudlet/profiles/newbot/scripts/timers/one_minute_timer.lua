@@ -187,12 +187,12 @@ function everyMinute()
 		if not botMaintenance.lastSA then
 			botMaintenance.lastSA = os.time()
 			saveBotMaintenance()
-			sendCommand("sa")
+			send("sa")
 		else
 			if (os.time() - botMaintenance.lastSA) > 30 then
 				botMaintenance.lastSA = os.time()
 				saveBotMaintenance()
-				sendCommand("sa")
+				send("sa")
 			end
 		end
 
@@ -316,12 +316,16 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 	end
 
 	if tonumber(botman.playersOnline) > 0 then
-		if server.coppi then
-			for k, v in pairs(igplayers) do
-				if players[k].autoFriend ~= "NA" then
-					sendCommand("lpf " .. k)
+		if tonumber(botman.playersOnline) < 25 then
+			if server.coppi then
+				for k, v in pairs(igplayers) do
+					if players[k].autoFriend ~= "NA" then
+						sendCommand("lpf " .. k)
+					end
 				end
 			end
+
+			removeClaims()
 		end
 
 		if tonumber(server.maxPrisonTime) > 0 then
@@ -347,10 +351,6 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 
 	-- check for timed events due to run
 	runTimedEvents()
-
-if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
-
-	removeClaims()
 
 if debug then dbug("debug one minute timer end") end
 end

@@ -8,21 +8,21 @@
 --]]
 
 function llp(line)
-	local x, y, z, expired, archived, removeClaims, testing, keystoneCount, steam
+	local x, y, z, expired, archived, removeClaims, testing, keystoneCount, steam, noPlayer
 
 	if string.find(line, "Player ") and string.find(line, "owns ") then
 		steam = string.sub(line, string.find(line, "7656"), string.find(line, "7656") + 16)
 		keystoneCount = string.sub(line, string.find(line, "owns ") + 5, string.find(line, " keystones") - 1)
-
-		if string.find(line, "protected: True", nil, true) then
-			expired = false
-		end
+		noPlayer = true
+		archived = false
+		expired = false
 
 		if string.find(line, "protected: False", nil, true) then
 			expired = true
 		end
 
 		if not players[steam] then
+			noPlayer = false
 			archived = true
 			playersArchived[steam].keystones = keystoneCount
 			playersArchived[steam].claimsExpired = expired
@@ -32,8 +32,10 @@ function llp(line)
 			end
 
 			if botman.dbConnected then conn:execute("UPDATE players SET keystones = " .. playersArchived[steam].keystones .. ", claimsExpired = " .. dbBool(expired) .. " WHERE steam = " .. steam) end
-		else
-			archived = false
+		end
+
+		if players[steam] then
+			noPlayer = false
 			players[steam].keystones = keystoneCount
 			players[steam].claimsExpired = expired
 
@@ -55,22 +57,21 @@ function llp(line)
 		y = tonumber(coords[2])
 		z = tonumber(coords[3])
 
-		if playersArchived[steam] then
-			if playersArchived[steam].removedClaims == nil then
-				playersArchived[steam].removedClaims = 0
+		if not noPlayer then
+			if archived then
+				expired = playersArchived[steam].claimsExpired
+				testing = playersArchived[steam].testAsPlayer
+				removeClaims = playersArchived[steam].removeClaims
+			else
+				expired = players[steam].claimsExpired
+				testing = players[steam].testAsPlayer
+				removeClaims = players[steam].removeClaims
 			end
-
-			expired = playersArchived[steam].claimsExpired
-			testing = playersArchived[steam].testAsPlayer
-			removeClaims = playersArchived[steam].removeClaims
 		else
-			if players[steam].removedClaims == nil then
-				players[steam].removedClaims = 0
-			end
-
-			expired = players[steam].claimsExpired
-			testing = players[steam].testAsPlayer
-			removeClaims = players[steam].removeClaims
+			-- found a claim with no owner
+			expired = true
+			removeClaims = server.removeExpiredClaims
+			testing = false
 		end
 
 		if tonumber(y) > 0 then

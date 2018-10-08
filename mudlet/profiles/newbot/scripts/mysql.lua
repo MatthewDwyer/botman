@@ -22,6 +22,7 @@ function resetMySQLMemoryTables()
 	conn:execute("TRUNCATE TABLE gimmeQueue")
 	conn:execute("TRUNCATE TABLE ircQueue")
 	conn:execute("TRUNCATE TABLE list")
+	conn:execute("TRUNCATE TABLE LKPQueue")
 	conn:execute("TRUNCATE TABLE memEntities")
 	conn:execute("TRUNCATE TABLE memIgnoredItems")
 	conn:execute("TRUNCATE TABLE memLottery")
@@ -630,9 +631,10 @@ function alterTables()
 	doSQL("CREATE TABLE `gimmeGroup` (`groupName` varchar(30) NOT NULL DEFAULT '',PRIMARY KEY (`groupName`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `connectQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `steam` bigint(17) NOT NULL, `command` varchar(255) NOT NULL, `processed` TINYINT(1) NOT NULL DEFAULT '0', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `commandAccessRestrictions` (`id` int(11) NOT NULL, `functionName` varchar(100) NOT NULL DEFAULT '', `accessLevel` int(11) NOT NULL DEFAULT '3', PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
-	doSQL("CREATE TABLE IF NOT EXISTS `customCommands_Detail` (`detailID` int(11) NOT NULL, `commandID` int(11) NOT NULL, `action` varchar(5) NOT NULL DEFAULT '' COMMENT 'say,give,tele,spawn,buff,cmd', `thing` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`detailID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
+	doSQL("CREATE TABLE IF NOT EXISTS `customCommands_Detail` (`detailID` int(11) NOT NULL, `commandID` int(11) NOT NULL, `action` varchar(5) NOT NULL DEFAULT '' COMMENT 'say,give,tele,spawn,buff,cmd', `thing` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`detailID`,`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE IF NOT EXISTS playersArchived LIKE players")
 	doSQL("CREATE TABLE `APIQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`URL` varchar(500) NOT NULL,`OutputFile` varchar(500) NOT NULL, PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
+	doSQL("CREATE TABLE `LKPQueue` (`id` int(11) NOT NULL AUTO_INCREMENT, `line` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 
 	-- changes to players table
 	doSQL("ALTER TABLE `players` ADD COLUMN `waypoint2X` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Y` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Z` INT NOT NULL DEFAULT '0', ADD COLUMN `waypointsLinked` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -664,6 +666,7 @@ function alterTables()
 	doSQL("ALTER TABLE `players` ADD `VACBanned` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `bountyReason` VARCHAR(100) NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `players` ADD `claimsExpired` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `players` ADD `showLocationMessages` TINYINT(1) NOT NULL DEFAULT '1'") -- this is just here for backwards compatibility
 
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
@@ -781,9 +784,9 @@ function alterTables()
 	doSQL("ALTER TABLE `server` ADD `dropMiningWarningThreshold` INT NOT NULL DEFAULT '99'")
 	doSQL("ALTER TABLE `server` ADD `webPanelPort` INT NOT NULL DEFAULT '8080'")
 	doSQL("ALTER TABLE `server` ADD `allocsWebAPIUser` VARCHAR(100) NOT NULL DEFAULT '', ADD `allocsWebAPIPassword` VARCHAR(100) NOT NULL DEFAULT '', ADD `useAllocsWebAPI` TINYINT(1) NOT NULL DEFAULT '0'")
-	doSQL("ALTER TABLE `server` ADD `defaultWatchTimer` INT NOT NULL DEFAULT '259200")
-	doSQL("ALTER TABLE `server` ADD `archivePlayersLastSeenDays` INT NOT NULL DEFAULT '60")
-	doSQL("ALTER TABLE `server` CHANGE `webPanelPort` `webPanelPort` INT(11) NOT NULL DEFAULT '0")
+	doSQL("ALTER TABLE `server` ADD `defaultWatchTimer` INT NOT NULL DEFAULT '259200'")
+	doSQL("ALTER TABLE `server` ADD `archivePlayersLastSeenDays` INT NOT NULL DEFAULT '60'")
+	doSQL("ALTER TABLE `server` CHANGE `webPanelPort` `webPanelPort` INT(11) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `playersLastArchived` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
 	doSQL("ALTER TABLE `server` ADD `alertLevelHack` TINYINT(1) NOT NULL DEFAULT '1'")
 	doSQL("ALTER TABLE `server` ADD `logBotCommands` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -800,6 +803,7 @@ function alterTables()
 	doSQL("ALTER TABLE `server` CHANGE `ircServer` `ircServer` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '127.0.0.1'")
 	doSQL("ALTER TABLE `server` CHANGE `serverGroup` `serverGroup` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT ''")
 	doSQL("ALTER TABLE `server` CHANGE `moneyName` `moneyName` VARCHAR(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Zenny|Zennies'")
+	doSQL("ALTER TABLE `server` ADD `baseDeadzone` INT NOT NULL DEFAULT '0'")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -839,6 +843,7 @@ function alterTables()
 	doSQL("ALTER TABLE `restrictedItems` ADD `validated` TINYINT(1) NOT NULL DEFAULT '1'")
 	doSQL("ALTER TABLE `shop` ADD `validated` TINYINT(1) NOT NULL DEFAULT '1'")
 	doSQL("ALTER TABLE `shop` ADD `units` INT(1) NOT NULL, ADD `quality` INT(0) NOT NULL")
+	doSQL("ALTER TABLE `customCommands_Detail` DROP PRIMARY KEY , ADD PRIMARY KEY (`detailID`,`commandID`)")
 
 	-- fix zero default tp sizes
 	doSQL("UPDATE `teleports` SET size = 1.5 WHERE size = 0")
@@ -872,6 +877,8 @@ function alterTables()
 	doSQL("ALTER TABLE `locations` ADD `lobby` TINYINT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `keystones` CHANGE `removed` `removed` INT(11) NOT NULL DEFAULT '0'")
 	doSQL("UPDATE `keystones` SET removed = 0") -- this is necessary to stop the bot giving everyone claims in error due to a table change.
+	doSQL("ALTER TABLE `customCommands_Detail` CHANGE `thing` `thing` VARCHAR(255)")
+	doSQL("ALTER TABLE `LKPQueue` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT") -- to fix missing auto increment for some bots that helped with testing
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)

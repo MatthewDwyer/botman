@@ -186,6 +186,13 @@ function gmsg_admin()
 
 			setChatColour(id)
 
+			-- save the player record to the database
+			if not isArchived then
+				updatePlayer(id)
+			else
+				updateArchivedPlayer(id)
+			end
+
 			botman.faultyChat = false
 			return true
 		end
@@ -1557,6 +1564,8 @@ function gmsg_admin()
 
 
 	local function cmd_ArchivePlayers() --tested
+		local k,v
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}archive players"
@@ -1605,6 +1614,17 @@ function gmsg_admin()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players (except staff) who have not played in 60 days will be archived.  The bot may become un-responsive during this time.[-]")
 			else
 				irc_chat(chatvars.ircAlias, "Players (except staff) who have not played in 60 days will be archived.  The bot may become un-responsive during this time.")
+			end
+
+			botman.archivePlayers = true
+
+			--	first flag everyone except staff as notInLKP.  We will remove that flag as we find them in LKP.
+			for k,v in pairs(players) do
+				if tonumber(v.accessLevel) > 3 then
+					v.notInLKP = true
+				else
+					v.notInLKP = false
+				end
 			end
 
 			tempTimer( 10, [[sendCommand("lkp")]] )
@@ -4574,9 +4594,9 @@ function gmsg_admin()
 				end
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playerName .. " will spawn at " .. locations[loc].name .. " next time they join.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playerName .. " will be moved to " .. locations[loc].name .. " next time they join.[-]")
 				else
-					irc_chat(chatvars.ircAlias, "Player " .. playerName .. " will spawn at " .. locations[loc].name .. " next time they join.")
+					irc_chat(chatvars.ircAlias, "Player " .. playerName .. " will be moved to " .. locations[loc].name .. " next time they join.")
 				end
 			end
 
@@ -5375,12 +5395,21 @@ function gmsg_admin()
 
 				if botman.dbConnected then conn:execute("UPDATE keystones SET remove = 1 WHERE steam = " .. id) end
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I will remove all of player " .. playerName .. "'s claims when their chunks are loaded.[-]")
+				if accessLevel(id) > 2 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playerName .. "'s claims will be removed when players are nearby.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Player " .. playerName .. "'s claims will be removed when players are nearby.")
+					end
 				else
-					irc_chat(chatvars.ircAlias, "I will remove all of player " .. playerName .. "'s claims when their chunks are loaded.")
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admin " .. playerName .. "'s claims will be marked for removal but will only be removed when they are no longer an admin (and not using {#}test as player).[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Admin " .. playerName .. "'s claims will be marked for removal but will only be removed when they are no longer an admin (and not using {#}test as player).")
+					end
 				end
 
+				-- do a scan now so all of their claims are recorded
 				sendCommand("llp " .. id .. " parseable")
 			end
 
@@ -7019,6 +7048,8 @@ function gmsg_admin()
 				end
 			end
 
+			players[pid].testAsPlayer = true
+
 			-- force an early retirement
 			owners[pid] = nil
 			admins[pid] = nil
@@ -7202,7 +7233,7 @@ function gmsg_admin()
 			end
 		end
 
-		if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "level" and chatvars.words[3] == "hack" and chatvars.words[3] == "alert" then
+		if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "level" and chatvars.words[3] == "hack" and chatvars.words[4] == "alert" then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -8046,6 +8077,77 @@ function gmsg_admin()
 	end
 
 
+	local function cmd_ToggleRemoveExpiredClaims()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}remove/leave expired claims"
+			help[2] = "By default the bot will not remove expired claims.  It will always ignore admin claims."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "remo,leav,togg,claim,exp"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "remove") or string.find(chatvars.command, "leave") or string.find(chatvars.command, "exp") or string.find(chatvars.command, "claim"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "remove" or chatvars.words[1] == "leave") and chatvars.words[2] == "expired" and string.find(chatvars.words[3], "claim") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "remove" then
+				server.removeExpiredClaims = true
+				conn:execute("UPDATE server SET removeExpiredClaims = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Expired claims will be removed when players are nearby.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Expired claims will be removed when players are nearby.")
+				end
+			else
+				server.removeExpiredClaims = false
+				conn:execute("UPDATE server SET removeExpiredClaims = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Expired claims will not be removed.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Expired claims will not be removed.")
+				end
+			end
+
+			irc_chat(chatvars.ircAlias, ".")
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleReservedSlotPlayer()
 		local playerName, isArchived
 
@@ -8210,7 +8312,7 @@ function gmsg_admin()
 
 			if chatvars.words[1] == "disable" then
 				disableTrigger("Zombie Scouts")
-				server.enableScreamerAlert = 0
+				server.enableScreamerAlert = false
 				conn:execute("UPDATE server SET enableScreamerAlert = 0")
 
 				if (chatvars.playername ~= "Server") then
@@ -8220,7 +8322,7 @@ function gmsg_admin()
 				end
 			else
 				enableTrigger("Zombie Scouts")
-				server.enableScreamerAlert = 1
+				server.enableScreamerAlert = true
 				conn:execute("UPDATE server SET enableScreamerAlert = 1")
 
 				if (chatvars.playername ~= "Server") then
@@ -9849,6 +9951,15 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_TogglePack triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleRemoveExpiredClaims()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleRemoveExpiredClaims triggered") end
 		return result
 	end
 

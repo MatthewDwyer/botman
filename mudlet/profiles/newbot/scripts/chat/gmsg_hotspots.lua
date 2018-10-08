@@ -211,7 +211,7 @@ function gmsg_hotspots()
 					botman.faultyChat = false
 					return true
 				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no hotspot #" .. chatvars.number .. ".[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no hotspot " .. chatvars.number .. ".[-]")
 					botman.faultyChat = false
 					return true
 				end
@@ -236,7 +236,7 @@ function gmsg_hotspots()
 							botman.faultyChat = false
 							return true
 						else
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no hotspot #" .. chatvars.number .. ".[-]")
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no hotspot " .. chatvars.number .. ".[-]")
 							botman.faultyChat = false
 							return true
 						end
@@ -374,7 +374,7 @@ function gmsg_hotspots()
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You deleted the hotspot: " .. hotspots[chatvars.number].hotspot .. "[-]")
 					hotspots[chatvars.number] = nil
 				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no hotspot #" .. chatvars.number .. ".[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no hotspot " .. chatvars.number .. ".[-]")
 					botman.faultyChat = false
 					return true
 				end
@@ -394,7 +394,7 @@ function gmsg_hotspots()
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You deleted the hotspot: " .. hotspots[chatvars.number].hotspot .. "[-]")
 							hotspots[chatvars.number] = nil
 						else
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no hotspot #" .. chatvars.number .. ".[-]")
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no hotspot " .. chatvars.number .. ".[-]")
 							botman.faultyChat = false
 							return true
 						end
@@ -463,7 +463,7 @@ function gmsg_hotspots()
 						cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
 						teleport(cmd, chatvars.playerid)
 					else
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no hotspot #" .. chatvars.number .. ".[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There is no hotspot " .. chatvars.number .. ".[-]")
 					end
 
 					botman.faultyChat = false
@@ -579,7 +579,7 @@ function gmsg_hotspots()
 					row = cursor:fetch({}, "a")
 
 					while row do
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]#" .. row.idx .. " " .. row.hotspot .. "[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.idx .. " " .. row.hotspot .. "[-]")
 						row = cursor:fetch(row, "a")
 					end
 
@@ -602,9 +602,9 @@ function gmsg_hotspots()
 
 				while row do
 					if chatvars.accessLevel < 3 then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]#" .. row.idx .. " " .. players[row.owner].name .. " size " .. row.size * 2 .. "m " .. row.hotspot .. "[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.idx .. " " .. players[row.owner].name .. " size " .. row.size * 2 .. "m " .. row.hotspot .. "[-]")
 					else
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]#" .. row.idx .. " size " .. row.size * 2 .. "m " .. row.hotspot .. "[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.idx .. " size " .. row.size * 2 .. "m " .. row.hotspot .. "[-]")
 					end
 
 					row = cursor:fetch(row, "a")

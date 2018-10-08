@@ -23,6 +23,16 @@ function APITimer()
 			URL = row.URL
 			outputFile = row.OutputFile
 			conn:execute("delete from APIQueue where id = " .. row.id)
+
+			-- should be able to remove list later.  Just put it here to fix an issue with older bots updating and not having the metrics table.
+			if type(metrics) ~= "table" then
+				metrics = {}
+				metrics.commands = 0
+				metrics.commandLag = 0
+				metrics.errors = 0
+				metrics.telnetLines = 0
+			end
+
 			metrics.commands = metrics.commands + 1
 
 			if server.logBotCommands then

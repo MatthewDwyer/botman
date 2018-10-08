@@ -135,48 +135,53 @@ function login()
 		botman.botOffline = false
 		botman.lastServerResponseTimestamp = os.time()
 		botman.lastTelnetResponseTimestamp = os.time()
+		botman.serverRebooting = false
 	end
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	tempTimer( 120, [[checkData()]] )
+	botman.userHome = string.sub(homedir, 1, string.find(homedir, ".config") - 2)
+
+	if botman.sysExitID == nil then
+		botman.sysExitID = registerAnonymousEventHandler("sysExitEvent", "onSysExit")
+
+		if botman.sysExitID == nil then
+			botman.sysExitID = 0
+		end
+	end
+
+	if botman.sysIrcStatusMessageID == nil then
+		botman.sysIrcStatusMessageID = registerAnonymousEventHandler("sysIrcStatusMessage", "ircStatusMessage")
+
+		if botman.sysIrcStatusMessageID == nil then
+			botman.sysIrcStatusMessageID = 0
+		end
+	end
+
+	if botman.sysDisconnectionID == nil then
+		botman.sysDisconnectionID = registerAnonymousEventHandler("sysDisconnectionEvent", "onSysDisconnection")
+
+		if botman.sysDisconnectionID == nil then
+			botman.sysDisconnectionID = 0
+		end
+	end
+
+	if botman.updateBotOnlineStatusID == nil then
+		tempRegexTrigger("^(.*)$", [[updateBotOnlineStatus()]])
+		botman.updateBotOnlineStatusID = 0
+	end
 
 	if (botman.botStarted == nil) then
 		botman.botStarted = os.time()
 
 		if reloadBotScripts == nil then
 			dofile(homedir .. "/scripts/reload_bot_scripts.lua")
-			reloadBotScripts()
+			reloadBotScripts(false, false, true)
 		end
 
 		-- this must come after reload_bot_scripts above.
 		fixTables()
-
-		if botman.sysExitID == nil then
-			botman.sysExitID = registerAnonymousEventHandler("sysExitEvent", "onSysExit")
-
-			if botman.sysExitID == nil then
-				botman.sysExitID = 0
-			end
-		end
-
-		if botman.sysIrcStatusMessageID == nil then
-			botman.sysIrcStatusMessageID = registerAnonymousEventHandler("sysIrcStatusMessage", "ircStatusMessage")
-
-			if botman.sysIrcStatusMessageID == nil then
-				botman.sysIrcStatusMessageID = 0
-			end
-		end
-
-		if botman.sysDisconnectionID == nil then
-			botman.sysDisconnectionID = registerAnonymousEventHandler("sysDisconnectionEvent", "onSysDisconnection")
-
-			if botman.sysDisconnectionID == nil then
-				botman.sysDisconnectionID = 0
-			end
-		end
-
-		tempRegexTrigger("^(.*)$", [[updateBotOnlineStatus()]])
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		initBot() -- this lives in edit_me.lua
@@ -197,7 +202,6 @@ function login()
 		botman.serverTime = ""
 		botman.feralWarning = false
 		botman.playersOnline = 0
-		botman.userHome = string.sub(homedir, 1, string.find(homedir, ".config") - 2)
 		loadServer()
 		botman.ignoreAdmins	= true
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end

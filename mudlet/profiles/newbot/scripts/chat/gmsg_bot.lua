@@ -1702,7 +1702,7 @@ function gmsg_bot()
 			end
 		end
 
-		if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "level" and chatvars.words[3] == "hack" then
+		if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "level" and chatvars.words[3] == "hack" and chatvars.words[4] == "check" then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 0) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))

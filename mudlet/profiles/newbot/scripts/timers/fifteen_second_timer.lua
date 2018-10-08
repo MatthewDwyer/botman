@@ -31,4 +31,24 @@ function FifteenSecondTimer()
 	-- force a re-test of the connection to the shared database called bots
 	botman.db2Connected = false
 	botman.db2Connected = isDBBotsConnected()
+
+	if not server.lagged then
+		if tonumber(botman.playersOnline) > 24 then
+			if server.coppi and tonumber(botman.playersOnline) > 0 then
+				if server.scanNoclip then
+					sendCommand("pug")
+				end
+
+				if not server.playersCanFly then
+					sendCommand("pgd")
+				end
+			end
+
+			if (server.scanZombies or server.scanEntities) then
+				if server.useAllocsWebAPI then
+					sendCommand("gethostilelocation", "gethostilelocation/?", "hostiles.txt")
+				end
+			end
+		end
+	end
 end

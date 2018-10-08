@@ -468,6 +468,8 @@ end
 
 
 function logAlerts(alertTime, alertLine)
+	local file
+
 	-- don't log base protection alerts
 	if botman.webdavFolderWriteable == false or string.find(alertLine, "base protection") then
 		return
@@ -487,6 +489,8 @@ end
 
 
 function logBotCommand(commandTime, commandLine)
+	local file
+
 	if botman.webdavFolderWriteable == false or string.find(commandLine, "password") or string.find(commandLine, "invite code") or string.find(commandLine, "webtokens") then
 		return
 	end
@@ -509,7 +513,7 @@ end
 
 
 function logCommand(commandTime, commandLine)
-	local commandPosition
+	local commandPosition, file
 	local playerName = chatvars.playername
 
 	commandPosition = "0 0 0"
@@ -540,12 +544,12 @@ end
 
 
 function logChat(chatTime, chatLine)
+	local chatPosition, file
+	local playerName = chatvars.playername
+
 	if chatvars == nil or string.trim(chatLine) == "Server" then
 		return
 	end
-
-	local chatPosition
-	local playerName = chatvars.playername
 
 	chatPosition = "0 0 0"
 
@@ -575,6 +579,8 @@ end
 
 
 function logInventoryChanges(steam, item, delta, x, y, z, session, flag)
+	local file
+
 	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
 	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
 	botman.webdavFolderWriteable = false

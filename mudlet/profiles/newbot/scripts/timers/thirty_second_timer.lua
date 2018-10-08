@@ -88,9 +88,7 @@ function thirtySecondTimer()
 			if botman.dbConnected then conn:execute("INSERT into commandQueue (command) VALUES ('" .. cmd .. "')") end
 		else
 			if tonumber(botman.playersOnline) > 0 then
-				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getplayerinventories/?adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
-				os.remove(homedir .. "/temp/inventories.txt")
-				downloadFile(homedir .. "/temp/inventories.txt", url)
+				sendCommand("getplayerinventories", "getplayerinventories/?", "inventories.txt")
 			end
 		end
 

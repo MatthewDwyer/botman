@@ -28,8 +28,8 @@ function playerQueuedCommands()
 
 	if row then
 		while row do
-			steam = steam
-			command = command
+			steam = row.steam
+			command = row.command
 
 			if row.boss == true then
 				for k, v in pairs(igplayers) do

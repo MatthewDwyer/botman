@@ -219,6 +219,21 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
+		irc_chat(name, "Command: reload bot")
+		irc_chat(name, "Make the bot read gg, admin list, ban list, version and lkp -online.")
+		irc_chat(name, ".")
+	end
+
+	if (words[1] == "reload" and string.find(msg, "bot") and words[3] == nil) then
+		irc_chat(name, "Reading gg, admins, bans, lkp, version from server.")
+		reloadBot()
+		irc_params = {}
+		return
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
 		irc_chat(name, "Command: update code")
 		irc_chat(name, "Make the bot check for code updates and apply them.")
 		irc_chat(name, ".")
@@ -335,6 +350,29 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_HelpShop()
 		irc_params = {}
 		return
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: empty category {category name}")
+		irc_chat(name, "Delete everything from a category so you can start fresh.")
+		irc_chat(name, ".")
+	end
+
+	if words[1] == "empty" and words[2] == "category" then
+		if shopCategories[words[3]] then
+			conn:execute("delete FROM shop WHERE category = '" .. escape(words[3]) .. "'")
+			irc_chat(name, "The shop category called " .. words[3] .. " has been emptied.")
+			irc_chat(name, ".")
+			irc_params = {}
+			return
+		else
+			irc_chat(name, "No shop category called " .. words[3] .. " exists.")
+			irc_chat(name, ".")
+			irc_params = {}
+			return
+		end
 	end
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
@@ -4608,6 +4646,27 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_params.pid = pid
 			irc_params.pname = players[pid].name
 			irc_IGPlayerInfo()
+		end
+
+		irc_params = {}
+		return
+	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: igplayers")
+		irc_chat(name, "View the bot's record for each player that is currently on the server.")
+		irc_chat(name, ".")
+	end
+
+	if (words[1] == "igplayers") then
+
+		for k,v in pairs(igplayers) do
+			irc_params.pid = k
+			irc_params.pname = players[k].name
+			irc_IGPlayerInfo()
+			irc_chat(name, ".")
 		end
 
 		irc_params = {}

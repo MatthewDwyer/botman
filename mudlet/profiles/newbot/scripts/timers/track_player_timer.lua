@@ -7,6 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+
 function trackPlayerTimer()
 	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
 		return
@@ -23,9 +24,9 @@ function trackPlayerTimer()
 					v.trackerCountdown = v.trackerSpeed
 
 					if v.trackerReversed then
-						cursor,errorString = conn:execute("select * from memTracker where admin = " .. k .. " and trackerID < " .. v.trackerCount .. " order by trackerID desc limit 0," .. v.trackerSkip + 1)
+						cursor,errorString = conn:execute("SELECT * FROM memTracker WHERE admin = " .. k .. " AND trackerID < " .. v.trackerCount .. " ORDER BY trackerID DESC LIMIT 0," .. v.trackerSkip + 1)
 					else
-						cursor,errorString = conn:execute("select * from memTracker where admin = " .. k .. " and trackerID > " .. v.trackerCount .. " order by trackerID limit 0," .. v.trackerSkip + 1)
+						cursor,errorString = conn:execute("SELECT * FROM memTracker WHERE admin = " .. k .. " AND trackerID > " .. v.trackerCount .. " ORDER BY trackerID LIMIT 0," .. v.trackerSkip + 1)
 					end
 
 					if not cursor then

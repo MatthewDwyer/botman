@@ -147,7 +147,7 @@ function gmsg_locations()
 
 
 	local function cmd_ListLocations()
-		local showLocation
+		local showLocation, noLocations
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -177,7 +177,10 @@ function gmsg_locations()
 		end
 
 		if (chatvars.words[1] == "locations") then
+			noLocations = true
+
 			for k, v in pairs(locations) do
+				noLocations = false
 				status = ""
 
 				if v.hidden and chatvars.accessLevel > 2 then
@@ -264,6 +267,10 @@ function gmsg_locations()
 						end
 					end
 				end
+			end
+
+			if noLocations then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There are no locations.[-]")
 			end
 
 			botman.faultyChat = false

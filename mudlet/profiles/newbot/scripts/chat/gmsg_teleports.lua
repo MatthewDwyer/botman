@@ -2255,7 +2255,7 @@ function gmsg_teleports()
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "able") or string.find(chatvars.command, "returns"))) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "able") or string.find(chatvars.command, "return"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2267,7 +2267,7 @@ function gmsg_teleports()
 			end
 		end
 
-		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "returns" and chatvars.words[3] == nil then
+		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "return" and chatvars.words[3] == nil then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")

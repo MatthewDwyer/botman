@@ -21,12 +21,28 @@ function listPlayers()
 	server.scanZombies = false
 
 	if tonumber(botman.playersOnline) ~= 0 then
-		if server.useAllocsWebAPI then
-			url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getplayersonline/?adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
-			os.remove(homedir .. "/temp/playersOnline.txt")
-			downloadFile(homedir .. "/temp/playersOnline.txt", url)
+		if botman.skipLP == nil then
+			botman.skipLP = -1
+		end
+
+		if tonumber(botman.playersOnline) > 24 then
+			botman.skipLP = botman.skipLP + 1
 		else
-			sendCommand("lp")
+			botman.skipLP = 0
+		end
+
+		if botman.skipLP == 0 then
+			if server.useAllocsWebAPI then
+				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getplayersonline/?adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+				os.remove(homedir .. "/temp/playersOnline.txt")
+				downloadFile(homedir .. "/temp/playersOnline.txt", url)
+			else
+				sendCommand("lp")
+			end
+		end
+
+		if botman.skipLP == 0 then
+			botman.skipLP = -2
 		end
 	end
 
@@ -65,7 +81,7 @@ function listPlayers()
 				conn:execute("TRUNCATE TABLE memTracker")
 				conn:execute("TRUNCATE TABLE commandQueue")
 				conn:execute("TRUNCATE TABLE gimmeQueue")
-				sendCommand("shutdown")
+				send("shutdown")
 			end
 
 

@@ -50,6 +50,21 @@ function removeOldStaff()
 			mods[k] = nil
 		end
 	end
+
+	-- nuke the staff table and rebuild it
+	if botman.dbConnected then conn:execute("DELETE FROM staff") end
+
+	for k,v in pairs(owners) do
+		if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. k .. ", 0)") end
+	end
+
+	for k,v in pairs(admins) do
+		if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. k .. ", 1)") end
+	end
+
+	for k,v in pairs(mods) do
+		if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. k .. ", 2)") end
+	end
 end
 
 
@@ -316,11 +331,13 @@ function matchAll(line, logDate, logTime)
 		if string.find(line, "reason: Died") then
 			tmp.spawnedReason = "died"
 			igplayers[tmp.pid].spawnChecked = true
+			igplayers[tmp.pid].teleCooldown = 3
 		end
 
 		if string.find(line, "reason: JoinMultiplayer") then
 			tmp.spawnedReason = "joined"
 			igplayers[tmp.pid].spawnChecked = true
+			igplayers[tmp.pid].teleCooldown = 3
 			irc_chat(server.ircMain, "Player " .. tmp.pid .. " " .. igplayers[tmp.pid].name .. " spawned at " .. igplayers[tmp.pid].spawnedXPos .. " " .. igplayers[tmp.pid].spawnedYPos .. " " .. igplayers[tmp.pid].spawnedZPos)
 			irc_chat(server.ircAlerts, "Player " .. tmp.pid .. " " .. igplayers[tmp.pid].name .. " spawned at " .. igplayers[tmp.pid].spawnedXPos .. " " .. igplayers[tmp.pid].spawnedYPos .. " " .. igplayers[tmp.pid].spawnedZPos)
 		end
@@ -341,10 +358,8 @@ function matchAll(line, logDate, logTime)
 
 
 	if not server.useAllocsWebAPI then
-		if string.find(line, "Executing command 'gg'") then
-			if string.find(line, server.botsIP) then
-				botman.readGG = true
-			end
+		if string.find(line, "GamePref.") then
+			botman.readGG = true
 		end
 	end
 
@@ -504,7 +519,7 @@ function matchAll(line, logDate, logTime)
 				players[pid].testAsPlayer = nil
 
 				if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. number .. " WHERE steam = " .. pid) end
-				if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. pid .. "," .. number .. ")") end
+--				if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. pid .. "," .. number .. ")") end
 			end
 
 			return
@@ -867,12 +882,12 @@ function matchAll(line, logDate, logTime)
 		if string.find(line, "Executing command 'version'") and server.botsIP then
 			if string.find(line, server.botsIP) then
 				modVersions = {}
-				server.alloc = false
+				server.allocs = false
 				server.coppi = false
 				server.stompy = false
 				server.SDXDetected = false
 				server.ServerToolsDetected = false
-
+				server.djkrose = false
 				if botman.dbConnected then
 					conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
 				end
@@ -906,7 +921,7 @@ function matchAll(line, logDate, logTime)
 	end
 
 
-	if botman.readGG or botman.badServerConfig then
+	if botman.readGG then
 		number = tonumber(string.match(line, " (%d+)"))
 
 		if (string.find(line, "HideCommandExecutionLog =")) then
@@ -1122,23 +1137,7 @@ function matchAll(line, logDate, logTime)
 	end
 
 
-	if string.find(line, "HideCommandExecutionLog =") then
-		if (not botman.readGG) and server.botsIP then
-			botman.badServerConfig = true
-
-			if server.HideCommandExecutionLog then
-				if tonumber(server.HideCommandExecutionLog) > 1 then
-					irc_chat(server.ircMain, "ALERT! It appears that the server config setting HideCommandExecutionLog is not set to 0 or 1")
-					irc_chat(server.ircMain, "If any telnet traffic is hidden from the bot, important features will not work.  Please set it to 0 or 1")
-				end
-			end
-		else
-			botman.badServerConfig = false
-		end
-	end
-
-
-	if string.find(line, "INF Server shutting down!") then
+	if string.find(line, "INF Server shutting down!") or string.find(line, "INF [Steamworks.NET] Stopping server") then
 		saveLuaTables()
 		return
 	end
@@ -1282,7 +1281,7 @@ function matchAll(line, logDate, logTime)
 	end
 
 
-	if string.find(line, "INF World.Unload") then
+	if (string.find(line, "INF [NET] ServerShutdown") or string.find(line, "INF World.Unload")) and not string.find(line, "Chat") then
 		botman.botOffline = true
 		return
 	end

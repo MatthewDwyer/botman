@@ -8,6 +8,76 @@
 --]]
 
 
+function processLKPLine(line)
+	local tmp
+
+	tmp = {}
+	tmp.data = string.split(line, ",")
+	tmp.name = string.sub(tmp.data[1], string.find(tmp.data[1], ". ") + 2)
+	tmp.id = string.sub(tmp.data[2], string.find(tmp.data[2], "id=") + 3)
+	tmp.steam = string.sub(tmp.data[3], string.find(tmp.data[3], "steamid=") + 8)
+	tmp.playtime = string.sub(tmp.data[6], string.find(tmp.data[6], "playtime=") + 9, string.len(tmp.data[6]) - 2)
+	tmp.seen = string.sub(tmp.data[7], string.find(tmp.data[7], "seen=") + 5)
+
+	if tmp.steam == "" then
+		return
+	end
+
+	-- if playersArchived[tmp.steam] then
+		-- -- don't process if this player has been archived
+		-- return
+	-- end
+
+	-- local pattern = "(%d+)-(%d+)-(%d+) (%d+):(%d+)"
+	-- local runyear, runmonth, runday, runhour, runminute = tmp.seen:match(pattern)
+	-- local seenTimestamp = os.time({year = runyear, month = runmonth, day = runday, hour = runhour, min = runminute, 0})
+
+	-- if (not igplayers[tmp.steam]) and players[tmp.steam] then
+		-- -- acrchive players that haven't played in 60 days and aren't an admin
+		-- if (os.time() - seenTimestamp) > 86400 * server.archivePlayersLastSeenDays and (accessLevel(tmp.steam) > 3) then
+			-- conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. tmp.steam)
+			-- conn:execute("DELETE FROM players WHERE steam = " .. tmp.steam)
+			-- players[tmp.steam] = nil
+			-- loadPlayersArchived(tmp.steam)
+			-- return
+		-- end
+	-- end
+
+	if playersArchived[tmp.steam] then
+		-- abort if the player has been archived
+		return
+	end
+
+	if (not players[tmp.steam] and (tmp.playtime ~= "0")) then
+		players[tmp.steam] = {}
+
+		if tmp.id ~= "-1" then
+			players[tmp.steam].id = tmp.id
+		end
+
+		players[tmp.steam].name = tmp.name
+		players[tmp.steam].steam = tmp.steam
+		players[tmp.steam].playtime = tmp.playtime
+		players[tmp.steam].seen = tmp.seen
+
+		if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. tmp.steam .. "," .. tmp.id .. ",'" .. escape(tmp.name) .. "'," .. tmp.playtime .. ",'" .. tmp.seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. tmp.playtime .. ", seen = '" .. tmp.seen .. "'") end
+	else
+		if tmp.id ~= "-1" then
+			players[tmp.steam].id = tmp.id
+		end
+
+		players[tmp.steam].name = tmp.name
+		players[tmp.steam].playtime = tmp.playtime
+		players[tmp.steam].seen = tmp.seen
+
+		if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. tmp.steam .. "," .. tmp.id .. ",'" .. escape(tmp.name) .. "'," .. tmp.playtime .. ",'" .. tmp.seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. tmp.playtime .. ", seen = '" .. tmp.seen .. "', name = '" .. escape(tmp.name) .. "', id = " .. tmp.id) end
+	end
+
+	-- add missing fields and give them default values
+	fixMissingPlayer(tmp.steam)
+end
+
+
 onSysDisconnection = function ()
 	botman.botOfflineCount = 0
 	botman.botOffline = true
@@ -129,9 +199,8 @@ function reloadBot(getAllPlayers)
 
 	-- got the time?  Hey that's a nice watch.  Can I have it?
 	tempTimer( 3, [[sendCommand("gt")]] )
-
-	tempTimer( 5, [[sendCommand("admin list")]] )
-	tempTimer( 10, [[sendCommand("version")]] )
+	tempTimer( 5, [[sendCommand("version")]] )
+	tempTimer( 10, [[sendCommand("gg")]] )
 
 	if getAllPlayers then
 		tempTimer( 15, [[sendCommand("lkp")]] )
@@ -139,22 +208,16 @@ function reloadBot(getAllPlayers)
 		tempTimer( 15, [[sendCommand("lkp -online")]] )
 	end
 
-	tempTimer( 20, [[sendCommand("gg")]] )
-	tempTimer( 25, [[sendCommand("ban list")]] )
-	tempTimer( 30, [[registerBot()]] )
+	tempTimer( 25, [[sendCommand("admin list")]] )
+	tempTimer( 30, [[sendCommand("ban list")]] )
+	tempTimer( 35, [[registerBot()]] )
 end
 
 
 function reloadCode()
-	tempTimer(5, [[ reloadStartup() ]] )
-
 	dofile(homedir .. "/scripts/reload_bot_scripts.lua")
 	-- reload the bot's code. Skip reloading the players table and don't announce that the code has been reloaded.
 	reloadBotScripts(true, true)
-end
-
-
-function reloadStartup()
 	dofile(homedir .. "/scripts/startup_bot.lua")
 end
 
@@ -1237,10 +1300,10 @@ end
 
 function downloadHandler(event, ...)
    if event == "sysDownloadDone" then
-		if string.find(..., "version.txt") then
-			finishDownload(...)
-			return
-		end
+		-- if string.find(..., "version.txt") then
+			-- finishDownload(...)
+			-- return
+		-- end
 
 		botman.lastServerResponseTimestamp = os.time()
 
@@ -1388,14 +1451,14 @@ end
 
 
 function finishDownload(filePath)
-	local file, ln, codeVersion, codeBranch
+	-- local file, ln, codeVersion, codeBranch
 
-	if isFile(homedir .. "/temp/version.txt") then
-		file = io.open(homedir .. "/temp/version.txt", "r")
-		codeVersion = file:read "*a"
-		codeBranch = file:read "*a"
-		file:close()
-	end
+	-- if isFile(homedir .. "/temp/version.txt") then
+		-- file = io.open(homedir .. "/temp/version.txt", "r")
+		-- codeVersion = file:read "*a"
+		-- codeBranch = file:read "*a"
+		-- file:close()
+	-- end
 end
 
 
@@ -1749,17 +1812,50 @@ function mapPosition(steam)
 end
 
 
-function validPosition(steam, alert)
-	-- check that y position is between bedrock and the max build height
-	if tonumber(players[steam].yPos) > -1 and tonumber(players[steam].yPos) < 256 then
-		return true
+function validBasePosition(steam)
+	local k, v, isValid, dist, minimumDist
+
+	isValid = true -- yay!
+
+	if tonumber(server.baseDeadzone) > (server.baseSize * 2) then
+		minimumDist = server.baseDeadzone
 	else
-		if alert ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]You cannot do that here. If you recently teleported, wait a bit then try again.[-]")
+		minimumDist = server.baseSize * 2
+	end
+
+	-- check that y position is between bedrock and the max build height
+	if tonumber(players[steam].yPos) < 1 or tonumber(players[steam].yPos) > 255 then
+		isValid = false -- drat!
+	end
+
+	-- check for nearby unfriendly bases
+	for k, v in pairs(players) do
+		if (v.homeX ~= nil) and k ~= steam then
+				if (v.homeX ~= 0 and v.homeZ ~= 0) then
+				dist = distancexz(players[steam].xPos, players[steam].zPos, v.homeX, v.homeZ)
+
+				if tonumber(dist) < tonumber(minimumDist) then
+					if not isFriend(k, steam) then
+						isValid = false -- curses!
+					end
+				end
+			end
 		end
 
-		return false
+		if (v.home2X ~= nil) and k ~= steam then
+				if (v.home2X ~= 0 and v.home2Z ~= 0) then
+				dist = distancexz(players[steam].xPos, players[steam].zPos, v.home2X, v.home2Z)
+
+				if tonumber(dist) < tonumber(minimumDist) then
+					if not isFriend(k, steam) then
+						isValid = false -- oh noes!
+					end
+				end
+			end
+		end
 	end
+
+	return isValid
 end
 
 
@@ -2162,7 +2258,7 @@ end
 
 
 function dbWho(name, x, y, z, dist, days, hours, height, steamid, ingame)
-	local cursor, errorString, row, counter, isStaff
+	local cursor, errorString, row, counter, isStaff, sql
 
 	isStaff = false
 
@@ -2182,9 +2278,13 @@ function dbWho(name, x, y, z, dist, days, hours, height, steamid, ingame)
 	conn:execute("DELETE FROM searchResults WHERE owner = " .. steamid)
 
 	if tonumber(hours) > 0 then
-		cursor,errorString = conn:execute("SELECT DISTINCT steam, session FROM tracker WHERE abs(x - " .. x .. ") <= " .. dist .. " AND ABS(z - " .. z .. ") <= " .. dist .. " AND ABS(y - " .. y .. ") <= " .. height .. " AND timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(hours) * 3600)) .. "'")
+		sql = "SELECT DISTINCT steam, session FROM tracker WHERE abs(x - " .. x .. ") <= " .. dist .. " AND ABS(z - " .. z .. ") <= " .. dist .. " AND ABS(y - " .. y .. ") <= " .. height .. " AND timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(hours) * 3600)) .. "'"
+
+		cursor,errorString = conn:execute(sql)
 	else
-		cursor,errorString = conn:execute("SELECT DISTINCT steam, session FROM tracker WHERE abs(x - " .. x .. ") <= " .. dist .. " AND ABS(z - " .. z .. ") <= " .. dist .. " AND ABS(y - " .. y .. ") <= " .. height .. " AND timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(days) * 86400)) .. "'")
+		sql = "SELECT DISTINCT steam, session FROM tracker WHERE abs(x - " .. x .. ") <= " .. dist .. " AND ABS(z - " .. z .. ") <= " .. dist .. " AND ABS(y - " .. y .. ") <= " .. height .. " AND timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(days) * 86400)) .. "'"
+
+		cursor,errorString = conn:execute(sql)
 	end
 
 	row = cursor:fetch({}, "a")
@@ -2203,9 +2303,9 @@ function dbWho(name, x, y, z, dist, days, hours, height, steamid, ingame)
 		if ingame then
 			if isStaff then
 				if players[row.steam] then
-					message("pm " .. steamid .. " [" .. server.chatColour .. "] #" .. counter .." " .. row.steam .. " " .. players[row.steam].id .. " " .. players[row.steam].name .. " sess: " .. row.session .. "[-]")
+					message("pm " .. steamid .. " [" .. server.chatColour .. "]" .. row.steam .. " " .. players[row.steam].id .. " " .. players[row.steam].name .. " sess: " .. row.session .. "[-]")
 				else
-					message("pm " .. steamid .. " [" .. server.chatColour .. "] #" .. counter .." " .. row.steam .. " " .. playersArchived[row.steam].id .. " " .. playersArchived[row.steam].name .. " (archived) sess: " .. row.session .. "[-]")
+					message("pm " .. steamid .. " [" .. server.chatColour .. "]" .. row.steam .. " " .. playersArchived[row.steam].id .. " " .. playersArchived[row.steam].name .. " (archived) sess: " .. row.session .. "[-]")
 				end
 			else
 				if players[row.steam] then
@@ -2248,7 +2348,6 @@ function dailyMaintenance()
 
 	-- delete telnet logs older than server.telnetLogKeepDays
 	os.execute("find " .. homedir .. "/log* -mtime +" .. server.telnetLogKeepDays .. " -exec rm {} \\;")
-
 	return true
 end
 
@@ -2259,7 +2358,7 @@ function startReboot()
 	-- add a random delay to mess with dupers
 	local rnd = rand(5)
 
-	sendCommand("sa")
+	send("sa")
 	botman.rebootTimerID = tempTimer( 10 + rnd, [[finishReboot()]] )
 end
 
@@ -2319,7 +2418,7 @@ function finishReboot()
 	conn:execute("TRUNCATE TABLE memTracker")
 	conn:execute("TRUNCATE TABLE commandQueue")
 	conn:execute("TRUNCATE TABLE gimmeQueue")
-	sendCommand("shutdown")
+	send("shutdown")
 
 	-- check for bot updates
 	updateBot()
@@ -2888,6 +2987,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].mute = false
 	players[steam].name = player
 	players[steam].newPlayer = true
+	players[steam].notInLKP = false
 	players[steam].overstack = false
 	players[steam].overstackItems = ""
 	players[steam].overstackScore = 0

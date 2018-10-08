@@ -691,10 +691,12 @@ function loadServer()
 			server.moneyPlural = temp[2]
 		end
 
-		if string.find(server.ircServer, ":") then
-			temp = string.split(server.ircServer, ":")
-			server.ircServer = temp[1]
-			server.ircPort = temp[2]
+		if server.ircServer then
+			if string.find(server.ircServer, ":") then
+				temp = string.split(server.ircServer, ":")
+				server.ircServer = temp[1]
+				server.ircPort = temp[2]
+			end
 		else
 			if row.ircServer ~= "" then
 				server.ircServer = row.ircServer

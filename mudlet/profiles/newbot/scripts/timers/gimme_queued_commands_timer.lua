@@ -7,6 +7,27 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+function LKPQueue()
+	local row, cursor, errorString, LKPLine
+
+	if not botman.dbConnected then
+		return
+	end
+
+	cursor,errorString = conn:execute("SELECT * FROM LKPQueue ORDER BY id LIMIT 1")
+
+	if cursor then
+		row = cursor:fetch({}, "a")
+
+		if row then
+			LKPLine = row.line
+			conn:execute("DELETE FROM LKPQueue WHERE id = " .. row.id)
+			processLKPLine(LKPLine)
+		end
+	end
+end
+
+
 function miscCommandsTimer()
 	local cursor, errorString, row, temp, steam, command
 
@@ -117,6 +138,7 @@ function gimmeQueuedCommands()
 					if row2 then
 						command = row2.command
 						conn:execute("DELETE FROM gimmeQueue WHERE id = " .. row2.id)
+						display(command)
 						sendCommand(command)
 					end
 				end
@@ -129,4 +151,7 @@ function gimmeQueuedCommands()
 	-- piggy back on this timer so we don't need to add more timers to the profile.
 	-- miscCommands are whatever we need done on a timer that isn't covered elsewhere
 	miscCommandsTimer()
+
+	-- Process 1 line from LKP.  We process them this way to avoid freezing the bot when reading thousands of players
+	LKPQueue()
 end

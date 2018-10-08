@@ -8,14 +8,33 @@
 --]]
 
 function endListPlayers(line)
-	local cursor, errorString, row
-	local freeSlots
+	local cursor, errorString, row, k, v, freeSlots
 
 	if botman.botDisabled then
 		return
 	end
 
 	if not server.useAllocsWebAPI then
+		if botman.readingLKP then
+			botman.readingLKP = nil
+
+			if botman.archivePlayers then
+				botman.archivePlayers = nil
+
+				--	Everyone who is flagged notInLKP gets archived.
+				for k,v in pairs(players) do
+					if v.notInLKP then
+						conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. k)
+						conn:execute("DELETE FROM players WHERE steam = " .. k)
+						players[k] = nil
+--						loadPlayersArchived(k)
+					end
+				end
+
+				loadPlayersArchived()
+			end
+		end
+
 		if botman.listPlayers and not botman.listEntities then
 			botman.playersOnline = tonumber(string.match(line, "%d+"))
 			playerConnectCounter = botman.playersOnline

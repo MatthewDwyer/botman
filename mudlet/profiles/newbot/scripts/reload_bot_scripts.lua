@@ -10,6 +10,14 @@ if botman.debugAll then
 	debug = true -- this should be true
 end
 
+
+function postUpdate()
+	os.remove(homedir .. "/temp/postUpdate.lua")
+	os.execute("wget http://www.botman.nz/" .. server.updateBranch .. "/postUpdate.lua -P \"" .. homedir .. "\"/temp/")
+	tempTimer( 5, [[ dofile(homedir .. "/temp/postUpdate.lua") ]] )
+end
+
+
 function updateBot(forced, steam)
 	if isFile(homedir .. "/blockScripts.txt") then
 		irc_chat(server.ircMain, "Update cancelled")
@@ -30,7 +38,6 @@ function updateBot(forced, steam)
 	if server.updateBranch ~= "" then
 		os.remove(homedir .. "/temp/scripts.zip")
 		os.remove(homedir .. "/temp/version.txt")
-		-- gameDay  gameType   gameVersion   serverName   ServerPort
 		os.execute("wget http://www.botman.nz/" .. server.updateBranch .. "/version.txt -P \"" .. homedir .. "\"/temp/")
 
 		if forced then
@@ -39,12 +46,12 @@ function updateBot(forced, steam)
 			tempTimer( 5, [[ checkScriptVersion() ]] )
 		end
 
-		-- vague attempt at compiling a list of bots.  This will be replaced with a restful api.
-		if botman.botOffline then
-			downloadFile(homedir .. "/temp/", "http://www.botman.nz/serverIP/" .. server.IP .. "/port/" .. server.ServerPort .. "/name/" .. server.serverName .. "/gameType/" .. server.gameType .. "/gameDay/" .. server.gameDay .. "/gameVersion/" .. server.gameVersion .. "/OFFLINE")
-		else
-			downloadFile(homedir .. "/temp/", "http://www.botman.nz/serverIP/" .. server.IP .. "/port/" .. server.ServerPort .. "/name/" .. server.serverName .. "/gameType/" .. server.gameType .. "/gameDay/" .. server.gameDay .. "/gameVersion/" .. server.gameVersion .. "/ONLINE")
-		end
+		-- -- vague attempt at compiling a list of bots.  This will be replaced with a restful api.
+		-- if botman.botOffline then
+			-- downloadFile(homedir .. "/temp/", "http://www.botman.nz/serverIP/" .. server.IP .. "/port/" .. server.ServerPort .. "/name/" .. server.serverName .. "/gameType/" .. server.gameType .. "/gameDay/" .. server.gameDay .. "/gameVersion/" .. server.gameVersion .. "/OFFLINE")
+		-- else
+			-- downloadFile(homedir .. "/temp/", "http://www.botman.nz/serverIP/" .. server.IP .. "/port/" .. server.ServerPort .. "/name/" .. server.serverName .. "/gameType/" .. server.gameType .. "/gameDay/" .. server.gameDay .. "/gameVersion/" .. server.gameVersion .. "/ONLINE")
+		-- end
 	end
 end
 
@@ -76,7 +83,7 @@ function checkScriptVersion(forced)
 				if forced then
 					irc_chat(server.ircMain, "The bot is running the latest " .. server.updateBranch .. " version.")
 
-					if steamID > 0 then
+					if tonumber(steamID) > 0 then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is running the latest " .. server.updateBranch .. " version.[-]")
 					end
 				end
@@ -99,12 +106,12 @@ function unpackScripts()
 	runBeforeBotUpdate()
 
 	os.execute("unzip -X -o \"" .. homedir .. "\"/temp/scripts.zip -d \"" .. homedir .. "\"")
-	tempTimer( 3, [[ reloadBotScripts(true, true) ]] )
-	tempTimer( 60, [[ reloadBotScripts(true, true, true) ]] ) -- while not strictly necessary it does seem to fix lingering issues after an update most of the time.
-
-	tempTimer( 6, [[ loadPlayers() ]] )
-	tempTimer( 8, [[ loadPlayersArchived() ]] )
 	message("say [" .. server.chatColour .. "]" .. server.botName .. " has been updated.[-]")
+	tempTimer( 5, [[ reloadBotScripts(true, true) ]] )
+	tempTimer( 10, [[ loadPlayers() ]] )
+	tempTimer( 15, [[ loadPlayersArchived() ]] )
+	tempTimer( 20, [[ postUpdate() ]] )
+	dofile(homedir .. "/scripts/reload_bot_scripts.lua")
 end
 
 
@@ -858,9 +865,11 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 			end
 
 			if not skipFetchData then
-				tempTimer( 5, [[sendCommand("version")]] )
-				tempTimer( 10, [[sendCommand("gg")]] )
-				tempTimer( 15, [[sendCommand("se")]] )
+				tempTimer( 30, [[reloadBot()]] )
+
+				-- tempTimer( 5, [[sendCommand("version")]] )
+				-- tempTimer( 10, [[sendCommand("gg")]] )
+				-- tempTimer( 15, [[sendCommand("se")]] )
 			end
 
 			if not botman.sysDisconnectionID then
@@ -880,17 +889,32 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 
 		-- run llp once per day but only when there are less than 11 players on. On busy servers this might cause llp to be run less often but we want to avoid server lag.
 		if not botMaintenance.lastLLP then
-			if botman.playersOnline < 11 then
+			if tonumber(botman.playersOnline) < 11 then
 				botMaintenance.lastLLP = server.dateTest
 				saveBotMaintenance()
 				sendCommand("llp parseable")
 			end
 		else
 			if botMaintenance.lastLLP ~= server.dateTest then
-				if botman.playersOnline < 11 then
+				if tonumber(botman.playersOnline) < 11 then
 					botMaintenance.lastLLP = server.dateTest
 					saveBotMaintenance()
 					sendCommand("llp parseable")
+				end
+			end
+		end
+
+		-- make sure we have run lkp at least once.  After that we will run it daily if there are 10 or less players online.
+		if not botMaintenance.lastLKP then
+				botMaintenance.lastLKP = server.dateTest
+				saveBotMaintenance()
+				sendCommand("lkp")
+		else
+			if botMaintenance.lastLKP ~= server.dateTest then
+				if tonumber(botman.playersOnline) < 11 then
+					botMaintenance.lastLKP = server.dateTest
+					saveBotMaintenance()
+					sendCommand("lkp")
 				end
 			end
 		end

@@ -235,6 +235,7 @@ function drawLottery(draw)
 				if (r == 4) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Being eaten by zombies! Poor guy :([-]") .. "')") end
 				if (r == 5) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]No one! HA! Suck it Nobody.[-]") .. "')") end
 				if (r == 6) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Sorry folks. Tonight's draw is cancelled.[-]") .. "')") end
+				r = 0
 			end
 
 			if (r == 6) then
@@ -252,6 +253,7 @@ function drawLottery(draw)
 					if (r == 4) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody. Right! That's it you've had it. *BANG* Nobody died.[-]") .. "')") end
 					if (r == 5) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Stop gambling you lunatic![-]") .. "')") end
 					if (r == 6) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Not Nobody, please don't draw Nobody.. Ah crap![-]") .. "')") end
+					r = 0
 				end
 			end
 
@@ -265,6 +267,7 @@ function drawLottery(draw)
 				if r == 6 then thing = "rotten cheese" end
 				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
 				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]EWW!  Who put a " .. thing .. " in the bag?  That's gross![-]") .. "')")
+				r = 0
 			end
 		else
 			message("say [" .. server.chatColour .. "]Nobody won this time.[-]")
@@ -538,9 +541,9 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			end
 
 			if server.stompy then
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase should be in your inventory but it could be at your feet.  Check the ground if you didn't notice the item being added.[-]")
+				message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase should be in your inventory but may be at your feet.  Check the ground.[-]")
 			else
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase is at your feet.  Look down and grab it before a zombie eats it.[-]")
+				message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase is at your feet.  Grab it before a zombie eats it.[-]")
 			end
 
 			conn:execute("UPDATE players SET cash = " .. players[playerid].cash .. " WHERE steam = " .. playerid)
