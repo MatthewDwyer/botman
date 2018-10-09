@@ -93,7 +93,7 @@ function randomTP(playerid, location, forced)
 				teleport(cmd, playerid)
 			else
 				message("pm " .. playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
-				if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
+				if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
 			end
 
 			return
@@ -120,7 +120,7 @@ function randomTP(playerid, location, forced)
 			teleport(cmd, playerid)
 		else
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
-			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
+			if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
 			igplayers[playerid].lastTPTimestamp = os.time()
 		end
 	end

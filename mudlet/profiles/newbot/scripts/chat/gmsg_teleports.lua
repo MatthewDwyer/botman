@@ -1000,7 +1000,7 @@ function gmsg_teleports()
 				teleport(cmd, chatvars.playerid)
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will teleport in " .. server.playerTeleportDelay .. " seconds.[-]")
-				if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
+				if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
 			end
 
 			botman.faultyChat = false
@@ -1089,7 +1089,7 @@ function gmsg_teleports()
 						teleport(cmd, chatvars.playerid)
 					else
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will return in " .. server.playerTeleportDelay .. " seconds.[-]")
-						if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
+						if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
 					end
 
 					if players[chatvars.playerid].yPos < 1000 then
@@ -1115,7 +1115,7 @@ function gmsg_teleports()
 						teleport(cmd, chatvars.playerid)
 					else
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will return in " .. server.playerTeleportDelay .. " seconds.[-]")
-						if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
+						if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
 					end
 
 					if players[chatvars.playerid].yPos < 1000 then

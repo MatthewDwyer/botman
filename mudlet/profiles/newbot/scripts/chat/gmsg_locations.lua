@@ -2457,7 +2457,7 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "hide ") + 6)
+			locationName = string.sub(chatvars.command, string.find(chatvars.command, "hide ") + 5)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -2524,7 +2524,7 @@ function gmsg_locations()
 			end
 		end
 
-		if chatvars.words[1] == "location" and (chatvars.words[2] == "lobby" or string.find(chatvars.command, "not lobby")) then
+		if chatvars.words[1] == "location" and (chatvars.words[2] == "lobby" or string.find(chatvars.command, "not lobby")) and not (string.find(chatvars.command, " pvp") or string.find(chatvars.command, " pve")) then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -3820,7 +3820,7 @@ function gmsg_locations()
 				teleport(cmd, chatvars.playerid)
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. loc .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
-				if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
+				if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
 			end
 
 			if server.announceTeleports then

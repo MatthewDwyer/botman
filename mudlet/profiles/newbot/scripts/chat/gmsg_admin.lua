@@ -5664,9 +5664,9 @@ function gmsg_admin()
 
 		if chatvars.words[1] == "restore" and chatvars.words[2] == "admin" then
 			if chatvars.ircid ~= 0 then
-				if botman.dbConnected then conn:execute("UPDATE miscQueue SET timerDelay = now() WHERE steam = " .. chatvars.ircid) end
+				if botman.dbConnected then conn:execute("UPDATE persistentQueue SET timerDelay = now() WHERE steam = " .. chatvars.ircid) end
 			else
-				if botman.dbConnected then conn:execute("UPDATE miscQueue SET timerDelay = now() WHERE steam = " .. chatvars.playerid) end
+				if botman.dbConnected then conn:execute("UPDATE persistentQueue SET timerDelay = now() WHERE steam = " .. chatvars.playerid) end
 			end
 
 			botman.faultyChat = false
@@ -7028,13 +7028,13 @@ function gmsg_admin()
 			end
 
 			cmd = string.format("ban remove %s", pid)
-			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. pid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + restoreDelay) .. "')") end
+			if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. pid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + restoreDelay) .. "')") end
 
 			cmd = string.format("admin add %s %s", pid, chatvars.accessLevel)
-			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. pid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + restoreDelay) .. "')") end
+			if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. pid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + restoreDelay) .. "')") end
 
 			cmd = string.format("pm %s [%s]Your admin status is restored.[-]", pid, server.chatColour)
-			if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. pid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + restoreDelay) .. "')") end
+			if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. pid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + restoreDelay) .. "')") end
 
 			sendCommand("admin remove " .. pid)
 

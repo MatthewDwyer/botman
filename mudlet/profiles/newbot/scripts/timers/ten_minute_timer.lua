@@ -8,6 +8,10 @@
 --]]
 
 function TenMinuteTimer()
+	if tonumber(botman.playersOnline) <= 0 then
+		sendCommand("mem")
+	end
+
 	if customTenMinuteTimer ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua
 		if customTenMinuteTimer then

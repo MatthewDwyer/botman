@@ -2732,6 +2732,7 @@ function readAPI_Version()
 	modVersions = {}
 	server.allocs = false
 	server.coppi = false
+	server.csmm = false
 	server.stompy = false
 	server.SDXDetected = false
 	server.ServerToolsDetected = false

@@ -200,7 +200,7 @@ function gmsg_base()
 				teleport(cmd, chatvars.playerid)
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will be teleported to your base in " .. server.playerTeleportDelay .. " seconds.[-]")
-				if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
+				if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
 			end
 
 			botman.faultyChat = false

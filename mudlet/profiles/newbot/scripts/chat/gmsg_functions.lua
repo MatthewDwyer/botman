@@ -1629,7 +1629,7 @@ function gmsg(line, ircid)
 				end
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. players[id].name .. "'s location in " .. server.playerTeleportDelay .. " seconds.[-]")
-				if botman.dbConnected then conn:execute("insert into miscQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
+				if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
 				igplayers[chatvars.playerid].lastTPTimestamp = os.time() -- this won't really stop additional tp commands stacking but it will slow the player down a little.
 			end
 

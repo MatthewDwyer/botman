@@ -635,6 +635,7 @@ function alterTables()
 	doSQL("CREATE TABLE IF NOT EXISTS playersArchived LIKE players")
 	doSQL("CREATE TABLE `APIQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`URL` varchar(500) NOT NULL,`OutputFile` varchar(500) NOT NULL, PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `LKPQueue` (`id` int(11) NOT NULL AUTO_INCREMENT, `line` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
+	doSQL("CREATE TABLE `persistentQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) NOT NULL,`command` varchar(255) NOT NULL,`action` varchar(15) NOT NULL,  `value` int(11) NOT NULL DEFAULT '0',`timerDelay` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 
 	-- changes to players table
 	doSQL("ALTER TABLE `players` ADD COLUMN `waypoint2X` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Y` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Z` INT NOT NULL DEFAULT '0', ADD COLUMN `waypointsLinked` TINYINT(1) NOT NULL DEFAULT '0'")

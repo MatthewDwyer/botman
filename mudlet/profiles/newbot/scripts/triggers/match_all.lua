@@ -884,10 +884,12 @@ function matchAll(line, logDate, logTime)
 				modVersions = {}
 				server.allocs = false
 				server.coppi = false
+				server.csmm = false
 				server.stompy = false
 				server.SDXDetected = false
 				server.ServerToolsDetected = false
 				server.djkrose = false
+
 				if botman.dbConnected then
 					conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
 				end
@@ -1078,6 +1080,7 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "Mod Coppis command additions") then
 		server.coppi = true
 
+
 		temp = string.split(line, ":")
 		server.coppiRelease = temp[1]
 		server.coppiVersion = temp[2]
@@ -1093,7 +1096,6 @@ function matchAll(line, logDate, logTime)
 	-- detect Alloc's Mod
 	if string.find(line, "Mod Allocs server fixes") then
 		server.allocs = true
-
 		temp = string.split(line, ":")
 		server.allocsServerFixes = temp[2]
 
@@ -1102,6 +1104,7 @@ function matchAll(line, logDate, logTime)
 
 
 	if string.find(line, "Mod Allocs command extensions") then
+		server.allocs = true
 		temp = string.split(line, ":")
 		server.allocsCommandExtensions = temp[2]
 
@@ -1110,6 +1113,7 @@ function matchAll(line, logDate, logTime)
 
 
 	if string.find(line, "Mod Allocs MapRendering") then
+		server.allocs = true
 		temp = string.split(line, ":")
 		server.allocsMap = temp[2]
 

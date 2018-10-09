@@ -285,11 +285,6 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 	botman.botDate = os.date("%Y-%m-%d", os.time())
 	botman.botTime = os.date("%H:%M:%S", os.time())
 
-if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
-
-	if tonumber(botman.playersOnline) <= 0 then
-		sendCommand("mem")
-	end
 
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 

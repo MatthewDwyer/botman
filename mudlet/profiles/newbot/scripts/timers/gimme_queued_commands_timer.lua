@@ -28,6 +28,92 @@ function LKPQueue()
 end
 
 
+function persistentQueueTimer()
+	local cursor, errorString, row, temp, steam, command
+
+	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
+		return
+	end
+
+	cursor,errorString = conn:execute("SELECT * FROM persistentQueue WHERE timerDelay = '0000-00-00 00:00:00'  ORDER BY id limit 0,1")
+
+	if cursor then
+		row = cursor:fetch({}, "a")
+
+		if row then
+			steam = row.steam
+			command = row.command
+
+			if string.find(command, "admin add") then
+				irc_chat(server.ircMain, "Player " .. players[steam].name .. " has been given admin.")
+				temp = string.split(command, " ")
+				setChatColour(steam, temp[4])
+				conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+				sendCommand(command)
+			end
+
+			if string.find(command, "ban remove") then
+				irc_chat(server.ircMain, "Player " .. players[steam].name .. " has been unbanned.")
+				conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+				sendCommand(command)
+			end
+
+			if string.find(command, "tele ") then
+				if igplayers[steam] then
+					conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+					teleport(command, steam)
+				end
+			else
+				conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+				sendCommand(command)
+			end
+		end
+	end
+
+	-- check all the delayed commands.  send any that are not in the future
+	cursor,errorString = conn:execute("SELECT id, steam, command, action, value, UNIX_TIMESTAMP(timerDelay) AS delay FROM persistentQueue WHERE timerDelay <> '0000-00-00 00:00:00' ORDER BY id")
+
+	if cursor then
+		row = cursor:fetch({}, "a")
+
+		if row then
+			while row do
+				steam = row.steam
+				command = row.command
+
+				if row.delay - os.time() <= 0 then
+					if string.sub(command, 1, 3) == "pm " or string.sub(command, 1, 3) == "say" then
+						conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+						message(command)
+
+						if string.find(row.command, "admin status") then
+							irc_chat(server.ircMain, "OH GOD NOOOO! " .. players[steam].name .. "'s admin status has been restored.")
+						end
+					else
+						if string.find(command, "tele ") then
+							if igplayers[steam] then
+								conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+								teleport(command, steam)
+							end
+						else
+							conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+							sendCommand(command)
+
+							if string.find(command, "admin add") then
+								temp = string.split(command, " ")
+								setChatColour(steam, temp[4])
+							end
+						end
+					end
+				end
+
+				row = cursor:fetch(row, "a")
+			end
+		end
+	end
+end
+
+
 function miscCommandsTimer()
 	local cursor, errorString, row, temp, steam, command
 
@@ -151,6 +237,9 @@ function gimmeQueuedCommands()
 	-- piggy back on this timer so we don't need to add more timers to the profile.
 	-- miscCommands are whatever we need done on a timer that isn't covered elsewhere
 	miscCommandsTimer()
+
+	-- the persistentQueue is identical to miscQueue except that it is preserved if the bot is restarted while miscQueue and other temporary tables get truncated.
+	persistentQueueTimer()
 
 	-- Process 1 line from LKP.  We process them this way to avoid freezing the bot when reading thousands of players
 	LKPQueue()
