@@ -724,7 +724,7 @@ function gmsg_base()
 			end
 
 			if not validBasePosition(chatvars.playerid) then
-				message("pm " .. steam .. " [" .. server.chatColour .. "]You cannot set the base here.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You cannot set the base here.  It is too close to a non-friendly base.[-]")
 				botman.faultyChat = false
 				return true
 			end

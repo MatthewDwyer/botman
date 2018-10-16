@@ -636,6 +636,7 @@ function alterTables()
 	doSQL("CREATE TABLE `APIQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`URL` varchar(500) NOT NULL,`OutputFile` varchar(500) NOT NULL, PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `LKPQueue` (`id` int(11) NOT NULL AUTO_INCREMENT, `line` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `persistentQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) NOT NULL,`command` varchar(255) NOT NULL,`action` varchar(15) NOT NULL,  `value` int(11) NOT NULL DEFAULT '0',`timerDelay` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
+	doSQL("CREATE TABLE `slots` (`slot` int(11) NOT NULL,`steam` bigint(17) NOT NULL DEFAULT '0',`online` tinyint(1) NOT NULL DEFAULT '0',`joinedTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`joinedSession` int(11) NOT NULL DEFAULT '0',`expires` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`reserved` tinyint(1) NOT NULL DEFAULT '0',`staff` tinyint(1) NOT NULL DEFAULT '0',`free` TINYINT(1) NOT NULL DEFAULT '1',`canBeKicked` TINYINT(1) NOT NULL DEFAULT '1',`disconnectedTimestamp` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', PRIMARY KEY (`slot`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 
 	-- changes to players table
 	doSQL("ALTER TABLE `players` ADD COLUMN `waypoint2X` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Y` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Z` INT NOT NULL DEFAULT '0', ADD COLUMN `waypointsLinked` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -805,6 +806,7 @@ function alterTables()
 	doSQL("ALTER TABLE `server` CHANGE `serverGroup` `serverGroup` VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT ''")
 	doSQL("ALTER TABLE `server` CHANGE `moneyName` `moneyName` VARCHAR(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Zenny|Zennies'")
 	doSQL("ALTER TABLE `server` ADD `baseDeadzone` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `reservedSlotTimelimit` INT NOT NULL DEFAULT '0'")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 

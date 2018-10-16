@@ -529,18 +529,12 @@ function gmsg_coppi()
 				return true
 			end
 
-			if tmp.direction == "north" then -- good
-				if chatvars.intX < 0 then
-					tmp.adjustment = -1
-				else
-					tmp.adjustment = 1
-				end
-
+			if tmp.direction == "north" then
 				prefabCopies[chatvars.playerid .. "bottemp"] = {}
 				prefabCopies[chatvars.playerid .. "bottemp"].owner = chatvars.playerid
 				prefabCopies[chatvars.playerid .. "bottemp"].name = "bottemp"
-				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX + tmp.adjustment - tmp.width
-				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX + tmp.adjustment + tmp.width
+				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX - tmp.width
+				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX + tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].y1 = tmp.base
 				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ
@@ -557,18 +551,12 @@ function gmsg_coppi()
 				return true
 			end
 
-			if tmp.direction == "south" then -- bad
-				if chatvars.intX < 0 then
-					tmp.adjustment = -1
-				else
-					tmp.adjustment = 1
-				end
-
+			if tmp.direction == "south" then
 				prefabCopies[chatvars.playerid .. "bottemp"] = {}
 				prefabCopies[chatvars.playerid .. "bottemp"].owner = chatvars.playerid
 				prefabCopies[chatvars.playerid .. "bottemp"].name = "bottemp"
-				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX + 1 - tmp.width
-				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX + 1 + tmp.width
+				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX - tmp.width
+				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX + tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].y1 = tmp.base
 				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ
@@ -585,7 +573,7 @@ function gmsg_coppi()
 				return true
 			end
 
-			if tmp.direction == "east" then -- good
+			if tmp.direction == "east" then
 				prefabCopies[chatvars.playerid .. "bottemp"] = {}
 				prefabCopies[chatvars.playerid .. "bottemp"].owner = chatvars.playerid
 				prefabCopies[chatvars.playerid .. "bottemp"].name = "bottemp"
@@ -593,8 +581,9 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX + tmp.long
 				prefabCopies[chatvars.playerid .. "bottemp"].y1 = tmp.base
 				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall
-				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - 1 - tmp.width
-				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ - 1 + tmp.width
+				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - tmp.width
+				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.width
+
 				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
 				if chatvars.words[1] == "dig" then
@@ -607,7 +596,7 @@ function gmsg_coppi()
 				return true
 			end
 
-			if tmp.direction == "west" then -- bad
+			if tmp.direction == "west" then
 				prefabCopies[chatvars.playerid .. "bottemp"] = {}
 				prefabCopies[chatvars.playerid .. "bottemp"].owner = chatvars.playerid
 				prefabCopies[chatvars.playerid .. "bottemp"].name = "bottemp"
@@ -615,8 +604,9 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX - tmp.long
 				prefabCopies[chatvars.playerid .. "bottemp"].y1 = tmp.base
 				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall
-				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ + 1 - tmp.width
-				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + 1 + tmp.width
+				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - tmp.width
+				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.width
+
 				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
 				if chatvars.words[1] == "dig" then

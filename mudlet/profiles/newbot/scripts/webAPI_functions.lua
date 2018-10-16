@@ -29,7 +29,7 @@ function checkAPIWorking()
 	foundAPI = false
 
 	-- if the API is working a file called dummy.txt will not be empty.
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		-- oh no!  it's empty! maybe its 2 above or below?  Let's find out :D
 		if not botman.testAPIPort then
 			-- re-test 2 above the port we were given
@@ -141,7 +141,7 @@ function API_PlayerInfo(data)
 	intY = posY
 	intZ = posZ
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	position = posX .. posY .. posZ
 
@@ -154,7 +154,7 @@ function API_PlayerInfo(data)
 		resetZone = false
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- check for invalid or missing steamid.  kick if not passed
 	steamtest = tonumber(data.steamid)
@@ -245,7 +245,7 @@ function API_PlayerInfo(data)
 		players[data.steamid].ping = data.ping
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if faultyInfo == data.steamid then
 		-- Attempt to fix the fault assuming it set some stuff because of it
@@ -289,14 +289,14 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if tonumber(intY) > 0 and tonumber(intY) < 500 then
 		igplayers[data.steamid].lastTP = nil
 		forgetLastTP(data.steamid)
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if players[data.steamid].location ~= "" and igplayers[data.steamid].spawnedInWorld and igplayers[data.steamid].teleCooldown < 1 then
 		-- spawn the player at location
@@ -445,7 +445,7 @@ function API_PlayerInfo(data)
 
 	igplayers[data.steamid].lastLP = os.time()
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	players[data.steamid].id = data.entityid
 	players[data.steamid].name = data.name
@@ -498,7 +498,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	igplayers[data.steamid].xPosLast = igplayers[data.steamid].xPos
 	igplayers[data.steamid].yPosLast = igplayers[data.steamid].yPos
@@ -515,7 +515,7 @@ function API_PlayerInfo(data)
 		igplayers[data.steamid].oldLevel = data.level
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- hacker detection
 	if tonumber(igplayers[data.steamid].oldLevel) ~= -1 then
@@ -532,7 +532,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	players[data.steamid].level = data.level
 	igplayers[data.steamid].level = data.level
@@ -559,7 +559,7 @@ function API_PlayerInfo(data)
 		igplayers[data.steamid].zPosLastOK = intZ
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	atHome(data.steamid)
 	currentLocation = inLocation(intX, intZ)
@@ -579,7 +579,7 @@ function API_PlayerInfo(data)
 		igplayers[data.steamid].inLocation = ""
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if server.showLocationMessages then
 		if igplayers[data.steamid].alertLocation ~= currentLocation and currentLocation ~= false then
@@ -589,7 +589,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if currentLocation == false then
 		if server.showLocationMessages then
@@ -609,7 +609,7 @@ function API_PlayerInfo(data)
 		igplayers[data.steamid].alertLocation = currentLocation
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- fix weird cash bug
 	if tonumber(players[data.steamid].cash) < 0 then
@@ -696,7 +696,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- update player record of zombies
 	players[data.steamid].zombies = igplayers[data.steamid].zombies
@@ -713,7 +713,7 @@ function API_PlayerInfo(data)
 		players[data.steamid].score = data.score
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	players[data.steamid].xPos = posX
 	players[data.steamid].yPos = posY
@@ -730,7 +730,7 @@ function API_PlayerInfo(data)
 	if (igplayers[data.steamid].greet) and tonumber(igplayers[data.steamid].greetdelay) == 0 then
 		igplayers[data.steamid].greet = false
 
-		if server.welcome ~= nil then
+		if server.welcome ~= nil and server.welcome ~= "" then
 			message(string.format("pm %s [%s]%s[-]", data.steamid, server.chatColour, server.welcome))
 		else
 			message("pm " .. data.steamid .. " [" .. server.chatColour .. "]Welcome to " .. server.serverName .. "!  Type " .. server.commandPrefix .. "info, " .. server.commandPrefix .. "rules or " .. server.commandPrefix .. "help for commands.[-]")
@@ -811,7 +811,7 @@ function API_PlayerInfo(data)
 
 	igplayers[data.steamid].sessionPlaytime = os.time() - igplayers[data.steamid].sessionStart
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if (players[data.steamid].newPlayer == true and (igplayers[data.steamid].sessionPlaytime + players[data.steamid].timeOnServer > (server.newPlayerTimer * 60))) then
 		players[data.steamid].newPlayer = false
@@ -825,7 +825,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- if we are following a player and they move more than 50 meters away, teleport us close to them.
 	if igplayers[data.steamid].following ~= nil then
@@ -901,7 +901,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if (igplayers[data.steamid].alertBaseExit == true) then
 		if igplayers[data.steamid].alertBase == 1 then
@@ -1033,7 +1033,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	x = math.floor(igplayers[data.steamid].xPos / 512)
 	z = math.floor(igplayers[data.steamid].zPos / 512)
@@ -1079,7 +1079,7 @@ function API_PlayerInfo(data)
 	end
 
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- prevent player exceeding the map limit unless they are an admin except when ignoreadmins is false
 	if not isDestinationAllowed(data.steamid, intX, intZ) then
@@ -1111,7 +1111,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- left prison zone warning
 	if (locations["prison"]) then
@@ -1144,7 +1144,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- freeze!
 	if (players[data.steamid].freeze == true) then
@@ -1160,7 +1160,7 @@ function API_PlayerInfo(data)
 		return
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- remove player from location if the location is closed or their level is outside level restrictions
 	if currentLocation ~= false then
@@ -1216,7 +1216,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- teleport lookup
 	if (igplayers[data.steamid].teleCooldown < 1) and (players[data.steamid].prisoner == false) then
@@ -1258,7 +1258,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- linked waypoint lookup
 	if (igplayers[data.steamid].teleCooldown < 1) and (players[data.steamid].prisoner == false) then
@@ -1293,7 +1293,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- left reset zone warning
 	if (not resetZone) then
@@ -1317,7 +1317,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if	baseProtection(data.steamid, posX, posY, posZ) and not resetZone then
 		faultyPlayerinfo = false
@@ -1348,7 +1348,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if (igplayers[data.steamid].deadX ~= nil) and igplayers[data.steamid].spawnedInWorld and igplayers[data.steamid].spawnedReason ~= "fake reason" then
 		dist = math.abs(distancexz(igplayers[data.steamid].deadX, igplayers[data.steamid].deadZ, posX, posZ))
@@ -1371,7 +1371,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- hotspot lookup
 	hotspot = LookupHotspot(posX, posY, posZ)
@@ -1401,7 +1401,7 @@ function API_PlayerInfo(data)
 	end
 
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if igplayers[data.steamid].rawPosition ~= position then
 		igplayers[data.steamid].afk = os.time() + 900
@@ -1414,9 +1414,9 @@ function API_PlayerInfo(data)
 			igplayers[data.steamid].greetdelay = 0
 		end
 
-		-- if tonumber(igplayers[data.steamid].teleCooldown) > 100 then
-			-- igplayers[data.steamid].teleCooldown = 3
-		-- end
+		if tonumber(igplayers[data.steamid].teleCooldown) > 100 then
+			igplayers[data.steamid].teleCooldown = 3
+		end
 	end
 
 
@@ -1426,7 +1426,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if igplayers[data.steamid].currentLocationPVP then
 		if players[data.steamid].alertPVP == true then
@@ -1442,7 +1442,7 @@ function API_PlayerInfo(data)
 		end
 	end
 
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug playerinfoJSON line " .. debugger.getinfo(1).currentline, true) end
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- stuff to do after everything else
 
@@ -1466,7 +1466,7 @@ function readAPI_AdminList()
 	fileSize = lfs.attributes (homedir .. "/temp/adminList.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -1560,7 +1560,7 @@ function readAPI_BanList()
 	fileSize = lfs.attributes (homedir .. "/temp/banList.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -1621,7 +1621,7 @@ function readAPI_BCGo()
 	fileSize = lfs.attributes (homedir .. "/temp/bc-go.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -1663,7 +1663,7 @@ function readAPI_BCTime()
 	fileSize = lfs.attributes (homedir .. "/temp/bc-time.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -1689,7 +1689,7 @@ function readAPI_Command()
 	fileSize = lfs.attributes (homedir .. "/temp/command.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -1761,7 +1761,7 @@ function readAPI_GG()
 	fileSize = lfs.attributes (homedir .. "/temp/gg.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -1805,7 +1805,7 @@ function readAPI_Help()
 	fileSize = lfs.attributes (homedir .. "/temp/help.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -1844,7 +1844,7 @@ function readAPI_Inventories()
 	fileSize = lfs.attributes (homedir .. "/temp/inventories.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -1956,7 +1956,7 @@ function readAPI_Hostiles()
 	fileSize = lfs.attributes (homedir .. "/temp/hostiles.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -1992,7 +1992,7 @@ function readAPI_LE()
 	fileSize = lfs.attributes (homedir .. "/temp/le.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -2037,7 +2037,7 @@ function readAPI_LKP()
 	fileSize = lfs.attributes (homedir .. "/temp/lkp.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -2173,7 +2173,7 @@ function readAPI_LI()
 	fileSize = lfs.attributes (homedir .. "/temp/li.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -2215,7 +2215,7 @@ function readAPI_LLP()
 	fileSize = lfs.attributes (homedir .. "/temp/llp.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -2383,7 +2383,7 @@ function readAPI_LPB()
 	fileSize = lfs.attributes (homedir .. "/temp/lpb.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -2439,7 +2439,7 @@ function readAPI_LPF()
 	fileSize = lfs.attributes (homedir .. "/temp/lpf.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -2479,7 +2479,7 @@ function readAPI_PlayersOnline()
 	fileSize = lfs.attributes (homedir .. "/temp/playersOnline.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -2518,7 +2518,7 @@ function readAPI_PGD()
 	fileSize = lfs.attributes (homedir .. "/temp/pgd.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -2547,7 +2547,7 @@ function readAPI_PUG()
 	fileSize = lfs.attributes (homedir .. "/temp/pug.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -2604,7 +2604,7 @@ function readAPI_SE()
 	fileSize = lfs.attributes (homedir .. "/temp/se.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -2680,7 +2680,7 @@ function readAPI_MEM()
 	fileSize = lfs.attributes (homedir .. "/temp/mem.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
@@ -2725,7 +2725,7 @@ function readAPI_Version()
 	fileSize = lfs.attributes (homedir .. "/temp/installedMods.txt", "size")
 
 	-- abort if the file is empty
-	if fileSize == nil or fileSize == 0 then
+	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 

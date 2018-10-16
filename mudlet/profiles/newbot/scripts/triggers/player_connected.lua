@@ -242,6 +242,8 @@ function playerConnected(line)
 		playerConnectCounter = 	playerConnectCounter + 1
 	end
 
+	send("sa")
+
 	if (debug) then
 		dbug("line " .. line)
 		dbug("debug playerConnectCounter " .. playerConnectCounter)
@@ -355,6 +357,7 @@ function playerConnected(line)
 		conn:execute("DELETE FROM playersArchived WHERE steam = " .. tmp.steam)
 		playersArchived[tmp.steam] = nil
 		loadPlayers(tmp.steam)
+		send("sa")
 	end
 
 	-- add to players table
@@ -396,7 +399,19 @@ function playerConnected(line)
 		end
 
 		cmd = "lpf " .. tmp.steam
-		tempTimer( 10, [[sendCommand("]] .. cmd .. [[")]] )
+		tempTimer( 30, [[sendCommand("]] .. cmd .. [[")]] )
+
+		-- this is a hack :O to try to fix corrupt player profiles that freeze/crash the server.  Its nuts but it works.
+		-- to limit the lag this would cause with everyone joining at once sometimes, we only do this once per day per player that joins but ignore brand new players when they first join
+		if not players[tmp.steam].dailySave then
+			players[tmp.steam].dailySave = os.date("%Y-%b-%d", os.time())
+			send("sa")
+		else
+			if players[tmp.steam].dailySave ~= os.date("%Y-%b-%d", os.time()) then
+				players[tmp.steam].dailySave = os.date("%Y-%b-%d", os.time())
+				send("sa")
+			end
+		end
 	end
 
 	-- add to in-game players table
@@ -477,17 +492,21 @@ function playerConnected(line)
 
 	if server.coppi then
 		if players[tmp.steam].mute then
-			sendCommand("mpc " .. tmp.steam .. " true")
+			tempTimer( 32, [[ sendCommand("mpc ]] .. tmp.steam .. [[ true") ]] )
+			--sendCommand("mpc " .. tmp.steam .. " true")
 		end
 
 		if players[tmp.steam].chatColour ~= "" then
 			if string.upper(string.sub(players[tmp.steam].chatColour, 1, 6)) ~= "FFFFFF" then
-				sendCommand("cpc " .. tmp.steam .. " " .. stripAllQuotes(players[tmp.steam].chatColour) .. " 1")
+				tempTimer( 35, [[ sendCommand("cpc ]] .. tmp.steam .. " " .. stripAllQuotes(players[tmp.steam].chatColour) .. [[ 1") ]] )
+				--sendCommand("cpc " .. tmp.steam .. " " .. stripAllQuotes(players[tmp.steam].chatColour) .. " 1")
 			else
-				setChatColour(tmp.steam)
+				tempTimer( 35, [[ setChatColour(]] .. tmp.steam .. [[) ]] )
+				--setChatColour(tmp.steam)
 			end
 		else
-			setChatColour(tmp.steam)
+			tempTimer( 35, [[ setChatColour(]] .. tmp.steam .. [[) ]] )
+			--setChatColour(tmp.steam)
 		end
 	end
 
@@ -540,7 +559,8 @@ function playerConnected(line)
 
 	if server.coppi then
 		-- limit ingame chat length to block chat bombs.
-		sendCommand("pcml " .. tmp.steam .. " 300")
+		tempTimer( 40, [[ sendCommand("pcml ]] .. tmp.steam .. [[ 300") ]] )
+		--sendCommand("pcml " .. tmp.steam .. " 300")
 	end
 
 	if tonumber(players[tmp.steam].donorExpiry) < os.time() and players[tmp.steam].donor then
@@ -571,10 +591,12 @@ function playerConnected(line)
 		irc_chat(server.ircAlerts, "Inventory watching of player " .. tmp.player .. " has expired. They will no longer be watched.")
 	end
 
-	sendCommand("lkp " .. tmp.steam)
+	tempTimer( 45, [[ sendCommand("lkp ]] .. tmp.steam .. [[") ]] )
+	--sendCommand("lkp " .. tmp.steam)
 
 	-- check how many claims they have placed
-	sendCommand("llp " .. tmp.steam .. " parseable")
+	tempTimer( 50, [[ sendCommand("llp ]] .. tmp.steam .. [[ parseable") ]] )
+	--sendCommand("llp " .. tmp.steam .. " parseable")
 
 	if customPlayerConnected ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua

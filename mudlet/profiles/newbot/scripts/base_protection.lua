@@ -74,7 +74,10 @@ function baseProtection(steam, posX, posY, posZ)
 									igplayers[steam].zPosLastAlert = posZ
 
 									if (dist < 20) then
-										alertAdmins("Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s base")
+										if not server.disableWatchAlerts then
+											alertAdmins("Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s base")
+										end
+
 										irc_chat(server.ircAlerts, server.gameDate .. " Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s base")
 									end
 
@@ -93,7 +96,10 @@ function baseProtection(steam, posX, posY, posZ)
 									message("pm " .. k .. " [" .. server.chatColour .. "]" .. igplayers[steam].name .. " has been bounced away from your base.[-]")
 								end
 
-								alertAdmins(igplayers[steam].name .. " has been ejected from " .. v.name  .."'s 1st base.")
+								if not server.disableWatchAlerts then
+									alertAdmins(igplayers[steam].name .. " has been ejected from " .. v.name  .."'s 1st base.")
+								end
+
 								dist = distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.homeX, v.homeZ)
 
 								if dist > size then
@@ -169,7 +175,10 @@ function baseProtection(steam, posX, posY, posZ)
 									igplayers[steam].zPosLastAlert = posZ
 
 									if (dist < 20) then
-										alertAdmins("Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s 2nd base teleport.")
+										if not server.disableWatchAlerts then
+											alertAdmins("Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s 2nd base teleport.")
+										end
+
 										irc_chat(server.ircAlerts, server.gameDate .. " Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s 2nd base teleport")
 									end
 
@@ -197,7 +206,10 @@ function baseProtection(steam, posX, posY, posZ)
 									message("pm " .. k .. " [" .. server.chatColour .. "]" .. igplayers[steam].name .. " has been ejected from your 2nd base.[-]")
 								end
 
-								alertAdmins(igplayers[steam].name .. " has been ejected from " .. v.name  .."'s 2nd base.")
+								if not server.disableWatchAlerts then
+									alertAdmins(igplayers[steam].name .. " has been ejected from " .. v.name  .."'s 2nd base.")
+								end
+
 								dist = distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.home2X, v.home2Z)
 
 								if dist > size then

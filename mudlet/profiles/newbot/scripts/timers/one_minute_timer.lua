@@ -134,6 +134,17 @@ function everyMinute()
 				end
 			end
 
+			-- the player's y coord is negative.  Attempt to rescue them by sending them back to the surface.
+			if tonumber(v.yPos) < 0 and accessLevel(k) > 2 then
+				if not v.fallingRescue then
+					v.fallingRescue = true
+					sendCommand("tele " .. k .. " " .. v.xPosLastOK .. " -1 " .. v.zPosLastOK)
+				else
+					v.fallingRescue = nil
+					kick(k, "You were kicked to fix you falling under the world. You can rejoin any time.")
+				end
+			end
+
 			-- check how many claims they have placed
 			sendCommand("llp " .. k .. " parseable")
 

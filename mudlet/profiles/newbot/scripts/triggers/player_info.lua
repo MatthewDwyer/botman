@@ -138,9 +138,13 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	rawPosition = posX .. posY .. posZ
 	rawRotation = rotY
 
-	intX = math.floor(posX)
-	intY = math.ceil(posY)
-	intZ = math.floor(posZ)
+	posX = math.floor(posX)
+	posY = math.ceil(posY)
+	posZ = math.floor(posZ)
+
+	intX = posX
+	intY = posY
+	intZ = posZ
 
 	region = getRegion(intX, intZ)
 	regionX, regionZ, chunkX, chunkZ = getRegionChunkXZ(intX, intZ)
@@ -752,7 +756,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if (igplayers[steam].greet) and tonumber(igplayers[steam].greetdelay) == 0 then
 		igplayers[steam].greet = false
 
-		if server.welcome ~= nil then
+		if server.welcome ~= nil and server.welcome ~= "" then
 			message(string.format("pm %s [%s]%s[-]", steam, server.chatColour, server.welcome))
 		else
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Welcome to " .. server.serverName .. "!  Type " .. server.commandPrefix .. "info, " .. server.commandPrefix .. "rules or " .. server.commandPrefix .. "help for commands.[-]")
@@ -1455,9 +1459,9 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			igplayers[steam].greetdelay = 0
 		end
 
-		-- if tonumber(igplayers[steam].teleCooldown) > 100 then
-			-- igplayers[steam].teleCooldown = 3
-		-- end
+		if tonumber(igplayers[steam].teleCooldown) > 100 then
+			igplayers[steam].teleCooldown = 3
+		end
 	end
 
 	if (igplayers[steam].rawRotation ~= rawRotation) and rawRotation ~= nil then

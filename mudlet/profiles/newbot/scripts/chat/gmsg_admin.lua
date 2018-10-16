@@ -6593,6 +6593,83 @@ function gmsg_admin()
 	end
 
 
+	local function cmd_SetReservedSlotTimelimit()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set reserved slot timelimit {minutes} (default 0)"
+			help[2] = "If this is 0, reserved slots are released when the player leaves the server.\n"
+			help[2] = help[2] .. "Otherwise minutes after the player reserves a slot, they will become eligible to be kicked to make room for another reserved slotter."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,reser,slot,time"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " set") or string.find(chatvars.command, "slot") or string.find(chatvars.command, "reser") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if string.find(chatvars.command, "set reserved slot time") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number == nil then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Number required eg. " .. server.commandPrefix .. "set reserved slot time 10[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Number required  eg. " .. server.commandPrefix .. "set reserved slot time 10")
+				end
+			else
+				chatvars.number = math.abs(chatvars.number)
+
+				server.reservedSlotTimelimit = chatvars.number
+				if botman.dbConnected then conn:execute("UPDATE server SET reservedSlotTimelimit = " .. server.reservedSlotTimelimit) end
+
+				if reservedSlotTimelimit == 0 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who are authorised to reserve slots will hold them until they leave the server.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Players who are authorised to reserve slots will hold them until they leave the server.")
+					end
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.reservedSlotTimelimit .. " minutes after an authorised player starts using a reserved slot, they can be kicked if another authorised player joins and the server is full.[-]")
+					else
+						irc_chat(chatvars.ircAlias, server.reservedSlotTimelimit .. " minutes after an authorised player starts using a reserved slot, they can be kicked if another authorised player joins and the server is full.")
+					end
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_SetReturnCooldown()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -9807,6 +9884,15 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_SetMaxTrackingDays triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetReservedSlotTimelimit()
+
+	if result then
+		if debug then dbug("debug cmd_SetReservedSlotTimelimit triggered") end
 		return result
 	end
 
