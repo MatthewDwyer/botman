@@ -127,11 +127,12 @@ function sendCommand(command, api, outputFile)
 			outputFile = "dummy.txt"
 		end
 
+		os.remove(homedir .. "/temp/" .. outputFile)
+
 		if server.logBotCommands then
 			logBotCommand(botman.serverTime, url)
 		end
 
-		os.remove(homedir .. "/temp/" .. outputFile)
 		downloadFile(homedir .. "/temp/" .. outputFile, url)
 
 		-- should be able to remove list later.  Just put it here to fix an issue with older bots updating and not having the metrics table.

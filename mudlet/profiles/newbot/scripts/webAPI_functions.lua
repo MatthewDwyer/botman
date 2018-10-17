@@ -1467,6 +1467,7 @@ function readAPI_AdminList()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		botman.resendAdminList = true
 		return
 	end
 
@@ -1561,6 +1562,7 @@ function readAPI_BanList()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		botman.resendBanList = true
 		return
 	end
 
@@ -1762,6 +1764,7 @@ function readAPI_GG()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		botman.resendGG = true
 		return
 	end
 
@@ -2726,6 +2729,7 @@ function readAPI_Version()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		botman.resendVersion = true
 		return
 	end
 

@@ -765,6 +765,10 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	enableTimer("ircQueue")
 	enableTimer("TrackPlayer")
 	enableTimer("messageQueue")
+
+	-- delayed reload for startup_bot.lua
+	tempTimer( 5, [[ dofile(]] .. homedir .. [[ .. "/scripts/startup_bot.lua") ]] )
+
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 end
 

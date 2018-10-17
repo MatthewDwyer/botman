@@ -224,7 +224,6 @@ function gimmeQueuedCommands()
 					if row2 then
 						command = row2.command
 						conn:execute("DELETE FROM gimmeQueue WHERE id = " .. row2.id)
-						display(command)
 						sendCommand(command)
 					end
 				end

@@ -7618,77 +7618,76 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_ToggleClaimScan()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
-			help = {}
-			help[1] = " {#}enable/disable claim scan"
-			help[2] = "Every 45 seconds the bot reads the claims of all ingame players. This can be a lot of data and could impact server performance.\n"
-			help[2] = help[2] .. "If the bot is reporting server lag frequently, you can disable the timed claim scan.\n"
-			help[2] = help[2] .. "It will still scan when a player leaves the server and can be commanded to do a scan."
+	-- This command is no longer needed as the claim scan has been recoded and is much more efficient.
+	-- local function cmd_ToggleClaimScan()
+		-- if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			-- help = {}
+			-- help[1] = " {#}enable/disable claim scan"
+			-- help[2] = "The bot reads an individual player's claims when they join and leave the server. Also once per real day it reads all claims (if the server is not busy)."
 
-			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,claim,lcb,key,scan"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
-				registerHelp(tmp)
-			end
+			-- if botman.registerHelp then
+				-- tmp.command = help[1]
+				-- tmp.keywords = "able,claim,lcb,key,scan"
+				-- tmp.accessLevel = 1
+				-- tmp.description = help[2]
+				-- tmp.notes = ""
+				-- tmp.ingameOnly = 0
+				-- registerHelp(tmp)
+			-- end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "claim"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, help[1])
+			-- if (chatvars.words[1] == "help" and (string.find(chatvars.command, "claim"))) or chatvars.words[1] ~= "help" then
+				-- irc_chat(chatvars.ircAlias, help[1])
 
-				if not shortHelp then
-					irc_chat(chatvars.ircAlias, help[2])
-					irc_chat(chatvars.ircAlias, ".")
-				end
+				-- if not shortHelp then
+					-- irc_chat(chatvars.ircAlias, help[2])
+					-- irc_chat(chatvars.ircAlias, ".")
+				-- end
 
-				chatvars.helpRead = true
-			end
-		end
+				-- chatvars.helpRead = true
+			-- end
+		-- end
 
-		if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "claim" and chatvars.words[3] == "scan" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
-			end
+		-- if (chatvars.words[1] == "disable" or chatvars.words[1] == "enable") and chatvars.words[2] == "claim" and chatvars.words[3] == "scan" then
+			-- if (chatvars.playername ~= "Server") then
+				-- if (chatvars.accessLevel > 1) then
+					-- message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					-- botman.faultyChat = false
+					-- return true
+				-- end
+			-- else
+				-- if (chatvars.accessLevel > 1) then
+					-- irc_chat(chatvars.ircAlias, "This command is restricted.")
+					-- botman.faultyChat = false
+					-- return true
+				-- end
+			-- end
 
-			if chatvars.words[1] == "disable" then
-				server.enableTimedClaimScan = 0
-				conn:execute("UPDATE server SET enableTimedClaimScan = 0")
+			-- if chatvars.words[1] == "disable" then
+				-- server.enableTimedClaimScan = 0
+				-- conn:execute("UPDATE server SET enableTimedClaimScan = 0")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Claims will not be scanned every minute.[-]")
-				else
-					irc_chat(chatvars.ircAlias, "Claims will not be scanned every minute.")
-				end
-			else
-				server.enableTimedClaimScan = 1
-				conn:execute("UPDATE server SET enableTimedClaimScan = 1")
+				-- if (chatvars.playername ~= "Server") then
+					-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Claims will not be scanned every minute.[-]")
+				-- else
+					-- irc_chat(chatvars.ircAlias, "Claims will not be scanned every minute.")
+				-- end
+			-- else
+				-- server.enableTimedClaimScan = 1
+				-- conn:execute("UPDATE server SET enableTimedClaimScan = 1")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Claims of ingame players (except admins) will be scanned every minute. This can produce a lot of data and may impact server performance.[-]")
-				else
-					irc_chat(chatvars.ircAlias, "Claims of ingame players (except admins) will be scanned every minute. This can produce a lot of data and may impact server performance.")
-				end
-			end
+				-- if (chatvars.playername ~= "Server") then
+					-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Claims of ingame players (except admins) will be scanned every minute. This can produce a lot of data and may impact server performance.[-]")
+				-- else
+					-- irc_chat(chatvars.ircAlias, "Claims of ingame players (except admins) will be scanned every minute. This can produce a lot of data and may impact server performance.")
+				-- end
+			-- end
 
-			irc_chat(chatvars.ircAlias, ".")
+			-- irc_chat(chatvars.ircAlias, ".")
 
-			botman.faultyChat = false
-			return true
-		end
-	end
+			-- botman.faultyChat = false
+			-- return true
+		-- end
+	-- end
 
 
 	local function cmd_ToggleFreezeThawPlayer()
@@ -9977,14 +9976,14 @@ if debug then dbug("debug admin") end
 		return result
 	end
 
-	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+	-- if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 
-	result = cmd_ToggleClaimScan()
+	-- result = cmd_ToggleClaimScan()
 
-	if result then
-		if debug then dbug("debug cmd_ToggleClaimScan triggered") end
-		return result
-	end
+	-- if result then
+		-- if debug then dbug("debug cmd_ToggleClaimScan triggered") end
+		-- return result
+	-- end
 
 	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
 

@@ -99,10 +99,17 @@ end
 
 
 function getBotsIP()
-	local file, ln
+	local file, fileSize, ln
 
 	os.remove(homedir .. "/temp/botsIP.txt")
 	os.execute("dig +short myip.opendns.com @resolver1.opendns.com > " .. homedir .. "/temp/botsIP.txt")
+
+	fileSize = lfs.attributes (homedir .. "/temp/botsIP.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/botsIP.txt", "r")
 
@@ -151,6 +158,13 @@ function checkVACBan(steam)
 	local file, ln, fileStr
 
 	fileStr = homedir .. "/temp/steamrep_" .. steam .. ".txt"
+
+	fileSize = lfs.attributes (fileStr, "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		return
+	end
 
 	file = io.open(fileStr, "r")
 	for ln in file:lines() do
@@ -201,15 +215,15 @@ function reloadBot(getAllPlayers)
 	tempTimer( 3, [[sendCommand("gt")]] )
 	tempTimer( 5, [[sendCommand("version")]] )
 	tempTimer( 10, [[sendCommand("gg")]] )
+	tempTimer( 15, [[sendCommand("admin list")]] )
+	tempTimer( 20, [[sendCommand("ban list")]] )
 
 	if getAllPlayers then
-		tempTimer( 15, [[sendCommand("lkp")]] )
+		tempTimer( 25, [[sendCommand("lkp")]] )
 	else
-		tempTimer( 15, [[sendCommand("lkp -online")]] )
+		tempTimer( 25, [[sendCommand("lkp -online")]] )
 	end
 
-	tempTimer( 25, [[sendCommand("admin list")]] )
-	tempTimer( 30, [[sendCommand("ban list")]] )
 	tempTimer( 35, [[registerBot()]] )
 end
 
@@ -276,7 +290,14 @@ end
 
 
 function readServerVote(steam)
-	local file, ln, url, result
+	local file, fileSize, ln, url, result
+
+	fileSize = lfs.attributes (homedir .. "/temp/voteCheck.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/temp/voteCheck.txt", "r")
 
@@ -2656,7 +2677,14 @@ function readDNS(steam)
 	-- if blacklist action is not exile or ban, nothing happens to the player.
 	-- NOTE: If blacklist action is nothing, proxies won't trigger a ban or exile response either.
 
-	local file, ln, split, ip1, ip2, exiled, banned, country, proxy, ISP, iprange, IP
+	local file, fileSize, ln, split, ip1, ip2, exiled, banned, country, proxy, ISP, iprange, IP
+
+	fileSize = lfs.attributes (homedir .. "/dns/" .. steam .. ".txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		return
+	end
 
 	file = io.open(homedir .. "/dns/" .. steam .. ".txt", "r")
 	exiled = false

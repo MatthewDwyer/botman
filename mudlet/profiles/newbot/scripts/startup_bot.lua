@@ -57,14 +57,16 @@ function checkData()
 		loadShopCategories()
 	end
 
+	tempTimer( 5, [[sendCommand("version")]] )
+
 	if tonumber(server.ServerPort) == 0 then
-		sendCommand("gg", "executeconsolecommand?command=gg&", "gg.txt")
+		tempTimer( 10, [[sendCommand("gg")]] )
 	end
 
 	if (botman.playersOnline > 0) then
 		if tablelength(igplayers) == 0 then
 			igplayers = {}
-			sendCommand("lp", "getplayersonline/?", "playersOnline.txt")
+			tempTimer( 15, [[sendCommand("lp")]] )
 		end
 	end
 
@@ -73,7 +75,7 @@ function checkData()
 	end
 
 	if tablelength(owners) == 0 then
-		sendCommand("admin list", "executeconsolecommand?command=admin list&", "adminList.txt")
+		tempTimer( 20, [[sendCommand("admin list")]] )
 	end
 
 	if benchmarkBot then
@@ -140,7 +142,7 @@ function login()
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	tempTimer( 120, [[checkData()]] )
+	tempTimer( 60, [[checkData()]] )
 	botman.userHome = string.sub(homedir, 1, string.find(homedir, ".config") - 2)
 
 	if botman.sysExitID == nil then

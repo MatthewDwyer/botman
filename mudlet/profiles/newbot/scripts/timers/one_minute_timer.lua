@@ -263,6 +263,28 @@ function everyMinute()
 	-- save some server fields
 	if botman.dbConnected then conn:execute("UPDATE server SET lottery = " .. server.lottery .. ", date = '" .. server.dateTest .. "', ircBotName = '" .. server.ircBotName .. "'") end
 
+	if server.useAllocsWebAPI then
+		if botman.resendAdminList or tablelength(staffList) == 0 then
+			sendCommand("admin list")
+			botman.resendAdminList = false
+		end
+
+		if botman.resendBanList then
+			sendCommand("ban list")
+			botman.resendBanList = false
+		end
+
+		if botman.resendGG then
+			sendCommand("gg")
+			botman.resendGG = false
+		end
+
+		if botman.resendVersion or tablelength(modVersions) == 0 then
+			sendCommand("version")
+			botman.resendVersion = false
+		end
+	end
+
 	if debug then dbug("debug everyMinute end") end
 end
 
