@@ -93,7 +93,7 @@ function gmsg_mail()
 			if chatvars.number ~= nil then
 				if tonumber(chatvars.number) == counter then
 					conn:execute("UPDATE mail set status = 1 WHERE id = " .. row.id)
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message " .. counter .. "[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message #" .. counter .. "[-]")
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")
 				end
 			else

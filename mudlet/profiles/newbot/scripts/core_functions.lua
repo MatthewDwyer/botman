@@ -21,7 +21,7 @@ function sendCommand(command, api, outputFile)
 
 	botman.lastBotCommand = command
 
-	if server.useAllocsWebAPI and not string.find(command, "webtokens ") then
+	if server.useAllocsWebAPI and not string.find(command, "webtokens ") and not string.find(command, "#") then
 		-- fix missing api and outputFile for some commands
 		if api == nil or api == "" then
 			if command == "admin list" then
@@ -365,7 +365,7 @@ end
 
 function message(msg, steam)
 	-- parse msg and enclose the actual message in double quotes
-	local words, word, skip
+	local words, word, skip, url
 
 	msg = msg:gsub("{#}", server.commandPrefix)
 
@@ -386,7 +386,8 @@ function message(msg, steam)
 	if string.sub(msg, 1, 4) == "say " then
 		-- say the message in public chat
 		if server.useAllocsWebAPI then
-			url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=say \"" .. string.sub(msg, 5) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+			msg = string.sub(msg, 5)
+			url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=say \"" .. msg .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
 
 			if botman.dbConnected then
 				conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
@@ -405,7 +406,8 @@ function message(msg, steam)
 		if players[words[2]] then
 			if players[words[2]].exiled ~= 1 then
 				if server.useAllocsWebAPI then
-					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+					msg = string.sub(msg, 22)
+					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. msg .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
 
 					if botman.dbConnected then
 						conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
@@ -423,7 +425,8 @@ function message(msg, steam)
 			end
 		else
 			if server.useAllocsWebAPI then
-				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+				msg = string.sub(msg, 22)
+				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. msg .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
 
 				if botman.dbConnected then
 					conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")

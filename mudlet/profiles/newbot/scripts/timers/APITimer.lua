@@ -8,7 +8,7 @@
 --]]
 
 function APITimer()
-	local row, cursor, errorString, URL, outputFile
+	local row, cursor, errorString, url, outputFile, cmd
 
 	if not botman.dbConnected then
 		return
@@ -20,7 +20,7 @@ function APITimer()
 		row = cursor:fetch({}, "a")
 
 		if row then
-			URL = row.URL
+			url = row.URL
 			outputFile = row.OutputFile
 			conn:execute("delete from APIQueue where id = " .. row.id)
 
@@ -36,11 +36,16 @@ function APITimer()
 			metrics.commands = metrics.commands + 1
 
 			if server.logBotCommands then
-				logBotCommand(botman.serverTime, URL)
+				logBotCommand(botman.serverTime, url)
 			end
 
-			os.remove(outputFile)
-			downloadFile(outputFile, URL)
+			if not string.find(url, "#") then
+				os.remove(outputFile)
+				downloadFile(outputFile, url)
+			else
+				cmd = string.sub(url, string.find(url, "command=") + 8, string.find(url, "&adminuser") - 1)
+				send(cmd)
+			end
 		end
 	end
 end

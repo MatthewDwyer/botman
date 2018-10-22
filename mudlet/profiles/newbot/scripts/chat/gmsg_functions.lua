@@ -954,6 +954,10 @@ function gmsg(line, ircid)
 		table.insert(chatvars.numbers, tonumber(word))
 	end
 
+	for word in string.gmatch (chatvars.command, "#(-?\%d+)") do
+		table.insert(chatvars.numbers, tonumber(word))
+	end
+
 	chatvars.wordCount = table.maxn(chatvars.words)
 	chatvars.numberCount = table.maxn(chatvars.numbers)
 	chatvars.commandOld = chatvars.command
@@ -964,7 +968,11 @@ function gmsg(line, ircid)
 	end
 
 	-- todo: stop using chatvars.number and use the new chatvars.numbers table
-	chatvars.number = tonumber(string.match(chatvars.command, " (-?%d+)")) -- (-?\%d+)
+	chatvars.number = tonumber(string.match(chatvars.command, " (-?%d+)"))
+
+	if chatvars.number == nil then
+		chatvars.number = tonumber(string.match(chatvars.command, "#(-?%d+)"))
+	end
 
 	if ircid ~= nil then
 		if ((chatvars.words[1] == "command" or chatvars.words[1] == "list") and chatvars.words[2] == "help" or chatvars.words[1] == "help") then
@@ -991,16 +999,6 @@ function gmsg(line, ircid)
 	-- don't process any chat coming from irc or death messages
 	if string.find(chatvars.oldLine, "-irc:", nil, true) or (chatvars.playername == "Server" and (string.find(chatvars.oldLine, "died") or string.find(chatvars.oldLine, "eliminated"))) then
 		botman.faultyChat = false
-		return true
-	end
-
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-
-	if debug then dbug("debug entering gmsg_custom") end
-	result = gmsg_custom()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_custom") end
 		return true
 	end
 
@@ -1218,6 +1216,16 @@ function gmsg(line, ircid)
 
 			botman.faultyChat = false
 		end
+	end
+
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
+	if debug then dbug("debug entering gmsg_custom") end
+	result = gmsg_custom()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_custom") end
+		return true
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end

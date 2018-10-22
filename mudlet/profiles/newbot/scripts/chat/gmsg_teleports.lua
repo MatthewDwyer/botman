@@ -846,7 +846,7 @@ function gmsg_teleports()
 
 			-- then teleport the player to you
 			cmd = "tele " .. id .. " " .. chatvars.intX + 1 .. " " .. chatvars.intY .. " " .. chatvars.intZ
-			teleport(cmd, chatvars.playerid)
+			teleport(cmd, id)
 
 			if (chatvars.accessLevel > 2) then
 				players[chatvars.playerid].cash = players[chatvars.playerid].cash - server.teleportCost

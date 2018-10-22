@@ -882,6 +882,17 @@ function alterTables()
 	doSQL("UPDATE `keystones` SET removed = 0") -- this is necessary to stop the bot giving everyone claims in error due to a table change.
 	doSQL("ALTER TABLE `customCommands_Detail` CHANGE `thing` `thing` VARCHAR(255)")
 	doSQL("ALTER TABLE `LKPQueue` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT") -- to fix missing auto increment for some bots that helped with testing
+	doSQL("ALTER TABLE `locations` CHANGE `name` `name` VARCHAR(50)")
+	doSQL("ALTER TABLE `hotspots` CHANGE `hotspot` `hotspot` VARCHAR(500)")
+	doSQL("ALTER TABLE `polls` CHANGE `topic` `topic` VARCHAR(255)")
+	doSQL("ALTER TABLE `polls` CHANGE `option1` `option1` VARCHAR(255)")
+	doSQL("ALTER TABLE `polls` CHANGE `option2` `option2` VARCHAR(255)")
+	doSQL("ALTER TABLE `polls` CHANGE `option3` `option3` VARCHAR(255)")
+	doSQL("ALTER TABLE `polls` CHANGE `option4` `option4` VARCHAR(255)")
+	doSQL("ALTER TABLE `polls` CHANGE `option5` `option5` VARCHAR(255)")
+	doSQL("ALTER TABLE `polls` CHANGE `option6` `option6` VARCHAR(255)")
+	doSQL("ALTER TABLE `teleports` CHANGE `name` `name` VARCHAR(100)")
+	doSQL("ALTER TABLE `waypoints` CHANGE `name` `name` VARCHAR(50")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)

@@ -7,6 +7,11 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+local debug
+
+-- enable debug to see where the code is stopping. Any error will be after the last debug line.
+debug = false -- should be false unless testing
+
 
 function flagAdminsForRemoval()
 	local k,v
@@ -73,6 +78,10 @@ function matchAll(line, logDate, logTime)
 	local dy, mth, yr, hr, min, sec, pm, reason, timestamp, banDate
 	local fields, values, x, y, z, id, loc, reset, steam, k, v, rows, tmp
 
+	if botman.debugAll then
+		debug = true
+	end
+
 	-- set counter to help detect the bot going offline
 	if not server.useAllocsWebAPI then
 		botman.botOfflineCount = 0
@@ -93,12 +102,20 @@ function matchAll(line, logDate, logTime)
 			metrics.errors = metrics.errors + 1
 		end
 
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
 	if string.find(line, "ERR ") then -- ignore lines containing this.
 		if botman.getMetrics then
 			metrics.errors = metrics.errors + 1
+		end
+
+		if not debug then
+			deleteLine()
 		end
 
 		return
@@ -126,6 +143,10 @@ function matchAll(line, logDate, logTime)
 			fallingBlocks[temp].x = x
 			fallingBlocks[temp].y = y
 			fallingBlocks[temp].z = z
+		end
+
+		if not debug then
+			deleteLine()
 		end
 	end
 
@@ -291,7 +312,10 @@ function matchAll(line, logDate, logTime)
 				end
 			end
 
-			deleteLine()
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 	end
@@ -367,7 +391,10 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "type=Entity") then
 		listEntities(line)
 
-		deleteLine()
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -378,7 +405,10 @@ function matchAll(line, logDate, logTime)
 			botman.stompyReportsSpawns = true
 			listEntities(line, "BCM")
 
-			deleteLine()
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 	end
@@ -436,7 +466,10 @@ function matchAll(line, logDate, logTime)
 			end
 		end
 
-		deleteLine()
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -461,7 +494,10 @@ function matchAll(line, logDate, logTime)
 			end
 		end
 
-		deleteLine()
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -472,7 +508,10 @@ function matchAll(line, logDate, logTime)
 				getAdminList = nil
 				removeOldStaff()
 
-				deleteLine()
+				if not debug then
+					deleteLine()
+				end
+
 				return
 			end
 		end
@@ -519,7 +558,6 @@ function matchAll(line, logDate, logTime)
 				players[pid].testAsPlayer = nil
 
 				if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. number .. " WHERE steam = " .. pid) end
---				if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. pid .. "," .. number .. ")") end
 			end
 
 			return
@@ -531,7 +569,10 @@ function matchAll(line, logDate, logTime)
 				playerListItems = nil
 			end
 
-			deleteLine()
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
@@ -541,7 +582,10 @@ function matchAll(line, logDate, logTime)
 				ircListItems = nil
 			end
 
-			deleteLine()
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
@@ -760,7 +804,7 @@ function matchAll(line, logDate, logTime)
 				igplayers[pid].noclipZ = z
 			end
 
-			if not server.useAllocsWebAPI then
+			if not debug then
 				deleteLine()
 			end
 
@@ -844,7 +888,7 @@ function matchAll(line, logDate, logTime)
 				end
 			end
 
-			if not server.useAllocsWebAPI then
+			if not debug then
 				deleteLine()
 			end
 
@@ -864,7 +908,10 @@ function matchAll(line, logDate, logTime)
 				conn:execute("TRUNCATE memEntities")
 			end
 
-			deleteLine()
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
@@ -874,7 +921,10 @@ function matchAll(line, logDate, logTime)
 				botman.listItems = true
 			end
 
-			deleteLine()
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
@@ -894,6 +944,10 @@ function matchAll(line, logDate, logTime)
 					conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
 				end
 
+				if not debug then
+					deleteLine()
+				end
+
 				return
 			end
 		end
@@ -902,6 +956,11 @@ function matchAll(line, logDate, logTime)
 		if string.find(line, "Executing command 'admin list'") and server.botsIP then
 			if string.find(line, server.botsIP) then
 				flagAdminsForRemoval()
+
+				if not debug then
+					deleteLine()
+				end
+
 				return
 			end
 		end
@@ -910,6 +969,11 @@ function matchAll(line, logDate, logTime)
 		if (string.find(line, "Banned until -")) then
 			collectBans = true
 			conn:execute("TRUNCATE bans")
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
@@ -918,6 +982,11 @@ function matchAll(line, logDate, logTime)
 		if string.find(line, "Level: SteamID (Player name if online)", nil, true) then
 			getAdminList = true
 			staffList = {}
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 	end
@@ -928,82 +997,162 @@ function matchAll(line, logDate, logTime)
 
 		if (string.find(line, "HideCommandExecutionLog =")) then
 			server.HideCommandExecutionLog = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "MaxSpawnedZombies set to")) then
 			server.MaxSpawnedZombies = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "MaxSpawnedAnimals set to")) then
 			server.MaxSpawnedAnimals = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "LootRespawnDays =")) then
 			server.LootRespawnDays = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "BlockDurabilityModifier =")) then
 			server.BlockDurabilityModifier = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "DayNightLength =")) then
 			server.DayNightLength = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "DayLightLength =")) then
 			server.DayLightLength = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "DropOnDeath =")) then
 			server.DropOnDeath = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "DropOnQuit =")) then
 			server.DropOnQuit = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "EnemyDifficulty =")) then
 			server.EnemyDifficulty = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "LandClaimSize =")) then
 			server.LandClaimSize = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "LandClaimExpiryTime =")) then
 			server.LandClaimExpiryTime = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "LootAbundance =")) then
 			server.LootAbundance = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "LootRespawnDays =")) then
 			server.LootRespawnDays = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "ServerPort =")) then
 			server.ServerPort = number
 			if botman.dbConnected then conn:execute("UPDATE server SET serverName = '" .. escape(server.serverName) .. "', ServerPort = " .. server.ServerPort) end
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "ZombiesRun =")) then
 			server.ZombiesRun = number
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
@@ -1014,11 +1163,20 @@ function matchAll(line, logDate, logTime)
 				server.gameType = "pvp"
 			end
 
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
 		if (string.find(line, "GameName =")) then
 			server.GameName = string.trim(string.sub(line, 20))
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
@@ -1042,6 +1200,10 @@ function matchAll(line, logDate, logTime)
 				end
 			end
 
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 
@@ -1049,6 +1211,11 @@ function matchAll(line, logDate, logTime)
 			server.MaxSpawnedZombies = number
 			-- If we detect this line it means we are receiving data from the server so we set a flag to let us know elsewhere that we got server data ok.
 			serverDataLoaded = true
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 	end
@@ -1072,6 +1239,10 @@ function matchAll(line, logDate, logTime)
 			sendCommand("tcch " .. server.commandPrefix)
 		end
 
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1089,6 +1260,10 @@ function matchAll(line, logDate, logTime)
 			sendCommand("tcch " .. server.commandPrefix)
 		end
 
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1099,6 +1274,10 @@ function matchAll(line, logDate, logTime)
 		temp = string.split(line, ":")
 		server.allocsServerFixes = temp[2]
 
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1108,6 +1287,10 @@ function matchAll(line, logDate, logTime)
 		temp = string.split(line, ":")
 		server.allocsCommandExtensions = temp[2]
 
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1116,6 +1299,10 @@ function matchAll(line, logDate, logTime)
 		server.allocs = true
 		temp = string.split(line, ":")
 		server.allocsMap = temp[2]
+
+		if not debug then
+			deleteLine()
+		end
 
 		return
 	end
@@ -1127,6 +1314,11 @@ function matchAll(line, logDate, logTime)
 		if botman.dbConnected then conn:execute("UPDATE otherEntities SET remove = 1") end
 
 		getZombies = true
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1143,11 +1335,21 @@ function matchAll(line, logDate, logTime)
 
 	if string.find(line, "INF Server shutting down!") or string.find(line, "INF [Steamworks.NET] Stopping server") then
 		saveLuaTables()
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
 	if string.find(line, "ERROR: unknown command 'pug'") then
 		server.scanNoclip = false
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1156,6 +1358,11 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "Game version:") then
 		server.gameVersion = string.trim(string.sub(line, string.find(line, "Game version:") + 14, string.find(line, "Compatibility") - 2))
 		if botman.dbConnected then conn:execute("UPDATE server SET gameVersion = '" .. escape(server.gameVersion) .. "'") end
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1164,6 +1371,11 @@ function matchAll(line, logDate, logTime)
 		server.stompy = true
 		temp = string.split(line, ":")
 		server.stompyVersion = temp[2]
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1172,6 +1384,11 @@ function matchAll(line, logDate, logTime)
 		server.djkrose = true
 		temp = string.split(line, ":")
 		server.djkroseVersion = temp[2]
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1180,6 +1397,11 @@ function matchAll(line, logDate, logTime)
 		server.JimsCommands = true
 		temp = string.split(line, ":")
 		server.JimsCommandsVersion = temp[2]
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1187,6 +1409,11 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "Mod SDX:") or string.find(line, "SDX: ") and not server.SDXDetected then
 		server.SDXDetected = true
 		if botman.dbConnected then conn:execute("UPDATE server SET SDXDetected = 1") end
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1194,6 +1421,11 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "Mod Server Tools:") or string.find(line, "mod 'Server Tools'") and not server.ServerToolsDetected then
 		server.ServerToolsDetected = true
 		if botman.dbConnected then conn:execute("UPDATE server SET ServerToolsDetected = 1") end
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1204,6 +1436,11 @@ function matchAll(line, logDate, logTime)
 			message("say [" .. server.chatColour .. "]To use bot commands such as /who you must now type !who[-]")
 			server.commandPrefix = "!"
 			if botman.dbConnected then conn:execute("UPDATE server SET commandPrefix = '!'") end
+
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 	end
@@ -1227,6 +1464,10 @@ function matchAll(line, logDate, logTime)
 				if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. x .. ", bedY = " .. y .. ", bedZ = " .. z .. " WHERE steam = " .. steam) end
 			end
 
+			if not debug then
+				deleteLine()
+			end
+
 			return
 		end
 	end
@@ -1234,6 +1475,10 @@ function matchAll(line, logDate, logTime)
 
 	if (string.find(line, "Process chat error")) then
 		irc_chat(server.ircAlerts, "Server error detected. Re-validate to fix: " .. line)
+
+		if not debug then
+			deleteLine()
+		end
 	end
 
 
@@ -1260,18 +1505,33 @@ function matchAll(line, logDate, logTime)
 
 	if string.find(line, "Playername or entity ID not found.") then
 		deleteLine()
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
 
 	if string.find(line, "bot_RemoveInvalidItems") then
 		removeInvalidItems()
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
 
 	if string.find(line, "Version mismatch") then
 		irc_chat(server.ircAlerts, line)
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1281,12 +1541,22 @@ function matchAll(line, logDate, logTime)
 		botman.serverErrorReported = true
 		irc_chat(server.ircAlerts, "Server error detected.")
 		irc_chat(server.ircAlerts, line)
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
 
 	if (string.find(line, "INF [NET] ServerShutdown") or string.find(line, "INF World.Unload")) and not string.find(line, "Chat") then
 		botman.botOffline = true
+
+		if not debug then
+			deleteLine()
+		end
+
 		return
 	end
 
@@ -1296,7 +1566,15 @@ function matchAll(line, logDate, logTime)
 			sendCommand("admin list")
 		end
 
+		if not debug then
+			deleteLine()
+		end
+
 		return
+	end
+
+	if not debug then
+		deleteLine()
 	end
 end
 
