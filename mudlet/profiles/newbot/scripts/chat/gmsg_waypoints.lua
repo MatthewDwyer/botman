@@ -1347,6 +1347,8 @@ function gmsg_waypoints()
 
 
 	local function cmd_UseWaypoint()
+		local loc
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}wp or {#}wp1 or {#}{your name}"
@@ -1443,6 +1445,17 @@ function gmsg_waypoints()
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry, your waypoint is in a restricted area.[-]")
 						botman.faultyChat = false
 						return true
+					end
+
+					-- we need to do a separate test for locations that don't allow waypoints as the function we used above is shared by other code
+					loc = inLocation(waypoints[tmp.id].x, waypoints[tmp.id].z)
+
+					if loc then
+						if not locations[loc].allowWaypoints then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry, your waypoint is in a restricted area.[-]")
+							botman.faultyChat = false
+							return true
+						end
 					end
 				end
 

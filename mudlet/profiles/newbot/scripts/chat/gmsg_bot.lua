@@ -288,6 +288,81 @@ function gmsg_bot()
 	end
 
 
+	local function cmd_ListBackups()
+		local counter, cursor, errorString, row
+
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}list backups"
+			help[2] = "View a numbered list of available backups.\n"
+			help[2] = help[2] .. "Use {#}restore backup, to restore a backup. See the help for {#}restore backup for additional options."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,list,back"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "list") or string.find(chatvars.command, "backup"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "list" and string.find(chatvars.command, "backup") and chatvars.words[3] == nil then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			getBackupFiles(homedir .. "/data_backup")
+			counter = 2
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]#1 Latest backup[-]")
+			else
+				irc_chat(chatvars.ircAlias, "#1 Latest backup")
+			end
+
+			cursor,errorString = conn:execute("select * from list where class = 'backup' order by thing desc")
+			row = cursor:fetch({}, "a")
+
+			while row do
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]#" .. counter .. " " .. row.thing  .. "[-]")
+				else
+					irc_chat(chatvars.ircAlias, "#" .. counter .. " " .. row.thing)
+				end
+
+				counter = counter + 1
+				row = cursor:fetch(row, "a")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_NoReset()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -2331,6 +2406,15 @@ function gmsg_bot()
 
 	if result then
 		if debug then dbug("debug cmd_GuessPassword triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ListBackups()
+
+	if result then
+		if debug then dbug("debug cmd_ListBackups triggered") end
 		return result
 	end
 

@@ -179,7 +179,7 @@ function login()
 
 		if reloadBotScripts == nil then
 			dofile(homedir .. "/scripts/reload_bot_scripts.lua")
-			reloadBotScripts(false, false, true)
+			reloadBotScripts(false, false, false)
 		end
 
 		-- this must come after reload_bot_scripts above.

@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local loc, locationName, locationName, id, pname, status, pvp, result, debug, temp, tmp
+local loc, locationName, locationName, id, pname, status, pvp, result, debug, temp, tmp, k, v
 local shortHelp = false
 local skipHelp = false
 
@@ -280,13 +280,14 @@ function gmsg_locations()
 
 
 	local function cmd_Lobby()
-		local playerName, isArchived, lobby
+		local playerName, isArchived, lobby, k, v
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}lobby {player name}"
 			help[2] = "If the lobby location exists, send the player to it. You can also do this to offline players, they will be moved to the lobby when they rejoin.\n"
-			help[2] = help[2] .. "If location spawn exists and lobby does not, spawn is the lobby location."
+			help[2] = help[2] .. "If location spawn exists and lobby does not, spawn is the lobby location.\n"
+			help[2] = help[2] .. "If a location has been assigned as the lobby and there isn't a location called lobby or spawn, it will be used instead."
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -325,10 +326,6 @@ function gmsg_locations()
 				end
 			end
 
-			if not locations["lobby"] and not locations["spawn"] then
-
-			end
-
 			-- use spawn as a substitute for lobby
 			if locations["spawn"] then
 				lobby = "spawn"
@@ -337,6 +334,14 @@ function gmsg_locations()
 			-- if lobby exists, use it
 			if locations["lobby"] then
 				lobby = "lobby"
+			end
+
+			if not locations["lobby"] and not locations["spawn"] then
+				for k,v in pairs(locations) do
+					if v.lobby then
+						lobby = k
+					end
+				end
 			end
 
 			pname = string.sub(chatvars.command, string.find(chatvars.command, "lobby ") + 6)
@@ -2524,7 +2529,7 @@ function gmsg_locations()
 			end
 		end
 
-		if chatvars.words[1] == "location" and (chatvars.words[2] == "lobby" or string.find(chatvars.command, "not lobby")) and not (string.find(chatvars.command, " pvp") or string.find(chatvars.command, " pve")) then
+		if chatvars.words[1] == "location" and (chatvars.words[2] == "lobby" or string.find(chatvars.command, "not lobby")) and not (string.find(chatvars.command, " pvp") or string.find(chatvars.command, " pve") or string.find(chatvars.command, " enable") or string.find(chatvars.command, " disable")) then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -3042,9 +3047,9 @@ function gmsg_locations()
 			end
 
 			if string.find(chatvars.command, "disable") then
-				temp = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[2]), string.find(chatvars.command, "disable") - 2)
+				temp = string.sub(chatvars.command, string.find(chatvars.command, "location") + 9, string.find(chatvars.command, "disable") - 2)
 			else
-				temp = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[2]), string.find(chatvars.command, "enable") - 2)
+				temp = string.sub(chatvars.command, string.find(chatvars.command, "location") + 9, string.find(chatvars.command, "enable") - 2)
 			end
 
 			if locations[temp] then
@@ -3628,9 +3633,16 @@ function gmsg_locations()
 	end
 
 	-- if a location called lobby exists and spawn does not, substitute spawn with lobby
+	-- alternatively if a location has been assigned as lobby, use it.
 	if chatvars.words[1] == "lobby" then
 		if locations["spawn"] and not locations["lobby"] then
 			chatvars.command = "spawn"
+		else
+			for k,v in pairs(locations) do
+				if v.lobby then
+					chatvars.command = k
+				end
+			end
 		end
 	end
 

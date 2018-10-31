@@ -1120,7 +1120,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	-- prevent player exceeding the map limit unless they are an admin except when ignoreadmins is false
 	if not isDestinationAllowed(steam, intX, intZ) then
 		if players[steam].donor then
-			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")
+			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) + 5000 .. " km from the center.[-]")
 		else
 			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")
 		end

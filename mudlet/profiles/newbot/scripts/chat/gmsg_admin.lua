@@ -1597,39 +1597,51 @@ function gmsg_admin()
 
 		if chatvars.words[1] == "archive" and chatvars.words[2] == "players" then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					botman.faultyChat = false
-					return true
-				end
+				message(string.format("pm %s [%s]This command has been disabled by Smeg until further notice. There's a bug in it.", chatvars.playerid, server.chatColour))
+				botman.faultyChat = false
+				return true
 			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+				irc_chat(chatvars.ircAlias, "This command has been disabled by Smeg until further notice. There's a bug in it.")
+				botman.faultyChat = false
+				return true
 			end
 
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players (except staff) who have not played in 60 days will be archived.  The bot may become un-responsive during this time.[-]")
-			else
-				irc_chat(chatvars.ircAlias, "Players (except staff) who have not played in 60 days will be archived.  The bot may become un-responsive during this time.")
-			end
 
-			botman.archivePlayers = true
 
-			--	first flag everyone except staff as notInLKP.  We will remove that flag as we find them in LKP.
-			for k,v in pairs(players) do
-				if tonumber(v.accessLevel) > 3 then
-					v.notInLKP = true
-				else
-					v.notInLKP = false
-				end
-			end
+			-- if (chatvars.playername ~= "Server") then
+				-- if (chatvars.accessLevel > 1) then
+					-- message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					-- botman.faultyChat = false
+					-- return true
+				-- end
+			-- else
+				-- if (chatvars.accessLevel > 1) then
+					-- irc_chat(chatvars.ircAlias, "This command is restricted.")
+					-- botman.faultyChat = false
+					-- return true
+				-- end
+			-- end
 
-			tempTimer( 10, [[sendCommand("lkp")]] )
-			botman.faultyChat = false
-			return true
+			-- if (chatvars.playername ~= "Server") then
+				-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players (except staff) who have not played in 60 days will be archived.  The bot may become un-responsive during this time.[-]")
+			-- else
+				-- irc_chat(chatvars.ircAlias, "Players (except staff) who have not played in 60 days will be archived.  The bot may become un-responsive during this time.")
+			-- end
+
+			-- botman.archivePlayers = true
+
+			-- --	first flag everyone except staff as notInLKP.  We will remove that flag as we find them in LKP.
+			-- for k,v in pairs(players) do
+				-- if tonumber(v.accessLevel) > 3 then
+					-- v.notInLKP = true
+				-- else
+					-- v.notInLKP = false
+				-- end
+			-- end
+
+			-- tempTimer( 10, [[sendCommand("lkp")]] )
+			-- botman.faultyChat = false
+			-- return true
 		end
 	end
 

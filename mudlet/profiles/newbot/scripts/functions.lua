@@ -8,6 +8,45 @@
 --]]
 
 
+function getBackupFiles(path)
+	local file, str
+
+	conn:execute("TRUNCATE list")
+	backupFiles = {}
+
+	for file in lfs.dir(path) do
+	  if file ~= "." and file ~= ".." and file ~= "" then
+		  if string.find(file, "_") then
+			str = string.sub(file, 1, 15)
+			table.insert(backupFiles, file)
+			conn:execute("INSERT INTO list (thing, class) VALUES ('" .. escape(str) .. "','backup')")
+		  end
+	  end
+	end
+end
+
+
+function encodeChar(chr)
+	return string.format("%%%X",string.byte(chr))
+end
+
+
+function encodeString(str)
+	local output, t = string.gsub(str,"[^%w]",encodeChar)
+	return output
+end
+
+
+function urlDecode(str)
+   str = str:gsub("+", " ")
+   str = str:gsub("%%(%x%x)", function(h)
+      return string.char(tonumber(h,16))
+   end)
+   str = str:gsub("\r\n", "\n")
+   return str
+end
+
+
 function processLKPLine(line)
 	local tmp
 
@@ -519,25 +558,25 @@ function runTimedEvents()
 	if botman.dbConnected then
 		-- make sure the announcements event exists
 		cursor,errorString = conn:execute("SELECT * FROM timedEvents WHERE timer = 'announcements'")
-		row = cursor:fetch({}, "a")
+		rows = cursor:numrows()
 
-		if not row then
-			conn:execute("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('announcements', '60', CURRENT_TIMESTAMP, '0'")
+		if rows == 0 then
+			conn:execute("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('announcements', '60', CURRENT_TIMESTAMP, '0')")
 		end
 
 		-- make sure the gimmeReset event exists
 		cursor,errorString = conn:execute("SELECT * FROM timedEvents WHERE timer = 'gimmeReset'")
-		row = cursor:fetch({}, "a")
+		rows = cursor:numrows()
 
-		if not row then
-			conn:execute("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('gimmeReset', '120', CURRENT_TIMESTAMP, '0'")
+		if rows == 0 then
+			conn:execute("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('gimmeReset', '120', CURRENT_TIMESTAMP, '0')")
 		end
 
 
 		-- look for any events due to be triggered
 		cursor,errorString = conn:execute("SELECT * FROM timedEvents WHERE nextTime <= NOW() AND disabled = 0")
-
 		row = cursor:fetch({}, "a")
+
 		while row do
 			if row.timer == "announcements" then
 				conn:execute("UPDATE timedEvents SET nextTime = NOW() + INTERVAL " .. row.delayMinutes .. " MINUTE WHERE timer = 'announcements'")

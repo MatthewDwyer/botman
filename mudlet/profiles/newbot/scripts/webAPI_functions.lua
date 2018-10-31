@@ -1084,7 +1084,7 @@ function API_PlayerInfo(data)
 	-- prevent player exceeding the map limit unless they are an admin except when ignoreadmins is false
 	if not isDestinationAllowed(data.steamid, intX, intZ) then
 		if players[data.steamid].donor then
-			message("pm " .. data.steamid .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")
+			message("pm " .. data.steamid .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) + 5000 .. " km from the center.[-]")
 		else
 			message("pm " .. data.steamid .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")
 		end
@@ -2151,21 +2151,21 @@ function readAPI_LKP()
 
 	file:close()
 
-	if botman.archivePlayers then
-		botman.archivePlayers = nil
+	-- if botman.archivePlayers then
+		-- botman.archivePlayers = nil
 
-		--	Everyone who is flagged notInLKP gets archived.
-		for k,v in pairs(players) do
-			if v.notInLKP then
-				conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. k)
-				conn:execute("DELETE FROM players WHERE steam = " .. k)
-				players[k] = nil
---				loadPlayersArchived(k)
-			end
-		end
+		-- --	Everyone who is flagged notInLKP gets archived.
+		-- for k,v in pairs(players) do
+			-- if v.notInLKP then
+				-- conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. k)
+				-- conn:execute("DELETE FROM players WHERE steam = " .. k)
+				-- players[k] = nil
+-- --				loadPlayersArchived(k)
+			-- end
+		-- end
 
-		loadPlayersArchived()
-	end
+		-- loadPlayersArchived()
+	-- end
 end
 
 

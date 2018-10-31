@@ -2990,8 +2990,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if words[1] == "add" and words[2] == "announcement" and words[3] ~= nil then
 		if debug then dbug("debug ircmessage " .. msg) end
 		msg = string.sub(msg, 17, string.len(msg))
+		msg = string.trim(msg)
 
-		conn:execute("INSERT INTO announcements (message, startdate, enddate) VALUES ('" .. escape(msg) .. "'," .. os.date("%Y-%m-%d", os.time()) .. ",'2020-01-01')")
+		conn:execute("INSERT INTO announcements (message, startdate, enddate) VALUES ('" .. escape(msg) .. "','" .. os.date("%Y-%m-%d", os.time()) .. "','2020-01-01')")
 
 		irc_chat(name, "New announcement added.")
 		irc_chat(name, ".")
@@ -4660,7 +4661,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "igplayers") then
+	if (words[1] == "igplayers" and words[2] == nil) then
 
 		for k,v in pairs(igplayers) do
 			irc_params.pid = k
@@ -4670,6 +4671,15 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		end
 
 		irc_params = {}
+		return
+	end
+
+	if (words[1] == "igplayers" and words[2] ~= nil) then
+		for k,v in pairs(igplayers) do
+			irc_chat(irc_params.name, "steam, " .. v.steam .. " id," .. v.id .. " name," .. v.name .. " connected," .. tostring(v.connected) .. " killTimer," .. v.killTimer)
+		end
+
+		irc_chat(name, ".")
 		return
 	end
 

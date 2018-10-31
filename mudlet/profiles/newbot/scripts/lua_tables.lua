@@ -22,7 +22,9 @@ end
 
 
 function dumpTable( tbl )
-  local result, done = {}, {}
+  local k, v, result, file
+  local done = {}
+
   for k, v in ipairs( tbl ) do
     table.insert( result, table.val_to_str( v ) )
     done[ k ] = true
@@ -130,15 +132,13 @@ function importPlayers()
 	for k,v in pairs(players) do
 		dbug("Importing " .. k .. " " .. v.id .. " " .. v.name)
 		conn:execute("INSERT INTO players (steam, id, name) VALUES (" .. k .. "," .. v.id .. ",'" .. escape(v.name) .. "')")
-		fixMissingPlayer(k)
-		updatePlayer(k)
+		conn:execute("INSERT INTO persistentQueue (steam, command) VALUES (" .. k .. ",'update player')")
 	end
 
 	for k,v in pairs(playersArchived) do
 		dbug("Importing archived " .. k .. " " .. v.id .. " " .. v.name)
 		conn:execute("INSERT INTO playersArchived (steam, id, name) VALUES (" .. k .. "," .. v.id .. ",'" .. escape(v.name) .. "')")
-		fixMissingArchivedPlayer(k)
-		updateArchivedPlayer(k)
+		conn:execute("INSERT INTO persistentQueue (steam, command) VALUES (" .. k .. ",'update archived player')")
 	end
 
 	dbug("Players Imported")
@@ -146,6 +146,8 @@ end
 
 
 function importTeleports()
+	local k, v
+
 	dbug("Importing Teleports")
 
 	for k,v in pairs(teleports) do
@@ -155,7 +157,7 @@ end
 
 
 function importLocations()
-	local sql, fields, values
+	local sql, fields, values, k, v
 
 	dbug("Importing Locations")
 
@@ -218,7 +220,7 @@ end
 
 
 function importFriends()
-	local friendlist, i, max
+	local friendlist, i, max, k, v
 
 	dbug("Importing Friends")
 
@@ -240,6 +242,8 @@ end
 
 
 function importVillagers()
+	local k, v
+
 	dbug("Importing Villagers")
 
 	for k,v in pairs(villagers) do
@@ -251,6 +255,8 @@ end
 
 
 function importHotspots()
+	local k, v
+
 	dbug("Importing Hotspots")
 
 	for k,v in pairs(hotspots) do
@@ -266,6 +272,8 @@ end
 
 
 function importResets()
+	local k, v
+
 	dbug("Importing Reset Zones")
 
 	for k,v in pairs(resetRegions) do
@@ -277,6 +285,8 @@ end
 
 
 function importBaditems()
+	local k, v
+
 	dbug("Importing Bad Items")
 
 	for k,v in pairs(badItems) do
@@ -288,6 +298,8 @@ end
 
 
 function importWaypoints()
+	local k, v
+
 	dbug("Importing Waypoints")
 
 	for k,v in pairs(waypoints) do
@@ -299,74 +311,124 @@ end
 
 
 
-function importLuaData()
+function importLuaData(path, onlyImportThis)
+	local k, v
+
 	dbug("Importing Lua Tables")
 	message("say Restoring bot data from backup..")
 
-	dbug("Loading server")
-	table.load(homedir .. "/data_backup/server.lua", server)
+	if path == nil then
+		path = homedir .. "/data_backup/"
+	end
 
-	dbug("Loading teleports")
-	teleports = {}
-	table.load(homedir .. "/data_backup/teleports.lua", teleports)
+	if onlyImportThis == nil then
+		dbug("Loading server")
+		table.load(path .. "server.lua", server)
 
-	 dbug("Loading friends")
-	 friends = {}
-	 table.load(homedir .. "/data_backup/friends.lua", friends)
+		dbug("Loading teleports")
+		teleports = {}
+		table.load(path .. "teleports.lua", teleports)
 
-	dbug("Loading locations")
-	locations = {}
-	table.load(homedir .. "/data_backup/locations.lua", locations)
+		 dbug("Loading friends")
+		 friends = {}
+		 table.load(path .. "friends.lua", friends)
 
-	dbug("Loading hotspots")
-	hotspots = {}
-	table.load(homedir .. "/data_backup/hotspots.lua", hotspots)
+		dbug("Loading locations")
+		locations = {}
+		table.load(path .. "locations.lua", locations)
 
-	dbug("Loading villagers")
-	villagers = {}
-	table.load(homedir .. "/data_backup/villagers.lua", villagers)
+		dbug("Loading hotspots")
+		hotspots = {}
+		table.load(path .. "hotspots.lua", hotspots)
 
-	dbug("Loading shop categories")
-	shopCategories = {}
-	table.load(homedir .. "/data_backup/shopCategories.lua", shopCategories)
+		dbug("Loading villagers")
+		villagers = {}
+		table.load(path .. "villagers.lua", villagers)
 
-	dbug("Loading reset zones")
-	resetZones = {}
-	table.load(homedir .. "/data_backup/resetRegions.lua", resetRegions)
+		dbug("Loading shop categories")
+		shopCategories = {}
+		table.load(path .. "shopCategories.lua", shopCategories)
 
-	dbug("Loading bad items")
-	badItems = {}
-	table.load(homedir .. "/data_backup/badItems.lua", badItems)
+		dbug("Loading reset zones")
+		resetZones = {}
+		table.load(path .. "resetRegions.lua", resetRegions)
 
-	dbug("Loading waypoints")
-	waypoints = {}
-	table.load(homedir .. "/data_backup/waypoints.lua", waypoints)
+		dbug("Loading bad items")
+		badItems = {}
+		table.load(path .. "badItems.lua", badItems)
 
-	dbug("Loading players")
-	players = {}
-	table.load(homedir .. "/data_backup/players.lua", players)
+		dbug("Loading waypoints")
+		waypoints = {}
+		table.load(path .. "waypoints.lua", waypoints)
 
-	conn:execute("TRUNCATE badItems")
-	conn:execute("TRUNCATE friends")
-	conn:execute("TRUNCATE hotspots")
-	conn:execute("TRUNCATE locations")
-	conn:execute("TRUNCATE players")
-	conn:execute("TRUNCATE resetZones")
-	conn:execute("TRUNCATE shopCategories")
-	conn:execute("TRUNCATE teleports")
-	conn:execute("TRUNCATE villagers")
-	conn:execute("TRUNCATE waypoints")
+		dbug("Loading players")
+		players = {}
+		table.load(path .. "players.lua", players)
 
-	importBaditems()
-	importHotspots()
-	importLocations()
-	importResets()
-	importTeleports()
-	importVillagers()
-	importFriends()
-	importShopCategories()
-	importWaypoints()
-	importPlayers()
+		conn:execute("TRUNCATE badItems")
+		conn:execute("TRUNCATE friends")
+		conn:execute("TRUNCATE hotspots")
+		conn:execute("TRUNCATE locations")
+		conn:execute("TRUNCATE players")
+		conn:execute("TRUNCATE resetZones")
+		conn:execute("TRUNCATE shopCategories")
+		conn:execute("TRUNCATE teleports")
+		conn:execute("TRUNCATE villagers")
+		conn:execute("TRUNCATE waypoints")
+
+		importBaditems()
+		importHotspots()
+		importLocations()
+		importResets()
+		importTeleports()
+		importVillagers()
+		importFriends()
+		importShopCategories()
+		importWaypoints()
+		importPlayers()
+	else
+		if onlyImportThis == "bases" then
+			-- restore bases and cash for the players table
+			table.load(path .. "players.lua", playersTemp)
+
+			for k,v in pairs(playersTemp) do
+				if players[k] then
+					if players[k].homeX == 0 and players[k].homeZ == 0 then
+						players[k].homeX = v.homeX
+						players[k].homeY = v.homeY
+						players[k].homeZ = v.homeZ
+						players[k].protect = v.protect
+						players[k].protectSize = v.protectSize
+					end
+
+					if players[k].home2X == 0 and players[k].home2Z == 0 then
+						players[k].home2X = v.home2X
+						players[k].home2Y = v.home2Y
+						players[k].home2Z = v.home2Z
+						players[k].protect2 = v.protect2
+						players[k].protect2Size = v.protect2Size
+					end
+
+					players[k].cash = players[k].cash + v.cash
+				end
+			end
+
+			playersTemp = nil
+		end
+
+		if onlyImportThis == "cash" then
+			-- restore cash only for the players table
+			table.load(path .. "players.lua", playersTemp)
+
+			for k,v in pairs(playersTemp) do
+				if players[k] then
+					players[k].cash = players[k].cash + v.cash
+				end
+			end
+
+			playersTemp = nil
+		end
+	end
 
 	dbug("Import of Lua tables Complete")
 	message("say Bot restore complete. It is now safe to turn off your modem. xD")

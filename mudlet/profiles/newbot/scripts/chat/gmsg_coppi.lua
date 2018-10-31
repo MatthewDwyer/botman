@@ -1021,7 +1021,7 @@ function gmsg_coppi()
 
 			tmp.prefab = chatvars.words[3]
 			tmp.face = 0
-			tmp.coords = chatvars.intX .. " " .. chatvars.intY - 1 .. " " .. chatvars.intZ
+			tmp.coords = chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ
 
 			if (prefabCopies[chatvars.playerid .. chatvars.words[3]]) and not (string.find(chatvars.command, " at ")) then
 				if tonumber(prefabCopies[chatvars.playerid .. chatvars.words[3]].y1) < tonumber(prefabCopies[chatvars.playerid .. chatvars.words[3]].y2) then
@@ -1044,12 +1044,12 @@ function gmsg_coppi()
 			end
 
 			if chatvars.words[4] == "here" then
-				tmp.coords = chatvars.intX .. " " .. chatvars.intY - 1 .. " " .. chatvars.intZ
+				tmp.coords = chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ
 			end
 
 			sendCommand(prefix .. "prender " .. chatvars.playerid .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face)
 			sendCommand(prefix .. "prender " .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face)
-			igplayers[chatvars.playerid].undoPrefab = true
+			--igplayers[chatvars.playerid].undoPrefab = true
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A prefab called " .. tmp.prefab .. " should have spawned.  If it didn't either the prefab isn't called " .. tmp.prefab .. " or it doesn't exist.[-]")
 			botman.faultyChat = false
 			return true
@@ -2005,12 +2005,12 @@ function gmsg_coppi()
 				return true
 			end
 
-			if igplayers[chatvars.playerid].undoPrefab then
-				sendCommand(prefix .. "prender " .. chatvars.playerid .. "bottemp" .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1  .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1)
-			else
+			-- if igplayers[chatvars.playerid].undoPrefab then
+				-- sendCommand(prefix .. "prender " .. chatvars.playerid .. "bottemp" .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1  .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1)
+			-- else
 				sendCommand("pundo")
 				igplayers[chatvars.playerid].undoPrefab = nil
-			end
+			-- end
 
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Block undo command (pundo) sent. If it didn't work you don't have an undo available.[-]")
 			botman.faultyChat = false

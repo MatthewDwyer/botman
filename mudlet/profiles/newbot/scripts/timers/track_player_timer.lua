@@ -7,6 +7,111 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+ -- These are run every second
+
+function persistentQueueTimer()
+	local cursor, errorString, row, temp, steam, command, ranCommand
+
+	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
+		return
+	end
+
+	ranCommand = false
+	cursor,errorString = conn:execute("SELECT * FROM persistentQueue WHERE timerDelay = '0000-00-00 00:00:00'  ORDER BY id limit 0,1")
+
+	if cursor then
+		row = cursor:fetch({}, "a")
+
+		if row then
+			steam = row.steam
+			command = row.command
+
+			if command == "update player" then
+				ranCommand = true
+				fixMissingPlayer(steam)
+				updatePlayer(steam)
+				conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+			end
+
+			if command == "update archived player" then
+				ranCommand = true
+				fixMissingArchivedPlayer(steam)
+				updateArchivedPlayer(steam)
+				conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+			end
+
+			if string.find(command, "admin add") then
+				ranCommand = true
+				irc_chat(server.ircMain, "Player " .. players[steam].name .. " has been given admin.")
+				temp = string.split(command, " ")
+				setChatColour(steam, temp[4])
+				conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+				sendCommand(command)
+			end
+
+			if string.find(command, "ban remove") then
+				ranCommand = true
+				irc_chat(server.ircMain, "Player " .. players[steam].name .. " has been unbanned.")
+				conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+				sendCommand(command)
+			end
+
+			if string.find(command, "tele ") then
+				ranCommand = true
+				conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+
+				if igplayers[steam] then
+					teleport(command, steam)
+				end
+			end
+
+			if not ranCommand then
+				conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+				sendCommand(command)
+			end
+		end
+	end
+
+	-- check all the delayed commands.  send any that are not in the future
+	cursor,errorString = conn:execute("SELECT id, steam, command, action, value, UNIX_TIMESTAMP(timerDelay) AS delay FROM persistentQueue WHERE timerDelay <> '0000-00-00 00:00:00' ORDER BY id limit 0,1")
+
+	if cursor then
+		row = cursor:fetch({}, "a")
+
+		if row then
+			steam = row.steam
+			command = row.command
+
+			if row.delay - os.time() <= 0 then
+				if string.sub(command, 1, 3) == "pm " or string.sub(command, 1, 3) == "say" then
+					conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+					message(command)
+
+					if string.find(row.command, "admin status") then
+						irc_chat(server.ircMain, "OH GOD NOOOO! " .. players[steam].name .. "'s admin status has been restored.")
+					end
+				else
+					if string.find(command, "tele ") then
+						conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+
+						if igplayers[steam] then
+							teleport(command, steam)
+						end
+					else
+						conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
+						sendCommand(command)
+
+						if string.find(command, "admin add") then
+							temp = string.split(command, " ")
+							setChatColour(steam, temp[4])
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
 
 function trackPlayerTimer()
 	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
@@ -60,4 +165,7 @@ function trackPlayerTimer()
 			end
 		end
 	end
+
+	-- piggy-back on this timer to run the persistentQueue.
+	persistentQueueTimer()
 end

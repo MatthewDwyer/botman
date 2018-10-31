@@ -588,9 +588,9 @@ function logInventoryChanges(steam, item, delta, x, y, z, session, flag)
 	-- log the chat
 	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_inventory.txt", "a")
 	if delta > 0 then
-		file:write(botman.serverTime .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty +" .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; sess " .. session .. "; " .. flag .. "\n")
+		file:write("server date " .. botman.serverTime .. "; game " .. server.gameDate .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty +" .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; sess " .. session .. "; " .. flag .. "\n")
 	else
-		file:write(botman.serverTime .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty " .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; sess " .. session .. "; " .. flag .. "\n")
+		file:write("server date " .. botman.serverTime .. "; game " .. server.gameDate .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty " .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; sess " .. session .. "; " .. flag .. "\n")
 	end
 
 	file:close()

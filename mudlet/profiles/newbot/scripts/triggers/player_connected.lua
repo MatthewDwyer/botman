@@ -357,7 +357,7 @@ function playerConnected(line)
 		conn:execute("DELETE FROM playersArchived WHERE steam = " .. tmp.steam)
 		playersArchived[tmp.steam] = nil
 		loadPlayers(tmp.steam)
-		send("sa")
+		--send("sa")
 	end
 
 	-- add to players table
@@ -403,15 +403,15 @@ function playerConnected(line)
 
 		-- this is a hack :O to try to fix corrupt player profiles that freeze/crash the server.  Its nuts but it works.
 		-- to limit the lag this would cause with everyone joining at once sometimes, we only do this once per day per player that joins but ignore brand new players when they first join
-		if not players[tmp.steam].dailySave then
-			players[tmp.steam].dailySave = os.date("%Y-%b-%d", os.time())
-			send("sa")
-		else
-			if players[tmp.steam].dailySave ~= os.date("%Y-%b-%d", os.time()) then
-				players[tmp.steam].dailySave = os.date("%Y-%b-%d", os.time())
-				send("sa")
-			end
-		end
+		-- if not players[tmp.steam].dailySave then
+			-- players[tmp.steam].dailySave = os.date("%Y-%b-%d", os.time())
+			-- send("sa")
+		-- else
+			-- if players[tmp.steam].dailySave ~= os.date("%Y-%b-%d", os.time()) then
+				-- players[tmp.steam].dailySave = os.date("%Y-%b-%d", os.time())
+				-- send("sa")
+			-- end
+		-- end
 	end
 
 	-- add to in-game players table

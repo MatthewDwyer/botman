@@ -45,13 +45,6 @@ function updateBot(forced, steam)
 		else
 			tempTimer( 5, [[ checkScriptVersion() ]] )
 		end
-
-		-- -- vague attempt at compiling a list of bots.  This will be replaced with a restful api.
-		-- if botman.botOffline then
-			-- downloadFile(homedir .. "/temp/", "http://www.botman.nz/serverIP/" .. server.IP .. "/port/" .. server.ServerPort .. "/name/" .. server.serverName .. "/gameType/" .. server.gameType .. "/gameDay/" .. server.gameDay .. "/gameVersion/" .. server.gameVersion .. "/OFFLINE")
-		-- else
-			-- downloadFile(homedir .. "/temp/", "http://www.botman.nz/serverIP/" .. server.IP .. "/port/" .. server.ServerPort .. "/name/" .. server.serverName .. "/gameType/" .. server.gameType .. "/gameDay/" .. server.gameDay .. "/gameVersion/" .. server.gameVersion .. "/ONLINE")
-		-- end
 	end
 end
 
@@ -244,6 +237,14 @@ function reportReloadCode()
 			irc_chat(server.ircMain, "Script error in " .. server.nextCodeReload)
 		end
 	end
+
+	if not server.reloadCustomCodeSuccess then
+		alertAdmins("Script error in " .. server.nextCodeReload)
+
+		if server.ircMain ~= nil then
+			irc_chat(server.ircMain, "Script error in " .. server.nextCodeReload)
+		end
+	end
 end
 
 
@@ -257,6 +258,36 @@ function checkScript(script)
 	end
 
 	dofile(script)
+end
+
+
+function reloadCustomScripts()
+	server.reloadCustomCodeSuccess = false
+
+	if (debug) then display("debug reloadCustomScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	if isFile(homedir .. "/custom/customIRC.lua") then
+		server.nextCodeReload = "/custom/customIRC.lua"
+		dofile(homedir .. "/custom/customIRC.lua")
+	end
+
+	if (debug) then display("debug reloadCustomScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	if isFile(homedir .. "/custom/custom_functions.lua") then
+		server.nextCodeReload = "/custom/custom_functions.lua"
+		dofile(homedir .. "/custom/custom_functions.lua")
+	end
+
+	if (debug) then display("debug reloadCustomScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	if isFile(homedir .. "/custom/gmsg_custom.lua") then
+		server.nextCodeReload = "/custom/gmsg_custom.lua"
+		checkScript(homedir .. "/custom/gmsg_custom.lua")
+	end
+
+	server.reloadCustomCodeSuccess = true
+
+	if (debug) then display("debug reloadCustomScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 end
 
 
@@ -275,18 +306,6 @@ function refreshScripts()
 	fixMissingStuff()
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
-	if isFile(homedir .. "/custom/customIRC.lua") then
-		server.nextCodeReload = "/custom/customIRC.lua"
-		dofile(homedir .. "/custom/customIRC.lua")
-	end
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
-	if isFile(homedir .. "/custom/custom_functions.lua") then
-		server.nextCodeReload = "/custom/custom_functions.lua"
-		dofile(homedir .. "/custom/custom_functions.lua")
-	end
 
 	server.nextCodeReload = "/scripts/debug.lua"
 	checkScript(homedir .. "/scripts/debug.lua")
@@ -409,11 +428,6 @@ function refreshScripts()
 
 	server.nextCodeReload = "/scripts/chat/gmsg_coppi.lua"
 	checkScript(homedir .. "/scripts/chat/gmsg_coppi.lua")
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
-	server.nextCodeReload = "/custom/gmsg_custom.lua"
-	checkScript(homedir .. "/custom/gmsg_custom.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -805,7 +819,7 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 	server.reloadCodeSuccess = false
 
 	if not silent then
-		tempTimer( 3, [[ reportReloadCode() ]] )
+		tempTimer( 10, [[ reportReloadCode() ]] )
 	end
 
 	disableTimer("ReloadScripts")
@@ -925,6 +939,9 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 	end
 
 	server.reloadCodeSuccess = true
+
+	--reload the custom scripts
+	tempTimer( 5, [[reloadCustomScripts()]] )
 
 	if (debug) then display("debug reloadBotScripts end \n") end
 end
