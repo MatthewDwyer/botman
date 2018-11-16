@@ -3238,9 +3238,9 @@ function gmsg_admin()
 
 			-- then teleport to the player
 			if not isArchived then
-				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[id].xPos) + 1 .. " " .. math.ceil(players[id].yPos) .. " " .. math.floor(players[id].zPos)
+				cmd = "tele " .. chatvars.playerid .. " " .. players[id].xPos + 1 .. " " .. players[id].yPos .. " " .. players[id].zPos
 			else
-				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(playersArchived[id].xPos) + 1 .. " " .. math.ceil(playersArchived[id].yPos) .. " " .. math.floor(playersArchived[id].zPos)
+				cmd = "tele " .. chatvars.playerid .. " " .. playersArchived[id].xPos + 1 .. " " .. playersArchived[id].yPos .. " " .. playersArchived[id].zPos
 			end
 
 			teleport(cmd, chatvars.playerid)
@@ -4716,12 +4716,12 @@ function gmsg_admin()
 			-- then teleport close to the player
 			if not isArchived then
 				if igplayers[id] then
-					cmd = "tele " .. chatvars.playerid .. " " .. math.floor(igplayers[id].xPos) .. " " .. math.ceil(igplayers[id].yPos - 20) .. " " .. math.floor(igplayers[id].zPos - igplayers[chatvars.playerid].followDistance)
+					cmd = "tele " .. chatvars.playerid .. " " .. igplayers[id].xPos .. " " .. igplayers[id].yPos - 20 .. " " .. igplayers[id].zPos - igplayers[chatvars.playerid].followDistance
 				else
-					cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[id].xPos) .. " " .. math.ceil(players[id].yPos - 20) .. " " .. math.floor(players[id].zPos - igplayers[chatvars.playerid].followDistance)
+					cmd = "tele " .. chatvars.playerid .. " " .. players[id].xPos .. " " .. players[id].yPos - 20 .. " " .. players[id].zPos - igplayers[chatvars.playerid].followDistance
 				end
 			else
-				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(playersArchived[id].xPos) .. " " .. math.ceil(playersArchived[id].yPos - 20) .. " " .. math.floor(playersArchived[id].zPos - igplayers[chatvars.playerid].followDistance)
+				cmd = "tele " .. chatvars.playerid .. " " .. playersArchived[id].xPos .. " " .. playersArchived[id].yPos - 20 .. " " .. playersArchived[id].zPos - igplayers[chatvars.playerid].followDistance
 			end
 
 			sendCommand(cmd)
@@ -6050,9 +6050,9 @@ function gmsg_admin()
 
 				-- first record the current x y z
 				if (igplayers[id]) then
-					players[id].xPosOld = math.floor(igplayers[id].xPos)
-					players[id].yPosOld = math.ceil(igplayers[id].yPos)
-					players[id].zPosOld = math.floor(igplayers[id].zPos)
+					players[id].xPosOld = igplayers[id].xPos
+					players[id].yPosOld = igplayers[id].yPos
+					players[id].zPosOld = igplayers[id].zPos
 				end
 
 				if (chatvars.words[1] == "sendhome") then
@@ -6245,15 +6245,15 @@ function gmsg_admin()
 				end
 
 				-- first record the current x y z
-				players[id1].xPosOld = math.floor(players[id1].xPos)
-				players[id1].yPosOld = math.floor(players[id1].yPos)
-				players[id1].zPosOld = math.floor(players[id1].zPos)
+				players[id1].xPosOld = players[id1].xPos
+				players[id1].yPosOld = players[id1].yPos
+				players[id1].zPosOld = players[id1].zPos
 
 				if (igplayers[id2]) then
 					cmd = "tele " .. id1 .. " " .. id2
 					teleport(cmd, id1)
 				else
-					cmd = "tele " .. id1 .. " " .. math.floor(players[id2].xPos) .. " " .. math.ceil(players[id2].yPos) .. " " .. math.floor(players[id2].zPos)
+					cmd = "tele " .. id1 .. " " .. players[id2].xPos .. " " .. players[id2].yPos .. " " .. players[id2].zPos
 					teleport(cmd, id1)
 				end
 			end
@@ -7272,9 +7272,9 @@ function gmsg_admin()
 
 			-- first record their current x y z
 			players[tmp.id].timeout = true
-			players[tmp.id].xPosTimeout = math.floor(players[tmp.id].xPos)
-			players[tmp.id].yPosTimeout = math.ceil(players[tmp.id].yPos)
-			players[tmp.id].zPosTimeout = math.floor(players[tmp.id].zPos)
+			players[tmp.id].xPosTimeout = players[tmp.id].xPos
+			players[tmp.id].yPosTimeout = players[tmp.id].yPos
+			players[tmp.id].zPosTimeout = players[tmp.id].zPos
 
 			if (chatvars.playername ~= "Server") then
 				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. players[tmp.id].xPosTimeout .. "," .. players[tmp.id].yPosTimeout .. "," .. players[tmp.id].zPosTimeout .. ",'" .. botman.serverTime .. "','timeout','Player " .. escape(players[tmp.id].name) .. " SteamID: " .. tmp.id .. " sent to timeout by " .. escape(players[chatvars.playerid].name) .. "'," .. tmp.id .. ")") end
@@ -7804,9 +7804,9 @@ function gmsg_admin()
 				end
 
 				players[id].freeze = true
-				players[id].prisonxPosOld = math.floor(players[id].xPos)
-				players[id].prisonyPosOld = math.ceil(players[id].yPos)
-				players[id].prisonzPosOld = math.floor(players[id].zPos)
+				players[id].prisonxPosOld = players[id].xPos
+				players[id].prisonyPosOld = players[id].yPos
+				players[id].prisonzPosOld = players[id].zPos
 				message("say [" .. server.chatColour .. "]STOP RIGHT THERE CRIMINAL SCUM![-]")
 			else
 				if not players[id].freeze then
@@ -8986,9 +8986,9 @@ function gmsg_admin()
 						return true
 					else
 						-- first record the current x y z
-						players[chatvars.playerid].xPosOld = math.floor(igplayers[chatvars.playerid].xPos)
-						players[chatvars.playerid].yPosOld = math.ceil(igplayers[chatvars.playerid].yPos)
-						players[chatvars.playerid].zPosOld = math.floor(igplayers[chatvars.playerid].zPos)
+						players[chatvars.playerid].xPosOld = igplayers[chatvars.playerid].xPos
+						players[chatvars.playerid].yPosOld = igplayers[chatvars.playerid].yPos
+						players[chatvars.playerid].zPosOld = igplayers[chatvars.playerid].zPos
 
 						cmd = "tele " .. chatvars.playerid .. " " .. players[id].homeX .. " " .. players[id].homeY .. " " .. players[id].homeZ
 						teleport(cmd, chatvars.playerid)
@@ -9000,9 +9000,9 @@ function gmsg_admin()
 						return true
 					else
 						-- first record the current x y z
-						players[chatvars.playerid].xPosOld = math.floor(igplayers[chatvars.playerid].xPos)
-						players[chatvars.playerid].yPosOld = math.ceil(igplayers[chatvars.playerid].yPos)
-						players[chatvars.playerid].zPosOld = math.floor(igplayers[chatvars.playerid].zPos)
+						players[chatvars.playerid].xPosOld = igplayers[chatvars.playerid].xPos
+						players[chatvars.playerid].yPosOld = igplayers[chatvars.playerid].yPos
+						players[chatvars.playerid].zPosOld = igplayers[chatvars.playerid].zPos
 
 						cmd = "tele " .. chatvars.playerid .. " " .. playersArchived[id].homeX .. " " .. playersArchived[id].homeY .. " " .. playersArchived[id].homeZ
 						teleport(cmd, chatvars.playerid)
@@ -9016,9 +9016,9 @@ function gmsg_admin()
 						return true
 					else
 						-- first record the current x y z
-						players[chatvars.playerid].xPosOld = math.floor(igplayers[chatvars.playerid].xPos)
-						players[chatvars.playerid].yPosOld = math.ceil(igplayers[chatvars.playerid].yPos)
-						players[chatvars.playerid].zPosOld = math.floor(igplayers[chatvars.playerid].zPos)
+						players[chatvars.playerid].xPosOld = igplayers[chatvars.playerid].xPos
+						players[chatvars.playerid].yPosOld = igplayers[chatvars.playerid].yPos
+						players[chatvars.playerid].zPosOld = igplayers[chatvars.playerid].zPos
 
 						cmd = "tele " .. chatvars.playerid .. " " .. players[id].home2X .. " " .. players[id].home2Y .. " " .. players[id].home2Z
 						teleport(cmd, chatvars.playerid)
@@ -9030,9 +9030,9 @@ function gmsg_admin()
 						return true
 					else
 						-- first record the current x y z
-						players[chatvars.playerid].xPosOld = math.floor(igplayers[chatvars.playerid].xPos)
-						players[chatvars.playerid].yPosOld = math.ceil(igplayers[chatvars.playerid].yPos)
-						players[chatvars.playerid].zPosOld = math.floor(igplayers[chatvars.playerid].zPos)
+						players[chatvars.playerid].xPosOld = igplayers[chatvars.playerid].xPos
+						players[chatvars.playerid].yPosOld = igplayers[chatvars.playerid].yPos
+						players[chatvars.playerid].zPosOld = igplayers[chatvars.playerid].zPos
 
 						cmd = "tele " .. chatvars.playerid .. " " .. playersArchived[id].home2X .. " " .. playersArchived[id].home2Y .. " " .. playersArchived[id].home2Z
 						teleport(cmd, chatvars.playerid)

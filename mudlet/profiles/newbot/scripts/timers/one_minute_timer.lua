@@ -41,6 +41,11 @@ function everyMinute()
 
 	windowMessage(server.windowDebug, "60 second timer\n")
 
+	if not server.ServerMaxPlayerCount then
+		-- missing ServerMaxPlayerCount so we need to re-read gg
+		sendCommand("gg")
+	end
+
 	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
 	debug = false
 
@@ -76,8 +81,10 @@ function everyMinute()
 			players[k].cash = players[k].cash + server.perMinutePayRate
 		end
 
-		if tonumber(v.afk - os.time()) < 300 and tonumber(v.afk - os.time()) > 60 and (botman.playersOnline >= server.ServerMaxPlayerCount) and (accessLevel(steam) > 2) and server.idleKick then
-			message("pm " .. v.steam .. " [" .. server.warnColour .. "]You appear to be away from your keyboard.  You will be kicked in " .. os.date("%M minutes %S seconds",v.afk - os.time()) .. " for being afk.  If you move, talk or do things you will not be kicked.[-]")
+		if server.ServerMaxPlayerCount then
+			if tonumber(v.afk - os.time()) < 300 and tonumber(v.afk - os.time()) > 60 and (botman.playersOnline >= server.ServerMaxPlayerCount) and (accessLevel(steam) > 2) and server.idleKick then
+				message("pm " .. v.steam .. " [" .. server.warnColour .. "]You appear to be away from your keyboard.  You will be kicked in " .. os.date("%M minutes %S seconds",v.afk - os.time()) .. " for being afk.  If you move, talk or do things you will not be kicked.[-]")
+			end
 		end
 
 		if debug then

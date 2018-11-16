@@ -553,7 +553,7 @@ function irc_PlayerShortInfo()
 		end
 	end
 
-	irc_chat(irc_params.name, "Current position " .. math.floor(players[irc_params.pid].xPos) .. " " .. math.ceil(players[irc_params.pid].yPos) .. " " .. math.floor(players[irc_params.pid].zPos))
+	irc_chat(irc_params.name, "Current position " .. players[irc_params.pid].xPos .. " " .. players[irc_params.pid].yPos .. " " .. players[irc_params.pid].zPos)
 
 	if players[irc_params.pid].donor then
 		irc_chat(irc_params.name, "Is a donor")
@@ -818,7 +818,7 @@ function irc_new_players(name)
 				if accessLevel(id) > 3 then
 					irc_chat(name, v.name)
 				else
-					irc_chat(name, "steam: " .. k .. " id: " .. string.format("%8d", v.id) .. " name: " .. v.name .. " at " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos))
+					irc_chat(name, "steam: " .. k .. " id: " .. string.format("%8d", v.id) .. " name: " .. v.name .. " at " .. v.xPos .. " " .. v.yPos .. " " .. v.zPos)
 				end
 			end
 		end
@@ -943,9 +943,9 @@ function irc_players(name)
 		else
 			if players[id].ircAuthenticated == true then
 				if v.inLocation ~= "" then
-					line = "steam: " .. k .. "| id: " .. string.format("%d", v.id) .. "| score: " .. string.format("%d", v.score) .. "| PVP: " .. string.format("%d", v.playerKills) .. "| zeds: " .. string.format("%d", v.zombies) .. "| level: " .. v.level .. "| region r." .. x .. "." .. z .. ".7rg| name: " .. v.name  .. flags .. " in " .. v.inLocation .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos) .. "  " .. players[k].country .. "| ping: " .. v.ping .. "| Hacker score: " .. players[k].hackerScore
+					line = "steam: " .. k .. "| id: " .. string.format("%d", v.id) .. "| score: " .. string.format("%d", v.score) .. "| PVP: " .. string.format("%d", v.playerKills) .. "| zeds: " .. string.format("%d", v.zombies) .. "| level: " .. v.level .. "| region r." .. x .. "." .. z .. ".7rg| name: " .. v.name  .. flags .. " in " .. v.inLocation .. " @ " .. v.xPos .. " " .. v.yPos .. " " .. v.zPos .. "  " .. players[k].country .. "| ping: " .. v.ping .. "| Hacker score: " .. players[k].hackerScore
 				else
-					line = "steam: " .. k .. "| id: " .. string.format("%d", v.id) .. "| score: " .. string.format("%d", v.score) .. "| PVP: " .. string.format("%d", v.playerKills) .. "| zeds: " .. string.format("%d", v.zombies) .. "| level: " .. v.level .. "| region r." .. x .. "." .. z .. ".7rg| name: " .. v.name  .. flags .. " @ " .. math.floor(v.xPos) .. " " .. math.ceil(v.yPos) .. " " .. math.floor(v.zPos) .. "  " .. players[k].country .. "| ping: " .. v.ping .. "| Hacker score: " .. players[k].hackerScore
+					line = "steam: " .. k .. "| id: " .. string.format("%d", v.id) .. "| score: " .. string.format("%d", v.score) .. "| PVP: " .. string.format("%d", v.playerKills) .. "| zeds: " .. string.format("%d", v.zombies) .. "| level: " .. v.level .. "| region r." .. x .. "." .. z .. ".7rg| name: " .. v.name  .. flags .. " @ " .. v.xPos .. " " .. v.yPos .. " " .. v.zPos .. "  " .. players[k].country .. "| ping: " .. v.ping .. "| Hacker score: " .. players[k].hackerScore
 				end
 			else
 				line = "steam: " .. k .. " " .. v.name .. "| score: " .. string.format("%d", v.score) .. "| PVP: " .. string.format("%d", v.playerKills) .. "| zeds: " .. string.format("%d", v.zombies) .. " " .. flags .. "| ping: " .. v.ping .. "| Hacker score: " .. players[k].hackerScore
@@ -1078,29 +1078,58 @@ function irc_listAllPlayers(name) --tested
 
 	table.sort(a)
 
-    for k, v in ipairs(a) do
-		steam = LookupOfflinePlayer(v, "all")
+	if irc_params.pname == nil then
+		for k, v in ipairs(a) do
+			steam = LookupOfflinePlayer(v, "all")
 
-		if players[steam].prisoner then
-			isPrisoner = "Prisoner"
-		else
-			isPrisoner = ""
+			if players[steam].prisoner then
+				isPrisoner = "Prisoner"
+			else
+				isPrisoner = ""
+			end
+
+			if players[steam].donor then
+				isDonor = "Donor"
+			else
+				isDonor = ""
+			end
+
+			if players[steam].accessLevel < 3 then
+				isAdmin = "Admin"
+			else
+				isAdmin = "Player"
+			end
+
+			cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", players[steam].id) .. " name: " .. v .. " [ " .. string.trim(isAdmin .. " " .. isDonor .. " " .. isPrisoner) .. " ] seen " .. players[steam].seen .. " playtime " .. players[steam].playtime .. " cash " .. players[steam].cash
+			irc_chat(irc_params.name, cmd)
 		end
+	else
+		steam = LookupPlayer(irc_params.pname)
 
-		if players[steam].donor then
-			isDonor = "Donor"
+		if players[steam] then
+			if players[steam].prisoner then
+				isPrisoner = "Prisoner"
+			else
+				isPrisoner = ""
+			end
+
+			if players[steam].donor then
+				isDonor = "Donor"
+			else
+				isDonor = ""
+			end
+
+			if players[steam].accessLevel < 3 then
+				isAdmin = "Admin"
+			else
+				isAdmin = "Player"
+			end
+
+			cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", players[steam].id) .. " name: " .. players[steam].name .. " [ " .. string.trim(isAdmin .. " " .. isDonor .. " " .. isPrisoner) .. " ] seen " .. players[steam].seen .. " playtime " .. players[steam].playtime .. " cash " .. players[steam].cash
+			irc_chat(irc_params.name, cmd)
 		else
-			isDonor = ""
+			irc_chat(irc_params.name, "No player found like " .. irc_params.pname)
 		end
-
-		if players[steam].accessLevel < 3 then
-			isAdmin = "Admin"
-		else
-			isAdmin = "Player"
-		end
-
-		cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", players[steam].id) .. " name: " .. v .. " [ " .. isAdmin .. " " .. isDonor .. " " .. isPrisoner .. " ] seen " .. players[steam].seen .. " playtime " .. players[steam].playtime
-		irc_chat(irc_params.name, cmd)
 	end
 
 	irc_chat(name, ".")

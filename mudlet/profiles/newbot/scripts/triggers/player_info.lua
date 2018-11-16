@@ -139,7 +139,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	rawRotation = rotY
 
 	posX = math.floor(posX)
-	posY = math.ceil(posY)
+	posY = math.floor(posY)
 	posZ = math.floor(posZ)
 
 	intX = posX
@@ -233,7 +233,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		irc_chat(server.ircAlerts, "New player joined " .. server.gameDate .. " " .. line:gsub("%,", ""))
 
 		if botman.dbConnected then
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(posX) .. "," .. math.floor(posY) .. "," .. math.floor(posZ) .. ",'" .. botman.serverTime .. "','new player','New player joined " .. name .. " steam: " .. steam.. " id: " .. id .. "'," .. steam .. ")")
+			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. posX .. "," .. posY .. "," .. posZ .. ",'" .. botman.serverTime .. "','new player','New player joined " .. name .. " steam: " .. steam.. " id: " .. id .. "'," .. steam .. ")")
 			conn:execute("INSERT INTO players (steam, name, id, IP, newPlayer, watchPlayer, watchPlayerTimer) VALUES (" .. steam .. ",'" .. escape(name) .. "'," .. id .. "," .. IP .. ",1,1, " .. os.time() + 2419200 .. ")")
 		end
 
@@ -469,13 +469,13 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if igplayers[steam].deaths ~= nil then
 		if tonumber(igplayers[steam].deaths) < tonumber(deaths) then
 			if server.SDXDetected and tonumber(igplayers[steam].yPosLast) > 0 then
-				players[steam].deathX = math.floor(igplayers[steam].xPosLast)
-				players[steam].deathY = math.ceil(igplayers[steam].yPosLast)
-				players[steam].deathZ = math.floor(igplayers[steam].zPosLast)
+				players[steam].deathX = igplayers[steam].xPosLast
+				players[steam].deathY = igplayers[steam].yPosLast
+				players[steam].deathZ = igplayers[steam].zPosLast
 
-				igplayers[steam].deadX = math.floor(igplayers[steam].xPosLast)
-				igplayers[steam].deadY = math.ceil(igplayers[steam].yPosLast)
-				igplayers[steam].deadZ = math.floor(igplayers[steam].zPosLast)
+				igplayers[steam].deadX = igplayers[steam].xPosLast
+				igplayers[steam].deadY = igplayers[steam].yPosLast
+				igplayers[steam].deadZ = igplayers[steam].zPosLast
 				igplayers[steam].teleCooldown = 1000
 
 				irc_chat(server.ircMain, "Player " .. steam .. " name: " .. name .. "'s death recorded at " .. igplayers[steam].deadX .. " " .. igplayers[steam].deadY .. " " .. igplayers[steam].deadZ)
@@ -753,75 +753,77 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		players[steam].alertReset = true
 	end
 
-	if (igplayers[steam].greet) and tonumber(igplayers[steam].greetdelay) == 0 then
-		igplayers[steam].greet = false
+	if (igplayers[steam].greet) then
+		if tonumber(igplayers[steam].greetdelay) == 0 then
+			igplayers[steam].greet = false
 
-		if server.welcome ~= nil and server.welcome ~= "" then
-			message(string.format("pm %s [%s]%s[-]", steam, server.chatColour, server.welcome))
-		else
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Welcome to " .. server.serverName .. "!  Type " .. server.commandPrefix .. "info, " .. server.commandPrefix .. "rules or " .. server.commandPrefix .. "help for commands.[-]")
-			message(string.format("pm %s [%s]We have a server manager bot called %s[-]", steam, server.chatColour, server.botName))
-		end
-
-		if (tonumber(igplayers[steam].zombies) ~= 0) then
-			if (players[steam].donor == true) then
-				welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Welcome back " .. name .. "! Thanks for supporting us. =D[-]"
+			if server.welcome ~= nil and server.welcome ~= "" then
+				message(string.format("pm %s [%s]%s[-]", steam, server.chatColour, server.welcome))
 			else
-				welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Welcome back " .. name .. "![-]"
+				message("pm " .. steam .. " [" .. server.chatColour .. "]Welcome to " .. server.serverName .. "!  Type " .. server.commandPrefix .. "info, " .. server.commandPrefix .. "rules or " .. server.commandPrefix .. "help for commands.[-]")
+				message(string.format("pm %s [%s]We have a server manager bot called %s[-]", steam, server.chatColour, server.botName))
 			end
 
-			if (string.find(botman.serverTime, "02-14", 5, 10)) then welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Happy Valentines Day " .. name .. "! ^^[-]" end
+			if (tonumber(igplayers[steam].zombies) ~= 0) then
+				if (players[steam].donor == true) then
+					welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Welcome back " .. name .. "! Thanks for supporting us. =D[-]"
+				else
+					welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Welcome back " .. name .. "![-]"
+				end
 
-			message(welcome)
-		else
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Welcome " .. name .. "![-]")
-		end
+				if (string.find(botman.serverTime, "02-14", 5, 10)) then welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Happy Valentines Day " .. name .. "! ^^[-]" end
 
-		if (players[steam].timeout == true) then
-			message("pm " .. steam .. " [" .. server.warnColour .. "]You are in timeout, not glitched or lagged.  You will stay here until released by an admin.[-]")
-		end
-
-		if (botman.scheduledRestart) then
-			message("pm " .. steam .. " [" .. server.alertColour .. "]<!>[-][" .. server.warnColour .. "] SERVER WILL REBOOT SHORTLY [-][" .. server.alertColour .. "]<!>[-]")
-		end
-
-		if server.MOTD ~= "" then
-			if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]" .. server.MOTD .. "[-]") .. "')") end
-		end
-
-		if tonumber(players[steam].removedClaims) > 0 then
-			if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]I am holding " .. players[steam].removedClaims .. " land claim blocks for you. Type " .. server.commandPrefix .. "give claims to receive them.[-]") .. "')") end
-		end
-
-		if botman.dbConnected then
-			cursor,errorString = conn:execute("SELECT * FROM mail WHERE recipient = " .. steam .. " and status = 0")
-			rows = cursor:numrows()
-
-			if rows > 0 then
-				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]NEW MAIL HAS ARRIVED!  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')") end
+				message(welcome)
+			else
+				message("pm " .. steam .. " [" .. server.chatColour .. "]Welcome " .. name .. "![-]")
 			end
-		end
 
-		if players[steam].newPlayer == true and server.rules ~= "" then
-			if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]" .. server.rules .."[-]") .. "')") end
-		end
+			if (players[steam].timeout == true) then
+				message("pm " .. steam .. " [" .. server.warnColour .. "]You are in timeout, not glitched or lagged.  You will stay here until released by an admin.[-]")
+			end
 
-		if server.warnBotReset == true and playerAccessLevel == 0 then
+			if (botman.scheduledRestart) then
+				message("pm " .. steam .. " [" .. server.alertColour .. "]<!>[-][" .. server.warnColour .. "] SERVER WILL REBOOT SHORTLY [-][" .. server.alertColour .. "]<!>[-]")
+			end
+
+			if server.MOTD ~= "" then
+				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]" .. server.MOTD .. "[-]") .. "')") end
+			end
+
+			if tonumber(players[steam].removedClaims) > 0 then
+				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]I am holding " .. players[steam].removedClaims .. " land claim blocks for you. Type " .. server.commandPrefix .. "give claims to receive them.[-]") .. "')") end
+			end
+
 			if botman.dbConnected then
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]ALERT!  It appears that the server has been reset.[-]") .. "')")
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To reset me type " .. server.commandPrefix .. "reset bot.[-]") .. "')")
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To dismiss this alert type " .. server.commandPrefix .. "no reset.[-]") .. "')")
+				cursor,errorString = conn:execute("SELECT * FROM mail WHERE recipient = " .. steam .. " and status = 0")
+				rows = cursor:numrows()
+
+				if rows > 0 then
+					if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]NEW MAIL HAS ARRIVED!  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')") end
+				end
 			end
-		end
 
-		if (not players[steam].santa) and specialDay == "christmas" then
-			if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]HO HO HO! Merry Christmas!  Type " .. server.commandPrefix .. "santa to open your Christmas stocking![-]") .. "')") end
-		end
+			if players[steam].newPlayer == true and server.rules ~= "" then
+				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]" .. server.rules .."[-]") .. "')") end
+			end
 
-		-- run commands from the connectQueue now that the player has spawned and hopefully paying attention to chat
-		tempTimer( 3, [[processConnectQueue("]].. steam .. [[")]] )
-		-- also check for removed claims
-		tempTimer(10, [[CheckClaimsRemoved("]] .. steam .. [[")]] )
+			if server.warnBotReset == true and playerAccessLevel == 0 then
+				if botman.dbConnected then
+					conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]ALERT!  It appears that the server has been reset.[-]") .. "')")
+					conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To reset me type " .. server.commandPrefix .. "reset bot.[-]") .. "')")
+					conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To dismiss this alert type " .. server.commandPrefix .. "no reset.[-]") .. "')")
+				end
+			end
+
+			if (not players[steam].santa) and specialDay == "christmas" then
+				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]HO HO HO! Merry Christmas!  Type " .. server.commandPrefix .. "santa to open your Christmas stocking![-]") .. "')") end
+			end
+
+			-- run commands from the connectQueue now that the player has spawned and hopefully paying attention to chat
+			tempTimer( 3, [[processConnectQueue("]].. steam .. [[")]] )
+			-- also check for removed claims
+			tempTimer(10, [[CheckClaimsRemoved("]] .. steam .. [[")]] )
+		end
 	end
 
 
@@ -864,7 +866,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				-- teleport close to the player
 				igplayers[steam].tp = 1
 				igplayers[steam].hackerTPScore = 0
-				sendCommand("tele " .. steam .. " " .. math.floor(igplayers[igplayers[steam].following].xPos) .. " " .. math.ceil(igplayers[igplayers[steam].following].yPos - 30) .. " " .. math.floor(igplayers[igplayers[steam].following].zPos))
+				sendCommand("tele " .. steam .. " " .. igplayers[igplayers[steam].following].xPos .. " " .. igplayers[igplayers[steam].following].yPos - 30 .. " " .. igplayers[igplayers[steam].following].zPos)
 			end
 		end
 	end
@@ -1271,7 +1273,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 						if (playerAccessLevel >= tonumber(teleports[tp].maximumAccess) and playerAccessLevel <= tonumber(teleports[tp].minimumAccess)) or playerAccessLevel < 3 then
 							if isDestinationAllowed(steam, teleports[tp].dx, teleports[tp].dz) then
 								igplayers[steam].teleCooldown = 2
-								cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].dx) .. " " .. math.ceil(teleports[tp].dy) .. " " .. math.floor(teleports[tp].dz)
+								cmd = "tele " .. steam .. " " .. teleports[tp].dx .. " " .. teleports[tp].dy .. " " .. teleports[tp].dz
 								teleport(cmd, steam)
 
 								faultyPlayerinfo = false
@@ -1286,7 +1288,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 						if (playerAccessLevel >= tonumber(teleports[tp].maximumAccess) and playerAccessLevel <= tonumber(teleports[tp].minimumAccess)) or playerAccessLevel < 3 then
 							if isDestinationAllowed(steam, teleports[tp].x, teleports[tp].z) then
 								igplayers[steam].teleCooldown = 2
-								cmd = "tele " .. steam .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
+								cmd = "tele " .. steam .. " " .. teleports[tp].x .. " " .. teleports[tp].y .. " " .. teleports[tp].z
 								teleport(cmd, steam)
 
 								faultyPlayerinfo = false
@@ -1315,7 +1317,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				if server.allowTeleporting then
 					if isDestinationAllowed(steam, waypoints[tmp.linkedID].x, waypoints[tmp.linkedID].z) then
 						igplayers[steam].teleCooldown = 2
-						cmd = "tele " .. steam .. " " .. math.floor(waypoints[tmp.linkedID].x) .. " " .. math.ceil(waypoints[tmp.linkedID].y) .. " " .. math.floor(waypoints[tmp.linkedID].z)
+						cmd = "tele " .. steam .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
 						teleport(cmd, steam)
 
 						faultyPlayerinfo = false
@@ -1325,7 +1327,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				else
 					if playerAccessLevel < 3 then
 						igplayers[steam].teleCooldown = 2
-						cmd = "tele " .. steam .. " " .. math.floor(waypoints[tmp.linkedID].x) .. " " .. math.ceil(waypoints[tmp.linkedID].y) .. " " .. math.floor(waypoints[tmp.linkedID].z)
+						cmd = "tele " .. steam .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
 						teleport(cmd, steam)
 
 						faultyPlayerinfo = false
@@ -1454,9 +1456,11 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	end
 
 	if igplayers[steam].spawnedInWorld then
-		if igplayers[steam].greet and tonumber(igplayers[steam].greetdelay) > 0 then
-			-- Player has spawned.  We can greet them now and do other stuff that waits for spawn
-			igplayers[steam].greetdelay = 0
+		if igplayers[steam].greet then
+			if tonumber(igplayers[steam].greetdelay) > 0 then
+				-- Player has spawned.  We can greet them now and do other stuff that waits for spawn
+				igplayers[steam].greetdelay = 0
+			end
 		end
 
 		if tonumber(igplayers[steam].teleCooldown) > 100 then

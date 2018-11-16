@@ -93,7 +93,7 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 		-- set the player offline in bots db
 		connBots:execute("UPDATE players set online = 0 where steam = " .. steam .. " AND botID = " .. server.botID)
 
-		-- log the player connection in events table
+		-- log the player disconnection in events table
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player left','Player disconnected " .. escape(players[steam].name) .. " " .. steam .. " Owner " .. players[steam].steamOwner .. " " .. players[steam].id .. "'," .. players[steam].steamOwner .. ")") end
 
 		-- check how many claims they have placed

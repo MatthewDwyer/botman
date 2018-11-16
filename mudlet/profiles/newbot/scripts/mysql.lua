@@ -637,6 +637,7 @@ function alterTables()
 	doSQL("CREATE TABLE `LKPQueue` (`id` int(11) NOT NULL AUTO_INCREMENT, `line` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `persistentQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) NOT NULL,`command` varchar(255) NOT NULL,`action` varchar(15) NOT NULL,  `value` int(11) NOT NULL DEFAULT '0',`timerDelay` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `slots` (`slot` int(11) NOT NULL,`steam` bigint(17) NOT NULL DEFAULT '0',`online` tinyint(1) NOT NULL DEFAULT '0',`joinedTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`joinedSession` int(11) NOT NULL DEFAULT '0',`expires` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`reserved` tinyint(1) NOT NULL DEFAULT '0',`staff` tinyint(1) NOT NULL DEFAULT '0',`free` TINYINT(1) NOT NULL DEFAULT '1',`canBeKicked` TINYINT(1) NOT NULL DEFAULT '1',`disconnectedTimestamp` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', PRIMARY KEY (`slot`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
+	doSQL("CREATE TABLE `bases` (`steam` bigint(17) NOT NULL,`baseNumber` int(11) NOT NULL DEFAULT '1',`title` varchar(100) NOT NULL DEFAULT '',`x` int(11) NOT NULL DEFAULT '0',`y` int(11) NOT NULL DEFAULT '0',`z` int(11) NOT NULL DEFAULT '0',`exitX` int(11) NOT NULL DEFAULT '0',`exitY` int(11) NOT NULL DEFAULT '0',`exitZ` int(11) NOT NULL DEFAULT '0',`size` int(11) NOT NULL DEFAULT '0',`protect` tinyint(1) NOT NULL DEFAULT '0',`keepOut` tinyint(1) NOT NULL DEFAULT '0',`creationTimestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,`creationGameDay` INT NOT NULL DEFAULT '0',PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
 
 	-- changes to players table
 	doSQL("ALTER TABLE `players` ADD COLUMN `waypoint2X` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Y` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Z` INT NOT NULL DEFAULT '0', ADD COLUMN `waypointsLinked` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -669,6 +670,7 @@ function alterTables()
 	doSQL("ALTER TABLE `players` ADD `bountyReason` VARCHAR(100) NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `players` ADD `claimsExpired` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `showLocationMessages` TINYINT(1) NOT NULL DEFAULT '1'") -- this is just here for backwards compatibility
+	doSQL("ALTER TABLE `players` ADD `DNSLookupCount` INT NOT NULL DEFAULT '0', ADD `lastDNSLookup` DATE NOT NULL DEFAULT '1000-01-01'")
 
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
@@ -904,6 +906,10 @@ function alterTables()
 	doSQL("ALTER TABLE `bans` ADD `GBLBanVetted` TINYINT(1) NOT NULL DEFAULT '0',  ADD `GBLBanActive` TINYINT(1) NOT NULL DEFAULT '0'", true)
 	doSQL("ALTER TABLE `players` ADD `VACBanned` TINYINT(1) NOT NULL DEFAULT '0'", true)
 	doSQL("ALTER TABLE `bans` ADD `level` INT NOT NULL DEFAULT '0'", true)
+	doSQL("ALTER TABLE `IPBlacklist` ADD `OrgName` VARCHAR(100) NOT NULL DEFAULT '", true)
+	doSQL("CREATE TABLE IF NOT EXISTS `IPTable` (`StartIP` bigint(15) NOT NULL,`EndIP` bigint(15) NOT NULL,`Country` varchar(2) NOT NULL DEFAULT '',`OrgName` varchar(100) NOT NULL DEFAULT '',`IP` varchar(20) NOT NULL DEFAULT '', PRIMARY KEY (`StartIP`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", true)
+	doSQL("CREATE TABLE IF NOT EXISTS `settings` (`DNSLookupCounter` int(11) NOT NULL DEFAULT '0',`DNSResetCounterDate` int(11) NOT NULL DEFAULT '10000101') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", true)
+	doSQL("ALTER TABLE `IPTable` ADD `steam` BIGINT(17) NOT NULL DEFAULT '0', ADD `botID` INT NOT NULL DEFAULT '0'", true)
 
 	-- change the primary key of table bans from steam to id (an auto incrementing integer field) if the id field does not exist.
 	cursor,errorString = connBots:execute("SHOW COLUMNS FROM `bans` LIKE 'id'")

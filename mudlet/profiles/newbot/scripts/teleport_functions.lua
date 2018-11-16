@@ -23,9 +23,9 @@ function prepareTeleport(steam, cmd)
 
 		-- record the player's current x y z
 		if tonumber(players[steam].accessLevel) < 3 or (string.lower(players[steam].inLocation) ~= "prison") then
-			players[steam].xPosOld = math.floor(players[steam].xPos)
-			players[steam].yPosOld = math.floor(players[steam].yPos)
-			players[steam].zPosOld = math.floor(players[steam].zPos)
+			players[steam].xPosOld = players[steam].xPos
+			players[steam].yPosOld = players[steam].yPos
+			players[steam].zPosOld = players[steam].zPos
 		end
 
 		igplayers[steam].lastLocation = ""
@@ -46,10 +46,18 @@ function teleport(cmd, steam, justTeleport)
 	coords = string.sub(cmd, 24)
 	coords = string.split(coords, " ")
 
+	-- make sure all 3 coords are integers
+	coords[1] = math.floor(coords[1])
+	coords[2] = math.floor(coords[2])
+	coords[3] = math.floor(coords[3])
+
 	-- don't teleport the player if the coords are 0 0 0
-	if tonumber(coords[1]) == 0 and tonumber(coords[2]) < 1 and tonumber(coords[3]) == 0 then
+	if coords[1] == 0 and coords[2] < 1 and coords[3] == 0 then
 		return false
 	end
+
+	-- bump the y coord up by 1 so we don't tele into the ground.
+	coords[2] = coords[2] + 1
 
 	-- if an admin is following a player (using the /near command) and they teleport away, stop following the player
 	if igplayers[steam].following ~= nil then igplayers[steam].following = nil end

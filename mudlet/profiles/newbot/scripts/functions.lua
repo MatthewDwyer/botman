@@ -1052,7 +1052,7 @@ function fixBot()
 
 	-- check in game player's coordinates. If all are 0 0 0, there's a fault.  It could be a missing table change so force the bot to redo them all.
 	for k,v in pairs(igplayers) do
-		if (math.floor(v.xPos) == 0) and (math.floor(v.yPos) == 0) and (math.floor(v.zPos) == 0) then
+		if v.xPos == 0 and v.yPos == 0 and v.zPos == 0 then
 			faultCount = faultCount + 1
 		end
 	end
@@ -1577,7 +1577,7 @@ function atHome(steam)
 
 	-- base 1
 	if math.abs(players[steam].homeX) > 0 and math.abs(players[steam].homeZ) > 0 then
-		dist = distancexz(math.floor(players[steam].xPos), math.floor(players[steam].zPos), players[steam].homeX, players[steam].homeZ)
+		dist = distancexz(players[steam].xPos, players[steam].zPos, players[steam].homeX, players[steam].homeZ)
 		size = tonumber(players[steam].protectSize)
 
 		if (dist <= size + 30) then
@@ -1591,7 +1591,7 @@ function atHome(steam)
 
 	-- base 2
 	if math.abs(players[steam].home2X) > 0 and math.abs(players[steam].home2Z) > 0 then
-		dist = distancexz(math.floor(players[steam].xPos), math.floor(players[steam].zPos), players[steam].home2X, players[steam].home2Z)
+		dist = distancexz(players[steam].xPos, players[steam].zPos, players[steam].home2X, players[steam].home2Z)
 		size = tonumber(players[steam].protect2Size)
 
 		if (dist <= size + 30) then
@@ -1857,15 +1857,15 @@ function mapPosition(steam)
 	local ns, ew
 
 	if tonumber(players[steam].xPos) < 0 then
-		ew = math.abs(math.floor(players[steam].xPos)).. " W"
+		ew = math.abs(players[steam].xPos).. " W"
 	else
-		ew = math.floor(players[steam].xPos) .. " E"
+		ew = players[steam].xPos .. " E"
 	end
 
 	if tonumber(players[steam].zPos) < 0 then
-		ns = math.abs(math.floor(players[steam].zPos)) .. " S"
+		ns = math.abs(players[steam].zPos) .. " S"
 	else
-		ns = math.floor(players[steam].zPos) .. " N"
+		ns = players[steam].zPos .. " N"
 	end
 
 	return ns .. " " .. ew
@@ -1924,15 +1924,15 @@ function savePosition(steam, temp)
 	if tonumber(players[steam].yPos) > -1 and tonumber(players[steam].yPos) < 256 then
 		-- store the player's current x y z
 		if temp == nil then
-			players[steam].xPosOld = math.floor(players[steam].xPos)
-			players[steam].yPosOld = math.ceil(players[steam].yPos)
-			players[steam].zPosOld = math.floor(players[steam].zPos)
+			players[steam].xPosOld = players[steam].xPos
+			players[steam].yPosOld = players[steam].yPos
+			players[steam].zPosOld = players[steam].zPos
 
 			if botman.dbConnected then conn:execute("UPDATE players SET xPosOld = " .. players[steam].xPosOld .. ", yPosOld = " .. players[steam].yPosOld .. ", zPosOld = " .. players[steam].zPosOld .. " WHERE steam = " .. steam) end
 		else
-			players[steam].xPosOld2 = math.floor(players[steam].xPos)
-			players[steam].yPosOld2 = math.ceil(players[steam].yPos)
-			players[steam].zPosOld2 = math.floor(players[steam].zPos)
+			players[steam].xPosOld2 = players[steam].xPos
+			players[steam].yPosOld2 = players[steam].yPos
+			players[steam].zPosOld2 = players[steam].zPos
 
 			if botman.dbConnected then conn:execute("UPDATE players SET xPosOld2 = " .. players[steam].xPosOld2 .. ", yPosOld2 = " .. players[steam].yPosOld2 .. ", zPosOld2 = " .. players[steam].zPosOld2 .. " WHERE steam = " .. steam) end
 		end
@@ -2030,7 +2030,7 @@ function kick(steam, reason)
 	end
 
 	if igplayers[steam] then
-		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','kick','Player " .. steam .. " " .. escape(players[steam].name) .. " kicked for " .. escape(reason) .. "'," .. steam .. ")") end
+		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. players[steam].xPos .. "," .. players[steam].yPos .. "," .. players[steam].zPos .. ",'" .. botman.serverTime .. "','kick','Player " .. steam .. " " .. escape(players[steam].name) .. " kicked for " .. escape(reason) .. "'," .. steam .. ")") end
 	end
 
 	sendCommand("kick " .. steam .. " " .. " \"" .. reason .. "\"")
@@ -2112,9 +2112,9 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 			end
 
 			if not isArchived then
-				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(playerName) .. " has has been banned for " .. duration .. " for " .. escape(reason) .. "'," .. steam .. ")")
+				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. players[steam].xPos .. "," .. players[steam].yPos .. "," .. players[steam].zPos .. ",'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(playerName) .. " has has been banned for " .. duration .. " for " .. escape(reason) .. "'," .. steam .. ")")
 			else
-				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(playersArchived[steam].xPos) .. "," .. math.ceil(playersArchived[steam].yPos) .. "," .. math.floor(playersArchived[steam].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(playerName) .. " has has been banned for " .. duration .. " for " .. escape(reason) .. "'," .. steam .. ")")
+				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. playersArchived[steam].xPos .. "," .. playersArchived[steam].yPos .. "," .. playersArchived[steam].zPos .. ",'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(playerName) .. " has has been banned for " .. duration .. " for " .. escape(reason) .. "'," .. steam .. ")")
 			end
 		end
 
@@ -2159,7 +2159,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 						equipment = row.equipment
 					end
 
-					conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[k].xPos) .. "," .. math.ceil(players[k].yPos) .. "," .. math.floor(players[k].zPos) .. ",'" .. botman.serverTime .. "','ban','Player " .. k .. " " .. escape(players[k].name) .. " has has been banned for " .. duration .. " for " .. escape("same IP as banned player") .. "'," .. k .. ")")
+					conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. players[k].xPos .. "," .. players[k].yPos .. "," .. players[k].zPos .. ",'" .. botman.serverTime .. "','ban','Player " .. k .. " " .. escape(players[k].name) .. " has has been banned for " .. duration .. " for " .. escape("same IP as banned player") .. "'," .. k .. ")")
 				end
 
 				irc_chat(server.ircMain, "[BANNED] Player " .. k .. " " .. players[k].name .. " has been banned for " .. duration .. " same IP as banned player")
@@ -2210,21 +2210,21 @@ function arrest(steam, reason, bail, releaseTime)
 	end
 
 	if igplayers[steam] then
-		players[steam].prisonxPosOld = math.floor(igplayers[steam].xPos)
-		players[steam].prisonyPosOld = math.floor(igplayers[steam].yPos)
-		players[steam].prisonzPosOld = math.floor(igplayers[steam].zPos)
-		igplayers[steam].xPosOld = math.floor(igplayers[steam].xPos)
-		igplayers[steam].yPosOld = math.floor(igplayers[steam].yPos)
-		igplayers[steam].zPosOld = math.floor(igplayers[steam].zPos)
+		players[steam].prisonxPosOld = igplayers[steam].xPos
+		players[steam].prisonyPosOld = igplayers[steam].yPos
+		players[steam].prisonzPosOld = igplayers[steam].zPos
+		igplayers[steam].xPosOld = igplayers[steam].xPos
+		igplayers[steam].yPosOld = igplayers[steam].yPos
+		igplayers[steam].zPosOld = igplayers[steam].zPos
 		irc_chat(server.ircAlerts, server.gameDate .. " " .. players[steam].name .. " has been sent to prison for " .. reason .. " at " .. igplayers[steam].xPosOld .. " " .. igplayers[steam].yPosOld .. " " .. igplayers[steam].zPosOld)
 		setChatColour(steam)
 	else
-		players[steam].prisonxPosOld = math.floor(players[steam].xPos)
-		players[steam].prisonyPosOld = math.floor(players[steam].yPos)
-		players[steam].prisonzPosOld = math.floor(players[steam].zPos)
-		players[steam].xPosOld = math.floor(players[steam].xPos)
-		players[steam].yPosOld = math.floor(players[steam].yPos)
-		players[steam].zPosOld = math.floor(players[steam].zPos)
+		players[steam].prisonxPosOld = players[steam].xPos
+		players[steam].prisonyPosOld = players[steam].yPos
+		players[steam].prisonzPosOld = players[steam].zPos
+		players[steam].xPosOld = players[steam].xPos
+		players[steam].yPosOld = players[steam].yPos
+		players[steam].zPosOld = players[steam].zPos
 		irc_chat(server.ircAlerts, server.gameDate .. " " .. players[steam].name .. " has been sent to prison for " .. reason .. " at " .. players[steam].xPosOld .. " " .. players[steam].yPosOld .. " " .. players[steam].zPosOld)
 	end
 
@@ -2265,7 +2265,7 @@ function arrest(steam, reason, bail, releaseTime)
 		message("pm " .. steam .. " [" .. server.chatColour .. "]You will be released in " .. days .. " days " .. hours .. " hours and " .. minutes .. " minutes.[-]")
 	end
 
-	if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','prison','Player " .. steam .. " " .. escape(players[steam].name) .. " has has been sent to prison for " .. escape(reason) .. "'," .. steam .. ")") end
+	if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. players[steam].xPos .. "," .. players[steam].yPos .. "," .. players[steam].zPos .. ",'" .. botman.serverTime .. "','prison','Player " .. steam .. " " .. escape(players[steam].name) .. " has has been sent to prison for " .. escape(reason) .. "'," .. steam .. ")") end
 end
 
 
@@ -2276,13 +2276,13 @@ function timeoutPlayer(steam, reason, bot)
 		if accessLevel(steam) > 2 then players[steam].silentBob = true end
 		if bot then players[steam].botTimeout = true end -- the bot initiated this timeout
 		-- record their position for return
-		players[steam].xPosTimeout = math.floor(players[steam].xPos)
-		players[steam].yPosTimeout = math.ceil(players[steam].yPos) + 1
-		players[steam].zPosTimeout = math.floor(players[steam].zPos)
+		players[steam].xPosTimeout = players[steam].xPos
+		players[steam].yPosTimeout = players[steam].yPos
+		players[steam].zPosTimeout = players[steam].zPos
 
 		if botman.dbConnected then
 			conn:execute("UPDATE players SET timeout = 1, botTimeout = " .. dbBool(bot) .. ", xPosTimeout = " .. players[steam].xPosTimeout .. ", yPosTimeout = " .. players[steam].yPosTimeout .. ", zPosTimeout = " .. players[steam].zPosTimeout .. " WHERE steam = " .. steam)
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','timeout','Player " .. steam .. " " .. escape(players[steam].name) .. " has has been sent to timeout for " .. escape(reason) .. "'," .. steam .. ")")
+			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. players[steam].xPos .. "," .. players[steam].yPos .. "," .. players[steam].zPos .. ",'" .. botman.serverTime .. "','timeout','Player " .. steam .. " " .. escape(players[steam].name) .. " has has been sent to timeout for " .. escape(reason) .. "'," .. steam .. ")")
 		end
 
 		-- then teleport the player to timeout
@@ -2406,8 +2406,14 @@ function dailyMaintenance()
 		deleteTrackingData(server.trackingKeepDays)
 	end
 
+	-- Bring out yer dead!
+
 	-- delete telnet logs older than server.telnetLogKeepDays
 	os.execute("find " .. homedir .. "/log* -mtime +" .. server.telnetLogKeepDays .. " -exec rm {} \\;")
+
+	-- delete other old logs
+	os.execute("find " .. botman.chatlogPath .. "/*inventory.txt -mtime +" .. server.telnetLogKeepDays .. " -exec rm {} \\;")
+	os.execute("find " .. botman.chatlogPath .. "/*commandlog.txt -mtime +" .. server.telnetLogKeepDays .. " -exec rm {} \\;")
 	return true
 end
 
@@ -2697,18 +2703,87 @@ function CheckBlacklist(steam, ip)
 			irc_chat(server.ircMain, "Blacklisted player " .. players[steam].name .. " banned.")
 			irc_chat(server.ircAlerts, server.gameDate .. " blacklisted player " .. players[steam].name .. " banned.")
 			banPlayer(steam, "10 years", "blacklisted", "")
-			connBots:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined and banned. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. ip  .. "'," .. steam .. ")")
+			connBots:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. players[steam].xPos .. "," .. players[steam].yPos .. "," .. players[steam].zPos .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined and banned. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. ip  .. "'," .. steam .. ")")
 		end
 	else
-		reverseDNS(steam, ip)
+		-- do a reverse dns lookup if we haven't already got an IP range for this IP
+		-- This isn't perfect since IP range ownership can change but its accuracy should be good enough.  We can always nuke the list periodically.
+		cursor,errorString = connBots:execute("SELECT * FROM IPTable WHERE StartIP <=  " .. ipint .. " AND EndIP >= " .. ipint)
+		if cursor:numrows() == 0 then
+			reverseDNS(steam, ip)
+		end
 	end
 end
 
 
+function getDNSLookupCounter()
+	local cursor, errorString, row
+
+	-- make sure the settings table isn't empty :O
+	cursor,errorString = connBots:execute("SELECT * FROM settings")
+	if cursor:numrows() == 0 then
+		connBots:execute("INSERT INTO settings (`DNSLookupCounter`) VALUES (0)")
+	end
+
+	-- make sure DNSResetCounterDate is not older than today
+	connBots:execute("UPDATE settings SET DNSResetCounterDate = CURDATE() + 0 WHERE DNSResetCounterDate < CURDATE() + 0")
+
+	-- now select the DNS lookup server
+	cursor,errorString = connBots:execute("SELECT * FROM settings WHERE DNSResetCounterDate = CURDATE() + 0")
+	row = cursor:fetch({}, "a")
+
+	if row.DNSLookupCounter then
+		if tonumber(row.DNSLookupCounter) < 500 then
+			-- pick this DNS lookup server and add to the lookupCounter
+			connBots:execute("UPDATE settings SET DNSLookupCounter = DNSLookupCounter + 1")
+			return tonumber(row.DNSLookupCounter)
+		else
+			-- reset the counter and set the resetDate to tomorrow
+			connBots:execute("UPDATE settings SET DNSLookupCounter = 0, DNSResetCounterDate = CURDATE() + 1")
+		end
+	end
+
+	-- select -1 which will tell us not to do a DNS lookup
+	return -1
+end
+
+
 function reverseDNS(steam, ip)
-	os.rename(homedir .. "/dns/" .. steam .. ".txt", homedir .. "/dns/" .. steam .. "_old.txt")
-	os.execute("whois " .. ip:gsub("::ffff:", "") .. " > \"" .. homedir .. "/dns/" .. steam .. ".txt\"")
-	tempTimer( 60, [[readDNS("]] .. steam .. [[")]] )
+	local lookupLimit
+
+	if players[steam].newPlayer then
+		lookupLimit = 3
+	else
+		lookupLimit = 1
+	end
+
+	if players[steam].DNSLookupCount == nil then
+		players[steam].DNSLookupCount = 0
+	end
+
+	if players[steam].lastDNSLookup == nil then
+		players[steam].lastDNSLookup = "1000-01-01"
+	end
+
+	if players[steam].lastDNSLookup ~= os.date("%Y-%m-%d") then
+		players[steam].DNSLookupCount = 0
+	end
+
+	if tonumber(players[steam].DNSLookupCount) < lookupLimit then
+		-- to avoid being blacklisted for doing too many dns lookups in 24 hours we will stop doing them until tomorrow once we reach 500 lookups
+		DNSLookupCounter = getDNSLookupCounter()
+
+		if DNSLookupCounter == -1 then
+			return
+		end
+
+		players[steam].DNSLookupCount = players[steam].DNSLookupCount + 1
+		players[steam].lastDNSLookup = os.date("%Y-%m-%d")
+		-- launch the utility called whois
+		os.rename(homedir .. "/dns/" .. steam .. ".txt", homedir .. "/dns/" .. steam .. "_old.txt")
+		os.execute("whois " .. ip:gsub("::ffff:", "") .. " > \"" .. homedir .. "/dns/" .. steam .. ".txt\"")
+		tempTimer( 30, [[readDNS("]] .. steam .. [[")]] )
+	end
 end
 
 
@@ -2716,7 +2791,7 @@ function readDNS(steam)
 	-- if blacklist action is not exile or ban, nothing happens to the player.
 	-- NOTE: If blacklist action is nothing, proxies won't trigger a ban or exile response either.
 
-	local file, fileSize, ln, split, ip1, ip2, exiled, banned, country, proxy, ISP, iprange, IP
+	local file, fileSize, ln, split, ip1, ip2, exiled, banned, country, onBlacklist, proxy, ISP, iprange, IP
 
 	fileSize = lfs.attributes (homedir .. "/dns/" .. steam .. ".txt", "size")
 
@@ -2729,14 +2804,33 @@ function readDNS(steam)
 	exiled = false
 	banned = false
 	proxy = false
+	onBlacklist = false
 	country = ""
+	ISP = ""
+	iprange = ""
 
 	for ln in file:lines() do
 		ln = string.upper(ln)
 
+		if string.find(ln, "ERROR:201: ACCESS DENIED") then -- oh noes!  We got blacklisted :(
+			return
+		end
+
+		if string.find(ln, "NON-RIPE-NCC-MANAGED-ADDRESS-BLOCK") then -- No point reading this DNS.
+			return
+		end
+
 		if string.find(ln, "%s(%d+)%.(%d+)%.(%d+)%.(%d+)%s") then
 			a,b = string.find(ln, "%s(%d+)%.(%d+)%.(%d+)%.(%d+)%s")
 			iprange = string.sub(ln, a, a+b)
+
+			-- convert the start IP, end IP and player's IP to integers
+			split = string.split(iprange, "-")
+			ip1 = IPToInt(string.trim(split[1]))
+			ip2 = IPToInt(string.trim(split[2]))
+
+			-- player's IP
+			IP = IPToInt(players[steam].ip)
 		end
 
 		if (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
@@ -2768,17 +2862,16 @@ function readDNS(steam)
 			end
 		end
 
-		--if proxy then break end
-
-		if string.find(ln, "ABUSE@") then
+		if string.find(ln, "ABUSE") and string.find(ln, "@") then
 			-- record the domain after the @ and store as the player's ISP
-			ISP = string.sub(ln, string.find(ln, "ABUSE@") + 6)
+			ISP = string.sub(ln, string.find(ln, "@") + 1)
 			players[steam].ISP = ISP
 		end
 
 		if string.find(ln, "CHINA") then
 			country = "CN"
 			players[steam].country = "CN"
+			onBlacklist = true
 		end
 
 		if string.find(ln, "OUNTRY:") or (ln == "ADDRESS:        CN") or (ln == "ADDRESS:        HK") then
@@ -2791,6 +2884,10 @@ function readDNS(steam)
 				proxy = true
 			else
 				 players[steam].country = country
+			end
+
+			if country == "CN" or country == "HK" then
+				onBlacklist = true
 			end
 		end
 
@@ -2819,17 +2916,11 @@ function readDNS(steam)
 			end
 
 			if botman.db2Connected then
-				if iprange ~= nil then
-					split = string.split(iprange, "-")
-					ip1 = IPToInt(string.trim(split[1]))
-					ip2 = IPToInt(string.trim(split[2]))
-
+				if iprange ~= "" then
 					-- check that player's IP is actually within the discovered IP range
-					IP = IPToInt(players[steam].ip)
-
 					if IP >= ip1 and IP <= ip2 then
 						irc_chat(server.ircMain, "Added new Chinese IP range " .. iprange .. " to blacklist")
-						connBots:execute("INSERT INTO IPBlacklist (StartIP, EndIP, Country, botID, steam, playerName, IP) VALUES (" .. ip1 .. "," .. ip2 .. "'" .. country .. "'," .. server.botID .. "," .. steam .. ",'" .. escape(players[steam].name) .. "','" .. escape(players[steam].ip) .. "')")
+						connBots:execute("INSERT INTO IPBlacklist (StartIP, EndIP, Country, OrgName) VALUES (" .. ip1 .. "," .. ip2 .. ",'" .. country .. "','" .. escape(ISP) .. "')")
 					end
 				end
 			end
@@ -2838,6 +2929,14 @@ function readDNS(steam)
 
 			-- got country so stop processing the dns record
 			break
+		end
+	end
+
+	if not onBlacklist and not proxy and iprange ~= "" then
+		-- check that player's IP is actually within the discovered IP range
+		if IP >= ip1 and IP <= ip2 then
+			-- Attempt to insert the IP range and info into IPTable.  It will fail if it is already there which if fine and more efficient than checking first.
+			connBots:execute("INSERT INTO IPTable (StartIP, EndIP, Country, OrgName, IP, steam, botID) VALUES (" .. ip1 .. "," .. ip2 .. ",'" .. country .. "','" .. escape(ISP) .. "','" .. players[steam].ip .. "'," .. steam .. "," .. server.botID .. ")")
 		end
 	end
 
@@ -2878,7 +2977,7 @@ function readDNS(steam)
 	if botman.dbConnected then
 		if server.blacklistResponse ~= 'nothing' and exiled and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			conn:execute("UPDATE players SET country = '" .. escape(country) .. "', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam)
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. math.floor(players[steam].xPos) .. "," .. math.ceil(players[steam].yPos) .. "," .. math.floor(players[steam].zPos) .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. players[steam].ip  .. "'," .. steam .. ")")
+			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. players[steam].xPos .. "," .. players[steam].yPos .. "," .. players[steam].zPos .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. players[steam].ip  .. "'," .. steam .. ")")
 		end
 	end
 
@@ -3027,6 +3126,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].donor = false
 	players[steam].donorExpiry = os.time()
 	players[steam].donorLevel = 0
+	players[steam].DNSLookupCount = 0
 	players[steam].exiled = 0
 	players[steam].firstSeen = os.time()
 	players[steam].GBLCount = 0
@@ -3048,6 +3148,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].lastChatLine = ""
 	players[steam].lastCommand = ""
 	players[steam].lastCommandTimestamp = os.time()
+	players[steam].lastDNSLookup = "1000-01-01"
 	players[steam].lastLogout = os.time()
 	players[steam].location = ""
 	players[steam].maxWaypoints = server.maxWaypoints

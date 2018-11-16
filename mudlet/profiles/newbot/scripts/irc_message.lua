@@ -4573,12 +4573,16 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
-		irc_chat(name, "Command: players")
-		irc_chat(name, "Get a list of all of the players (except archived players).")
+		irc_chat(name, "Command: players {optional player name}")
+		irc_chat(name, "Get a list of all of the players or a specific player (except archived players).")
 		irc_chat(name, ".")
 	end
 
-	if (msgLower == "players") and players[ircid].accessLevel == 0 then
+	if (words[1] == "players") and players[ircid].accessLevel < 3 then
+		if words[2] ~= nil then
+			irc_params.pname = string.sub(msg, 9)
+		end
+
 		irc_listAllPlayers(name)
 		irc_params = {}
 		return
@@ -4739,53 +4743,87 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
-		irc_chat(name, "Command: donors")
-		irc_chat(name, "List all of the donors.")
+		irc_chat(name, "Command: donors {optional player name}")
+		irc_chat(name, "List all of the donors or a specific donor.")
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "donors" and words[2] == nil) then
+	if (words[1] == "donors") then
 		tmp = {}
 		tmp.list = {}
 		tmp.count = 0
+		tmp.name = ""
 
-		irc_chat(name, "These are all the donors on record:")
+		if words[2] == nil then
+			irc_chat(name, "These are all the donors on record:")
 
-		for i in pairs(players) do
-			if (players[i].donor) then
-				table.insert(tmp.list, players[i].name)
-				tmp.count = tmp.count + 1
-			end
-		end
-
-		table.sort(tmp.list)
-
-		for k, v in ipairs(tmp.list) do
-			tmp.steam = LookupOfflinePlayer(v, "all")
-
-			diff = os.difftime(players[tmp.steam].donorExpiry, os.time()) -- diff = os.difftime(players[tmp.steam].donorExpiry, os.time(dateNow))
-			days = math.floor(diff / 86400)
-
-			if (days > 0) then
-				diff = diff - (days * 86400)
+			for i in pairs(players) do
+				if (players[i].donor) then
+					table.insert(tmp.list, players[i].name)
+					tmp.count = tmp.count + 1
+				end
 			end
 
-			hours = math.floor(diff / 3600)
+			table.sort(tmp.list)
 
-			if (hours > 0) then
-				diff = diff - (hours * 3600)
+			for k, v in ipairs(tmp.list) do
+				tmp.steam = LookupOfflinePlayer(v, "all")
+
+				diff = os.difftime(players[tmp.steam].donorExpiry, os.time()) -- diff = os.difftime(players[tmp.steam].donorExpiry, os.time(dateNow))
+				days = math.floor(diff / 86400)
+
+				if (days > 0) then
+					diff = diff - (days * 86400)
+				end
+
+				hours = math.floor(diff / 3600)
+
+				if (hours > 0) then
+					diff = diff - (hours * 3600)
+				end
+
+				minutes = math.floor(diff / 60)
+
+				if tonumber(days) < 0 then
+					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " .. players[tmp.steam].cash .. " *** expired ***")
+				else
+					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " .. players[tmp.steam].cash .. " expires in " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
+				end
 			end
 
-			minutes = math.floor(diff / 60)
+			irc_chat(name, tmp.count .. " current donors")
+		else
+			tmp.name = string.sub(msg, 8)
+			tmp.steam = LookupPlayer(tmp.name)
 
-			if tonumber(days) < 0 then
-				irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " *** expired ***")
+			if players[tmp.steam] then
+				irc_chat(name, "Donor record of " .. tmp.name .. ":")
+
+				diff = os.difftime(players[tmp.steam].donorExpiry, os.time())
+				days = math.floor(diff / 86400)
+
+				if (days > 0) then
+					diff = diff - (days * 86400)
+				end
+
+				hours = math.floor(diff / 3600)
+
+				if (hours > 0) then
+					diff = diff - (hours * 3600)
+				end
+
+				minutes = math.floor(diff / 60)
+
+				if tonumber(days) < 0 then
+					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " .. players[tmp.steam].cash .. " *** expired ***")
+				else
+					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " .. players[tmp.steam].cash .. " expires in " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
+				end
 			else
-				irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " expires in " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
+				irc_chat(name, "No player found like " .. tmp.name)
 			end
 		end
 
-		irc_chat(name, tmp.count .. " current donors")
 		irc_chat(name, ".")
 		irc_params = {}
 		return

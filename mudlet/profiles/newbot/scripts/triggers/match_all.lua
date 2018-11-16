@@ -199,6 +199,23 @@ function matchAll(line, logDate, logTime)
 	end
 
 
+	if server.useAllocsWebAPI and not server.allocs then
+		server.useAllocsWebAPI = false
+		irc_chat(server.ircMain, "Alloc's mod missing or not fully installed.  The bot is using telnet.")
+	end
+
+
+	if string.find(line, "*** ERROR: unknown command 'webtokens'") then -- revert to using telnet
+		if server.useAllocsWebAPI then
+			server.useAllocsWebAPI = false
+			irc_chat(server.ircMain, "Alloc's mod missing or not fully installed.  The bot is using telnet.")
+		end
+
+		deleteLine()
+		return
+	end
+
+
 	if string.find(line, "*** ERROR: Executing command 'admin'") then -- abort processing the admin list
 		-- abort reading admin list
 		getAdminList = nil
@@ -292,7 +309,7 @@ function matchAll(line, logDate, logTime)
 			end
 		end
 
-		if echoConsole then
+		if echoConsole and echoConsoleTo then
 			line = line:gsub(",", "") -- strip out commas
 			irc_chat(echoConsoleTo, line)
 		end
@@ -364,6 +381,10 @@ function matchAll(line, logDate, logTime)
 			igplayers[tmp.pid].teleCooldown = 3
 			irc_chat(server.ircMain, "Player " .. tmp.pid .. " " .. igplayers[tmp.pid].name .. " spawned at " .. igplayers[tmp.pid].spawnedXPos .. " " .. igplayers[tmp.pid].spawnedYPos .. " " .. igplayers[tmp.pid].spawnedZPos)
 			irc_chat(server.ircAlerts, "Player " .. tmp.pid .. " " .. igplayers[tmp.pid].name .. " spawned at " .. igplayers[tmp.pid].spawnedXPos .. " " .. igplayers[tmp.pid].spawnedYPos .. " " .. igplayers[tmp.pid].spawnedZPos)
+
+			if players[tmp.pid].accessLevel == 0 and not server.allocs then
+				message(string.format("say [%s]ALERT! The bot requires Alloc's mod but it appears to be missing. The bot will not work well without it.[-]", server.warnColour))
+			end
 		end
 
 		if string.find(line, "reason: Teleport") then
@@ -391,9 +412,9 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "type=Entity") then
 		listEntities(line)
 
-		if not debug then
-			deleteLine()
-		end
+		-- if not debug then
+			-- deleteLine()
+		-- end
 
 		return
 	end
@@ -437,13 +458,13 @@ function matchAll(line, logDate, logTime)
 		pid = LookupPlayer(pname, "all")
 
 		if (pid ~= 0) then
-			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(igplayers[pid].xPos) .. "," .. math.ceil(igplayers[pid].yPos) .. "," .. math.floor(igplayers[pid].zPos) .. ",'" .. botman.serverTime .. "','death','" .. escape(pname) .. " died'," .. pid .. ")") end
+			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. igplayers[pid].xPos .. "," .. igplayers[pid].yPos .. "," .. igplayers[pid].zPos .. ",'" .. botman.serverTime .. "','death','" .. escape(pname) .. " died'," .. pid .. ")") end
 
 			igplayers[pid].tp = 1
 			igplayers[pid].hackerTPScore = 0
-			igplayers[pid].deadX = math.floor(igplayers[pid].xPos)
-			igplayers[pid].deadY = math.ceil(igplayers[pid].yPos)
-			igplayers[pid].deadZ = math.floor(igplayers[pid].zPos)
+			igplayers[pid].deadX = igplayers[pid].xPos
+			igplayers[pid].deadY = igplayers[pid].yPos
+			igplayers[pid].deadZ = igplayers[pid].zPos
 			igplayers[pid].teleCooldown = 1000
 			igplayers[pid].spawnedInWorld = false
 
@@ -494,9 +515,9 @@ function matchAll(line, logDate, logTime)
 			end
 		end
 
-		if not debug then
-			deleteLine()
-		end
+		-- if not debug then
+			-- deleteLine()
+		-- end
 
 		return
 	end
@@ -508,9 +529,9 @@ function matchAll(line, logDate, logTime)
 				getAdminList = nil
 				removeOldStaff()
 
-				if not debug then
-					deleteLine()
-				end
+				-- if not debug then
+					-- deleteLine()
+				-- end
 
 				return
 			end
@@ -569,9 +590,9 @@ function matchAll(line, logDate, logTime)
 				playerListItems = nil
 			end
 
-			if not debug then
-				deleteLine()
-			end
+			-- if not debug then
+				-- deleteLine()
+			-- end
 
 			return
 		end
@@ -582,9 +603,9 @@ function matchAll(line, logDate, logTime)
 				ircListItems = nil
 			end
 
-			if not debug then
-				deleteLine()
-			end
+			-- if not debug then
+				-- deleteLine()
+			-- end
 
 			return
 		end
@@ -739,9 +760,9 @@ function matchAll(line, logDate, logTime)
 			pid = words[1]
 			pid = LookupPlayer(pid)
 
-			x = math.floor(igplayers[pid].xPos)
-			y = math.floor(igplayers[pid].yPos)
-			z = math.floor(igplayers[pid].zPos)
+			x = igplayers[pid].xPos
+			y = igplayers[pid].yPos
+			z = igplayers[pid].zPos
 
 			if string.find(line, "isUnderGround=True") and accessLevel(pid) > 2 then
 				igplayers[pid].noclip = true
@@ -824,9 +845,9 @@ function matchAll(line, logDate, logTime)
 			dist = tonumber(words[2]) -- distance above ground
 			igplayers[pid].flyingHeight = dist
 
-			x = math.floor(igplayers[pid].xPos)
-			y = math.floor(igplayers[pid].yPos)
-			z = math.floor(igplayers[pid].zPos)
+			x = igplayers[pid].xPos
+			y = igplayers[pid].yPos
+			z = igplayers[pid].zPos
 
 			if tonumber(dist) > 5 and accessLevel(pid) > 2 then
 				if not players[pid].timeout and not players[pid].botTimeout and igplayers[pid].lastTP == nil and not players[pid].ignorePlayer then
@@ -908,9 +929,9 @@ function matchAll(line, logDate, logTime)
 				conn:execute("TRUNCATE memEntities")
 			end
 
-			if not debug then
-				deleteLine()
-			end
+			-- if not debug then
+				-- deleteLine()
+			-- end
 
 			return
 		end
@@ -921,9 +942,9 @@ function matchAll(line, logDate, logTime)
 				botman.listItems = true
 			end
 
-			if not debug then
-				deleteLine()
-			end
+			-- if not debug then
+				-- deleteLine()
+			-- end
 
 			return
 		end
@@ -1528,9 +1549,9 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "Version mismatch") then
 		irc_chat(server.ircAlerts, line)
 
-		if not debug then
-			deleteLine()
-		end
+		-- if not debug then
+			-- deleteLine()
+		-- end
 
 		return
 	end
@@ -1573,8 +1594,8 @@ function matchAll(line, logDate, logTime)
 		return
 	end
 
-	if not debug then
-		deleteLine()
-	end
+	-- if not debug then
+		-- deleteLine()
+	-- end
 end
 

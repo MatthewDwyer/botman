@@ -1342,8 +1342,8 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if chatvars.number ~= nil and loc ~= nil then
-				locations[loc].accessLevel = math.floor(tonumber(chatvars.number))
-				conn:execute("UPDATE locations set accessLevel = " .. math.floor(tonumber(chatvars.number)) .. " WHERE name = '" .. escape(locationName) .. "'")
+				locations[loc].accessLevel = math.abs(chatvars.number)
+				conn:execute("UPDATE locations set accessLevel = " .. locations[loc].accessLevel .. " WHERE name = '" .. escape(locationName) .. "'")
 
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. locationName .. " is restricted to players with access level " .. locations[loc].accessLevel .. " and above.[-]")

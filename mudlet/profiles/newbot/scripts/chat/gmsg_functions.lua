@@ -406,9 +406,9 @@ end
 function gmsg_who(playerid, number)
 	local xdir, zdir, k, v, dist, alone, intX, intY, intZ, x, z
 
-	intX = math.floor(igplayers[playerid].xPos)
-	intY = math.ceil(igplayers[playerid].yPos)
-	intZ = math.floor(igplayers[playerid].zPos)
+	intX = igplayers[playerid].xPos
+	intY = igplayers[playerid].yPos
+	intZ = igplayers[playerid].zPos
 
 	x = math.floor(intX / 512)
 	z = math.floor(intZ / 512)
@@ -429,7 +429,7 @@ function gmsg_who(playerid, number)
 	if (tonumber(intZ) < 0) then zdir = " south" else zdir = " north" end
 
 	message("pm " .. playerid .. " [" .. server.chatColour .. "]You are at " .. intX .. xdir .. intZ .. zdir .. " at a height of " .. intY .. "[-]")
-	message("pm " .. playerid .. " [" .. server.chatColour .. "]You are in region " .. x .. " " .. z .. "[-]")
+	message("pm " .. playerid .. " [" .. server.chatColour .. "]You are in region r." .. x .. " " .. z .. ".7rg[-]")
 
 	if (pvpZone(igplayers[playerid].xPos, igplayers[playerid].zPos) ~= false) and chatvars.accessLevel > 2 then
 		return
@@ -913,9 +913,9 @@ function gmsg(line, ircid)
 	if (chatvars.playername ~= "Server") then
 		if igplayers[chatvars.playerid] then
 			igplayers[chatvars.playerid].afk = os.time() + 900
-			chatvars.intX = math.floor(igplayers[chatvars.playerid].xPos)
-			chatvars.intY = math.ceil(igplayers[chatvars.playerid].yPos)
-			chatvars.intZ = math.floor(igplayers[chatvars.playerid].zPos)
+			chatvars.intX = igplayers[chatvars.playerid].xPos
+			chatvars.intY = igplayers[chatvars.playerid].yPos
+			chatvars.intZ = igplayers[chatvars.playerid].zPos
 			chatvars.accessLevel = tonumber(accessLevel(chatvars.playerid))
 			x = math.floor(chatvars.intX / 512)
 			z = math.floor(chatvars.intZ / 512)
@@ -1012,7 +1012,7 @@ function gmsg(line, ircid)
 				return true
 			end
 
-			if (string.find(chatvars.command, server.commandPrefix .. "again") and chatvars.words[3] == nil) or (chatvars.command == server.commandPrefix .. " north") or (chatvars.command == server.commandPrefix .. " south") or (chatvars.command == server.commandPrefix .. " east") or (chatvars.command == server.commandPrefix .. " west") then
+			if (string.find(chatvars.command, server.commandPrefix .. "again") and chatvars.words[3] == nil) or (chatvars.command == server.commandPrefix .. " north") or (chatvars.command == server.commandPrefix .. " south") or (chatvars.command == server.commandPrefix .. " east") or (chatvars.command == server.commandPrefix .. " west") or (chatvars.command == server.commandPrefix .. " up") or (chatvars.command == server.commandPrefix .. " down") then
 				if string.find(chatvars.command, "north") then
 					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("south", "north")
 					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("east", "north")
@@ -1037,6 +1037,14 @@ function gmsg(line, ircid)
 					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("south", "west")
 				end
 
+				if string.find(chatvars.command, "up") then
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("down", "up")
+				end
+
+				if string.find(chatvars.command, "down") then
+					players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine:gsub("up", "down") -- and shake it all about
+				end
+
 				players[chatvars.playerid].lastChatLineTimestamp = os.time() - 10
 				gmsg(players[chatvars.playerid].lastChatLine)
 				return true
@@ -1050,8 +1058,10 @@ function gmsg(line, ircid)
 		players[chatvars.playerid].lastCommandTimestamp = os.time()
 
 		if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) then
-			players[chatvars.playerid].lastCommand = chatvars.command
-			players[chatvars.playerid].lastChatLine = chatvars.oldLine -- used for storing the telnet line from the last command
+			if chatvars.command ~= server.commandPrefix .. "undo" then -- don't record undo so we can repeat the previous command if we want to.
+				players[chatvars.playerid].lastCommand = chatvars.command
+				players[chatvars.playerid].lastChatLine = chatvars.oldLine -- used for storing the telnet line from the last command
+			end
 
 			if players[chatvars.playerid].commandCooldown == 0 or (os.time() - players[chatvars.playerid].commandCooldown >= server.commandCooldown) then
 				players[chatvars.playerid].commandCooldown = os.time()
@@ -1169,7 +1179,7 @@ function gmsg(line, ircid)
 			message("say [" .. server.chatColour .. "]Banning player " .. igplayers[chatvars.playerid].name .. " 10 years for advertising hacks.[-]")
 			irc_chat(server.ircMain, "[BANNED] Player " .. chatvars.playerid .. " " .. igplayers[chatvars.playerid].name .. " has has been banned for advertising hacks.")
 			irc_chat(server.ircAlerts, "[BANNED] Player " .. chatvars.playerid .. " " .. igplayers[chatvars.playerid].name .. " has has been banned for 10 years for advertising hacks.")
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. math.floor(chatvars.intX) .. "," .. math.ceil(chatvars.intY) .. "," .. math.floor(chatvars.intZ) .. ",'" .. botman.serverTime .. "','ban','Player " .. chatvars.playerid .. " " .. escape(igplayers[chatvars.playerid].name) .. " has has been banned for 10 years for advertising hacks.'," .. chatvars.playerid .. ")")
+			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','ban','Player " .. chatvars.playerid .. " " .. escape(igplayers[chatvars.playerid].name) .. " has has been banned for 10 years for advertising hacks.'," .. chatvars.playerid .. ")")
 
 			if botman.db2Connected then
 				-- copy in bots db
@@ -1263,7 +1273,7 @@ function gmsg(line, ircid)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-		if players[chatvars.playerid].silentBob == true then
+		if players[chatvars.playerid].silentBob == true and chatvars.accessLevel > 2 then
 			result = true
 			botman.faultyChat = false
 			return true
@@ -1599,7 +1609,7 @@ function gmsg(line, ircid)
 				return true
 			end
 
-			if math.floor(players[id].xPos) == 0 and math.floor(players[id].yPos) == 0 and math.floor(players[id].zPos) == 0 then
+			if players[id].xPos == 0 and players[id].yPos == 0 and players[id].zPos == 0 then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has not played here since the last map wipe.[-]")
 				botman.faultyChat = false
 				return true
@@ -1627,7 +1637,7 @@ function gmsg(line, ircid)
 			igplayers[chatvars.playerid].lastLocation = ""
 
 			-- then teleport to the friend
-			cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[id].xPos) .. " " .. math.ceil(players[id].yPos) .. " " .. math.floor(players[id].zPos)
+			cmd = "tele " .. chatvars.playerid .. " " .. players[id].xPos .. " " .. players[id].yPos .. " " .. players[id].zPos
 
 			players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.teleportCost
 

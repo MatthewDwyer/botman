@@ -232,6 +232,24 @@ function stripCommas(value)
 end
 
 
+function stripBBCodes(text)
+	local oldText
+
+	text = string.trim(text)
+	oldText = text
+
+
+	text = string.gsub(text, "%[[%/%!]-[^%[%]]-]", "")
+	--text = string.match(text, "^[(.*)]$")
+
+	if text == nil then
+		text = oldtext
+	end
+
+	return text
+end
+
+
 function stripAngleBrackets(text)
 	local oldText
 
@@ -365,7 +383,7 @@ end
 
 function message(msg, steam)
 	-- parse msg and enclose the actual message in double quotes
-	local words, word, skip, url
+	local words, word, skip, url, k, v
 
 	msg = msg:gsub("{#}", server.commandPrefix)
 
@@ -386,21 +404,54 @@ function message(msg, steam)
 	if string.sub(msg, 1, 4) == "say " then
 		-- say the message in public chat
 		if server.useAllocsWebAPI then
-			msg = string.sub(msg, 5)
-			url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=say \"" .. msg .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+			if not server.allocs then
+				-- Alloc's mod is missing or not detected
+				msg = string.sub(msg, 5)
+				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=say \"" .. msg .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
 
-			if botman.dbConnected then
-				conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+				if botman.dbConnected then
+					conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+				end
+			else
+				-- Alloc's mod is installed so send all public messages as individual PM's
+				msg = string.sub(msg, 5)
+				irc_chat(server.ircMain, stripBBCodes(msg))
+
+				for k,v in pairs(igplayers) do
+					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. k .. " \"" .. msg .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+
+					if botman.dbConnected then
+						conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+					end
+				end
 			end
 		else
-			msg = "say \"" .. string.sub(msg, 5) .. "\""
-			send(msg)
+			if not server.allocs then
+				-- Alloc's mod is missing or not detected
+				msg = "say \"" .. string.sub(msg, 5) .. "\""
+				send(msg)
 
-			if server.logBotCommands then
-				logBotCommand(botman.serverTime, msg)
+				if server.logBotCommands then
+					logBotCommand(botman.serverTime, msg)
+				end
+
+				metrics.commands = metrics.commands + 1
+			else
+				-- Alloc's mod is installed so send all public messages as individual PM's
+				irc_chat(server.ircMain, stripBBCodes(string.sub(msg, 5)))
+				msg = "\"" .. string.sub(msg, 5) .. "\""
+
+
+				for k,v in pairs(igplayers) do
+					send("pm " .. k .. " " .. msg)
+
+					if server.logBotCommands then
+						logBotCommand(botman.serverTime, msg)
+					end
+
+					metrics.commands = metrics.commands + 1
+				end
 			end
-
-			metrics.commands = metrics.commands + 1
 		end
 	else
 		if players[words[2]] then
@@ -1337,6 +1388,10 @@ function fixMissingPlayer(steam)
 		players[steam].denyRights = false
 	end
 
+	if players[steam].DNSLookupCount == nil then
+		players[steam].DNSLookupCount = 0
+	end
+
 	if players[steam].exiled == nil then
 		players[steam].exiled = 0
 	end
@@ -1411,6 +1466,10 @@ function fixMissingPlayer(steam)
 
 	if players[steam].lastCommandTimestamp == nil then
 		players[steam].lastCommandTimestamp = os.time() -1
+	end
+
+	if players[steam].lastDNSLookup == nil then
+		players[steam].lastDNSLookup = "1000-01-01"
 	end
 
 	if players[steam].lastLogout == nil then
@@ -1825,13 +1884,14 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].flyingHeight = 0
 	end
 
-	if (igplayers[steam].greet == nil) then
-		igplayers[steam].greet = false
-	end
+	-- if (igplayers[steam].greet == nil) then
+-- display("fix missing greet = false")
+		-- igplayers[steam].greet = false
+	-- end
 
-	if (igplayers[steam].greetdelay == nil) then
-		igplayers[steam].greetdelay = 0
-	end
+	-- if (igplayers[steam].greetdelay == nil) then
+		-- igplayers[steam].greetdelay = 0
+	-- end
 
 	if igplayers[steam].hackerTPScore == nil then
 		igplayers[steam].hackerTPScore = 0

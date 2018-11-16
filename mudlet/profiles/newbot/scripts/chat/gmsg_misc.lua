@@ -464,7 +464,7 @@ function gmsg_misc()
 
 			if note == nil then note = "" end
 
-			conn:execute("INSERT INTO bookmarks (steam, x, y, z, note) VALUES (" .. chatvars.playerid .. "," .. math.floor(igplayers[chatvars.playerid].xPos) .. "," .. math.ceil(igplayers[chatvars.playerid].yPos) .. "," .. math.floor(igplayers[chatvars.playerid].zPos) .. ",'" .. escape(note) .. "')")
+			conn:execute("INSERT INTO bookmarks (steam, x, y, z, note) VALUES (" .. chatvars.playerid .. "," .. igplayers[chatvars.playerid].xPos .. "," .. igplayers[chatvars.playerid].yPos .. "," .. igplayers[chatvars.playerid].zPos .. ",'" .. escape(note) .. "')")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have bookmarked your current position for admins with the message: " .. note .. ".[-]")
 
 			botman.faultyChat = false

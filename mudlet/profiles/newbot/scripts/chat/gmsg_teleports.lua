@@ -1786,19 +1786,19 @@ function gmsg_teleports()
 				end
 
 				if chatvars.words[2] == "north" then
-					cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[chatvars.playerid].xPos) .. " " .. math.ceil(players[chatvars.playerid].yPos) .. " " .. math.floor(players[chatvars.playerid].zPos) + chatvars.number
+					cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPos .. " " .. players[chatvars.playerid].yPos .. " " .. players[chatvars.playerid].zPos + chatvars.number
 				end
 
 				if chatvars.words[2] == "south" then
-					cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[chatvars.playerid].xPos) .. " " .. math.ceil(players[chatvars.playerid].yPos) .. " " .. math.floor(players[chatvars.playerid].zPos) - chatvars.number
+					cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPos .. " " .. players[chatvars.playerid].yPos .. " " .. players[chatvars.playerid].zPos - chatvars.number
 				end
 
 				if chatvars.words[2] == "west" then
-					cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[chatvars.playerid].xPos) - chatvars.number .. " " .. math.ceil(players[chatvars.playerid].yPos) .. " " .. math.floor(players[chatvars.playerid].zPos)
+					cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPos - chatvars.number .. " " .. players[chatvars.playerid].yPos .. " " .. players[chatvars.playerid].zPos
 				end
 
 				if chatvars.words[2] == "east" then
-					cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[chatvars.playerid].xPos) + chatvars.number .. " " .. math.ceil(players[chatvars.playerid].yPos) .. " " .. math.floor(players[chatvars.playerid].zPos)
+					cmd = "tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].xPos + chatvars.number .. " " .. players[chatvars.playerid].yPos .. " " .. players[chatvars.playerid].zPos
 				end
 
 				teleport(cmd, chatvars.playerid)
@@ -1844,7 +1844,7 @@ function gmsg_teleports()
 					-- first record their current x y z
 					savePosition(chatvars.playerid)
 
-					cmd = "tele " .. chatvars.playerid .. " " .. math.floor(teleports[tp].x) .. " " .. math.ceil(teleports[tp].y) .. " " .. math.floor(teleports[tp].z)
+					cmd = "tele " .. chatvars.playerid .. " " .. teleports[tp].x .. " " .. teleports[tp].y .. " " .. teleports[tp].z
 					teleport(cmd, chatvars.playerid)
 					igplayers[chatvars.playerid].teleCooldown = 5
 
@@ -1868,10 +1868,10 @@ function gmsg_teleports()
 						-- first record their current x y z
 						savePosition(chatvars.playerid)
 
-						cmd = "tele " .. chatvars.playerid .. " " .. math.floor(playersArchived[tp].xPos) .. " " .. math.ceil(playersArchived[tp].yPos) .. " " .. math.floor(playersArchived[tp].zPos)
+						cmd = "tele " .. chatvars.playerid .. " " .. playersArchived[tp].xPos .. " " .. playersArchived[tp].yPos .. " " .. playersArchived[tp].zPos
 						teleport(cmd, chatvars.playerid)
 
-						if math.floor(playersArchived[tp].xPos) ~= 0 and math.floor(playersArchived[tp].yPos) ~= 0 and math.floor(playersArchived[tp].zPos) ~= 0 then
+						if playersArchived[tp].xPos ~= 0 and playersArchived[tp].yPos ~= 0 and playersArchived[tp].zPos ~= 0 then
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[tp].name .. " was archived.  This is their last recorded position.[-]")
 						end
 
@@ -1885,7 +1885,7 @@ function gmsg_teleports()
 					-- first record their current x y z
 					savePosition(chatvars.playerid)
 
-					cmd = "tele " .. chatvars.playerid .. " " .. math.floor(players[tp].xPos) .. " " .. math.ceil(players[tp].yPos) .. " " .. math.floor(players[tp].zPos)
+					cmd = "tele " .. chatvars.playerid .. " " .. players[tp].xPos .. " " .. players[tp].yPos .. " " .. players[tp].zPos
 					teleport(cmd, chatvars.playerid)
 
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is the last recorded position of " .. players[tp].name .. "[-]")

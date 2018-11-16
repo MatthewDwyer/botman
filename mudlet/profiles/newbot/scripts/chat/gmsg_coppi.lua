@@ -78,10 +78,10 @@ local function makeMaze(w, h, xPos, yPos, zPos, wall, fill, tall)
   for i = 1, h*2+1 do
     for j = 1, w*2+1 do
       if map[i][j] then
-		cmd = prefix .. "pblock " .. wall .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos - 1 .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1 .. suffix
+		cmd = prefix .. "pblock " .. wall .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1 .. suffix
 		if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (0, '" .. escape(cmd) .. "')") end
       else
-		cmd = prefix .. "pblock " .. fill .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos - 1 .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1 .. suffix
+		cmd = prefix .. "pblock " .. fill .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1 .. suffix
 		if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (0, '" .. escape(cmd) .. "')") end
       end
     end
@@ -278,6 +278,8 @@ function gmsg_coppi()
 
 
 	local function cmd_DigFill() -- diggy diggy hole
+		local foundTall, foundLong
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}dig (or fill) {optional number} (default 5)"
@@ -341,11 +343,14 @@ function gmsg_coppi()
 
 			tmp.prefab = ""
 			tmp.base = chatvars.intY
-			tmp.tall = chatvars.intY + 5
-			tmp.block = chatvars.words[3]
+			tmp.tall = 5
+			tmp.block = ""
 			tmp.direction = ""
 			tmp.width = 5
 			tmp.long = 5
+			foundTall = false
+			foundLong = false
+			-- foundWally = false
 
 			if prefabCopies[chatvars.playerid .. chatvars.words[2]] then
 				tmp.prefab = chatvars.playerid .. chatvars.words[2]
@@ -354,10 +359,7 @@ function gmsg_coppi()
 			for i=2,chatvars.wordCount,1 do
 				if chatvars.words[i] == "wide" or chatvars.words[i] == "width"  then
 					tmp.width = chatvars.words[i+1]
-
-					-- allow for width of 1
 					tmp.width = math.abs(tmp.width)
-					if tmp.width > 0 then tmp.width = tmp.width - 1 end
 
 					-- default to same height
 					tmp.tall = tmp.width
@@ -377,51 +379,107 @@ function gmsg_coppi()
 
 				if chatvars.words[i] == "tall" or chatvars.words[i] == "deep" or chatvars.words[i] == "height" or chatvars.words[i] == "hieght" then
 					tmp.tall = chatvars.words[i+1]
-
-					-- allow for height of 1
 					tmp.tall = math.abs(tmp.tall)
-					if tmp.tall > 0 then tmp.tall = tmp.tall - 1 end
+					foundTall = true
 				end
 
 				if chatvars.words[i] == "base" or chatvars.words[i] == "floor" or chatvars.words[i] == "bottom" then
 					tmp.base = chatvars.words[i+1]
+					tmp.base = math.abs(tmp.base)
 				end
 
 				if chatvars.words[i] == "long" or chatvars.words[i] == "length" then
 					tmp.long = chatvars.words[i+1]
-
-					-- allow for length of 1
 					tmp.long = math.abs(tmp.long)
-					if tmp.long > 0 then tmp.long = tmp.long - 1 end
+					foundLong = true
 				end
 
 				if chatvars.words[i] == "up" or chatvars.words[i] == "room" then
 					tmp.direction = "up"
+
+					if not foundTall then
+						tmp.number = tonumber(chatvars.words[i+1])
+
+						if tmp.number ~= nil then
+							tmp.tall = math.abs(tmp.number)
+						end
+					end
 				end
 
 				if chatvars.words[i] == "down" then
 					tmp.direction = "down"
+
+					if not foundTall then
+						tmp.number = tonumber(chatvars.words[i+1])
+
+						if tmp.number ~= nil then
+							tmp.tall = math.abs(tmp.number)
+						end
+					end
 				end
 
 				if chatvars.words[i] == "north" then
 					tmp.direction = "north"
+
+					if not foundLong then
+						tmp.number = tonumber(chatvars.words[i+1])
+
+						if tmp.number ~= nil then
+							tmp.long = math.abs(tmp.number)
+						end
+					end
 				end
 
 				if chatvars.words[i] == "south" then
 					tmp.direction = "south"
+
+					if not foundLong then
+						tmp.number = tonumber(chatvars.words[i+1])
+
+						if tmp.number ~= nil then
+							tmp.long = math.abs(tmp.number)
+						end
+					end
 				end
 
 				if chatvars.words[i] == "east" then
 					tmp.direction = "east"
+
+					if not foundLong then
+						tmp.number = tonumber(chatvars.words[i+1])
+
+						if tmp.number ~= nil then
+							tmp.long = math.abs(tmp.number)
+						end
+					end
 				end
 
 				if chatvars.words[i] == "west" then
 					tmp.direction = "west"
+
+					if not foundLong then
+						tmp.number = tonumber(chatvars.words[i+1])
+
+						if tmp.number ~= nil then
+							tmp.long = math.abs(tmp.number)
+						end
+					end
 				end
 
 				if chatvars.words[i] == "bedrock" then
 					tmp.direction = "bedrock"
 				end
+			end
+
+			if not string.find(chatvars.command, "base") and not string.find(chatvars.command, "floor") and not string.find(chatvars.command, "bottom") then
+				players[chatvars.playerid].lastChatLine = players[chatvars.playerid].lastChatLine .. " base " .. tmp.base
+				players[chatvars.playerid].lastCommand = players[chatvars.playerid].lastCommand .. " base " .. tmp.base
+			end
+
+			-- subtract 1 so that walls 1 block wide etc are possible
+			if tmp.direction == "" then
+				if tmp.width > 0 then tmp.width = tmp.width - 1 end
+				if tmp.long > 0 then tmp.long = tmp.long - 1 end
 			end
 
 			if tmp.prefab ~= "" then
@@ -461,7 +519,7 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX + tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].y1 = 3
-				prefabCopies[chatvars.playerid .. "bottemp"].y2 = chatvars.intY
+				prefabCopies[chatvars.playerid .. "bottemp"].y2 = chatvars.intY - 1
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.width
 				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
@@ -491,8 +549,8 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].name = "bottemp"
 				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX + tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX - tmp.width
-				prefabCopies[chatvars.playerid .. "bottemp"].y1 = chatvars.intY - 1
-				prefabCopies[chatvars.playerid .. "bottemp"].y2 = (chatvars.intY - 1) + tmp.tall
+				prefabCopies[chatvars.playerid .. "bottemp"].y1 = chatvars.intY
+				prefabCopies[chatvars.playerid .. "bottemp"].y2 = chatvars.intY + tmp.tall - 1
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.width
 				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
@@ -514,7 +572,7 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX + tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].y1 = chatvars.intY - 1
-				prefabCopies[chatvars.playerid .. "bottemp"].y2 = chatvars.intY - tmp.long
+				prefabCopies[chatvars.playerid .. "bottemp"].y2 = chatvars.intY - tmp.tall
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.width
 				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
@@ -536,8 +594,8 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX + tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].y1 = tmp.base
-				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall
-				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ
+				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall - 1
+				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ + 1
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.long
 				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
@@ -558,8 +616,8 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX + tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].y1 = tmp.base
-				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall
-				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ
+				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall - 1
+				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - 1
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ - tmp.long
 				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
@@ -577,10 +635,10 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"] = {}
 				prefabCopies[chatvars.playerid .. "bottemp"].owner = chatvars.playerid
 				prefabCopies[chatvars.playerid .. "bottemp"].name = "bottemp"
-				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX
+				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX + 1
 				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX + tmp.long
 				prefabCopies[chatvars.playerid .. "bottemp"].y1 = tmp.base
-				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall
+				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall - 1
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.width
 
@@ -600,10 +658,10 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"] = {}
 				prefabCopies[chatvars.playerid .. "bottemp"].owner = chatvars.playerid
 				prefabCopies[chatvars.playerid .. "bottemp"].name = "bottemp"
-				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX
+				prefabCopies[chatvars.playerid .. "bottemp"].x1 = chatvars.intX -1
 				prefabCopies[chatvars.playerid .. "bottemp"].x2 = chatvars.intX - tmp.long
 				prefabCopies[chatvars.playerid .. "bottemp"].y1 = tmp.base
-				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall
+				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall - 1
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.width
 
@@ -1768,8 +1826,8 @@ function gmsg_coppi()
 
 				if tmp.id ~= 0 then
 					if igplayers[tmp.id] then
-						sendCommand(prefix .. "sh " .. math.floor(igplayers[tmp.id].xPos) .. " " .. math.floor(igplayers[tmp.id].yPos) .. " " .. math.floor(igplayers[tmp.id].zPos) .. " " .. chatvars.number)
-						irc_chat(server.ircMain, "Horde spawned by bot at " .. igplayers[tmp.id].name .. "'s position at " .. math.floor(igplayers[tmp.id].xPos) .. " " .. math.floor(igplayers[tmp.id].yPos) .. " " .. math.floor(igplayers[tmp.id].zPos))
+						sendCommand(prefix .. "sh " .. igplayers[tmp.id].xPos .. " " .. igplayers[tmp.id].yPos .. " " .. igplayers[tmp.id].zPos .. " " .. chatvars.number)
+						irc_chat(server.ircMain, "Horde spawned by bot at " .. igplayers[tmp.id].name .. "'s position at " .. igplayers[tmp.id].xPos .. " " .. igplayers[tmp.id].yPos .. " " .. igplayers[tmp.id].zPos)
 					end
 				else
 					tmp.loc = LookupLocation(chatvars.words[3])
@@ -2005,12 +2063,11 @@ function gmsg_coppi()
 				return true
 			end
 
-			-- if igplayers[chatvars.playerid].undoPrefab then
-				-- sendCommand(prefix .. "prender " .. chatvars.playerid .. "bottemp" .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1  .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1)
-			-- else
+			if chatvars.words[2] == "save" then
+				sendCommand(prefix .. "prender " .. chatvars.playerid .. "bottemp" .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1  .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1)
+			else
 				sendCommand("pundo")
-				igplayers[chatvars.playerid].undoPrefab = nil
-			-- end
+			end
 
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Block undo command (pundo) sent. If it didn't work you don't have an undo available.[-]")
 			botman.faultyChat = false
@@ -2288,7 +2345,7 @@ function gmsg_coppi()
 
 			if tmp.pid ~= 0 then
 				player[chatvars.playerid].markX = players[pid].xPos
-				player[chatvars.playerid].markY = players[pid].yPos - 1
+				player[chatvars.playerid].markY = players[pid].yPos
 				player[chatvars.playerid].markZ = players[pid].zPos
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]No player found called " .. tmp.name .. "[-]")
@@ -2297,7 +2354,7 @@ function gmsg_coppi()
 			end
 		else
 			player[chatvars.playerid].markX = chatvars.intX
-			player[chatvars.playerid].markY = chatvars.intY - 1
+			player[chatvars.playerid].markY = chatvars.intY
 			player[chatvars.playerid].markZ = chatvars.intZ
 		end
 
@@ -2322,7 +2379,7 @@ function gmsg_coppi()
 
 	if chatvars.words[1] == "set" and chatvars.words[2] == "p1" and (chatvars.playerid ~= 0) then
 		player[chatvars.playerid].p1X = chatvars.intX
-		player[chatvars.playerid].p1Y = chatvars.intY - 1
+		player[chatvars.playerid].p1Y = chatvars.intY
 		player[chatvars.playerid].p1Z = chatvars.intZ
 
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]P1 position stored.  See block commands for its proper usage.[-]")
@@ -2346,7 +2403,7 @@ function gmsg_coppi()
 
 	if chatvars.words[1] == "set" and chatvars.words[2] == "p2" and (chatvars.playerid ~= 0) then
 		player[chatvars.playerid].p2X = chatvars.intX
-		player[chatvars.playerid].p2Y = chatvars.intY - 1
+		player[chatvars.playerid].p2Y = chatvars.intY
 		player[chatvars.playerid].p2Z = chatvars.intZ
 
 		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]P2 position stored.  See block commands for its proper usage.[-]")

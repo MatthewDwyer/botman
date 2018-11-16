@@ -233,7 +233,11 @@ function playerConnected(line)
 	local timestamp = os.time()
 	local cursor, errorString, rows
 
-	debug = false
+	if botman.debugAll then
+		debug = true -- this should be true
+	end
+
+	-- Papers please
 	tmp = {}
 
 	if playerConnectCounter == nil then
@@ -242,15 +246,16 @@ function playerConnected(line)
 		playerConnectCounter = 	playerConnectCounter + 1
 	end
 
-	send("sa")
-
 	if (debug) then
 		dbug("line " .. line)
 		dbug("debug playerConnectCounter " .. playerConnectCounter)
 		dbug("botman.playersOnline " .. botman.playersOnline)
 		dbug("server.maxPlayers " .. server.maxPlayers)
 		dbug("server.reservedSlots " .. server.reservedSlots)
-		dbug("server.ServerMaxPlayerCount " .. server.ServerMaxPlayerCount)
+
+		if server.ServerMaxPlayerCount then
+			dbug("server.ServerMaxPlayerCount " .. server.ServerMaxPlayerCount)
+		end
 	end
 
 	local _, commas = string.gsub(line, ",", "")
@@ -357,7 +362,6 @@ function playerConnected(line)
 		conn:execute("DELETE FROM playersArchived WHERE steam = " .. tmp.steam)
 		playersArchived[tmp.steam] = nil
 		loadPlayers(tmp.steam)
-		--send("sa")
 	end
 
 	-- add to players table
@@ -401,21 +405,13 @@ function playerConnected(line)
 		cmd = "lpf " .. tmp.steam
 		tempTimer( 30, [[sendCommand("]] .. cmd .. [[")]] )
 
-		-- this is a hack :O to try to fix corrupt player profiles that freeze/crash the server.  Its nuts but it works.
-		-- to limit the lag this would cause with everyone joining at once sometimes, we only do this once per day per player that joins but ignore brand new players when they first join
-		-- if not players[tmp.steam].dailySave then
-			-- players[tmp.steam].dailySave = os.date("%Y-%b-%d", os.time())
-			-- send("sa")
-		-- else
-			-- if players[tmp.steam].dailySave ~= os.date("%Y-%b-%d", os.time()) then
-				-- players[tmp.steam].dailySave = os.date("%Y-%b-%d", os.time())
-				-- send("sa")
-			-- end
-		-- end
+		if botMaintenance.experimentalFix then
+			send("sa")
+		end
 	end
 
 	-- add to in-game players table
-	if (igplayers[tmp.steam] == nil) then
+	if not igplayers[tmp.steam] then
 		initNewIGPlayer(tmp.steam, tmp.player, tmp.entityid, tmp.steamOwner)
 		fixMissingIGPlayer(tmp.steam, tmp.steamOwner)
 	end
@@ -466,19 +462,21 @@ function playerConnected(line)
 
 	igplayers[tmp.steam].playerConnectCounter = playerConnectCounter
 
-	if tonumber(botman.playersOnline) == tonumber(server.ServerMaxPlayerCount) and tonumber(server.reservedSlots) > 0 then
-		-- any player that is staff or a donor can take a reserved slot from a regular joe
-		-- admins can take a reserved slot for any non-admins (unless it's admins all the way down).
-		if players[tmp.steam].reserveSlot or tonumber(players[tmp.steam].accessLevel) < 3 or players[tmp.steam].donor then
-			if tonumber(botman.dbReservedSlotsUsed) >= tonumber(server.reservedSlots) then
-				if not freeReservedSlot(players[tmp.steam].accessLevel, tmp.steam) then
-					kick(tmp.steam, "Server is full :(")
-					return
+	if server.ServerMaxPlayerCount then
+		if tonumber(botman.playersOnline) == tonumber(server.ServerMaxPlayerCount) and tonumber(server.reservedSlots) > 0 then
+			-- any player that is staff or a donor can take a reserved slot from a regular joe
+			-- admins can take a reserved slot for any non-admins (unless it's admins all the way down).
+			if players[tmp.steam].reserveSlot or tonumber(players[tmp.steam].accessLevel) < 3 or players[tmp.steam].donor then
+				if tonumber(botman.dbReservedSlotsUsed) >= tonumber(server.reservedSlots) then
+					if not freeReservedSlot(players[tmp.steam].accessLevel, tmp.steam) then
+						kick(tmp.steam, "Server is full :(")
+						return
+					end
 				end
+			else
+				kick(tmp.steam, "Server is full :(")
+				return
 			end
-		else
-			kick(tmp.steam, "Server is full :(")
-			return
 		end
 	end
 
@@ -592,11 +590,9 @@ function playerConnected(line)
 	end
 
 	tempTimer( 45, [[ sendCommand("lkp ]] .. tmp.steam .. [[") ]] )
-	--sendCommand("lkp " .. tmp.steam)
 
 	-- check how many claims they have placed
 	tempTimer( 50, [[ sendCommand("llp ]] .. tmp.steam .. [[ parseable") ]] )
-	--sendCommand("llp " .. tmp.steam .. " parseable")
 
 	if customPlayerConnected ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua
