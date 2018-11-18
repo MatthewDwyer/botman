@@ -277,8 +277,89 @@ function gmsg_coppi()
 	end
 
 
+	local function cmd_DeleteSave()
+		local counter, cursor, errorString, row, owner
+
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}delete save {number taken from {#}list saves}"
+			help[2] = "After {#}list saves, you can delete a save from the list.\n"
+			help[2] = help[2] .. "Note that the list is temporary, but will last until the next time a list is generated.  If it doesn't work, do another {#}list saves."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "del,list,save,coppi"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "save") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "list") or string.find(chatvars.command, "dele"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "delete" and chatvars.words[2] == "save" and chatvars.number ~= nil then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			display(chatvars)
+
+			cursor,errorString = conn:execute("SELECT * FROM list WHERE id = " .. chatvars.number)
+			row = cursor:fetch({}, "a")
+
+			if row then
+				temp = string.split(row.thing, " ")
+				conn:execute("DELETE FROM prefabCopies WHERE owner = '" .. escape(temp[1]) .. "' AND name = '" .. escape(temp[2]) .. "'")
+
+				-- reload prefabCopies
+				loadPrefabCopies()
+
+				owner = temp[1]
+
+				if players[temp[1]] then
+					owner = players[temp[1]].name
+				else
+					if playersArchived[temp[1]] then
+						owner = playersArchived[temp[1]].name
+					end
+				end
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have deleted the save called " .. temp[2] .. " created by " .. owner  .. ".[-]")
+				else
+					irc_chat(chatvars.ircAlias, "You have deleted the save called " .. temp[2] .. " created by " .. owner)
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_DigFill() -- diggy diggy hole
-		local foundTall, foundLong
+		local foundTall, foundLong, k, v
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -354,6 +435,16 @@ function gmsg_coppi()
 
 			if prefabCopies[chatvars.playerid .. chatvars.words[2]] then
 				tmp.prefab = chatvars.playerid .. chatvars.words[2]
+			else
+				for k,v in pairs(prefabCopies) do
+					if v.name == chatvars.words[2] then
+						tmp.prefab = k
+					end
+				end
+			end
+
+			if tmp.prefab ~= "" and chatvars.words[1] == "fill" then
+				tmp.block = chatvars.words[3]
 			end
 
 			for i=2,chatvars.wordCount,1 do
@@ -676,6 +767,11 @@ function gmsg_coppi()
 				botman.faultyChat = false
 				return true
 			end
+
+			message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Your " .. chatvars.words[1] .. " command failed or is wrong.[-]")
+
+			botman.faultyChat = false
+			return true
 		end
 	end
 
@@ -895,11 +991,15 @@ function gmsg_coppi()
 
 
 	local function cmd_ListSaves() -- tested
+		local name, counter, cursor, errorString, row
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}list saves {optional player name}"
-			help[2] = "List all your saved prefabs or those of someone else.  This list is coordinate pairs of places in the world that you have marked for some block command.\n"
-			help[2] = help[2] .. "You can use a named save with the block commands."
+			help[2] = "List all your saved marked areas or those of someone else.  This list is coordinate pairs of places in the world that you have marked for some block command.\n"
+			help[2] = help[2] .. "You can use a named save with the block commands.\n"
+			help[2] = help[2] .. "You can teleport to them with {#}tp #{name of marked area}.\n"
+			help[2] = help[2] .. "You can delete one {#}delete save {list number of marked area}."
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -938,6 +1038,7 @@ function gmsg_coppi()
 				end
 			end
 
+			counter = 1
 			tmp.pid = 0
 
 			if chatvars.words[3] ~= nil then
@@ -957,21 +1058,23 @@ function gmsg_coppi()
 			end
 
 			if botman.dbConnected then
+				conn:execute("TRUNCATE list")
+
 				if tmp.pid ~= 0 then
-					cursor,errorString = conn:execute("select * from prefabCopies where owner = " .. tmp.pid)
+					cursor,errorString = conn:execute("SELECT * FROM prefabCopies WHERE owner = " .. tmp.pid .. " ORDER BY name")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Saved prefabs created by " .. tmp.name .. ":[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Marked areas created by " .. tmp.name .. ":[-]")
 					else
-						irc_chat(chatvars.ircAlias, "Saved prefabs created by " .. tmp.name)
+						irc_chat(chatvars.ircAlias, "Marked areas created by " .. tmp.name)
 					end
 				else
-					cursor,errorString = conn:execute("select * from prefabCopies order by name")
+					cursor,errorString = conn:execute("SELECT * FROM prefabCopies ORDER BY name")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Saved prefabs:[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Marked areas:[-]")
 					else
-						irc_chat(chatvars.ircAlias, "Saved prefabs:")
+						irc_chat(chatvars.ircAlias, "Marked areas:")
 					end
 
 				end
@@ -987,20 +1090,24 @@ function gmsg_coppi()
 				end
 
 				while row do
-					if tmp.pid == 0 then
-						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[row.owner].name .. ": " .. row.name .. "  P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "   P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2 .. "[-]")
-						else
-							irc_chat(chatvars.ircAlias, players[row.owner].name .. ": " .. row.name .. "  P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "  P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2)
-						end
+					if players[row.owner] then
+						name = players[row.owner].name
 					else
-						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.name .. "  P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "   P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2 .. "[-]")
-						else
-							irc_chat(chatvars.ircAlias, row.name .. "   P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "  P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2)
-						end
+						name = row.owner
 					end
 
+					if playersArchived[row.owner] then
+						name = playersArchived[row.owner].name
+					end
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]#" .. counter .. " " .. name .. ": " .. row.name .. "  P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "   P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2 .. "[-]")
+					else
+						irc_chat(chatvars.ircAlias, "#" .. counter .. " " .. name .. ": " .. row.name .. "  P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "  P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2)
+					end
+
+					conn:execute("INSERT INTO list (id, thing, class) VALUES (" .. counter .. ",'" .. escape(row.owner .. " " .. row.name) .. "','" .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "')")
+					counter = counter + 1
 					row = cursor:fetch(row, "a")
 				end
 			end
@@ -1107,7 +1214,6 @@ function gmsg_coppi()
 
 			sendCommand(prefix .. "prender " .. chatvars.playerid .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face)
 			sendCommand(prefix .. "prender " .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face)
-			--igplayers[chatvars.playerid].undoPrefab = true
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A prefab called " .. tmp.prefab .. " should have spawned.  If it didn't either the prefab isn't called " .. tmp.prefab .. " or it doesn't exist.[-]")
 			botman.faultyChat = false
 			return true
@@ -2197,6 +2303,15 @@ function gmsg_coppi()
 
 	if result then
 		if debug then dbug("debug cmd_CancelMaze triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_DeleteSave()
+
+	if result then
+		if debug then dbug("debug cmd_DeleteSave triggered") end
 		return result
 	end
 

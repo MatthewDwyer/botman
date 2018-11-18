@@ -36,11 +36,19 @@ function FifteenSecondTimer()
 		if tonumber(botman.playersOnline) > 24 then
 			if server.coppi and tonumber(botman.playersOnline) > 0 then
 				if server.scanNoclip then
-					sendCommand("pug")
+					if server.coppiRelease == "Mod CSMM Patrons" then
+						sendCommand("pinc")
+					else
+						sendCommand("pug")
+					end
 				end
 
 				if not server.playersCanFly then
-					sendCommand("pgd")
+					if server.coppiRelease == "Mod CSMM Patrons" then
+						sendCommand("cph")
+					else
+						sendCommand("pgd")
+					end
 				end
 			end
 

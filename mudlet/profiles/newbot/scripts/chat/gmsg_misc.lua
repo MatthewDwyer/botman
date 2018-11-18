@@ -930,7 +930,10 @@ function gmsg_misc()
 			end
 
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]When done you can save it with Coppi's mod by typing " .. server.commandPrefix .. "save " .. chatvars.words[2] .. "[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Or save it with djkrose's scripting mod by typing " .. server.commandPrefix .. "export " .. chatvars.words[2] .. "[-]")
+
+			if server.djkrose then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Or save it with djkrose's scripting mod by typing " .. server.commandPrefix .. "export " .. chatvars.words[2] .. "[-]")
+			end
 
 			botman.faultyChat = false
 			return true

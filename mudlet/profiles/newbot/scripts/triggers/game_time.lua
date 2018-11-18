@@ -8,7 +8,7 @@
 --]]
 
 function gameTimeTrigger(line)
-	local word, words, k, v, closed, closingSoon
+	local word, words, k, v, closed, closingSoon, oldGameDay
 
 	if botman.botDisabled then
 		return
@@ -25,6 +25,7 @@ function gameTimeTrigger(line)
 	end
 
 	server.gameDate = string.trim(line)
+	oldGameDay = server.gameDay
 	server.gameDay = words[2]
 	server.gameHour = tonumber(words[3])
 	server.gameMinute = words[4]
@@ -73,7 +74,7 @@ function gameTimeTrigger(line)
 		botman.dailyDraw = false
 	end
 
-	if tonumber(server.gameDay) < tonumber(server.gameDay) and tonumber(server.gameDay) > 0 and server.warnBotReset ~= true then
+	if tonumber(server.gameDay) < tonumber(oldGameDay) and tonumber(server.gameDay) > 0 and not server.warnBotReset then
 		if tonumber(server.gameDay) < 5 then
 			-- the server date has rolled back.  try to alert any level 0 admin that the bot may need a reset too.
 			server.warnBotReset = true

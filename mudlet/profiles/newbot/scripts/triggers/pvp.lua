@@ -233,8 +233,6 @@ function pvpPolice(line)
 
 		if (accessLevel(killerID) < 3 and botman.ignoreAdmins == true) then
 			message("say [" .. server.chatColour .. "]PvP is not allowed outside of PVP zones! However " .. killerName .. " is authorised to PVP[-]")
-			message("pm " .. killerID .. " [" .. server.chatColour .. "]You are allowed to pvp to defend yourself and others. Don't abuse this privilege.[-]")
-			table.save(homedir .. "/server.lua", server)
 			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. igplayers[victimID].xPos .. "," .. igplayers[victimID].yPos .. "," .. igplayers[victimID].zPos .. ",'" .. botman.serverTime .. "','pvp','Admin " .. escape(killerName) .. " killed " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")") end
 
 			if botman.db2Connected then

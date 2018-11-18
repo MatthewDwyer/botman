@@ -1739,11 +1739,14 @@ function gmsg_teleports()
 
 
 	local function cmd_AdminTeleport()
+		local temp
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}tp {player name}\n"
 			help[1] = help[1] ..  " {#}tp {name of teleport}\n"
 			help[1] = help[1] .. " {#}tp {X coord} {Y coord} {Z coord}\n"
+			help[1] = help[1] .. " {#}tp #1 (tele to the coords of a line in a numbered list eg. from {#}list saves)\n"
 			help[1] = help[1] .. " {#}north/south/east/west {distance}"
 			help[2] = "Teleport yourself to a player, a coordinate, a named teleport, or a distance in a compass direction (north, south, east or west)."
 
@@ -1807,12 +1810,34 @@ function gmsg_teleports()
 				return true
 			end
 
+			-- tp to numbered line in a list
+			if string.find(chatvars.words[2], "#") and chatvars.words[3] == nil and string.len(chatvars.words[2]) < 4 then
+				-- this is most likely from a numbered list and the admin wants to go to its coordinates
+
+				temp = string.match(chatvars.words[2], "#(%d+)")
+				cursor,errorString = conn:execute("select * from list where id = " .. temp)
+				row = cursor:fetch({}, "a")
+
+				if row then
+					temp = string.split(row.class, " ")
+
+					-- first record their current x y z
+					savePosition(chatvars.playerid)
+
+					cmd = "tele " .. chatvars.playerid .. " " .. temp[1] .. " " .. temp[2] .. " " .. temp[3]
+					teleport(cmd, chatvars.playerid)
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
 			-- tp to x y z coord
 			if chatvars.words[4] ~= nil then
 				-- first record their current x y z
 				savePosition(chatvars.playerid)
 
-				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(chatvars.words[2]) .. " " .. math.ceil(chatvars.words[3]) .. " " .. math.floor(chatvars.words[4])
+				cmd = "tele " .. chatvars.playerid .. " " .. math.floor(chatvars.words[2]) .. " " .. math.floor(chatvars.words[3]) .. " " .. math.floor(chatvars.words[4])
 				teleport(cmd, chatvars.playerid)
 
 				botman.faultyChat = false

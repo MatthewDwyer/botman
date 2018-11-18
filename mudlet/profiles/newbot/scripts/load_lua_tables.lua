@@ -94,6 +94,37 @@ function loadBans()
 end
 
 
+function loadBases()
+	local cursor, errorString, row
+	-- load bases
+
+	getTableFields("bases")
+
+    bases = {}
+	cursor,errorString = conn:execute("select * from bases")
+	row = cursor:fetch({}, "a")
+	while row do
+		bases[row.Steam .. "_" .. row.baseNumber] = {}
+		bases[row.Steam .. "_" .. row.baseNumber].steam = row.Steam
+		bases[row.Steam .. "_" .. row.baseNumber].baseNumber = row.baseNumber
+		bases[row.Steam .. "_" .. row.baseNumber].title = row.title
+		bases[row.Steam .. "_" .. row.baseNumber].x = row.x
+		bases[row.Steam .. "_" .. row.baseNumber].y = row.y
+		bases[row.Steam .. "_" .. row.baseNumber].z = row.z
+		bases[row.Steam .. "_" .. row.baseNumber].exitX = row.exitX
+		bases[row.Steam .. "_" .. row.baseNumber].exitY = row.exitY
+		bases[row.Steam .. "_" .. row.baseNumber].exitZ = row.exitZ
+		bases[row.Steam .. "_" .. row.baseNumber].size = row.size
+		bases[row.Steam .. "_" .. row.baseNumber].protect = row.protect
+		bases[row.Steam .. "_" .. row.baseNumber].keepOut = row.keepOut
+		bases[row.Steam .. "_" .. row.baseNumber].creationTimestamp = row.creationTimestamp
+		bases[row.Steam .. "_" .. row.baseNumber].creationGameDay = row.creationGameDay
+
+		row = cursor:fetch(row, "a")
+	end
+end
+
+
 function loadCustomMessages()
 	local cursor, errorString, row
 
@@ -863,6 +894,9 @@ function loadTables(skipPlayers)
 
 	loadKeystones()
 	if (debug) then display("debug loaded keystones\n") end
+
+	loadBases()
+	if (debug) then display("debug loaded bases\n") end
 
 	loadBotMaintenance()
 

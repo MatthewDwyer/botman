@@ -199,10 +199,10 @@ function matchAll(line, logDate, logTime)
 	end
 
 
-	if server.useAllocsWebAPI and not server.allocs then
-		server.useAllocsWebAPI = false
-		irc_chat(server.ircMain, "Alloc's mod missing or not fully installed.  The bot is using telnet.")
-	end
+	-- if server.useAllocsWebAPI and not server.allocs then
+		-- server.useAllocsWebAPI = false
+		-- irc_chat(server.ircMain, "Alloc's mod missing or not fully installed.  The bot is using telnet.")
+	-- end
 
 
 	if string.find(line, "*** ERROR: unknown command 'webtokens'") then -- revert to using telnet
@@ -412,10 +412,6 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "type=Entity") then
 		listEntities(line)
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
-
 		return
 	end
 
@@ -487,10 +483,6 @@ function matchAll(line, logDate, logTime)
 			end
 		end
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
-
 		return
 	end
 
@@ -514,10 +506,6 @@ function matchAll(line, logDate, logTime)
 				end
 			end
 		end
-
-		-- if not debug then
-			-- deleteLine()
-		-- end
 
 		return
 	end
@@ -929,10 +917,6 @@ function matchAll(line, logDate, logTime)
 				conn:execute("TRUNCATE memEntities")
 			end
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
-
 			return
 		end
 
@@ -941,10 +925,6 @@ function matchAll(line, logDate, logTime)
 			if string.find(line, server.botsIP) and playerListItems == nil then
 				botman.listItems = true
 			end
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -965,10 +945,6 @@ function matchAll(line, logDate, logTime)
 					conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
 				end
 
-				-- if not debug then
-					-- deleteLine()
-				-- end
-
 				return
 			end
 		end
@@ -977,10 +953,6 @@ function matchAll(line, logDate, logTime)
 		if string.find(line, "Executing command 'admin list'") and server.botsIP then
 			if string.find(line, server.botsIP) then
 				flagAdminsForRemoval()
-
-				-- if not debug then
-					-- deleteLine()
-				-- end
 
 				return
 			end
@@ -991,10 +963,6 @@ function matchAll(line, logDate, logTime)
 			collectBans = true
 			conn:execute("TRUNCATE bans")
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
-
 			return
 		end
 
@@ -1003,10 +971,6 @@ function matchAll(line, logDate, logTime)
 		if string.find(line, "Level: SteamID (Player name if online)", nil, true) then
 			getAdminList = true
 			staffList = {}
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -1019,19 +983,11 @@ function matchAll(line, logDate, logTime)
 		if (string.find(line, "HideCommandExecutionLog =")) then
 			server.HideCommandExecutionLog = number
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
-
 			return
 		end
 
 		if (string.find(line, "MaxSpawnedZombies set to")) then
 			server.MaxSpawnedZombies = number
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -1039,19 +995,11 @@ function matchAll(line, logDate, logTime)
 		if (string.find(line, "MaxSpawnedAnimals set to")) then
 			server.MaxSpawnedAnimals = number
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
-
 			return
 		end
 
 		if (string.find(line, "LootRespawnDays =")) then
 			server.LootRespawnDays = number
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -1059,19 +1007,11 @@ function matchAll(line, logDate, logTime)
 		if (string.find(line, "BlockDurabilityModifier =")) then
 			server.BlockDurabilityModifier = number
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
-
 			return
 		end
 
 		if (string.find(line, "DayNightLength =")) then
 			server.DayNightLength = number
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -1079,19 +1019,11 @@ function matchAll(line, logDate, logTime)
 		if (string.find(line, "DayLightLength =")) then
 			server.DayLightLength = number
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
-
 			return
 		end
 
 		if (string.find(line, "DropOnDeath =")) then
 			server.DropOnDeath = number
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -1099,19 +1031,11 @@ function matchAll(line, logDate, logTime)
 		if (string.find(line, "DropOnQuit =")) then
 			server.DropOnQuit = number
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
-
 			return
 		end
 
 		if (string.find(line, "EnemyDifficulty =")) then
 			server.EnemyDifficulty = number
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -1119,19 +1043,11 @@ function matchAll(line, logDate, logTime)
 		if (string.find(line, "LandClaimSize =")) then
 			server.LandClaimSize = number
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
-
 			return
 		end
 
 		if (string.find(line, "LandClaimExpiryTime =")) then
 			server.LandClaimExpiryTime = number
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -1139,19 +1055,11 @@ function matchAll(line, logDate, logTime)
 		if (string.find(line, "LootAbundance =")) then
 			server.LootAbundance = number
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
-
 			return
 		end
 
 		if (string.find(line, "LootRespawnDays =")) then
 			server.LootRespawnDays = number
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -1160,19 +1068,11 @@ function matchAll(line, logDate, logTime)
 			server.ServerPort = number
 			if botman.dbConnected then conn:execute("UPDATE server SET serverName = '" .. escape(server.serverName) .. "', ServerPort = " .. server.ServerPort) end
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
-
 			return
 		end
 
 		if (string.find(line, "ZombiesRun =")) then
 			server.ZombiesRun = number
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -1182,21 +1082,45 @@ function matchAll(line, logDate, logTime)
 
 			if string.find(string.lower(server.serverName), "pvp") and not string.find(string.lower(server.serverName), "pve") then
 				server.gameType = "pvp"
-			end
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
+				if server.northeastZone == "" then
+					server.northeastZone = "pvp"
+				end
+
+				if server.northwestZone == "" then
+					server.northwestZone = "pvp"
+				end
+
+				if server.southeastZone == "" then
+					server.southeastZone = "pvp"
+				end
+
+				if server.southwestZone == "" then
+					server.southwestZone = "pvp"
+				end
+			else
+				if server.northeastZone == "" then
+					server.northeastZone = "pve"
+				end
+
+				if server.northwestZone == "" then
+					server.northwestZone = "pve"
+				end
+
+				if server.southeastZone == "" then
+					server.southeastZone = "pve"
+				end
+
+				if server.southwestZone == "" then
+					server.southwestZone = "pve"
+				end
+			end
 
 			return
 		end
 
 		if (string.find(line, "GameName =")) then
 			server.GameName = string.trim(string.sub(line, 20))
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -1221,10 +1145,6 @@ function matchAll(line, logDate, logTime)
 				end
 			end
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
-
 			return
 		end
 
@@ -1232,10 +1152,6 @@ function matchAll(line, logDate, logTime)
 			server.MaxSpawnedZombies = number
 			-- If we detect this line it means we are receiving data from the server so we set a flag to let us know elsewhere that we got server data ok.
 			serverDataLoaded = true
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -1260,10 +1176,6 @@ function matchAll(line, logDate, logTime)
 			sendCommand("tcch " .. server.commandPrefix)
 		end
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
-
 		return
 	end
 
@@ -1281,10 +1193,6 @@ function matchAll(line, logDate, logTime)
 			sendCommand("tcch " .. server.commandPrefix)
 		end
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
-
 		return
 	end
 
@@ -1295,10 +1203,6 @@ function matchAll(line, logDate, logTime)
 		temp = string.split(line, ":")
 		server.allocsServerFixes = temp[2]
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
-
 		return
 	end
 
@@ -1308,10 +1212,6 @@ function matchAll(line, logDate, logTime)
 		temp = string.split(line, ":")
 		server.allocsCommandExtensions = temp[2]
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
-
 		return
 	end
 
@@ -1320,10 +1220,6 @@ function matchAll(line, logDate, logTime)
 		server.allocs = true
 		temp = string.split(line, ":")
 		server.allocsMap = temp[2]
-
-		-- if not debug then
-			-- deleteLine()
-		-- end
 
 		return
 	end
@@ -1335,10 +1231,6 @@ function matchAll(line, logDate, logTime)
 		if botman.dbConnected then conn:execute("UPDATE otherEntities SET remove = 1") end
 
 		getZombies = true
-
-		-- if not debug then
-			-- deleteLine()
-		-- end
 
 		return
 	end
@@ -1356,10 +1248,6 @@ function matchAll(line, logDate, logTime)
 
 	if string.find(line, "INF World.Unload") then
 		saveLuaTables()
-
-		-- if not debug then
-			-- deleteLine()
-		-- end
 
 		return
 	end
@@ -1380,9 +1268,8 @@ function matchAll(line, logDate, logTime)
 		server.gameVersion = string.trim(string.sub(line, string.find(line, "Game version:") + 14, string.find(line, "Compatibility") - 2))
 		if botman.dbConnected then conn:execute("UPDATE server SET gameVersion = '" .. escape(server.gameVersion) .. "'") end
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
+		temp = string.split(server.gameVersion, " ")
+		server.gameVersionNumber = temp[2]
 
 		return
 	end
@@ -1393,10 +1280,6 @@ function matchAll(line, logDate, logTime)
 		temp = string.split(line, ":")
 		server.stompyVersion = temp[2]
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
-
 		return
 	end
 
@@ -1405,10 +1288,6 @@ function matchAll(line, logDate, logTime)
 		server.djkrose = true
 		temp = string.split(line, ":")
 		server.djkroseVersion = temp[2]
-
-		-- if not debug then
-			-- deleteLine()
-		-- end
 
 		return
 	end
@@ -1419,10 +1298,6 @@ function matchAll(line, logDate, logTime)
 		temp = string.split(line, ":")
 		server.JimsCommandsVersion = temp[2]
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
-
 		return
 	end
 
@@ -1431,10 +1306,6 @@ function matchAll(line, logDate, logTime)
 		server.SDXDetected = true
 		if botman.dbConnected then conn:execute("UPDATE server SET SDXDetected = 1") end
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
-
 		return
 	end
 
@@ -1442,10 +1313,6 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "Mod Server Tools:") or string.find(line, "mod 'Server Tools'") and not server.ServerToolsDetected then
 		server.ServerToolsDetected = true
 		if botman.dbConnected then conn:execute("UPDATE server SET ServerToolsDetected = 1") end
-
-		-- if not debug then
-			-- deleteLine()
-		-- end
 
 		return
 	end
@@ -1457,10 +1324,6 @@ function matchAll(line, logDate, logTime)
 			message("say [" .. server.chatColour .. "]To use bot commands such as /who you must now type !who[-]")
 			server.commandPrefix = "!"
 			if botman.dbConnected then conn:execute("UPDATE server SET commandPrefix = '!'") end
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -1549,10 +1412,6 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "Version mismatch") then
 		irc_chat(server.ircAlerts, line)
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
-
 		return
 	end
 
@@ -1574,10 +1433,6 @@ function matchAll(line, logDate, logTime)
 	if (string.find(line, "INF [NET] ServerShutdown") or string.find(line, "INF World.Unload")) and not string.find(line, "Chat") then
 		botman.botOffline = true
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
-
 		return
 	end
 
@@ -1587,15 +1442,7 @@ function matchAll(line, logDate, logTime)
 			sendCommand("admin list")
 		end
 
-		-- if not debug then
-			-- deleteLine()
-		-- end
-
 		return
 	end
-
-	-- if not debug then
-		-- deleteLine()
-	-- end
 end
 

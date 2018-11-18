@@ -56,47 +56,55 @@ function saveBotMaintenance()
 end
 
 
-function saveLuaTables(date)
+function saveLuaTables(date, name)
 	if date ~= nil then
 		date = date .. "_"
 	else
 		date = ""
 	end
 
-	dbug("saving Lua tables")
-	-- save a datestamped copy (for manual restore)
-	table.save(homedir .. "/data_backup/" .. date .. "badItems.lua", badItems)
-	table.save(homedir .. "/data_backup/" .. date .. "customMessages.lua", customMessages)
-	table.save(homedir .. "/data_backup/" .. date .. "friends.lua", friends)
-	table.save(homedir .. "/data_backup/" .. date .. "hotspots.lua", hotspots)
-	table.save(homedir .. "/data_backup/" .. date .. "locations.lua", locations)
-	table.save(homedir .. "/data_backup/" .. date .. "players.lua", players)
-	table.save(homedir .. "/data_backup/" .. date .. "playersArchived.lua", playersArchived)
-	table.save(homedir .. "/data_backup/" .. date .. "resetRegions.lua", resetRegions)
-	table.save(homedir .. "/data_backup/" .. date .. "restrictedItems.lua", restrictedItems)
-	table.save(homedir .. "/data_backup/" .. date .. "server.lua", server)
-	table.save(homedir .. "/data_backup/" .. date .. "shopCategories.lua", shopCategories)
-	table.save(homedir .. "/data_backup/" .. date .. "teleports.lua", teleports)
-	table.save(homedir .. "/data_backup/" .. date .. "villagers.lua", villagers)
-	table.save(homedir .. "/data_backup/" .. date .. "waypoints.lua", waypoints)
+	if name ~= nil then
+		date = ""
+		name = name .. "_"
+	else
+		name = ""
+	end
 
-	-- save without a datestamp (used by /restore backup)
-	table.save(homedir .. "/data_backup/badItems.lua", badItems)
-	table.save(homedir .. "/data_backup/customMessages.lua", customMessages)
-	table.save(homedir .. "/data_backup/friends.lua", friends)
-	table.save(homedir .. "/data_backup/hotspots.lua", hotspots)
-	table.save(homedir .. "/data_backup/locations.lua", locations)
-	table.save(homedir .. "/data_backup/players.lua", players)
-	table.save(homedir .. "/data_backup/playersArchived.lua", playersArchived)
-	table.save(homedir .. "/data_backup/resetRegions.lua", resetRegions)
-	table.save(homedir .. "/data_backup/restrictedItems.lua", restrictedItems)
-	table.save(homedir .. "/data_backup/server.lua", server)
-	table.save(homedir .. "/data_backup/shopCategories.lua", shopCategories)
-	table.save(homedir .. "/data_backup/teleports.lua", teleports)
-	table.save(homedir .. "/data_backup/villagers.lua", villagers)
-	table.save(homedir .. "/data_backup/waypoints.lua", waypoints)
-
-	dbug("finished saving Lua tables")
+	if date ~= "" or name ~= "" then
+		-- save with a date or name
+		table.save(homedir .. "/data_backup/" .. date .. name .. "badItems.lua", badItems)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "bases.lua", bases)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "customMessages.lua", customMessages)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "friends.lua", friends)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "hotspots.lua", hotspots)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "locations.lua", locations)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "players.lua", players)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "playersArchived.lua", playersArchived)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "resetRegions.lua", resetRegions)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "restrictedItems.lua", restrictedItems)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "server.lua", server)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "shopCategories.lua", shopCategories)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "teleports.lua", teleports)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "villagers.lua", villagers)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "waypoints.lua", waypoints)
+	else
+		-- save without a date or name
+		table.save(homedir .. "/data_backup/badItems.lua", badItems)
+		table.save(homedir .. "/data_backup/bases.lua", bases)
+		table.save(homedir .. "/data_backup/customMessages.lua", customMessages)
+		table.save(homedir .. "/data_backup/friends.lua", friends)
+		table.save(homedir .. "/data_backup/hotspots.lua", hotspots)
+		table.save(homedir .. "/data_backup/locations.lua", locations)
+		table.save(homedir .. "/data_backup/players.lua", players)
+		table.save(homedir .. "/data_backup/playersArchived.lua", playersArchived)
+		table.save(homedir .. "/data_backup/resetRegions.lua", resetRegions)
+		table.save(homedir .. "/data_backup/restrictedItems.lua", restrictedItems)
+		table.save(homedir .. "/data_backup/server.lua", server)
+		table.save(homedir .. "/data_backup/shopCategories.lua", shopCategories)
+		table.save(homedir .. "/data_backup/teleports.lua", teleports)
+		table.save(homedir .. "/data_backup/villagers.lua", villagers)
+		table.save(homedir .. "/data_backup/waypoints.lua", waypoints)
+	end
 end
 
 

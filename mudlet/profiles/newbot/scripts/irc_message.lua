@@ -3349,10 +3349,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (words[1] == "con") and players[ircid].accessLevel == 0 then
 		msg = string.trim(string.sub(msg, string.find(msgLower, "con") + 4))
 
-		if string.sub(msg, 1, 4) == "help" then
-			echoConsoleTo = name
-			echoConsole = false
-		end
+		-- if string.sub(msg, 1, 4) == "help" then
+			-- echoConsoleTo = name
+			-- echoConsole = false
+		-- end
 
 		if msg == "se" or msg == "webpermission list" or msg == "ban list" or msg == "lp" or msg == "le" or string.sub(msg, 1, 3) == "lpf" or string.sub(msg, 1, 3) == "lpb" or string.sub(msg, 1, 3) == "lps" or msg == "SystemInfo" or msg == "traderlist" or msg == "gg" or msg == "version" or string.sub(msg, 1, 3) == "li " or string.sub(msg, 1, 3) == "si " or string.sub(msg, 1, 4) == "help" then
 			echoConsole = false

@@ -895,6 +895,9 @@ function alterTables()
 	doSQL("ALTER TABLE `polls` CHANGE `option6` `option6` VARCHAR(255)")
 	doSQL("ALTER TABLE `teleports` CHANGE `name` `name` VARCHAR(100)")
 	doSQL("ALTER TABLE `waypoints` CHANGE `name` `name` VARCHAR(50")
+	doSQL("ALTER TABLE `bases` DROP PRIMARY KEY, ADD PRIMARY KEY(`steam`,`baseNumber`)")
+	doSQL("ALTER TABLE `list` DROP INDEX `thing`, ADD PRIMARY KEY(`id`)")
+	doSQL("ALTER TABLE `list` DROP PRIMARY KEY") -- OOPS! Doesn't work too well with indexes.  Down with them I say!
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)

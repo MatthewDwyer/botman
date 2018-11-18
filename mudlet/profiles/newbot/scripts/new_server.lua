@@ -83,8 +83,8 @@ function initServer()
 	server.moneyPlural = "Zennies"
 	server.MOTD = "We have a new server bot!"
 	server.newPlayerTimer = 120
-	server.northeastZone = "pve"
-	server.northwestZone = "pve"
+	server.northeastZone = ""
+	server.northwestZone = ""
 	server.overstackThreshold = 2000
 	server.packCooldown = 0
 	server.packCost = 0
@@ -100,8 +100,8 @@ function initServer()
 	server.serverName = "New Server"
 	server.ServerPort = "0"
 	server.shopCountdown = 3
-	server.southeastZone = "pve"
-	server.southwestZone = "pve"
+	server.southeastZone = ""
+	server.southwestZone = ""
 	server.swearCash = 0
 	server.swearFine = 5
 	server.swearJar = false

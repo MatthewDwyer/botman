@@ -121,6 +121,10 @@ function fixTables() -- waiter!  Where's my table!?
 		bans = {}
 	end
 
+	if type(bases) ~= "table" then
+		bases = {}
+	end
+
 	if type(botman) ~= "table" then
 		botman = {}
 	end
