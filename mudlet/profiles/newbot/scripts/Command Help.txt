@@ -1,0 +1,2124 @@
+This command help is taken directly from the bot.  It is not a manual but you will learn a lot just exploring this text.
+
+/reload code
+Tell the bot to reload all external Lua scripts. This also happens shortly after restarting the bot and it can automatically detect if the scripts are not loaded and reload them.
+Once the script have loaded, if you make any changes to them you need to run this command or restart the bot for your changes to take effect.
+
+/pause bot
+Temporarily disable the bot. It will still read the chat and can be enabled again.
+
+*Note:  The command sections below are not currently in alphabetical order. Also your bot will be missing some commands if it is using an older code branch.
+
+Unslashed Commands:
+
+Unslashed commands are simply words in normal chat that trigger a response from the bot.
+
+Your bot will react to any player using the words hack, cheat, grief or flying. That triggers a special scan for hackers.
+Any players with a non-zero hacker score found near the player will be immediately exiled. If you don't have the exile location set up, nothing will happen.
+
+When feral. Like /day7, the bot will report how many days remain until a horde night.
+When reboot. The bot will report how long until the next reboot.
+
+restart bot
+If your bot is launched from a custom script with the ability to restart itself, you can command your bot to restart.
+All of Smegz0r's hosted bots have this feature. Contact Smeg if you need help adding it to your bot.
+
+
+Info Commands:
+
+/bot info
+Displays info about the bot.
+
+/uptime
+Reports the bot and server's running times.
+
+/server or /info
+Displays info mostly from the server config.
+
+/next reboot
+Reports the time remaining before the next scheduled reboot.
+
+/day7 or /when feral or /bloodmoon
+Reports the number of days remaining until the next horde night.
+
+/server date
+Displays the system clock of the game server.
+
+/server stats
+Displays various server totals for the last 24 hours or more days if you add a number.
+eg. /server stats 5 (gives you the last 5 days cummulative stats)
+
+/new players {optional number (days)
+List the new players and basic info about them in the last day or more.
+
+/seen {player name}
+Reports when the player was last on the server.
+
+/rules
+Reports the server rules.
+
+/where
+Gives info about where you are in the world and the rules that apply there.
+
+/who {optional number distance}
+Donors can see 300 metres and other players can see 200. New and watched players can't see staff near them.
+
+/alert {message}
+Whatever is typed after /alert is recorded to the database and displayed on irc.
+You can recall the alerts with the irc command view alerts {optional days}
+
+/info {player}
+Displays info about a player. Only staff can specify a player. Players just see their own info.
+
+/who visited {player name} days {days} hours {hrs} range {dist} height {ht}
+See who visited a player location or base.
+Example with defaults: /who visited player smeg days 1 hours 0 range 10 height 5
+/who visited bed smeg
+Add base to just see base visitors. Setting hours will reset days to zero.
+Use this command to discover who's been at the player's location.
+
+Base Commands:
+
+/delbase/delbase2
+/delbase/delbase2 {player name} (for admins only)
+Delete a player's base and base protection (in the bot only). It does not physically delete the base in the game world.
+Players can only delete their own bases.
+
+/sethome (or sethome2)
+/setbase (or setbase2)
+Tell the bot where your first or second base is for base protection, raid alerting and the ability to teleport home.
+
+/set base cooldown {number in seconds} (default is 2400 or 40 minutes)
+The /base or /home command can have a time delay between uses. Donors wait half as long. If you set it to 0 there is no wait time.
+
+/set base cost {number}
+By default players can type /base to return to their base. You can set a delay and/or a cost before the command is available.
+
+/set base deadzone {distance}
+Block players setting their base too close to the base of another player who has not friended them.
+The default is 0 which disables this feature. It does not remove existing bases that are closer than the distance you set here, but they will not be able to redo /setbase unless they move further away.
+
+/set base size {number} {player name}
+/set base2 size {number} {player name}
+Set the base protection size for a player's first or second base.
+
+/setbed/clearbed
+When you die, the bot can automatically return you to your first or second base after respawn.
+Set within 50 metres of your base. The closest base will become your new spawn point after death.
+
+/set default base size {number in metres or blocks}
+The default base protection size is 32 blocks (64 diameter). This default only applies to new players joining the server for the first time.
+Existing base sizes are not changed with this command.
+
+/protect (or protect2)
+Set up the bot's base protection. The bot will tell the player to move towards or away from their base and will
+automatically set protection outside of their base protected area. Players should not set traps in this area.
+
+/enable/disable base protection
+Base protection can be turned off server wide. Players can still use claim blocks for protection.
+Not the same as /enable/disable pvp protect which is specifically for allowing the bot's base protection in PVP rules.
+
+/enable/disable pvp protect
+By default base protection is disabled where pvp rules apply. You can change that by enabling it.
+
+/enable/disable base (or home) teleport
+Enable or disable the home or base teleport command (except for staff).
+
+/unprotectbase {player name}
+/unprotectbase2 {player name}
+Disable base protection for a player.
+Only admins can specify a player name. Everyone else can only use this command on their own bases.
+
+/home/base
+/home2/base2
+Teleport back to your first or second base. A timer and/or a cost may apply.
+
+/pause
+Pause your base protection.
+Only works on your base(s) if you are within 100 metres of them and automatically resumes if you move away or leave the server.
+This allows players who you haven't friended access to your base with you present.
+
+/setbase/sethome {player name}
+Set a player's first base for them where you are standing.
+
+/test base
+Turn your own base protection against you for 30 seconds to test that it works.
+
+/resume/unpause
+Re-activate your base protection.
+
+Location Commands:
+
+/location add {name}
+Create a location where you are standing. Unless you add random spawns, any player teleporting to the location will arrive at your current position. If you are not on the ground, make sure the players can survive the landing.
+
+/location categories
+List the location categories. Only admins see the access level restrictions
+
+/locations
+List the locations and basic info about them.
+
+/lobby {player name}
+If the lobby location exists, send the player to it. You can also do this to offline players, they will be moved to the lobby when they rejoin.
+If location spawn exists and lobby does not, spawn is the lobby location.
+
+/location clear reset {location name}
+Remove the reset zone flag. Unless otherwise restricted, players will be allowed to place claims and setbase.
+
+/location {name} clear
+Delete all random spawns for the location.
+
+/location {name} ends here
+Set the size of the location as the difference between your position and the centre of the location. Handy for setting it visually.
+
+/location {name}
+See detailed information about a location including a list of players currently in it.
+
+/location {name} random
+Start setting random spawn points for the location. The bot uses your position which it samples every 3 seconds or so. It only records a new coordinate when you have moved more than 2 metres from the last recorded spot.
+Unless you intend players to fall, do not fly or clip through objects while recording. To stop recording just type stop.
+You can record random spawns anywhere and more than once but remember to type stop after each recording or the bot will continue recording your movement and making spawn points from them.
+The spawns do not have to be inside the location and you can make groups of spawns anywhere in the world for the location.
+
+/location set reset {name}
+Flag the location as a reset zone. The bot will warn players not to build in it and will block /setbase and will remove placed claims of non-staff.
+
+/location move {name}
+Move an existing location to where you are standing. Unless you add random spawns, any player teleporting to the location will arrive at your current position.
+If you are not on the ground, make sure the players can survive the landing. If there are existing random spawns for the location, moving it will not move them.
+You should clear them and redo them using /location {name} clear and /location {name} random.
+
+/protect location
+Tell the bot to protect the location that you are in. It will instruct you what to do and will tell you when the location is protected.
+
+/location remove {name}
+Delete the location and all of its spawnpoints.
+
+/location {old name} rename {new name}
+Change an existing location's name to something else.
+
+/location {name} category {category name}
+/location {name} clear category
+Set or clear a category for a location. If the category doesn't exist it is created.
+
+/location {name} access {minimum access level}
+Set the minimum access level required to teleport to the location.
+
+/location {name} close {0-23}
+Block and remove players from the location from a set hour.
+
+/set location {name} cooldown {number in seconds}
+After teleporting to the location, players won't be able to teleport back to it until the cooldown timer expires.
+
+/location {name} cost {number}
+Require the player to have {number} Zennies to teleport there. The Zennies are removed from the player afterwards.
+
+/location {name} day closed {0-7}
+Block and remove players from the location on a set day. Disable this feature by setting it to 0.
+
+/location {name} minigame {game type}
+Flag the location as part of a minigame such as capture the flag. The minigame is an unfinished idea so this command doesn't do much yet.
+
+/location {name} open {0-23}
+Allow players inside the location from a set hour.
+
+/location owner {player name}
+Assign ownership of a location to a player. They will be able to set protect on it and players not friended to them won't be able to teleport there.
+
+/location {name} min level {minimum player level}
+/location {name} max level {maximum player level}
+/location {name} min level {minimum player level} max level {maximum player level}
+Set a player level requirement to teleport to a location.
+
+/location {name} size {number}
+Set the size of the location measured from its centre. To make a 200 metre location set it to 100.
+
+/set tp {optional location}
+Create a single random teleport for the location you are in or if you are recording random teleports, it will set for that location.
+If you provide a location name you will create 1 random TP for that location where you are standing.
+
+/location allow base {location name}
+/location disallow/deny/block base {location name}
+Allow players to /setbase in the location or block that.
+
+/location enable/disable {name}
+Flag the location as enabled or disabled. Currently this flag isn't used and you can ignore this command.
+
+/location hide/unhide {name}
+Flag the location as hidden or unhidden. Hidden locations are only shown to admins when using the /locations command.
+
+/location lobby/not lobby {name}
+Flag the location as the lobby or not the lobby. New players will be sent to this location when they spawn if it is flagged as lobby. Only one location will be used so flagging more will not make them all the lobby.
+To do that use /set tp {location}. This will add a random teleport destination for the location. You can set as many as you want.
+
+/location private/public {name} (default is private)
+Flag the location as private or public. Players can only use public locations.
+
+/location {name} pvp
+/location {name} pve
+Change the rules at a location to pvp or pve.
+
+/location {name} enable (or disable) returns
+Enable or disable the return command for a location.
+
+/location safe/unsafe {location name}
+Flag/unflag the location as a safe zone. The bot will automatically kill zombies in the location if players are in it.
+To prevent this feature spamming the server it is triggered every 30 seconds. When there are more than 10 players it changes to every minute.
+If you have StompyNZ's Bad Company mod, the bot will instantly despawn zombies that spawn inside the zone. Walk-in zombies are detected as above.
+
+/location {name} watch
+/location {name} stop watching
+Set a location to report player activity regardless of other player watch settings, or not. The default is to not watch players.
+Use this setting to be alerted whenever a player enters/exits a watched location or their inventory changes while in it.
+
+/location {name} enable (or disable) waypoints
+Block or allow players to set waypoints in the location.
+
+/show/hide locations
+Normally when you enter and leave a location you will see a private message informing you of this. You can disable the message.
+
+/unprotect location {optional name}
+Remove bot protection from the location. You can leave out the location name if you are in the location.
+
+Teleport Commands:
+
+/tele {name} delete
+Delete a teleport.
+
+/enabletp {player name}
+/disabletp {player name}
+Allows a player to use teleport commands. Only staff can specify a player, otherwise it defaults to whoever issued the command.
+Note: Players can set/unset this on themselves too.
+
+/tele {name} enable
+/tele {name} disable
+Enable or disable a teleport.
+
+/tele {name} one way
+/tele {name} two way
+Teleports are a pair of coordinates and the second coordinate placed is the destination.
+You can make it work in one direction only or both ways (loop). They are two way teleports by default.
+
+/tele {teleport name} private
+/tele {teleport name} public
+Make the teleport private or public. New teleports are private by default.
+
+/tele {name} owner {player name}
+Assign ownership of a teleport to a player. Only they and their friends can use it (and staff)
+
+/set teleport cost {number}
+Set a price for all private teleporting (excludes public locations). Players must have sufficient Zennies to teleport.
+
+/set teleport delay {number}
+Set a time delay for player initiated teleport commands. The player will see a PM informing them that their teleport will happen in x seconds. The default is 0 and no PM will be sent.
+
+/tele {name} access min {minimum access level} max {maximum access level}
+/tele {name} access min {minimum access level}
+/tele {name} access max {maximum access level}
+Set a player access level requirement to activate a teleport.
+Teleports are not access level restricted by default and the min and max are both 0. Set them to 0 to remove an access restriction.
+Note: Access levels are not player levels. See /help access
+eg. To limit to donors /tele test access min 10. No need to set max as only admins are higher.
+eg. To limit to new players /tele newbies access min 99 max 99.
+
+/enable/disable p2p
+Allow or block players teleporting to other players via shared waypoints or teleporting to friends.
+
+/show/hide teleports
+If bot commands are hidden from chat, you can have the bot announce whenever a player teleports to a location (except /home).
+
+/enable/disable teleporting
+Toggle ability of players using teleport commands. Admins can still teleport.
+
+/enable/disable return (enabled is default)
+After being teleported somewhere, players can type /return to be sent back to where they came from.
+This is enabled by default but you can disable them. Admins are not affected by this setting.
+
+/enable/disable stuck
+Enable or disable the /stuck command. Default is enabled.
+
+/set pack cooldown {number in seconds}
+By default players can type /pack when they respawn after a death to return to close to their pack. You can set a delay and/or a cost before the command is available after a death.
+
+/set pack cost {number}
+By default players can type /pack or /revive when they respawn after a death to return to close to their pack. You can set a delay and/or a cost before the command is available after a death.
+
+/tp {player name}
+/tp {name of teleport}
+/tp {X coord} {Y coord} {Z coord}
+/north/south/east/west {distance}
+Teleport yourself to a player, a coordinate, a named teleport, or a distance in a compass direction (north, south, east or west).
+
+/tele {name} end
+Complete a teleport ending at your location or move an existing teleport's end to you.
+
+/tele {name} start
+Create a teleport starting at your location or move an existing teleport's start to you.
+
+/fetch {player name}
+Move a player to your current location (staff cannot be fetched).
+
+/teleports
+List the teleports.
+
+/pack
+/revive
+Teleport close to where you last died.
+
+/return
+Teleport back to where you came from before your last teleport command. Locations support a 2nd return if you teleport within the location more than once without leaving it.
+
+/tele {name} end size {radius in blocks}
+Set the size of the exit point of a pair of teleports. The default is 3 wide (1.5 radius)
+
+/tele {name} start size {radius in blocks}
+Set the size of the starting point of a pair of teleports. The default is 3 wide (1.5 radius)
+
+/stuck
+Teleport you to the highest ground level at your location.
+
+/view teleport {named teleport}
+View all the settings of a teleport.
+
+Waypoint Commands:
+
+/clear all waypoints {optional player name}
+Delete all your waypoints (anyone can do this) or those of a named player (only admins)
+
+/waypoints {player name} (list a player's waypoints)
+/waypoints range {distance} (list all waypoints within range of your position)
+/waypoints near {player or location} range {distance} (list all waypoints within range of a player or location)
+List the waypoints of a player or within {distance} of your current position or the location of another player or location.
+
+/set max waypoints {number} (server wide)
+/set max waypoints {player name} number {number} (for a specific player)
+/set max waypoints donors {number} (for donors)
+Set the max number of waypoints players can have or a specific player can have.
+
+/set waypoint cooldown {number} (seconds)
+Set how long in seconds players must wait between uses of waypoints
+
+/set waypoint cost {number}
+Set a price to use waypoints. Players must have sufficient Zennies to teleport.
+
+/set waypoint create cost {number}
+Set a price to create waypoints. Players must have sufficient Zennies
+
+/set waypoints public/private
+Make waypoints accessible to all (except new players) or restricted to donors only.
+
+/clear wp {name}
+Delete a named waypoint. If they are linked, this also unlinks them.
+
+/close wp {waypoint name}
+Make a waypoint private again. This is its default state.
+
+/open wp {waypoint name}
+Share a waypoint with your friends.
+
+/set wp {waypoint name}
+Create or move your first waypoint where you are standing. It retains its current status if it already exists.
+
+/link wp {name of wp1} to {name of wp2}
+Link your waypoints to create a portal instead. In this mode you cannot teleport to them, instead you activate them by stepping into them.
+
+/unlink wp {name of waypoint}
+Close your portal and convert each end back into two waypoints which you can then teleport to as normal.
+
+/wp or /wp1 or /{your name}
+Teleport to your first waypoint.
+
+Shop Commands:
+
+/fix shop
+Attempt to automatically fix the shop. It reloads the shop categories, checks for any missing categories in shop items and assigns them to misc then reindexes the shop.
+This fix is experimental and might not actually fix whatever is wrong with your shop.
+
+/reset shop
+Restock the shop to the max quantity of each item.
+
+/set/clear shop location {location name (for set only)}
+Restrict the shop to a specific location. Buying from the shop will only be possible while in that location (excluding admins).
+Or clear the location so that the shop can be accessed server wide. (the default)
+
+/set lottery multiplier {number}
+Every zombie killed adds 1 x the lottery multiplier to the lottery total. The higher the number, the faster the lottery rises. The default is 2.
+
+/set lottery prize {number}
+You can set or reset the lottery prize to any number. Useful if it gets too large.
+
+/set lottery ticket price {number}
+The default cost of a lottery ticket is 25 Zennies. You can change it to anything above 0.
+
+/set shop reset days {number}
+Restock the shop to the max quantity of each item every {number} of real days.
+A setting of 0 disables the automatic restock. To manually restock it use /reset shop.
+
+/set shop open/close {0 - 23}
+Enter a number from 0 to 23 which will be the game hour that the shop opens or closes.
+
+/open/close lottery
+/enable/disable lottery
+Turn on or off the daily lottery. It is on be default.
+
+/set playtime reward {Zennies}
+Set how many Zennies a player earns for each minutes played. (excludes new players)
+
+/set zombie reward {Zennies}
+Set how many Zennies a player earns for each zombie killed.
+
+/enable/disable bank
+Players can earn Zennies if the bank is enabled.
+
+/open/close or /enable/disable shop
+Enable or disable the shop feature.
+
+/set money name {singular} {plural}
+The default money name is the Zenny and the plural is Zennies. Both names must be one word each.
+eg /set money name Chip Chips.
+
+/enable/disable spending alert (default disabled)
+PM the player every time an a command costs them money. Tell them how much they spent and what they have left.
+
+/cash or /wallet or /bank
+Tells you how many Zennies you have.
+
+/pay {player name} {amount}
+Pay a player some amount of Zennies. Admins don't need to have the cash in their balance first.
+
+/lotto or /lottery or /tickets
+See how big the lottery is and how many tickets you have in the draw.
+
+/gamble {optional quantity} or /buy ticket {optional quantity}
+Buy a ticket in the next daily lottery.
+
+/show/hide cash
+See an ingame PM every time your cash balance changes.
+
+Misc Commands:
+
+/accept
+Use this command if you have received an invite to join the IRC server and want further instructions from the bot.
+
+/add command {command} message {custom message}
+Add a custom command. Currently all it can do is send a private message. Later more actions will be added including the ability to add multiple actions.
+
+/bk {bookmark number}
+Teleport to the numbered bookmark (Admins only)
+
+/bookmark {message}
+Record the coordinates where you are standing with a message. This was created to help admins quickly teleport to places that players wanted screenshot or videoed by admins before a server wipe.
+Only admins can teleport to them. Players can only view a list of the bookmarks created by themselves.
+
+/claim vote
+Claim your reward for voting for the server at 7daystodie-servers.com
+Can only be claimed once per day.
+
+/list bookmarks {player}
+If players have bookmarked coordinates on your server, this command will give you a numbered list of a player's bookmarks
+Players can only list their own bookmarks and can't teleport to them.
+
+/bail {player} /bail {player} pay {amount}
+Anyone can bail a prisoner out of prison if they have enough Zennies.
+If you don't have enough Zennies you can reduce the bail by making payment towards it.
+
+/get region {x coordinate} {z coordinate}
+Get the region name for the supplied coordinates.
+
+/invite {player}
+Invite a player to join the IRC server. Choose carefully who you invite.
+
+/custom commands
+List the custom commands.
+
+/mark {name} start/end or p1/p2
+Mark out a named area to be used later with commands that accept coordinate pairs
+You can save and reload it using Coppi's Mod with /save {name} and /load prefab {name}
+Or if using djkrose's scripting Mod with /export {name} and /import {name}
+Mark two opposite corners of the area you wish to copy. Move up or down between corners to add volume or stay at the same height to mark out a flat area.
+
+/remove command {command}
+Remove a custom command.
+
+/yes
+If the bot asks you a yes/no question you can simply say yes or use this command to hide your response if commands are hidden.
+
+Hotspot Commands:
+
+/hotspot {message}
+Create a hotspot at your current position with a message.
+
+/delete hotspot {hotspot number from list}
+Delete a hotspot by its number in a list.
+
+/delete hotspots {player name}
+Players can only delete their own hotspots but admins can add a player name or id to delete the player's hotspots.
+
+/hotspots {player name}
+List your own hotspots. Admins can list another player's hotspots.
+
+/move hotspot {hotspot number from list}
+Move a hotspot to your current position.
+
+/resize hotspot {hotspot number from list} size {size}
+Change a hotspot's radius to a max of 10 (no max size for admins).
+eg. /resize hotspot 3 size 5. See /hotspots to get the list of hotspots.
+
+/hotspot {hotspot number from list} action {action from list: pm, tele, drop, spawn}
+NOTE: This command is not finished. Setting it won't do anything yet.
+Change a hotspot's action. The deafault is to just pm the player but it can also teleport them somewhere, spawn something or buff/debuff the player.
+eg. /hotspot {number of hotspot} action {pm/tele/drop/spawn} {location name/spawn list}
+If spawning items or entities use the format item name,quantity|item name,quantity|etc or entity id, entity id, entity id, etc
+
+Friend Commands:
+
+/player {player} friend {other player}
+eg. /player joe friend mary
+Admins can force a player to friend another player with this command. It only applies to the bot, not the game itself.
+
+/friend {player}
+Tell the bot that a player is your friend. The bot can also read your friend list directly from the game. If you only friend them using this command, they will not be friended on the server itself only in the bot.
+
+/clear friends {player} (only admins can specify a player)
+Clear your friends list. Note that this does not unfriend players that you friended via your game. You will need to unfriend those players there yourself.
+
+/unfriend {player}
+Unfriend a player.
+
+/friendme {player}
+Admins can force a player to be their friend with this command. It only applies to the bot, not the game itself.
+
+/friends {player} (only admins can specify a player)
+List your friends.
+
+/unfriendme {player}
+/unfriendme everyone
+Unfriend a player or everyone. This command is for admins only.
+
+Village Commands:
+
+/add member {player name} village {village}
+Add a player as a member of a village.
+
+/elect {player name} village {village}
+Elect a player as mayor of a village. Democratically of course :)
+
+/villages
+/villagers
+List villages or villagers.
+
+/remove village {village}
+Delete a village and everything associated with it.
+
+/remove member {player name} village {village}
+Remove a player from a village.
+
+/village {village} size {metres}
+Resize a village. Note that this removes village protection to prevent teleport loops.
+
+/add village {village name}
+Create a new village.
+
+/protect village {village name}
+Set village protection and follow the prompt from the bot, just like setting base protection.
+
+/unprotect village {village name}
+Remove protection on a village.
+
+Bot Commands:
+
+/clear whitelist
+Remove everyone from the bot's whitelist.
+
+/password {some password or phrase}
+If you have set a master password, some bot commands will issue a password challenge. Use this command to send the password to the bot.
+
+/quick reset bot
+Tell the bot to forget only some things, some player info, locations, bases etc. You will be asked to confirm this, answer with yes. Say anything else to abort.
+Use this command after wiping the server. The bot will detect the day change and will ask if you want to reset the bot too.
+
+/refresh code
+Make the bot re-download and install from the current code branch for script updates. Only necessary if someone has edited the code and needs to restore it.
+
+/rejoin irc
+Sometimes the bot can fall off IRC and fail to reconnect. This command forces it to reconnect.
+
+/reload bot
+Make the bot read several things from the server including admin list, ban list, gg, lkp and others. If you have Coppi's Mod installed it will also detect that.
+
+/reset bot
+/reset bot keep money
+Tell the bot to forget only some things, some player info, locations, bases etc. You will be asked to confirm this, answer with yes. Say anything else to abort.
+Use this command after wiping the server. The bot will detect the day change and will ask if you want to reset the bot too.
+
+/restart bot
+If your Mudlet (the bot's engine) is set up to automatically restart itself you can command the bot to restart. Also this feature must be enabled.
+
+/restore backup
+The bot saves its Lua tables daily at midnight (server time) and each time the server is shut down.
+If the bot gets messed up, you can try to fix it with this command. Other timestamped backups are made before the bot is reset but you will first need to strip the date part off them to restore with this command.
+
+/blacklist action ban (or exile or 'nothing')
+Set what happens to blacklisted players. The default is to ban them 10 years but if you create a location called exile, the bot can bannish them to there instead. It acts like a prison.
+To disable the blacklist, set action to the word nothing.
+NOTE: If blacklist action is nothing, proxies won't trigger a ban or exile response either.
+
+/set alert colour {hex code}
+Set the colour of server alert messages.
+
+/set chat colour {hex code}
+Set the colour of server messages. Player chat will be the default colour.
+
+/name bot {some cool name}
+The default name is Bot. Help give your bot a personality by giving it a name.
+
+/set bot restart {0+} (total bot days running)
+The bot can automatically restart itself after running for days. The restart helps fix issues and keeps the bot fresh.
+The default is 7 days between bot restarts. You can disable it by setting it to 0. Also it will only activate if bot restarts are enabled.
+
+/set warn colour {hex code}
+Set the colour of server warning messages.
+
+/set command prefix / (or no symbol or any symbol except \ )
+Change bot commands from using / to using nothing or another symbol.
+
+/set master password {secret password up to 50 characters}
+Protect important commands such as /reset bot with a password.
+This will prevent you or another server owner from accidentally doing something stupid (hopefully).
+To remove it use /clear master password.
+
+/set update branch
+Bot updates are released in code branches such as stable and testing. The stable branch will not update as often and should have less issues than testing.
+New and trial features will release to testing before stable. Important fixes will be ported to stable from testing whenever possible.
+You can switch between branches as often as you want. Any changes in testing that are not in stable will never break stable should you switch back to it.
+
+/shutdown bot
+While not essential as it seems to work just fine, you can tell the bot to save all pending player data, before you quit Mudlet.Note: This doesn't actually stop the bot. It only ensures that everything has been saved so you can manually shutdown Mudlet.
+
+/set bot chatty/quiet
+If you want to stop the bot responding to 'hi bot' and be more utilitarian, you can set the bot to be quiet.
+
+/enable/disable bot restart
+Using a launcher script or some other monitoring process you can have the bot automatically restart itself every time it terminates.
+Periodically restarting the bot helps to keep it running at its best.
+This feature is disabled by default. A restart script can be downloaded from http://botman.nz/shellscripts.zip
+You will need to inspect and modify some paths in the scripts to match your setup.
+
+/enable/disable updates (disabled by default)
+Allow the bot to automatically update itself by downloading scripts. It will check daily, but you can also command it to check immediately with /update bot
+
+/enable/disable level hack check
+Hackers can give themselves XP but normal play and/or game bugs can also cause large level changes.
+The level check could falsely report legit level changes as hacking so this is disabled by default.
+If you enable it and innocent players get banned, either unban them or turn it off again.
+
+/enable/disable hacker tp detection
+Some mods or managers don't report legit teleports to telnet which breaks the bot's hacker teleport detection.
+If the bot doesn't automatically disable/enable hacker tp detection, you can manually change it.
+
+/show/hide unknown command
+If the bot doesn't recognise a command it will respond with 'Unknown command'. You can hide that message if you want.
+
+/enable/disable lag check (enabled by default)
+Every 10 seconds while connected to the server, the bot sends a special lag check command to the server and times the response.
+If the bot detects more than 10 seconds delay, it will automatically suspend several bot functions to reduce the number of commands that it sends to the server.
+You can disable this check, but your bot won't pause for lag and the server could get significantly behind during busy times.
+
+/enable/disable bot command log (disabled by default)
+For debugging purposes, commands sent to the server by the bot can be logged just like player commands but to its own log file.
+This will include sensitive information such as passwords so don't enable this if anyone has access to it that you don't want reading it.
+Only server owners can enable this log.
+
+/enable/disable inventory log. (disabled by default)
+The bot logs inventory and inventory changes to the database all the time. You can also have inventory changes recorded to a daily text file along with the other daily logs.
+
+/use telnet (this is the default now but the API is planned to become the new default soon)
+/use api
+The bot communicates with the server using telnet. It can use Allocs web API instead.
+
+/update code
+Make the bot check for script updates. They will be installed if you have set /enable updates
+
+/no reset
+If the bot detects that the server days have rolled back, it will ask you if you want to reset the bot. Type /no reset if you don't want the bot to reset itself.
+
+/reset server
+Tell the bot to forget everything it knows about the server. You will be asked to confirm this, answer with yes. Say anything else to abort.
+Usually you only need to use /reset bot. This reset goes further.
+
+Fun Commands:
+
+/bounty {optional player name}
+/view bounty {optional player name}
+/view bounties
+See the player kills and current bounty on a players head or on all players currently on the server.
+
+/gimme gimme
+/gimme peace
+Make gimme messages appear in public chat with /gimme gimme or as private messages with /gimme peace (with some exceptions).
+
+/fix gimme
+Force the bot to rescan the list of zombies and animals.
+
+/reset gimmearena
+Cancel a gimmearena game in progress.
+
+/gimme raincheck {seconds}
+Set a time delay between gimmes. The default is 0 seconds.
+
+/gimme reset
+Reset gimme counters for everyone so they can play gimme again. The bot does this every 120 minutes automatically.
+
+/gimme on/off
+Enable/disable the gimme game.
+
+/gimme zombies
+/gimme no zombies
+Enable or disable zombies as gimme prizes.
+
+/gimme reset time {number} (In minutes. Default is 120)
+Reset everyone's gimme counter after (n) minutes.
+
+/beer
+While in any location with beer in its name, players can grab a beer (or a lot).
+
+/suicide
+Don't do it! :O
+
+/place bounty {player name} {cash}
+Place a bounty on a player's head. The money is removed from your cash.
+
+/gimme
+Play one gimme - win a prize!
+Gimme cannot be played within a location unless it is pvp enabled.
+Gimme cannot be played inside a player base.
+Prize may contain nuts. If a rash develops, see your doctor. Keep away from small children. The bag is not a hat.
+
+/quit
+/ragequit
+Get kicked out of the server with a random message.
+
+/quit {message}
+Get kicked out of the server and have the bot say your message in game chat.
+
+/gimmezombies or /gimmehell or /gimmeinsane or /gimmedeath
+Play a special gimme game in a location called arena. You and anyone with you will get 4 waves of zombies to fight.
+Select one of 4 games of increasing difficulty (more zombies, faster spawns, harder zombies).
+Admins or arena players can cancel the game with /reset gimmearena
+Zombies are randomly distributed between arena players. Any players more than 5 blocks above the arena floor (or under it) are specators and don't get zombies.
+Some useless crap is supplied at the start.
+
+/doge mode or /doge on/off
+But what does it do!? Play and find out xD
+
+Admin Commands:
+
+/admin add {player or steam or game ID} level {0-2}
+/admin remove {player or steam or game ID}
+Give a player admin status and a level, or take it away.
+Server owners are level 0, admins are level 1 and moderators level 2. The bot does not currently recognise other admin levels.
+Or remove an admin so they become a regular player.
+This does not stop them using god mode etc if they are ingame and already have dm enabled. They must leave the server or disable dm themselves.
+
+/add/remove bad item {item} action {timeout or ban} (default action is timeout)
+Add or remove an item to/from the list of bad items. The default action is to timeout the player.
+See also /ignore player {name} and /include player {name}
+
+/add/remove blacklist country {US}
+Add or remove a country to/from the blacklist. Note: Use 2 letter country codes only.
+
+/add donor {player name} level {0 to 7} expires {number} week or month or year
+/remove donor {player name}
+Give a player donor status. This doesn't have to involve money. Donors get a few perks above other players but no items or Zennies.
+Level and expiry are optional. The default is level 1 and expiry 10 years.
+You can also temporarily raise everyone to donor level with /override access.
+
+/add restricted item {item name} qty {count} action {action} access {level}
+/remove restricted item {item name}
+Add an item to the list of restricted items.
+Valid actions are timeout, ban, exile and watch
+eg. /add restricted item tnt qty 5 action timeout access 90
+Players with access > 90 will be sent to timeout for more than 5 tnt.
+
+/add whitelist country {US}
+/remove whitelist country {US}
+Add or remove a country to/from the whitelist. Note: Use 2 letter country codes.
+
+/archive players
+Archive players that haven't played in 60 days, aren't staff, banned, or a donor.
+This should speed the bot up on servers that have seen thousands of players over time as the bot won't need to search so many player records.
+Archived players are still accessible and searchable but are removed from the main players table. If a player comes back they are automatically restored from the archive.
+
+/arrest {player name}
+/arrest {player name} reason {why arrested}
+Send a player to prison. If the location prison does not exist they are temp-banned instead.
+
+/ban {player name} (ban for 10 years with the reason 'banned')
+/ban {player name} reason {reason for ban} (ban for 10 years with the reason you provided)
+/ban {player name} time {number} hour or day or month or year reason {reason for ban}
+/unban {player name} (This will also remove global bans issued by this bot against this player. It will not remove global bans issued elsewhere.
+/gblban {player name} reason {reason for ban}
+Ban a player from the server. You can optionally give a reason and a duration. The default is a 10 year ban with the reason 'banned'.
+Global bans are vetted before they become active. If the player is later caught hacking by a bot and they have pending global bans, a new active global ban is added automatically.
+
+/block/unblock {name}
+Block/Unblock a player from using any bot commands or command the bot from IRC.
+
+/burn {player name}
+Set a player on fire. It usually kills them.
+
+/clear country blacklist
+Remove all countries from the blacklist. (yay?)
+
+/clear country whitelist
+Remove all countries from the whitelist.
+
+/cool {player name}
+Cool a player or yourself if no name given.
+
+/cure {player name}
+Cure a player or yourself if no name given.
+
+/equip admin
+Spawn various items on you. The bot checks your inventory and will top you up instead of doubling up if you repeat this command later.
+
+/exile {player name}
+Bannish a player to a special location called /exile which must exist first. While exiled, the player will not be able to command the bot.
+
+/free {player name}
+Release the player from exile, however it does not return them. They can type /return or you can return them.
+
+/give claim/key/lcb
+The bot can despawn player placed claims in reset zones. This command is for them to request them back from the bot.
+It will only return the number that it took away. If it isn't holding any, it won't give any back.
+
+/give everyone {item} {amount} {quality}
+Give everyone that is playing on the server right now an amount of an item. The default is to give 1 item.
+If quality is not given, it will have a random quality for each player.
+Anyone not currently playing will not receive the item.
+
+/give player {joe} item {item} {amount} {quality}
+/give player {joe} item {item} {amount} {quality} message {say something here}
+Give a specific player amount of an item. The default is to give 1 item.
+The player does not need to be on the server. They will receive the item and optional message when they next join.
+You can give more items but only 1 item type per command. Items are given in the same order so you could include a message with the first item and they will read that first.
+
+/supplies
+Spawn various items on you like equip admin does but no armour or guns. The bot checks your inventory and will top you up instead of doubling up if you repeat this command later.
+
+/goto {player or steam or game ID}
+Teleport to the current position of a player. This works with offline players too.
+
+/heal {player name}
+Apply big firstaid buff to a player or yourself if no name given.
+
+/hordme
+Spawn a horde of 50 random zombies on yourself. Only admins can do this (but not mods)
+
+/kick {Player name|Steam ID|Game ID} reason {optional reason}
+Is Joe annoying you? Kick his ass right out of the server! >:D
+
+/leave claims {player name}
+Stop the bot automatically removing a player's claims. They will still be removed if they are in a location that doesn't allow player claims.
+
+/bad items
+List the items that are not allowed in player inventories and what action is taken.
+
+/bases/homes
+/bases/homes range {number}
+/bases/homes near {player name} range {number}
+See what player bases are nearby. You can use it on yourself or on a player. Range and player are optional. The default range is 200 metres.
+
+/list blacklist
+List the countries that are not allowed to play on the server.
+
+/claims {range} (range is optional and defaults to 50)
+List all of the claims within range with who owns them
+
+/offline players nearby
+/offline players nearby range {number}
+List all offline players near your position. The default range is 200 metres.
+
+/prisoners
+List all the players who are prisoners.
+
+/list staff/admins
+Lists the server staff and shows who if any are playing.
+
+/restricted items
+List the items that new players are not allowed to have in inventory and what action is taken.
+
+/list whitelist
+List the countries that are allowed to play on the server.
+
+/load botman ini
+Make the bot reload the botman.ini file. It only reloads when told to.
+
+/mend {player name}
+Remove the brokenLeg buff from a player or yourself if no name given.
+
+/move {player name} to {location}
+Teleport a player to a location. To teleport them to another player use the send command. If the player is offline, they will be moved to the location when they next join.
+
+/near {player name} {optional number (distance away from player)}
+Teleport below and a short distance away from a player. You must be flying for this or you will just fall all the time.
+You arrive 20 metres below the player and 30 metres to the south. If you give a number after the player name you will be that number metres south of them.
+The bot will keep you near the player, teleporting you close to them if they get away from you.
+To stop following them type /stop or use any teleport command or relog.
+
+/player {player name} is not new
+Upgrade a new player to a regular without making them wait for the bot to upgrade them. They will no longer be as restricted as a new player.
+
+/poop {player name}
+Make a player shit potatoes everywhere coz potatoes.
+
+/read claims
+Make the bot run llp so it knows where all the claims are and who owns them.
+
+/release {player name}
+/just release {player name}
+Release a player from prison. They are teleported back to where they were arrested.
+Alternatively just release them so they do not teleport and have to walk back or use bot commands.
+See also /release here (admin only)
+
+/release here {prisoner}
+Release a player from prison and move them to your location.
+
+/reload admins
+Make the bot run admin list to reload the admins from the server's list.
+
+/remove claims {player name}
+The bot will automatically remove the player's claims whenever possible. The chunk has to be loaded and the bot takes several minutes to remove them but it will remove them.
+
+/reset player {player name}
+Make the bot forget a player's cash, waypoints, bases etc but leave their donor status alone.
+
+/resettimers {player name}
+Normally a player needs to wait a set time after /base before they can use it again. This zeroes that timer and also resets their gimmies.
+
+/reset stack
+If you have changed stack sizes and the bot is mistakenly abusing players for overstacking, you can make the bot forget the stack sizes.
+It will re-learn them from the server as players overstack beyond the new stack limits.
+
+/restore admin
+Use this command if you have used /test as player, and you want to get your admin status back now.
+
+/return {player name}
+/return {player name} to {location or other player}
+Return a player from timeout. You can use their steam or game id and part or all of their name.
+You can return them to any player even offline ones or to any location. If you just return them, they will return to wherever they were when they were sent to timeout.
+Your regular players can also return new players from timeout but only if a player sent them there.
+
+/sendhome {player name}
+/sendhome2 {player name}
+Teleport a player to their first or second base.
+
+/send {player} to {other player}
+Teleport a player to another player even if the other player is offline.
+
+/set drop mining warning {number of blocks} (default is 99)
+Set how many blocks can fall off the world every minute before the bot alerts admins to it.
+Disable by setting it to 0
+
+/set command cooldown {seconds} (default 0)
+You can add a delay between player commands to the bot. Does not apply to staff. This helps to slow down command abuse.
+
+/set feral horde night {day number} (default is 7)
+Set which day is horde night. This is needed if your horde nights are not every 7 days.
+
+/feral reboot delay {minutes}
+Set how many minutes after day 7 that the bot will wait before rebooting if a reboot is scheduled for day 7.
+To disable this feature, set it to 0. The bot will wait a full game day instead.
+
+/max tracking days {days}
+Set how many days to keep tracking data before deleting it. The default it 28.
+
+/set return cooldown {seconds} (default 0)
+You can add a delay to the return command. Does not affect staff.
+
+/prisoner {player name} arrested {reason for arrest}
+/prisoner {player name} (read the reason if one is recorded)
+You can record or view the reason for a player being arrested. If they are released, this record is destroyed.
+
+/set watch timer {number in seconds}
+When a new player joins, in-game admins will be messaged when the player adds or removes inventory. They will automatically stop being watched after a delay. The default is 3 days.
+You can also set a different watch duration for an individual player.
+1 hour = 3,600 1 day = 86,400 1 week = 604,800 4 weeks = 2,419,200
+This timer is in real time not game time or time played.
+
+/shit {player name}
+Give a player the shits for shits and giggles.
+
+/test as player {optional number in seconds}
+Remove your admin status for 5 minutes. After 5 minutes your admin status will be restored and any bans against you removed.
+If you provide a number, your admin will instead be restored after that many seconds incase you need longer or shorter than the default 5 minutes.
+
+/timeout {player name}
+Send a player to timeout. You can use their steam or game id and part or all of their name. If you send the wrong player to timeout /return {player name} to fix that.
+While in timeout, the player will not be able to use any bot commands but they can chat.
+
+/enable/disable level hack alert
+By default the bot will inform admins when a player's level increases massively in a very short time. You can disable the message.
+
+/enable/disable airdrop alert
+By default the bot will inform players when an airdrop occurs near them. You can disable the message.
+
+/enable/disable bounty
+Normally a small bounty is awarded for a player's first pvp kill in pvp rules. You can disable the automatic bounty.
+Players will still be able to manually place bounties, but those come out of their Zennies.
+
+/enable/disable claim scan
+Every 45 seconds the bot reads the claims of all ingame players. This can be a lot of data and could impact server performance.
+If the bot is reporting server lag frequently, you can disable the timed claim scan.
+It will still scan when a player leaves the server and can be commanded to do a scan.
+
+/ignore/punish friendly pvp
+By default if a player PVPs where the rules don't permit it, they can get jailed.
+You can tell the bot to ignore friendly kills. Players must have friended the victim before the PVP occurs.
+
+/block/unblock player {player name}
+Prevent a player from using IRC. Other stuff may be blocked in the future.
+
+/freeze/unfreeze {player name}
+Bind a player to their current position. They get teleported back if they move.
+
+/include/exclude admins
+Normally the bot ignores admins when checking inventory and other stuff. If admins are included, all of the rules that apply to players will also apply to admins.
+This is useful for testing the bot. You can also use /test as player (for 5 minutes)
+This setting is not stored and will revert to excluding admins the next time the bot runs.
+
+/ignore/include player {player name}
+An ignored player can have uncraftable inventory and do hacker like activity such as teleporting and flying.
+An included player is checked for these things and can be punished or temp banned for them.
+
+/enable/disable pack/revive
+Players can teleport close to where they last died to retrieve their pack.
+You can disable the pack and revive commands. They are enabled by default.
+
+/remove/leave expired claims
+By default the bot will not remove expired claims. It will always ignore admin claims.
+
+/reserve/unreserve slot {player name}
+Give a player the right to take a reserved slot when the server is full.
+Reserved slots are auto assigned for donors and staff.
+
+/enable/disable screamer alert
+By default the bot will warn players when screamers are approaching. You can disable that warning.
+
+/allow/disallow teleport {player name}
+Allow or prevent a player from using any teleports. When disabled, they won't be able to teleport themselves, but they can still be teleported. Also physical teleports won't work for them.
+
+/watch {player name}
+/watch new players
+/stop watching {player name}
+/stop watching everyone
+Flag a player or all current new players for extra attention and logging. New players are watched by default.
+
+/enable/disable waypoints
+Donors will be able to create, use and share waypoints. To enable them for other players, set waypoints public.
+
+/crimescene {prisoner}
+Teleport to the coords where a player was when they got arrested.
+
+/playerbase/playerhome {player name}
+/playerbase2/playerhome2 {player name}
+Teleport yourself to the first or second base of a player.
+
+/warm {player name}
+Warm a player or yourself if no name given.
+
+/whitelist add/remove {player name}
+Add (or remove) a player to the bot's whitelist. This is not the server's whitelist and it works differently.
+It exempts the player from bot restrictions such as ping kicks and the country blacklist.
+
+/whitelist everyone/all
+You can add everyone except blacklisted players to the bot's whitelist.
+
+Reset Commands:
+
+/clear reset zones
+The bot will forget all the reset zones so you can start over marking new ones.
+
+/reset zones
+List all of the regions that are reset zones.
+
+/add/remove reset zone
+Flag or unflag an entire region as a reset zone.
+
+Tracker Commands:
+
+/track {player name} session {number} range {distance}
+/next (track the next session)
+/last (track the previous session)
+Track the movements of a player. If a session is given, you will track their movements from that session.
+If you add the word hax, hacking or cheat the bot will only send you to coordinates that were flagged as flying or clipping.
+
+/skip {number of steps}
+Skip {number} of steps. Instead of tracking each recorded step, you will skip {number} steps for faster but less precise tracking.
+
+/speed {number}
+The default pause between each tracked step is 3 seconds. Change it to any number of seconds from 1 to whatever.
+
+/jump {number of steps}
+Jump forward {number} steps or backwards if given a negative number.
+
+/goto start
+Move to the start of the current track.
+
+/goto end
+Move to the end of the current track.
+
+/go back
+Remove the current base and protection that the tracker has teleported you to. Used with /check base.
+
+/stop
+Stop tracking. Resume it with /go
+
+/go
+Resume tracking.
+
+/stop tracking
+Stops tracking and clears the tracking data from memory. This happens when you exit the server anyway so you don't have to do this.
+
+/check bases
+Load base coordinates into the tracker so you can tp directly to each base in sequence. Used for visiting every single base ingame.
+
+/nb
+Visit the next base in the tracker.
+
+/pb
+Visit the previous base in the tracker.
+
+/killbase
+Remove the current base and protection that the tracker has teleported you to. Used with /check base.
+
+Server Commands:
+
+/say{2 letter language code} {something you want translated}
+If the translator utility is installed, the bot can translate from english what you say into the language you specify.
+eg. /sayfr Hello. The bot will say Smegz0r: Bonjour
+Note: This uses Google and due to the number of bots I host, it is not installed on my servers as I don't want to risk an invoice from them.
+
+/cancel reboot
+Cancel a scheduled reboot. You may not be able to stop a forced or automatically scheduled reboot but you can pause it instead.
+
+/join server {ip} port {telnet port} pass {telnet password}
+Tell the bot to join a different game server.
+
+/pause reboot
+Pause a scheduled reboot. It will stay paused until you unpause it or restart the bot.
+
+/run command {a console command}
+Sometimes you need to make the bot run a specific console command.
+This can be used to force the bot re-parse a list. Only server owners can do this.
+
+/reboot
+/reboot {n} minute (or hour) (optional: forced)
+/reboot now
+Schedule a timed or immediate server reboot. The actual restart must be handled externally by something else.
+Just before the reboot happens, the bot issues a save command. If you add forced, only a level 0 admin can stop the reboot.
+Shutting down the bot will also cancel a reboot but any automatic (timed) reboots will reschedule if the server wasn't also restarted.
+
+/override access {number from 99 to 4}
+All players have an access level which governs what they can do. You can override it for everyone to temporarily raise their access.
+eg. /overide access 10 would make all players donors until you restore it. To do that type /override access 99. This is faster than giving individual players donor access if you just want to do a free donor weekend.
+
+/set archive players day {number (days) default is 60}
+The bot will archive players who haven't played in 60 days except for admins. You can disable this feature by setting it to 0.
+The bot will archive players at startup or if you use the command /archive players.
+
+/set bail {number}
+Set how many Zennies it costs to bail out of prison. To disable bail set it to zero (the default)
+
+/motd (to view it)
+/motd (or /set motd) {your message here} (to set it)
+/motd clear (to disable it)
+Display the current message of the day. If an admin types anything after /motd the typed text becomes the new MOTD.
+To remove it type /motd clear
+
+/set irc main (or alerts or watch) {channel name without a # sign}
+Change the bot's IRC channels.
+
+/set irc nick {bot name}
+Change the bot's IRC nickname. Sometimes it can have a nick collision with itself and it gets an underscore appended to it.
+
+/set irc server {IP or URL and optional port}
+Use this command if you want players to know your IRC server's address.
+
+/set map size {number}
+Set the maximum distance from 0,0 that players are allowed to travel. Any players already outside this limit will be teleported to 0,0 and may get stuck under the map. They can relog.
+Size is in metres (blocks) and be careful not to set it too small. The default map size is 10000 but the bot's default is 20000.
+Whatever size you set, donors will be able to travel 5km futher out so the true boundary is +5000.
+
+/set max animals {number}
+Change the server's max spawned animals.
+
+/set (or clear) max ping {number}
+To kick high ping players set a max ping. It will only be applied to new players. You can also whitelist a new player to make them exempt.
+The bot doesn't immediately kick for high ping, it samples ping over 30 seconds and will only kick for a sustained high ping.
+
+/set max players {number}
+Change the server's max players. Admins can always join using the automated reserved slots feature.
+
+/set max uptime {number}
+/max uptime (to see it)
+Set how long (in hours) that the server can be running before the bot schedules a reboot. The bot will always add 15 minutes as the reboot is only scheduled at that time.
+
+/set max zombies {number}
+Change the server's max spawned zombies.
+
+/set new player max level {number} (game level)
+By default a new player is automatically upgraded to a regular player once they pass level 9.
+Use this command to change it to a different player level.
+
+/set new player timer {number} (in minutes)
+/new player timer (to see it)
+By default a new player is treated differently from regulars and has some restrictions placed on them mainly concerning inventory.
+Set it to 0 to disable this feature.
+
+/set overstack {number} (default 1000)
+Sets the maximum stack size before the bot will warn a player about overstacking. Usually the bot learns this directly from the server as stack sizes are exceeded.
+
+/set ping kick target {new or all}
+By default if a ping kick is set it only applies to new players. Set to all to have it applied to everyone.
+Note: Does not apply to exempt players which includes admins, donors and individuals that have been bot whitelisted.
+
+/set prison timer {number} (in minutes)
+Set how long someone stays in prison when jailed by the bot. To not have a time limit, set this to 0 which is the default.
+
+/set pvp cooldown {seconds}
+Set how long after a pvp kill before the player can use teleport commands again.
+
+/set reserved slots {number of slots}
+You can have a number of server slots reserved for admins and selected players.
+Anyone can join but if the server becomes full, players who aren't staff or allowed to reserve a slot will be randomly selected and kicked if an admin or authorised player joins.
+To disable, set reserved slots to 0.
+
+/set rolling delay {minutes}
+Set the delay in minutes between rolling announcements.
+
+/set rules {new rules}
+Set the server rules. You can use supported bbcode tags, but only when setting the rules from IRC. Each tag must be closed with this tag [-] or colours will bleed into the next line.
+To display the rules type /rules
+
+/set server api {api key from 7daystodie-servers.com}
+Your API key is not recorded in logs or the databases and no bot command reports it. It is used to determine if a player has voted for your server today.
+While the bot takes precautions to keep your API key a secret, you should be careful not to type it anywhere in public. The safest place to give it to the bot is in private chat on IRC or on the bot's web interface when that is available.
+
+/set server group {group name} (one word)
+This is used by the bots database which could be a cloud database. It is used to identify this bot as belonging to a group if you have more than one server. You do not need to set this.
+
+/set server ip {IP of your 7 Days to Die server}
+The bot is unable to read the IP from its own profile for the server so enter it here. It will display in the /info command and be used if a few other places.
+
+/set reboot hour {0 to 23}
+Reboot the server when the server time matches the hour (24 hour time). To disable clock based reboots set this to -1 or don't enter a number.
+
+/set reboot minute {0 to 59}
+Reboot the server when the server time matches the hour and minute (24 hour time). To disable clock based reboots use /set reboot hour (without a number)
+
+/set server pve (or pvp, creative or contest)
+Set the entire server to be PVE, PVP, Creative or Contest.
+Contest mode is not implemented yet and all setting it creative does is stop the bot pestering players about their inventory.
+
+/setup map
+Optional extras after setup map: no hostiles, no animals, show players, show claims, show inventory
+eg. /setup map no hostiles no animals show players show claims show inventory
+The bot can fix your server map's permissions with some nice settings. If you use this command, the following permissions are set:
+web.map 2000
+webapi.getlandclaims 1000
+webapi.viewallplayers 2
+webapi.viewallclaims 2
+webapi.getplayerinventory 2
+webapi.getplayerslocation 2
+webapi.getplayersOnline 2000
+webapi.getstats 2000
+webapi.gethostilelocation 2000
+webapi.getanimalslocation 2000
+If setting no hostiles and/or no animals:
+webapi.gethostilelocation 2
+webapi.getanimalslocation 2
+If setting show players, show claims, show inventory:
+webapi.viewallplayers 2000
+webapi.viewallclaims 2000
+webapi.getplayerinventory 2000
+
+/set web panel port {port of server's control panel/web panel}
+or /set api port {number}
+The bot needs to be told the port for Alloc's web map. If you give it the wrong port and API support is enabled or you enable that later, the bot will try that port and the ports +/- 2 above and below it.
+
+/set website {your website or steam group}
+Tell the bot the URL of your website or steam group so your players can ask for it.
+
+/set welcome message {your message here}
+/clear welcome message
+You can set a custom welcome message that will override the default greeting message when a player joins.
+
+/allow/disallow/kick bad names
+Auto-kick players with numeric names or names that contain no letters such as ascii art crap.
+They will see a kick message asking them to change their name.
+
+/enable/disable vac (disable is the default)
+If a player has any VAC bans you can auto-ban them or allow them in.
+Each time they join, admins will be alerted to their VAC ban. To stop that, add the them to the bot's whitelist.
+
+/set cbsm friendly (the default)
+/set cbsm unfriendly (or anything other than the word friendly such as die die die)
+If set to friendly, the bot will automatically switch from / commands to using the ! since CBSM uses the /
+Set to anything else and the bot will use / commands whether CBSM is present or not.
+
+/remove zombies before bloodmoon
+/leave zombies before bloodmoon
+If you have Stompy's BC mod, the bot can despawn all zombies server wide a few minutes before bloodmoon starts. It may trigger more than once.
+
+/enable/disable entity scan (disabled by default)
+Scan for entities server wide every 30 seconds.
+The resulting list is copied to the entities Lua table where it can be further processed for other bot features.
+
+/enable/disable error scan (disabled by default)
+The server can automatically scan for and fix some errors using console commands if you have Coppi's mod or djkrose's scripting mod installed.
+You can disable the scan if you suspect it is creating lag.
+
+/enable/disable hardcore mode
+Allow players to use bot commands. This is the default.
+Players can still talk to the bot and use info commands such as /rules.
+
+/enable/disable idle kick (disabled is default)
+When the server is full, if idle kick is on players will get kick warnings for 15 minutes of no movement then they get kicked.
+
+/allow/disallow flying
+Toggle the bot's player flying detection. You would want to do this if players can use debug mode on your server.
+
+/set irc private/public
+If IRC is private, the bot won't share the url or info with players and players can't invite anyone to irc using the invite command.
+When public, players can find the IRC info with /help irc and they can create irc invites for themselves and others.
+
+/enable/disable noclip scan (the default)
+Using Coppi's mod version 2.5+ you can detect players that are noclipping under the map.
+It can false flag but it is still a useful early warning of a possible hacker. The bot will ban a player found clipping a lot for one week.
+
+/allow/disallow overstack or /enable/disable overstack
+By default the bot reads overstack warnings coming from the server to learn what the stack limits are and it will pester players with excessive stack sizes and can send them to timeout for non-compliance.
+
+/northeast pve/pvp
+/northeast pve/pvp
+/northwest pve/pvp
+/southeast pve/pvp
+/southwest pve/pvp
+/north pve/pvp
+/south pve/pvp
+/east pve/pvp
+/west pve/pvp
+Make northeast/northwest/southeast/southwest/north/south/east/west of 0,0 PVE or PVP.
+
+/allow/disallow rapid relog
+New players who want to cheat often relog rapidly in order to spawn lots of items into the server using cheats or bugs.
+If enabled, the bot will temp ban (10 minutes) players caught relogging several times in short order.
+
+/enable/disable region pm
+A PM for admins that tells them the region name when they move to a new region.
+
+/enable (or disable) reboot
+By default the bot does not manage server reboots.
+See also /set max uptime (default 12 hours)
+
+/disable/enable watch alerts
+Enable or disable ingame private messages about watched player inventory and base raiding. Alerts will still go to IRC.
+
+/resume/unpause reboot
+Resume a paused reboot.
+
+Coppi's Commands:
+
+/trader protect/unprotect/remove {named area}
+After marking out a named area with the /mark command, you can add or remove trader protection on it.
+The protected area will only cover the area marked out, not all the way to bedrock.
+
+/mute/unmute {player name}
+Muting a player blocks their ingame chat from being seen by other players. You will still see it from the web client.
+It does not block voice chat sadly.
+
+/spawn horde {optional player or location name} {number of zombies}
+Spawn a horde around a player or location or at a marked coordinate. See /set horde.
+
+/show/hide commands
+Hide commands from ingame chat which makes them all PM's or show them which makes them public. They will still appear in the web client.
+
+/set new player/player/donor/prisoner/mod/admin/owner chat colour FFFFFF
+/reset chat colour
+Set the default chat colour for a class of player. You can also set chat colour for a named player.
+eg. /set player joe chat colour B0E0E6
+To disable automatic chat colouring, set it to white which is FFFFFF
+To reset everyone to white type /reset chat colour everyone
+
+/make maze (default maze 20 x 20)
+/make maze wall {block name} fill {air block} width {number} length {number} height {number} x {x coord} y {y coord} z {z coord}
+The bot also accepts wide, long, and tall instead of width, length, and height.
+Generate and build a random maze. Someone must stay there until the maze completes or it will fail to spawn fully.
+Default values: wall steelBlock fill air width 20 length 20 height 3. It uses your current position for x, y and z if not given.
+
+/stop/cancel maze
+Aborts any maze(s) that you have told the bot to create.
+
+/set/clear horde
+Marks your current position to spawn a horde there with /spawn horde.
+Clear horde doesn't remove the horde. It only clears the saved coordinate.
+
+/undo
+/undo save (restores saved chunks)
+The block commands prender, pdup and pblock allow for the last command to be undone, however since more than one person can command the bot to do block commands
+it is possible that other block commands have been done by the bot since your last block command. If the last block command came from you, the bot will undo it.
+Undo save will restore the saved area even if Coppi's undo can't be used due to another prefab or block command being used. Note: Even this has limits.
+
+/list saves {optional player name}
+List all your saved prefabs or those of someone else. This list is coordinate pairs of places in the world that you have marked for some block command.
+You can use a named save with the block commands.
+
+/save {name}
+After marking out the area you want to copy, you can save it.
+
+/load prefab {name}
+/load prefab {name} at {x} {y} {z} face {0-3}
+/load prefab {name} here
+Everything after the prefab name is optional and if not given, the stored coords and rotation will be used.
+Restore a saved prefab in place or place it somewhere else.
+If you provide coords and an optional rotation (default is 0 - north), you will make a new copy of the prefab at those coords.
+If you instead add here, it will load on your current position with optional rotation.
+If you instead add here, it will load on your current position with optional rotation.
+If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy.
+For perfect placement, stand at the south west corner before using this command.
+
+/list (or /li) {partial name of an item or block}
+List all items containing the text you are searching for.
+
+/move block {name of saved prefab} here
+/move block {name of saved prefab} {x} {y} {z}
+/move block {name of saved prefab} up (or down) {number}
+Fills a saved block with air then renders it at the new position and updates the block's coordinates.
+
+/erase {optional number} (default 5)
+/erase block {block name} replace {with other block name} {optional number}
+eg. /erase block stone replace air 20
+Replace an area around you with air blocks. Add a number to change the size.
+
+/dig (or fill) {optional number} (default 5)
+Dig a hole or fill a hole.
+This can also be used to make tunnels and walls.
+When not digging or filling up or down, a compass direction is needed (north, south, east, west)
+There are several optional parts, wide, block, tall, base and long.
+Default block is air, base is at your feet and the others default to 5.
+Examples:
+/dig north wide 3 tall 3 long 100
+/dig bedrock wide 1
+/dig up (makes a 5x5 room)
+/dig up (or room) wide 5 tall 10 (makes a 10x10 room)
+/fill east base 70 wide 2 tall 10 long 50 block steelBlock
+/fill bedrock wide 2 block stone
+/fill {saved prefab} block stone
+
+You can repeat the last command with /again and change direction with /again west
+
+/fix bedrock {distance}
+You can replace the bedrock layer below you up to {distance} away from your position.
+You only need to be over the area to be fixed. No other layers are touched.
+
+DJKRose Commands:
+
+/export {named area}
+This command requires that you have previously marked out an area to be exported using the /mark command.
+Everything within the marked area will be saved as a prefab file including he contents of all containers and ownership.
+
+/import {named area}
+Optional extras: replace, empty, face {0-3}
+This command requires that you have previously marked out an area to be exported using the /mark command.
+You can rotate the prefab with face. 0 = unmodified 1 = 90Â° right 2 = 180Â° right 3 = 270Â° right.
+Add 'replace' if you want to replace the original prefab or it will spawn at your current position and elevation.
+Add 'empty' if you don't want to restore the contents of containers. Note: Currently this only works if the container has been destroyed.
+
+/regen {optional distance} (max 30)
+Regenerate the chunk you are standing in and surrounding chunks if you specify a distance.
+Note: The console command used, dj-regen calculates the chunks so if it doesn't regenerate a small part, just move to the effected area and repeat the command.
+
+
+
+
+Bot Commands on IRC:
+help (display this list)
+help manual (New to the bot and IRC? Read this.)
+help setup (Stuff to do when the bot is new.)
+help irc (View a different list of IRC command help including ingame commands that refer to IRC.)
+fps (display current server performance metrics)
+say {something} to talk to players ingame
+staff (see who your admins are. You can also type owners, admins, or mods to just see a partial list)
+server (server ip and port and number of players)
+stop (stop the bot spamming you. If the command you ran has a lot of output, this stops it)
+uptime (server and bot running times)
+who (list in-game players)
+
+Misc Commands:
+
+day, date or time (show the game date and time)
+locations
+new players (list new players in the last 2 days)
+server status (some daily stats)
+shop categories (list categories)
+shop {category} (list items in a category)
+shop {item} (list all items that partially match what you type)
+villages (list)
+
+If your login is not working properly try typing rescue me, hit return then login again.
+
+help topics (display help topics only)
+help commands (for ingame commands that you can also do in irc)
+
+invite {player name} (Send the player a code and instructions to join irc and give themselves a password)
+add player {playername} login {password} (create a password for an irc player to authenticate on irc).
+bases (list all bases and their regions)
+check dns player {player name} ip {ip} (tell bot to do a dns check on a player)
+claims (list all players more than 1 placed claim and their total)
+claims {player name} (list each placed claim for a player with coords)
+date, time, day (display the current game date and time)
+donors (list donors known to the bot)
+friends {player name}
+info {player name} (lots of quick info about a player)
+inv {player name} (current inventory of player)
+mute irc {player name} (prevent someone from using say and most other irc bot commands)
+unmute irc {player name} (prevent someone from using say and most other irc bot commands)
+list bad items
+locations (list)
+new players
+pay {player name} {amount} (gift Zennies to a player or admin)
+permaban {playername}
+player {player name} friend {player to be friended}
+player {player name} unfriend {player to be unfriended}
+player {player name} (info on a specific player)
+players (master list of all players)
+prisoners (list)
+remove permaban {playername}
+resetzones (list)
+server stats
+status {player name}
+stealth translate {player name} (ingame chat from the player will not be translated to irc only)
+stop translating {player name} (ingame chat from the player will not be translated)
+stop watching {player name}
+teleports (list)
+translate {player name} (ingame chat from the player will be translated ingame)
+view alerts (lists the last 20) add a number for more
+villagers (list villages and villagers)
+watch player {player name}
+who (list in-game players)
+uptime
+
+type say {something} to talk to players ingame
+type pm {playername or id} PM a player ingame
+type con {server command} (send a command to the server in console
+
+help {keyword} (adding a new help system. As it grows, more keywords will be known to it.)
+list help {optional section} (eg. admin, server). Short help, just a list.
+command help {optional section} (eg. admin, server). Longer help with info.
+Commands are divided into sections eg. admin, server, locations etc.
+
+The following commands are not sorted.  That will happen later.
+
+Command: reload code
+Make the bot reload its code. It also performs some maintenance tasks on the bot's data.
+
+Command: update code
+Make the bot check for code updates and apply them.
+
+Command: server
+View basic info about the server and installed mods.
+
+Command: search blacklist {IP}
+See if an IP is in the blacklist or not.
+
+Command: shop, or help shop
+View the IRC help for the shop management.
+
+Command: empty category {category name}
+Delete everything from a category so you can start fresh.
+
+Command: shop {category name}
+List the items in the specified shop category.
+
+Command: shop categories
+List the shop categories.
+
+Command: shop {item name}
+View an item in the shop.
+
+Command: villages
+List the villages and who the mayor is.
+
+Command: fps
+View the last recorded mem output. (mem is updated every 40 seconds while players are online)
+
+Command: help custom commands
+View the help for custom commands.
+
+Command: date, or time, or day
+View the game day and time (not server time)
+
+Command: uptime
+See how long the bot and server have been running.
+
+Command: location categories
+List any defined location categories.
+
+Command: location {name of location}
+View info about a specified location
+
+Command: server stats
+View basic stats about the server from the last 24 hours.
+
+Command: who played today
+List who played on the server in the last 24 hours in order of appearance.
+
+Command: help topics
+View IRC command help topics.
+
+Command: locations
+List the locations.
+
+Command: staff
+List the staff including owners, admins and mods.
+
+Command: owners
+List the owners only.
+
+Command: admins
+List the admins only.
+
+Command: mods
+List the mods only.
+
+Command: restore admin
+Restore your admin status early if you used /test as player and the timer hasn't expired yet.
+
+Command: logout
+Log out of the bot on IRC (does not disconnect you from the IRC server).
+
+Command: hi bot
+Get the bot to respond to you. It will create a private chat channel as well as respond to you in the current channel.
+
+Command: who
+List everyone playing on the server right now. The info varies depending on if you are staff or player, logged in to the bot or not.
+
+Command: login {name} pass {password}
+Log in to the bot. Do NOT do this in any public channels (they start with a #). Do this only in the bot's private chat channel. If the bot sees this in a public channel it will destroy your login. If that happens, use the invite command to invite your
+
+Command: rescue me
+This command fixes a weird and long standing bug where the bot can get mixed up between you on IRC and a random player. It doesn't give them admin commands but it does cause you to not be able to use them on IRC and the say command uses the other player
+
+Command: bow before me
+Login to the bot without a password. Only works if you have previously been authenticated.
+
+Command: bow
+Same as bow before me but less typing. You also get a silly response.
+
+Command: help manual
+Read the help manual. Its about a page and a half.
+
+Command: help setup
+View the help topic on setting up the bot.
+
+Command: server {IP}
+Tell the bot the IP of the server that it is connected to. Due to a limitation in Mudlet it can't easily determine this for itself.
+
+Command: new login {name} pass {password}
+Change your bot login.
+
+Command: say {something man}
+Say something publicly in-game to the players as yourself.
+
+Command: sayfr {something to be translated}
+Depreciated feature. It should work but requires a translation utility installed in Linux. I don't use it anymore as I host too many bots and don't want a big surprise bill from Google.
+
+Command: command help
+View the ingame command help in full including descriptions.
+
+Command: list help
+View the ingame command help minus the description texts.
+
+Command: help server
+View the server help topic
+
+Command: help donors
+View the donor help topic
+
+Command: help csi
+View the CSI help topic
+
+Command: help watchlist
+View the watchlist help topic
+
+Command: help bad items
+View the bad items help topic
+
+Command: help announcements
+View the rolling announcements help topic
+
+Command: help commands
+View the remote commands help topic
+
+Command: help motd
+View the message of the day help topic
+
+Command: help access
+View the access levels help topic
+
+Command: reset zones
+List the reset zones.
+
+Command: stop
+Stop the bot's current command output so you can issue a new command without waiting for the last one to finish.
+
+Command: stop all
+Stop the bot's IRC command output for everyone.
+
+Command: rules {new rules}
+View the server rules.
+
+Command: invite {player name}
+Send and IRC invite to a player. The bot will give them a series of simple instructions that they must follow in order to join the IRC server and be recognised by the bot. Also useful if you get your own bot login disabled, just invite yourself, join th
+
+Command: fix bot
+Restricted: Owners and Admins only
+The bot will run a number of house-keeping tasks from data collection to database maintenance. The bot will appear frozen during this time until it has completed these tasks.
+DO NOT repeat the command, just wait for it to complete. The bot will start talking again and shortly after will respond to new commands.
+
+Command: add location category {category} {minimum access level} {maximum access level}
+Add a location category and optionally assign a minimum access level and maximum access level (can be the same level.)
+
+Command: remove location category
+Remove a location category. It is also removed from all locations currently assigned to it.
+
+Command: run report
+View a report on server performance including how long the command lag is. The report recalculates continuously until stopped by typing stop report.
+
+Command: stop report
+Stop the running report.
+
+Command: unmute irc {player}
+Allow a player to use bot commands on IRC again.
+
+Command: mute irc {player}
+Block a player from commanding the bot on IRC.
+
+Command: sql {a select statement}
+Run a select query on the bot's database and view the output. It is limited to 100 records by default. Specify a different limit if you want more.
+Only select queries are permitted. This is mainly intended for debugging purposes.
+Only server owners can use this command.
+
+Command: set irc server {IP:Port}
+The bot will connect to the IRC server that you specify. If the IP and port are wrong, you will need to join the server and issue same command in-game but with a valid IP and port.
+Only server owners can use this command.
+
+Command: set server ip {server IP} port {telnet port} pass {telnet password}
+Make the bot join a different 7 Days to Die server. All parts are required even if they are not changing.
+Only server owners can use this command.
+
+Command: restart bot
+If your bot's server or the bot's launcher script monitors the bot's process ID, you can command the bot to shut down and restart itself. This can help to fix temporary problems with the bot.
+All bots hosted at botmanhosting or hosted by Smegz0r can be restarted this way. The command is disabled by default.
+
+Command: check disk
+View basic information about disk usage on the server hosting the bot.
+
+Command: command prefix {new in-game command prefix}
+Change the in-game command prefix to something else. The default is /. The bot can automatically change to ! if it detects some other server managers.
+If there is a command clash between the bot and another manager or mod, you should use this command. The only symbol that cannot be used is the other slash.
+
+Command: server settings {optional filter}
+View current settings in the bot, organised by category. You can view a specific category if you type it after settings.
+The categories are: chat, shop, teleports, security, waypoints, misc, games, irc, mods.
+The displayed settings may not be a complete list as the bot is still under development and new settings are added frequently.
+
+Command: new players
+List new players that have joined in the last 24 hours. To see further back, add a number eg: new players 5 will give you the last 5 days.
+
+Command: check dns {player}
+Make the bot do a DNS lookup on any player. Mainly useful if a player of interest is already in the game before the bot joined. Otherwise the bot will check their DNS only when the player re-logs.
+
+Command: view alerts
+
+Command: view slots
+View information about the bot's reserved slots and who is occupying them.
+
+Command: show inventory
+View historic inventory movement of a player. They do not need to be playing right now.
+Full example.. show inventory player Joe xpos 100 zpos 200 days 2 range 50 item tnt qty 20
+You can grab the coords from any player by adding, near john (for example)
+Defaults: days = 1, range = 100km, xpos = 0, zpos = 0
+Optional: player (or near) joe, days 1, hours 1, range 50, item tin, qty 10, xpos 0, zpos 0, session 1
+Currently this command always reports up to the current time. Later you will be able to specify an end date and time.
+
+Command: announcements
+View the rolling announcements.
+
+Command: add announcement
+Add a new rolling announcement.
+
+Command: delete announcement
+If you type 'announcements' you will see a numbered list of rolling announcements. To delete a specific announcement type its number at the end of this command.
+eg. delete announcement 3
+
+Command: who visited
+See who visited a player location or base.
+Example with defaults: who visited player smeg days 1 range 10 height 4
+Example with coords: who visited x 0 y 100 z 0 height 5 days 1 range 20
+Another example: who visited player smeg base
+Another example: who visited bed smeg
+Setting hours will reset days to zero
+Defaults: days = 1 or hours = 0, range = 10
+
+Command: pay {player} {amount of {monies}}
+eg. pay joe 1000. Joe will receive 1000 {monies} and will be alerted with a private message. You will also see a confirmation message that you have paid them.
+Only owners and level 1 admins can do this on IRC.
+
+Command: set player {name} cash {value}
+Reset a player's cash to a specific amount to fix stuff-ups.
+
+Command: claims {optional player}
+List all of the claims on the server or a specific player's claims.
+
+Command: cmd {normal ingame command}
+Use an in-game command from IRC. The command is identical to how you use it in-game except you prefix it with cmd. eg. cmd /uptime. Not all in-game commands allow you to use them from IRC and will tell you if you can't use them.
+
+Command: pm {player} {message}
+
+Command: con {console command}
+Send a console command to the server. If you don't see the console output on IRC it will be a command that the bot doesn't pipe back to IRC. The command will still be ran. This feature is restricted to server owners.
+
+Command: villagers
+List all of the villagers. It also shows who are the mayors.
+
+Command: base cooldown {seconds}
+Set a timer between uses of the /base or /home command. Donors wait half as long.
+
+Command: set rules {new rules}
+Change the server rules.
+
+Command: motd
+View the message of the day. You can clear it with motd clear.
+
+Command: set motd {message}
+Change the message of the day.
+
+Command: list tables
+List the bot's tables.
+
+Command: show table {table name}
+View the contents of one of the bot's tables. Not all tables will display but you'll soon work out which ones you can view.
+
+Command: reset bot keep money
+Make the bot forget map specific information but remember the player cash. Use this command after a map wipe.
+
+Command: reset bot
+Make the bot forget map specific information. Use this command after a map wipe.
+
+Command: stop translating {player}
+Stop sending a player's in-game chat to Google for translating.
+
+Command: translate {player}
+This command only works if a Linux utility called trans is installed. It uses Google Translate so I no longer use it since I don't want to risk a huge bill from Google. It worked great when I used to use it.
+
+Command: stealth translate {player}
+Only translate a player's in-game chat to IRC.
+
+Command: open shop
+Enable the shop so player's can buy stuff and spend their hard earned {monies}.
+
+Command: close shop
+Disable the shop. You'll soon see who can't live without it xD
+
+Command: shop price {item} {new price}
+Change the price of an item in the shop.
+
+Command: shop max {item} {max stock level}
+Set the maximum quantity of an item for sale in the shop.
+
+Command: shop restock {item} {quantity}
+Increase the quantity of an item in the shop.
+
+Command: shop add category {category name} code {short code}
+Add a new category to the shop, such as weapons.
+
+Command: shop remove category {category name}
+Remove a category from the shop.
+
+Command: shop change category {old category} to {new category}
+Rename a shop category. All of its items will move to the new category.
+
+Command: inv {player}
+View the current or last known inventory of a player.
+
+Command: list villagers {name of village}
+List all of the village members of a specific village.
+
+Command: list {optional player} bases
+List all of the player bases or just those of one player.
+
+Command: add bad item {item name}
+Add an item to the bad items list.
+
+Command: remove bad item {item name}
+Remove an item from the bad items list.
+
+Command: near player {player}
+Lists players, bases and locations near a player or coordinate.
+Usage: near player {name}
+optional: range {number}
+optional: Instead of player use xpos {number} zpos {number}
+
+Command: info {player}
+View info about a player including links to some 7 Days related websites and the player's DNS record.
+
+Command: add donor {player}
+Give a player donor status. They get a few special privileges but it is not play to win. There are no game items included.
+
+Command: remove donor {player}
+Remove a player's donor status.
+
+Command: add owner {player}
+Give a player owner status which is the highest admin status in the bot and server.
+
+Command: remove owner {player}
+Remove an owner so they are just a regular player.
+
+Command: add admin {player}
+Give a player admin status. Note: This gives them level 1 admin status only.
+
+Command: remove admin {player}
+OUT! Remove an admin. They become a player again.
+
+Command: permaban {jackass}
+Ban and permanban a player. Not currently used by the bot, but the ban works.
+
+Command: remove permaban {player}
+Unban a player and remove their permaban status. Not currently used by the bot, but it will unban them.
+
+Command: add player {player} login {name} pass {password}
+Authorise a player to login to the bot here on IRC. They can login with login {name} pass {password}. They must not use that in any public channels, only in private with the bot or the bot will destroy their login.
+
+Command: player {player one} unfriend {player two}
+Make a player no longer friends with another player. Does not change friend status done through the game's own friend system.
+
+Command: player {player one} friend {player two}
+Make friends. No not you! Make a player friends with another player.
+
+Command: friends {player}
+View all of the friends of a player known to the bot or the game.
+
+Command: players
+Get a list of all of the players (except archived players).
+
+Command: archived players
+Get a list of all the players that have been archived.
+
+Command: player {name}
+View the permanent record for a player.
+
+Command: igplayer {name}
+View the bot's record for a player that is currently on the server.
+
+Command: watch {player}
+
+Command: stop watching {player}
+Stop getting in-game messages about a player every time their inventory changes or they get too close to a base.
+
+Command: donors
+List all of the donors.
+
+Command: teleports
+List all of the teleports. These are not locations or waypoints. They are special teleports that players step onto in-game to get automatically teleported somewhere.
+
+Command: list bad items
+
+Command: prisoners
+List all of the current prisoners. If a reason was recorded, that will be shown too.
+
+Command: li {item name}
+List game items. eg. li boots, will list all items with boots in their name.
+
+Command: list prefabs {optional partial name of a prefab}
+Lists of all the prefabs known to the server or a filtered list if you specify part of a prefab name.
+
+Command: status {player}
+View some info about a player's bases and donor status.
+
+Command: shop add item {item name} category {category} price {price} stock {max stock}
+Add an item to the shop.
+
+Command: empty shop
+Completely empty the shop so you can start fresh.
+
+Command: shop remove item {item name}
+Remove an item from the shop.
+
+Command: add command {command} access {minimum access level} message {private message}
+Add a custom command. At the moment these are just a private message. Later more actions will be possible.
+
+Command: remove command {command}
+Delete a custom command.
+
+Command: blacklist add {player}
+Add a player to the bot's blacklist. The bot will ban them for 10 years.
+
+Command: ban remove {player}
+Unban a player.
+
+Command: list event {event type}
+Several events are logged and can be searched with list event. Select from any of the following or add a player name or steam ID.
+eg. list event ban. Matching events in the last day are displayed. To see more days add a number eg. list event ban 5
+
+Command: search player {name}
+Search for a player by name. It will list any players that match your search.
+
+Command: list duplicate players
+Get a list of all players with the same name. Useful for fixing issues.
+
+Command: add proxy {text to match} action {ban or exile}
+Add a proxy for the bot to scan for and what action to take when it sees it.
+
+Command: remove proxy {text}
+Remove a proxy.
+
+Command: list proxies
+View all of the proxies that the bot checks for, how many hits each has had and what action the bot takes when it sees one.
+
+Command: list regions
+List all of the regions that contain a player base. Does not take into account parts of bases that cross into other regions.
+
+Command: list restricted items
+View the list of restricted items. These are items that new players aren't allowed.
+
+Command: list entities
+List all of entities currently in the world.
+
+Command: near entity {entity ID}
+View a list of players, bases and locations near a specific entity.
+
+You can view in-game command help by topic using list help {topic} or command help {topic} for any of the following topics:
+
+unslashed
+info
+base
+locations
+teleports
+waypoints
+misc
+hotspots
+friends
+villages
+bot
+fun
+admin
+resets
+tracker
+server
+coppi
+scripting
+stompy
+Command: help {command}
+View help for an in-game command. You will see help for any commands that match your search based on keywords.
