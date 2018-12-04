@@ -27,7 +27,9 @@ function inventoryOwner(line)
 		igplayers[invCheckID].inventory = ""
 		igplayers[invCheckID].oldBelt = igplayers[invCheckID].belt
 		igplayers[invCheckID].belt = ""
+		igplayers[invCheckID].oldPack = igplayers[invCheckID].pack
 		igplayers[invCheckID].pack = ""
+		igplayers[invCheckID].oldEquipment = igplayers[invCheckID].equipment
 		igplayers[invCheckID].equipment = ""
 		invScan = "belt"
 	end

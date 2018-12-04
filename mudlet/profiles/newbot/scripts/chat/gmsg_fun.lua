@@ -7,6 +7,8 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+-- a17 items done
+
 local result, debug, help, tmp
 local shortHelp = false
 local skipHelp = false
@@ -56,9 +58,17 @@ function gmsg_fun()
 		if (chatvars.words[1] == "waiter" or chatvars.words[1] == "beer" and chatvars.words[2] == nil) then
 			if string.find(inLocation(chatvars.intX, chatvars.intZ), "beer") then
 				if server.stompy then
-					sendCommand("bc-give " .. chatvars.playerid .. " beer /c=1 /silent")
+					if tonumber(server.gameVersionNumber) < 17 then
+						sendCommand("bc-give " .. chatvars.playerid .. " beer /c=1 /silent")
+					else
+						sendCommand("bc-give " .. chatvars.playerid .. " drinkJarBeer /c=1 /silent")
+					end
 				else
-					sendCommand("give " .. chatvars.playerid .. " beer 1")
+					if tonumber(server.gameVersionNumber) < 17 then
+						sendCommand("give " .. chatvars.playerid .. " beer")
+					else
+						sendCommand("give " .. chatvars.playerid .. " drinkJarBeer")
+					end
 				end
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Enjoy your beer![-]")
@@ -710,39 +720,71 @@ function gmsg_fun()
 		-- HO
 
 		-- A special command for Ho's
-		if (chatvars.words[1] == "santa" and specialDay == "christmas" and chatvars.words[2] == nil) then
+		if (chatvars.words[1] == "santa" and chatvars.words[2] == nil) then --  and specialDay == "christmas"
 			if (not players[chatvars.playerid].santa) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HO HO HO  Merry Christmas!  Press e now, don't let the Grinch steal Christmas.[-]")
 				if server.stompy then
-					sendCommand("bc-give " .. chatvars.playerid .. " shades /c=1 /silent")
-					sendCommand("bc-give " .. chatvars.playerid .. " turd /c=1 /silent")
-					sendCommand("bc-give " .. chatvars.playerid .. " beer /c=1 /silent")
-					sendCommand("bc-give " .. chatvars.playerid .. " coalOre /c=1 /silent")
-					sendCommand("bc-give " .. chatvars.playerid .. " pipeBomb /c=1 /silent")
-					sendCommand("bc-give " .. chatvars.playerid .. " splint /c=1 /silent")
+					sendCommand("bc-give " .. chatvars.playerid .. " shades /c=1 /silent") -- A1617
+
+					if tonumber(server.gameVersionNumber) < 17 then
+						sendCommand("bc-give " .. chatvars.playerid .. " turd /c=1 /silent") -- A16
+						sendCommand("bc-give " .. chatvars.playerid .. " beer /c=1 /silent") -- A16
+						sendCommand("bc-give " .. chatvars.playerid .. " coalOre /c=1 /silent") -- A16
+						sendCommand("bc-give " .. chatvars.playerid .. " pipeBomb /c=1 /silent") -- A16
+						sendCommand("bc-give " .. chatvars.playerid .. " splint /c=1 /silent") -- A16
+					else
+						sendCommand("bc-give " .. chatvars.playerid .. " drinkJarBeer /c=1 /silent") -- A17
+						sendCommand("bc-give " .. chatvars.playerid .. " resourceCoal /c=1 /silent") -- A17
+						sendCommand("bc-give " .. chatvars.playerid .. " thrownAmmoPipeBomb /c=1 /silent") -- A17
+						sendCommand("bc-give " .. chatvars.playerid .. " medicalSplint /c=1 /silent") -- A17
+					end
 				else
-					sendCommand("give " .. chatvars.playerid .. " shades 1")
-					sendCommand("give " .. chatvars.playerid .. " turd 1")
-					sendCommand("give " .. chatvars.playerid .. " beer 2")
-					sendCommand("give " .. chatvars.playerid .. " coalOre 1")
-					sendCommand("give " .. chatvars.playerid .. " pipeBomb 1")
-					sendCommand("give " .. chatvars.playerid .. " splint 1")
+					sendCommand("give " .. chatvars.playerid .. " shades 1") -- A1617
+
+					if tonumber(server.gameVersionNumber) < 17 then
+						sendCommand("give " .. chatvars.playerid .. " turd 1") -- A16
+						sendCommand("give " .. chatvars.playerid .. " beer") -- A16
+						sendCommand("give " .. chatvars.playerid .. " coalOre") -- A16
+						sendCommand("give " .. chatvars.playerid .. " pipeBomb") -- A16
+						sendCommand("give " .. chatvars.playerid .. " splint") -- A16
+					else
+						sendCommand("give " .. chatvars.playerid .. " drinkJarBeer") -- A17
+						sendCommand("give " .. chatvars.playerid .. " resourceCoal") -- A17
+						sendCommand("give " .. chatvars.playerid .. " thrownAmmoPipeBomb") -- A17
+						sendCommand("give " .. chatvars.playerid .. " medicalSplint") -- A17
+					end
 				end
 
 				r = rand(2)
 				if r == 1 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " firstAidBandage /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " firstAidBandage /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " medicalFirstAidBandage /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " firstAidBandage 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " firstAidBandage") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " medicalFirstAidBandage") -- A17
+						end
 					end
 				end
 
 				if r == 2 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " firstAidKit /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " firstAidKit /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " medicalFirstAidKit /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " firstAidKit 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " firstAidKit") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " medicalFirstAidKit") -- A17
+						end
 					end
 				end
 
@@ -751,209 +793,401 @@ function gmsg_fun()
 				r = rand(26)
 				if r == 1 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canBeef /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canBeef /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanBeef /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canBeef 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canBeef") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanBeef") -- A17
+						end
 					end
 				end
 
 				if r == 2 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canBoiledWater /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canBoiledWater /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " drinkCanBoiledWater /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canBoiledWater 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canBoiledWater") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " drinkCanBoiledWater") -- A17
+						end
 					end
 				end
 
 				if r == 3 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canCatfood /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canCatfood /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanCatfood /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canCatfood 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canCatfood") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanCatfood") -- A17
+						end
 					end
 				end
 
 				if r == 4 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canChicken /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canChicken /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanChicken /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canChicken 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canChicken") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanChicken") -- A17
+						end
 					end
 				end
 
 				if r == 5 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canChilli /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canChilli /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanChilli /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canChili 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canChilli") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanChilli") -- A17
+						end
 					end
 				end
 
 				if r == 6 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " candle /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " candle /c=1 /silent") -- A1617
 					else
-						sendCommand("give " .. chatvars.playerid .. " candle 1")
+						sendCommand("give " .. chatvars.playerid .. " candle 1") -- A1617
 					end
 				end
 
 				if r == 7 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " candleStick /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " candleStick /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " resourceCandleStick /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " candleStick 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " candleStick") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " resourceCandleStick") -- A17
+						end
 					end
 				end
 
 				if r == 8 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " candleTable /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " candleTable /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " candleTableLightPlayer /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " candleTable 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " candleTable") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " candleTableLightPlayer") -- A17
+						end
 					end
 				end
 
 				if r == 9 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " candleWall /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " candleWall /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " candleWallLightPlayer /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " candleWall 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " candleWall") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " candleWallLightPlayer") -- A17
+						end
 					end
 				end
 
 				if r == 10 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canDogfood /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canDogfood /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanDogfood /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canDogfood 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canDogfood") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanDogfood") -- A17
+						end
 					end
 				end
 
 				if r == 11 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " candyTin /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " candyTin /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " resourceCandyTin /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " candyTin 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " candyTin") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " resourceCandyTin") -- A17
+						end
 					end
 				end
 
 				if r == 12 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canEmpty /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canEmpty /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " drinkCanEmpty /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canEmpty 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canEmpty") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " drinkCanEmpty") -- A17
+						end
 					end
 				end
 
 				if r == 13 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canHam /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canHam /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanHam /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canHam 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canHam") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanHam") -- A17
+						end
 					end
 				end
 
 				if r == 14 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canLamb /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canLamb /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanLamb /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canLamb 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canLamb") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanLamb") -- A17
+						end
 					end
 				end
 
 				if r == 15 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canMiso /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canMiso /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanMiso /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canMiso 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canMiso") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanMiso") -- A17
+						end
 					end
 				end
 
 				if r == 16 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canMurkyWater /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canMurkyWater /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " drinkJarRiverWater /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canMurkyWater 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canMurkyWater") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " drinkJarRiverWater") -- A17
+						end
 					end
 				end
 
 				if r == 17 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canPasta /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canPasta /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanPasta /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canPasta 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canPasta") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanPasta") -- A17
+						end
 					end
 				end
 
 				if r == 18 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canPears /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canPears /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanPears /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canPears 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canPears") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanPears") -- A17
+						end
 					end
 				end
 
 				if r == 19 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canPeas /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canPeas /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanPeas /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canPeas 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canPeas") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanPeas") -- A17
+						end
 					end
 				end
 
 				if r == 20 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canSalmon /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canSalmon /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanSalmon /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canSalmon 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canSalmon") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanSalmon") -- A17
+						end
 					end
 				end
 
 				if r == 21 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canSoup /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canSoup /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanSoup /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canSoup 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canSoup") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanSoup") -- A17
+						end
 					end
 				end
 
 				if r == 22 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canStock /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canStock /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanStock /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canStock 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canStock") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanStock") -- A17
+						end
 					end
 				end
 
 				if r == 23 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " canTuna /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " canTuna /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " foodCanTuna /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " canTuna 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " canTuna") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " foodCanTuna") -- A17
+						end
 					end
 				end
 
 				if r == 24 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " gasCan /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " gasCan /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " ammoGasCan /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " gasCan 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " gasCan") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " ammoGasCan") -- A17
+						end
 					end
 				end
 
 				if r == 25 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " gasCanSchematic /c=1 /silent")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("bc-give " .. chatvars.playerid .. " gasCanSchematic /c=1 /silent") -- A16
+						else
+							sendCommand("bc-give " .. chatvars.playerid .. " ammoGasCanSchematic /c=1 /silent") -- A17
+						end
 					else
-						sendCommand("give " .. chatvars.playerid .. " gasCanSchematic 1")
+						if tonumber(server.gameVersionNumber) < 17 then
+							sendCommand("give " .. chatvars.playerid .. " gasCanSchematic") -- A16
+						else
+							sendCommand("give " .. chatvars.playerid .. " ammoGasCanSchematic") -- A17
+						end
 					end
 				end
 
 				if r == 26 then
 					if server.stompy then
-						sendCommand("bc-give " .. chatvars.playerid .. " mineCandyTin /c=1 /silent")
+						sendCommand("bc-give " .. chatvars.playerid .. " mineCandyTin /c=1 /silent") -- A1617
 					else
-						sendCommand("give " .. chatvars.playerid .. " mineCandyTin 1")
+						sendCommand("give " .. chatvars.playerid .. " mineCandyTin 1") -- A1617
 					end
 				end
 

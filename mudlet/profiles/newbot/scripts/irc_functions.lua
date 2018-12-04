@@ -29,6 +29,11 @@ function joinIRCServer()
 	os.remove(homedir .. "/irc_port")
 	os.remove(homedir .. "/irc_server_port")
 
+	-- Do not allow the bot to automatically connect to Freenode.
+	if string.find(string.lower(server.ircServer), "freenode") then
+		server.ircServer = "127.0.0.1"
+	end
+
 	if setIrcServer ~= nil then
 		table.insert(channels, server.ircMain)
 		table.insert(channels, server.ircAlerts)
@@ -106,9 +111,8 @@ function irc_NewInventory(tmp)
 
 	row = cursor:fetch({}, "a")
 	if row then
-		irc_chat(tmp.name, " ")
+		irc_chat(tmp.name, ".")
 		irc_chat(tmp.name, "Belt of " .. players[tmp.playerID].name)
-		irc_chat(tmp.name, " ")
 
 		tmp.inventory = string.split(row.belt, "|")
 
@@ -122,9 +126,8 @@ function irc_NewInventory(tmp)
 			end
 		end
 
-		irc_chat(tmp.name, " ")
+		irc_chat(tmp.name, ".")
 		irc_chat(tmp.name, "Backpack of " .. players[tmp.playerID].name)
-		irc_chat(tmp.name, " ")
 
 		tmp.inventory = string.split(row.pack, "|")
 
@@ -138,9 +141,8 @@ function irc_NewInventory(tmp)
 			end
 		end
 
-		irc_chat(tmp.name, " ")
+		irc_chat(tmp.name, ".")
 		irc_chat(tmp.name, "Equipment of " .. players[tmp.playerID].name)
-		irc_chat(tmp.name, " ")
 
 		tmp.inventory = string.split(row.equipment, "|")
 
@@ -150,11 +152,11 @@ function irc_NewInventory(tmp)
 			irc_chat(tmp.name, "Slot " .. tmp.slot[1] .. " " .. tmp.slot[2] .. " " .. tmp.slot[3])
 		end
 	else
-		irc_chat(tmp.name, " ")
+		irc_chat(tmp.name, ".")
 		irc_chat(tmp.name, "I do not have an inventory recorded for " .. players[tmp.playerID].name)
 	end
 
-	irc_chat(tmp.name, " ")
+	irc_chat(tmp.name, ".")
 end
 
 
@@ -477,12 +479,12 @@ function irc_PlayerShortInfo()
 	irc_chat(irc_params.name, "Steam http://steamcommunity.com/profiles/" .. irc_params.pid)
 
 	if irc_params.pid ~= players[irc_params.pid].steamOwner then
-		irc_chat(irc_params.name, " ")
+		irc_chat(irc_params.name, ".")
 		irc_chat(irc_params.name, "Family Key:")
 		irc_chat(irc_params.name, "CBSM GBL https://gbl.envul.com/lookup/" .. players[irc_params.pid].steamOwner .. "/")
 		irc_chat(irc_params.name, "Steam Rep http://steamrep.com/search?q=" .. players[irc_params.pid].steamOwner)
 		irc_chat(irc_params.name, "Steam http://steamcommunity.com/profiles/" .. players[irc_params.pid].steamOwner)
-		irc_chat(irc_params.name, " ")
+		irc_chat(irc_params.name, ".")
 	end
 
 	irc_chat(irc_params.name, "Player ID " .. players[irc_params.pid].id)
@@ -624,7 +626,7 @@ function listOwners(steam)
 	end
 
 	if not igplayers[steam] then
-		irc_chat(irc_params.name, " ")
+		irc_chat(irc_params.name, ".")
 	end
 end
 
@@ -676,7 +678,7 @@ function listAdmins(steam)
 	end
 
 	if not igplayers[steam] then
-		irc_chat(irc_params.name, " ")
+		irc_chat(irc_params.name, ".")
 	end
 end
 
@@ -728,7 +730,7 @@ function listMods(steam)
 	end
 
 	if not igplayers[steam] then
-		irc_chat(irc_params.name, " ")
+		irc_chat(irc_params.name, ".")
 	end
 end
 
@@ -753,7 +755,7 @@ function irc_friend()
 		irc_chat(irc_params.name, players[irc_params.pid].name .. " is already friends with " .. players[irc_params.pid2].name)
 	end
 
-	irc_chat(irc_params.name, " ")
+	irc_chat(irc_params.name, ".")
 end
 
 
@@ -781,7 +783,7 @@ function irc_unfriend()
 
 	conn:execute("DELETE FROM friends WHERE steam = " .. irc_params.pid .. " AND friend = " .. irc_params.pid2)
 
-	irc_chat(irc_params.name, " ")
+	irc_chat(irc_params.name, ".")
 end
 
 
@@ -799,7 +801,7 @@ function irc_friends()
 		end
 	end
 
-	irc_chat(irc_params.name, " ")
+	irc_chat(irc_params.name, ".")
 end
 
 
@@ -1194,7 +1196,7 @@ function irc_IGPlayerInfo()
 		irc_chat(irc_params.name, "I do not know a player called " .. irc_params.pname)
 	end
 
-	irc_chat(irc_params.name, " ")
+	irc_chat(irc_params.name, ".")
 end
 
 
@@ -1264,5 +1266,5 @@ function irc_playerStatus()
 		irc_chat(irc_params.name, "Has not set base two.")
 	end
 
-	irc_chat(irc_params.name, " ")
+	irc_chat(irc_params.name, ".")
 end

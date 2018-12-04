@@ -7,8 +7,6 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
--- todo: add archived player lookup
-
 local debug, tmp, msg, result, help
 local shortHelp = false
 local skipHelp = false
@@ -2767,7 +2765,7 @@ function gmsg_server()
 
 			if server.useAllocsWebAPI then
 				-- verify that the web API is working for us
-				tempTimer( 2, [[message("pm APITEST testing")]] )
+				tempTimer( 2, [[message("pm APItest \"test\"")]] )
 				tempTimer( 5, [[checkAPIWorking()]] )
 			end
 

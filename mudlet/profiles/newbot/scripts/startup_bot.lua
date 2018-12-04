@@ -49,6 +49,8 @@ function checkData()
 		login()
 	end
 
+	tempTimer( 5, [[sendCommand("version")]] )
+
 	if server.botsIP == nil then
 		getBotsIP()
 	end
@@ -56,8 +58,6 @@ function checkData()
 	if tablelength(shopCategories) == 0 then
 		loadShopCategories()
 	end
-
-	tempTimer( 5, [[sendCommand("version")]] )
 
 	if tonumber(server.ServerPort) == 0 then
 		tempTimer( 10, [[sendCommand("gg")]] )
@@ -102,6 +102,7 @@ end
 function login()
 	local benchStart = os.clock()
 	local getAllPlayers = false
+	local randomChannel, r
 
 	debug = false
 	debugdb = false
@@ -123,6 +124,17 @@ function login()
 		if not botman.botDisabled then
 			botman.botOffline = false
 		end
+
+		-- force the irc server to localhost so that we don't automatically join Freenode and the Mudlet channel if nothing else has been set.
+		-- set some random irc channel name so that the bot should not join an existing channel with another bot in it if localhost has an irc server.
+		math.randomseed(os.time())
+		r = math.random(900) + 100
+		randomChannel = "bot_" .. r
+		server.ircServer = "127.0.0.1"
+		server.ircMain = randomChannel
+		server.ircAlerts = randomChannel .. "_alerts"
+		server.ircWatch = randomChannel .. "_watch"
+		server.ircPort = 6667
 
 		botman.scheduledRestartPaused = false
 		botman.scheduledRestartForced = false

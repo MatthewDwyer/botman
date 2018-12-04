@@ -35,7 +35,7 @@ function FifteenSecondTimer()
 	if not server.lagged then
 		if tonumber(botman.playersOnline) > 24 then
 			if server.coppi and tonumber(botman.playersOnline) > 0 then
-				if server.scanNoclip then
+				if server.scanNoclip and tonumber(server.gameVersionNumber) < 17 then
 					if server.coppiRelease == "Mod CSMM Patrons" then
 						sendCommand("pinc")
 					else
@@ -43,7 +43,7 @@ function FifteenSecondTimer()
 					end
 				end
 
-				if not server.playersCanFly then
+				if not server.playersCanFly and tonumber(server.gameVersionNumber) < 17 then
 					if server.coppiRelease == "Mod CSMM Patrons" then
 						sendCommand("cph")
 					else
@@ -54,7 +54,7 @@ function FifteenSecondTimer()
 
 			if (server.scanZombies or server.scanEntities) then
 				if server.useAllocsWebAPI then
-					sendCommand("gethostilelocation", "gethostilelocation/?", "hostiles.txt")
+					sendCommand("gethostilelocation", "gethostilelocation?", "hostiles.txt")
 				end
 			end
 		end

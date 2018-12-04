@@ -227,7 +227,7 @@ function gmsg_unslashed()
 
 			if (r == 6) then
 				message("say [" .. server.chatColour .. "]What we've got here is failure to communicate.[-]")
-				sendCommand("mpc " .. chatvars.playerid .. " true")
+				mutePlayerChat(chatvars.playerid, "true")
 				tempTimer( 180, [[unmutePlayer("]] .. chatvars.playerid .. [[")]] )
 			end
 

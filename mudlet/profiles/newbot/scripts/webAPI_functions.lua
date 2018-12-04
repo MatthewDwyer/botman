@@ -12,13 +12,18 @@ local debug = false -- should be false unless testing
 
 
 function getAPILog()
--- NOTE:  This can't work in practice because there is currently no way to know the current line number of the log.
--- Alloc must add a last log line number query to his API.
+	 url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/GetWebUIUpdates?adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+	 os.remove(homedir .. "/temp/webUIUpdates.txt")
+	 downloadFile(homedir .. "/temp/webUIUpdates.txt", url)
+end
 
-		 -- url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getlog/?firstline=50&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
-		 -- os.remove(homedir .. "/temp/log.txt")
-		 -- downloadFile(homedir .. "/temp/log.txt", url)
 
+function getAPILog()
+	if botman.lastLogLine then
+		 url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getlog?firstline=" .. botman.lastLogLine .. "&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+		 os.remove(homedir .. "/temp/log.txt")
+		 downloadFile(homedir .. "/temp/log.txt", url)
+	 end
 end
 
 
@@ -44,58 +49,31 @@ function checkAPIWorking()
 			end
 		end
 	else
-		file = io.open(homedir .. "/temp/dummy.txt", "r")
-
-		for ln in file:lines() do
-			if string.find(ln, "{\"command\"") then
-				foundAPI = true
-
-				if botman.testAPIPort then
-					-- yay! we found the API.  Update the webPanelPort. Those silly humans!
-					conn:execute("UPDATE server SET webPanelPort = " .. botman.testAPIPort)
-					botman.testAPIPort = nil
-				end
-			else
-				-- oh no!  it's empty! maybe its 2 above or below?  Let's find out :D
-				if not botman.testAPIPort then
-					-- re-test 2 above the port we were given
-					botman.testAPIPort = botman.oldAPIPort + 2
-				else
-					if botman.testAPIPort == botman.oldAPIPort + 2 then
-						-- welp that didn't work.  Lets test 2 below the port we were given
-						botman.testAPIPort = botman.oldAPIPort - 2
-					else
-						-- well shit.  We can't find the API.  Stop testing and give up.
-						botman.testAPIPort = nil
-					end
-				end
-			end
-		end
-
-		file:close()
+		-- yay! we found the API.  Update the webPanelPort. Those silly humans!
+		conn:execute("UPDATE server SET webPanelPort = " .. botman.testAPIPort)
+		botman.testAPIPort = nil
+		foundAPI = true
 	end
 
 	if botman.testAPIPort then
 		server.webPanelPort = botman.testAPIPort
 
 		-- verify that the web API is working for us
-		tempTimer( 2, [[message("pm APITEST testing")]] )
-		tempTimer( 5, [[checkAPIWorking()]] )
+		tempTimer( 3, [[message("pm APItest test")]] )
+		tempTimer( 7, [[checkAPIWorking()]] )
 		return
 	else
 		if foundAPI then
 			-- report our success
-			alertAdmins("The bot is now using Alloc's web API to communicate with the server.")
-			irc_chat(server.ircMain, "The bot is now using Alloc's web API to communicate with the server.")
-			irc_chat(chatvars.ircAlias, "The bot is now using Alloc's web API to communicate with the server.")
+			alertAdmins("The bot is now using Alloc's web API.")
+			irc_chat(server.ircMain, "The bot is now using Alloc's web API.")
 		else
 			server.useAllocsWebAPI = false
 			server.webPanelPort = botman.oldAPIPort
 			conn:execute("UPDATE server set useAllocsWebAPI = 0")
 
-			alertAdmins("API FAILED! The bot is using telnet. Check your server's web panel port and set it with {#}set web panel port {port number}.  It should be set to 2 below your web map's port and is called ControlPanelPort in your server config.", "alert")
-			irc_chat(server.ircMain, "API FAILED! The bot is using telnet.  Check your server's web panel port and set it with {#}set web panel port {port number}, then re-try {#}use api.  It should be set to 2 below your web map's port and is called ControlPanelPort in your server config.")
-			irc_chat(chatvars.ircAlias, "API FAILED! The bot is using telnet.  Check your server's web panel port and set it with {#}set web panel port {port number}, then re-try {#}use api.  It should be set to 2 below your web map's port and is called ControlPanelPort in your server config.")
+			alertAdmins("API FAILED! The bot is using telnet. Check your server's web panel port and set it with {#}set api port {port number}.  It should be set to 2 below your web map's port and is called ControlPanelPort in your server config.", "alert")
+			irc_chat(server.ircMain, "API FAILED! The bot is using telnet.  Check your server's web panel port and set it with {#}set api port {port number}, then re-try {#}use api.  It should be set to 2 below your web map's port and is called ControlPanelPort in your server config.")
 		end
 	end
 end
@@ -1622,8 +1600,9 @@ end
 
 function readAPI_BCGo()
 	local file, ln, result, data, k, v, a, b
-	local fileSize
+	local fileSize, task
 
+	task = ""
 	fileSize = lfs.attributes (homedir .. "/temp/bc-go.txt", "size")
 
 	-- abort if the file is empty
@@ -1636,29 +1615,44 @@ function readAPI_BCGo()
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
 
+		-- if result.parameters == "Items /filter=Name" then
+			-- task = "read items"
+			-- conn:execute("TRUNCATE TABLE spawnableItems")
+		-- end
+
 		-- This JSON data has nested JSON data that also needs to be converted to a Lua table
 		data = yajl.to_value(result.result)
 
 		for k,v in pairs(data) do
 			if v ~= "" then
 				for a,b in pairs(v) do
-					if ircListItems ~= nil then
-						if ircListItemsFilter ~= "" then
-							if string.find(string.lower(b), ircListItemsFilter, nil, true) then
-								irc_chat(players[ircListItems].ircAlias, b)
-							end
-						else
-							irc_chat(players[ircListItems].ircAlias, b)
-						end
-					end
+
+					-- if task == "read items" then
+						-- conn:execute("INSERT INTO spawnableItems (itemName) VALUES ('" .. escape(b) .. "')")
+					-- end
+
+
+					-- if ircListItems ~= nil then
+						-- if ircListItemsFilter ~= "" then
+							-- if string.find(string.lower(b), ircListItemsFilter, nil, true) then
+								-- irc_chat(players[ircListItems].ircAlias, b)
+							-- end
+						-- else
+							-- irc_chat(players[ircListItems].ircAlias, b)
+						-- end
+					-- end
 				end
 			end
 		end
 	end
 
 	file:close()
-	ircListItems = nil
-	ircListItemsFilter = nil
+	--ircListItems = nil
+	--ircListItemsFilter = nil
+
+	-- if task == "read items" then
+		-- removeInvalidItems()
+	-- end
 end
 
 
@@ -1694,8 +1688,14 @@ function readAPI_Command()
 
 	fileSize = lfs.attributes (homedir .. "/temp/command.txt", "size")
 
-	-- abort if the file is empty
+	-- abort if the file is empty and switch back to using telnet
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if server.useAllocsWebAPI then
+			server.useAllocsWebAPI = false
+			conn:execute("UPDATE server set useAllocsWebAPI = 0")
+			irc_chat(server.ircMain, "Communications fault detected in API. The bot has reverted to using telnet.")
+		end
+
 		return
 	end
 
@@ -1883,7 +1883,9 @@ function readAPI_Inventories()
 			igplayers[steam].inventory = ""
 			igplayers[steam].oldBelt = igplayers[steam].belt
 			igplayers[steam].belt = ""
+			igplayers[steam].oldPack = igplayers[steam].pack
 			igplayers[steam].pack = ""
+			igplayers[steam].oldEquipment = igplayers[steam].equipment
 			igplayers[steam].equipment = ""
 
 			for k,v in pairs(result[index].belt) do
@@ -1979,7 +1981,7 @@ function readAPI_Hostiles()
 				if loc ~= false then
 					if locations[loc].killZombies then
 						if not server.lagged then
-							sendCommand("removeentity " .. v.id)
+							removeEntityCommand(v.id)
 						end
 					end
 				end
@@ -2175,9 +2177,10 @@ end
 
 function readAPI_LI()
 	local file, ln, result, temp, data, k, v, entityID, entity, cursor, errorString, con, q
-	local fileSize
+	local fileSize, updateItemsList
 
 	fileSize = lfs.attributes (homedir .. "/temp/li.txt", "size")
+	updateItemsList = false
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
@@ -2189,13 +2192,31 @@ function readAPI_LI()
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
 
+		if result.parameters == "*" then
+			updateItemsList = true
+		end
+
+		if string.find(result.result, "\n") then
+			data = splitCRLF(result.result)
+
+			for k,v in pairs(data) do
+				if not string.find(data[k], " matching items.") then
+					if botman.dbConnected then
+						temp = string.trim(data[k])
+						if temp ~= "" and updateItemsList then
+							conn:execute("INSERT INTO spawnableItems (itemName) VALUES ('" .. escape(temp) .. "')")
+						end
+					end
+				end
+			end
+		end
+
 		for con, q in pairs(conQueue) do
 			if string.sub(q.command, 1, 3) == "li " then
 				if string.find(result.result, "\n") then
-					data = splitCRLF(result.result)
-
 					for k,v in pairs(data) do
-						irc_chat(q.ircUser, data[k])
+						temp = string.trim(data[k])
+						irc_chat(q.ircUser, temp)
 					end
 				else
 					irc_chat(q.ircUser, result.result)
@@ -2210,6 +2231,10 @@ function readAPI_LI()
 		if (q.command == result.command) or (q.command == result.command .. " " .. result.parameters) then
 			conQueue[con] = nil
 		end
+	end
+
+	if updateItemsList then
+		removeInvalidItems()
 	end
 end
 
@@ -2577,7 +2602,6 @@ end
 
 
 function readAPI_ReadLog()
--- this works but knowing what the current log line number on the server is is critical or this is a waste of time.
 	local file, ln, result, temp, data, k, v
 	local uptime, date, time, msg
 

@@ -33,7 +33,7 @@ function listPlayers()
 
 		if botman.skipLP == 0 then
 			if server.useAllocsWebAPI then
-				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getplayersonline/?adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getplayersonline?adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
 				os.remove(homedir .. "/temp/playersOnline.txt")
 				downloadFile(homedir .. "/temp/playersOnline.txt", url)
 			else

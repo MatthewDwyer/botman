@@ -73,7 +73,7 @@ function ResetBot(keepTheMoney)
 	server.prisonSize = 100
 	server.warnBotReset = false
 
-	if math.floor(server.gameVersionNumber) > 16 then
+	if math.floor(tonumber(server.gameVersionNumber)) > 16 then
 		server.playersCanFly = true -- set to true for A17+ now that players can fly.
 	end
 

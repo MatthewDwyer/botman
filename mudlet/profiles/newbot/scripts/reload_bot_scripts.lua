@@ -430,11 +430,6 @@ function refreshScripts()
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	server.nextCodeReload = "/scripts/chat/gmsg_coppi.lua"
-	checkScript(homedir .. "/scripts/chat/gmsg_coppi.lua")
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
 	server.nextCodeReload = "/scripts/chat/gmsg_friends.lua"
 	checkScript(homedir .. "/scripts/chat/gmsg_friends.lua")
 
@@ -492,6 +487,11 @@ function refreshScripts()
 
 	server.nextCodeReload = "/scripts/chat/gmsg_stompy.lua"
 	checkScript(homedir .. "/scripts/chat/gmsg_stompy.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/chat/gmsg_coppi.lua"
+	checkScript(homedir .. "/scripts/chat/gmsg_coppi.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -892,6 +892,9 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 				-- tempTimer( 5, [[sendCommand("version")]] )
 				-- tempTimer( 10, [[sendCommand("gg")]] )
 				-- tempTimer( 15, [[sendCommand("se")]] )
+			else
+				tempTimer( 5, [[sendCommand("version")]] )
+				tempTimer( 10, [[sendCommand("gg")]] )
 			end
 
 			if not botman.sysDisconnectionID then

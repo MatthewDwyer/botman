@@ -10,10 +10,25 @@
 local shortHelp = false
 local skipHelp = false
 local tmp = {}
-local debug, prefix, suffix
+local debug
+
+gmsg_coppi_version = 6.3
 
 -- enable debug to see where the code is stopping. Any error will be after the last debug line.
 debug = false -- should be false unless testing
+
+function listPlayerBed(cmd)
+	local temp
+
+	temp = string.split(cmd, " ")
+	return "cpm-listbedplayer " .. temp[2]
+end
+
+
+function listPlayerFriends(steam)
+	sendCommand("cpm-listfriendsplayer " .. steam)
+end
+
 
 -- Fisher-Yates shuffle from http://santos.nfshost.com/shuffling.html
 local function shuffle(t)
@@ -78,10 +93,10 @@ local function makeMaze(w, h, xPos, yPos, zPos, wall, fill, tall)
   for i = 1, h*2+1 do
     for j = 1, w*2+1 do
       if map[i][j] then
-		cmd = prefix .. "pblock " .. wall .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1 .. suffix
+		cmd = "cpm-fblock " .. wall .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1
 		if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (0, '" .. escape(cmd) .. "')") end
       else
-		cmd = prefix .. "pblock " .. fill .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1 .. suffix
+		cmd = "cpm-fblock " .. fill .. " " .. xPos + i .. " " .. xPos + i+1 .. " " .. yPos .. " " .. yPos + tall - 1 .. " " .. zPos + j .. " " .. zPos + j+1
 		if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (0, '" .. escape(cmd) .. "')") end
       end
     end
@@ -94,43 +109,14 @@ local function renderMaze(wallBlock, x, y, z, width, length, height, fillBlock)
 	makeMaze(width, length, x, y, z, wallBlock, fillBlock, height)
 end
 
-function mutePlayer(steam)
-	sendCommand(prefix .. "mpc " .. steam .. " true")
-	players[steam].mute = true
-	irc_chat(server.ircMain, players[steam].name .. "'s chat has been muted :D")
-	message("pm " .. steam .. " [" .. server.warnColour .. "]Your chat has been muted.[-]")
-	if botman.dbConnected then conn:execute("UPDATE players SET mute = 1 WHERE steam = " .. steam) end
-end
-
-
-function unmutePlayer(steam)
-	sendCommand(prefix .. "mpc " .. steam .. " false")
-	players[steam].mute = false
-	irc_chat(server.ircMain, players[steam].name .. "'s chat is no longer muted D:")
-	message("pm " .. steam .. " [" .. server.chatColour .. "]Your chat is no longer muted.[-]")
-	if botman.dbConnected then conn:execute("UPDATE players SET mute = 0 WHERE steam = " .. steam) end
-end
-
 
 function gmsg_coppi()
 	calledFunction = "gmsg_coppi"
-	prefix = ""
-	suffix = " 0"
 	result = false
 	tmp = {}
 
 	if botman.debugAll then
 		debug = true -- this should be true
-	end
-
-	if server.coppiRelease == "Mod Coppis command additions Light" or tonumber(server.coppiVersion) > 4.4 then
-		prefix = "cp-"
-		suffix = ""
-	end
-
-	if server.csmm then
-		prefix = ""
-		suffix = ""
 	end
 
 -- ################## coppi's command functions ##################
@@ -206,10 +192,10 @@ function gmsg_coppi()
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]You haven't marked an area called " .. tmp.name .. ". Please do that first.[-]")
 			else
 				if chatvars.words[2] == "protect" then
-					sendCommand(prefix .. "safe add " .. prefabCopies[chatvars.playerid .. tmp.name].x1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].x2 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].y1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].y2 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].z1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].z2)
+					sendCommand("cpm-tprotect add " .. prefabCopies[chatvars.playerid .. tmp.name].x1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].x2 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].y1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].y2 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].z1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].z2)
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You added trader protection on a marked area called " .. tmp.name .. ".[-]")
 				else
-					sendCommand(prefix .. "safe del " .. prefabCopies[chatvars.playerid .. tmp.name].x1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].x2 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].y1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].y2 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].z1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].z2)
+					sendCommand("cpm-tprotect del " .. prefabCopies[chatvars.playerid .. tmp.name].x1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].x2 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].y1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].y2 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].z1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].z2)
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You removed trader protection on a marked area called " .. tmp.name .. ".[-]")
 				end
 			end
@@ -583,19 +569,19 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].y2 = prefabCopies[tmp.prefab].y2
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = prefabCopies[tmp.prefab].z1
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = prefabCopies[tmp.prefab].z2
-				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
+				sendCommand("cpm-bexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
 				if chatvars.words[1] == "dig" then
 					if tmp.newblock then
-						sendCommand(prefix .. "prepblock " .. tmp.newblock .. " air " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].z2 .. suffix)
+						sendCommand("cpm-fblock " .. tmp.newblock .. " air " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].z2)
 					else
-						sendCommand(prefix .. "pblock air " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].z2 .. suffix)
+						sendCommand("cpm-fblock air " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].z2)
 					end
 				else
 					if tmp.newblock then
-						sendCommand(prefix .. "prepblock " .. tmp.newblock .. " " .. tmp.block .. " " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].z2 .. suffix)
+						sendCommand("cpm-fblock " .. tmp.newblock .. " " .. tmp.block .. " " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].z2)
 					else
-						sendCommand(prefix .. "pblock " .. tmp.block .. " " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].z2 .. suffix)
+						sendCommand("cpm-fblock " .. tmp.block .. " " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].z2)
 					end
 				end
 
@@ -613,20 +599,20 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].y2 = chatvars.intY - 1
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.width
-				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
+				sendCommand("cpm-bexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
 				if chatvars.words[1] == "dig" then
 					if tmp.newblock then
-					--prepblock <block_to_be_replaced> <block_name> <x1> <x2> <y1> <y2> <z1> <z2> <rot>
-						sendCommand(prefix .. "prepblock " .. tmp.newblock .. " air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					--cpm-fblock <block_to_be_replaced> <block_name> <x1> <x2> <y1> <y2> <z1> <z2> <rot>
+						sendCommand("cpm-fblock " .. tmp.newblock .. " air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 					else
-						sendCommand(prefix .. "pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+						sendCommand("cpm-fblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 					end
 				else
 					if tmp.newblock then
-						sendCommand(prefix .. "prepblock " .. tmp.newblock .. " " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+						sendCommand("cpm-fblock " .. tmp.newblock .. " " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 					else
-						sendCommand(prefix .. "pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+						sendCommand("cpm-fblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 					end
 				end
 
@@ -644,12 +630,12 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].y2 = chatvars.intY + tmp.tall - 1
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.width
-				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
+				sendCommand("cpm-bexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
 				if chatvars.words[1] == "dig" then
-					sendCommand(prefix .. "pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					sendCommand("cpm-fblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 				else
-					sendCommand(prefix .. "pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					sendCommand("cpm-fblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 				end
 
 				botman.faultyChat = false
@@ -666,12 +652,12 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].y2 = chatvars.intY - tmp.tall
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.width
-				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
+				sendCommand("cpm-bexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
 				if chatvars.words[1] == "dig" then
-					sendCommand(prefix .. "pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					sendCommand("cpm-fblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 				else
-					sendCommand(prefix .. "pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					sendCommand("cpm-fblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 				end
 
 				botman.faultyChat = false
@@ -688,12 +674,12 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall - 1
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ + 1
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.long
-				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
+				sendCommand("cpm-bexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
 				if chatvars.words[1] == "dig" then
-					sendCommand(prefix .. "pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					sendCommand("cpm-fblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 				else
-					sendCommand(prefix .. "pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					sendCommand("cpm-fblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 				end
 
 				botman.faultyChat = false
@@ -710,12 +696,12 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].y2 = tmp.base + tmp.tall - 1
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - 1
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ - tmp.long
-				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
+				sendCommand("cpm-bexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
 				if chatvars.words[1] == "dig" then
-					sendCommand(prefix .. "pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					sendCommand("cpm-fblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 				else
-					sendCommand(prefix .. "pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					sendCommand("cpm-fblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 				end
 
 				botman.faultyChat = false
@@ -733,12 +719,12 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.width
 
-				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
+				sendCommand("cpm-bexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
 				if chatvars.words[1] == "dig" then
-					sendCommand(prefix .. "pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					sendCommand("cpm-fblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 				else
-					sendCommand(prefix .. "pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					sendCommand("cpm-fblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 				end
 
 				botman.faultyChat = false
@@ -756,12 +742,12 @@ function gmsg_coppi()
 				prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - tmp.width
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + tmp.width
 
-				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
+				sendCommand("cpm-bexport " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. " " .. chatvars.playerid .. "bottemp")
 
 				if chatvars.words[1] == "dig" then
-					sendCommand(prefix .. "pblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					sendCommand("cpm-fblock air " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 				else
-					sendCommand(prefix .. "pblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2 .. suffix)
+					sendCommand("cpm-fblock " .. tmp.block .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y2 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z2)
 				end
 
 				botman.faultyChat = false
@@ -849,16 +835,16 @@ function gmsg_coppi()
 			prefabCopies[chatvars.playerid .. "bottemp"].z1 = chatvars.intZ - chatvars.number
 			prefabCopies[chatvars.playerid .. "bottemp"].z2 = chatvars.intZ + chatvars.number
 
-			sendCommand(prefix .. "pexport " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number .. " " .. chatvars.playerid .. "bottemp")
+			sendCommand("cpm-bexport " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number .. " " .. chatvars.playerid .. "bottemp")
 
 			if tmp.blockToErase ~= nil then
 				if tmp.blockToReplace == nil then
-					sendCommand(prefix .. "prepblock " .. tmp.blockToErase .. " air " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number .. suffix)
+					sendCommand("cpm-fblock " .. tmp.blockToErase .. " air " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number)
 				else
-					sendCommand(prefix .. "prepblock " .. tmp.blockToErase .. " " .. tmp.blockToReplace .. " " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number .. suffix)
+					sendCommand("cpm-fblock " .. tmp.blockToErase .. " " .. tmp.blockToReplace .. " " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number)
 				end
 			else
-				sendCommand(prefix .. "pblock air " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number .. suffix)
+				sendCommand("cpm-fblock air " .. chatvars.intX - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intZ + chatvars.number)
 			end
 
 			botman.faultyChat = false
@@ -927,7 +913,7 @@ function gmsg_coppi()
 			tmp.y2 = 2
 			tmp.z1 = chatvars.intZ - chatvars.number
 			tmp.z2 = chatvars.intZ + chatvars.number
-			sendCommand(prefix .. "pblock 12 " .. tmp.x1 .. " " .. tmp.x2 .. " " .. tmp.y1 .. " " .. tmp.y2 .. " " .. tmp.z1 .. " " .. tmp.z2 .. suffix)
+			sendCommand("cpm-fblock 12 " .. tmp.x1 .. " " .. tmp.x2 .. " " .. tmp.y1 .. " " .. tmp.y2 .. " " .. tmp.z1 .. " " .. tmp.z2)
 			botman.faultyChat = false
 			return true
 		end
@@ -1212,8 +1198,7 @@ function gmsg_coppi()
 				tmp.coords = chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ
 			end
 
-			sendCommand(prefix .. "prender " .. chatvars.playerid .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face)
-			sendCommand(prefix .. "prender " .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face)
+			sendCommand("cpm-brender " .. chatvars.playerid .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face)
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A prefab called " .. tmp.prefab .. " should have spawned.  If it didn't either the prefab isn't called " .. tmp.prefab .. " or it doesn't exist.[-]")
 			botman.faultyChat = false
 			return true
@@ -1374,7 +1359,7 @@ function gmsg_coppi()
 
 			if prefabCopies[chatvars.playerid .. chatvars.words[3]] then
 				-- first remove the original block by replacing it with air blocks
-				sendCommand(prefix .. "pblock " .. 0 ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. suffix)
+				sendCommand("cpm-fblock " .. 0 ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2)
 
 				if chatvars.words[4] == "up" then
 					prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 = prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number
@@ -1382,7 +1367,7 @@ function gmsg_coppi()
 					if botman.dbConnected then conn:execute("UPDATE prefabCopies SET y1 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number .. ", y2 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 + chatvars.number .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[3]) .. "'") end
 
 					-- render the block at its new position
-					sendCommand(prefix .. "pblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. suffix)
+					sendCommand("cpm-fblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2)
 				end
 
 				if chatvars.words[4] == "down" then
@@ -1391,7 +1376,7 @@ function gmsg_coppi()
 					if botman.dbConnected then conn:execute("UPDATE prefabCopies SET y1 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 + chatvars.number .. ", y2 = " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 + chatvars.number .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[3]) .. "'") end
 
 					-- render the block at its new position
-					sendCommand(prefix .. "pblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2 .. suffix)
+					sendCommand("cpm-fblock " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].blockName ..  " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[3]].z2)
 				end
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]No saved block called " .. chatvars.words[3] .. "[-]")
@@ -1403,64 +1388,64 @@ function gmsg_coppi()
 	end
 
 
-	local function cmd_SavePrefab()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
-			help = {}
-			help[1] = " {#}save {name}"
-			help[2] = "After marking out the area you want to copy, you can save it."
+	-- local function cmd_SavePrefab()
+		-- if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			-- help = {}
+			-- help[1] = " {#}save {name}"
+			-- help[2] = "After marking out the area you want to copy, you can save it."
 
-			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "save,prefab,coppi"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
-				registerHelp(tmp)
-			end
+			-- if botman.registerHelp then
+				-- tmp.command = help[1]
+				-- tmp.keywords = "save,prefab,coppi"
+				-- tmp.accessLevel = 2
+				-- tmp.description = help[2]
+				-- tmp.notes = ""
+				-- tmp.ingameOnly = 1
+				-- registerHelp(tmp)
+			-- end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "save") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "copy"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, help[1])
+			-- if (chatvars.words[1] == "help" and (string.find(chatvars.command, "save") or string.find(chatvars.command, "prefab") or string.find(chatvars.command, "coppi") or string.find(chatvars.command, "copy"))) or chatvars.words[1] ~= "help" then
+				-- irc_chat(chatvars.ircAlias, help[1])
 
-				if not shortHelp then
-					irc_chat(chatvars.ircAlias, help[2])
-					irc_chat(chatvars.ircAlias, ".")
-				end
+				-- if not shortHelp then
+					-- irc_chat(chatvars.ircAlias, help[2])
+					-- irc_chat(chatvars.ircAlias, ".")
+				-- end
 
-				chatvars.helpRead = true
-			end
-		end
+				-- chatvars.helpRead = true
+			-- end
+		-- end
 
-		if chatvars.words[1] == "save" and chatvars.words[2] ~= nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+		-- if chatvars.words[1] == "save" and chatvars.words[2] ~= nil then
+			-- if (chatvars.playername ~= "Server") then
+				-- if (chatvars.accessLevel > 2) then
+					-- message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					-- botman.faultyChat = false
+					-- return true
+				-- end
+			-- else
+				-- if (chatvars.accessLevel > 2) then
+					-- irc_chat(chatvars.ircAlias, "This command is restricted.")
+					-- botman.faultyChat = false
+					-- return true
+				-- end
 
-				irc_chat(chatvars.ircAlias, "You can only use this command ingame.")
-				botman.faultyChat = false
-				return true
-			end
+				-- irc_chat(chatvars.ircAlias, "You can only use this command ingame.")
+				-- botman.faultyChat = false
+				-- return true
+			-- end
 
-			if not prefabCopies[chatvars.playerid .. chatvars.words[2]] then
-				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]You haven't marked a prefab called " .. chatvars.words[2] .. ". Please do that first.[-]")
-			else
-				sendCommand(prefix .. "pexport " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].name)
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You saved a prefab called " .. chatvars.words[2] .. ".[-]")
-			end
+			-- if not prefabCopies[chatvars.playerid .. chatvars.words[2]] then
+				-- message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]You haven't marked a prefab called " .. chatvars.words[2] .. ". Please do that first.[-]")
+			-- else
+				-- sendCommand("cpm-bexport " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].x2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 .. " " .. prefabCopies[chatvars.playerid .. chatvars.words[2]].name)
+				-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You saved a prefab called " .. chatvars.words[2] .. ".[-]")
+			-- end
 
-			botman.faultyChat = false
-			return true
-		end
-	end
+			-- botman.faultyChat = false
+			-- return true
+		-- end
+	-- end
 
 
 	local function cmd_SetChatColours()
@@ -1525,7 +1510,7 @@ function gmsg_coppi()
 					end
 
 					for k,v in pairs(igplayers) do
-						sendCommand(prefix .. "cpc " .. k .. " FFFFFF 1")
+						setPlayerColour(k, "FFFFFF")
 					end
 
 					if botman.dbConnected then conn:execute("UPDATE players SET chatColour = 'FFFFFF'") end
@@ -1564,7 +1549,7 @@ function gmsg_coppi()
 					end
 
 					if tmp.pid ~= 0 then
-						sendCommand(prefix .. "cpc " .. tmp.pid .. " FFFFFF 1")
+						setPlayerColour(tmp.id, "FFFFFF")
 						players[tmp.pid].chatColour = tmp.colour
 						if botman.dbConnected then conn:execute("UPDATE players SET chatColour = 'FFFFFF' WHERE steam = " .. tmp.pid) end
 
@@ -1632,7 +1617,7 @@ function gmsg_coppi()
 
 				for k,v in pairs(igplayers) do
 					if accessLevel(k) == 99 and string.sub(players[k].chatColour, 1, 6) == "FFFFFF" then
-						sendCommand(prefix .. "cpc " .. k .. " " .. tmp.colour .. " 1")
+						setPlayerColour(k, tmp.colour)
 					end
 				end
 			end
@@ -1666,7 +1651,7 @@ function gmsg_coppi()
 					end
 
 					if tmp.pid ~= 0 then
-						sendCommand(prefix .. "cpc " .. tmp.pid .. " " .. tmp.colour .. " 1")
+						setPlayerColour(tmp.id, tmp.colour)
 						players[tmp.pid].chatColour = tmp.colour
 						if botman.dbConnected then conn:execute("UPDATE players SET chatColour = '" .. escape(tmp.colour) .. "' WHERE steam = " .. tmp.pid) end
 
@@ -1691,7 +1676,7 @@ function gmsg_coppi()
 
 					for k,v in pairs(igplayers) do
 						if accessLevel(k) == 90 and string.sub(players[k].chatColour, 1, 6) == "FFFFFF" then
-							sendCommand(prefix .. "cpc " .. k .. " " .. tmp.colour .. " 1")
+							setPlayerColour(k, tmp.colour)
 						end
 					end
 				end
@@ -1709,7 +1694,7 @@ function gmsg_coppi()
 
 				for k,v in pairs(igplayers) do
 					if (accessLevel(k) > 3 and accessLevel(k) < 11) and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
-						sendCommand(prefix .. "cpc " .. k .. " " .. tmp.colour .. " 1")
+						setPlayerColour(k, tmp.colour)
 					end
 				end
 			end
@@ -1726,7 +1711,7 @@ function gmsg_coppi()
 
 				for k,v in pairs(igplayers) do
 					if players[k].prisoner then
-						sendCommand(prefix .. "cpc " .. k .. " " .. tmp.colour .. " 1")
+						setPlayerColour(k, tmp.colour)
 					end
 				end
 			end
@@ -1743,7 +1728,7 @@ function gmsg_coppi()
 
 				for k,v in pairs(igplayers) do
 					if accessLevel(k) == 2 and string.sub(players[k].chatColour, 1, 6) == "FFFFFF" then
-						sendCommand(prefix .. "cpc " .. k .. " " .. tmp.colour .. " 1")
+						setPlayerColour(k, tmp.colour)
 					end
 				end
 			end
@@ -1760,7 +1745,7 @@ function gmsg_coppi()
 
 				for k,v in pairs(igplayers) do
 					if accessLevel(k) == 1 and string.sub(players[k].chatColour, 1, 6) == "FFFFFF" then
-						sendCommand(prefix .. "cpc " .. k .. " " .. tmp.colour .. " 1")
+						setPlayerColour(k, tmp.colour)
 					end
 				end
 			end
@@ -1777,7 +1762,7 @@ function gmsg_coppi()
 
 				for k,v in pairs(igplayers) do
 					if accessLevel(k) == 0 and string.sub(players[k].chatColour, 1, 6) == "FFFFFF" then
-						sendCommand(prefix .. "cpc " .. k .. " " .. tmp.colour .. " 1")
+						setPlayerColour(k, tmp.colour)
 					end
 				end
 			end
@@ -1932,13 +1917,13 @@ function gmsg_coppi()
 
 				if tmp.id ~= 0 then
 					if igplayers[tmp.id] then
-						sendCommand(prefix .. "sh " .. igplayers[tmp.id].xPos .. " " .. igplayers[tmp.id].yPos .. " " .. igplayers[tmp.id].zPos .. " " .. chatvars.number)
+						sendCommand("cpm-targetedhorde " .. igplayers[tmp.id].xPos .. " " .. igplayers[tmp.id].yPos .. " " .. igplayers[tmp.id].zPos .. " " .. chatvars.number)
 						irc_chat(server.ircMain, "Horde spawned by bot at " .. igplayers[tmp.id].name .. "'s position at " .. igplayers[tmp.id].xPos .. " " .. igplayers[tmp.id].yPos .. " " .. igplayers[tmp.id].zPos)
 					end
 				else
 					tmp.loc = LookupLocation(chatvars.words[3])
 					if tmp.loc ~= nil then
-						sendCommand(prefix .. "sh " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z .. " " .. chatvars.number)
+						sendCommand("cpm-targetedhorde " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z .. " " .. chatvars.number)
 						irc_chat(server.ircMain, "Horde spawned by bot at " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z)
 					end
 				end
@@ -1946,9 +1931,9 @@ function gmsg_coppi()
 				-- spawn horde on self
 				if (chatvars.playername ~= "Server") then
 					if igplayers[chatvars.playerid].horde ~= nil then
-						sendCommand(prefix .. "sh " .. igplayers[chatvars.playerid].horde .. " " .. chatvars.number)
+						sendCommand("cpm-targetedhorde " .. igplayers[chatvars.playerid].horde .. " " .. chatvars.number)
 					else
-						sendCommand(prefix .. "sh " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ .. " " .. chatvars.number)
+						sendCommand("cpm-targetedhorde " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ .. " " .. chatvars.number)
 					end
 				else
 					irc_chat(chatvars.ircAlias, "You need to be on the server or specify a player that isn't you, or a location.")
@@ -2094,7 +2079,7 @@ function gmsg_coppi()
 			end
 
 			if chatvars.words[1] == "hide" then
-				sendCommand(prefix .. "tcch " .. server.commandPrefix)
+				hidePlayerChat(server.commandPrefix)
 				if botman.dbConnected then conn:execute("UPDATE server SET hideCommands = 1") end
 
 				if (chatvars.playername ~= "Server") then
@@ -2103,7 +2088,7 @@ function gmsg_coppi()
 					irc_chat(server.ircMain, "Bot commands are now hidden from global chat.")
 				end
 			else
-				sendCommand(prefix .. "tcch")
+				hidePlayerChat()
 				if botman.dbConnected then conn:execute("UPDATE server SET hideCommands = 0") end
 
 				if (chatvars.playername ~= "Server") then
@@ -2124,7 +2109,7 @@ function gmsg_coppi()
 			help = {}
 			help[1] = " {#}undo\n"
 			help[1] = help[1] .. " {#}undo save (restores saved chunks)"
-			help[2] = "The block commands prender, pdup and pblock allow for the last command to be undone, however since more than one person can command the bot to do block commands\n"
+			help[2] = "The block commands cpm-brender, pdup and cpm-fblock allow for the last command to be undone, however since more than one person can command the bot to do block commands\n"
 			help[2] = help[2] .. "it is possible that other block commands have been done by the bot since your last block command.  If the last block command came from you, the bot will undo it.\n"
 			help[2] = help[2] .. "Undo save will restore the saved area even if Coppi's undo can't be used due to another prefab or block command being used. Note: Even this has limits."
 
@@ -2170,12 +2155,12 @@ function gmsg_coppi()
 			end
 
 			if chatvars.words[2] == "save" then
-				sendCommand(prefix .. "prender " .. chatvars.playerid .. "bottemp" .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1  .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1)
+				sendCommand("cpm-brender " .. chatvars.playerid .. "bottemp" .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].x1  .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].y1 .. " " .. prefabCopies[chatvars.playerid .. "bottemp"].z1)
 			else
-				sendCommand("pundo")
+				sendCommand("cpm-bundo")
 			end
 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Block undo command (pundo) sent. If it didn't work you don't have an undo available.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Block undo command (cpm-bundo) sent. If it didn't work you don't have an undo available.[-]")
 			botman.faultyChat = false
 			return true
 		end
@@ -2344,14 +2329,14 @@ function gmsg_coppi()
 
 	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
 
-	result = cmd_SavePrefab()
+	-- result = cmd_SavePrefab()
 
-	if result then
-		if debug then dbug("debug cmd_SavePrefab triggered") end
-		return result
-	end
+	-- if result then
+		-- if debug then dbug("debug cmd_SavePrefab triggered") end
+		-- return result
+	-- end
 
-	if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
+	-- if (debug) then dbug("debug coppi line " .. debugger.getinfo(1).currentline) end
 
 	result = cmd_LoadPrefab()
 

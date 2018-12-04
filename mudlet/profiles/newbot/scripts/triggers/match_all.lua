@@ -199,15 +199,50 @@ function matchAll(line, logDate, logTime)
 	end
 
 
-	-- if server.useAllocsWebAPI and not server.allocs then
-		-- server.useAllocsWebAPI = false
-		-- irc_chat(server.ircMain, "Alloc's mod missing or not fully installed.  The bot is using telnet.")
-	-- end
+	if string.find(line, "INF (BCM) Party:", nil, true) then -- Party time!
+		gmsg(line)
+		return
+	end
+
+
+	if string.find(line, "INF (BCM) Friends:", nil, true) then -- Friend chat
+		gmsg(line)
+		return
+	end
+
+
+	if string.find(line, "Defined webuser") then
+		botman.readTokens = true
+
+		return
+	end
+
+
+	if botman.readTokens then
+		if not string.find(line, "Defined web") then
+			if string.find(line, "bot") then
+				-- grab the current bot user's password
+				if string.find(line, "/") then
+					temp = string.split(line, "/")
+					server.allocsWebAPIPasswordNew = server.allocsWebAPIPassword
+					server.allocsWebAPIPassword = string.trim(temp[2])
+				end
+			end
+		end
+	end
+
+
+	if string.find(line, "Web user with name=bot", nil, true) then
+		server.allocsWebAPIPassword = server.allocsWebAPIPasswordNew
+
+		return
+	end
 
 
 	if string.find(line, "*** ERROR: unknown command 'webtokens'") then -- revert to using telnet
 		if server.useAllocsWebAPI then
 			server.useAllocsWebAPI = false
+			conn:execute("UPDATE server set useAllocsWebAPI = 0")
 			irc_chat(server.ircMain, "Alloc's mod missing or not fully installed.  The bot is using telnet.")
 		end
 
@@ -235,23 +270,23 @@ function matchAll(line, logDate, logTime)
 		end
 	end
 
-	-- fix deathloop
-	if server.coppi and (tonumber(server.coppiVersion) > 4.4 or server.coppiRelease == "Mod Coppis command additions Light") then
-		if string.find(line, "Spawned entity with wrong pos") then
-			if string.find(line, "type=EntityPlayer") then
-				temp = string.split(line, ",")
+	-- -- fix deathloop
+	-- if server.coppi and (tonumber(server.coppiVersion) > 4.4 or server.coppiRelease == "Mod Coppis command additions Light") then
+		-- if string.find(line, "Spawned entity with wrong pos") then
+			-- if string.find(line, "type=EntityPlayer") then
+				-- temp = string.split(line, ",")
 
-				pname = string.sub(temp[2], string.find(temp[2], "=") + 1)
-				pid = LookupPlayer(string.trim(pname))
+				-- pname = string.sub(temp[2], string.find(temp[2], "=") + 1)
+				-- pid = LookupPlayer(string.trim(pname))
 
-				if pid ~= 0 then
-					sendCommand("fdl " .. pid)
+				-- if pid ~= 0 then
+					-- sendCommand("fdl " .. pid)
 
-					irc_chat(server.ircAlerts, "Fixed death loop for player " ..  igplayers[pid].name)
-				end
-			end
-		end
-	end
+					-- irc_chat(server.ircAlerts, "Fixed death loop for player " ..  igplayers[pid].name)
+				-- end
+			-- end
+		-- end
+	-- end
 
 	if string.find(line, "WRN ") then
 		deleteLine()
@@ -279,6 +314,10 @@ function matchAll(line, logDate, logTime)
 
 	if not server.useAllocsWebAPI then
 		if (string.sub(line, 1, 4) == os.date("%Y")) then
+			if botman.readTokens then
+				botman.readTokens = false
+			end
+
 			if botman.readGG then
 				botman.readGG = false
 			end
@@ -318,9 +357,11 @@ function matchAll(line, logDate, logTime)
 
 	-- grab steam ID of player joining server if the server is using reserved slots
 	if tonumber(server.reservedSlots) > 0 then
-		if string.find(line, "INF Steam auth") then
+		if string.find(line, "INF Steam authentication successful") then
 			temp = string.split(line, ",")
 			pid = string.sub(temp[3], 12, string.len(temp[3]) -1)
+
+			playerConnected(line)
 
 			-- check the slots and how full the server is try to kick a player from a reserved slot
 			if players[pid].reserveSlot == true or players[pid].accessLevel < 11 then
@@ -328,10 +369,6 @@ function matchAll(line, logDate, logTime)
 					freeReservedSlot()
 				end
 			end
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -517,10 +554,6 @@ function matchAll(line, logDate, logTime)
 				getAdminList = nil
 				removeOldStaff()
 
-				-- if not debug then
-					-- deleteLine()
-				-- end
-
 				return
 			end
 		end
@@ -578,10 +611,6 @@ function matchAll(line, logDate, logTime)
 				playerListItems = nil
 			end
 
-			-- if not debug then
-				-- deleteLine()
-			-- end
-
 			return
 		end
 
@@ -590,10 +619,6 @@ function matchAll(line, logDate, logTime)
 			if string.sub(string.trim(line), 1, 5) == "Slot " then
 				ircListItems = nil
 			end
-
-			-- if not debug then
-				-- deleteLine()
-			-- end
 
 			return
 		end
@@ -615,18 +640,21 @@ function matchAll(line, logDate, logTime)
 
 		-- collect the ban list
 		if collectBans then
-			if not string.find(line, "banned until") then
-				temp = string.split(line, "-")
-				bannedTo = string.trim(temp[1] .. "-" .. temp[2] .. "-" .. temp[3])
-				steam = string.trim(temp[4])
-				reason = string.trim(temp[5])
+			if not string.find(line, "Reason") then
+				if string.find(line, "-") then
+					temp = string.split(line, "-")
 
-				if botman.dbConnected then
-					conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. bannedTo .. "', '%Y-%m-%d %H:%i:%s'))")
+					bannedTo = string.trim(temp[1] .. "-" .. temp[2] .. "-" .. temp[3])
+					steam = string.trim(temp[4])
+					reason = string.trim(temp[5])
 
-					if players[steam] then
-						-- also insert the steam owner (will only work if the steam id is different)
-						conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. players[steam].steamOwner .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. bannedTo .. "', '%Y-%m-%d %H:%i:%s'))")
+					if botman.dbConnected then
+						conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. bannedTo .. "', '%Y-%m-%d %H:%i:%s'))")
+
+						if players[steam] then
+							-- also insert the steam owner (will only work if the steam id is different)
+							conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. players[steam].steamOwner .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. bannedTo .. "', '%Y-%m-%d %H:%i:%s'))")
+						end
 					end
 				end
 			end
@@ -1170,10 +1198,10 @@ function matchAll(line, logDate, logTime)
 
 		temp = string.split(line, ":")
 		server.coppiRelease = temp[1]
-		server.coppiVersion = temp[2]
+		server.coppiVersion = tonumber(temp[2])
 
 		if server.hideCommands then
-			sendCommand("tcch " .. server.commandPrefix)
+			hidePlayerChat(server.commandPrefix)
 		end
 
 		return
@@ -1187,10 +1215,15 @@ function matchAll(line, logDate, logTime)
 
 		temp = string.split(line, ":")
 		server.coppiRelease = temp[1]
-		server.coppiVersion = temp[2]
+		server.coppiVersion = tonumber(temp[2])
+
+		if not isFile(homedir .. "/blockScripts.txt") then
+			os.remove(homedir .. "/scripts/chat/gmsg_coppi.lua")
+			os.execute("wget http://www.botman.nz/FUP/Coppis\\ command\\ additions\\ Light/gmsg_coppi.lua -P \"" .. homedir .. "\"/scripts/chat/")
+		end
 
 		if server.hideCommands then
-			sendCommand("tcch " .. server.commandPrefix)
+			hidePlayerChat(server.commandPrefix)
 		end
 
 		return
@@ -1269,7 +1302,7 @@ function matchAll(line, logDate, logTime)
 		if botman.dbConnected then conn:execute("UPDATE server SET gameVersion = '" .. escape(server.gameVersion) .. "'") end
 
 		temp = string.split(server.gameVersion, " ")
-		server.gameVersionNumber = temp[2]
+		server.gameVersionNumber = tonumber(temp[2])
 
 		return
 	end

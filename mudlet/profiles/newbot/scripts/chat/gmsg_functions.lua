@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local debug, result, x, z, id, pname, noWaypoint, temp, chatStringStart, cmd, msg, test, ircMsg
+local debug, result, x, z, id, pname, noWaypoint, temp, chatStringStart, cmd, msg, test, ircMsg, chatFlag
 
 -- enable debug to see where the code is stopping. Any error will be after the last debug line.
 debug = false -- should be false unless testing
@@ -491,7 +491,7 @@ end
 function logBotCommand(commandTime, commandLine)
 	local file
 
-	if botman.webdavFolderWriteable == false or string.find(commandLine, "password") or string.find(commandLine, "invite code") or string.find(commandLine, "webtokens") then
+	if botman.webdavFolderWriteable == false or string.find(commandLine, "password") or string.find(commandLine, "invite code") or string.find(commandLine, "webtokens") or string.find(string.lower(commandLine), " api ") then
 		return
 	end
 
@@ -716,18 +716,53 @@ function gmsg(line, ircid)
 	chatvars.ircAlias = ""
 	chatvars.helpRead = false
 	chatvars.playername = ""
+	chatFlag = ""
 
-	if debug then dbug("gmsg chatvars.accessLevel " .. chatvars.accessLevel) end
+	if tonumber(server.gameVersionNumber) < 17 then
+		if string.find(line, "Chat: ", nil, true) then
+			msg = string.sub(line, string.find(line, "Chat: ") + 6)
+			temp = string.split(msg, ":")
+			chatvars.playername = stripQuotes(temp[1])
 
-	if string.find(line, "Chat: ", nil, true) then
-		msg = string.sub(line, string.find(line, "Chat: ") + 6)
-		temp = string.split(msg, ":")
-		chatvars.playername = stripQuotes(temp[1])
+			if temp[3] then
+				chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
+			else
+				chatvars.command = temp[2]
+			end
+		end
+	else
+		if string.find(line, "'Global'): ", nil, true) then
+			msg = string.sub(line, string.find(line, "'Global'): ") + 11)
+			temp = string.split(msg, ":")
+			chatvars.playername = stripQuotes(temp[1])
 
-		if temp[3] then
-			chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
-		else
-			chatvars.command = temp[2]
+			if temp[3] then
+				chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
+			else
+				chatvars.command = temp[2]
+			end
+		end
+
+		if string.find(line, "INF (BCM) Party", nil, true) then
+			chatFlag = "(P) "
+			msg = string.sub(line, string.find(line, "INF (BCM) Party", nil, true) + 16)
+			temp = string.split(msg, ":")
+			chatvars.playername = stripQuotes(temp[1])
+
+			if temp[3] then
+				chatvars.command = string.trim(temp[3])
+			end
+		end
+
+		if string.find(line, "INF (BCM) Friends", nil, true) then
+			chatFlag = "(F) "
+			msg = string.sub(line, string.find(line, "INF (BCM) Friends", nil, true) + 18)
+			temp = string.split(msg, ":")
+			chatvars.playername = stripQuotes(temp[1])
+
+			if temp[3] then
+				chatvars.command = string.trim(temp[3])
+			end
 		end
 	end
 
@@ -840,9 +875,9 @@ function gmsg(line, ircid)
 		chatvars.command = string.trim(msg)
 		chatvars.accessLevel = tonumber(accessLevel(chatvars.playerid))
 
-		ircMsg = server.gameDate .. " " .. chatvars.command
+		ircMsg = server.gameDate .. " " .. chatFlag .. " " ..  chatvars.command
 	else
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+		if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 		if string.find(chatvars.oldLine, "'Server':", nil, true) and not string.find(line, "-irc:") then
 			chatvars.playername = "Server"
@@ -854,16 +889,16 @@ function gmsg(line, ircid)
 				temp = string.gsub(chatvars.playername, "%[[%/%!]-[^%[%]]-]", "") .. ": " .. string.sub(chatvars.command, 1, 200)
 				temp = string.gsub(temp, "%[[%/%!]-[^%[%]]-]", "")
 
-				ircMsg = server.gameDate .. " " .. temp
+				ircMsg = server.gameDate .. " " .. chatFlag .. " " ..  temp
 				messageIRC()
 
 				temp = string.sub(chatvars.command, 201)
 				temp = string.gsub(temp, "%[[%/%!]-[^%[%]]-]", "")
 
-				ircMsg = server.gameDate .. " " .. temp
+				ircMsg = server.gameDate .. " " .. chatFlag .. " " ..  temp
 			else
 				if not string.find(chatvars.command, server.commandPrefix .. "accept") and not string.find(chatvars.command, server.commandPrefix .. "poke") then
-					ircMsg = server.gameDate .. " " .. string.gsub(chatvars.playername, "%[[%/%!]-[^%[%]]-]", "") .. ": " .. string.gsub(chatvars.command, "%[[%/%!]-[^%[%]]-]", "")
+					ircMsg = server.gameDate .. " " .. chatFlag .. " " ..  string.gsub(chatvars.playername, "%[[%/%!]-[^%[%]]-]", "") .. ": " .. string.gsub(chatvars.command, "%[[%/%!]-[^%[%]]-]", "")
 				end
 			end
 		end
@@ -1500,13 +1535,26 @@ function gmsg(line, ircid)
 		return true
 	end
 
-	if server.coppi then
-		if debug then dbug("debug entering gmsg_coppi") end
-		result = gmsg_coppi()
+	-- make Stompy's BC mod override Coppi/CPM mod commands wherever they clash
+	if server.stompy then
+		if debug then dbug("debug entering gmsg_stompy") end
+		result = gmsg_stompy()
 
 		if result then
-			if debug then dbug("debug ran command in gmsg_coppi") end
+			if debug then dbug("debug ran command in gmsg_stompy") end
 			return true
+		end
+	end
+
+	if server.coppi then
+		if debug then dbug("debug entering gmsg_coppi") end
+		if gmsg_coppi ~= nil then
+			result = gmsg_coppi()
+
+			if result then
+				if debug then dbug("debug ran command in gmsg_coppi") end
+				return true
+			end
 		end
 	end
 
@@ -1516,16 +1564,6 @@ function gmsg(line, ircid)
 
 		if result then
 			if debug then dbug("debug ran command in gmsg_djkrose") end
-			return true
-		end
-	end
-
-	if server.stompy then
-		if debug then dbug("debug entering gmsg_stompy") end
-		result = gmsg_stompy()
-
-		if result then
-			if debug then dbug("debug ran command in gmsg_stompy") end
 			return true
 		end
 	end

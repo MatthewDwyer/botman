@@ -7,6 +7,125 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+-- a17 items done
+
+function startUsingAllocsWebAPI()
+	server.useAllocsWebAPI = true
+
+	-- verify that the web API is working for us
+	botman.oldAPIPort = server.webPanelPort
+	botman.testAPIPort = server.webPanelPort
+	message("pm APItest \"test\"")
+	tempTimer( 7, [[checkAPIWorking()]] )
+end
+
+function removeEntityCommand(entityID)
+	if server.stompy then
+		sendCommand("bc-remove " .. entityID)
+		return
+	end
+
+	if server.coppi then
+		sendCommand("cpm-entityremove " .. entityID)
+		return
+	end
+end
+
+
+function hidePlayerChat(prefix)
+	if server.stompy then
+		if prefix then
+			sendCommand("bc-chatprefix " .. prefix)
+		else
+			sendCommand("bc-chatprefix \"\"")
+		end
+
+		return
+	end
+
+	if server.coppi then
+		if prefix then
+			sendCommand("cpm-hidechatcommand " .. prefix)
+		else
+			sendCommand("cpm-hidechatcommand")
+		end
+
+		return
+	end
+end
+
+
+function mutePlayerChat(steam, toggle)
+	if server.stompy then
+		sendCommand("bc-mute " .. steam .. " " .. toggle)
+		return
+	end
+
+	if server.coppi then
+		sendCommand("cpm-mutechatplayer " .. steam .. " " .. toggle)
+		return
+	end
+end
+
+
+function mutePlayer(steam)
+	mutePlayerChat(steam, "true")
+	players[steam].mute = true
+	irc_chat(server.ircMain, players[steam].name .. "'s chat has been muted :D")
+	message("pm " .. steam .. " [" .. server.warnColour .. "]Your chat has been muted.[-]")
+	if botman.dbConnected then conn:execute("UPDATE players SET mute = 1 WHERE steam = " .. steam) end
+end
+
+
+function unmutePlayer(steam)
+	mutePlayerChat(steam, "false")
+	players[steam].mute = false
+	irc_chat(server.ircMain, players[steam].name .. "'s chat is no longer muted D:")
+	message("pm " .. steam .. " [" .. server.chatColour .. "]Your chat is no longer muted.[-]")
+	if botman.dbConnected then conn:execute("UPDATE players SET mute = 0 WHERE steam = " .. steam) end
+end
+
+
+function unlockAll(steam)
+	if server.stompy then
+		sendCommand("bc-unlockall " .. igplayers[steam].chunkX .. " " .. igplayers[steam].chunkZ)
+		return
+	end
+end
+
+
+function setPlayerChatLimit(steam, length)
+	if server.stompy then
+		sendCommand("bc-chatmax " .. length)
+		return
+	end
+
+	if server.coppi then
+		sendCommand("cpm-playerchatmaxlength " .. steam .. " " .. length)
+		return
+	end
+end
+
+
+function setPlayerColour(steam, colour)
+	colour = string.lower(colour)
+
+	if server.stompy then
+		sendCommand("bc-chatcolor " .. steam .. " " .. colour .. " false")
+
+		if colour == "ffffff" then
+			sendCommand("bc-chatcolor " .. steam .. " clear")
+		end
+
+		return
+	end
+
+	if server.coppi then
+		sendCommand("cpm-playerchatcolor " .. steam .. " " .. colour .. " 1")
+		return
+	end
+end
+
 
 function getBackupFiles(path)
 	local file, str
@@ -331,14 +450,14 @@ end
 function readServerVote(steam)
 	local file, fileSize, ln, url, result
 
-	fileSize = lfs.attributes (homedir .. "/temp/voteCheck.txt", "size")
+	fileSize = lfs.attributes (homedir .. "/temp/voteCheck_" .. steam .. ".txt", "size")
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
 		return
 	end
 
-	file = io.open(homedir .. "/temp/voteCheck.txt", "r")
+	file = io.open(homedir .. "/temp/voteCheck_" .. steam .. ".txt", "r")
 
 	for ln in file:lines() do
 		if ln == "0" then
@@ -351,8 +470,8 @@ function readServerVote(steam)
 		if ln == "1" then
 			-- claim the vote
 			url = "https://7daystodie-servers.com/api/?action=post&object=votes&element=claim&key=" .. serverAPI .. "&steamid=" .. steam
-			os.remove(homedir .. "/temp/voteClaim.txt")
-			downloadFile(homedir .. "/temp/voteClaim.txt", url)
+			os.remove(homedir .. "/temp/voteClaim_" .. steam .. ".txt")
+			downloadFile(homedir .. "/temp/voteClaim_" .. steam .. ".txt", url)
 
 			-- reward the player.  Good Player!  Have a biscuit.
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Thanks for voting for us!  Your reward should spawn beside you.[-]")
@@ -365,6 +484,7 @@ function readServerVote(steam)
 		if ln == "2" then
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Thanks for voting today.  You have already claimed your reward.  Vote for us tomorrow and you can claim another reward then.[-]")
 			file:close()
+			os.remove(homedir .. "/temp/voteCheck_" .. steam .. ".txt")
 
 			return
 		end
@@ -379,9 +499,8 @@ function checkServerVote(steam)
 
 	if serverAPI ~= nil then
 		url = "https://7daystodie-servers.com/api/?object=votes&element=claim&key=" .. serverAPI .. "&steamid=" .. steam
-		os.remove(homedir .. "/temp/voteCheck.txt")
-		downloadFile(homedir .. "/temp/voteCheck.txt", url)
-		tempTimer( 5, [[ readServerVote("]] .. steam .. [[") ]] )
+		os.remove(homedir .. "/temp/voteCheck_" .. steam .. ".txt")
+		downloadFile(homedir .. "/temp/voteCheck_" .. steam .. ".txt", url)
 	end
 end
 
@@ -676,30 +795,96 @@ function canSetWaypointHere(steam, x, z)
 end
 
 
+function updateGimmeForA17()
+	local rowGimme, rowSpawnable, cursorGimme, cursorSpawnable, errorString, rows
+
+	if botman.dbConnected then
+		-- walk the gimmePrizes table and check that each item exists in the table spawnableItems
+		-- If they don't match, update the gimme prize so it matches spawnableItems
+		cursorGimme,errorString = conn:execute("SELECT * FROM gimmePrizes")
+		rowGimme = cursorGimme:fetch({}, "a")
+
+		while rowGimme do
+			cursorSpawnable,errorString = conn:execute("SELECT * FROM spawnableItems WHERE itemName like '%" .. rowGimme.name .. "'")
+			rowSpawnable = cursorSpawnable:fetch({}, "a")
+
+			if rowSpawnable then
+				rows = cursorSpawnable:numrows()
+
+				-- don't do anything if more than 1 match is found.
+				if tonumber(rows) == 1 then
+					if rowGimme.name ~= rowSpawnable.itemName and rowSpawnable.itemName ~= "" then
+
+						conn:execute("UPDATE gimmePrizes SET name = '" .. escape(rowSpawnable.itemName) .. "' WHERE name = '" .. escape(rowGimme.name) .. "'")
+					end
+				end
+			else
+				-- item doesn't exist in A17.  Delete delete delete.
+				conn:execute("DELETE FROM gimmePrizes WHERE name = '" .. escape(rowGimme.name) .. "'")
+			end
+
+			rowGimme = cursorGimme:fetch(rowGimme, "a")
+		end
+	end
+end
+
+
+function updateShopItemsForA17()
+	-- walk the shop table and check that each item exists in the table spawnableItems
+	-- If they don't match, update the shop item so it matches spawnableItems
+	-- If the item doesn't exist in A17 delete it from the shop
+
+	local rowShop, rowSpawnable, cursorShop, cursorSpawnable, errorString, rows
+
+	if botman.dbConnected then
+
+		cursorShop,errorString = conn:execute("SELECT * FROM shop")
+		rowShop = cursorShop:fetch({}, "a")
+
+		while rowShop do
+			cursorSpawnable,errorString = conn:execute("SELECT * FROM spawnableItems WHERE itemName like '%" .. rowShop.item .. "'")
+			rowSpawnable = cursorSpawnable:fetch({}, "a")
+
+			if rowSpawnable then
+				rows = cursorSpawnable:numrows()
+
+				-- don't do anything if more than 1 match is found.
+				if rows == 1 then
+					if rowShop.item ~= rowSpawnable.itemName then
+						conn:execute("UPDATE shop SET item = '" .. escape(rowSpawnable.itemName) .. "' WHERE item = '" .. escape(rowShop.item) .. "'")
+					end
+				end
+			else
+				-- item doesn't exist in A17.  Delete delete delete.
+				conn:execute("DELETE FROM shop WHERE item = '" .. escape(rowShop.item) .. "'")
+			end
+
+			rowShop = cursorShop:fetch(rowShop, "a")
+		end
+	end
+end
+
+
 function removeInvalidItems()
-	-- remove invalid items from gimmePrizes
-	conn:execute("DELETE FROM `gimmePrizes` WHERE name NOT IN (select itemName from spawnableItems)")
+	-- update shop item names to match case of itemName in spawnableItems
+	conn:execute("UPDATE shop INNER JOIN spawnableItems ON spawnableItems.itemName = shop.item SET shop.item = spawnableItems.itemName")
 
 	-- update gimmePrizes prize names to match case of itemName in spawnableItems
 	conn:execute("UPDATE gimmePrizes INNER JOIN spawnableItems ON spawnableItems.itemName = gimmePrizes.name SET gimmePrizes.name = spawnableItems.itemName")
 
-	-- remove invalid items from the shop
-	conn:execute("DELETE FROM `shop` WHERE item NOT IN (select itemName from spawnableItems)")
-
-	-- update shop item names to match case of itemName in spawnableItems
-	conn:execute("UPDATE shop INNER JOIN spawnableItems ON spawnableItems.itemName = shop.item SET shop.item = spawnableItems.itemName")
-
-	-- remove invalid items from badItems
-	conn:execute("DELETE FROM `badItems` WHERE item NOT IN (select itemName from spawnableItems)")
-
-	-- update badItems item name to match case of itemName in spawnableItems
+	-- update item names in badItems to match case of itemName in spawnableItems
 	conn:execute("UPDATE badItems INNER JOIN spawnableItems ON spawnableItems.itemName = badItems.item SET badItems.item = spawnableItems.itemName")
-
-	-- remove invalid items from restrictedItems
-	conn:execute("DELETE FROM `restrictedItems` WHERE item NOT IN (select itemName from spawnableItems)")
 
 	-- update restrictedItems item name to match case of itemName in spawnableItems
 	conn:execute("UPDATE restrictedItems INNER JOIN spawnableItems ON spawnableItems.itemName = restrictedItems.item SET restrictedItems.item = spawnableItems.itemName")
+
+	-- try to convert shop items to A17
+	if math.floor(server.gameVersionNumber) == 17 then
+		updateShopItemsForA17()
+		updateGimmeForA17()
+	end
+
+	-- don't remove anything from the tables, badItems or restrictedItems as those can contain wildcards
 
 	-- refresh the restrictedItems table
 	loadRestrictedItems()
@@ -721,12 +906,11 @@ function collectSpawnableItemsList()
 		conn:execute("UPDATE shop SET validated = 1")
 	end
 
-	sendCommand("li a")
-	tempTimer( 10, [[sendCommand("li e"))]] )
-	tempTimer( 20, [[sendCommand("li i"))]] )
-	tempTimer( 30, [[sendCommand("li o"))]] )
-	tempTimer( 40, [[sendCommand("li u"))]] )
-	tempTimer( 50, [[sendCommand("pm bot_RemoveInvalidItems"))]] )
+	sendCommand("li *")
+
+	if not server.useAllocsWebAPI then
+		tempTimer( 30, [[sendCommand("pm bot_RemoveInvalidItems \"test\""))]] )
+	end
 end
 
 
@@ -815,7 +999,8 @@ function setChatColour(steam, level)
 
 	if players[steam].prisoner then
 		if string.upper(server.chatColourPrisoner) ~= "FFFFFF" then
-			sendCommand("cpc " .. steam .. " " .. server.chatColourPrisoner .. " 1")
+
+			setPlayerColour(steam, server.chatColourPrisoner)
 			return -- force prison colour
 		end
 	end
@@ -829,33 +1014,33 @@ function setChatColour(steam, level)
 	-- change the colour of the player's name
 	if players[steam].chatColour ~= "" then
 		if string.upper(string.sub(players[steam].chatColour, 1, 6)) ~= "FFFFFF" then
-			sendCommand("cpc " .. steam .. " " .. stripAllQuotes(players[steam].chatColour) .. " 1")
+			setPlayerColour(steam, stripAllQuotes(players[steam].chatColour))
 			return
 		end
 	end
 
 	if (access > 3 and access < 11) then
-		sendCommand("cpc " .. steam .. " " .. server.chatColourDonor .. " 1")
+		setPlayerColour(steam, server.chatColourDonor)
 	end
 
 	if access == 0 then
-		sendCommand("cpc " .. steam .. " " .. server.chatColourOwner .. " 1")
+		setPlayerColour(steam, server.chatColourOwner)
 	end
 
 	if access == 1 then
-		sendCommand("cpc " .. steam .. " " .. server.chatColourAdmin .. " 1")
+		setPlayerColour(steam, server.chatColourAdmin)
 	end
 
 	if access == 2 then
-		sendCommand("cpc " .. steam .. " " .. server.chatColourMod .. " 1")
+		setPlayerColour(steam, server.chatColourMod)
 	end
 
 	if access == 90 then
-		sendCommand("cpc " .. steam .. " " .. server.chatColourPlayer .. " 1")
+		setPlayerColour(steam, server.chatColourPlayer)
 	end
 
 	if access == 99 then
-		sendCommand("cpc " .. steam .. " " .. server.chatColourNewPlayer .. " 1")
+		setPlayerColour(steam, server.chatColourNewPlayer)
 	end
 end
 
@@ -1346,7 +1531,10 @@ function restrictedCommandMessage()
 		if r == 11 then return("Give up.  You aren't using this command.") end
 
 		if r == 12 then
-			sendCommand("give " .. igplayers[chatvars.playerid].id .. " turd 1")
+			if tonumber(server.gameVersionNumber) < 17 then
+				sendCommand("give " .. igplayers[chatvars.playerid].id .. " turd 1")
+			end
+
 			return("I don't give a shit. That was a lie, but you're still not using this command.")
 		end
 
@@ -1359,6 +1547,8 @@ end
 
 
 function downloadHandler(event, ...)
+	local steam
+
    if event == "sysDownloadDone" then
 		-- if string.find(..., "version.txt") then
 			-- finishDownload(...)
@@ -1372,6 +1562,11 @@ function downloadHandler(event, ...)
 			if customAPIHandler(...) then
 				return
 			end
+		end
+
+		if string.find(..., "gmsg_coppi.lua") then
+			dofile(homedir .. "/scripts/chat/gmsg_coppi.lua")
+			return
 		end
 
 		if string.find(..., "adminList.txt") then
@@ -1494,6 +1689,19 @@ function downloadHandler(event, ...)
 			return
 		end
 
+		if string.find(..., "voteCheck_") then
+			-- check vote response from 7daystodie-servers.com
+			steam = string.sub(..., string.find(..., "voteCheck_") + 10, string.find(..., ".txt") - 1)
+			readServerVote(steam)
+			return
+		end
+
+		if string.find(..., "voteClaim_") then
+			-- we don't need to process or keep this file.  Just delete it.
+			os.remove(...)
+			return
+		end
+
    elseif event == "sysDownloadError" then
 	   failDownload(event, ...) -- Oh no!  Critical failure!
 	end
@@ -1501,12 +1709,13 @@ end
 
 
 function failDownload(event, filePath)
-	if string.find(filePath, "Forbidden") then
-		dbug("webtoken password has been reset")
-		server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
-		conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
-		sendCommand("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
-	end
+	-- if string.find(filePath, "Forbidden") then
+		-- dbug("failDownload - webtoken password has been reset")
+		-- server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+		-- conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+		-- os.remove(homedir .. "/temp/dummy.txt")
+		-- send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+	-- end
 end
 
 
@@ -1633,23 +1842,43 @@ function atHome(steam)
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Dinner's on the floor.[-]")
 			r = rand(5)
 			if r == 1 then
-				sendCommand("give " .. steam .. " canDogfood 1")
+				if tonumber(server.gameVersionNumber) < 17 then
+					sendCommand("give " .. steam .. " canDogfood 1") -- A16
+				else
+					sendCommand("give " .. steam .. " foodCanDogfood 1") -- A17
+				end
 			end
 
 			if r == 2 then
-				sendCommand("give " .. steam .. " canCatfood 1")
+				if tonumber(server.gameVersionNumber) < 17 then
+					sendCommand("give " .. steam .. " canCatfood 1") -- A16
+				else
+					sendCommand("give " .. steam .. " foodCanCatfood 1") -- A17
+				end
 			end
 
 			if r == 3 then
-				sendCommand("give " .. steam .. " femur 1")
+				if tonumber(server.gameVersionNumber) < 17 then
+					sendCommand("give " .. steam .. " femur 1") -- A16
+				else
+					sendCommand("give " .. steam .. " foodBakedPotato 1") -- A17
+				end
 			end
 
 			if r == 4 then
-				sendCommand("give " .. steam .. " vegetableStew 1")
+				if tonumber(server.gameVersionNumber) < 17 then
+					sendCommand("give " .. steam .. " vegetableStew 1") -- A16
+				else
+					sendCommand("give " .. steam .. " foodVegetableStew 1") -- A17
+				end
 			end
 
 			if r == 5 then
-				sendCommand("give " .. steam .. " meatStew 1")
+				if tonumber(server.gameVersionNumber) < 17 then
+					sendCommand("give " .. steam .. " meatStew 1") -- A16
+				else
+					sendCommand("give " .. steam .. " foodMeatStew 1") -- A17
+				end
 			end
 		end
 	end

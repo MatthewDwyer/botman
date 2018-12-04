@@ -88,7 +88,7 @@ function thirtySecondTimer()
 			if botman.dbConnected then conn:execute("INSERT into commandQueue (command) VALUES ('" .. cmd .. "')") end
 		else
 			if tonumber(botman.playersOnline) > 0 then
-				sendCommand("getplayerinventories", "getplayerinventories/?", "inventories.txt")
+				sendCommand("getplayerinventories", "getplayerinventories?", "inventories.txt")
 			end
 		end
 

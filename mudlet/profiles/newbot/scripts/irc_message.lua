@@ -199,7 +199,33 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (words[1] == "use" and words[2] == "telnet") then
 		server.useAllocsWebAPI = false
 		conn:execute("UPDATE server set useAllocsWebAPI = 0")
-		irc_chat(name, "The bot will connect to the server using telnet.")
+		irc_chat(name, "The bot is now using telnet.")
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if (words[1] == "use" and words[2] == "api") then
+		if tonumber(server.allocsMap) < 26 then
+			irc_chat(name, "This feature requires Allocs MapRendering and Webinterface version 26.  Your version is " .. server.allocsMap .. ".  Please update your copy of Alloc's mod.")
+			return
+		end
+
+		if tonumber(server.webPanelPort) == 0 then
+			irc_chat(name, "You must first set the web panel port. This is normally port 8080 but yours may be different.  To set it type {#}set web panel port {the port number}")
+			return
+		end
+
+		-- the message must be sent first because we change the webtoken password next which would block the message.
+		irc_chat(name, "The bot will test using Alloc's web API.")
+
+		server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+		conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+		os.remove(homedir .. "/temp/dummy.txt")
+		send("webtokens list")
+		send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+		tempTimer(5, "startUsingAllocsWebAPI()")
+
+		return
 	end
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
@@ -318,6 +344,43 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, ".")
 			irc_params = {}
 			return
+		end
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: bot info")
+		irc_chat(name, "Display basic info about the bot.")
+		irc_chat(name, ".")
+	end
+
+	if (words[1] == "bot" and words[2] == "info") then
+		-- bot name
+		irc_chat(name, "The bot is called " .. server.botName)
+
+		-- API or telnet
+		if server.useAllocsWebAPI then
+			irc_chat(name, "The bot is using Alloc's web API to command the server.")
+		else
+			irc_chat(name, "The bot is using telnet to command the server.")
+		end
+
+		-- code branch
+		if server.updateBranch ~= '' then
+			irc_chat(name, "The bot is running code from the " .. server.updateBranch .. " branch.")
+		end
+
+		-- code version
+		if server.botVersion ~= '' then
+			irc_chat(name, "The bot's code is version " .. server.botVersion)
+		end
+
+		-- bot updates enabled or not
+		if server.updateBot then
+			irc_chat(name, "The bot checks for new code daily.")
+		else
+			irc_chat(name, "Bot updates are set to happen manually using the {#}update code command")
 		end
 	end
 
@@ -2039,14 +2102,15 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(server.ircMain, "Ingame bot commands must now start with a " .. tmp.prefix)
 			message("say [" .. server.chatColour .. "]Commands now begin with a " .. server.commandPrefix .. ". To use commands such as who type " .. server.commandPrefix .. "who.[-]")
 
-			sendCommand("tcch " .. tmp.prefix)
+
+			hidePlayerChat(tmp.prefix)
 		else
 			server.commandPrefix = ""
 			conn:execute("UPDATE server SET commandPrefix = ''")
 			irc_chat(server.ircMain, "Ingame bot commands do not use a prefix and can be typed in public chat.")
 			message("say [" .. server.chatColour .. "]Bot commands are now just text.  To use commands such as who simply type who.[-]")
 
-			sendCommand("tcch")
+			hidePlayerChat()
 		end
 
 		irc_params = {}
@@ -3501,6 +3565,56 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_params = {}
 			return
 		end
+	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: set api port")
+		irc_chat(name, "Tell the bot what port the Alloc's API is using.")
+		irc_chat(name, ".")
+	end
+
+	if words[1] == "set" and words[2] == "api" and words[3] == "port" and words[4] ~= nil and (players[ircid].accessLevel == 0) then
+		if number == nil then
+			irc_chat(name, "Port number between 1 and 65535 expected.")
+			return
+		else
+			number = math.abs(number)
+		end
+
+		if tonumber(number) > 65535 then
+			irc_chat(name, "Valid ports range from 1 to 65535.")
+			return
+		end
+
+		server.webPanelPort = number
+		botman.oldAPIPort = server.webPanelPort
+		botman.testAPIPort = server.webPanelPort
+		conn:execute("UPDATE server SET webPanelPort = " .. number)
+		irc_chat(name, "You set the web panel port to " .. number)
+
+		if server.useAllocsWebAPI then
+			irc_chat(name, "The web API will now be re-tested.")
+			-- verify that the web API is working for us
+			tempTimer( 7, [[checkAPIWorking()]] )
+		end
+	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: set api key {API key from 7daystodie-servers.com}")
+		irc_chat(name, "Tell the bot your servers API key.  DO NOT do this in a public channel!\n")
+		irc_chat(name, "Your key is not logged or displayed anywhere.  It is kept out of the database too.\n")
+		irc_chat(name, "Once set, your players will be able to use the command {#}claim vote.\n")
+		irc_chat(name, ".")
+	end
+
+	if words[1] == "set" and words[2] == "api" and words[3] == "key" and words[4] ~= nil and (players[ircid].accessLevel == 0) then
+		serverAPI = wordsOld[4]
+		writeAPI()
+		irc_chat(name, "Your players can now get rewarded for voting for your server using the command {#}claim vote")
 	end
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end

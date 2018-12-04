@@ -36,7 +36,7 @@ function TenSecondTimer()
 	else
 		if tonumber(botman.playersOnline) > 0 and tonumber(botman.playersOnline) < 25 then
 			if server.coppi and tonumber(botman.playersOnline) > 0 then
-				if server.scanNoclip then
+				if server.scanNoclip and tonumber(server.gameVersionNumber) < 17 then
 					if server.coppiRelease == "Mod CSMM Patrons" then
 						sendCommand("pinc")
 					else
@@ -44,7 +44,7 @@ function TenSecondTimer()
 					end
 				end
 
-				if not server.playersCanFly then
+				if not server.playersCanFly and tonumber(server.gameVersionNumber) < 17 then
 					if server.coppiRelease == "Mod CSMM Patrons" then
 						sendCommand("cph")
 					else
@@ -55,7 +55,7 @@ function TenSecondTimer()
 
 			if (server.scanZombies or server.scanEntities) then
 				if server.useAllocsWebAPI then
-					sendCommand("gethostilelocation", "gethostilelocation/?", "hostiles.txt")
+					sendCommand("gethostilelocation", "gethostilelocation?", "hostiles.txt")
 				end
 			end
 		end

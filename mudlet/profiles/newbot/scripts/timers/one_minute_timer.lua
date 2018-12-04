@@ -355,7 +355,7 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 			if server.coppi then
 				for k, v in pairs(igplayers) do
 					if players[k].autoFriend ~= "NA" then
-						sendCommand("lpf " .. k)
+						listPlayerFriends(k)
 					end
 				end
 			end

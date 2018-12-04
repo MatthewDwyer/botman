@@ -1325,7 +1325,7 @@ function gmsg_bot()
 					irc_chat(server.ircMain, "Ingame bot commands must now start with a " .. tmp.prefix)
 				end
 
-				sendCommand("tcch " .. tmp.prefix)
+				hidePlayerChat(tmp.prefix)
 			else
 				server.commandPrefix = ""
 				conn:execute("UPDATE server SET commandPrefix = ''")
@@ -1336,7 +1336,7 @@ function gmsg_bot()
 					irc_chat(server.ircMain, "Ingame bot commands do not use a prefix such as /  Instead just type the commands as words.")
 				end
 
-				sendCommand("tcch")
+				hidePlayerChat()
 			end
 
 			botman.faultyChat = false
@@ -2221,9 +2221,9 @@ function gmsg_bot()
 				conn:execute("UPDATE server set useAllocsWebAPI = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will connect to the server using telnet.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is now using telnet.[-]")
 				else
-					irc_chat(chatvars.ircAlias, "The bot will connect to the server using telnet.")
+					irc_chat(chatvars.ircAlias, "The bot is now using telnet.")
 				end
 			else
 				if tonumber(server.allocsMap) < 26 then
@@ -2250,21 +2250,18 @@ function gmsg_bot()
 
 				-- the message must be sent first because we change the webtoken password next which would block the message.
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will attempt to connect to the server using Alloc's web API.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will test using Alloc's web API.[-]")
 				else
-					irc_chat(chatvars.ircAlias, "The bot will attempt to connect to the server using Alloc's web API.")
+					irc_chat(chatvars.ircAlias, "The bot will test using Alloc's web API.")
 				end
 
-				server.useAllocsWebAPI = true
 				server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
 				conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
-				sendCommand("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+				os.remove(homedir .. "/temp/dummy.txt")
+				send("webtokens list")
+				send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 
-				-- verify that the web API is working for us
-				botman.oldAPIPort = server.webPanelPort
-				botman.testAPIPort = nil
-				tempTimer( 2, [[message("pm APITEST testing")]] )
-				tempTimer( 5, [[checkAPIWorking()]] )
+				tempTimer(5, "startUsingAllocsWebAPI()")
 			end
 
 			botman.faultyChat = false

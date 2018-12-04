@@ -7,6 +7,8 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+-- a17 items done
+
 local debug, pickCounter -- todo: finish coding pickCounter to try to prevent any infinite loopies
 
 debug = false -- this should be false unless testing
@@ -73,23 +75,37 @@ function setupArenaPlayers(pid)
 
 			-- give arena players stuff
 			if server.stompy then
-				sendCommand("bc-give " .. k .. " firstAidBandage /c=1 /silent")
-				sendCommand("bc-give " .. k .. " spint /c=1 /silent")
-				sendCommand("bc-give " .. k .. " beer /c=1 /silent")
-				sendCommand("bc-give " .. k .. " turd /c=1 /silent")
-				sendCommand("bc-give " .. k .. " trapSpikesNew 3 /silent")
+				if tonumber(server.gameVersionNumber) < 17 then
+					sendCommand("bc-give " .. k .. " firstAidBandage /c=1 /silent") -- A16
+					sendCommand("bc-give " .. k .. " spint /c=1 /silent") -- A16
+					sendCommand("bc-give " .. k .. " beer /c=1 /silent") -- A16
+					sendCommand("bc-give " .. k .. " turd /c=1 /silent") -- A16
+					sendCommand("bc-give " .. k .. " trapSpikesNew 3 /silent") -- A16
+				else
+					sendCommand("bc-give " .. k .. " medicalFirstAidBandage /c=1 /silent") -- A17
+					sendCommand("bc-give " .. k .. " medicalSpint /c=1 /silent") -- A17
+					sendCommand("bc-give " .. k .. " drinkJarBeer /c=1 /silent") -- A17
+					sendCommand("bc-give " .. k .. " trapSpikesNew 3 /silent") -- A1617
+				end
 			else
-				sendCommand("give " .. k .. " firstAidBandage 1")
-				sendCommand("give " .. k .. " splint 1")
-				sendCommand("give " .. k .. " beer 1")
-				sendCommand("give " .. k .. " turd 1")
-				sendCommand("give " .. k .. " trapSpikesNew 3")
+				if tonumber(server.gameVersionNumber) < 17 then
+					sendCommand("give " .. k .. " firstAidBandage 1") -- A16
+					sendCommand("give " .. k .. " splint 1") -- A16
+					sendCommand("give " .. k .. " beer 1") -- A16
+					sendCommand("give " .. k .. " turd 1") -- A16
+					sendCommand("give " .. k .. " trapSpikesNew 3") -- A16
+				else
+					sendCommand("give " .. k .. " medicalFirstAidBandage 1") -- A17
+					sendCommand("give " .. k .. " medicalSplint 1") -- A17
+					sendCommand("give " .. k .. " drinkJarBeer 1") -- A17
+					sendCommand("give " .. k .. " trapSpikesNew 3") -- A1617
+				end
 			end
 
 			if server.stompy then
-				sendCommand("bc-give " .. k .. " boneShiv /c=1 /q=600 /silent")
-			else
-				sendCommand("give " .. k .. " boneShiv 1")
+				if tonumber(server.gameVersionNumber) < 17 then
+					sendCommand("bc-give " .. k .. " boneShiv /c=1 /q=600 /silent") -- A16
+				end
 			end
 
 			if server.stompy then
@@ -861,14 +877,25 @@ function gimme(pid)
 		for i = 1, 100 do
 			r = rand(7)
 
-			if (r == 1) then litter = "canEmpty" end
-			if (r == 2) then litter = "candyTin" end
-			if (r == 3) then litter = "paper" end
-			if (r == 4) then litter = "cloth" end
-			if (r == 5) then litter = "yuccaFibers" end
-			if (r == 6) then litter = "dirt" end
-			if (r == 6) then litter = "bulletCasing" end
-			if (r == 7) then litter = "emptyJar" end
+			if tonumber(server.gameVersionNumber) < 17 then
+				if (r == 1) then litter = "canEmpty" end -- A16
+				if (r == 2) then litter = "candyTin" end -- A16
+				if (r == 3) then litter = "paper" end -- A16
+				if (r == 4) then litter = "cloth" end -- A16
+				if (r == 5) then litter = "yuccaFibers" end -- A16
+				if (r == 6) then litter = "dirt" end -- A16
+				if (r == 6) then litter = "bulletCasing" end -- A16
+				if (r == 7) then litter = "emptyJar" end -- A16
+			else
+				if (r == 1) then litter = "drinkCanEmpty" end -- A17
+				if (r == 2) then litter = "resourceCandyTin" end -- A17
+				if (r == 3) then litter = "resourcePaper" end -- A17
+				if (r == 4) then litter = "resourceRockSmall" end -- A17
+				if (r == 5) then litter = "resourceYuccaFibers" end -- A17
+				if (r == 6) then litter = "resourceScrapIron" end -- A17
+				if (r == 6) then litter = "resourceBulletCasing" end -- A17
+				if (r == 7) then litter = "drinkJarEmpty" end -- A17
+			end
 
 			cmd = "give " .. pid .. " " .. litter .. " 1"
 			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
@@ -882,18 +909,34 @@ function gimme(pid)
 
 	if (r == botman.maxGimmeZombies + 5) then
 		item = rand(12)
-		if (item == 1) then prize = "canBeef" end
-		if (item == 2) then prize = "canChili" end
-		if (item == 3) then prize = "canPasta" end
-		if (item == 4) then prize = "gasCan" end
-		if (item == 5) then prize = "firstAidBandage" end
-		if (item == 6) then prize = "beer" end
-		if (item == 7) then prize = "shades" end
-		if (item == 8) then prize = "bottledWater" end
-		if (item == 9) then prize = "baconAndEggs" end
-		if (item == 10) then prize = "vegetableStew" end
-		if (item == 11) then prize = "goldenRodTea" end
-		if (item == 12) then prize = "coffee" end
+
+		if tonumber(server.gameVersionNumber) < 17 then
+			if (item == 1) then prize = "canBeef" end -- A16
+			if (item == 2) then prize = "canChili" end -- A16
+			if (item == 3) then prize = "canPasta" end -- A16
+			if (item == 4) then prize = "gasCan" end -- A16
+			if (item == 5) then prize = "firstAidBandage" end -- A16
+			if (item == 6) then prize = "beer" end -- A16
+			if (item == 7) then prize = "shades" end -- A16
+			if (item == 8) then prize = "bottledWater" end -- A16
+			if (item == 9) then prize = "baconAndEggs" end -- A16
+			if (item == 10) then prize = "vegetableStew" end -- A16
+			if (item == 11) then prize = "goldenRodTea" end -- A16
+			if (item == 12) then prize = "coffee" end -- A16
+		else
+			if (item == 1) then prize = "foodCanBeef" end -- A17
+			if (item == 2) then prize = "foodCcanChili" end -- A17
+			if (item == 3) then prize = "foodCcanPasta" end -- A17
+			if (item == 4) then prize = "ammoGasCan" end -- A17
+			if (item == 5) then prize = "medicalFirstAidBandage" end -- A17
+			if (item == 6) then prize = "drinkJarBeer" end -- A17
+			if (item == 7) then prize = "shades" end -- A17
+			if (item == 8) then prize = "drinkJarBoiledWater" end -- A17
+			if (item == 9) then prize = "foodBaconAndEggs" end -- A17
+			if (item == 10) then prize = "foodVegetableStew" end -- A17
+			if (item == 11) then prize = "drinkJarGoldenRodTea" end -- A17
+			if (item == 12) then prize = "drinkJarCoffee" end -- A17
+		end
 
 		for k, v in pairs(igplayers) do
 			if (k ~= pid) then
@@ -1245,19 +1288,27 @@ function gimme(pid)
 		if (specialDay == "valentine") then
 			z = rand(4)
 			if z == 1 then
-				sendCommand("give " .. pid .. " yellowflower 1")
+				if tonumber(server.gameVersionNumber) < 17 then
+					sendCommand("give " .. pid .. " yellowflower 1") -- A16
+				end
 			end
 
 			if z == 2 then
-				sendCommand("give " .. pid .. " plantChrysanthemum 1")
+				if tonumber(server.gameVersionNumber) < 17 then
+					sendCommand("give " .. pid .. " plantChrysanthemum 1") -- A16
+				end
 			end
 
 			if z == 3 then
-				sendCommand("give " .. pid .. " goldenrod 1")
+				if tonumber(server.gameVersionNumber) < 17 then
+					sendCommand("give " .. pid .. " goldenrod 1") -- A16
+				end
 			end
 
 			if z == 4 then
-				sendCommand("give " .. pid .. " cotton 1")
+				if tonumber(server.gameVersionNumber) < 17 then
+					sendCommand("give " .. pid .. " cotton 1") -- A16
+				end
 			end
 		end
 	else
@@ -1273,10 +1324,13 @@ function gimme(pid)
 
 				if (specialDay == "valentine") then
 					z = rand(4)
-					if z == 1 then cmd = "give " .. pid .. " yellowflower 1" end
-					if z == 2 then cmd = "give " .. pid .. " plantChrysanthemum 1" end
-					if z == 3 then cmd = "give " .. pid .. " goldenrod 1" end
-					if z == 4 then cmd = "give " .. pid .. " cotton 1" end
+
+					if tonumber(server.gameVersionNumber) < 17 then
+						if z == 1 then cmd = "give " .. pid .. " yellowflower 1" end -- A16
+						if z == 2 then cmd = "give " .. pid .. " plantChrysanthemum 1" end -- A16
+						if z == 3 then cmd = "give " .. pid .. " goldenrod 1" end -- A16
+						if z == 4 then cmd = "give " .. pid .. " cotton 1" end -- A16
+					end
 
 					conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 				end

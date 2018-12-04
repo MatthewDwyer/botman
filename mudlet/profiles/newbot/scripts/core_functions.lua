@@ -8,6 +8,41 @@
 --]]
 
 
+function getSWNECoords(x1, y1, z1, x2, y2, z2)
+	local coords = {}
+	local num -- comfortably
+
+	if x1 < x2 then
+		coords.x1 = x1
+		coords.x2 = x2
+	else
+		num = x1
+		coords.x1 = x2
+		coords.x2 = num
+	end
+
+	if y1 < y2 then
+		coords.y1 = y1
+		coords.y2 = y2
+	else
+		num = y1
+		coords.y1 = y2
+		coords.y2 = num
+	end
+
+	if z1 < z2 then
+		coords.z1 = z1
+		coords.z2 = z2
+	else
+		num = z1
+		coords.z1 = z2
+		coords.z2 = num
+	end
+
+	return coords.x1, coords.y1, coords.z1, coords.x2, coords.y2, coords.z2
+end
+
+
 function sendCommand(command, api, outputFile)
 	-- send the command to the server via Allocs web API if enabled otherwise use telnet
 
@@ -34,10 +69,15 @@ function sendCommand(command, api, outputFile)
 				outputFile = "banList.txt"
 			end
 
-			if command == "bc-go prefabs" then -- this is used to read server ticks and grab the players online.
+			if command == "bc-go prefabs" then
 				api = "executeconsolecommand?command=" .. command .. "&"
 				outputFile = "bc-go.txt"
 			end
+
+			if command == "bc-go Items /filter=Name" then
+				api = "executeconsolecommand?command=" .. command .. "&"
+				outputFile = "bc-go.txt"
+		 end
 
 			if command == "bc-time" then -- this is used to read server ticks and grab the players online.
 				api = "executeconsolecommand?command=bc-time&"
@@ -75,7 +115,7 @@ function sendCommand(command, api, outputFile)
 			end
 
 			if command == "lp" then
-				api = "getplayersonline/?"
+				api = "getplayersonline?"
 				outputFile = "playersOnline.txt"
 			end
 
@@ -121,7 +161,7 @@ function sendCommand(command, api, outputFile)
 			end
 		end
 
-		url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/" .. api .. "adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+		url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/" .. api .. "adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
 
 		if outputFile == nil then
 			outputFile = "dummy.txt"
@@ -402,55 +442,109 @@ function message(msg, steam)
 	end
 
 	if string.sub(msg, 1, 4) == "say " then
-		-- say the message in public chat
-		if server.useAllocsWebAPI then
-			if not server.allocs then
-				-- Alloc's mod is missing or not detected
-				msg = string.sub(msg, 5)
-				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=say \"" .. msg .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
-
-				if botman.dbConnected then
-					conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
-				end
-			else
-				-- Alloc's mod is installed so send all public messages as individual PM's
-				msg = string.sub(msg, 5)
-				irc_chat(server.ircMain, stripBBCodes(msg))
-
-				for k,v in pairs(igplayers) do
-					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. k .. " \"" .. msg .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
-
-					if botman.dbConnected then
-						conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
-					end
-				end
-			end
-		else
-			if not server.allocs then
-				-- Alloc's mod is missing or not detected
-				msg = "say \"" .. string.sub(msg, 5) .. "\""
-				send(msg)
-
-				if server.logBotCommands then
-					logBotCommand(botman.serverTime, msg)
-				end
-
-				metrics.commands = metrics.commands + 1
-			else
-				-- Alloc's mod is installed so send all public messages as individual PM's
-				irc_chat(server.ircMain, stripBBCodes(string.sub(msg, 5)))
-				msg = "\"" .. string.sub(msg, 5) .. "\""
-
-
-				for k,v in pairs(igplayers) do
-					send("pm " .. k .. " " .. msg)
+		if tonumber(server.gameVersionNumber) < 17 then
+			-- A16 code
+			-- say the message in public chat
+			if server.useAllocsWebAPI then
+				if not server.allocs then
+					-- Alloc's mod is missing or not detected
+					msg = "say \"" .. string.sub(msg, 5) .. "\""
+					send(msg)
 
 					if server.logBotCommands then
 						logBotCommand(botman.serverTime, msg)
 					end
 
 					metrics.commands = metrics.commands + 1
+				else
+					-- Alloc's mod is installed so send all public messages as individual PM's
+					msg = string.sub(msg, 5)
+					irc_chat(server.ircMain, stripBBCodes(msg))
+
+					for k,v in pairs(igplayers) do
+						url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=pm " .. k .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+
+						if botman.dbConnected then
+							conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+						end
+					end
 				end
+			else
+				if not server.allocs then
+					-- Alloc's mod is missing or not detected
+					msg = "say \"" .. string.sub(msg, 5) .. "\""
+					send(msg)
+
+					if server.logBotCommands then
+						logBotCommand(botman.serverTime, msg)
+					end
+
+					metrics.commands = metrics.commands + 1
+				else
+					-- Alloc's mod is installed so send all public messages as individual PM's
+					irc_chat(server.ircMain, stripBBCodes(string.sub(msg, 5)))
+					msg = "\"" .. string.sub(msg, 5) .. "\""
+
+
+					for k,v in pairs(igplayers) do
+						send("pm " .. k .. " " .. msg)
+
+						if server.logBotCommands then
+							logBotCommand(botman.serverTime, msg)
+						end
+
+						metrics.commands = metrics.commands + 1
+					end
+				end
+			end
+		else
+			-- A17 code
+			-- say the message in public chat
+			if server.useAllocsWebAPI then
+				if not server.allocs then
+					-- Alloc's mod is missing or not detected
+					msg = "say \"" .. string.sub(msg, 5) .. "\""
+					send(msg)
+
+					if server.logBotCommands then
+						logBotCommand(botman.serverTime, msg)
+					end
+
+					metrics.commands = metrics.commands + 1
+				else
+					msg = string.sub(msg, 5)
+					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=say \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+
+					if botman.dbConnected then
+						conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+					end
+				end
+			else
+				--if not server.allocs then
+					msg = "say \"" .. string.sub(msg, 5) .. "\""
+					send(msg)
+
+					if server.logBotCommands then
+						logBotCommand(botman.serverTime, msg)
+					end
+
+					metrics.commands = metrics.commands + 1
+				-- else
+					-- -- Alloc's mod is installed so send all public messages as individual PM's
+					-- irc_chat(server.ircMain, stripBBCodes(string.sub(msg, 5)))
+					-- msg = "\"" .. string.sub(msg, 5) .. "\""
+
+
+					-- for k,v in pairs(igplayers) do
+						-- send("pm " .. k .. " " .. msg)
+
+						-- if server.logBotCommands then
+							-- logBotCommand(botman.serverTime, msg)
+						-- end
+
+						-- metrics.commands = metrics.commands + 1
+					-- end
+				-- end
 			end
 		end
 	else
@@ -458,7 +552,7 @@ function message(msg, steam)
 			if players[words[2]].exiled ~= 1 then
 				if server.useAllocsWebAPI then
 					msg = string.sub(msg, 22)
-					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. msg .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=pm " .. words[2] .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
 
 					if botman.dbConnected then
 						conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
@@ -477,7 +571,7 @@ function message(msg, steam)
 		else
 			if server.useAllocsWebAPI then
 				msg = string.sub(msg, 22)
-				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand/?command=pm " .. words[2] .. " \"" .. msg .. "\"&adminuser=" .. server.allocsWebAPIUser .. "&admintoken=" .. server.allocsWebAPIPassword
+				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=pm " .. words[2] .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
 
 				if botman.dbConnected then
 					conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")

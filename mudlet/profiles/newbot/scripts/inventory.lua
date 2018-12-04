@@ -12,9 +12,7 @@ local debug = false -- should be false unless testing
 
 
 function CheckInventory()
-	local temp, table1, table2, items, d1, changes, tmp, max, search, k, v
-
-	if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
+	local temp, table1, table2, items, d1, changes, tmp, max, search, k, v, i, a, b
 
 	-- do a quick sanity check to prevent a rare fault causing this to get stuck
 	for k, v in pairs(igplayers) do
@@ -36,7 +34,10 @@ function CheckInventory()
 		tmp.moveTo = ""
 		tmp.moveReason = ""
 		tmp.newPlayer = false
-		tmp.badItemsFound = ""
+		tmp.badItemFound = false
+		tmp.itemsFound = ""
+		tmp.badItem = ""
+		tmp.badItemAction = ""
 		tmp.watchPlayer = players[k].watchPlayer
 		tmp.newItems = ""
 		tmp.delta = 0
@@ -88,56 +89,74 @@ function CheckInventory()
 			for i = 1, max do
 				if table1[i] ~= "" then
 					table2 = string.split(table1[i], ",")
+					tmp.badItemFound = false
+					tmp.badItem = ""
 
-					if (badItems[table2[2]]) and (tmp.playerAccessLevel > 2 or botman.ignoreAdmins == false) and (not players[k].ignorePlayer) and (server.gameType ~= "cre") then
+					-- check for wildcard items in badItems and search for those
+					for a,b in pairs(badItems) do
+						if string.find(a, "*", nil, true) then
+							search = a:gsub('%W','')
+
+							if string.find(table2[2], search) then
+								tmp.badItemFound = true
+								tmp.badItem = table2[2]
+								tmp.badItemAction = b.action
+								break
+							end
+						end
+					end
+
+					if (badItems[table2[2]] or tmp.badItemFound) and (tmp.playerAccessLevel > 2 or botman.ignoreAdmins == false) and (not players[k].ignorePlayer) and (server.gameType ~= "cre") then
 						tmp.dbFlag = tmp.dbFlag .. "B"
-
 						v.illegalInventory = true
-						if badItems[table2[2]].action == "ban" then
-							tmp.ban = true
-							tmp.banReason = "Bad items found in inventory"
 
-							if v.raiding then
-								tmp.banReason = "Bad items found in inventory while base raiding"
+						if badItems[table2[2]] then
+							tmp.badItemFound = true
+							tmp.badItemAction = badItems[table2[2]].action
+							tmp.badItem = table2[2]
+
+							if tmp.itemsFound == "" then
+								tmp.itemsFound = table2[2] .. "(" .. table2[1] .. ")"
+							else
+								tmp.itemsFound = badItemsFound .. ", " .. table2[2] .. "(" .. table2[1] .. ")"
+							end
+						else
+							if tmp.badItemFound then
+								if tmp.itemsFound == "" then
+									tmp.itemsFound = tmp.badItem
+								else
+									tmp.itemsFound = tmp.itemsFound .. ", " .. tmp.badItem
+								end
 							end
 						end
 
-						if badItems[table2[2]].action == "exile" then
+						if tmp.badItemAction == "ban" then
+							tmp.ban = true
+							tmp.banReason = "Bad item found in inventory"
+
+							if v.raiding then
+								tmp.banReason = "Bad item found in inventory while base raiding"
+							end
+						end
+
+						if tmp.badItemAction == "exile" then
 							tmp.move = true
 							tmp.moveTo = "exile"
 
 							if tmp.moveReason == nil then
-								tmp.moveReason = "Bad items found " .. b.item .. "(" .. b.quantity .. ")"
+								tmp.moveReason = "Bad items found " .. tmp.badItem .. "(" .. table2[1] .. ")"
 
 								if v.raiding then
 									tmp.moveReason = "Bad items found while raiding "
 								end
 							else
-								tmp.moveReason = tmp.moveReason .. ", " .. b.item .. "(" .. b.quantity .. ")"
+								tmp.moveReason = tmp.moveReason .. ", " .. tmp.badItem .. "(" .. table2[1] .. ")"
 							end
 						end
 
-						if tmp.badItemsFound == "" then
-							tmp.badItemsFound = table2[2] .. "(" .. table2[1] .. ")"
-						else
-							tmp.badItemsFound = badItemsFound .. ", " .. table2[2] .. "(" .. table2[1] .. ")"
-						end
-
-						-- check for wildcard items in badItems and search for those
-						for a,b in pairs(badItems) do
-							if string.find(a, "*", nil, true) then
-								search = a:gsub('%W','')
-								if string.find(v.inventory, search) then
-									tmp.timeout = true
-									tmp.timeoutReason = "Restricted items found in inventory"
-
-									if tmp.badItemsFound == "" then
-										tmp.badItemsFound = a
-									else
-										tmp.badItemsFound = tmp.badItemsFound .. ", " .. a
-									end
-								end
-							end
+						if tmp.badItemAction == "timeout" then
+							tmp.timeout = true
+							tmp.timeoutReason = "Bad item found in inventory"
 						end
 					end
 
@@ -191,6 +210,7 @@ function CheckInventory()
 
 				irc_chat(server.ircMain, "Exiling " .. v.name .. " detected with bad inventory while raiding.")
 				irc_chat(server.ircAlerts, server.gameDate .. " exiling " .. v.name .. " detected with bad inventory while raiding.")
+				irc_chat(server.ircAlerts, server.gameDate .. " Items detected: " .. tmp.itemsFound)
 			end
 
 			if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
@@ -324,7 +344,7 @@ function CheckInventory()
 
 						-- list beds for this player if they drop 1 bed
 						if b.item == "bedroll" and tmp.delta == -1 and server.coppi then
-							sendCommand("lpb " .. k)
+							listPlayerBed(k)
 						end
 					end
 
@@ -343,14 +363,6 @@ function CheckInventory()
 
 						if (b.item == "keystoneBlock") and not string.find(tmp.newItems, b.item, nil, true) then
 							tmp.newItems = tmp.newItems .. "keystoneBlock (" .. tmp.delta .. "), "
-
-							-- if tonumber(tmp.delta) < 0 then
-								-- players[k].keystones = 0
-
-								-- if not server.lagged then
-									-- sendCommand("llp " .. k)
-								-- end
-							-- end
 						end
 					end
 				end
@@ -366,7 +378,7 @@ function CheckInventory()
 
 			if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
 
-			if tmp.inventoryChanged == true or (v.oldBelt ~= v.belt) then
+			if tmp.inventoryChanged == true or (v.oldBelt ~= v.belt) or (v.oldPack ~= v.pack) or (v.oldEquipment ~= v.equipment) then
 				conn:execute("INSERT INTO inventoryTracker (steam, x, y, z, session, belt, pack, equipment) VALUES (" .. k .. "," .. v.xPos .. "," .. v.yPos .. "," .. v.zPos .. "," .. players[k].sessionCount .. ",'" .. escape(v.belt) .. "','" .. escape(v.pack) .. "','" .. escape(v.equipment) .. "')")
 				invTemp[k] = items
 
@@ -446,6 +458,8 @@ function CheckInventory()
 					-- copy in bots db
 					connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','ban','Player " .. k .. " " .. escape(v.name) .. " has has been banned for 1 year for " .. escape(tmp.banReason) .. ".'," .. k .. ")")
 				end
+
+				irc_chat(server.ircAlerts, server.gameDate .. " Items detected: " .. tmp.itemsFound)
 			end
 		end
 
@@ -464,13 +478,13 @@ function CheckInventory()
 			irc_chat(server.ircMain, "Moving player " .. k .. " " .. v.name .. " to " .. tmp.moveTo .. " for " .. tmp.moveReason .. ".")
 			irc_chat(server.ircAlerts, server.gameDate .. " moving player " .. k .. " " .. v.name .. " to " .. tmp.moveTo .. " for " .. tmp.moveReason .. ".")
 			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. v.xPos .. "," .. v.yPos .. "," .. v.zPos .. ",'" .. botman.serverTime .. "','exile','Player " .. k .. " " .. escape(v.name) .. " has has been exiled to " .. escape(tmp.moveTo) .. " for " .. escape(tmp.moveReason) .. ".'," .. k .. ")")
+			irc_chat(server.ircAlerts, server.gameDate .. " Items detected: " .. tmp.itemsFound)
 		end
 
 		if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
 
 		if (not players[k].ignorePlayer) and (server.gameType ~= "cre") then
-			if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
-			if tmp.badItemsFound ~= "" then
+			if tmp.itemsFound ~= "" then
 				v.illegalInventory = true
 
 				if (players[k].timeout == false) and (tmp.playerAccessLevel > 2 or botman.ignoreAdmins == false) then
@@ -481,17 +495,17 @@ function CheckInventory()
 					players[k].zPosTimeout = players[k].zPos
 
 					if tmp.playerAccessLevel > 2 then players[k].silentBob = true end
-					message("say [" .. server.chatColour .. "]" .. v.name .. " is in timeout for uncraftable items " .. tmp.badItemsFound .. ".[-]")
+					message("say [" .. server.chatColour .. "]" .. v.name .. " is in timeout for uncraftable items " .. tmp.itemsFound .. ".[-]")
 					message("pm " .. k .. " [" .. server.chatColour .. "]You have items in your inventory that are not permitted.[-]")
 					message("pm " .. k .. " [" .. server.chatColour .. "]You must drop them if you wish to return to the game.[-]")
 
-					irc_chat(server.ircMain, v.name .. " detected with uncraftable " .. tmp.badItemsFound)
-					irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " " .. v.name .. " detected with uncraftable " .. tmp.badItemsFound)
-					conn:execute("INSERT INTO events (x, y, z, serverTime, type, event) VALUES (" .. igplayers[k].xPos .. "," .. igplayers[k].yPos .. "," .. igplayers[k].zPos .. ",'" .. botman.serverTime .. "','timeout','Player " .. escape(v.name) .. " detected with uncraftable inventory " .. escape(tmp.badItemsFound) .. "')")
+					irc_chat(server.ircMain, v.name .. " detected with uncraftable " .. tmp.itemsFound)
+					irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " " .. v.name .. " detected with uncraftable " .. tmp.itemsFound)
+					conn:execute("INSERT INTO events (x, y, z, serverTime, type, event) VALUES (" .. igplayers[k].xPos .. "," .. igplayers[k].yPos .. "," .. igplayers[k].zPos .. ",'" .. botman.serverTime .. "','timeout','Player " .. escape(v.name) .. " detected with uncraftable inventory " .. escape(tmp.itemsFound) .. "')")
 
 					if botman.db2Connected then
 						-- copy in bots db
-						connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','timeout','Player " .. escape(v.name) .. " detected with uncraftable inventory " .. escape(tmp.badItemsFound) .. "')")
+						connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','timeout','Player " .. escape(v.name) .. " detected with uncraftable inventory " .. escape(tmp.itemsFound) .. "')")
 					end
 
 					break
