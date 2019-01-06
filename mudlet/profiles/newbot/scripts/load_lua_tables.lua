@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -170,8 +170,7 @@ end
 
 
 function loadGimmeZombies()
-	local idx
-	local cursor, errorString, row
+	local cursor, errorString, row, idx, max, k, v, n, m
 
 	--debug = false
 	calledFunction = "gimmeZombies"
@@ -181,6 +180,7 @@ function loadGimmeZombies()
 	getTableFields("gimmeZombies")
 
 	gimmeZombies = {}
+	max = 0
 	cursor,errorString = conn:execute("select * from gimmeZombies")
 	row = cursor:fetch({}, "a")
 
@@ -189,8 +189,11 @@ function loadGimmeZombies()
 	end
 
 	while row do
-		idx = tostring(row.entityID)
+		if tonumber(row.entityID) > max then
+			max = tonumber(row.entityID)
+		end
 
+		idx = row.entityID
 		gimmeZombies[idx] = {}
 
 		for k,v in pairs(cols) do
@@ -212,6 +215,15 @@ function loadGimmeZombies()
 		end
 
 		row = cursor:fetch(row, "a")
+	end
+
+	botman.maxGimmeZombies = max
+
+	for k,v in pairs(gimmeZombies) do
+		if string.find(v.zombie, "Radiated") then
+			v.bossZombie = true
+			v.doNotSpawn = false
+		end
 	end
 
 	if (debug) then dbug("debug gimmeZombies line end") end
@@ -415,6 +427,12 @@ function loadOtherEntities()
 		otherEntities[idx].entityID = row.entityID
 		otherEntities[idx].doNotSpawn = dbTrue(row.doNotSpawn)
 		otherEntities[idx].doNotDespawn = dbTrue(row.doNotDespawn)
+
+		if string.find(row.entity, "Trader") or string.find(row.entity, "ehicle") or string.find(row.entity, "emplate") or string.find(row.entity, "Plane") or string.find(row.entity, "sc_") or string.find(row.entity, "nvisible") or string.find(row.entity, "ontainer") then
+			otherEntities[idx].doNotSpawn = true
+			otherEntities[idx].doNotDespawn = true
+		end
+
 		row = cursor:fetch(row, "a")
 	end
 end

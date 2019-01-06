@@ -64,8 +64,11 @@ function saveLuaTables(date, name)
 	end
 
 	if name ~= nil then
-		date = ""
 		name = name .. "_"
+
+		if name == "_" then
+			name = ""
+		end
 	else
 		name = ""
 	end
@@ -77,6 +80,7 @@ function saveLuaTables(date, name)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "customMessages.lua", customMessages)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "friends.lua", friends)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "hotspots.lua", hotspots)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "locationCategories.lua", locationCategories)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "locations.lua", locations)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "players.lua", players)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "playersArchived.lua", playersArchived)
@@ -94,7 +98,9 @@ function saveLuaTables(date, name)
 		table.save(homedir .. "/data_backup/customMessages.lua", customMessages)
 		table.save(homedir .. "/data_backup/friends.lua", friends)
 		table.save(homedir .. "/data_backup/hotspots.lua", hotspots)
+		table.save(homedir .. "/data_backup/locationCategories.lua", locationCategories)
 		table.save(homedir .. "/data_backup/locations.lua", locations)
+		table.save(homedir .. "/data_backup/modVersions.lua", modVersions)
 		table.save(homedir .. "/data_backup/players.lua", players)
 		table.save(homedir .. "/data_backup/playersArchived.lua", playersArchived)
 		table.save(homedir .. "/data_backup/resetRegions.lua", resetRegions)
@@ -161,6 +167,19 @@ function importTeleports()
 	for k,v in pairs(teleports) do
 		conn:execute("INSERT INTO teleports (name, active, public, oneway, friends, x, y, z, dx, dy, dz, owner) VALUES ('" .. escape(v.name) .. "'," .. dbBool(v.active) .. "," .. dbBool(v.public) .. "," .. dbBool(v.oneway) .. "," .. dbBool(v.friends) .. "," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. v.dx .. "," .. v.dy .. "," .. v.owner .. ")")
 	end
+end
+
+
+function importLocationCategories()
+	local k, v
+
+	dbug("Importing locationCategories")
+
+	for k,v in pairs(locationCategories) do
+		conn:execute("INSERT INTO locationCategories (categoryName, minAccessLevel, maxAccessLevel) VALUES (" .. escape(k) .. "," .. v.minAccessLevel .. "," .. v.maxAccessLevel .. ")")
+	end
+
+	dbug("locationCategories Imported")
 end
 
 
@@ -318,65 +337,111 @@ function importWaypoints()
 end
 
 
-
-function importLuaData(path, onlyImportThis)
+function importModVersions()
 	local k, v
 
+	if isFile(homedir .. "/data_backup/modVersions.lua") then
+		modVersions = {}
+		table.load(homedir .. "/data_backup/modVersions.lua", modVersions)
+		server.allocs = false
+		server.coppi = false
+		server.csmm = false
+		server.stompy = false
+		server.SDXDetected = false
+		server.ServerToolsDetected = false
+		server.djkrose = false
+
+		for k,v in pairs(modVersions) do
+			matchAll(k)
+		end
+	end
+end
+
+
+function importLuaData(pathPrefix, onlyImportThis, path)
+	local k, v, id, temp
+
 	dbug("Importing Lua Tables")
-	message("say Restoring bot data from backup..")
+
+	if pathPrefix then
+		if onlyImportThis ~= "" then
+			irc_chat(chatvars.ircMain, "Restoring requested bot data from backup " .. pathPrefix)
+			alertAdmins("Restoring requested bot data from backup " .. pathPrefix)
+		else
+			irc_chat(chatvars.ircMain, "Restoring backup " .. pathPrefix)
+			alertAdmins("Restoring backup " .. pathPrefix)
+		end
+	else
+		if onlyImportThis ~= "" then
+			irc_chat(chatvars.ircMain, "Restoring requested bot data from last backup.")
+			alertAdmins("Restoring requested bot data from last backup.")
+		else
+			irc_chat(chatvars.ircMain, "Restoring last backup.")
+			alertAdmins("Restoring last backup.")
+		end
+	end
 
 	if path == nil then
 		path = homedir .. "/data_backup/"
 	end
 
-	if onlyImportThis == nil then
-		dbug("Loading server")
-		table.load(path .. "server.lua", server)
+	if not pathPrefix then
+		pathPrefix = ""
+	end
 
-		dbug("Loading teleports")
-		teleports = {}
-		table.load(path .. "teleports.lua", teleports)
+	if onlyImportThis == "" then
+		dbug("Loading bad items")
+		badItems = {}
+		table.load(path .. pathPrefix .. "badItems.lua", badItems)
 
-		 dbug("Loading friends")
-		 friends = {}
-		 table.load(path .. "friends.lua", friends)
-
-		dbug("Loading locations")
-		locations = {}
-		table.load(path .. "locations.lua", locations)
+		dbug("Loading friends")
+		friends = {}
+		table.load(path .. pathPrefix .. "friends.lua", friends)
 
 		dbug("Loading hotspots")
 		hotspots = {}
-		table.load(path .. "hotspots.lua", hotspots)
+		table.load(path .. pathPrefix .. "hotspots.lua", hotspots)
 
-		dbug("Loading villagers")
-		villagers = {}
-		table.load(path .. "villagers.lua", villagers)
+		dbug("Loading locationCategories")
+		locationCategories = {}
+		table.load(path .. pathPrefix .. "locationCategories.lua", locationCategories)
 
-		dbug("Loading shop categories")
-		shopCategories = {}
-		table.load(path .. "shopCategories.lua", shopCategories)
-
-		dbug("Loading reset zones")
-		resetZones = {}
-		table.load(path .. "resetRegions.lua", resetRegions)
-
-		dbug("Loading bad items")
-		badItems = {}
-		table.load(path .. "badItems.lua", badItems)
-
-		dbug("Loading waypoints")
-		waypoints = {}
-		table.load(path .. "waypoints.lua", waypoints)
+		dbug("Loading locations")
+		locations = {}
+		table.load(path .. pathPrefix .. "locations.lua", locations)
 
 		dbug("Loading players")
 		players = {}
-		table.load(path .. "players.lua", players)
+		table.load(path .. pathPrefix .. "players.lua", players)
+
+		dbug("Loading reset zones")
+		resetZones = {}
+		table.load(path .. pathPrefix .. "resetRegions.lua", resetRegions)
+
+		dbug("Loading server")
+		table.load(path .. pathPrefix .. "server.lua", server)
+
+		dbug("Loading shop categories")
+		shopCategories = {}
+		table.load(path .. pathPrefix .. "shopCategories.lua", shopCategories)
+
+		dbug("Loading teleports")
+		teleports = {}
+		table.load(path .. pathPrefix .. "teleports.lua", teleports)
+
+		dbug("Loading villagers")
+		villagers = {}
+		table.load(path .. pathPrefix .. "villagers.lua", villagers)
+
+		dbug("Loading waypoints")
+		waypoints = {}
+		table.load(path .. pathPrefix .. "waypoints.lua", waypoints)
 
 		conn:execute("TRUNCATE badItems")
 		conn:execute("TRUNCATE friends")
 		conn:execute("TRUNCATE hotspots")
 		conn:execute("TRUNCATE locations")
+		conn:execute("TRUNCATE locationCategories")
 		conn:execute("TRUNCATE players")
 		conn:execute("TRUNCATE resetZones")
 		conn:execute("TRUNCATE shopCategories")
@@ -386,6 +451,7 @@ function importLuaData(path, onlyImportThis)
 
 		importBaditems()
 		importHotspots()
+		importLocationCategories()
 		importLocations()
 		importResets()
 		importTeleports()
@@ -395,11 +461,11 @@ function importLuaData(path, onlyImportThis)
 		importWaypoints()
 		importPlayers()
 	else
-		if onlyImportThis == "bases" then
-			-- restore bases and cash for the players table
-			table.load(path .. "players.lua", playersTemp)
+		-- restore bases and cash for the players table
+		table.load(path .. pathPrefix .. "players.lua", playersTemp)
 
-			for k,v in pairs(playersTemp) do
+		for k,v in pairs(playersTemp) do
+			if string.find(onlyImportThis, "bases") then
 				if players[k] then
 					if players[k].homeX == 0 and players[k].homeZ == 0 then
 						players[k].homeX = v.homeX
@@ -416,28 +482,124 @@ function importLuaData(path, onlyImportThis)
 						players[k].protect2 = v.protect2
 						players[k].protect2Size = v.protect2Size
 					end
-
-					players[k].cash = players[k].cash + v.cash
 				end
 			end
 
-			playersTemp = nil
-		end
-
-		if onlyImportThis == "cash" then
-			-- restore cash only for the players table
-			table.load(path .. "players.lua", playersTemp)
-
-			for k,v in pairs(playersTemp) do
+			if string.find(onlyImportThis, "cash") then
 				if players[k] then
 					players[k].cash = players[k].cash + v.cash
 				end
 			end
 
-			playersTemp = nil
+			if string.find(onlyImportThis, "donors") then
+				if players[k] then
+					players[k].donor = v.donor
+					players[k].donorLevel = v.donorLevel
+					players[k].donorExpiry = v.donorExpiry
+				end
+			end
+
+			if string.find(onlyImportThis, "colours") then
+				if players[k] then
+					players[k].chatColour = v.chatColour
+				end
+			end
+
+			if string.find(onlyImportThis, " player ") then
+				temp = string.split(onlyImportThis, " ")
+				id = temp[2]
+
+				if players[id] then
+					players[id] = {}
+					players[id] = playersTemp[id]
+					conn:execute("INSERT INTO players (steam) VALUES (" .. k .. ")")
+					conn:execute("INSERT INTO persistentQueue (steam, command) VALUES (" .. k .. ",'update player')")
+				end
+			end
 		end
+
+		playersTemp = nil
+	end
+
+	if string.find(onlyImportThis, "friends") then
+		dbug("Loading friends")
+		friends = {}
+		table.load(path .. pathPrefix .. "friends.lua", friends)
+
+		conn:execute("TRUNCATE friends")
+		importFriends()
+	end
+
+	if string.find(onlyImportThis, "hotspots") then
+		dbug("Loading hotspots")
+		hotspots = {}
+		table.load(path .. pathPrefix .. "hotspots.lua", hotspots)
+
+		conn:execute("TRUNCATE hotspots")
+		importHotspots()
+	end
+
+	if string.find(onlyImportThis, "locations") then
+		dbug("Loading locationCategories")
+		locationCategories = {}
+		table.load(path .. pathPrefix .. "locationCategories.lua", locationCategories)
+
+		dbug("Loading locations")
+		locations = {}
+		table.load(path .. pathPrefix .. "locations.lua", locations)
+
+		conn:execute("TRUNCATE locations")
+		conn:execute("TRUNCATE locationCategories")
+		importLocationCategories()
+		importLocations()
+	end
+
+	if string.find(onlyImportThis, "players") then
+		dbug("Loading players")
+		players = {}
+		table.load(path .. pathPrefix .. "players.lua", players)
+
+		conn:execute("TRUNCATE players")
+		importPlayers()
+	end
+
+	if string.find(onlyImportThis, "resets") then
+		dbug("Loading reset zones")
+		resetZones = {}
+		table.load(path .. pathPrefix .. "resetRegions.lua", resetRegions)
+
+		conn:execute("TRUNCATE resetZones")
+		importResets()
+	end
+
+	if string.find(onlyImportThis, "teleports") then
+		dbug("Loading teleports")
+		teleports = {}
+		table.load(path .. pathPrefix .. "teleports.lua", teleports)
+
+		conn:execute("TRUNCATE teleports")
+		importTeleports()
+	end
+
+	if string.find(onlyImportThis, "villagers") then
+		dbug("Loading villagers")
+		villagers = {}
+		table.load(path .. pathPrefix .. "villagers.lua", villagers)
+
+		conn:execute("TRUNCATE villagers")
+		importVillagers()
+	end
+
+	if string.find(onlyImportThis, "waypoints") then
+		dbug("Loading waypoints")
+		waypoints = {}
+		table.load(path .. pathPrefix .. "waypoints.lua", waypoints)
+
+		conn:execute("TRUNCATE waypoints")
+		importWaypoints()
 	end
 
 	dbug("Import of Lua tables Complete")
-	message("say Bot restore complete. It is now safe to turn off your modem. xD")
+	irc_chat(chatvars.ircMain, "Bot restore complete. It is now safe to turn off your modem. xD")
+	alertAdmins("Bot restore complete. It is now safe to turn off your modem. xD")
 end

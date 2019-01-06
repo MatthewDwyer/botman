@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -286,7 +286,7 @@ function everyMinute()
 			botman.resendGG = false
 		end
 
-		if botman.resendVersion or tablelength(modVersions) == 0 then
+		if botman.resendVersion or tablelength(modVersions) == 0 or not server.allocs then
 			sendCommand("version")
 			botman.resendVersion = false
 		end
@@ -339,6 +339,10 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 		end
 	end
 
+	if server.stompy and server.useAllocsWebAPI then
+		sendcommand("bc-time")
+	end
+
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	everyMinute()
@@ -352,12 +356,10 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 
 	if tonumber(botman.playersOnline) > 0 then
 		if tonumber(botman.playersOnline) < 25 then
-			if server.coppi then
-				for k, v in pairs(igplayers) do
-					if players[k].autoFriend ~= "NA" then
-						listPlayerFriends(k)
-					end
-				end
+			if server.stompy then
+				--for k, v in pairs(igplayers) do
+					sendCommand("bc-lp /online /filter=steamid,friends,bedroll,pack,walked")
+				--end
 			end
 
 			removeClaims()

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -84,6 +84,7 @@ function persistentQueueTimer()
 
 			if row.delay - os.time() <= 0 then
 				if string.sub(command, 1, 3) == "pm " or string.sub(command, 1, 3) == "say" then
+					ranCommand = true
 					conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
 					message(command)
 
@@ -92,18 +93,24 @@ function persistentQueueTimer()
 					end
 				else
 					if string.find(command, "tele ") then
+						ranCommand = true
 						conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
 
 						if igplayers[steam] then
 							teleport(command, steam)
 						end
 					else
+						ranCommand = true
 						conn:execute("DELETE FROM persistentQueue WHERE id = " .. row.id)
 						sendCommand(command)
 
 						if string.find(command, "admin add") then
 							temp = string.split(command, " ")
 							setChatColour(steam, temp[4])
+						end
+
+						if string.find(command, "rlp ") then
+							message("pm " .. steam .. " [" .. server.warnColour .. "]Your claim is in a reset zone and will be removed.[-]")
 						end
 					end
 				end

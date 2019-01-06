@@ -173,9 +173,6 @@ Delete all random spawns for the location.
 /location {name} ends here
 Set the size of the location as the difference between your position and the centre of the location. Handy for setting it visually.
 
-/location {name}
-See detailed information about a location including a list of players currently in it.
-
 /location {name} random
 Start setting random spawn points for the location.  The bot uses your position which it samples every 3 seconds or so.  It only records a new coordinate when you have moved more than 2 metres from the last recorded spot.
 Unless you intend players to fall, do not fly or clip through objects while recording.  To stop recording just type stop.
@@ -253,6 +250,10 @@ Flag the location as hidden or unhidden. Hidden locations are only shown to admi
 Flag the location as the lobby or not the lobby. New players will be sent to this location when they spawn if it is flagged as lobby.  Only one location will be used so flagging more will not make them all the lobby.
 To do that use /set tp {location}.  This will add a random teleport destination for the location.  You can set as many as you want.
 
+/location round/circle/square/rectangle {name}
+Locations are circles by default with a central coord and a radius.  You can make the location a square (with equal sides).
+The location's size is always its radius.
+
 /location private/public {name} (default is private)
 Flag the location as private or public.  Players can only use public locations.
 
@@ -281,6 +282,9 @@ Normally when you enter and leave a location you will see a private message info
 
 /unprotect location {optional name}
 Remove bot protection from the location. You can leave out the location name if you are in the location.
+
+/location {name}
+See detailed information about a location including a list of players currently in it.
 
 
 Teleport Commands:
@@ -639,6 +643,9 @@ Remove protection on a village.
 
 Bot Commands:
 
+/backup bot {optional name}
+Make a backup of the bot's data before doing something to the bot. :O
+
 /clear whitelist
 Remove everyone from the bot's whitelist.
 
@@ -662,6 +669,10 @@ Sometimes the bot can fall off IRC and fail to reconnect.  This command forces i
 /reload bot
 Make the bot read several things from the server including admin list, ban list, gg, lkp and others.  If you have Coppi's Mod installed it will also detect that.
 
+/reset bases
+Just reset the player bases, nothing else.
+This commmand is mainly for rare cases where you only need the bot to forget the player bases.
+
 /reset bot
 /reset bot keep money
 Tell the bot to forget only some things, some player info, locations, bases etc.  You will be asked to confirm this, answer with yes.  Say anything else to abort.
@@ -670,9 +681,11 @@ Use this command after wiping the server.  The bot will detect the day change an
 /restart bot
 If your Mudlet (the bot's engine) is set up to automatically restart itself you can command the bot to restart.  Also this feature must be enabled.
 
-/restore backup
+/restore backup {optional words: bases, cash, donors}
+/restore backup (optional number from numbered list of backups from /list backups)
 The bot saves its Lua tables daily at midnight (server time) and each time the server is shut down.
 If the bot gets messed up, you can try to fix it with this command. Other timestamped backups are made before the bot is reset but you will first need to strip the date part off them to restore with this command.
+To only restore player bases, add the word bases, for cash add cash and for donors add donors. If these words are included, nothing else is restored.
 
 /blacklist action ban (or exile or 'nothing')
 Set what happens to blacklisted players.  The default is to ban them 10 years but if you create a location called exile, the bot can bannish them to there instead.  It acts like a prison.
@@ -1134,6 +1147,9 @@ Flag a player or all current new players for extra attention and logging.  New p
 /enable/disable waypoints
 Donors will be able to create, use and share waypoints.  To enable them for other players, set waypoints public.
 
+/unlockall
+Unlocks all locked containers etc in your immediate area (the current chunk)
+
 /crimescene {prisoner}
 Teleport to the coords where a player was when they got arrested.
 
@@ -1448,85 +1464,7 @@ Enable or disable ingame private messages about watched player inventory and bas
 /resume/unpause reboot
 Resume a paused reboot.
 
-
-Coppi's Commands:
-
-/trader protect/unprotect/remove {named area}
-After marking out a named area with the /mark command, you can add or remove trader protection on it.
-The protected area will only cover the area marked out, not all the way to bedrock.
-
-/mute/unmute {player name}
-Muting a player blocks their ingame chat from being seen by other players.  You will still see it from the web client.
-It does not block voice chat sadly.
-
-/spawn horde {optional player or location name} {number of zombies}
-Spawn a horde around a player or location or at a marked coordinate.  See /set horde.
-
-/show/hide commands
-Hide commands from ingame chat which makes them all PM's or show them which makes them public.  They will still appear in the web client.
-
-/set new player/player/donor/prisoner/mod/admin/owner chat colour FFFFFF
-/reset chat colour
-Set the default chat colour for a class of player.  You can also set chat colour for a named player.
-eg. /set player joe chat colour B0E0E6
-To disable automatic chat colouring, set it to white which is FFFFFF
-To reset everyone to white type /reset chat colour everyone
-
-/make maze (default maze 20 x 20)
-/make maze wall {block name} fill {air block} width {number} length {number} height {number} x {x coord} y {y coord} z {z coord}
-The bot also accepts wide, long, and tall instead of width, length, and height.
-Generate and build a random maze.  Someone must stay there until the maze completes or it will fail to spawn fully.
-Default values: wall steelBlock fill air width 20 length 20 height 3. It uses your current position for x, y and z if not given.
-
-/stop/cancel maze
-Aborts any maze(s) that you have told the bot to create.
-
-/delete save {number taken from /list saves}
-After /list saves, you can delete a save from the list.
-Note that the list is temporary, but will last until the next time a list is generated.  If it doesn't work, do another /list saves.
-
-/set/clear horde
-Marks your current position to spawn a horde there with /spawn horde.
-Clear horde doesn't remove the horde. It only clears the saved coordinate.
-
-/undo
-/undo save (restores saved chunks)
-The block commands prender, pdup and pblock allow for the last command to be undone, however since more than one person can command the bot to do block commands
-it is possible that other block commands have been done by the bot since your last block command.  If the last block command came from you, the bot will undo it.
-Undo save will restore the saved area even if Coppi's undo can't be used due to another prefab or block command being used. Note: Even this has limits.
-
-/list saves {optional player name}
-List all your saved marked areas or those of someone else.  This list is coordinate pairs of places in the world that you have marked for some block command.
-You can use a named save with the block commands.
-You can teleport to them with /tp #{name of marked area}.
-You can delete one /delete save {list number of marked area}.
-
-/save {name}
-After marking out the area you want to copy, you can save it.
-
-/load prefab {name}
-/load prefab {name} at {x} {y} {z} face {0-3}
-/load prefab {name} here
-Everything after the prefab name is optional and if not given, the stored coords and rotation will be used.
-Restore a saved prefab in place or place it somewhere else.
-If you provide coords and an optional rotation (default is 0 - north), you will make a new copy of the prefab at those coords.
-If you instead add here, it will load on your current position with optional rotation.
-If you instead add here, it will load on your current position with optional rotation.
-If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy.
-For perfect placement, stand at the south west corner before using this command.
-
-/list (or /li) {partial name of an item or block}
-List all items containing the text you are searching for.
-
-/move block {name of saved prefab} here
-/move block {name of saved prefab} {x} {y} {z}
-/move block {name of saved prefab} up (or down) {number}
-Fills a saved block with air then renders it at the new position and updates the block's coordinates.
-
-/erase {optional number} (default 5)
-/erase block {block name} replace {with other block name} {optional number}
-eg. /erase block stone replace air 20
-Replace an area around you with air blocks.  Add a number to change the size.
+BC Mod Commands:
 
 /dig (or fill) {optional number} (default 5)
 Dig a hole or fill a hole.
@@ -1545,9 +1483,78 @@ Examples:
 
 You can repeat the last command with /again and change direction with /again west
 
+
+/show/hide commands
+Hide commands from ingame chat which makes them all PM's or show them which makes them public.  They will still appear in the web client.
+
+/mute/unmute {player name}
+Muting a player blocks their ingame chat from being seen by other players.  You will still see it from the web client.
+It does not block voice chat sadly.
+
+/set new player/player/donor/prisoner/mod/admin/owner chat colour FFFFFF
+/reset chat colour
+Set the default chat colour for a class of player.  You can also set chat colour for a named player.
+eg. /set player joe chat colour B0E0E6
+To disable automatic chat colouring, set it to white which is FFFFFF
+To reset everyone to white type /reset chat colour everyone
+
+/spawn horde {optional player or location name} {number of zombies}
+Spawn a horde around a player or location or at a marked coordinate.  See /set horde.
+
+/trader add/trader del {named area}
+After marking out a named area with the /mark command, you can add or remove trader protection on it.
+
+/delete save {number taken from /list saves}
+After /list saves, you can delete a save from the list.
+Note that the list is temporary, but will last until the next time a list is generated.  If it doesn't work, do another /list saves.
+
+/erase {optional number} (default 5)
+/erase block {block name} replace {with other block name} {optional number}
+eg. /erase block stone replace air 20
+Replace an area around you with air blocks.  Add a number to change the size.
+
+/make maze (default maze 20 x 20)
+/make maze wall {block name} fill {air block} width {number} length {number} height {number} x {x coord} y {y coord} z {z coord}
+The bot also accepts wide, long, and tall instead of width, length, and height.
+Generate and build a random maze.  Someone must stay there until the maze completes or it will fail to spawn fully.
+Default values: wall steelBlock fill air width 20 length 20 height 3. It uses your current position for x, y and z if not given.
+
+/stop/cancel maze
+Aborts any maze(s) that you have told the bot to create.
+
 /fix bedrock {distance}
 You can replace the bedrock layer below you up to {distance} away from your position.
 You only need to be over the area to be fixed.  No other layers are touched.
+
+/undo {optional name of saved (marked) area}
+Undo your last block command.
+
+/list saves {optional player name}
+List all your saved marked areas or those of someone else.  This list is coordinate pairs of places in the world that you have marked for some block command.
+You can use a named save with the block commands.
+You can teleport to them with /tp #{name of marked area}.
+You can delete one /delete save {list number of marked area}.
+
+/save {name}
+After marking out the area you want to copy, you can save it.
+
+/set/clear horde
+Marks your current position to spawn a horde there with /spawn horde.
+Clear horde doesn't remove the horde. It only clears the saved coordinate.
+
+/load prefab {name}
+/load prefab {name} at {x} {y} {z} face {0-3}
+/load prefab {name} here
+Everything after the prefab name is optional and if not given, the stored coords and rotation will be used.
+Restore a saved prefab in place or place it somewhere else.
+If you provide coords and an optional rotation (default is 0 - north), you will make a new copy of the prefab at those coords.
+If you instead add here, it will load on your current position with optional rotation.
+If you instead add here, it will load on your current position with optional rotation.
+If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy.
+For perfect placement, stand at the south west corner before using this command.
+
+/list (or /li) {partial name of an item or block}
+List all items containing the text you are searching for.
 
 
 djkrose Commands:

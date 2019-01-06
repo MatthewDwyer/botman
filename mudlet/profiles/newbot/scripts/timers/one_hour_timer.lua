@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -58,8 +58,12 @@ function oneHourTimer()
 		if botman.dbBotsConnected then connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID) end
 	end
 
-	 -- fix any problems with player records
-	 for k,v in pairs(players) do
+	-- fix any problems with player records
+	for k,v in pairs(players) do
 		fixMissingPlayer(k)
-	 end
+	end
+
+	if tonumber(server.gameVersionNumber) >= 17 then
+		sendCommand("llp")
+	end
 end

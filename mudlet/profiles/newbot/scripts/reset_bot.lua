@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -48,8 +48,22 @@ function QuickBotReset()
 end
 
 
-function ResetBot(keepTheMoney)
-	saveLuaTables(os.date("%Y%m%d_%H%M%S"))
+function resetBases()
+	local sql
+
+	-- reset bases in the players table
+	sql = "UPDATE players SET homeX=0, home2X=0, homeY=0, home2Y=0, homeZ=0, home2Z=0, exitX=0, exit2X=0, exitY=0, exit2Y=0, exitZ=0, exit2Z=0, baseCooldown=0, protect=0, protect2=0, protectSize=" .. server.LandClaimSize .. ", protect2Size=" .. server.LandClaimSize
+	conn:execute(sql)
+	loadPlayers()
+end
+
+
+function ResetBot(keepTheMoney, backupName)
+	if backupName then
+		saveLuaTables(os.date("%Y%m%d_%H%M%S"), backupName)
+	else
+		saveLuaTables(os.date("%Y%m%d_%H%M%S"))
+	end
 
 	-- save some additional tables in from mysql
 	dumpTable("events")

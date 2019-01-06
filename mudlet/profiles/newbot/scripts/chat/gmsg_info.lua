@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -60,14 +60,20 @@ function gmsg_info()
 
 				-- API or telnet
 				if server.useAllocsWebAPI then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is using Alloc's web API to command the server.[-]")
+					if botman.APIOffline then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]API is offline.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is using telnet.[-]")
+					else
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]API is online.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is using Alloc's web API.[-]")
+					end
 				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is using telnet to command the server.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is using telnet.[-]")
 				end
 
 				-- code branch
 				if server.updateBranch ~= '' then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is running code from the " .. server.updateBranch .. " branch.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The code branch is " .. server.updateBranch .. "[-]")
 				end
 
 				-- code version
@@ -1041,7 +1047,7 @@ function gmsg_info()
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Keystones placed " .. playersArchived[id].keystones .. "[-]")
 
 						if server.allowBank then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.moneyPlural .. " " .. playersArchived[id].cash .. "[-]")
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.moneyPlural .. " " .. string.format("%d", playersArchived[id].cash) .. "[-]")
 						end
 
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Current Session " .. playersArchived[id].sessionCount .. "[-]")
@@ -1162,7 +1168,7 @@ function gmsg_info()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Keystones placed " .. players[id].keystones .. "[-]")
 
 				if server.allowBank then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.moneyPlural .. " " .. players[id].cash .. "[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.moneyPlural .. " " .. string.format("%d", players[id].cash) .. "[-]")
 				end
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Current Session " .. players[id].sessionCount .. "[-]")
@@ -1839,6 +1845,21 @@ function gmsg_info()
 		end
 
 		commandHelp(cmd)
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
+
+	-- db help
+	if chatvars.words[1] == "hhelp" and chatvars.ircid == 0 then
+		if chatvars.words[2] ~= nil then
+			cmd = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[2]))
+--			cmd = string.trim(string.sub(chatvars.command, 7))
+		end
+
+		dbHelp(cmd)
 
 		botman.faultyChat = false
 		return true

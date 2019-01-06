@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -95,7 +95,12 @@ function teleTrigger(line)
 				player = stripQuotes(player[2])
 			end
 
-			id = LookupPlayer(player, "all")
+			if not igplayers[player] then
+				id = LookupPlayer(player, "all")
+			else
+				id = player
+			end
+
 			igplayers[id].tp = 1
 			igplayers[id].hackserTPScore = 0
 			igplayers[id].spawnPending = true

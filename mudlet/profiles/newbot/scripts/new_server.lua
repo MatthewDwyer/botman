@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -16,10 +16,10 @@ function gatherServerData()
 	end
 
 	sendCommand("lkp -online")
-	tempTimer( 5, [[sendCommand("version")]] )
-	tempTimer( 10, [[sendCommand("gg")]] )
-	tempTimer( 20, [[sendCommand("admin list")]] )
-	tempTimer( 25, [[sendCommand("ban list")]] )
+	sendCommand("version")
+	sendCommand("gg")
+	sendCommand("admin list")
+	sendCommand("ban list")
 end
 
 

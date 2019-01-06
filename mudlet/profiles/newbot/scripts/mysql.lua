@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -899,6 +899,8 @@ function alterTables()
 	doSQL("ALTER TABLE `bases` DROP PRIMARY KEY, ADD PRIMARY KEY(`steam`,`baseNumber`)")
 	doSQL("ALTER TABLE `list` DROP INDEX `thing`, ADD PRIMARY KEY(`id`)")
 	doSQL("ALTER TABLE `list` DROP PRIMARY KEY") -- OOPS! Doesn't work too well with indexes.  Down with them I say!
+	doSQL("ALTER TABLE `list` ADD `steam` BIGINT(17) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `playerQueue` ADD `delayTimer` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)

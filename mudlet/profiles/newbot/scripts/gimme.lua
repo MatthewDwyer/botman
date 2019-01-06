@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -9,29 +9,45 @@
 
 -- a17 items done
 
-local debug, pickCounter -- todo: finish coding pickCounter to try to prevent any infinite loopies
+local debug
 
 debug = false -- this should be false unless testing
 
 function arenaPicknMix(wave, counter, playerLevel)
 	local r
 
+	counter = counter + 1
+
+	if tonumber(counter) > 10 then
+		return 0
+	end
+
 	r = tostring(rand(botman.maxGimmeZombies))
+
+	if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
+		return 0
+	end
 
 	if not gimmeZombies[r] then
 		r = arenaPicknMix(wave, counter, playerLevel)
 	else
-		if gimmeZombies[r].doNotSpawn then --  or tonumber(gimmeZombies[r].minArenaLevel) > tonumber(playerLevel)
+		if gimmeZombies[r].doNotSpawn then
 			r = arenaPicknMix(wave, counter, playerLevel)
 		end
 	end
 
-	if (tonumber(wave) < 4 and gimmeZombies[r].bossZombie) or string.find(gimmeZombies[r].zombie, "eral") then
-		r = arenaPicknMix(wave, counter, playerLevel) -- don't allow feral zombies or boss zombies before round 4
+	if tonumber(wave) < 4 then
+		if (gimmeZombies[r].bossZombie or gimmeZombies[r].doNotSpawn or string.find(gimmeZombies[r].zombie, "eral")) then
+			r = arenaPicknMix(wave, counter, playerLevel) -- don't allow feral zombies or boss zombies before round 4
+		end
 	else
-		if not gimmeZombies[r].bossZombie and tonumber(counter) < 10 then
-			counter = counter + 1
-			r = arenaPicknMix(wave, counter, playerLevel) -- only pick boss zombies
+		if tablelength(gimmeZombieBosses) == 0 or gimmeZombieBosses == nil then
+			return 0
+		end
+
+		if maxBossZombies then
+			r = rand(maxBossZombies)
+			r = gimmeZombieBosses[r].entityID
 		end
 	end
 
@@ -44,6 +60,10 @@ function PicknMix(level)
 
 	if level == nil then
 		level = 9001
+	end
+
+	if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
+		return 0
 	end
 
 	r = tostring(rand(botman.maxGimmeZombies))
@@ -72,18 +92,19 @@ function setupArenaPlayers(pid)
 			botman.arenaCount = botman.arenaCount + 1
 			arenaPlayers[k] = {}
 			arenaPlayers[k].id = v.id
+			arenaPlayers[k].steam = k
 
 			-- give arena players stuff
 			if server.stompy then
 				if tonumber(server.gameVersionNumber) < 17 then
 					sendCommand("bc-give " .. k .. " firstAidBandage /c=1 /silent") -- A16
-					sendCommand("bc-give " .. k .. " spint /c=1 /silent") -- A16
+					sendCommand("bc-give " .. k .. " splint /c=1 /silent") -- A16
 					sendCommand("bc-give " .. k .. " beer /c=1 /silent") -- A16
 					sendCommand("bc-give " .. k .. " turd /c=1 /silent") -- A16
 					sendCommand("bc-give " .. k .. " trapSpikesNew 3 /silent") -- A16
 				else
 					sendCommand("bc-give " .. k .. " medicalFirstAidBandage /c=1 /silent") -- A17
-					sendCommand("bc-give " .. k .. " medicalSpint /c=1 /silent") -- A17
+					sendCommand("bc-give " .. k .. " medicalSplint /c=1 /silent") -- A17
 					sendCommand("bc-give " .. k .. " drinkJarBeer /c=1 /silent") -- A17
 					sendCommand("bc-give " .. k .. " trapSpikesNew 3 /silent") -- A1617
 				end
@@ -123,61 +144,21 @@ function setupArenaPlayers(pid)
 end
 
 
-function announceGimmeHell(wave)
-	local k, v
+function announceGimmeHell(wave, delay)
+	local cmd
 
-	for k, v in pairs(arenaPlayers) do
-		if (wave == 1) then
-			message("pm " .. k .. " [" .. server.chatColour .. "]Here they come![-]")
-		else
-			message("pm " .. k .. " [" .. server.chatColour .. "]Here comes round " .. wave .. "![-]")
-		end
+	if (wave == 1) then
+		cmd = "Here they come!"
+	else
+		cmd = "Here comes round " .. wave .. "!"
 	end
+
+	conn:execute("INSERT into playerQueue (command, arena, steam, delayTimer) VALUES ('" .. escape(cmd) .. "', true, " .. 0 .. ",'" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + delay) .. "')")
 end
 
 
 function resetGimmeArena()
 	local k, v
-
-	if (arenaTimer1 ~= nil) then
-		killTimer(arenaTimer1)
-		arenaTimer1 = nil
-	end
-
-	if (arenaTimer2 ~= nil) then
-		killTimer(arenaTimer2)
-		arenaTimer2 = nil
-	end
-
-	if (arenaTimer3 ~= nil) then
-		killTimer(arenaTimer3)
-		arenaTimer3 = nil
-	end
-
-	if (arenaTimer4 ~= nil) then
-		killTimer(arenaTimer4)
-		arenaTimer4 = nil
-	end
-
-	if (arenaTimer5 ~= nil) then
-		killTimer(arenaTimer5)
-		arenaTimer5 = nil
-	end
-
-	if (arenaTimer6 ~= nil) then
-		killTimer(arenaTimer6)
-		arenaTimer6 = nil
-	end
-
-	if (arenaTimer7 ~= nil) then
-		killTimer(arenaTimer7)
-		arenaTimer7 = nil
-	end
-
-	if (arenaTimer8 ~= nil) then
-		killTimer(arenaTimer8)
-		arenaTimer8 = nil
-	end
 
 	botman.gimmeHell = 0
 	arenaPlayers = {}
@@ -194,54 +175,45 @@ function resetGimmeArena()
 end
 
 
-function queueGimmeHell(wave, level)
+function queueGimmeHell(wave, level, silent)
 	local multiplier, i, zed, p, k, v, cmd
 
+	multiplier = 5
+
 	if botman.gimmeDifficulty == 1 then
-		--multiplier = rand(15, 7)
 		multiplier = 5
 	end
 
 	if botman.gimmeDifficulty == 2 then
---		multiplier = rand(20, 10)
 		multiplier = 8
 	end
 
 	if botman.gimmeDifficulty == 3 then
-		--multiplier = rand(20, 15)
 		multiplier = 10
 	end
 
 	if botman.gimmeDifficulty == 4 then
-		--multiplier = rand(25, 20)
 		multiplier = 12
 	end
 
 	for i = 1, botman.arenaCount * multiplier do
-		if tonumber(botman.arenaCount) > 1 then
-			p = rand(botman.arenaCount)
-		else
-			p = 1
-		end
-
 		-- the level of the player that started gimmehell is used to control which zombies can be picked
 		pickCounter = 0
 		zed = arenaPicknMix(wave, 0, level)
 
-		p = pickRandomArenaPlayer()
+		if tonumber(zed) > 0 then
+			p = pickRandomArenaPlayer()
 
-		if tonumber(p) > 0 then
-			cmd = "se " .. arenaPlayers[p].id .. " " .. zed
-			conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. cmd .. "', true, " .. p .. ")")
+			if tonumber(p) > 0 then
+				cmd = "se " .. arenaPlayers[p].id .. " " .. zed
+				conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. cmd .. "', true, " .. p .. ")")
+			end
 		end
 	end
 
-	if tonumber(wave) == 4 then
-		for k, v in pairs(arenaPlayers) do
-			cmd = "pm " .. v.id .. " [" .. server.chatColour .. "]Congratulations!  You have survived to the end of the fight!  Rest now. Tend to your wounded and mourn the fallen.[-]"
-			conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. cmd .. "', true, " .. k .. ")")
-		end
-
+	if tonumber(wave) == 4 and silent == nil then
+		cmd = "Congratulations!  You have survived to the end of the fight!  Rest now. Tend to your wounded and mourn the fallen."
+		conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. escape(cmd) .. "', true, 0)")
 		conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('reset', true, 0)")
 	end
 end
@@ -261,7 +233,7 @@ function gimmeReset()
 end
 
 
-function gimme(pid)
+function gimme(pid, testGimme)
 	if (debug) then
 		dbug("debug gimme line " .. debugger.getinfo(1).currentline)
 		dbug("gimme pid " .. pid)
@@ -275,18 +247,21 @@ function gimme(pid)
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if botman.maxGimmeZombies == nil then
+		if (not server.gimmePeace) then
+			message("say [" .. server.chatColour .. "]Oh No! Gimme is empty![-]")
+		else
+			message("pm " .. pid .. " [" .. server.chatColour .. "]Oh No! Gimme is empty![-]")
+		end
+
 		-- the gimmeZombies table is empty so run se to fill it.
 		sendCommand("se")
 		botman.faultyGimme = false
 		return
 	end
 
-	removeZombies() -- make sure there are no zeds left that we have flagged for removal
-	removeEntities() -- make sure there are no entities left that we have flagged for removal
-
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
-	if (botman.faultyGimme == true) then
+	if (botman.faultyGimme) then
 		dbugi("Fault occurred in Gimme #: " .. botman.faultyGimmeNumber)
 	end
 
@@ -310,52 +285,57 @@ function gimme(pid)
 		return
 	end
 
-	if server.gimmeZombies then
-		r = math.random(1, botman.maxGimmeZombies + 30)
+	if testGimme ~= nil then
+		r = tonumber(testGimme)
+		message("pm " .. pid .. " [" .. server.chatColour .. "]Testing gimme prize " .. testGimme .. "[-]")
 	else
-		r = rand(5)
+		if server.gimmeZombies then
+			r = math.random(1, botman.maxGimmeZombies + 30)
+		else
+			r = rand(5)
 
-		if r==1 then
-			if (not server.gimmePeace) then
-				message("say [" .. server.chatColour .. "]" .. pname .. " almost won a prize![-]")
-			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]You almost won a prize![-]")
+			if r==1 then
+				if (not server.gimmePeace) then
+					message("say [" .. server.chatColour .. "]" .. pname .. " almost won a prize![-]")
+				else
+					message("pm " .. pid .. " [" .. server.chatColour .. "]You almost won a prize![-]")
+				end
+
+				botman.faultyGimme = false
+				return
 			end
 
-			botman.faultyGimme = false
-			return
-		end
-
-		if r == 2 or r == 3 then
-			r = botman.maxGimmeZombies + 1
-		end
-
-		if r==4 then
-			if (not server.gimmePeace) then
-				message("say [" .. server.chatColour .. "]" .. pname .. " nearly won a cool prize![-]")
-			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]You nearly won a cool prize![-]")
+			if r == 2 or r == 3 then
+				r = botman.maxGimmeZombies + 1
 			end
 
-			botman.faultyGimme = false
-			return
-		end
+			if r==4 then
+				if (not server.gimmePeace) then
+					message("say [" .. server.chatColour .. "]" .. pname .. " nearly won a cool prize![-]")
+				else
+					message("pm " .. pid .. " [" .. server.chatColour .. "]You nearly won a cool prize![-]")
+				end
 
-		if r==5 then
-			if (not server.gimmePeace) then
-				message("say [" .. server.chatColour .. "]Surprise! " .. pname .. " didn't win anything.[-]")
-			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]Surprise! You didn't win anything.[-]")
+				botman.faultyGimme = false
+				return
 			end
 
-			botman.faultyGimme = false
-			return
+			if r==5 then
+				if (not server.gimmePeace) then
+					message("say [" .. server.chatColour .. "]Surprise! " .. pname .. " didn't win anything.[-]")
+				else
+					message("pm " .. pid .. " [" .. server.chatColour .. "]Surprise! You didn't win anything.[-]")
+				end
+
+				botman.faultyGimme = false
+				return
+			end
 		end
 	end
 
 	botman.faultyGimmeNumber = r
 
-	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
+	if debug then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 	if debug then dbug("gimme random  " .. r .. " player = " .. pname) end
 	if debug then dbug("max zombie id " .. botman.maxGimmeZombies) end
 
@@ -383,9 +363,22 @@ function gimme(pid)
 		end
 	end
 
+	if debug then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
+
 	-- get name of entity
 	if gimmeZombies[tostring(r)] then
 		entity = gimmeZombies[tostring(r)].zombie
+
+		if string.find(entity, "emplate") or string.find(entity, "nvisible") then
+			if (not server.gimmePeace) then
+				message("say [" .. server.chatColour .. "]" .. pname .. " won a party but nobody came.[-]")
+			else
+				message("pm " .. pid .. " [" .. server.chatColour .. "]You won a party but nobody came.[-]")
+			end
+
+			botman.faultyGimme = false
+			return
+		end
 	end
 
 	spawnCount = 1
@@ -403,7 +396,7 @@ function gimme(pid)
 			if (zombies > 4999) then spawnCount = rand(8) end
 		end
 
-	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
+		if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 		-- set up critter description
 		if (spawnCount == 1) then
@@ -577,7 +570,12 @@ function gimme(pid)
 		qual = row.quality
 		quality = (10 * players[pid].level) + rand(50, -50)
 		if quality < 50 then quality = 50 end
-		if quality > 600 then quality = 600 end
+
+		if tonumber(server.gameVersionNumber) < 17 then
+			if quality > 600 then quality = 600 end
+		else
+			if quality > 600 then quality = 6 end
+		end
 
 		description = ""
 		if (qty == 1) then description = "a " end
@@ -587,19 +585,34 @@ function gimme(pid)
 
 			if (descr==1) then
 				description = description .. "shiny new "
-				quality = 600
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 600
+				else
+					quality = 5
+				end
 			end
 
 			if (descr==2) then description = description .. "dangerous " end
 
 			if (descr==3) then
 				description = description .. "sharp "
-				quality = 450
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 450
+				else
+					quality = 4
+				end
 			end
 
 			if (descr==4) then
 				description = description .. "well crafted "
-				quality = 500
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 500
+				else
+					quality = 5
+				end
 			end
 
 			if (descr==5) then
@@ -608,7 +621,12 @@ function gimme(pid)
 
 			if (descr==6) then
 				description = description .. "banged up "
-				quality = 200
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 200
+				else
+					quality = 2
+				end
 			end
 
 			if (descr==7) then
@@ -617,12 +635,22 @@ function gimme(pid)
 
 			if (descr==8) then
 				description = description .. "barely used "
-				quality = 560
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 560
+				else
+					quality = 5
+				end
 			end
 
 			if (descr==9) then
 				description = description .. "blood stained "
-				quality = 250
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 250
+				else
+					quality = 2
+				end
 			end
 
 			if (descr==10) then
@@ -631,12 +659,22 @@ function gimme(pid)
 
 			if (descr==11) then
 				description = description .. "dull "
-				quality = 100
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 100
+				else
+					quality = 1
+				end
 			end
 
 			if (descr==12) then
 				description = description .. "rusty "
-				quality = 50
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 50
+				else
+					quality = 1
+				end
 			end
 		end
 
@@ -726,52 +764,102 @@ function gimme(pid)
 
 			if (descr==1) then
 				description = description .. "shitty "
-				quality = 200
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 200
+				else
+					quality = 2
+				end
 			end
 
 			if (descr==2) then
 				description = description .. "sturdy "
-				quality = 500
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 500
+				else
+					quality = 5
+				end
 			end
 
 			if (descr==3) then
 				description = description .. "tatty "
-				quality = 200
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 200
+				else
+					quality = 2
+				end
 			end
 
 			if (descr==4) then
 				description = description .. "used "
-				quality = 300
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 300
+				else
+					quality = 3
+				end
 			end
 
 			if (descr==5) then
 				description = description .. "brand new "
-				quality = 600
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 600
+				else
+					quality = 5
+				end
 			end
 
 			if (descr==6) then
 				description = description .. "soiled "
-				quality = 400
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 400
+				else
+					quality = 4
+				end
 			end
 
 			if (descr==7) then
 				description = description .. "boring "
-				quality = 300
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 300
+				else
+					quality = 3
+				end
 			end
 
 			if (descr==8) then
 				description = description .. "fabulous "
-				quality = 550
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 550
+				else
+					quality = 5
+				end
 			end
 
 			if (descr==9) then
 				description = description .. "natty "
-				quality = 550
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 550
+				else
+					quality = 5
+				end
 			end
 
 			if (descr==10) then
 				description = description .. "stylish "
-				quality = 550
+
+				if tonumber(server.gameVersionNumber) < 17 then
+					quality = 550
+				else
+					quality = 5
+				end
 			end
 		end
 
@@ -1096,7 +1184,12 @@ function gimme(pid)
 		end
 
 		for i = 1, spawnCount do
-			cmd = "give " .. pid .. " potato 1"
+			if tonumber(server.gameVersionNumber) < 17 then
+				cmd = "give " .. pid .. " potato 1"
+			else
+				cmd = "give " .. pid .. " foodBakedPotato 1"
+			end
+
 			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 		end
 
@@ -1113,10 +1206,10 @@ function gimme(pid)
 			message("pm " .. pid .. " [" .. server.chatColour .. "]" .. pname .. " voted first place WINNER! Here's your trophy.[-]")
 		end
 
-		if server.stompy then
-			sendCommand("bc-give " .. pid .. " trophy /c=1 /silent")
-		else
+		if tonumber(server.gameVersionNumber) < 17 then
 			cmd = "give " .. pid .. " trophy 1"
+		else
+			cmd = "give " .. pid .. " resourceTrophy1 1"
 		end
 
 		conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
@@ -1204,16 +1297,24 @@ function gimme(pid)
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if (r == botman.maxGimmeZombies + 21) then
-		spawnCount = rand(30,10)
-		if (not server.gimmePeace) then
-			message("say [" .. server.chatColour .. "]" .. pname .. " won some shit.[-]")
-		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]Here is your prize. It's a bit shitty but congrats! [-]")
-		end
+		if tonumber(server.gameVersionNumber) < 17 then
+			spawnCount = rand(30,10)
+			if (not server.gimmePeace) then
+				message("say [" .. server.chatColour .. "]" .. pname .. " won some shit.[-]")
+			else
+				message("pm " .. pid .. " [" .. server.chatColour .. "]Here is your prize. It's a bit shitty but congrats! [-]")
+			end
 
-		for i = 1, spawnCount do
-			cmd = "give " .. pid .. " turd 1"
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+			for i = 1, spawnCount do
+				cmd = "give " .. pid .. " turd 1"
+				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+			end
+		else
+			if (not server.gimmePeace) then
+				message("say [" .. server.chatColour .. "]Something sticky is blocking the Gimme chute.[-]")
+			else
+				message("pm " .. pid .. " [" .. server.chatColour .. "]Something sticky is blocking the Gimme chute.[-]")
+			end
 		end
 
 		botman.faultyGimme = false
@@ -1239,7 +1340,7 @@ function gimme(pid)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " won " .. description .. entity .. "[-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]You've won " .. description .. entity .. "[-]")
+			message("pm " .. pid .. " [" .. server.chatColour .. "]You have won " .. description .. entity .. "[-]")
 		end
 	else
 		if (zombies > 2499) then
@@ -1274,7 +1375,7 @@ function gimme(pid)
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " won " .. spawnCount .. " " .. description .. entity .."s![-]")
 			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]" .. pname .. " won " .. spawnCount .. " " .. description .. entity .."s![-]")
+				message("pm " .. pid .. " [" .. server.chatColour .. "]You have won " .. spawnCount .. " " .. description .. entity .."s![-]")
 			end
 		end
 	end
@@ -1282,6 +1383,24 @@ function gimme(pid)
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if (spawnCount == 1) then
+if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
+
+		if otherEntities[tostring(r)] then
+			if otherEntities[tostring(r)].doNotSpawn then
+	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
+				if (not server.gimmePeace) then
+					message("say [" .. server.alertColour .. "][ERROR][-][" .. server.chatColour .. "] Gimme prize stuck in chute! [-][" .. server.alertColour .. "][ERROR][-]")
+				else
+					message("pm " .. pid .. " [" .. server.alertColour .. "][ERROR][-][" .. server.chatColour .. "] Gimme prize stuck in chute! [-][" .. server.alertColour .. "][ERROR][-]")
+				end
+
+				botman.faultyGimme = false
+				return
+			end
+		end
+
+if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
+
 		cmd = "se " .. playerid .. " " .. r
 		conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -227,7 +227,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		players[steam].watchPlayer = true
 		players[steam].watchPlayerTimer = os.time() + 2419200 -- stop watching in one month or until no longer a new player
 		players[steam].ip = IP
-		players[steam].exiled = 0
+		players[steam].exiled = false
 
 		irc_chat(server.ircMain, "###  New player joined " .. player .. " steam: " .. steam.. " id: " .. id .. " ###")
 		irc_chat(server.ircAlerts, "New player joined " .. server.gameDate .. " " .. line:gsub("%,", ""))
@@ -238,7 +238,10 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 
 		fixMissingPlayer(steam)
-		CheckBlacklist(steam, IP)
+
+		if not server.optOutGlobalBots then
+			CheckBlacklist(steam, IP)
+		end
 	end
 
 	if igplayers[steam].greet then
@@ -275,7 +278,10 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if IP ~= "" and players[steam].ip == "" then
 		players[steam].ip = IP
-		CheckBlacklist(steam, IP)
+
+		if not server.optOutGlobalBots then
+			CheckBlacklist(steam, IP)
+		end
 	end
 
 if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
@@ -417,13 +423,13 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 								players[steam].watchPlayerTimer = os.time() + 259200 -- watch for 3 days
 								if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. steam) end
 
-								if tonumber(players[steam].exiled) == 1 or players[steam].newPlayer then
+								if players[steam].exiled == true or players[steam].newPlayer then
 									igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
 								end
 
 								if igplayers[steam].hackerTPScore > 0 and players[steam].newPlayer and tonumber(players[steam].ping) > 180 then
 									if locations["exile"] and not players[steam].prisoner then
-										players[steam].exiled = 1
+										players[steam].exiled = true
 									else
 										igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
 									end
@@ -648,7 +654,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			players[steam].cash = tonumber(players[steam].cash) + math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillReward
 
 			if (players[steam].watchCash == true) then
-				message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", steam, server.chatColour, math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillReward, server.moneyPlural, players[steam].cash))
+				message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", steam, server.chatColour, math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillReward, server.moneyPlural, string.format("%d", players[steam].cash)))
 			end
 		end
 
@@ -1142,7 +1148,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		return
 	end
 
-	if tonumber(players[steam].exiled) == 1 and locations["exile"] and not players[steam].prisoner then
+	if players[steam].exiled == true and locations["exile"] and not players[steam].prisoner then
 		if (distancexz( intX, intZ, locations["exile"].x, locations["exile"].z ) > tonumber(locations["exile"].size)) then
 			randomTP(steam, "exile", true)
 			faultyPlayerinfo = false

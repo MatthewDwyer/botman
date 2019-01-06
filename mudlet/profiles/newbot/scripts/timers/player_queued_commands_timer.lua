@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -8,16 +8,16 @@
 --]]
 
 function playerQueuedCommands()
-	local cursor, errorString, row, k, v, a, b, steam, command
+	local cursor, errorString, row, k, v, a, b, steam, command, dist
 
 	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected or not botman.arenaCount then
 		return
 	end
 
 	if botman.gimmeDifficulty == 1 then
-		cursor,errorString = conn:execute("select * from playerQueue order by id limit 0,1")
+		cursor,errorString = conn:execute("select *, UNIX_TIMESTAMP(delayTimer) AS delay from playerQueue order by id limit 0,1")
 	else
-		cursor,errorString = conn:execute("select * from playerQueue order by id limit 0," .. botman.arenaCount)
+		cursor,errorString = conn:execute("select *, UNIX_TIMESTAMP(delayTimer) AS delay from playerQueue order by id limit 0," .. botman.arenaCount)
 	end
 
 	if not cursor then
@@ -31,16 +31,22 @@ function playerQueuedCommands()
 			steam = row.steam
 			command = row.command
 
-			if row.boss == true then
-				for k, v in pairs(igplayers) do
-					if distancexz(igplayers[k].xPos, igplayers[k].zPos, locations["arena"].x, locations["arena"].z) then
-						for a, b in pairs(arenaPlayers) do
-							message("pm " .. players[b.id].id .. " [" .. server.chatColour .. "]Here comes the BOSS!")
-						end
+			if tonumber(steam) == 0 then
+				if row.delay - os.time() > 0 then
+					return
+				end
 
-						conn:execute("delete from playerQueue where id = " .. row.id)
-						sendCommand(command)
-						return
+				conn:execute("delete from playerQueue where id = " .. row.id)
+
+				if command == "reset" then
+					resetGimmeArena()
+				else
+					for a, b in pairs(arenaPlayers) do
+						dist = distancexz(igplayers[a].xPos, igplayers[a].zPos, locations["arena"].x, locations["arena"].z)
+
+						if (tonumber(dist) <= tonumber(locations["arena"].size)) then
+							message("pm " .. b.steam .. " [" .. server.chatColour .. "]" .. command .. "[-]")
+						end
 					end
 				end
 
@@ -53,22 +59,6 @@ function playerQueuedCommands()
 					conn:execute("delete from playerQueue where id = " .. row.id)
 					return
 				end
-			end
-
-			if tonumber(steam) == 0 then
-				conn:execute("delete from playerQueue where id = " .. row.id)
-
-				if (string.sub(command, 1, 2) ~= "se") and (string.sub(command, 1, 3) ~= "say") and (string.sub(command, 1, 2) ~= "pm") and (command ~= "reset") then
-					sendCommand(command)
-				else
-					if command == "reset" then
-						resetGimmeArena()
-					else
-						message(command)
-					end
-				end
-
-				return
 			end
 
 			if (distancexz(igplayers[steam].xPos, igplayers[steam].zPos, locations["arena"].x, locations["arena"].z ) > locations["arena"].size + 1 or igplayers[steam].deadX ~= nil) then

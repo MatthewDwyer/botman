@@ -87,6 +87,71 @@ function gmsg_bot()
 	end
 
 
+	local function cmd_BackupBot()
+		local saveName
+
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}backup bot {optional name}"
+			help[2] = "Make a backup of the bot's data before doing something to the bot. :O"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,back,save"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "back") or string.find(chatvars.command, "save"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "backup" and chatvars.words[2] == "bot" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.wordsOld[3] ~= nil then
+				saveName = string.sub(chatvars.commandOld, string.find(chatvars.command, " bot ") + 5)
+			else
+				saveName = ""
+			end
+
+			saveLuaTables(os.date("%Y%m%d_%H%M%S"), saveName)
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot has been backed up.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "The bot has been backed up.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ClearBotsWhitelist()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -289,7 +354,7 @@ function gmsg_bot()
 
 
 	local function cmd_ListBackups()
-		local counter, cursor, errorString, row
+		local cursor, errorString, row, count
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -335,7 +400,17 @@ function gmsg_bot()
 			end
 
 			getBackupFiles(homedir .. "/data_backup")
-			counter = 2
+
+			-- the file list isn't in a useful order for numbering.  Let's fix that.
+			cursor,errorString = conn:execute("SELECT * FROM list WHERE class = 'backup' ORDER BY thing desc")
+			row = cursor:fetch({}, "a")
+			count = 2
+
+			while row do
+				conn:execute("UPDATE list SET id = " .. count .. " WHERE thing = '" .. escape(row.thing) .. "'")
+				count = count + 1
+				row = cursor:fetch(row, "a")
+			end
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]#1 Latest backup[-]")
@@ -343,18 +418,91 @@ function gmsg_bot()
 				irc_chat(chatvars.ircAlias, "#1 Latest backup")
 			end
 
-			cursor,errorString = conn:execute("select * from list where class = 'backup' order by thing desc")
+			cursor,errorString = conn:execute("SELECT * FROM list WHERE class = 'backup' ORDER BY id")
 			row = cursor:fetch({}, "a")
 
 			while row do
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]#" .. counter .. " " .. row.thing  .. "[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]#" .. row.id .. " " .. row.thing  .. "[-]")
 				else
-					irc_chat(chatvars.ircAlias, "#" .. counter .. " " .. row.thing)
+					irc_chat(chatvars.ircAlias, "#" .. row.id .. " " .. row.thing)
 				end
 
-				counter = counter + 1
 				row = cursor:fetch(row, "a")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ListChatColours()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}list chat colors"
+			help[2] = "See the bot's chat colours and player chat colours."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,list,chat,colo"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "list") or string.find(chatvars.command, "chat") or string.find(chatvars.command, "colo"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "list" and chatvars.words[2] == "chat" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bot chat colour is " .. server.chatColour .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bot warn colour is [-][" .. server.warnColour .. "]" .. server.chatColour .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bot alert colour is [-][" .. server.alertColour .. "]" .. server.alertColour .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Owner colour is [-][" .. server.chatColourOwner .. "]" .. server.chatColourOwner .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Admin colour is [-][" .. server.chatColourAdmin .. "]" .. server.chatColourAdmin .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Mod colour is [-][" .. server.chatColourMod .. "]" .. server.chatColourMod .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Prisoner colour is [-][" .. server.chatColourPrisoner .. "]" .. server.chatColourPrisoner .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor colour is [-][" .. server.chatColourDonor .. "]" .. server.chatColourDonor .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player colour is [-][" .. server.chatColourPlayer .. "]" .. server.chatColourPlayer .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New player colour is [-][" .. server.chatColourNewPlayer .. "]" .. server.chatColourNewPlayer .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Bot chat colour is " .. server.chatColour)
+				irc_chat(chatvars.ircAlias, "Bot warn colour is " .. server.warnColour)
+				irc_chat(chatvars.ircAlias, "Bot alert colour is " .. server.alertColour)
+				irc_chat(chatvars.ircAlias, "Owner colour is " .. server.chatColourOwner)
+				irc_chat(chatvars.ircAlias, "Admin colour is " .. server.chatColourAdmin)
+				irc_chat(chatvars.ircAlias, "Mod colour is " .. server.chatColourMod)
+				irc_chat(chatvars.ircAlias, "Prisoner colour is " .. server.chatColourPrisoner)
+				irc_chat(chatvars.ircAlias, "Donor colour is " .. server.chatColourDonor)
+				irc_chat(chatvars.ircAlias, "Player colour is " .. server.chatColourPlayer)
+				irc_chat(chatvars.ircAlias, "New player colour is " .. server.chatColourNewPlayer)
 			end
 
 			botman.faultyChat = false
@@ -585,6 +733,56 @@ function gmsg_bot()
 	end
 
 
+	local function cmd_ResetBases()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}reset bases"
+			help[2] = "Just reset the player bases, nothing else.\n"
+			help[2] = help[2] .. "This commmand is mainly for rare cases where you only need the bot to forget the player bases."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,reset"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "reset") or string.find(chatvars.command, "bot"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "reset" and chatvars.words[2] == "bases" and chatvars.words[3] == nil then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				irc_chat(chatvars.ircAlias, "This command is ingame only.")
+				botman.faultyChat = false
+				return true
+			end
+
+			resetBases()
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot has forgotten the player bases only.  Players will need to re-do {#}setbase.[-]")
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
 
 	local function cmd_ResetBot()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
@@ -617,8 +815,14 @@ function gmsg_bot()
 		end
 
 		if chatvars.words[1] == "reset" and chatvars.words[2] == "bot" and chatvars.words[3] == "keep" and (chatvars.words[4] == "money" or chatvars.words[4] == "cash" or chatvars.words[4] == server.moneyName or chatvars.words[4] == server.moneyPlural) then
-			if chatvars.accessLevel > 0 then
-				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				irc_chat(chatvars.ircAlias, "This command is ingame only.")
 				botman.faultyChat = false
 				return true
 			end
@@ -630,9 +834,15 @@ function gmsg_bot()
 			return true
 		end
 
-		if (chatvars.words[1] == "reset") and (chatvars.words[2] == "bot") and (chatvars.playerid ~= 0) then
-			if chatvars.accessLevel > 0 then
-				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+		if (chatvars.words[1] == "reset") and (chatvars.words[2] == "bot") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				irc_chat(chatvars.ircAlias, "This command is ingame only.")
 				botman.faultyChat = false
 				return true
 			end
@@ -778,11 +988,17 @@ function gmsg_bot()
 
 
 	local function cmd_RestoreBackup()
+		local cursor, errorString, row, onlyImportThis
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
-			help[1] = " {#}restore backup"
+			help[1] = " {#}restore backup {optional backup number} {optional words: bases, cash, donors, colors, locations, waypoints, friends, villagers, teleports, hotspots, resets, players}\n"
+			help[1] = help[1] .. " {#}restore backup {optional backup number} {optional words as above} player {name or steam or player id} (note: player {name} must be specified last)"
 			help[2] = "The bot saves its Lua tables daily at midnight (server time) and each time the server is shut down.\n"
-			help[2] = help[2] .. "If the bot gets messed up, you can try to fix it with this command. Other timestamped backups are made before the bot is reset but you will first need to strip the date part off them to restore with this command."
+			help[2] = help[2] .. "If the bot gets messed up, you can try to fix it with this command. Other timestamped backups are made before the bot is reset but you will first need to strip the date part off them to restore with this command.\n"
+			help[2] = help[2] .. "To only restore player bases, add the word bases, for cash add cash and for donors add donors. If these words are included, nothing else is restored.\n"
+			help[2] = help[2] .. "You can also just restore 1 named player.\n"
+			help[2] = help[2] .. "To see a list of backups use {#}list backups."
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -806,7 +1022,7 @@ function gmsg_bot()
 			end
 		end
 
-		if chatvars.words[1] == "restore" and (chatvars.words[2] == "backup" or chatvars.words[2] == "bot") and chatvars.words[3] == nil then
+		if chatvars.words[1] == "restore" and (chatvars.words[2] == "backup" or chatvars.words[2] == "bot") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 0) then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
@@ -821,18 +1037,115 @@ function gmsg_bot()
 				end
 			end
 
-			if botman.lastDataImport == nil then
-				botman.lastDataImport = os.time() - 2400
+			onlyImportThis = ""
+
+			if string.find(chatvars.command, " colo") then
+				onlyImportThis = onlyImportThis .. "colours"
 			end
 
-			if (os.time() - botman.lastDataImport) > 1800 then
-				importLuaData()
+			if string.find(chatvars.command, " base") then
+				onlyImportThis = onlyImportThis .. "bases"
 			end
+
+			if string.find(chatvars.command, " cash") then
+				onlyImportThis = onlyImportThis .. "cash"
+			end
+
+			if string.find(chatvars.command, " donor") then
+				onlyImportThis = onlyImportThis .. "donors"
+			end
+
+			if chatvars.number then
+				if chatvars.number == 1 then
+					importLuaData()
+
+					botman.faultyChat = false
+					return true
+				end
+
+				cursor,errorString = conn:execute("SELECT * FROM list WHERE id = " .. chatvars.number .. " AND steam = -10")
+				row = cursor:fetch({}, "a")
+
+				if row.thing then
+					importLuaData(row.thing .. "_", onlyImportThis)
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Pick one of the numbered backups.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Pick one of the numbered backups.")
+					end
+
+					botman.faultyChat = false
+					return true
+				end
+			else
+				importLuaData(nil, onlyImportThis)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_SetAPILogPollingInterval()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set api log read {interval in seconds} (default 1 second)"
+			help[2] = "In API mode the bot will read the server log at regular intervals with the default being every second.\n"
+			help[2] = help[2] .. "You can set a longer delay but the bot won't respond to in-game commands faster than the delay that you set.\n"
+			help[2] = help[2] .. "If you think the polling interval is causing server lag you can try slowing it down."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,api,log,time,delay,inter"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "api") or string.find(chatvars.command, " log"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if string.find(chatvars.command, "set api log read") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number == nil then
+				chatvars.number = 1
+			else
+				chatvars.number = math.abs(chatvars.number)
+			end
+
+			server.logPollingInterval = chatvars.number
+			conn:execute("UPDATE server SET logPollingInterval  = '" .. chatvars.number .. "'")
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The backup has been restored.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will poll the server log every " .. server.logPollingInterval .. " seconds.[-]")
 			else
-				irc_chat(chatvars.ircAlias, "The backup has been restored.")
+				irc_chat(chatvars.ircAlias, "The bot will poll the server log every " .. server.logPollingInterval .. " seconds.")
 			end
 
 			botman.faultyChat = false
@@ -2255,13 +2568,11 @@ function gmsg_bot()
 					irc_chat(chatvars.ircAlias, "The bot will test using Alloc's web API.")
 				end
 
+				server.useAllocsWebAPI = true
 				server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
 				conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
-				os.remove(homedir .. "/temp/dummy.txt")
-				send("webtokens list")
+				os.remove(homedir .. "/temp/apitest.txt")
 				send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
-
-				tempTimer(5, "startUsingAllocsWebAPI()")
 			end
 
 			botman.faultyChat = false
@@ -2390,6 +2701,15 @@ function gmsg_bot()
 
 	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_BackupBot()
+
+	if result then
+		if debug then dbug("debug cmd_BackupBot triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_ClearBotsWhitelist()
 
 	if result then
@@ -2412,6 +2732,15 @@ function gmsg_bot()
 
 	if result then
 		if debug then dbug("debug cmd_ListBackups triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ListChatColours()
+
+	if result then
+		if debug then dbug("debug cmd_ListChatColours triggered") end
 		return result
 	end
 
@@ -2453,6 +2782,15 @@ function gmsg_bot()
 
 	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_ResetBases()
+
+	if result then
+		if debug then dbug("debug cmd_ResetBases triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_ResetBot()
 
 	if result then
@@ -2475,6 +2813,15 @@ function gmsg_bot()
 
 	if result then
 		if debug then dbug("debug cmd_RestoreBackup triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetAPILogPollingInterval()
+
+	if result then
+		if debug then dbug("debug cmd_SetAPILogPollingInterval triggered") end
 		return result
 	end
 

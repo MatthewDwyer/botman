@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -9,6 +9,27 @@
 
 function reconnectTimer()
 	local channels
+
+	if type(server) == "table" and type(modVersions) ~= "table" then
+		importModVersions()
+	end
+
+	if botman.lastServerResponseTimestamp == nil then
+		botman.lastServerResponseTimestamp = os.time()
+	end
+
+	if botman.lastTelnetResponseTimestamp == nil then
+		botman.lastTelnetResponseTimestamp = os.time()
+	end
+
+	if botman.lastAPIResponseTimestamp == nil then
+		botman.lastAPIResponseTimestamp = os.time()
+	end
+
+	if server.useAllocsWebAPI and botman.APIOffline and tonumber(server.webPanelPort) > 0 then
+		botman.APITestSilent = true
+		startUsingAllocsWebAPI()
+	end
 
 	if botman.botConnectedTimestamp == nil then
 		botman.botConnectedTimestamp = os.time()
@@ -26,14 +47,6 @@ function reconnectTimer()
 		botman.botOfflineCount = tonumber(botman.botOfflineCount) + 1
 	end
 
-	if botman.lastServerResponseTimestamp == nil then
-		botman.lastServerResponseTimestamp = os.time()
-	end
-
-	if botman.lastTelnetResponseTimestamp == nil then
-		botman.lastTelnetResponseTimestamp = os.time()
-	end
-
 	if tonumber(botman.playersOnline) > 0 and (os.time() - botman.lastTelnetResponseTimestamp > 90 or botman.botOffline) then
 		reconnect()
 	end
@@ -43,7 +56,7 @@ function reconnectTimer()
 		return
 	end
 
-	if tonumber(botman.botOfflineCount) > 2 and (os.time() - botman.botConnectedTimestamp > 1800) then
+	if tonumber(botman.botOfflineCount) > 30 then
 		if server.allowBotRestarts then
 			restartBot()
 			return
@@ -52,11 +65,17 @@ function reconnectTimer()
 
 	if tonumber(botman.botOfflineCount) > 0 then
 		if tonumber(botman.botOfflineCount) < 16 then
-			irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
+			if botman.APIOffline then
+				irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
+			end
+
 			reconnect()
 		else
 			if (botman.botOfflineCount % 20 == 0) then
-				irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
+				if botman.APIOffline then
+					irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
+				end
+
 				reconnect()
 			end
 		end

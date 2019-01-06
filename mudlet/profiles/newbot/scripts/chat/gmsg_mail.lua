@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -118,7 +118,7 @@ function gmsg_mail()
 		row = cursor:fetch({}, "a")
 		while row do
 			if row.status == "0" then status = " [NEW]" end
-			if row.status == "1" then status = " [READ]" end
+			if row.status == "1" then status = " [SEEN]" end
 			if row.status == "2" then status = " [SAVED]" end
 
 			if tonumber(row.sender) == 0 then

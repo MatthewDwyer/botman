@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -9,31 +9,107 @@
 
 -- a17 items done
 
-function startUsingAllocsWebAPI()
-	server.useAllocsWebAPI = true
+local debug
 
-	-- verify that the web API is working for us
-	botman.oldAPIPort = server.webPanelPort
-	botman.testAPIPort = server.webPanelPort
-	message("pm APItest \"test\"")
-	tempTimer( 7, [[checkAPIWorking()]] )
+if botman.debugAll then
+	debug = true -- this should be true
+end
+
+
+function toggleTriggers(event)
+	if event == "api offline" then
+		enableTrigger("Player connected")
+		enableTrigger("Player disconnected")
+		enableTrigger("PVP Police")
+		enableTrigger("Matchall")
+		enableTrigger("Zombie Scouts")
+		enableTrigger("Game Time")
+		enableTrigger("Collect Ban")
+		enableTrigger("Unban player")
+		--enableTrigger("Tele")
+		enableTrigger("Chat")
+		enableTrigger("Overstack")
+		enableTrigger("mem")
+	end
+
+	if event == "api online" then
+		disableTrigger("Player connected")
+		disableTrigger("Player disconnected")
+		disableTrigger("PVP Police")
+		disableTrigger("Matchall")
+		disableTrigger("Zombie Scouts")
+		disableTrigger("Game Time")
+		disableTrigger("Collect Ban")
+		disableTrigger("Unban player")
+		--disableTrigger("Tele")
+		disableTrigger("Chat")
+		disableTrigger("Overstack")
+		disableTrigger("mem")
+	end
+end
+function dogeWOW()
+	-- So words. Many doge. WOW!
+	local r, doge
+
+	r = rand(5)
+	if r == 1 then doge = "So " end
+	if r == 2 then doge = "Such " end
+	if r == 3 then doge = "Many " end
+	if r == 4 then doge = "Much " end
+	if r == 5 then doge = "Very " end
+
+	r = rand(16)
+	if r == 1 then doge = doge .. "Kill." end
+	if r == 2 then doge = doge .. "Death." end
+	if r == 3 then doge = doge .. "Bullet." end
+	if r == 4 then doge = doge .. "Owned." end
+	if r == 5 then doge = doge .. "Hax." end
+	if r == 6 then doge = doge .. "Pain." end
+	if r == 7 then doge = doge .. "Gore." end
+	if r == 8 then doge = doge .. "Loot." end
+	if r == 9 then doge = doge .. "Epic." end
+	if r == 10 then doge = doge .. "Damage." end
+	if r == 11 then doge = doge .. "Fluke." end
+	if r == 12 then doge = doge .. "Luck." end
+	if r == 13 then doge = doge .. "Died." end
+	if r == 14 then doge = doge .. "Dismemberment." end
+	if r == 15 then doge = doge .. "Blood." end
+	if r == 16 then doge = doge .. "Rage." end
+
+	return doge
+end
+
+
+function startUsingAllocsWebAPI()
+	if tonumber(server.webPanelPort) > 0 then
+		-- verify that the web API is working for us
+		botman.oldAPIPort = server.webPanelPort
+		botman.testAPIPort = server.webPanelPort
+		botman.APIOffline = false
+		message("pm APItest \"test\"")
+	end
 end
 
 function removeEntityCommand(entityID)
-	if server.stompy then
+	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
 		sendCommand("bc-remove " .. entityID)
 		return
 	end
 
 	if server.coppi then
-		sendCommand("cpm-entityremove " .. entityID)
+		if tonumber(server.gameVersionNumber) < 17 then
+			sendCommand("removeentity " .. entityID)
+		else
+			sendCommand("cpm-entityremove " .. entityID)
+		end
+
 		return
 	end
 end
 
 
 function hidePlayerChat(prefix)
-	if server.stompy then
+	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
 		if prefix then
 			sendCommand("bc-chatprefix " .. prefix)
 		else
@@ -44,10 +120,18 @@ function hidePlayerChat(prefix)
 	end
 
 	if server.coppi then
-		if prefix then
-			sendCommand("cpm-hidechatcommand " .. prefix)
+		if tonumber(server.gameVersionNumber) < 17 then
+			if prefix then
+				sendCommand("tcch " .. prefix)
+			else
+				sendCommand("tcch")
+			end
 		else
-			sendCommand("cpm-hidechatcommand")
+			if prefix then
+				sendCommand("cpm-hidechatcommand " .. prefix)
+			else
+				sendCommand("cpm-hidechatcommand")
+			end
 		end
 
 		return
@@ -56,13 +140,18 @@ end
 
 
 function mutePlayerChat(steam, toggle)
-	if server.stompy then
+	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
 		sendCommand("bc-mute " .. steam .. " " .. toggle)
 		return
 	end
 
 	if server.coppi then
-		sendCommand("cpm-mutechatplayer " .. steam .. " " .. toggle)
+		if tonumber(server.gameVersionNumber) < 17 then
+			sendCommand("mpc " .. steam .. " " .. toggle)
+		else
+			sendCommand("cpm-mutechatplayer " .. steam .. " " .. toggle)
+		end
+
 		return
 	end
 end
@@ -87,7 +176,7 @@ end
 
 
 function unlockAll(steam)
-	if server.stompy then
+	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
 		sendCommand("bc-unlockall " .. igplayers[steam].chunkX .. " " .. igplayers[steam].chunkZ)
 		return
 	end
@@ -95,13 +184,18 @@ end
 
 
 function setPlayerChatLimit(steam, length)
-	if server.stompy then
+	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
 		sendCommand("bc-chatmax " .. length)
 		return
 	end
 
 	if server.coppi then
-		sendCommand("cpm-playerchatmaxlength " .. steam .. " " .. length)
+		if tonumber(server.gameVersionNumber) < 17 then
+			sendCommand("pcml " .. steam .. " " .. length)
+		else
+			sendCommand("cpm-playerchatmaxlength " .. steam .. " " .. length)
+		end
+
 		return
 	end
 end
@@ -110,7 +204,8 @@ end
 function setPlayerColour(steam, colour)
 	colour = string.lower(colour)
 
-	if server.stompy then
+
+	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
 		sendCommand("bc-chatcolor " .. steam .. " " .. colour .. " false")
 
 		if colour == "ffffff" then
@@ -121,25 +216,67 @@ function setPlayerColour(steam, colour)
 	end
 
 	if server.coppi then
-		sendCommand("cpm-playerchatcolor " .. steam .. " " .. colour .. " 1")
+		if tonumber(server.gameVersionNumber) < 17 then
+			sendCommand("cpc " .. steam .. " " .. colour .. " 1")
+		else
+			sendCommand("cpm-playerchatcolor " .. steam .. " " .. colour .. " 1")
+		end
+
+		return
+	end
+end
+
+
+function setOverrideChatName(steam, newName, clear)
+	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
+		sendCommand("bc-chatcolor " .. steam .. " " .. colour .. " false")
+
+		if colour == "ffffff" then
+			sendCommand("bc-chatcolor " .. steam .. " clear")
+		end
+
+		return
+	end
+
+	if server.coppi then
+		if tonumber(server.gameVersionNumber) < 17 then
+			if clear then
+				sendCommand("ocn " .. steam .. " clear")
+			else
+				sendCommand("ocn " .. steam .. " " .. newName)
+			end
+		else
+			if clear then
+				sendCommand("cpm-ocn " .. steam .. " clear")
+			else
+				sendCommand("cpm-ocn " .. steam .. " " .. newName)
+			end
+		end
+
 		return
 	end
 end
 
 
 function getBackupFiles(path)
-	local file, str
+	local file, str, backups, count, lastUnderscore
 
-	conn:execute("TRUNCATE list")
-	backupFiles = {}
+	conn:execute("DELETE FROM list WHERE steam = -10")
+	backups = {}
+	count = 2
 
 	for file in lfs.dir(path) do
 	  if file ~= "." and file ~= ".." and file ~= "" then
-		  if string.find(file, "_") then
-			str = string.sub(file, 1, 15)
-			table.insert(backupFiles, file)
-			conn:execute("INSERT INTO list (thing, class) VALUES ('" .. escape(str) .. "','backup')")
-		  end
+		if string.find(file, "_") then
+			lastUnderscore = file:match('^.*()_')
+			str = string.sub(file, 1, lastUnderscore - 1)
+
+			if not backups[str] then
+				backups[str] = {}
+				conn:execute("INSERT INTO list (id, thing, class, steam) VALUES (" .. count .. ",'" .. escape(str) .. "','backup',-10)")
+				count = count + 1
+			end
+		end
 	  end
 	end
 end
@@ -257,22 +394,26 @@ end
 
 
 function getBotsIP()
-	local file, fileSize, ln
+	local file, fileSize, ln, temp
 
+	-- this will break the bot if it only returns the local LAN IP!  So far it seems to always return the internet IP.
 	os.remove(homedir .. "/temp/botsIP.txt")
-	os.execute("dig +short myip.opendns.com @resolver1.opendns.com > " .. homedir .. "/temp/botsIP.txt")
-
-	fileSize = lfs.attributes (homedir .. "/temp/botsIP.txt", "size")
-
-	-- abort if the file is empty
-	if fileSize == nil or tonumber(fileSize) == 0 then
-		return
-	end
+	os.execute("hostname -i > " .. homedir .. "/temp/botsIP.txt")
 
 	file = io.open(homedir .. "/temp/botsIP.txt", "r")
 
 	for ln in file:lines() do
-		server.botsIP = ln
+		if string.find(ln, " ") then
+			temp = string.split(ln, " ")
+
+			if temp[2] then
+				server.botsIP = temp[2]
+			else
+				server.botsIP = ln
+			end
+		else
+			server.botsIP = ln
+		end
 	end
 
 	file:close()
@@ -1124,7 +1265,7 @@ function scanForPossibleHackersNearby(steam, world)
 
 			if dist < 301 then
 				if locations["exile"] then
-					players[k].exiled = 1
+					players[k].exiled = true
 					players[k].silentBob = true
 					players[k].canTeleport = false
 					if botman.dbConnected then conn:execute("UPDATE players SET exiled = 1, silentBob = 1, canTeleport = 0 WHERE steam = " .. k) end
@@ -1269,7 +1410,12 @@ function addFriend(player, friend, auto)
 			if botman.dbConnected then conn:execute("INSERT INTO friends (steam, friend, autoAdded) VALUES (" .. player .. "," .. friend .. ", 0)") end
 		end
 
-		friends[player].friends = friends[player].friends .. "," .. friend
+		if friends[player].friends == "" then
+			friends[player].friends = friend
+		else
+			friends[player].friends = friends[player].friends .. "," .. friend
+		end
+
 		return true
 	else
 		return false
@@ -1410,8 +1556,8 @@ function updateOtherEntities(entityID, entity)
 		otherEntities[entityID].doNotSpawn = false
 		otherEntities[entityID].doNotDespawn = false
 
-		-- don't despawn if it's cute or delicious
-		if string.find(entityLower, "pig") or string.find(entityLower, "boar") or string.find(entityLower, "stag") or string.find(entityLower, "chicken") or string.find(entityLower, "rabbit") then
+		-- don't despawn if it's cute, delicious or a dirty trader
+		if string.find(entityLower, "pig") or string.find(entityLower, "boar") or string.find(entityLower, "stag") or string.find(entityLower, "chicken") or string.find(entityLower, "rabbit") or string.find(entityLower, "trader") then
 			otherEntities[entityID].doNotDespawn = true
 		end
 	else
@@ -1430,8 +1576,8 @@ function updateOtherEntities(entityID, entity)
 			otherEntities[entityID].doNotDespawn = false
 			otherEntities[entityID].remove = nil
 
-			-- don't despawn if it's cute or delicious
-			if string.find(entityLower, "pig") or string.find(entityLower, "boar") or string.find(entityLower, "stag") or string.find(entityLower, "chicken") or string.find(entityLower, "rabbit") then
+			-- don't despawn if it's cute, delicious or a dirty trader
+			if string.find(entityLower, "pig") or string.find(entityLower, "boar") or string.find(entityLower, "stag") or string.find(entityLower, "chicken") or string.find(entityLower, "rabbit") or string.find(entityLower, "trader") then
 				otherEntities[entityID].doNotDespawn = true
 			end
 		end
@@ -1471,8 +1617,12 @@ function updateGimmeZombies(entityID, zombie)
 		gimmeZombies[entityID].doNotSpawn = false
 
 		if string.find(zombieLower, "cop") or string.find(zombieLower, "dog") or string.find(zombieLower, "bear") or string.find(zombieLower, "feral") or string.find(zombieLower, "radiated") or string.find(zombieLower, "behemoth") or string.find(zombieLower, "template") then
-			gimmeZombies[entityID].doNotSpawn = true
-			if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
+			if string.find(zombieLower, "radiated") then
+				if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 1, doNotSpawn = 0 WHERE entityID = " .. entityID) end
+			else
+				gimmeZombies[entityID].doNotSpawn = true
+				if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
+			end
 		else
 			if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end
 		end
@@ -1550,13 +1700,6 @@ function downloadHandler(event, ...)
 	local steam
 
    if event == "sysDownloadDone" then
-		-- if string.find(..., "version.txt") then
-			-- finishDownload(...)
-			-- return
-		-- end
-
-		botman.lastServerResponseTimestamp = os.time()
-
 		if customAPIHandler ~= nil then
 			-- read the note on overriding bot code in custom/custom_functions.lua
 			if customAPIHandler(...) then
@@ -1584,6 +1727,12 @@ function downloadHandler(event, ...)
 		if string.find(..., "bc-go.txt", nil, true) then
 			-- read bc-go from Stompy's BC mod to get a list of game objects
 			readAPI_BCGo()
+			return
+		end
+
+		if string.find(..., "bc-lp.txt", nil, true) then
+			-- read bc-lp from Stompy's BC mod
+			readAPI_BCLP()
 			return
 		end
 
@@ -1653,6 +1802,12 @@ function downloadHandler(event, ...)
 			return
 		end
 
+		if string.find(..., "log.txt") then
+			-- read log
+			readAPI_ReadLog()
+			return
+		end
+
 		if string.find(..., "lpf.txt") then
 			-- read lpf
 			readAPI_LPF()
@@ -1699,6 +1854,12 @@ function downloadHandler(event, ...)
 		if string.find(..., "voteClaim_") then
 			-- we don't need to process or keep this file.  Just delete it.
 			os.remove(...)
+			return
+		end
+
+		if string.find(..., "webUIUpdates.txt") then
+			-- read webUIUpdates
+			readAPI_webUIUpdates()
 			return
 		end
 
@@ -1814,73 +1975,6 @@ function atHome(steam)
 
 	if greet then
 		time = os.time() - players[steam].lastAtHome
-
-		if time > 300 and time <= 900 then
-			r = rand(5)
-			if r == 1 then message("pm " .. steam .. " [" .. server.chatColour .. "]Welcome home " .. players[steam].name .. "[-]") end
-			if r == 2 then message("pm " .. steam .. " [" .. server.chatColour .. "]Back so soon " .. players[steam].name .. "?[-]") end
-			if r == 3 then message("pm " .. steam .. " [" .. server.chatColour .. "]You're back![-]") end
-			if r == 4 then message("pm " .. steam .. " [" .. server.chatColour .. "]Home sweet home :)[-]") end
-			if r == 5 then message("pm " .. steam .. " [" .. server.chatColour .. "]Home again[-]") end
-		end
-
-		if time > 900 and time <= 1800 then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]You're back " .. players[steam].name .. "! Welcome home :)[-]")
-		end
-
-		if time > 1800 and time <= 3600 then
-			r = rand(5)
-			if r == 1 then message("pm " .. steam .. " [" .. server.chatColour .. "]Home at last " .. players[steam].name .. "![-]") end
-			if r == 2 then message("pm " .. steam .. " [" .. server.chatColour .. "]Home again, home again. Ziggity zig.[-]") end
-			if r == 3 then message("pm " .. steam .. " [" .. server.chatColour .. "]Look what the cat dragged in.  Hello " .. players[steam].name .. "[-]") end
-			if r == 4 then message("pm " .. steam .. " [" .. server.chatColour .. "]Home at last " .. players[steam].name .. "![-]") end
-			if r == 5 then message("pm " .. steam .. " [" .. server.chatColour .. "]You're back! So nice of you to drop by.[-]") end
-		end
-
-		if time > 3600 then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]So you decided to come home " .. players[steam].name .. "?[-]")
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Dinner's on the floor.[-]")
-			r = rand(5)
-			if r == 1 then
-				if tonumber(server.gameVersionNumber) < 17 then
-					sendCommand("give " .. steam .. " canDogfood 1") -- A16
-				else
-					sendCommand("give " .. steam .. " foodCanDogfood 1") -- A17
-				end
-			end
-
-			if r == 2 then
-				if tonumber(server.gameVersionNumber) < 17 then
-					sendCommand("give " .. steam .. " canCatfood 1") -- A16
-				else
-					sendCommand("give " .. steam .. " foodCanCatfood 1") -- A17
-				end
-			end
-
-			if r == 3 then
-				if tonumber(server.gameVersionNumber) < 17 then
-					sendCommand("give " .. steam .. " femur 1") -- A16
-				else
-					sendCommand("give " .. steam .. " foodBakedPotato 1") -- A17
-				end
-			end
-
-			if r == 4 then
-				if tonumber(server.gameVersionNumber) < 17 then
-					sendCommand("give " .. steam .. " vegetableStew 1") -- A16
-				else
-					sendCommand("give " .. steam .. " foodVegetableStew 1") -- A17
-				end
-			end
-
-			if r == 5 then
-				if tonumber(server.gameVersionNumber) < 17 then
-					sendCommand("give " .. steam .. " meatStew 1") -- A16
-				else
-					sendCommand("give " .. steam .. " foodMeatStew 1") -- A17
-				end
-			end
-		end
 	end
 
 	if home then
@@ -2775,6 +2869,10 @@ function newDay()
 			irc_chat("#status", "Bot " .. server.botName .. " on server " .. server.serverName .. " " .. server.IP .. ":" .. server.ServerPort .. " Game version: " .. server.gameVersion)
 			irc_chat("#status", "Status: " .. status .. ", bot version: " .. server.botVersion .. " on branch " .. server.updateBranch)
 		end
+
+		if tonumber(server.gameVersionNumber) < 17 then
+			sendCommand("llp")
+		end
 	end
 end
 
@@ -2923,7 +3021,7 @@ function CheckBlacklist(steam, ip)
 
 		if server.blacklistResponse == 'exile' and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
 			if tonumber(players[steam].exiled) == 0 then
-				players[steam].exiled = 1
+				players[steam].exiled = true
 				if botman.dbConnected then conn:execute("UPDATE players SET country = 'CN', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam) end
 			end
 		end
@@ -3079,8 +3177,8 @@ function readDNS(steam)
 							banPlayer(steam, "10 years", "Banned proxy. Contact us to get unbanned and whitelisted.", "")
 							banned = true
 						else
-							if players[steam].exiled == 0 then
-								players[steam].exiled = 1
+							if not players[steam].exiled then
+								players[steam].exiled = true
 								irc_chat(server.ircMain, "Player " .. players[steam].name .. " exiled. Detected proxy " .. v.scanString)
 								irc_chat(server.ircAlerts, server.gameDate .. " player " .. players[steam].name .. " exiled. Detected proxy " .. v.scanString)
 								exiled = true
@@ -3129,8 +3227,8 @@ function readDNS(steam)
 			players[steam].ircTranslate = true
 
 			if server.blacklistResponse == 'exile' and not exiled and accessLevel(steam) > 2 then
-				if players[steam].exiled == 0 then
-					players[steam].exiled = 1
+				if not players[steam].exiled then
+					players[steam].exiled = true
 					irc_chat(server.ircMain, "Chinese player " .. players[steam].name .. " exiled.")
 					irc_chat(server.ircAlerts, server.gameDate .. " Chinese player " .. players[steam].name .. " exiled.")
 					exiled = true
@@ -3187,8 +3285,8 @@ function readDNS(steam)
 		end
 
 		if server.blacklistResponse == 'exile' and not exiled then
-			if players[steam].exiled == 0 then
-				players[steam].exiled = 1
+			if not players[steam].exiled then
+				players[steam].exiled = true
 				irc_chat(server.ircMain, "Player " .. players[steam].name .. " exiled. Blacklisted country " .. country)
 				irc_chat(server.ircAlerts, server.gameDate .. " player " .. players[steam].name .. " exiled. Blacklisted country " .. country)
 				exiled = true
@@ -3248,7 +3346,7 @@ function resetPlayer(steam)
 	players[steam].commandCooldown = 0
 	players[steam].country = ""
 	players[steam].denyRights = false
-	players[steam].exiled = 0
+	players[steam].exiled = false
 	players[steam].exit2X = 0
 	players[steam].exit2Y = 0
 	players[steam].exit2Z = 0
@@ -3356,7 +3454,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].donorExpiry = os.time()
 	players[steam].donorLevel = 0
 	players[steam].DNSLookupCount = 0
-	players[steam].exiled = 0
+	players[steam].exiled = false
 	players[steam].firstSeen = os.time()
 	players[steam].GBLCount = 0
 	players[steam].gimmeCooldown = 0
@@ -3544,6 +3642,10 @@ function fixMissingStuff()
 	lfs.mkdir(homedir .. "/scripts")
 	lfs.mkdir(homedir .. "/data_backup")
 	lfs.mkdir(homedir .. "/chatlogs")
+
+	if botman.chatlogPath then
+		lfs.mkdir(botman.chatlogPath .. "/temp")
+	end
 
 	if not isFile(homedir .. "/custom/gmsg_custom.lua") then
 		os.execute("wget http://www.botman.nz/gmsg_custom.lua -P \"" .. homedir .. "\"/custom/")

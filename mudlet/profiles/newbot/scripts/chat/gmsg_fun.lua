@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -203,7 +203,7 @@ function gmsg_fun()
 				players[id].pvpBounty = players[id].pvpBounty + bounty
 				players[chatvars.playerid].cash = players[chatvars.playerid].cash - bounty
 				message("say [" .. server.chatColour .. "]" .. players[chatvars.playerid].name .. " has placed a bounty of " .. bounty .. " on " .. players[id].name .. "'s head![-]")
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You now have " .. players[chatvars.playerid].cash .. " " .. server.moneyPlural .. ".[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You now have " .. string.format("%d", players[chatvars.playerid].cash) .. " " .. server.moneyPlural .. ".[-]")
 
 				-- update the player's bounty
 				if botman.dbConnected then conn:execute("UPDATE players SET pvpBounty = " .. players[id].pvpBounty .. " WHERE steam = " .. id) end
@@ -255,7 +255,7 @@ function gmsg_fun()
 			end
 		end
 
-		if (chatvars.words[1] == "gimmie" or chatvars.words[1] == "gimme") and chatvars.words[2] == nil then
+		if (chatvars.words[1] == "gimmie" or chatvars.words[1] == "gimme") and (chatvars.words[2] == nil or chatvars.number ~= nil) then
 			if (server.allowGimme) then
 				if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
 					sendCommand("se")
@@ -303,7 +303,12 @@ function gmsg_fun()
 					return true
 				end
 
-				gimme(chatvars.playerid)
+				if chatvars.number and chatvars.accessLevel == 0 then
+					-- this is meant for testing gimme only.
+					gimme(chatvars.playerid, chatvars.number)
+				else
+					gimme(chatvars.playerid)
+				end
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry, an admin has disabled gimme =([-]")
 			end
@@ -315,6 +320,8 @@ function gmsg_fun()
 
 
 	local function cmd_PlayGimmeHell()
+		local k, v
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}gimmezombies or {#}gimmehell or {#}gimmeinsane or {#}gimmedeath"
@@ -364,6 +371,23 @@ function gmsg_fun()
 
 			if tablelength(gimmeZombies) == 0 or gimmeZombies == nil then
 				sendCommand("se")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Oopsie! Somebody fed the zombies. Wait a few seconds while we swap them out with fresh starving ones.[-]")
+				botman.faultyChat = false
+				return true
+			end
+
+			if gimmeZombieBosses == nil then
+				gimmeZombieBosses = {}
+				maxBossZombies = 1
+
+				for k,v in pairs(gimmeZombies) do
+					if v.bossZombie then
+						gimmeZombieBosses[maxBossZombies] = {}
+						gimmeZombieBosses[maxBossZombies].zombie = v.zombie
+						gimmeZombieBosses[maxBossZombies].entityID = k
+						maxBossZombies = maxBossZombies + 1
+					end
+				end
 			end
 
 			-- abort if not in arena
@@ -382,53 +406,60 @@ function gmsg_fun()
 			end
 
 			if (botman.gimmeHell == 0) then
-				removeZombies() -- make sure there are no zeds left that we have flagged for removal
-				removeEntities() -- make sure there are no entities left that we have flagged for removal
 				botman.gimmeHell = 1
 				setupArenaPlayers(chatvars.playerid)
 
 				if botman.gimmeDifficulty == 1 then
-					arenaTimer1 = tempTimer( 5, [[ announceGimmeHell(1) ]] )
-					arenaTimer2 = tempTimer( 10, [[ queueGimmeHell(1,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
-					arenaTimer3 = tempTimer( 60, [[ announceGimmeHell(2) ]] )
-					arenaTimer4 = tempTimer( 65, [[ queueGimmeHell(2,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
-					arenaTimer5 = tempTimer( 120, [[ announceGimmeHell(3) ]] )
-					arenaTimer6 = tempTimer( 125, [[ queueGimmeHell(3,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
-					arenaTimer7 = tempTimer( 180, [[ announceGimmeHell(4) ]] )
-					arenaTimer8 = tempTimer( 185, [[ queueGimmeHell(4,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
+					announceGimmeHell(1, 15)
+					queueGimmeHell(1, igplayers[chatvars.playerid].level)
+					announceGimmeHell(2, 60)
+					queueGimmeHell(2, igplayers[chatvars.playerid].level)
+					announceGimmeHell(3, 120)
+					queueGimmeHell(3, igplayers[chatvars.playerid].level)
+					announceGimmeHell(4, 180)
+					queueGimmeHell(4, igplayers[chatvars.playerid].level)
 				end
 
 				if botman.gimmeDifficulty == 2 then
-					arenaTimer1 = tempTimer( 5, [[ announceGimmeHell(1) ]] )
-					arenaTimer2 = tempTimer( 10, [[ queueGimmeHell(1,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
-					arenaTimer3 = tempTimer( 50, [[ announceGimmeHell(2) ]] )
-					arenaTimer4 = tempTimer( 55, [[ queueGimmeHell(2,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
-					arenaTimer5 = tempTimer( 100, [[ announceGimmeHell(3) ]] )
-					arenaTimer6 = tempTimer( 105, [[ queueGimmeHell(3,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
-					arenaTimer7 = tempTimer( 150, [[ announceGimmeHell(4) ]] )
-					arenaTimer8 = tempTimer( 155, [[ queueGimmeHell(4,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
+					announceGimmeHell(1, 15)
+					queueGimmeHell(1, igplayers[chatvars.playerid].level)
+					announceGimmeHell(2, 50)
+					queueGimmeHell(2, igplayers[chatvars.playerid].level)
+					announceGimmeHell(3, 100)
+					queueGimmeHell(3, igplayers[chatvars.playerid].level)
+					announceGimmeHell(4, 150)
+					queueGimmeHell(4, igplayers[chatvars.playerid].level, true)
+					queueGimmeHell(4, igplayers[chatvars.playerid].level)
 				end
 
 				if botman.gimmeDifficulty == 3 then
-					arenaTimer1 = tempTimer( 5, [[ announceGimmeHell(1) ]] )
-					arenaTimer2 = tempTimer( 8, [[ queueGimmeHell(1,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
-					arenaTimer3 = tempTimer( 40, [[ announceGimmeHell(2) ]] )
-					arenaTimer4 = tempTimer( 43, [[ queueGimmeHell(2,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
-					arenaTimer5 = tempTimer( 80, [[ announceGimmeHell(3) ]] )
-					arenaTimer6 = tempTimer( 83, [[ queueGimmeHell(3,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
-					arenaTimer7 = tempTimer( 120, [[ announceGimmeHell(4) ]] )
-					arenaTimer8 = tempTimer( 123, [[ queueGimmeHell(4,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
+					announceGimmeHell(1, 5)
+					queueGimmeHell(1, igplayers[chatvars.playerid].level)
+					announceGimmeHell(2, 40)
+					queueGimmeHell(2, igplayers[chatvars.playerid].level)
+					announceGimmeHell(3, 80)
+					queueGimmeHell(3, igplayers[chatvars.playerid].level)
+					announceGimmeHell(4, 120)
+					queueGimmeHell(4, igplayers[chatvars.playerid].level, true)
+					queueGimmeHell(4, igplayers[chatvars.playerid].level, true)
+					queueGimmeHell(4, igplayers[chatvars.playerid].level)
 				end
 
 				if botman.gimmeDifficulty == 4 then
-					arenaTimer1 = tempTimer( 5, [[ announceGimmeHell(1) ]] )
-					arenaTimer2 = tempTimer( 7, [[ queueGimmeHell(1,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
-					arenaTimer3 = tempTimer( 30, [[ announceGimmeHell(2) ]] )
-					arenaTimer4 = tempTimer( 32, [[ queueGimmeHell(2,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
-					arenaTimer5 = tempTimer( 60, [[ announceGimmeHell(3) ]] )
-					arenaTimer6 = tempTimer( 62, [[ queueGimmeHell(3,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
-					arenaTimer7 = tempTimer( 90, [[ announceGimmeHell(4) ]] )
-					arenaTimer8 = tempTimer( 92, [[ queueGimmeHell(4,]] .. igplayers[chatvars.playerid].level .. [[) ]] )
+					announceGimmeHell(1, 5)
+					queueGimmeHell(1, igplayers[chatvars.playerid].level)
+					queueGimmeHell(1, igplayers[chatvars.playerid].level)
+					announceGimmeHell(2, 30)
+					queueGimmeHell(2, igplayers[chatvars.playerid].level)
+					queueGimmeHell(2, igplayers[chatvars.playerid].level)
+					announceGimmeHell(3, 60)
+					queueGimmeHell(3, igplayers[chatvars.playerid].level)
+					queueGimmeHell(3, igplayers[chatvars.playerid].level)
+					announceGimmeHell(4, 90)
+					queueGimmeHell(4, igplayers[chatvars.playerid].level, true)
+					queueGimmeHell(4, igplayers[chatvars.playerid].level, true)
+					queueGimmeHell(4, igplayers[chatvars.playerid].level, true)
+					queueGimmeHell(4, igplayers[chatvars.playerid].level)
 				end
 
 				faultChat = false
@@ -720,7 +751,7 @@ function gmsg_fun()
 		-- HO
 
 		-- A special command for Ho's
-		if (chatvars.words[1] == "santa" and chatvars.words[2] == nil) then --  and specialDay == "christmas"
+		if (chatvars.words[1] == "santa" and chatvars.words[2] == nil and specialDay == "christmas") then
 			if (not players[chatvars.playerid].santa) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HO HO HO  Merry Christmas!  Press e now, don't let the Grinch steal Christmas.[-]")
 				if server.stompy then

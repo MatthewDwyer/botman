@@ -343,7 +343,7 @@ function baseStatus(command, playerid)
 		pname = players[id].name
 	end
 
-	message("pm " .. playerid .. " [" .. server.chatColour .. "]You have " .. players[id].cash .. " " .. server.moneyPlural .. " in the bank.[-]")
+	message("pm " .. playerid .. " [" .. server.chatColour .. "]You have " .. string.format("%d", players[id].cash) .. " " .. server.moneyPlural .. " in the bank.[-]")
 
 	if (players[id].protect == true) then
 		protected = "protected"
@@ -604,6 +604,10 @@ function gmsg(line, ircid)
 
 	if botman.debugAll then
 		debug = true -- this should be true
+	end
+
+	if not server.gameVersionNumber then
+		sendCommand("version")
 	end
 
 	-- Hi there! ^^  Welcome to the function that parses player chat.  It builds a lua table called chatvars filled with lots of info
@@ -1208,6 +1212,58 @@ function gmsg(line, ircid)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
+		if chatvars.words[1] == "reload" and chatvars.words[2] == "lua" and chatvars.words[3] ~= nil then
+			-- command the bot to reload 1 specified lua script from disk.  Limited to the scripts folder.
+			temp = string.sub(line, string.find(line, chatvars.wordsOld[2]) + 4)
+			temp = homedir .. "/scripts/" .. temp
+
+			if not isFile(temp) then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]That script does not exist or you have a typo.[-]")
+				else
+					irc_chat(players[chatvars.ircid].ircAlias, "That script does not exist or you have a typo.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if string.find(temp, ".lua") then
+				checkScript(temp)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
+		if chatvars.words[1] == "reload" and chatvars.words[2] == "custom" and chatvars.words[3] == "lua" and chatvars.words[4] ~= nil then
+			-- command the bot to reload 1 specified lua script from disk.  Limited to the custom scripts folder.
+			temp = string.sub(line, string.find(line, chatvars.wordsOld[3]) + 4)
+			temp = homedir .. "/custom/" .. temp
+
+			if not isFile(temp) then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]That script does not exist or you have a typo.[-]")
+				else
+					irc_chat(players[chatvars.ircid].ircAlias, "That script does not exist or you have a typo.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if string.find(temp, ".lua") then
+				checkScript(temp)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
 		if string.find(chatvars.command, "asmfreakz") then
 			banPlayer(chatvars.playerid, "10 year", "advertising hacks", "")
 
@@ -1243,6 +1299,25 @@ function gmsg(line, ircid)
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 		if chatvars.words[1] == "register" and chatvars.words[2] == "help" then
+			if (chatvars.accessLevel > 0) then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				else
+					if not chatvars.showHelp then
+						irc_chat(players[chatvars.ircid].ircAlias, "This command is restricted.")
+					end
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if (chatvars.playername == "Server") then
+				if not chatvars.showHelp then
+					irc_chat(players[chatvars.ircid].ircAlias, "Registering command help.")
+				end
+			end
+
 			botman.registerHelp	= true
 			topicID = 1
 			commandID = 1
@@ -1270,6 +1345,18 @@ function gmsg(line, ircid)
 
 	if result then
 		if debug then dbug("debug ran command in gmsg_custom") end
+		return true
+	end
+
+	-- If you want to override any commands in the sections below, create commands in gmsg_custom.lua or call them from within it making sure to match the commands keywords.
+
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
+	if debug then dbug("debug entering gmsg_info") end
+	result = gmsg_info()
+
+	if result then
+		if debug then dbug("debug ran command in gmsg_info") end
 		return true
 	end
 
@@ -1305,6 +1392,19 @@ function gmsg(line, ircid)
 			botman.faultyChat = false
 			return true
 		end
+
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
+	if chatvars.words[1] == "restore" and chatvars.words[2] == "admin" then
+		if chatvars.ircid ~= 0 then
+			if botman.dbConnected then conn:execute("UPDATE persistentQueue SET timerDelay = now() WHERE steam = " .. chatvars.ircid) end
+		else
+			if botman.dbConnected then conn:execute("UPDATE persistentQueue SET timerDelay = now() WHERE steam = " .. chatvars.playerid) end
+		end
+
+		botman.faultyChat = false
+		return true
+	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
@@ -1390,22 +1490,6 @@ function gmsg(line, ircid)
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-
-	if debug then dbug("debug entering gmsg_info") end
-	result = gmsg_info()
-
-	if result then
-		if debug then dbug("debug ran command in gmsg_info") end
-		return true
-	end
-
-	if not result then
-		if not result and debug then dbug("debug entering gmsg_custom") end
-		result = gmsg_custom()
-		if result and debug then dbug("debug ran command in gmsg_custom") end
-	end
-
-	-- If you want to override any commands in the sections below, create commands in gmsg_custom.lua or call them from within it making sure to match the commands keywords.
 
 	if debug then dbug("debug entering gmsg_base") end
 	result = gmsg_base()
@@ -1536,24 +1620,48 @@ function gmsg(line, ircid)
 	end
 
 	-- make Stompy's BC mod override Coppi/CPM mod commands wherever they clash
-	if server.stompy then
-		if debug then dbug("debug entering gmsg_stompy") end
-		result = gmsg_stompy()
+	if tonumber(server.gameVersionNumber) < 17 then
+		if server.coppi then
+			if debug then dbug("debug entering gmsg_coppi") end
+			if gmsg_coppi ~= nil then
+				result = gmsg_coppi()
 
-		if result then
-			if debug then dbug("debug ran command in gmsg_stompy") end
-			return true
+				if result then
+					if debug then dbug("debug ran command in gmsg_coppi") end
+					return true
+				end
+			end
 		end
-	end
 
-	if server.coppi then
-		if debug then dbug("debug entering gmsg_coppi") end
-		if gmsg_coppi ~= nil then
-			result = gmsg_coppi()
+		if server.stompy then
+			if debug then dbug("debug entering gmsg_stompy") end
+			result = gmsg_stompy()
 
 			if result then
-				if debug then dbug("debug ran command in gmsg_coppi") end
+				if debug then dbug("debug ran command in gmsg_stompy") end
 				return true
+			end
+		end
+	else
+		if server.stompy then
+			if debug then dbug("debug entering gmsg_stompy") end
+			result = gmsg_stompy()
+
+			if result then
+				if debug then dbug("debug ran command in gmsg_stompy") end
+				return true
+			end
+		end
+
+		if server.coppi then
+			if debug then dbug("debug entering gmsg_coppi") end
+			if gmsg_coppi ~= nil then
+				result = gmsg_coppi()
+
+				if result then
+					if debug then dbug("debug ran command in gmsg_coppi") end
+					return true
+				end
 			end
 		end
 	end
@@ -1696,7 +1804,17 @@ function gmsg(line, ircid)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-	botman.registerHelp	= false
+	if botman.registerHelp then
+		botman.registerHelp	= false
+
+		if (chatvars.playername ~= "Server") then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The command help has been registered.[-]")
+		else
+			if not chatvars.showHelp then
+				irc_chat(players[chatvars.ircid].ircAlias, "Command help registration complete.")
+			end
+		end
+	end
 
 	if chatvars.words[1] == "register" and chatvars.words[2] == "help" then
 		result = true

@@ -65,7 +65,7 @@ function gmsg_locations()
 				return true
 			end
 
-			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "add ") + 4)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -443,7 +443,8 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "reset ") + 6)
+			locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[4]))
+			--locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "reset ") + 6)
 			locationName = string.trim(locationName)
 
 			loc = LookupLocation(locationName)
@@ -606,6 +607,8 @@ function gmsg_locations()
 
 
 	local function cmd_LocationInfo()
+		local cursor, errorString, row
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}location {name}"
@@ -644,7 +647,8 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9)
+			locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[2]))
+			--locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -818,7 +822,8 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "reset ") + 6)
+			locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[4]))
+			--locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "reset ") + 6)
 			locationName = string.trim(locationName)
 
 			loc = LookupLocation(locationName)
@@ -889,7 +894,8 @@ function gmsg_locations()
 				return true
 			end
 
-			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "move ") + 5)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+			--locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "move ") + 5)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -1010,7 +1016,8 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "remove ") + 7)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+			--locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "remove ") + 7)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -2222,7 +2229,8 @@ function gmsg_locations()
 			end
 
 			if chatvars.words[3] ~= nil then
-				locationName = string.sub(chatvars.command, string.find(chatvars.command, " tp ") + 4, string.len(chatvars.command))
+				locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+				--locationName = string.sub(chatvars.command, string.find(chatvars.command, " tp ") + 4, string.len(chatvars.command))
 				locationName = string.trim(locationName)
 				loc = LookupLocation(locationName)
 
@@ -2295,7 +2303,8 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "base ") + 5)
+			locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[4]))
+			--locationName = string.sub(chatvars.command, string.find(chatvars.command, "base ") + 5)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -2376,11 +2385,13 @@ function gmsg_locations()
 				end
 			end
 
-			if chatvars.words[2] == "enable" then
-				locationName = string.sub(chatvars.command, string.find(chatvars.command, "enable ") + 7)
-			else
-				locationName = string.sub(chatvars.command, string.find(chatvars.command, "disable ") + 8)
-			end
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+
+			-- if chatvars.words[2] == "enable" then
+				-- locationName = string.sub(chatvars.command, string.find(chatvars.command, "enable ") + 7)
+			-- else
+				-- locationName = string.sub(chatvars.command, string.find(chatvars.command, "disable ") + 8)
+			-- end
 
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
@@ -2462,7 +2473,8 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "hide ") + 5)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+			--locationName = string.sub(chatvars.command, string.find(chatvars.command, "hide ") + 5)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -2586,6 +2598,89 @@ function gmsg_locations()
 	end
 
 
+	local function cmd_ToggleLocationIsRound()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}location round/circle/square/rectangle {name}"
+			help[2] = "Locations are circles by default with a central coord and a radius.  You can make the location a square (with equal sides).\n"
+			help[2] = help[2] .. "The location's size is always its radius."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "locat,togg,set,square,round,circ,rect"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "locat") or string.find(chatvars.command, "togg") or string.find(chatvars.command, "round") or string.find(chatvars.command, "square") or string.find(chatvars.command, "rect") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "location" and (chatvars.words[2] == "round" or chatvars.words[2] == "circle" or chatvars.words[2] == "square" or string.find(chatvars.words[2], "rect")) and chatvars.words[3] ~= nil then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+			locationName = string.trim(locationName)
+
+			loc = LookupLocation(locationName)
+
+			if (loc == nil) then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]That location does not exist.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				end
+			else
+				if chatvars.words[2] == "round" or chatvars.words[2] == "circle" then
+					locations[loc].isRound = true
+					conn:execute("UPDATE locations set isRound = 1 WHERE name = '" .. escape(locationName) .. "'")
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " is now a circle with radius " .. locations[loc].size .. ".[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now a circle with radius " .. locations[loc].size .. ".")
+					end
+				else
+					locations[loc].isRound = false
+					conn:execute("UPDATE locations set isRound = 0 WHERE name = '" .. escape(locationName) .. "'")
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " is now a square with radius " .. locations[loc].size .. ".[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now a square with radius " .. locations[loc].size .. ".")
+					end
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleLocationPrivate()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -2629,11 +2724,13 @@ function gmsg_locations()
 				end
 			end
 
-			if chatvars.words[2] == "private" then
-				locationName = string.sub(chatvars.command, string.find(chatvars.command, "private ") + 8)
-			else
-				locationName = string.sub(chatvars.command, string.find(chatvars.command, "public ") + 7)
-			end
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+
+			-- if chatvars.words[2] == "private" then
+				-- locationName = string.sub(chatvars.command, string.find(chatvars.command, "private ") + 8)
+			-- else
+				-- locationName = string.sub(chatvars.command, string.find(chatvars.command, "public ") + 7)
+			-- end
 
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
@@ -2876,11 +2973,13 @@ function gmsg_locations()
 				end
 			end
 
-			if chatvars.words[2] == "safe" then
-				locationName = string.sub(chatvars.command, string.find(chatvars.command, "safe ") + 5)
-			else
-				locationName = string.sub(chatvars.command, string.find(chatvars.command, "unsafe ") + 7)
-			end
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+
+			-- if chatvars.words[2] == "safe" then
+				-- locationName = string.sub(chatvars.command, string.find(chatvars.command, "safe ") + 5)
+			-- else
+				-- locationName = string.sub(chatvars.command, string.find(chatvars.command, "unsafe ") + 7)
+			-- end
 
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
@@ -3192,7 +3291,8 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+			--locationName = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -3332,15 +3432,6 @@ function gmsg_locations()
 
 	if result then
 		if debug then dbug("debug cmd_LocationEndsHere triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_LocationInfo()
-
-	if result then
-		if debug then dbug("debug cmd_LocationInfo triggered") end
 		return result
 	end
 
@@ -3544,6 +3635,15 @@ function gmsg_locations()
 
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_ToggleLocationIsRound()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationIsRound triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_ToggleLocationPrivate()
 
 	if result then
@@ -3611,6 +3711,15 @@ function gmsg_locations()
 
 	if result then
 		if debug then dbug("debug cmd_UnprotectLocation triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_LocationInfo()
+
+	if result then
+		if debug then dbug("debug cmd_LocationInfo triggered") end
 		return result
 	end
 

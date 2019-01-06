@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -227,6 +227,8 @@ function freeReservedSlot(accessLevel, steam)
 	return false
 end
 
+-- enable debug to see where the code is stopping. Any error will be somewhere after the last successful debug line.
+debug = false -- should be false unless testing
 
 function playerConnected(line)
 	local temp_table, temp, debug, commas, freeSlots, test, tmp
@@ -419,7 +421,7 @@ function playerConnected(line)
 				players[tmp.steam].testAsPlayer = nil
 			end
 
-			tempTimer( 30, [[listPlayerFriends("]] .. tmp.steam .. [[")]] )
+			tempTimer( 30, [[sendCommand("bc-lp ]] .. tmp.steam .. [[ /full")]] )
 		end
 	end
 
@@ -432,24 +434,26 @@ function playerConnected(line)
 
 		players[tmp.steam].pendingBans = 0
 
-		-- check if GBL ban
-		if botman.db2Connected then
-			cursor,errorString = connBots:execute("SELECT * FROM bans WHERE (Steam = " .. tmp.steam .. " or Steam = " .. tmp.steamOwner .. ") and GBLBan = 1 and GBLBanActive = 1")
-			rows = cursor:numrows()
+		if not server.optOutGlobalBots then
+			-- check if GBL ban
+			if botman.db2Connected then
+				cursor,errorString = connBots:execute("SELECT * FROM bans WHERE (Steam = " .. tmp.steam .. " or Steam = " .. tmp.steamOwner .. ") and GBLBan = 1 and GBLBanActive = 1")
+				rows = cursor:numrows()
 
-			if tonumber(rows) > 0 then
-				row = cursor:fetch({}, "a")
-				kick(tmp.steam, "You are on the global ban list. " .. row.GBLBanReason)
-				banPlayer(tmp.steam, "10 years", "On global ban list", 0, true)
-				return
-			else
-				-- check number of pending global bans and alert if this player has any, but allow them to join.
-				cursor,errorString = connBots:execute("SELECT count(steam) as pendingBans FROM bans WHERE (Steam = " .. tmp.steam .. " or Steam = " .. tmp.steamOwner .. ") and GBLBan = 1 and GBLBanVetted = 0")
-				row = cursor:fetch({}, "a")
-				if tonumber(row.pendingBans) > 0 then
-					irc_chat(server.ircAlerts, "ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")
-					players[tmp.steam].pendingBans = row.pendingBans
-					alertAdmins("ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.", "alert")
+				if tonumber(rows) > 0 then
+					row = cursor:fetch({}, "a")
+					kick(tmp.steam, "You are on the global ban list. " .. row.GBLBanReason)
+					banPlayer(tmp.steam, "10 years", "On global ban list", 0, true)
+					return
+				else
+					-- check number of pending global bans and alert if this player has any, but allow them to join.
+					cursor,errorString = connBots:execute("SELECT count(steam) as pendingBans FROM bans WHERE (Steam = " .. tmp.steam .. " or Steam = " .. tmp.steamOwner .. ") and GBLBan = 1 and GBLBanVetted = 0")
+					row = cursor:fetch({}, "a")
+					if tonumber(row.pendingBans) > 0 then
+						irc_chat(server.ircAlerts, "ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")
+						players[tmp.steam].pendingBans = row.pendingBans
+						alertAdmins("ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.", "alert")
+					end
 				end
 			end
 		end
@@ -520,8 +524,10 @@ function playerConnected(line)
 
 		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
-		if tmp.ip ~= "" then
-			CheckBlacklist(tmp.steam, tmp.ip)
+		if not server.optOutGlobalBots then
+			if tmp.ip ~= "" then
+				CheckBlacklist(tmp.steam, tmp.ip)
+			end
 		end
 
 		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end

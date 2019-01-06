@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -74,7 +74,7 @@ end
 
 
 function matchAll(line, logDate, logTime)
-	local pname, pid, number, died, coords, words, temp, msg
+	local pname, pid, number, died, coords, words, temp, msg, claimRemoved
 	local dy, mth, yr, hr, min, sec, pm, reason, timestamp, banDate
 	local fields, values, x, y, z, id, loc, reset, steam, k, v, rows, tmp
 
@@ -83,11 +83,9 @@ function matchAll(line, logDate, logTime)
 	end
 
 	-- set counter to help detect the bot going offline
-	if not server.useAllocsWebAPI then
-		botman.botOfflineCount = 0
-		botman.botOffline = false
-		botman.lastTelnetResponseTimestamp = os.time()
-	end
+	botman.botOfflineCount = 0
+	botman.botOffline = false
+	botman.lastServerResponseTimestamp = os.time()
 
 	if botman.botDisabled then
 		return
@@ -211,30 +209,8 @@ function matchAll(line, logDate, logTime)
 	end
 
 
-	if string.find(line, "Defined webuser") then
-		botman.readTokens = true
-
-		return
-	end
-
-
-	if botman.readTokens then
-		if not string.find(line, "Defined web") then
-			if string.find(line, "bot") then
-				-- grab the current bot user's password
-				if string.find(line, "/") then
-					temp = string.split(line, "/")
-					server.allocsWebAPIPasswordNew = server.allocsWebAPIPassword
-					server.allocsWebAPIPassword = string.trim(temp[2])
-				end
-			end
-		end
-	end
-
-
 	if string.find(line, "Web user with name=bot", nil, true) then
-		server.allocsWebAPIPassword = server.allocsWebAPIPasswordNew
-
+		startUsingAllocsWebAPI()
 		return
 	end
 
@@ -314,9 +290,9 @@ function matchAll(line, logDate, logTime)
 
 	if not server.useAllocsWebAPI then
 		if (string.sub(line, 1, 4) == os.date("%Y")) then
-			if botman.readTokens then
-				botman.readTokens = false
-			end
+			-- if botman.readTokens then
+				-- botman.readTokens = false
+			-- end
 
 			if botman.readGG then
 				botman.readGG = false
@@ -337,7 +313,7 @@ function matchAll(line, logDate, logTime)
 				loadOtherEntities()
 
 				if botman.dbConnected then
-					cursor,errorString = conn:execute("SELECT Count(entityID) as maxZeds from gimmeZombies")
+					cursor,errorString = conn:execute("SELECT MAX(entityID) AS maxZeds FROM gimmeZombies")
 					row = cursor:fetch({}, "a")
 					botman.maxGimmeZombies = tonumber(row.maxZeds)
 				end
@@ -345,6 +321,12 @@ function matchAll(line, logDate, logTime)
 
 			if collectBans then
 				collectBans = false
+			end
+
+			if readVersion then
+				readVersion = nil
+				resetVersion = nil
+				table.save(homedir .. "/data_backup/modVersions.lua", modVersions)
 			end
 		end
 
@@ -592,14 +574,14 @@ function matchAll(line, logDate, logTime)
 				players[pid].timeout = false
 				players[pid].botTimeout = false
 				players[pid].prisoner = false
-				players[pid].exiled = 2
+				players[pid].exiled = false
 				players[pid].canTeleport = true
 				players[pid].enableTP = true
 				players[pid].botHelp = true
 				players[pid].hackerScore = 0
 				players[pid].testAsPlayer = nil
 
-				if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. number .. " WHERE steam = " .. pid) end
+				if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 0, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. number .. " WHERE steam = " .. pid) end
 			end
 
 			return
@@ -697,6 +679,12 @@ function matchAll(line, logDate, logTime)
 		end
 
 
+		if string.find(line, "Executing command 'version") or string.find(line, "Game version:", nil, true) then
+			readVersion = true
+			resetVersion = true
+		end
+
+
 		if echoConsoleTo ~= nil then
 			if string.find(line, "Executing command 'webpermission list") and string.find(line, server.botsIP) then
 				echoConsole = true
@@ -726,7 +714,7 @@ function matchAll(line, logDate, logTime)
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'version") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'version") then
 				echoConsole = true
 			end
 
@@ -809,7 +797,7 @@ function matchAll(line, logDate, logTime)
 							players[pid].hackerScore = tonumber(players[pid].hackerScore) + 10
 						end
 
-						alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. "[-]", "warn")
+						alertAdmins("Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z, "warn")
 						irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist))
 						irc_chat(server.ircAlerts, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist))
 					else
@@ -819,13 +807,13 @@ function matchAll(line, logDate, logTime)
 
 								irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist))
 								irc_chat(server.ircAlerts, server.gameDate .. " player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist))
-								alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist) .. "[-]", "warn")
+								alertAdmins("Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist), "warn")
 							end
 
 							if tonumber(os.time() - igplayers[pid].lastHackerAlert) > 120 then
 								igplayers[pid].lastHackerAlert = os.time()
 								irc_chat(server.ircAlerts, server.gameDate .. " player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (session: " .. players[pid].sessionCount .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist))
-								alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z ..  " moved " .. string.format("%d", dist) .. "[-]", "warn")
+								alertAdmins("Player " .. pid .. " " .. igplayers[pid].name .. " detected noclipping (count: " .. igplayers[pid].noclipCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z ..  " moved " .. string.format("%d", dist), "warn")
 							end
 						end
 					end
@@ -897,20 +885,20 @@ function matchAll(line, logDate, logTime)
 							if tonumber(igplayers[pid].flyCount) > 1 then
 								irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (session: " .. players[pid].sessionCount .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z)
 								irc_chat(server.ircAlerts, server.gameDate .. " player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (session: " .. players[pid].sessionCount .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist))
-								alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " may be flying (count: " .. igplayers[pid].flyCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist) .. "[-]", "warn")
+								alertAdmins("Player " .. pid .. " " .. igplayers[pid].name .. " may be flying (count: " .. igplayers[pid].flyCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist), "warn")
 							end
 						else
 							if igplayers[pid].flyingX == x and igplayers[pid].flyingY == y and igplayers[pid].flyingZ == z then
 								if igplayers[pid].lastHackerAlert == nil then
 									igplayers[pid].lastHackerAlert = os.time()
 
-									alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist) .. "[-]", "warn")
+									alertAdmins("Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist), "warn")
 									irc_chat(server.ircMain, "Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z)
 									irc_chat(server.ircAlerts, server.gameDate .. " player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist))
 								end
 
 								if os.time() - igplayers[pid].lastHackerAlert > 120 then
-									alertAdmins("[" .. server.alertColour .. "]Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist) .. "[-]", "warn")
+									alertAdmins("Player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist), "warn")
 									irc_chat(server.ircAlerts, server.gameDate .. " player " .. pid .. " " .. igplayers[pid].name .. " detected flying (count: " .. igplayers[pid].flyCount .. ") (session: " .. players[pid].session .. " hacker score: " .. players[pid].hackerScore .. ") " .. x .. " " .. y .. " " .. z .. " moved " .. string.format("%d", dist))
 								end
 							end
@@ -955,26 +943,6 @@ function matchAll(line, logDate, logTime)
 			end
 
 			return
-		end
-
-
-		if string.find(line, "Executing command 'version'") and server.botsIP then
-			if string.find(line, server.botsIP) then
-				modVersions = {}
-				server.allocs = false
-				server.coppi = false
-				server.csmm = false
-				server.stompy = false
-				server.SDXDetected = false
-				server.ServerToolsDetected = false
-				server.djkrose = false
-
-				if botman.dbConnected then
-					conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
-				end
-
-				return
-			end
 		end
 
 
@@ -1187,6 +1155,23 @@ function matchAll(line, logDate, logTime)
 
 
 	if string.sub(line, 1, 4) == "Mod " then
+		if resetVersion and not server.useAllocsWebAPI then
+			modVersions = {}
+			server.allocs = false
+			server.coppi = false
+			server.csmm = false
+			server.stompy = false
+			server.SDXDetected = false
+			server.ServerToolsDetected = false
+			server.djkrose = false
+
+			if botman.dbConnected then
+				conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
+			end
+
+			resetVersion = nil
+		end
+
 		modVersions[line] = {}
 	end
 
@@ -1303,6 +1288,10 @@ function matchAll(line, logDate, logTime)
 
 		temp = string.split(server.gameVersion, " ")
 		server.gameVersionNumber = tonumber(temp[2])
+
+		if server.gameVersionNumber == 17 and server.updateBranch == "stable" then
+			server.updateBranch = "a17"
+		end
 
 		return
 	end
@@ -1476,6 +1465,65 @@ function matchAll(line, logDate, logTime)
 		end
 
 		return
+	end
+
+	if string.find(line, "INF BlockAdded") then
+		temp = string.split(line, " ")
+		pid = string.match(temp[5], "(-?%d+)")
+		x = string.match(temp[6], "(-?%d+)")
+		y = string.match(temp[7], "(-?%d+)")
+		z = string.match(temp[8], "(-?%d+)")
+
+		if players[pid].accessLevel > 2 then
+			if accessLevel(pid) > 3 then
+				region = getRegion(x, z)
+				loc, reset = inLocation(x, z)
+
+				if (resetRegions[region] or reset or players[pid].removeClaims) and not players[pid].testAsPlayer then
+					claimRemoved = true
+					if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. pid .. ",'" .. escape("rlp " .. x .. " " .. y .. " " .. z) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 5) .. "')") end
+				else
+					if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired, remove, removed) VALUES (" .. pid .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ",0,0) ON DUPLICATE KEY UPDATE expired = " .. dbBool(expired) .. ", remove = 0, removed = 0") end
+				end
+			else
+				if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired, remove, removed) VALUES (" .. pid .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ",0,0) ON DUPLICATE KEY UPDATE expired = " .. dbBool(expired) .. ", remove = 0, removed = 0") end
+			end
+
+			if not claimRemoved then
+				if not keystones[x .. y .. z] then
+					keystones[x .. y .. z] = {}
+					keystones[x .. y .. z].x = x
+					keystones[x .. y .. z].y = y
+					keystones[x .. y .. z].z = z
+					keystones[x .. y .. z].steam = pid
+				end
+			end
+		end
+
+		return
+	end
+
+
+	if string.find(line, "INF Started Webserver") then
+		if tonumber(server.webPanelPort) == 0 then
+			temp = string.sub(line, string.find(line, " on ") + 4)
+			temp = tonumber(temp) - 2
+			server.webPanelPort = temp
+
+			if not server.useAllocsWebAPI then
+				server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+				conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+				os.remove(homedir .. "/temp/apitest.txt")
+				server.useAllocsWebAPI = true
+				botman.APIOffline = false
+				botman.APITestSilent = true
+				send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+			else
+				botman.APIOffline = false
+				botman.APITestSilent = true
+				startUsingAllocsWebAPI()
+			end
+		end
 	end
 end
 

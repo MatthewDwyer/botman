@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -51,7 +51,7 @@ function gmsg_shop()
 		end
 
 		if (chatvars.words[1] == "cash" or chatvars.words[1] == server.moneyName or chatvars.words[1] == server.moneyPlural or chatvars.words[1] == "bank" or chatvars.words[1] == "wallet") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have " .. players[chatvars.playerid].cash .. " " .. server.moneyPlural .. " in the bank.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have " .. string.format("%d", players[chatvars.playerid].cash) .. " " .. server.moneyPlural .. " in the bank.[-]")
 			botman.faultyChat = false
 			return true
 		end

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -526,7 +526,7 @@ function irc_PlayerShortInfo()
 		irc_chat(irc_params.name, "Not a prisoner")
 	end
 
-	irc_chat(irc_params.name, server.moneyPlural .. " " .. players[irc_params.pid].cash)
+	irc_chat(irc_params.name, server.moneyPlural .. " " .. string.format("%d", players[irc_params.pid].cash))
 	irc_chat(irc_params.name, "Keystones placed " .. players[irc_params.pid].keystones)
 	irc_chat(irc_params.name, "Zombies " .. players[irc_params.pid].zombies)
 	irc_chat(irc_params.name, "Score " .. players[irc_params.pid].score)
@@ -541,7 +541,7 @@ function irc_PlayerShortInfo()
 		irc_chat(irc_params.name, "China IP detected")
 	end
 
-	if players[irc_params.pid].exiled == 1 then
+	if players[irc_params.pid].exiled then
 		irc_chat(irc_params.name, "Is exiled")
 	else
 		irc_chat(irc_params.name, "Not exiled")
@@ -790,15 +790,19 @@ end
 function irc_friends()
 	local friendlist, max
 
+	irc_chat(irc_params.name, players[irc_params.pid].name .. " is friends with..")
 	friendlist = string.split(friends[irc_params.pid].friends, ",")
-
-	irc_chat(irc_params.name, players[irc_params.pid2].name .. " is friends with..")
 	max = table.maxn(friendlist)
+
 	for i=1,max,1 do
 		if (friendlist[i] ~= "") then
 			id = LookupPlayer(friendlist[i])
 			irc_chat(irc_params.name, players[id].name)
 		end
+	end
+
+	if friends[irc_params.pid].friends == "" then
+		irc_chat(irc_params.name, "Nobody :(")
 	end
 
 	irc_chat(irc_params.name, ".")
@@ -1215,7 +1219,7 @@ function irc_playerStatus()
 	else
 		base = "Has set a base"
 	end
-	irc_chat(irc_params.name, irc_params.pname .. " has " .. players[irc_params.pid].cash .. " " .. server.moneyPlural .. "")
+	irc_chat(irc_params.name, irc_params.pname .. " has " .. string.format("%d", players[irc_params.pid].cash) .. " " .. server.moneyPlural .. "")
 
 	irc_chat(irc_params.name, "Base status for " .. irc_params.pname .. " is..")
 	irc_chat(irc_params.name, base)

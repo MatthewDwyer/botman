@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	          This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -49,7 +49,7 @@ function checkData()
 		login()
 	end
 
-	tempTimer( 5, [[sendCommand("version")]] )
+	sendCommand("version")
 
 	if server.botsIP == nil then
 		getBotsIP()
@@ -60,22 +60,18 @@ function checkData()
 	end
 
 	if tonumber(server.ServerPort) == 0 then
-		tempTimer( 10, [[sendCommand("gg")]] )
+		sendCommand("gg")
 	end
 
 	if (botman.playersOnline > 0) then
 		if tablelength(igplayers) == 0 then
 			igplayers = {}
-			tempTimer( 15, [[sendCommand("lp")]] )
+			sendCommand("lp")
 		end
 	end
 
-	if not botman.customMudlet then
-		irc_chat(server.ircMain, "You appear to not be using the custom Mudlet build by TheFae or an old version. The latest version adds several nice automation features and better IRC support. You can get here https://github.com/itsTheFae/FaesMudlet2")
-	end
-
 	if tablelength(owners) == 0 then
-		tempTimer( 20, [[sendCommand("admin list")]] )
+		sendCommand("admin list")
 	end
 
 	if benchmarkBot then
@@ -115,15 +111,16 @@ function login()
 
 	if type(botman) ~= "table" then
 		botman = {}
+		botman.botOffline = true
+		botman.telnetOffline = true
+		botman.APIOffline = true
 	end
+
+	tempTimer( 40, [[checkData()]] )
 
 	if type(server) ~= "table" then
 		server = {}
 		getAllPlayers = true
-
-		if not botman.botDisabled then
-			botman.botOffline = false
-		end
 
 		-- force the irc server to localhost so that we don't automatically join Freenode and the Mudlet channel if nothing else has been set.
 		-- set some random irc channel name so that the bot should not join an existing channel with another bot in it if localhost has an irc server.
@@ -146,7 +143,6 @@ function login()
 		server.lagged = false
 		botman.botConnectedTimestamp = os.time()
 		botman.botOfflineCount = 0
-		botman.botOffline = false
 		botman.lastServerResponseTimestamp = os.time()
 		botman.lastTelnetResponseTimestamp = os.time()
 		botman.serverRebooting = false
@@ -154,31 +150,21 @@ function login()
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	tempTimer( 60, [[checkData()]] )
 	botman.userHome = string.sub(homedir, 1, string.find(homedir, ".config") - 2)
 
 	if botman.sysExitID == nil then
 		botman.sysExitID = registerAnonymousEventHandler("sysExitEvent", "onSysExit")
-
-		if botman.sysExitID == nil then
-			botman.sysExitID = 0
-		end
+		botman.sysExitID = 0
 	end
 
 	if botman.sysIrcStatusMessageID == nil then
 		botman.sysIrcStatusMessageID = registerAnonymousEventHandler("sysIrcStatusMessage", "ircStatusMessage")
-
-		if botman.sysIrcStatusMessageID == nil then
-			botman.sysIrcStatusMessageID = 0
-		end
+		botman.sysIrcStatusMessageID = 0
 	end
 
 	if botman.sysDisconnectionID == nil then
 		botman.sysDisconnectionID = registerAnonymousEventHandler("sysDisconnectionEvent", "onSysDisconnection")
-
-		if botman.sysDisconnectionID == nil then
-			botman.sysDisconnectionID = 0
-		end
+		botman.sysDisconnectionID = 0
 	end
 
 	if botman.updateBotOnlineStatusID == nil then
@@ -306,7 +292,7 @@ function login()
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	if not isFile(homedir .. "/botman.ini") then
-		storeBotmanINI()
+		--storeBotmanINI()
 	end
 
 	-- load the server API key if it exists

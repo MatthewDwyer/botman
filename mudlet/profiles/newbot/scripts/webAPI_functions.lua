@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -11,32 +11,30 @@
 local debug = false -- should be false unless testing
 
 
-function getAPILog()
-	 url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/GetWebUIUpdates?adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
-	 os.remove(homedir .. "/temp/webUIUpdates.txt")
-	 downloadFile(homedir .. "/temp/webUIUpdates.txt", url)
+function getAPILogUpdates()
+	url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getwebuiupdates?adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+	os.remove(homedir .. "/temp/webUIUpdates.txt")
+	downloadFile(homedir .. "/temp/webUIUpdates.txt", url)
 end
 
 
 function getAPILog()
-	if botman.lastLogLine then
-		 url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getlog?firstline=" .. botman.lastLogLine .. "&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
-		 os.remove(homedir .. "/temp/log.txt")
-		 downloadFile(homedir .. "/temp/log.txt", url)
-	 end
+	url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getlog?firstline=" .. botman.lastLogLine .. "&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+	os.remove(homedir .. "/temp/log.txt")
+	downloadFile(homedir .. "/temp/log.txt", url)
 end
 
 
 function checkAPIWorking()
 	local fileSize, ln, foundAPI
 
-	fileSize = lfs.attributes (homedir .. "/temp/dummy.txt", "size")
+	fileSize = lfs.attributes (homedir .. "/temp/apitest.txt", "size")
 	foundAPI = false
 
 	-- if the API is working a file called dummy.txt will not be empty.
 	if fileSize == nil or tonumber(fileSize) == 0 then
 		-- oh no!  it's empty! maybe its 2 above or below?  Let's find out :D
-		if not botman.testAPIPort then
+		if botman.testAPIPort == botman.oldAPIPort then
 			-- re-test 2 above the port we were given
 			botman.testAPIPort = botman.oldAPIPort + 2
 		else
@@ -59,21 +57,48 @@ function checkAPIWorking()
 		server.webPanelPort = botman.testAPIPort
 
 		-- verify that the web API is working for us
-		tempTimer( 3, [[message("pm APItest test")]] )
+		tempTimer( 1, [[message("pm APItest test")]] )
 		tempTimer( 7, [[checkAPIWorking()]] )
 		return
 	else
 		if foundAPI then
-			-- report our success
-			alertAdmins("The bot is now using Alloc's web API.")
-			irc_chat(server.ircMain, "The bot is now using Alloc's web API.")
-		else
-			server.useAllocsWebAPI = false
-			server.webPanelPort = botman.oldAPIPort
-			conn:execute("UPDATE server set useAllocsWebAPI = 0")
+			botman.APIOffline = false
+			toggleTriggers("api online")
 
-			alertAdmins("API FAILED! The bot is using telnet. Check your server's web panel port and set it with {#}set api port {port number}.  It should be set to 2 below your web map's port and is called ControlPanelPort in your server config.", "alert")
-			irc_chat(server.ircMain, "API FAILED! The bot is using telnet.  Check your server's web panel port and set it with {#}set api port {port number}, then re-try {#}use api.  It should be set to 2 below your web map's port and is called ControlPanelPort in your server config.")
+			-- report our success
+			if not botman.APITestSilent then
+				alertAdmins("The bot is now using Alloc's web API.")
+				irc_chat(server.ircMain, "The bot is now using Alloc's web API.")
+			end
+		else
+			botman.APIOffline = true
+			toggleTriggers("api offline")
+
+			--server.useAllocsWebAPI = false
+			server.webPanelPort = botman.oldAPIPort
+			--conn:execute("UPDATE server set useAllocsWebAPI = 0")
+
+			--alertAdmins("API FAILED! The bot is now using telnet.", "warn")
+			--irc_chat(server.ircMain, "API FAILED! The bot is using telnet.  Check your server's web panel port and set it with {#}set api port {port number}, then re-try {#}use api.  It should be set to 2 below your web map's port and is called ControlPanelPort in your server config.")
+		end
+	end
+
+	botman.APITestSilent = nil
+	os.remove(homedir .. "/temp/apitest.txt")
+end
+
+
+function getBCFriends(steam, data)
+	local pid, fpid, i, temp, max, k, v
+
+	-- delete auto-added friends from the MySQL table
+	if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. steam .. " AND autoAdded = 1") end
+
+	for k,v in pairs(data) do
+
+		-- add friends read from BC-LP
+		if not string.find(friends[steam].friends, v) then
+			addFriend(steam, v, true)
 		end
 	end
 end
@@ -198,7 +223,7 @@ function API_PlayerInfo(data)
 		players[data.steamid].watchPlayer = true
 		players[data.steamid].watchPlayerTimer = os.time() + 2419200 -- stop watching in one month or until no longer a new player
 		players[data.steamid].ip = data.ip
-		players[data.steamid].exiled = 0
+		players[data.steamid].exiled = false
 
 		irc_chat(server.ircMain, "###  New player joined " .. data.name .. " steam: " .. data.steamid.. " id: " .. data.entityid .. " ###")
 		irc_chat(server.ircAlerts, "New player joined " .. server.gameDate)
@@ -209,7 +234,10 @@ function API_PlayerInfo(data)
 		end
 
 		fixMissingPlayer(data.steamid)
-		CheckBlacklist(data.steamid, data.ip)
+
+		if not server.optOutGlobalBots then
+			CheckBlacklist(data.steamid, data.ip)
+		end
 	end
 
 	if igplayers[data.steamid].greet then
@@ -244,7 +272,10 @@ function API_PlayerInfo(data)
 
 	if data.ip ~= "" and players[data.steamid].ip == "" then
 		players[data.steamid].IP = data.ip
-		CheckBlacklist(data.steamid, data.ip)
+
+		if not server.optOutGlobalBots then
+			CheckBlacklist(data.steamid, data.ip)
+		end
 	end
 
 	-- ping kick
@@ -383,13 +414,13 @@ function API_PlayerInfo(data)
 								players[data.steamid].watchPlayerTimer = os.time() + 259200 -- watch for 3 days
 								if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. data.steamid) end
 
-								if tonumber(players[data.steamid].exiled) == 1 or players[data.steamid].newPlayer then
+								if players[data.steamid].exiled == true or players[data.steamid].newPlayer then
 									igplayers[data.steamid].hackerTPScore = tonumber(igplayers[data.steamid].hackerTPScore) + 1
 								end
 
 								if igplayers[data.steamid].hackerTPScore > 0 and players[data.steamid].newPlayer and tonumber(players[data.steamid].ping) > 180 then
 									if locations["exile"] and not players[data.steamid].prisoner then
-										players[data.steamid].exiled = 1
+										players[data.steamid].exiled = true
 									else
 										igplayers[data.steamid].hackerTPScore = tonumber(igplayers[data.steamid].hackerTPScore) + 1
 									end
@@ -600,72 +631,21 @@ function API_PlayerInfo(data)
 			players[data.steamid].cash = tonumber(players[data.steamid].cash) + math.abs(igplayers[data.steamid].zombies - players[data.steamid].zombies) * server.zombieKillReward
 
 			if (players[data.steamid].watchCash == true) then
-				message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", data.steamid, server.chatColour, math.abs(igplayers[data.steamid].zombies - players[data.steamid].zombies) * server.zombieKillReward, server.moneyPlural, players[data.steamid].cash))
+				message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", data.steamid, server.chatColour, math.abs(igplayers[data.steamid].zombies - players[data.steamid].zombies) * server.zombieKillReward, server.moneyPlural, string.format("%d", players[data.steamid].cash)))
 			end
 		end
 
 		if igplayers[data.steamid].doge then
-			r = rand(60)
-			if r == 1 then message(string.format("pm %s [%s]MUCH KILL[-]", data.steamid, server.chatColour)) end
-			if r == 2 then message(string.format("pm %s [%s]GREAT PAIN[-]", data.steamid, server.chatColour)) end
-			if r == 3 then message(string.format("pm %s [%s]WOW[-]", data.steamid, server.chatColour)) end
-			if r == 4 then message(string.format("pm %s [%s]VERY DEATH[-]", data.steamid, server.chatColour)) end
-			if r == 5 then message(string.format("pm %s [%s]AMAZING[-]", data.steamid, server.chatColour)) end
-			if r == 6 then message(string.format("pm %s [%s]CALL 911[-]", data.steamid, server.chatColour)) end
-			if r == 7 then message(string.format("pm %s [%s]BIG HIT[-]", data.steamid, server.chatColour)) end
-			if r == 8 then message(string.format("pm %s [%s]EXTREME GORE[-]", data.steamid, server.chatColour)) end
-			if r == 9 then message(string.format("pm %s [%s]EXTREME POWER SHOT[-]", data.steamid, server.chatColour)) end
-			if r == 10 then message(string.format("pm %s [%s]EPIC BLOOD LOSS[-]", data.steamid, server.chatColour)) end
-			if r == 11 then message(string.format("pm %s [%s]OMG[-]", data.steamid, server.chatColour)) end
-			if r == 12 then message(string.format("pm %s [%s]OVERKILL[-]", data.steamid, server.chatColour)) end
-			if r == 13 then message(string.format("pm %s [%s]EXTREME OVERKILL[-]", data.steamid, server.chatColour)) end
-			if r == 14 then message(string.format("pm %s [%s]VERY OP[-]", data.steamid, server.chatColour)) end
-			if r == 15 then message(string.format("pm %s [%s]DISMEMBERMENT[-]", data.steamid, server.chatColour)) end
-			if r == 16 then message(string.format("pm %s [%s]HEADSHOT[-]", data.steamid, server.chatColour)) end
-			if r == 17 then message(string.format("pm %s [%s]PSYCHO[-]", data.steamid, server.chatColour)) end
-			if r == 18 then message(string.format("pm %s [%s]HAX[-]", data.steamid, server.chatColour)) end
-			if r == 19 then message(string.format("pm %s [%s]GAME OVER MAN!  GAME OVER![-]", data.steamid, server.chatColour)) end
-			if r == 20 then message(string.format("pm %s [%s]OWNED[-]", data.steamid, server.chatColour)) end
-			if r == 21 then message(string.format("pm %s [%s]DUDE[-]", data.steamid, server.chatColour)) end
-			if r == 22 then message(string.format("pm %s [%s]SICK[-]", data.steamid, server.chatColour)) end
-			if r == 23 then message(string.format("pm %s [%s]INCREDIBLE[-]", data.steamid, server.chatColour)) end
-			if r == 24 then message(string.format("pm %s [%s]BODY PARTS FLYING[-]", data.steamid, server.chatColour)) end
-			if r == 25 then message(string.format("pm %s [%s]WTF[-]", data.steamid, server.chatColour)) end
-			if r == 26 then message(string.format("pm %s [%s]EPIC[-]", data.steamid, server.chatColour)) end
-			if r == 27 then message(string.format("pm %s [%s]AIMBOT HAX[-]", data.steamid, server.chatColour)) end
-			if r == 28 then message(string.format("pm %s [%s]EXPLOSIVE[-]", data.steamid, server.chatColour)) end
-			if r == 29 then message(string.format("pm %s [%s]IMPOSSIBRU[-]", data.steamid, server.chatColour)) end
-			if r == 30 then message(string.format("pm %s [%s]MASSIVE HURT[-]", data.steamid, server.chatColour)) end
-			if r == 31 then message(string.format("pm %s [%s]C-C-C-COMBO BREAKER[-]", data.steamid, server.chatColour)) end
-			if r == 32 then message(string.format("pm %s [%s]ULTRA KILL[-]", data.steamid, server.chatColour)) end
-			if r == 33 then message(string.format("pm %s [%s]SUPPRESSED[-]", data.steamid, server.chatColour)) end
-			if r == 34 then message(string.format("pm %s [%s]IMPRESSIVE[-]", data.steamid, server.chatColour)) end
-			if r == 35 then message(string.format("pm %s [%s]ONE UP[-]", data.steamid, server.chatColour)) end
-			if r == 36 then message(string.format("pm %s [%s]MEGA KILL[-]", data.steamid, server.chatColour)) end
-			if r == 37 then message(string.format("pm %s [%s]SUPER KILL[-]", data.steamid, server.chatColour)) end
-			if r == 38 then message(string.format("pm %s [%s]SKILL SHOT[-]", data.steamid, server.chatColour)) end
-			if r == 39 then message(string.format("pm %s [%s]VERY AMAZING[-]", data.steamid, server.chatColour)) end
-			if r == 40 then message(string.format("pm %s [%s]EPIC OWNAGE[-]", data.steamid, server.chatColour)) end
-			if r == 41 then message(string.format("pm %s [%s]OMG WTF HAX[-]", data.steamid, server.chatColour)) end
-			if r == 42 then message(string.format("pm %s [%s]HOW?[-]", data.steamid, server.chatColour)) end
-			if r == 43 then message(string.format("pm %s [%s]UNPOSSIBLE![-]", data.steamid, server.chatColour)) end
-			if r == 44 then message(string.format("pm %s [%s]CRAZY KILL[-]", data.steamid, server.chatColour)) end
-			if r == 45 then message(string.format("pm %s [%s]LEGENDARY KILL[-]", data.steamid, server.chatColour)) end
-			if r == 46 then message(string.format("pm %s [%s]GUTSY[-]", data.steamid, server.chatColour)) end
-			if r == 47 then message(string.format("pm %s [%s]SMOOTH[-]", data.steamid, server.chatColour)) end
-			if r == 48 then message(string.format("pm %s [%s]PRO[-]", data.steamid, server.chatColour)) end
-			if r == 49 then message(string.format("pm %s [%s]NUKED[-]", data.steamid, server.chatColour)) end
-			if r == 50 then message(string.format("pm %s [%s]STOLEN KILL[-]", data.steamid, server.chatColour)) end
-			if r == 51 then message(string.format("pm %s [%s]LEEEEEEEEEEEEEROY JENKINS!!!!!![-]", data.steamid, server.chatColour)) end
-			if r == 52 then message(string.format("pm %s [%s]TRUMPED[-]", data.steamid, server.chatColour)) end
-			if r == 53 then message(string.format("pm %s [%s]CRAP[-]", data.steamid, server.chatColour)) end
-			if r == 54 then message(string.format("pm %s [%s]WTF BBQ[-]", data.steamid, server.chatColour)) end
-			if r == 55 then message(string.format("pm %s [%s]KILLJOY[-]", data.steamid, server.chatColour)) end
-			if r == 56 then message(string.format("pm %s [%s]TIS BUT A SCRATCH[-]", data.steamid, server.chatColour)) end
-			if r == 57 then message(string.format("pm %s [%s]LEGLESS[-]", data.steamid, server.chatColour)) end
-			if r == 58 then message(string.format("pm %s [%s]OOPS[-]", data.steamid, server.chatColour)) end
-			if r == 59 then message(string.format("pm %s [%s]DAMN[-]", data.steamid, server.chatColour)) end
-			if r == 60 then message(string.format("pm %s [%s]RIM SHOT[-]", data.steamid, server.chatColour)) end
+			dogePhrase = dogeWOW() .. " " .. dogeWOW() .. " "
+
+			r = rand(10)
+			if r == 1 then dogePhrase = dogePhrase .. "WOW" end
+			if r == 3 then dogePhrase = dogePhrase .. "Excite" end
+			if r == 5 then dogePhrase = dogePhrase .. "Amaze" end
+			if r == 7 then dogePhrase = dogePhrase .. "OMG" end
+			if r == 9 then dogePhrase = dogePhrase .. "Respect" end
+
+			message(string.format("pm %s [%s]" .. dogePhrase .. "[-]", data.steamid, server.chatColour))
 		end
 
 		if server.allowBank then
@@ -1083,7 +1063,7 @@ function API_PlayerInfo(data)
 		return
 	end
 
-	if tonumber(players[data.steamid].exiled) == 1 and locations["exile"] and not players[data.steamid].prisoner then
+	if players[data.steamid].exiled == true and locations["exile"] and not players[data.steamid].prisoner then
 		if (distancexz( intX, intZ, locations["exile"].x, locations["exile"].z ) > tonumber(locations["exile"].size)) then
 			randomTP(data.steamid, "exile", true)
 			faultyPlayerinfo = false
@@ -1451,6 +1431,15 @@ function readAPI_AdminList()
 	if fileSize == nil or tonumber(fileSize) == 0 then
 		botman.resendAdminList = true
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	flagAdminsForRemoval()
@@ -1501,14 +1490,14 @@ function readAPI_AdminList()
 				players[steam].walkies = false
 				players[steam].timeout = false
 				players[steam].prisoner = false
-				players[steam].exiled = 2
+				players[steam].exiled = false
 				players[steam].canTeleport = true
 				players[steam].enableTP = true
 				players[steam].botHelp = true
 				players[steam].hackerScore = 0
 				players[steam].testAsPlayer = nil
 
-				if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 2, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. level .. " WHERE steam = " .. steam) end
+				if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 0, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. level .. " WHERE steam = " .. steam) end
 				--if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. steam .. "," .. level .. ")") end
 
 				if players[steam].botTimeout and igplayers[steam] then
@@ -1532,6 +1521,8 @@ function readAPI_AdminList()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/adminList.txt")
 end
 
 
@@ -1544,8 +1535,23 @@ function readAPI_BanList()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+dbug("set api offline " .. debugger.getinfo(1).currentline)
+			toggleTriggers("api offline")
+		end
+
 		botman.resendBanList = true
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/banList.txt", "r")
@@ -1595,6 +1601,8 @@ function readAPI_BanList()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/banList.txt")
 end
 
 
@@ -1607,7 +1615,22 @@ function readAPI_BCGo()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+dbug("set api offline " .. debugger.getinfo(1).currentline)
+			toggleTriggers("api offline")
+		end
+
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/bc-go.txt", "r")
@@ -1653,6 +1676,96 @@ function readAPI_BCGo()
 	-- if task == "read items" then
 		-- removeInvalidItems()
 	-- end
+
+	os.remove(homedir .. "/temp/bc-go.txt")
+end
+
+
+function readAPI_BCLP()
+	local file, ln, result, data, k, v, a, b
+	local fileSize, steam
+
+	task = ""
+	fileSize = lfs.attributes (homedir .. "/temp/bc-lp.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+dbug("set api offline " .. debugger.getinfo(1).currentline)
+			toggleTriggers("api offline")
+		end
+
+		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
+	end
+
+	file = io.open(homedir .. "/temp/bc-lp.txt", "r")
+
+	for ln in file:lines() do
+		result = yajl.to_value(ln)
+
+		-- This JSON data has nested JSON data that also needs to be converted to a Lua table
+		data = yajl.to_value(result.result)
+
+		if string.find(result.parameters, "/filter=steamid,friends", nil, true) then
+			for k,v in pairs(data) do
+				steam = v.SteamId
+
+				if v.Friends then
+					if type(v.Friends) == "table" then
+					--if v.Friends ~= "null" then
+						-- get the player's friends list
+						if players[steam].autoFriend ~= "NA" then
+							getBCFriends(steam, v.Friends)
+						end
+					end
+				end
+
+				if v.Bedroll then
+					if type(v.Bedroll) == "table" then
+						players[steam].bedX = math.floor(v.Bedroll.x)
+						players[steam].bedX = math.floor(v.Bedroll.y)
+						players[steam].bedX = math.floor(v.Bedroll.z)
+					end
+				end
+
+				-- if v.DroppedPack then
+					-- if type(v.DroppedPack) == "table" then
+						-- players[steam].deathX = math.floor(v.DroppedPack.x)
+						-- players[steam].deathY = math.floor(v.DroppedPack.y)
+						-- players[steam].deathZ = math.floor(v.DroppedPack.z)
+					-- end
+				-- end
+			end
+		end
+
+		if string.find(result.parameters, "/full", nil, true) then
+			steam = data.SteamId
+
+			-- get the player's friends list
+			if players[steam].autoFriend ~= "NA" then
+				getBCFriends(steam, data.Friends)
+			end
+
+			-- get the bedroll coords
+			players[steam].bedX = math.floor(data.Bedroll.x)
+			players[steam].bedY = math.floor(data.Bedroll.y)
+			players[steam].bedZ = math.floor(data.Bedroll.z)
+			if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. data.Bedroll.x .. ", bedY = " .. data.Bedroll.y .. ", bedZ = " .. data.Bedroll.z .. " WHERE steam = " .. steam) end
+		end
+	end
+
+	file:close()
+	os.remove(homedir .. "/temp/bc-lp.txt")
 end
 
 
@@ -1664,7 +1777,22 @@ function readAPI_BCTime()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+dbug("set api offline " .. debugger.getinfo(1).currentline)
+			toggleTriggers("api offline")
+		end
+
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/bc-time.txt", "r")
@@ -1679,6 +1807,7 @@ function readAPI_BCTime()
 	end
 
 	file:close()
+	os.remove(homedir .. "/temp/bc-time.txt")
 end
 
 
@@ -1690,13 +1819,22 @@ function readAPI_Command()
 
 	-- abort if the file is empty and switch back to using telnet
 	if fileSize == nil or tonumber(fileSize) == 0 then
-		if server.useAllocsWebAPI then
-			server.useAllocsWebAPI = false
-			conn:execute("UPDATE server set useAllocsWebAPI = 0")
-			irc_chat(server.ircMain, "Communications fault detected in API. The bot has reverted to using telnet.")
+		if not botman.APIOffline then
+			botman.APIOffline = true
+dbug("set api offline " .. debugger.getinfo(1).currentline)
+			toggleTriggers("api offline")
 		end
 
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/command.txt", "r")
@@ -1757,6 +1895,8 @@ function readAPI_Command()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/command.txt")
 end
 
 
@@ -1768,8 +1908,23 @@ function readAPI_GG()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+dbug("set api offline " .. debugger.getinfo(1).currentline)
+			toggleTriggers("api offline")
+		end
+
 		botman.resendGG = true
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/gg.txt", "r")
@@ -1802,6 +1957,8 @@ function readAPI_GG()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/gg.txt")
 end
 
 
@@ -1813,7 +1970,22 @@ function readAPI_Help()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+dbug("set api offline " .. debugger.getinfo(1).currentline)
+			toggleTriggers("api offline")
+		end
+
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/help.txt", "r")
@@ -1838,6 +2010,8 @@ function readAPI_Help()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/help.txt")
 end
 
 
@@ -1852,7 +2026,22 @@ function readAPI_Inventories()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+dbug("set api offline " .. debugger.getinfo(1).currentline)
+			toggleTriggers("api offline")
+		end
+
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	if (debug) then dbug("debug readAPI_Inventories line " .. debugger.getinfo(1).currentline) end
@@ -1955,6 +2144,7 @@ function readAPI_Inventories()
 	if (debug) then dbug("debug readAPI_Inventories line " .. debugger.getinfo(1).currentline) end
 
 	CheckInventory()
+	os.remove(homedir .. "/temp/inventories.txt")
 end
 
 
@@ -1969,6 +2159,7 @@ function readAPI_Hostiles()
 		return
 	end
 
+	botman.lastServerResponseTimestamp = os.time()
 	file = io.open(homedir .. "/temp/hostiles.txt", "r")
 
 	for ln in file:lines() do
@@ -1990,6 +2181,7 @@ function readAPI_Hostiles()
 	end
 
 	file:close()
+	os.remove(homedir .. "/temp/hostiles.txt")
 end
 
 
@@ -2002,7 +2194,22 @@ function readAPI_LE()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+dbug("set api offline " .. debugger.getinfo(1).currentline)
+			toggleTriggers("api offline")
+		end
+
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/le.txt", "r")
@@ -2033,6 +2240,8 @@ function readAPI_LE()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/le.txt")
 end
 
 
@@ -2047,7 +2256,22 @@ function readAPI_LKP()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+dbug("set api offline " .. debugger.getinfo(1).currentline)
+			toggleTriggers("api offline")
+		end
+
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/lkp.txt", "r")
@@ -2146,6 +2370,12 @@ function readAPI_LKP()
 						-- end
 					-- end
 				-- end
+
+				for con, q in pairs(conQueue) do
+					if q.command == "lkp" then
+						irc_chat(q.ircUser, data[k])
+					end
+				end
 			end
 		end
 
@@ -2172,6 +2402,14 @@ function readAPI_LKP()
 
 		-- loadPlayersArchived()
 	-- end
+
+	for con, q in pairs(conQueue) do
+		if q.command == "lkp" then
+			conQueue[con] = nil
+		end
+	end
+
+	os.remove(homedir .. "/temp/lkp.txt")
 end
 
 
@@ -2184,7 +2422,22 @@ function readAPI_LI()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+dbug("set api offline " .. debugger.getinfo(1).currentline)
+			toggleTriggers("api offline")
+		end
+
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/li.txt", "r")
@@ -2236,6 +2489,8 @@ function readAPI_LI()
 	if updateItemsList then
 		removeInvalidItems()
 	end
+
+	os.remove(homedir .. "/temp/li.txt")
 end
 
 
@@ -2251,6 +2506,7 @@ function readAPI_LLP()
 		return
 	end
 
+	botman.lastServerResponseTimestamp = os.time()
 	conn:execute("DELETE FROM keystones WHERE x = 0 AND y = 0 AND z = 0")
 
 	file = io.open(homedir .. "/temp/llp.txt", "r")
@@ -2405,6 +2661,8 @@ function readAPI_LLP()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/llp.txt")
 end
 
 
@@ -2419,6 +2677,7 @@ function readAPI_LPB()
 		return
 	end
 
+	botman.lastServerResponseTimestamp = os.time()
 	file = io.open(homedir .. "/temp/lpb.txt", "r")
 
 	for ln in file:lines() do
@@ -2461,6 +2720,8 @@ function readAPI_LPB()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/lpb.txt")
 end
 
 
@@ -2475,6 +2736,7 @@ function readAPI_LPF()
 		return
 	end
 
+	botman.lastServerResponseTimestamp = os.time()
 	file = io.open(homedir .. "/temp/lpf.txt", "r")
 
 	for ln in file:lines() do
@@ -2501,6 +2763,8 @@ function readAPI_LPF()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/lpf.txt")
 end
 
 
@@ -2512,7 +2776,22 @@ function readAPI_PlayersOnline()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+dbug("set api offline " .. debugger.getinfo(1).currentline)
+			toggleTriggers("api offline")
+		end
+
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/playersOnline.txt", "r")
@@ -2540,6 +2819,8 @@ function readAPI_PlayersOnline()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/playersOnline.txt")
 end
 
 
@@ -2554,6 +2835,7 @@ function readAPI_PGD()
 		return
 	end
 
+	botman.lastServerResponseTimestamp = os.time()
 	file = io.open(homedir .. "/temp/pgd.txt", "r")
 
 	for ln in file:lines() do
@@ -2569,6 +2851,7 @@ function readAPI_PGD()
 	end
 
 	file:close()
+	os.remove(homedir .. "/temp/pgd.txt")
 end
 
 
@@ -2583,6 +2866,7 @@ function readAPI_PUG()
 		return
 	end
 
+	botman.lastServerResponseTimestamp = os.time()
 	file = io.open(homedir .. "/temp/pug.txt", "r")
 
 	for ln in file:lines() do
@@ -2598,12 +2882,34 @@ function readAPI_PUG()
 	end
 
 	file:close()
+	os.remove(homedir .. "/temp/pug.txt")
 end
 
 
 function readAPI_ReadLog()
-	local file, ln, result, temp, data, k, v
-	local uptime, date, time, msg
+	local file, fileSize, ln, result, temp, data, k, v
+	local uptime, date, time, msg, handled
+
+	fileSize = lfs.attributes (homedir .. "/temp/log.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+			toggleTriggers("api offline")
+		end
+
+		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
+	end
 
 	file = io.open(homedir .. "/temp/log.txt", "r")
 
@@ -2613,18 +2919,125 @@ function readAPI_ReadLog()
 		botman.lastLogLine = result.lastLine
 
 		for k,v in pairs(result.entries) do
+			msg = v.msg
+
 			uptime = v.uptime
 			date = v.date
 			time = v.time
-			msg = v.msg
+			botman.serverTime = date .. " " .. time
+			handled = false
 
-			matchAll(msg, date, time)
+			botman.serverHour = string.sub(time, 1, 2)
+			botman.serverMinute = string.sub(time, 4, 5)
+			specialDay = ""
+
+			if (string.find(botman.serverTime, "02-14", 5, 10)) then specialDay = "valentine" end
+			if (string.find(botman.serverTime, "12-25", 5, 10)) then specialDay = "christmas" end
+
+			if server.dateTest == nil then
+				server.dateTest = date
+			end
+
+			if string.find(msg, "Chat:", nil, true) or string.find(msg, "Chat (from", nil, true) then
+				gmsg(msg)
+				handled = true
+			end
+
+			if string.find(msg, "Executing command 'pm ", nil, true) or string.find(msg, "Denying command 'pm", nil, true) then
+				gmsg(msg)
+				handled = true
+			end
+
+			if string.find(msg, "GMSG:", nil, true) or string.find(msg, "Chat command from", nil, true) then
+				gmsg(msg)
+				handled = true
+			end
+
+			if not handled then
+				if string.find(msg, "denied: Too many players on the server!", nil, true) then
+					playerDenied(msg)
+					handled = true
+				end
+			end
+
+			if not handled then
+				if string.find(msg, "Player connected") then
+					playerConnected(msg)
+					handled = true
+				end
+			end
+
+			if not handled then
+				if string.find(msg, "Player disconnected") then
+					playerDisconnected(msg)
+					handled = true
+				end
+			end
+
+			if not handled then
+				if string.find(msg, "AIDirector: Spawning scouts", nil, true) then
+					scoutsWarning()
+					handled = true
+				end
+			end
+
+			-- if not handled then
+				-- if string.find(msg, "Telnet executed 'tele ", nil, true) or string.find(msg, "Executing command 'tele ", nil, true) then
+					-- teleTrigger(msg)
+					-- handled = true
+				-- end
+			-- end
+
+			if not handled then
+				if string.find(msg, "Heap:", nil, true) then
+					memTrigger(msg)
+					handled = true
+				end
+			end
+
+			if not handled then
+				if string.sub(msg, 1, 4) == "Day " then
+					gameTimeTrigger(msg)
+					handled = true
+				end
+			end
+
+			if not handled then
+				if string.find(msg, "INF Player with ID") then
+					overstackTrigger(msg)
+					handled = true
+				end
+			end
+
+			if not handled then
+				if string.find(msg, "banned until") then
+					collectBan(msg)
+					handled = true
+				end
+			end
+
+			if not handled then
+				if string.find(msg, "Executing command 'ban remove", nil, true) then
+					unbanPlayer(msg)
+					handled = true
+				end
+			end
+
+			if not handled then
+				if string.find(msg, "eliminated") or string.find(msg, "killed by") then
+					pvpPolice(msg)
+					handled = true
+				end
+			end
+
+			if not handled then
+				matchAll(msg, date, time)
+			end
 		end
 	end
 
---	server.serverTime = date .. " " .. string.sub(time, 1, 5)
---	server.uptime = math.floor(time * 60)
 	file:close()
+	os.remove(homedir .. "/temp/log.txt")
 end
 
 
@@ -2639,6 +3052,7 @@ function readAPI_SE()
 		return
 	end
 
+	botman.lastServerResponseTimestamp = os.time()
 	file = io.open(homedir .. "/temp/se.txt", "r")
 	getData = false
 
@@ -2688,7 +3102,7 @@ function readAPI_SE()
 		loadOtherEntities()
 
 		if botman.dbConnected then
-			cursor,errorString = conn:execute("SELECT Count(entityID) as maxZeds from gimmeZombies")
+			cursor,errorString = conn:execute("SELECT MAX(entityID) AS maxZeds FROM gimmeZombies")
 			row = cursor:fetch({}, "a")
 			botman.maxGimmeZombies = tonumber(row.maxZeds)
 		end
@@ -2701,6 +3115,8 @@ function readAPI_SE()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/se.txt")
 end
 
 
@@ -2712,7 +3128,21 @@ function readAPI_MEM()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+			toggleTriggers("api offline")
+		end
+
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/mem.txt", "r")
@@ -2746,6 +3176,58 @@ function readAPI_MEM()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/mem.txt")
+end
+
+
+function readAPI_webUIUpdates()
+	local file, ln, result, data, con, q
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/webUIUpdates.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+			toggleTriggers("api offline")
+		end
+
+		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
+	end
+
+	file = io.open(homedir .. "/temp/webUIUpdates.txt", "r")
+
+	for ln in file:lines() do
+		result = yajl.to_value(ln)
+		botman.playersOnline = tonumber(result.players)
+
+		if botman.lastLogLine == nil then
+			botman.lastLogLine = tonumber(result.newlogs)
+		end
+
+		if tonumber(result.newlogs) >= tonumber(botman.lastLogLine) then
+			getAPILog()
+			botman.lastLogLine = tonumber(result.newlogs) + 1
+		end
+
+		if botman.lastLogLine > tonumber(result.newlogs) + 1 then
+			botman.lastLogLine = tonumber(result.newlogs)
+		end
+	end
+
+	file:close()
+	os.remove(homedir .. "/temp/webUIUpdates.txt")
 end
 
 
@@ -2757,8 +3239,22 @@ function readAPI_Version()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
+		if not botman.APIOffline then
+			botman.APIOffline = true
+			toggleTriggers("api offline")
+		end
+
 		botman.resendVersion = true
 		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
 	end
 
 	modVersions = {}
@@ -2781,14 +3277,14 @@ function readAPI_Version()
 		data = splitCRLF(result.result)
 
 		for k,v in pairs(data) do
+			if v ~= "" then
+				matchAll(v)
+			end
+
 			for con, q in pairs(conQueue) do
 				if q.command == "version" then
 					irc_chat(q.ircUser, data[k])
 				end
-			end
-
-			if v ~= "" then
-				matchAll(v)
 			end
 		end
 
@@ -2801,4 +3297,7 @@ function readAPI_Version()
 			conQueue[con] = nil
 		end
 	end
+
+	os.remove(homedir .. "/temp/installedMods.txt")
+	table.save(homedir .. "/data_backup/modVersions.lua", modVersions)
 end

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -16,7 +16,14 @@ function scoutsWarning(line)
 
 	if string.find(line, "towards") then
 		-- get the origin coords
-		test = string.sub(line, string.find(line, "scouts") + 11, string.find(line, "heading") - 4)
+		if string.find(line, "heading") then
+			test = string.sub(line, string.find(line, "scouts") + 11, string.find(line, "heading") - 4)
+		end
+
+		if string.find(line, " at ") then
+			test = string.sub(line, string.find(line, " at ") + 5, string.find(line, "towards") - 4)
+		end
+
 		split = string.split(test, ",")
 		xStart = string.match(split[1], "-?%d+")
 		zStart = string.match(split[3], "-?%d+")
@@ -27,14 +34,12 @@ function scoutsWarning(line)
 		xEnd = string.match(split[1], "-?%d+")
 		zEnd = string.match(split[3], "-?%d+")
 
-		if (string.find(line, "heading towards")) then
-			for k, v in pairs(igplayers) do
-				direction = getCompass(v.xPos, v.zPos, xStart, zStart)
-				dist = distancexz(v.xPos, v.zPos, xEnd, zEnd)
+		for k, v in pairs(igplayers) do
+			direction = getCompass(v.xPos, v.zPos, xStart, zStart)
+			dist = distancexz(v.xPos, v.zPos, xEnd, zEnd)
 
-				if (dist < 100) then
-					message("pm " .. k .. " " ..  " [" .. server.chatColour .. "]Screamers have been detected heading your way from the " .. direction .. ".[-]")
-				end
+			if (dist < 100) then
+				message("pm " .. k .. " " ..  " [" .. server.chatColour .. "]Screamers have been detected heading your way from the " .. direction .. ".[-]")
 			end
 		end
 	end

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -43,6 +43,32 @@ function getSWNECoords(x1, y1, z1, x2, y2, z2)
 end
 
 
+function getSWNECoordsXZ(x1, z1, x2, z2)
+	local coords = {}
+	local num -- comfortably
+
+	if x1 < x2 then
+		coords.x1 = x1
+		coords.x2 = x2
+	else
+		num = x1
+		coords.x1 = x2
+		coords.x2 = num
+	end
+
+	if z1 < z2 then
+		coords.z1 = z1
+		coords.z2 = z2
+	else
+		num = z1
+		coords.z1 = z2
+		coords.z2 = num
+	end
+
+	return coords.x1, coords.z1, coords.x2, coords.z2
+end
+
+
 function sendCommand(command, api, outputFile)
 	-- send the command to the server via Allocs web API if enabled otherwise use telnet
 
@@ -56,7 +82,7 @@ function sendCommand(command, api, outputFile)
 
 	botman.lastBotCommand = command
 
-	if server.useAllocsWebAPI and not string.find(command, "webtokens ") and not string.find(command, "#") then
+	if server.useAllocsWebAPI and not botman.APIOffline and not string.find(command, "webtokens ") and not string.find(command, "#") then
 		-- fix missing api and outputFile for some commands
 		if api == nil or api == "" then
 			if command == "admin list" then
@@ -77,11 +103,16 @@ function sendCommand(command, api, outputFile)
 			if command == "bc-go Items /filter=Name" then
 				api = "executeconsolecommand?command=" .. command .. "&"
 				outputFile = "bc-go.txt"
-		 end
+			end
 
 			if command == "bc-time" then -- this is used to read server ticks and grab the players online.
 				api = "executeconsolecommand?command=bc-time&"
-				outputFile = "time.txt"
+				outputFile = "bc-time.txt"
+			end
+
+			if string.find(command, "bc-lp", nil, true) then
+				api = "executeconsolecommand?command=" .. command .. "&"
+				outputFile = "bc-lp.txt"
 			end
 
 			if command == "gg" then
@@ -218,6 +249,10 @@ end
 function alertAdmins(msg, alert)
 	-- pm all in-game admins with msg
 	local k, v, msgColour
+
+	if not alert then
+		alert = ""
+	end
 
 	if type(server) == "table" then
 		msgColour = server.chatColour
@@ -574,7 +609,11 @@ function message(msg, steam)
 				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=pm " .. words[2] .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
 
 				if botman.dbConnected then
-					conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+					if words[2] == "APItest" then
+						conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/apitest.txt") .. "')")
+					else
+						conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+					end
 				end
 			else
 				msg = "pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
@@ -654,7 +693,7 @@ end
 
 function inLocation(x, z)
 	-- is the coord inside a location?
-	local closestLocation, closestDistance, dist, reset
+	local closestLocation, closestDistance, dist, reset, inside
 
 	if x == nil then
 		return false, false
@@ -665,21 +704,20 @@ function inLocation(x, z)
 	reset = false
 
 	for k, v in pairs(locations) do
-		if v.size ~= nil then
-			if math.abs(v.x-x) <= tonumber(v.size) and math.abs(v.z-z) <= tonumber(v.size) then
-				dist = distancexz(x, z, v.x, v.z)
+		dist = distancexz(x, z, v.x, v.z)
+		inside = false
 
-				if tonumber(dist) < tonumber(closestDistance) then
-					closestLocation = v.name
-					closestDistance = dist
-					reset = v.resetZone
-				end
+		if not v.isRound then
+			if (math.abs(v.x-x) <= tonumber(v.size) and math.abs(v.z-z) <= tonumber(v.size)) then
+				inside = true
 			end
 		else
-			if math.abs(v.x-x) < 15 and math.abs(v.z-z) < 15 then
-				dist = distancexz(x, z, v.x, v.z)
+			inside = insideCircle(x, z, v.x, v.z, v.size)
+		end
 
-				if dist < closestDistance then
+		if v.size ~= nil then
+			if inside then
+				if tonumber(dist) < tonumber(closestDistance) then
 					closestLocation = v.name
 					closestDistance = dist
 					reset = v.resetZone
@@ -1209,6 +1247,17 @@ end
 function compare(a,b)
 	-- simple sort
 	return a[1] < b[1]
+end
+
+
+function insideCircle(x, z, cx, cz, radius)
+	-- x and z is the coord to be tested
+	-- cx and cz is the centre of the circle
+	if math.pow(x-cx,2) + math.pow(z-cz,2) <= math.pow(radius,2) then
+		return true
+	else
+		return false
+	end
 end
 
 

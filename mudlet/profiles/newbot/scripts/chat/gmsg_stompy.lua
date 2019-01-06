@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -250,6 +250,8 @@ function gmsg_stompy()
 					sendCommand("bc-protect " .. prefabCopies[chatvars.playerid .. tmp.name].x1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].z1 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].x2 .. " " .. prefabCopies[chatvars.playerid .. tmp.name].z2 .. " false")
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You removed trader protection on a marked area called " .. tmp.name .. ".[-]")
 				end
+
+				igplayers[chatvars.playerid].undoPrefab = false
 			end
 
 			botman.faultyChat = false
@@ -432,8 +434,10 @@ function gmsg_stompy()
 					tmp.width = chatvars.words[i+1]
 					tmp.width = math.abs(tmp.width)
 
-					-- default to same height
-					tmp.tall = tmp.width
+					if not foundTall then
+						-- default to same height
+						tmp.tall = tmp.width
+					end
 				end
 
 				if chatvars.words[i] == "prefab" then
@@ -473,6 +477,7 @@ function gmsg_stompy()
 
 						if tmp.number ~= nil then
 							tmp.tall = math.abs(tmp.number)
+							foundTall = true
 						end
 					end
 				end
@@ -485,6 +490,7 @@ function gmsg_stompy()
 
 						if tmp.number ~= nil then
 							tmp.tall = math.abs(tmp.number)
+							foundTall = true
 						end
 					end
 				end
@@ -497,6 +503,7 @@ function gmsg_stompy()
 
 						if tmp.number ~= nil then
 							tmp.long = math.abs(tmp.number)
+							foundLong = true
 						end
 					end
 				end
@@ -509,6 +516,7 @@ function gmsg_stompy()
 
 						if tmp.number ~= nil then
 							tmp.long = math.abs(tmp.number)
+							foundLong = true
 						end
 					end
 				end
@@ -521,6 +529,7 @@ function gmsg_stompy()
 
 						if tmp.number ~= nil then
 							tmp.long = math.abs(tmp.number)
+							foundLong = true
 						end
 					end
 				end
@@ -533,6 +542,7 @@ function gmsg_stompy()
 
 						if tmp.number ~= nil then
 							tmp.long = math.abs(tmp.number)
+							foundLong = true
 						end
 					end
 				end
@@ -575,6 +585,9 @@ function gmsg_stompy()
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = z2
 
 				sendCommand("bc-export " .. chatvars.playerid .. "bottemp " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2)
+				if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'bottemp'," .. x1 .. "," .. y1 .. "," .. z1 .. ")") end
+
+				igplayers[chatvars.playerid].undoPrefab = false
 
 				if chatvars.words[1] == "dig" then
 					if tmp.newblock then
@@ -616,6 +629,8 @@ function gmsg_stompy()
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = z2
 
 				sendCommand("bc-export " .. chatvars.playerid .. "bottemp " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2)
+				if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'bottemp'," .. x1 .. "," .. y1 .. "," .. z1 .. ")") end
+				igplayers[chatvars.playerid].undoPrefab = false
 
 				if chatvars.words[1] == "dig" then
 					if tmp.newblock then
@@ -657,6 +672,8 @@ function gmsg_stompy()
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = z2
 
 				sendCommand("bc-export " .. chatvars.playerid .. "bottemp " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2)
+				if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'bottemp'," .. x1 .. "," .. y1 .. "," .. z1 .. ")") end
+				igplayers[chatvars.playerid].undoPrefab = false
 
 				if chatvars.words[1] == "dig" then
 					sendCommand("bc-block fill " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " * air")
@@ -694,6 +711,8 @@ function gmsg_stompy()
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = z2
 
 				sendCommand("bc-export " .. chatvars.playerid .. "bottemp " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2)
+				if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'bottemp'," .. x1 .. "," .. y1 .. "," .. z1 .. ")") end
+				igplayers[chatvars.playerid].undoPrefab = false
 
 				if chatvars.words[1] == "dig" then
 					sendCommand("bc-block fill " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " * air")
@@ -731,6 +750,8 @@ function gmsg_stompy()
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = z2
 
 				sendCommand("bc-export " .. chatvars.playerid .. "bottemp " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2)
+				if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'bottemp'," .. x1 .. "," .. y1 .. "," .. z1 .. ")") end
+				igplayers[chatvars.playerid].undoPrefab = false
 
 				if chatvars.words[1] == "dig" then
 					sendCommand("bc-block fill " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " * air")
@@ -768,6 +789,8 @@ function gmsg_stompy()
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = z2
 
 				sendCommand("bc-export " .. chatvars.playerid .. "bottemp " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2)
+				if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'bottemp'," .. x1 .. "," .. y1 .. "," .. z1 .. ")") end
+				igplayers[chatvars.playerid].undoPrefab = false
 
 				if chatvars.words[1] == "dig" then
 					sendCommand("bc-block fill " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " * air")
@@ -805,6 +828,8 @@ function gmsg_stompy()
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = z2
 
 				sendCommand("bc-export " .. chatvars.playerid .. "bottemp " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2)
+				if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'bottemp'," .. x1 .. "," .. y1 .. "," .. z1 .. ")") end
+				igplayers[chatvars.playerid].undoPrefab = false
 
 				if chatvars.words[1] == "dig" then
 					sendCommand("bc-block fill " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " * air")
@@ -842,6 +867,8 @@ function gmsg_stompy()
 				prefabCopies[chatvars.playerid .. "bottemp"].z2 = z2
 
 				sendCommand("bc-export " .. chatvars.playerid .. "bottemp " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2)
+				if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'bottemp'," .. x1 .. "," .. y1 .. "," .. z1 .. ")") end
+				igplayers[chatvars.playerid].undoPrefab = false
 
 				if chatvars.words[1] == "dig" then
 					sendCommand("bc-block fill " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " * air")
@@ -953,15 +980,17 @@ function gmsg_stompy()
 			prefabCopies[chatvars.playerid .. "bottemp"].z2 = z2
 
 			sendCommand("bc-export " .. chatvars.playerid .. "bottemp " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2)
+			if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'bottemp'," .. x1 .. "," .. y1 .. "," .. z1 .. ")") end
+			igplayers[chatvars.playerid].undoPrefab = false
 
 			if tmp.blockToErase ~= nil then
 				if tmp.blockToReplace == nil then
-					sendCommand("bc-block swap " .. chatvars.intX - chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ + chatvars.number .. " air " .. tmp.blockToErase)
+					sendCommand("bc-block swap " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " air " .. tmp.blockToErase)
 				else
-					sendCommand("bc-block fill " .. chatvars.intX - chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ + chatvars.number .. " " .. tmp.blockToReplace .. " " .. tmp.blockToErase)
+					sendCommand("bc-block fill " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " " .. tmp.blockToReplace .. " " .. tmp.blockToErase)
 				end
 			else
-				sendCommand("bc-block fill " .. chatvars.intX - chatvars.number .. " " .. chatvars.intY - chatvars.number .. " " .. chatvars.intZ - chatvars.number .. " " .. chatvars.intX + chatvars.number .. " " .. chatvars.intY + chatvars.number .. " " .. chatvars.intZ + chatvars.number .. " air *")
+				sendCommand("bc-block fill " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " air *")
 			end
 
 			botman.faultyChat = false
@@ -1030,6 +1059,8 @@ function gmsg_stompy()
 			tmp.y2 = 2
 			tmp.z1 = chatvars.intZ - chatvars.number
 			tmp.z2 = chatvars.intZ + chatvars.number
+
+			igplayers[chatvars.playerid].undoPrefab = false
 
 			if tonumber(server.gameVersionNumber) < 17 then
 				sendCommand("bc-block fill " .. tmp.x1 .. " " .. tmp.y1 .. " " .. tmp.z1 .. " " .. tmp.x2 .. " " .. tmp.y2 .. " " .. tmp.z2 .. " " .. " air bedrock")
@@ -1215,7 +1246,7 @@ function gmsg_stompy()
 						irc_chat(chatvars.ircAlias, "#" .. counter .. " " .. name .. ": " .. row.name .. "  P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "  P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2)
 					end
 
-					conn:execute("INSERT INTO list (id, thing, class) VALUES (" .. counter .. ",'" .. escape(row.owner .. " " .. row.name) .. "','" .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "')")
+					conn:execute("INSERT INTO list (id, thing, class, steam) VALUES (" .. counter .. ",'" .. escape(row.owner .. " " .. row.name) .. "','" .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "'," .. chatvars.playerid .. ")")
 					counter = counter + 1
 					row = cursor:fetch(row, "a")
 				end
@@ -1323,6 +1354,7 @@ function gmsg_stompy()
 
 			sendCommand("bc-import " .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face .. " /ne")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A prefab called " .. tmp.prefab .. " should have spawned.  If it didn't either the prefab isn't called " .. tmp.prefab .. " or it doesn't exist.[-]")
+			igplayers[chatvars.playerid].undoPrefab = true
 			botman.faultyChat = false
 			return true
 		end
@@ -1423,6 +1455,7 @@ function gmsg_stompy()
 				end
 			end
 
+			igplayers[chatvars.playerid].undoPrefab = false
 			renderMaze(tmp.wallBlock, tmp.x, tmp.y, tmp.z, tmp.width, tmp.length, tmp.height, tmp.fillBlock)
 
 			botman.faultyChat = false
@@ -2215,6 +2248,13 @@ function gmsg_stompy()
 				return true
 			end
 
+			if igplayers[chatvars.playerid].undoPrefab then
+				sendCommand("bc-undo")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your last prefab command has been undone.[-]")
+				botman.faultyChat = false
+				return true
+			end
+
 			restoreName = ""
 
 			if chatvars.words[2] then
@@ -2552,6 +2592,11 @@ function gmsg_stompy()
 	end
 
 	if debug then dbug("debug stompy end") end
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "**** BC commands help registered ****")
+		dbug("BC commands help registered")
+		topicID = topicID + 1
+	end
 
 	-- can't touch dis
 	if true then

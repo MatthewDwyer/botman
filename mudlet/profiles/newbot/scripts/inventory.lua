@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -44,6 +44,7 @@ function CheckInventory()
 		tmp.inventoryChanged = false
 		tmp.flags = ""
 		tmp.dbFlag = ""
+		tmp.stopProcessing = false
 
 		if v.inLocation ~= "" then
 			if locations[v.inLocation].watchPlayers and tmp.playerAccessLevel > 2 then
@@ -204,7 +205,7 @@ function CheckInventory()
 			end
 
 			if v.raiding and tmp.timeout then
-				players[k].exiled = 1
+				players[k].exiled = true
 				if tmp.playerAccessLevel > 2 then players[k].silentBob = true end
 				players[k].canTeleport = false
 
@@ -447,6 +448,7 @@ function CheckInventory()
 
 		if (ban == true) and (server.gameType ~= "cre") then
 			if tmp.playerAccessLevel > 2 then
+				tmp.stopProcessing = true
 				banPlayer(k, "1 year", tmp.banReason, "")
 
 				message("say [" .. server.chatColour .. "]Banning player " .. v.name .. " 1 year for suspected inventory cheating.[-]")
@@ -463,32 +465,37 @@ function CheckInventory()
 			end
 		end
 
-		if (tmp.timeout == true) and (server.gameType ~= "cre") then
-			v.illegalInventory = true
-			conn:execute("INSERT INTO inventoryTracker (steam, x, y, z, session, belt, pack, equipment) VALUES (" .. k .. "," .. v.xPos .. "," .. v.yPos .. "," .. v.zPos .. "," .. players[k].sessionCount .. ",'" .. escape(v.belt) .. "','" .. escape(v.pack) .. "','" .. escape(v.equipment) .. "')")
-			timeoutPlayer(k, tmp.timeoutReason, true)
-		end
+		--if (tmp.timeout == true) and (server.gameType ~= "cre") and not tmp.stopProcessing then
+			--tmp.stopProcessing = true
+			--v.illegalInventory = true
+			--conn:execute("INSERT INTO inventoryTracker (steam, x, y, z, session, belt, pack, equipment) VALUES (" .. k .. "," .. v.xPos .. "," .. v.yPos .. "," .. v.zPos .. "," .. players[k].sessionCount .. ",'" .. escape(v.belt) .. "','" .. escape(v.pack) .. "','" .. escape(v.equipment) .. "')")
+			--timeoutPlayer(k, tmp.timeoutReason, true)
+		--end
 
-		if (tmp.move == true and players[k].exiled ~= 1) and (server.gameType ~= "cre") then
-			message("say [" .. server.chatColour .. "]Sending player " .. v.name .. " to " .. tmp.moveTo .. " for " .. tmp.moveReason .. ".[-]")
-			teleport("tele " .. k .. " " .. locations[tmp.moveTo].x .. " " .. locations[tmp.moveTo].y + 1 .. " " .. locations[tmp.moveTo].z, k)
-			players[k].exiled = 1
-			if tmp.playerAccessLevel > 2 then players[k].silentBob = true end
-			players[k].canTeleport = false
-			irc_chat(server.ircMain, "Moving player " .. k .. " " .. v.name .. " to " .. tmp.moveTo .. " for " .. tmp.moveReason .. ".")
-			irc_chat(server.ircAlerts, server.gameDate .. " moving player " .. k .. " " .. v.name .. " to " .. tmp.moveTo .. " for " .. tmp.moveReason .. ".")
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. v.xPos .. "," .. v.yPos .. "," .. v.zPos .. ",'" .. botman.serverTime .. "','exile','Player " .. k .. " " .. escape(v.name) .. " has has been exiled to " .. escape(tmp.moveTo) .. " for " .. escape(tmp.moveReason) .. ".'," .. k .. ")")
-			irc_chat(server.ircAlerts, server.gameDate .. " Items detected: " .. tmp.itemsFound)
+		if tmp.move == true and (server.gameType ~= "cre") and not tmp.stopProcessing then
+			if not players[k].exiled then
+				players[k].exiled = true
+				if tmp.playerAccessLevel > 2 then players[k].silentBob = true end
+				players[k].canTeleport = false
+				irc_chat(server.ircMain, "Moving player " .. k .. " " .. v.name .. " to " .. tmp.moveTo .. " for " .. tmp.moveReason .. ".")
+				irc_chat(server.ircAlerts, server.gameDate .. " moving player " .. k .. " " .. v.name .. " to " .. tmp.moveTo .. " for " .. tmp.moveReason .. ".")
+				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. v.xPos .. "," .. v.yPos .. "," .. v.zPos .. ",'" .. botman.serverTime .. "','exile','Player " .. k .. " " .. escape(v.name) .. " has has been exiled to " .. escape(tmp.moveTo) .. " for " .. escape(tmp.moveReason) .. ".'," .. k .. ")")
+				irc_chat(server.ircAlerts, server.gameDate .. " Items detected: " .. tmp.itemsFound)
+				teleport("tele " .. k .. " " .. locations[tmp.moveTo].x .. " " .. locations[tmp.moveTo].y + 1 .. " " .. locations[tmp.moveTo].z, k)
+				message("say [" .. server.chatColour .. "]Sending player " .. v.name .. " to " .. tmp.moveTo .. " for " .. tmp.moveReason .. ".[-]")
+			end
+
+			tmp.stopProcessing = true
 		end
 
 		if  debug then dbug("debug check inventory line " .. debugger.getinfo(1).currentline, true) end
 
-		if (not players[k].ignorePlayer) and (server.gameType ~= "cre") then
+		if (not players[k].ignorePlayer) and (server.gameType ~= "cre") and not players[k].botTimeout then
 			if tmp.itemsFound ~= "" then
 				v.illegalInventory = true
 
-				if (players[k].timeout == false) and (tmp.playerAccessLevel > 2 or botman.ignoreAdmins == false) then
-					players[k].timeout = true
+				if (players[k].timeout == false) and (tmp.playerAccessLevel > 2 or botman.ignoreAdmins == false) and not tmp.stopProcessing then
+					--players[k].timeout = true
 					players[k].botTimeout = true
 					players[k].xPosTimeout = players[k].xPos
 					players[k].yPosTimeout = players[k].yPos
@@ -507,8 +514,6 @@ function CheckInventory()
 						-- copy in bots db
 						connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','timeout','Player " .. escape(v.name) .. " detected with uncraftable inventory " .. escape(tmp.itemsFound) .. "')")
 					end
-
-					break
 				end
 			end
 		end

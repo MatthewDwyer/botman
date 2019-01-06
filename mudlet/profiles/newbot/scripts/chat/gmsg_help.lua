@@ -1,11 +1,33 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
+
+
+function dbHelp(search)
+	local cursor, errorString, row
+
+	if search == nil or search == "" then
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Search word or phrase required.[-]")
+		return
+	end
+
+	-- experimental command help using the database
+	cursor,errorString = conn:execute("SELECT * FROM helpCommands WHERE keywords like '%" .. search .."%'")
+	rows = cursor:numrows()
+	row = cursor:fetch({}, "a")
+
+	while row do
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.command .. "[-]")
+		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.description .. "[-]")
+
+		row = cursor:fetch(row, "a")
+	end
+end
 
 
 function commandHelp(command)

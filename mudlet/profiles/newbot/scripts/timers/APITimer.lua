@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -22,6 +22,7 @@ function APITimer()
 		if row then
 			url = row.URL
 			outputFile = row.OutputFile
+			os.remove(outputFile)
 			conn:execute("delete from APIQueue where id = " .. row.id)
 
 			-- should be able to remove list later.  Just put it here to fix an issue with older bots updating and not having the metrics table.
@@ -40,7 +41,7 @@ function APITimer()
 			end
 
 			if not string.find(url, "#") then
-				os.remove(outputFile)
+--				os.remove(outputFile)
 				downloadFile(outputFile, url)
 			else
 				cmd = string.sub(url, string.find(url, "command=") + 8, string.find(url, "&adminuser") - 1)

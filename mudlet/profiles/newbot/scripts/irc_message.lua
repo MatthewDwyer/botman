@@ -1,13 +1,13 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local ircid, pid, login, name1, name2, words, wordsOld, words2, wordCount, word2Count, result, msgLower, counter, xpos, zpos, debug, tmp, k, v, filter, temp
+local ircid, pid, login, name1, name2, words, wordsOld, words2, wordCount, word2Count, result, msgLower, counter, xpos, zpos, debug, tmp, k, v, filter, temp, action
 local displayIRCHelp, number, numberCount, numbers = {}
 
 debug = false -- should be false unless testing
@@ -57,7 +57,7 @@ end
 
 
 IRCMessage = function (event, name, channel, msg)
-
+	ircid = nil
 	displayIRCHelp = false
 
 	local function dbugi(text)
@@ -220,11 +220,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
 		conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
-		os.remove(homedir .. "/temp/dummy.txt")
-		send("webtokens list")
+		os.remove(homedir .. "/temp/apitest.txt")
 		send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
-		tempTimer(5, "startUsingAllocsWebAPI()")
-
+		server.useAllocsWebAPI = true
 		return
 	end
 
@@ -285,7 +283,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "Address is " .. server.IP .. ":" .. server.ServerPort)
 			irc_chat(name, "Game version is " .. server.gameVersion)
 			irc_chat(name, "The server time is " .. botman.serverTime)
-			irc_chat(name, "The game time is " .. server.gameDate)
+
+			if server.gameDate then
+				irc_chat(name, "The game time is " .. server.gameDate)
+			end
 
 			irc_chat(name, "The server map should be here http://" .. server.IP .. ":" .. server.webPanelPort + 2)
 
@@ -361,9 +362,15 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		-- API or telnet
 		if server.useAllocsWebAPI then
-			irc_chat(name, "The bot is using Alloc's web API to command the server.")
+			if botman.APIOffline then
+				irc_chat(name, "API is offline.")
+				irc_chat(name, "The bot is using telnet to talk to the server.")
+			else
+				irc_chat(name, "API is online.")
+				irc_chat(name, "The bot is using Alloc's web API to talk to the server.")
+			end
 		else
-			irc_chat(name, "The bot is using telnet to command the server.")
+			irc_chat(name, "The bot is using telnet to talk to the server.")
 		end
 
 		-- code branch
@@ -381,6 +388,18 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "The bot checks for new code daily.")
 		else
 			irc_chat(name, "Bot updates are set to happen manually using the {#}update code command")
+		end
+
+		if botman.botOffline then
+			irc_chat(name, "The bot is offline.")
+		else
+			irc_chat(name, "The bot is online.")
+		end
+
+		if botman.telnetOffline then
+			irc_chat(name, "Telnet is offline.")
+		else
+			irc_chat(name, "Telnet is online.")
 		end
 	end
 
@@ -622,11 +641,13 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if tablelength(locationCategories) == 0 then
 			irc_chat(name, "There are no location categories.")
 		else
-			if players[ircid].accessLevel < 3 then
-				irc_chat(name, "Category | Minimum Access Level | Maximum Access Level")
+			if ircid then
+				if players[ircid].accessLevel < 3 then
+					irc_chat(name, "Category | Minimum Access Level | Maximum Access Level")
 
-				for k, v in pairs(locationCategories) do
-					irc_chat(name, k .. " min: " .. v.minAccessLevel .. " max: " .. v.maxAccessLevel)
+					for k, v in pairs(locationCategories) do
+						irc_chat(name, k .. " min: " .. v.minAccessLevel .. " max: " .. v.maxAccessLevel)
+					end
 				end
 			else
 				irc_chat(name, "Category")
@@ -939,7 +960,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "logout" or (words[1] == "log" and words[2] == "out") then
-		if ircid ~= 0 then
+		if ircid and ircid ~= 0 then
 			players[ircid].ircAuthenticated = false
 			players[ircid].ircSessionExpiry = os.time()
 			connBots:execute("UPDATE players SET ircAuthenticated = 0 WHERE steam = " .. ircid)
@@ -969,7 +990,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 		end
 
-		if ircid ~= 0 then
+		if ircid and ircid ~= 0 then
 			if players[ircid].ircAuthenticated then
 				irc_chat(channel, "Command me :3")
 			else
@@ -3243,9 +3264,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if pid ~= 0 then
 			players[pid].cash = players[pid].cash + number
 			conn:execute("UPDATE players set cash = " .. players[pid].cash .. " WHERE steam = " .. pid)
-			message("pm " .. pid .. " " .. players[ircid].name .. " just paid you " .. number .. " " .. server.moneyPlural .. "!  You now have " .. players[pid].cash .. " " .. server.moneyPlural .. "!  KA-CHING!!")
+			message("pm " .. pid .. " " .. players[ircid].name .. " just paid you " .. number .. " " .. server.moneyPlural .. "!  You now have " .. string.format("%d", players[pid].cash) .. " " .. server.moneyPlural .. "!  KA-CHING!!")
 
-			msg = "You just paid " .. number .. " " .. server.moneyPlural .. " to " .. players[pid].name .. " giving them a total of " .. players[pid].cash .. " " .. server.moneyPlural .. "."
+			msg = "You just paid " .. number .. " " .. server.moneyPlural .. " to " .. players[pid].name .. " giving them a total of " .. string.format("%d", players[pid].cash) .. " " .. server.moneyPlural .. "."
 			irc_chat(name, msg)
 		else
 			irc_chat(name, "No player found called " .. name1)
@@ -3588,16 +3609,15 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			return
 		end
 
+		os.remove(homedir .. "/temp/apitest.txt")
 		server.webPanelPort = number
-		botman.oldAPIPort = server.webPanelPort
-		botman.testAPIPort = server.webPanelPort
 		conn:execute("UPDATE server SET webPanelPort = " .. number)
 		irc_chat(name, "You set the web panel port to " .. number)
 
 		if server.useAllocsWebAPI then
 			irc_chat(name, "The web API will now be re-tested.")
-			-- verify that the web API is working for us
-			tempTimer( 7, [[checkAPIWorking()]] )
+			os.remove(homedir .. "/temp/apitest.txt")
+			startUsingAllocsWebAPI()
 		end
 	end
 
@@ -3634,7 +3654,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
-		irc_chat(name, "Command: show table {table name}")
+		irc_chat(name, "Command: show table {table name} {optional search string}")
 		irc_chat(name, "View the contents of one of the bot's tables.  Not all tables will display but you'll soon work out which ones you can view.")
 		irc_chat(name, ".")
 	end
@@ -3642,16 +3662,33 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (words[1] == "show") and (words[2] == "table") and (words[3] ~= nil) and (players[ircid].accessLevel == 0) then
 		irc_chat(name, "The " .. words[3] .." table: ")
 
+		if words[4] ~= nil then
+			words[4] = string.lower(words[4])
+		end
+
 		if string.lower(words[3]) == "locations" then
 			for k, v in pairs(locations) do
-				irc_chat(name, "Location " .. k)
-				irc_chat(name, ".")
+				if words[4] ~= nil then
+					if string.find(string.lower(v.name), words[4])  then
+						irc_chat(name, "Location " .. k)
+						irc_chat(name, ".")
 
-				for n,m in pairs(locations[k]) do
-					irc_chat(name, n .. "," .. tostring(m))
+						for n,m in pairs(locations[k]) do
+							irc_chat(name, n .. "," .. tostring(m))
+						end
+
+						irc_chat(name, ".")
+					end
+				else
+					irc_chat(name, "Location " .. k)
+					irc_chat(name, ".")
+
+					for n,m in pairs(locations[k]) do
+						irc_chat(name, n .. "," .. tostring(m))
+					end
+
+					irc_chat(name, ".")
 				end
-
-				irc_chat(name, ".")
 			end
 
 			irc_chat(name, ".")
@@ -3678,14 +3715,27 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		if string.lower(words[3]) == "teleports" then
 			for k, v in pairs(teleports) do
-				irc_chat(name, "Teleport " .. k)
-				irc_chat(name, ".")
+				if words[4] ~= nil then
+					if string.find(string.lower(v.name), words[4])  then
+						irc_chat(name, "Teleport " .. k)
+						irc_chat(name, ".")
 
-				for n,m in pairs(teleports[k]) do
-					irc_chat(name, n .. "," .. tostring(m))
+						for n,m in pairs(teleports[k]) do
+							irc_chat(name, n .. "," .. tostring(m))
+						end
+
+						irc_chat(name, ".")
+					end
+				else
+					irc_chat(name, "Teleport " .. k)
+					irc_chat(name, ".")
+
+					for n,m in pairs(teleports[k]) do
+						irc_chat(name, n .. "," .. tostring(m))
+					end
+
+					irc_chat(name, ".")
 				end
-
-				irc_chat(name, ".")
 			end
 
 			irc_chat(name, ".")
@@ -3695,14 +3745,27 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		if string.lower(words[3]) == "gimmezombies" then
 			for k, v in pairs(gimmeZombies) do
-				irc_chat(name, "Zombie " .. k)
-				irc_chat(name, ".")
+				if words[4] ~= nil then
+					if string.find(string.lower(v.zombie), words[4])  then
+						irc_chat(name, "Zombie " .. k)
+						irc_chat(name, ".")
 
-				for n,m in pairs(gimmeZombies[k]) do
-					irc_chat(name, n .. "," .. tostring(m))
+						for n,m in pairs(gimmeZombies[k]) do
+							irc_chat(name, n .. "," .. tostring(m))
+						end
+
+						irc_chat(name, ".")
+					end
+				else
+					irc_chat(name, "Zombie " .. k)
+					irc_chat(name, ".")
+
+					for n,m in pairs(gimmeZombies[k]) do
+						irc_chat(name, n .. "," .. tostring(m))
+					end
+
+					irc_chat(name, ".")
 				end
-
-				irc_chat(name, ".")
 			end
 
 			irc_chat(name, ".")
@@ -3712,8 +3775,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		-- other tables
 		for k, v in pairs(_G[words[3]]) do
-			if not string.find(string.lower(k),"pass") then
-				irc_chat(name, k .. "," .. tostring(v))
+			if words[4] ~= nil then
+				if not string.find(string.lower(k),"pass") and string.find(string.lower(k), words[4])  then
+					irc_chat(name, k .. "," .. tostring(v))
+				end
+			else
+				if not string.find(string.lower(k),"pass") then
+					irc_chat(name, k .. "," .. tostring(v))
+				end
 			end
 		end
 
@@ -3767,7 +3836,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, ".")
 		end
 
-		ResetBot()
+		ResetBot(nil, "UndoReset")
 		resetbotCount = 0
 
 		irc_chat(name, "I have been reset.  All bases, inventories etc are forgotten, but not the players.")
@@ -4196,7 +4265,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
-		irc_chat(name, "Command: add bad item {item name}")
+		irc_chat(name, "Command: add bad item {item name} action {exile, ban or timeout} (timeout is the default)")
 		irc_chat(name, "Add an item to the bad items list.")
 		irc_chat(name, ".")
 	end
@@ -4204,12 +4273,23 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (words[1] == "add" and words[2] == "bad" and words[3] == "item" and words[4] ~= nil and players[ircid].accessLevel == 0) then
 		name1 = wordsOld[4]
 
+		if words[5] == "action" then
+			action = words[6]
+
+			if not string.find("banexiletimeout", action) then
+				action = "timeout"
+			end
+		else
+			action = "timeout"
+		end
+
 		-- add the bad item to badItems table
 		badItems[name1] = {}
+		badItems[name1].action = action
 
-		conn:execute("INSERT INTO badItems (item) VALUES ('" .. escape(name1) .. "')")
+		conn:execute("INSERT INTO badItems (item, action) VALUES ('" .. escape(name1) .. "','" .. escape(action) .. "')")
 
-		irc_chat(name, name1 .. " has been added to the bad items list.")
+		irc_chat(name, name1 .. " has been added to the bad items list.  The bot will " .. action .. " players caught with it.")
 		irc_chat(name, ".")
 
 		irc_params = {}
@@ -4227,12 +4307,57 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (words[1] == "remove" and words[2] == "bad" and words[3] == "item" and words[4] ~= nil and players[ircid].accessLevel == 0) then
 		name1 = wordsOld[4]
 
+		if not badItems[name1] then
+			irc_chat(name, name1 .. " has already been removed or you typed the name wrong (case sensitive).")
+			irc_params = {}
+			return
+		end
+
 		-- remove the bad item from the badItems table
 		badItems[name1] = nil
 
 		conn:execute("DELETE FROM badItems WHERE item = '" .. escape(name1) .. "'")
 
 		irc_chat(name, name1 .. " has been removed from the bad items list.")
+		irc_chat(name, ".")
+
+		irc_params = {}
+		return
+	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: bad item {item name} action {exile, ban or timeout}")
+		irc_chat(name, "Change what the bot does when it detects a specific bad item in inventory.")
+		irc_chat(name, ".")
+	end
+
+	if (words[1] == "bad" and words[2] == "item" and words[3] ~= nil and players[ircid].accessLevel == 0) then
+		name1 = wordsOld[3]
+
+		if not badItems[name1] then
+			irc_chat(name, name1 .. " is not in the list of bad items.")
+			irc_params = {}
+			return
+		end
+
+		if words[4] == "action" then
+			action = words[5]
+
+			if not string.find("banexiletimeout", action) then
+				action = "timeout"
+			end
+		else
+			action = "timeout"
+		end
+
+		-- add the bad item to badItems table
+		badItems[name1].action = action
+
+		conn:execute("UPDATE badItems SET action = '" .. escape(action) .. "' WHERE item = '" .. escape(name1) .. "'")
+
+		irc_chat(name, name1 .. "'s action has been changed to " .. action)
 		irc_chat(name, ".")
 
 		irc_params = {}
@@ -4864,24 +4989,24 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (words[1] == "donors") then
 		tmp = {}
-		tmp.list = {}
 		tmp.count = 0
 		tmp.name = ""
+		conn:execute("DELETE FROM list WHERE steam = " .. ircid)
 
 		if words[2] == nil then
 			irc_chat(name, "These are all the donors on record:")
 
-			for i in pairs(players) do
-				if (players[i].donor) then
-					table.insert(tmp.list, players[i].name)
+			for k,v in pairs(players) do
+				if (v.donor) then
+					conn:execute("INSERT INTO list (thing, class, steam) VALUES ('" .. escape(v.name) .. "','" .. k .. "'," .. ircid .. ")")
 					tmp.count = tmp.count + 1
 				end
 			end
 
-			table.sort(tmp.list)
-
-			for k, v in ipairs(tmp.list) do
-				tmp.steam = LookupOfflinePlayer(v, "all")
+			cursor,errorString = conn:execute("SELECT * FROM list where steam = " .. ircid .. " order by thing")
+			row = cursor:fetch({}, "a")
+			while row do
+				tmp.steam = row.class
 
 				diff = os.difftime(players[tmp.steam].donorExpiry, os.time()) -- diff = os.difftime(players[tmp.steam].donorExpiry, os.time(dateNow))
 				days = math.floor(diff / 86400)
@@ -4899,11 +5024,15 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				minutes = math.floor(diff / 60)
 
 				if tonumber(days) < 0 then
-					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " .. players[tmp.steam].cash .. " *** expired ***")
+					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " ..string.format("%d",  players[tmp.steam].cash) .. " *** expired ***")
 				else
-					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " .. players[tmp.steam].cash .. " expires in " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
+					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " .. string.format("%d", players[tmp.steam].cash) .. " expires in " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
 				end
+
+				row = cursor:fetch(row, "a")
 			end
+
+			conn:execute("DELETE FROM list WHERE steam = " .. ircid)
 
 			irc_chat(name, tmp.count .. " current donors")
 		else
@@ -4929,9 +5058,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				minutes = math.floor(diff / 60)
 
 				if tonumber(days) < 0 then
-					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " .. players[tmp.steam].cash .. " *** expired ***")
+					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " .. string.format("%d", players[tmp.steam].cash) .. " *** expired ***")
 				else
-					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " .. players[tmp.steam].cash .. " expires in " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
+					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " .. string.format("%d", players[tmp.steam].cash) .. " expires in " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
 				end
 			else
 				irc_chat(name, "No player found like " .. tmp.name)
@@ -4978,10 +5107,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "list" and words[2] == "bad" and words[3] == "items") then
-		irc_chat(name, "I scan for these uncraftable items in inventories:")
+		irc_chat(name, "I scan for these bad items in inventory:")
 
 		for k, v in pairs(badItems) do
-			irc_chat(name, k)
+			irc_chat(name, k .. " -> " .. v.action)
 		end
 
 		irc_chat(name, ".")
@@ -5498,47 +5627,47 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "list" and words[2] == "regions" then
-		conn:execute("TRUNCATE list")
+		conn:execute("DELETE FROM list WHERE steam = " .. ircid)
 
 		irc_chat(name, "The following regions have player bases in them.")
 
 		for k,v in pairs(players) do
 			if math.abs(v.homeX) > 0 and math.abs(v.homeZ) > 0 then
 				temp = getRegion(v.homeX, v.homeZ)
-				conn:execute("INSERT INTO list (thing) VALUES ('" .. temp .. "')")
+				conn:execute("INSERT INTO list (thing, steam) VALUES ('" .. temp .. "'," .. ircid .. ")")
 			end
 
 			if math.abs(v.home2X) > 0 and math.abs(v.home2Z) > 0 then
 				temp = getRegion(v.home2X, v.home2Z)
-				conn:execute("INSERT INTO list (thing) VALUES ('" .. temp .. "')")
+				conn:execute("INSERT INTO list (thing, steam) VALUES ('" .. temp .. "'," .. ircid .. ")")
 			end
 		end
 
-		cursor,errorString = conn:execute("SELECT * FROM list order by thing")
+		cursor,errorString = conn:execute("SELECT * FROM list WHERE steam = " .. ircid .. " order by thing")
 		row = cursor:fetch({}, "a")
 		while row do
 			irc_chat(name, row.thing)
 			row = cursor:fetch(row, "a")
 		end
 
-		conn:execute("TRUNCATE list")
+		conn:execute("DELETE FROM list WHERE steam = " .. ircid)
 
 		irc_chat(name, ".")
 		irc_chat(name, "The following regions have locations in them.")
 
 		for k,v in pairs(locations) do
 			temp = getRegion(v.x, v.z)
-				conn:execute("INSERT INTO list (thing) VALUES ('" .. temp .. "')")
+				conn:execute("INSERT INTO list (thing, steam) VALUES ('" .. temp .. "'," .. ircid .. ")")
 		end
 
-		cursor,errorString = conn:execute("SELECT * FROM list order by thing")
+		cursor,errorString = conn:execute("SELECT * FROM list WHERE steam = " .. ircid .. " order by thing")
 		row = cursor:fetch({}, "a")
 		while row do
 			irc_chat(name, row.thing)
 			row = cursor:fetch(row, "a")
 		end
 
-		conn:execute("TRUNCATE list")
+		conn:execute("DELETE FROM list WHERE steam = " .. ircid)
 
 		irc_chat(name, ".")
 		irc_params = {}

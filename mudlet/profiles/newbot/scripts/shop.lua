@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2018  Matthew Dwyer
+    Copyright (C) 2019  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -334,7 +334,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if words[1] == "shop" and words[2] == nil then
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have " .. players[playerid].cash .. " " .. server.moneyPlural .. " in the bank. Shop is " .. shopState .. "[-]")
+		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have " .. string.format("%d", players[playerid].cash) .. " " .. server.moneyPlural .. " in the bank. Shop is " .. shopState .. "[-]")
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]Shop categories are " .. list .. ".[-]")
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]Type shop " .. example .. " (to browse our fine collection).[-]")
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]New stock arrives every 3 days.[-]")
@@ -532,7 +532,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		if (tonumber(players[playerid].cash) > (tonumber(shopPrice) * number)) and ((number <= tonumber(shopStock) or (tonumber(shopStock) == -1))) then
 			players[playerid].cash = tonumber(players[playerid].cash) - (tonumber(shopPrice) * number)
 
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. players[playerid].cash .. " " .. server.moneyPlural .. " remaining.[-]")
+			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. string.format("%d", players[playerid].cash) .. " " .. server.moneyPlural .. " remaining.[-]")
 
 			if server.stompy then
 				sendCommand("bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number .. " /silent")

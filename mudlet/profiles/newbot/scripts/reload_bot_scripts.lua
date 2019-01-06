@@ -185,10 +185,6 @@ function fixTables() -- waiter!  Where's my table!?
 		mods = {}
 	end
 
-	if type(modVersions) ~= "table" then
-		modVersions = {}
-	end
-
 	if type(proxies) ~= "table" then
 		proxies = {}
 	end
@@ -546,6 +542,11 @@ function refreshScripts()
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
+	server.nextCodeReload = "/scripts/timers/one_second_timer.lua"
+	checkScript(homedir .. "/scripts/timers/one_second_timer.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
 	server.nextCodeReload = "/scripts/timers/list_players_timer.lua"
 	checkScript(homedir .. "/scripts/timers/list_players_timer.lua")
 
@@ -729,13 +730,27 @@ function refreshScripts()
 if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	-- enable triggers and timers.  No ability to enable scripts in code yet.
+	if not server.useAllocsWebAPI then
+		enableTrigger("Player connected")
+		enableTrigger("Player disconnected")
+		enableTrigger("PVP Police")
+		enableTrigger("Matchall")
+		enableTrigger("Game Time")
+		enableTrigger("Collect Ban")
+		enableTrigger("Unban player")
+		enableTrigger("Overstack")
+		enableTrigger("mem")
+		enableTrigger("Tele")
+		enableTrigger("Chat")
+	end
+
 	enableTrigger("End list players")
-	enableTrigger("PVP Police")
-	enableTrigger("MatchAll")
+	--enableTrigger("PVP Police")
+	--enableTrigger("MatchAll")
 	enableTrigger("InventorySlot")
-	enableTrigger("Player connected")
+	--enableTrigger("Player connected")
 	enableTrigger("playerinfo")
-	enableTrigger("Player disconnected")
+	--enableTrigger("Player disconnected")
 	enableTrigger("Inventory")
 	enableTrigger("lkp")
 
@@ -755,16 +770,17 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	enableTrigger("Spam")
 	enableTrigger("Game Time")
 	enableTrigger("Logon Successful")
-	enableTrigger("Collect Ban")
-	enableTrigger("Unban player")
-	enableTrigger("Overstack")
-	enableTrigger("mem")
+	--enableTrigger("Collect Ban")
+	--enableTrigger("Unban player")
+	--enableTrigger("Overstack")
+	--enableTrigger("mem")
 	enableTrigger("lp")
 	enableTrigger("Tele")
 	enableTrigger("llp")
-	enableTrigger("Chat")
+	--enableTrigger("Chat")
 
 	enableTimer("APITimer")
+	enableTimer("EverySecond")
 	enableTimer("Every10Seconds")
 	enableTimer("Every15Seconds")
 	enableTimer("EveryHalfMinute")
@@ -812,6 +828,10 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 
 	if exists("APITimer", "timer") == 0 then
 	  permTimer("APITimer", "", 0.150, [[APITimer()]])
+	end
+
+	if exists("EverySecond", "timer") == 0 then
+	  permTimer("EverySecond", "", 1, [[OneSecondTimer()]])
 	end
 
 	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -874,9 +894,6 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 				fixMissingPlayer(k)
 			end
 
-			-- check the waypoints table and migrate the old waypoints to it if it is empty.
-			--migrateWaypoints()
-
 			fixMissingServer()
 			registerBot()
 			botman.webdavFolderExists = true
@@ -888,10 +905,6 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 
 			if not skipFetchData then
 				tempTimer( 30, [[reloadBot()]] )
-
-				-- tempTimer( 5, [[sendCommand("version")]] )
-				-- tempTimer( 10, [[sendCommand("gg")]] )
-				-- tempTimer( 15, [[sendCommand("se")]] )
 			else
 				tempTimer( 5, [[sendCommand("version")]] )
 				tempTimer( 10, [[sendCommand("gg")]] )
