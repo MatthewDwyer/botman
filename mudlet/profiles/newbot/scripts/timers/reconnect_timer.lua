@@ -10,10 +10,6 @@
 function reconnectTimer()
 	local channels
 
-	if type(server) == "table" and type(modVersions) ~= "table" then
-		importModVersions()
-	end
-
 	if botman.lastServerResponseTimestamp == nil then
 		botman.lastServerResponseTimestamp = os.time()
 	end
@@ -24,11 +20,6 @@ function reconnectTimer()
 
 	if botman.lastAPIResponseTimestamp == nil then
 		botman.lastAPIResponseTimestamp = os.time()
-	end
-
-	if server.useAllocsWebAPI and botman.APIOffline and tonumber(server.webPanelPort) > 0 then
-		botman.APITestSilent = true
-		startUsingAllocsWebAPI()
 	end
 
 	if botman.botConnectedTimestamp == nil then
@@ -47,13 +38,30 @@ function reconnectTimer()
 		botman.botOfflineCount = tonumber(botman.botOfflineCount) + 1
 	end
 
-	if tonumber(botman.playersOnline) > 0 and (os.time() - botman.lastTelnetResponseTimestamp > 90 or botman.botOffline) then
-		reconnect()
+	if server.useAllocsWebAPI and botman.APIOffline and tonumber(server.webPanelPort) > 0 then
+		os.remove(homedir .. "/temp/apitest.txt")
+		botman.APITestSilent = true
+		startUsingAllocsWebAPI()
 	end
 
-	if (os.time() - botman.lastTelnetResponseTimestamp > 310) then
+	if tonumber(botman.playersOnline) > 0 and (os.time() - botman.lastTelnetResponseTimestamp > 90 or botman.botOffline) then
+		if (not server.useAllocsWebAPI) and botman.APIOffline then
+			reconnect()
+			return
+		end
+	end
+
+	if os.time() - botman.lastServerResponseTimestamp > 60 and botman.botOffline then
+		irc_chat(server.ircMain, "Bot is offline - attempting reconnection.")
 		reconnect()
 		return
+	end
+
+	if (os.time() - botman.lastTelnetResponseTimestamp) > 310 then
+		if (not server.useAllocsWebAPI) and botman.APIOffline then
+			reconnect()
+			return
+		end
 	end
 
 	if tonumber(botman.botOfflineCount) > 30 then
@@ -102,5 +110,10 @@ function reconnectTimer()
 		if not string.find(channels, server.ircWatch) then
 			ircJoin(server.ircWatch)
 		end
+	end
+
+
+	if type(server) == "table" and type(modVersions) ~= "table" then
+		importModVersions()
 	end
 end

@@ -217,12 +217,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		-- the message must be sent first because we change the webtoken password next which would block the message.
 		irc_chat(name, "The bot will test using Alloc's web API.")
-
-		server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
-		conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
-		os.remove(homedir .. "/temp/apitest.txt")
-		send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 		server.useAllocsWebAPI = true
+
+		if server.allocsWebAPIPassword == "" then
+			server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+			send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+		end
+
+		conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
 		return
 	end
 
@@ -365,6 +367,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			if botman.APIOffline then
 				irc_chat(name, "API is offline.")
 				irc_chat(name, "The bot is using telnet to talk to the server.")
+
+				if server.useAllocsWebAPI then
+					irc_chat(name, "The bot will keep trying to use the API.")
+				end
 			else
 				irc_chat(name, "API is online.")
 				irc_chat(name, "The bot is using Alloc's web API to talk to the server.")
@@ -1262,7 +1268,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if words[1] == "help" and (words[2] == "setup") then
+	if words[1] == "help" and words[2] == "setup" then
 		irc_Setup()
 		irc_params = {}
 		return
@@ -3280,23 +3286,45 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: set player {name} cash {value}")
-		irc_chat(name, "Reset a player's cash to a specific amount to fix stuff-ups.")
+		irc_chat(name, "Command: set player everyone cash {value}")
+		irc_chat(name, "Reset a player's cash to a specific amount to fix stuff-ups, or reset everyone's cash if you type everyone instead of a player name.")
 		irc_chat(name, ".")
 	end
 
-	if words[1] == "set" and words[2] == "player" and (string.find(msg, "cash") or string.find(msg, "money") or string.find(msg, server.moneyPlural)) then
-		name1 = words[3]
-		name1 = string.trim(name1)
-		pid = LookupPlayer(name1)
+	if words[1] == "set" and words[2] == "player" and (string.find(msg, "cash") or string.find(msg, "money") or string.find(msg, server.moneyPlural)) and players[ircid].accessLevel == 0 then
+		if words[3] ~= "everyone" then
+			name1 = words[3]
+			name1 = string.trim(name1)
+			pid = LookupPlayer(name1)
 
-		if pid ~= 0 then
+			if pid ~= 0 then
+				if numbers[2] ~= nil then
+					number = numbers[2]
+					players[pid].cash = number
+				else
+					if numbers[1] ~= nil then
+						number = numbers[1]
+						players[pid].cash = number
+					else
+						irc_chat(name, "Expected a number for cash but no cash found. Check under your seat, might be some cash there. xD")
+						irc_params = {}
+						return
+					end
+				end
+
+				players[pid].cash = number
+				conn:execute("UPDATE players set cash = " .. players[pid].cash .. " WHERE steam = " .. pid)
+				msg = "You set " .. players[pid].name .. "'s " .. server.moneyPlural .. " to " .. number
+				irc_chat(name, msg)
+			else
+				irc_chat(name, "No player found called " .. name1)
+			end
+		else
 			if numbers[2] ~= nil then
 				number = numbers[2]
-				players[pid].cash = number
 			else
 				if numbers[1] ~= nil then
 					number = numbers[1]
-					players[pid].cash = number
 				else
 					irc_chat(name, "Expected a number for cash but no cash found. Check under your seat, might be some cash there. xD")
 					irc_params = {}
@@ -3304,15 +3332,53 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				end
 			end
 
-			players[pid].cash = number
-			conn:execute("UPDATE players set cash = " .. players[pid].cash .. " WHERE steam = " .. pid)
-			msg = "You altered " .. players[pid].name .. "'s " .. server.moneyPlural .. " to " .. number
+			for k,v in pairs(players) do
+				v.cash = number
+			end
+
+			conn:execute("UPDATE players set cash = " .. number)
+			msg = "You set everyone's " .. server.moneyPlural .. " to " .. number
 			irc_chat(name, msg)
-		else
-			irc_chat(name, "No player found called " .. name1)
 		end
 
 		irc_params = {}
+		return
+	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: set update branch {branch name}")
+		irc_chat(name, "Tell the bot to switch to a different code branch.")
+		irc_chat(name, ".")
+	end
+
+	if words[1] == "set" and words[2] == "update" and words[3] == "branch" and words[4] ~= nil then
+		server.server.updateBranch = words[4]
+		irc_chat(name, "The bot will check for updates from the " .. server.updateBranch .. " code branch.")
+		irc_chat(name, ".")
+		conn:execute("UPDATE server SET updateBranch = '" .. escape(server.updateBranch) .. "'")
+		irc_params = {}
+		return
+	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: enable/disable debug")
+		irc_chat(name, "If you have access to Mudlet you can enable or disable debug output to Mudlet's debug and lists windows. This automatically disables itself when Mudlet is closed.")
+		irc_chat(name, ".")
+	end
+
+	if (words[1] == "enable" or words[1] == "disable") and words[2] == "debug" and words[3] == nil then
+		if words[1] == "enable" then
+			server.enableWindowMessages = true
+			irc_chat(name, "Debugging enabled")
+		else
+			server.enableWindowMessages = false
+			irc_chat(name, "Debugging disabled")
+		end
+
 		return
 	end
 
@@ -3465,6 +3531,37 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 -- ************************************************************************************************
 
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: set bot owner {steam ID}")
+		irc_chat(name, "Assign a steam ID as owner of this bot. Only 1 steam ID can be the bot owner and this can only be assigned once.")
+		irc_chat(name, "This isn't currently used by the bot but will be used later.")
+		irc_chat(name, "To use this command you must be a level 0 admin and to have been seen on the server by the bot.")
+		irc_chat(name, ".")
+	end
+
+	if words[1] == "set" and words[2] == "bot" and words[3] == "owner" and words[4] ~= nil and (players[ircid].accessLevel == 0) then
+		if tonumber(server.botOwner) ~= 0 then
+			irc_chat(name, "The bot owner has already be been set.  To change it now you must manually edit the bot's server table in the database.")
+			irc_params = {}
+			return
+		end
+
+		if not isValidSteamID(words[4]) then
+			irc_chat(name, "The steam ID you provided does not look like a steam ID.")
+			irc_params = {}
+			return
+		end
+
+		server.botOwner = words[4]
+		conn:execute("UPDATE server SET botOwner = " .. escape(words[4]))
+		irc_chat(name, "This bot is owned by steam ID " .. words[4])
+
+		irc_params = {}
+		return
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: villagers")

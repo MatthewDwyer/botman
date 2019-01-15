@@ -25,7 +25,7 @@ end
 
 function dbug(text)
 	-- send text to the debug window we created in Mudlet.
-	if server == nil then
+	if type(server) ~= "table" then
 		display(text .. "\n")
 		return
 	end
@@ -112,8 +112,8 @@ function login()
 	if type(botman) ~= "table" then
 		botman = {}
 		botman.botOffline = true
-		botman.telnetOffline = true
 		botman.APIOffline = true
+		botman.telnetOffline = true
 	end
 
 	tempTimer( 40, [[checkData()]] )
@@ -172,6 +172,8 @@ function login()
 		botman.updateBotOnlineStatusID = 0
 	end
 
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+
 	if (botman.botStarted == nil) then
 		botman.botStarted = os.time()
 
@@ -179,6 +181,8 @@ function login()
 			dofile(homedir .. "/scripts/reload_bot_scripts.lua")
 			reloadBotScripts(false, false, false)
 		end
+
+		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 		-- this must come after reload_bot_scripts above.
 		fixTables()
@@ -307,6 +311,15 @@ function login()
 
 	if custom_startup ~= nil then
 		custom_startup()
+	end
+
+	if botman.APIOffline then
+		toggleTriggers("api offline")
+
+		if server.useAllocsWebAPI then
+			botman.APITestSilent = true
+			startUsingAllocsWebAPI()
+		end
 	end
 
 	if debug then display("debug login end\n") end

@@ -3169,7 +3169,7 @@ function gmsg_admin()
 	local function cmd_HordeMe() --tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
-			help[1] = " {#}hordme"
+			help[1] = " {#}hordeme"
 			help[2] = "Spawn a horde of 50 random zombies on yourself.  Only admins can do this (but not mods)"
 
 			if botman.registerHelp then
@@ -3194,7 +3194,7 @@ function gmsg_admin()
 			end
 		end
 
-		if (chatvars.words[1] == "hordeme") or (string.find(chatvars.command, "this is sparta")) then
+		if (chatvars.words[1] == "hordeme") or (chatvars.words[1] == "hordme") or (string.find(chatvars.command, "this is sparta")) then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))

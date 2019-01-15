@@ -233,6 +233,10 @@ function sendCommand(command, api, outputFile)
 		send(command)
 		metrics.commands = metrics.commands + 1
 	end
+
+	if command == "shutdown" and botman.telnetOffline then
+		saveLuaTables()
+	end
 end
 
 
@@ -584,7 +588,7 @@ function message(msg, steam)
 		end
 	else
 		if players[words[2]] then
-			if players[words[2]].exiled ~= 1 then
+			if not players[words[2]].exiled then
 				if server.useAllocsWebAPI then
 					msg = string.sub(msg, 22)
 					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=pm " .. words[2] .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
@@ -1536,7 +1540,7 @@ function fixMissingPlayer(steam)
 	end
 
 	if players[steam].exiled == nil then
-		players[steam].exiled = 0
+		players[steam].exiled = false
 	end
 
 	if players[steam].exit2X == 0 and players[steam].exit2Z == 0 then

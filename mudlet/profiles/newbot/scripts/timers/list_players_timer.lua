@@ -81,7 +81,7 @@ function listPlayers()
 				conn:execute("TRUNCATE TABLE memTracker")
 				conn:execute("TRUNCATE TABLE commandQueue")
 				conn:execute("TRUNCATE TABLE gimmeQueue")
-				send("shutdown")
+				sendCommand("shutdown")
 			end
 
 

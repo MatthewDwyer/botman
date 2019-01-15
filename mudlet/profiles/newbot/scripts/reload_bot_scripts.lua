@@ -400,6 +400,8 @@ function refreshScripts()
 	server.nextCodeReload = "/scripts/update.lua"
 	checkScript(homedir .. "/scripts/update.lua")
 
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
 	server.nextCodeReload = "/scripts/webAPI_functions.lua"
 	checkScript(homedir .. "/scripts/webAPI_functions.lua")
 

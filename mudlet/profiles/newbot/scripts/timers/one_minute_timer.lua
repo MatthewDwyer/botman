@@ -205,12 +205,12 @@ function everyMinute()
 		if not botMaintenance.lastSA then
 			botMaintenance.lastSA = os.time()
 			saveBotMaintenance()
-			send("sa")
+			sendCommand("sa")
 		else
 			if (os.time() - botMaintenance.lastSA) > 30 then
 				botMaintenance.lastSA = os.time()
 				saveBotMaintenance()
-				send("sa")
+				sendCommand("sa")
 			end
 		end
 
@@ -340,7 +340,7 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 	end
 
 	if server.stompy and server.useAllocsWebAPI then
-		sendcommand("bc-time")
+		sendCommand("bc-time")
 	end
 
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end

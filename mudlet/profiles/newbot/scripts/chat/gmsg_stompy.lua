@@ -425,8 +425,9 @@ function gmsg_stompy()
 				end
 			end
 
-			if chatvars.words[1] == "fill" then
+			if chatvars.words[1] == "fill" and chatvars.words[3] ~= "block" then
 				tmp.block = chatvars.wordsOld[3]
+				tmp.block = getBlockName(tmp.block)
 			end
 
 			for i=2,chatvars.wordCount,1 do
@@ -446,10 +447,12 @@ function gmsg_stompy()
 
 				if chatvars.words[i] == "replace" then
 					tmp.newblock = chatvars.wordsOld[i+1]
+					tmp.newblock = getBlockName(tmp.newblock)
 				end
 
 				if chatvars.words[i] == "block" then
 					tmp.block = chatvars.wordsOld[i+1]
+					tmp.block = getBlockName(tmp.block)
 				end
 
 				if chatvars.words[i] == "tall" or chatvars.words[i] == "deep" or chatvars.words[i] == "height" or chatvars.words[i] == "hieght" then
@@ -591,15 +594,15 @@ function gmsg_stompy()
 
 				if chatvars.words[1] == "dig" then
 					if tmp.newblock then
-						sendCommand("bc-block fill " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z2 .. " * " ..  tmp.newblock)
+						sendCommand("bc-block fill " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z2 .. " " .. tmp.block .. " " ..  tmp.newblock)
 					else
-						sendCommand("bc-block fill " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z2 .. " * " .. tmp.block)
+						sendCommand("bc-block fill " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z2 .. " " .. tmp.block)
 					end
 				else
 					if tmp.newblock then
-						sendCommand("bc-block swap " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z2 .. " " .. tmp.block .. " " .. tmp.newblock)
+						sendCommand("bc-block swap " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z2 .. " " .. tmp.newblock .. " " .. tmp.block)
 					else
-						sendCommand("bc-block swap " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z2 .. " * " .. tmp.block)
+						sendCommand("bc-block fill " .. prefabCopies[tmp.prefab].x1 .. " " .. prefabCopies[tmp.prefab].y1 .. " " .. prefabCopies[tmp.prefab].z1 .. " " .. prefabCopies[tmp.prefab].x2 .. " " .. prefabCopies[tmp.prefab].y2 .. " " .. prefabCopies[tmp.prefab].z2 .. " " .. tmp.block)
 					end
 				end
 
@@ -634,9 +637,9 @@ function gmsg_stompy()
 
 				if chatvars.words[1] == "dig" then
 					if tmp.newblock then
-						sendCommand("bc-block fill " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " " ..  tmp.newblock .. " air")
+						sendCommand("bc-block fill " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " " ..  tmp.newblock .. " " .. tmp.block)
 					else
-						sendCommand("bc-block fill " ..  x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " * air")
+						sendCommand("bc-block fill " ..  x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2 .. " " .. tmp.block)
 					end
 				else
 					if tmp.newblock then
@@ -1259,6 +1262,8 @@ function gmsg_stompy()
 
 
 	local function cmd_LoadPrefab()
+		local i
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}load prefab {name}\n"
@@ -1268,10 +1273,10 @@ function gmsg_stompy()
 			help[2] = "Restore a saved prefab in place or place it somewhere else.\n"
 			help[2] = help[2] .. "If you provide coords and an optional rotation (default is 0 - north), you will make a new copy of the prefab at those coords.\n"
 			help[2] = help[2] .. "If you instead add here, it will load on your current position with optional rotation.\n"
-			help[2] = help[2] .. "If you instead add here, it will load on your current position with optional rotation.\n"
-			help[2] = help[2] .. "If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy.\n"
-			help[2] = help[2] .. "For perfect placement, stand at the south west corner before using this command."
-			help[2] = help[2] .. ""
+			help[2] = help[2] .. "If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy."
+			-- help[2] = help[2] .. "By default the prefab will spawn north east of you. You can alter how it spawns by adding any of the following..\n"
+			-- help[2] = help[2] .. "center ne nw se sw cne cnw cse csw nooffset air noair sleepers nosleepers\n"
+			-- help[2] = help[2] .. "For explainations of these in refer to the console command help bc-import.\n"
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -1319,7 +1324,6 @@ function gmsg_stompy()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Everything after the prefab name is optional and if not given, the stored coords and rotation will be used.[-]")
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]add coords and optional rotation to copy of the prefab or type here to place it at your feet.[-]")
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]To restore the prefab in place, just give the prefab name. Stock prefabs will always spawn at your feet if no coord is given.[-]")
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]For perfect placement, start from a south corner.[-]")
 				botman.faultyChat = false
 				return true
 			end
@@ -1327,6 +1331,65 @@ function gmsg_stompy()
 			tmp.prefab = chatvars.words[3]
 			tmp.face = 0
 			tmp.coords = chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ
+			tmp.options = ""
+
+			-- for i=3,chatvars.wordCount,1 do
+				-- if chatvars.words[i] == "ne" then
+					-- tmp.options = tmp.options .." /ne"
+				-- end
+
+				-- if chatvars.words[i] == "nw" then
+					-- tmp.options = tmp.options .." /nw"
+				-- end
+
+				-- if chatvars.words[i] == "se" then
+					-- tmp.options = tmp.options .." /se"
+				-- end
+
+				-- if chatvars.words[i] == "sw" then
+					-- tmp.options = tmp.options .." /sw"
+				-- end
+
+				-- if chatvars.words[i] == "cne" then
+					-- tmp.options = tmp.options .." /cne"
+				-- end
+
+				-- if chatvars.words[i] == "cnw" then
+					-- tmp.options = tmp.options .." /cnw"
+				-- end
+
+				-- if chatvars.words[i] == "cse" then
+					-- tmp.options = tmp.options .." /cse"
+				-- end
+
+				-- if chatvars.words[i] == "cnw" then
+					-- tmp.options = tmp.options .." /cnw"
+				-- end
+
+				-- if chatvars.words[i] == "nooffset" then
+					-- tmp.options = tmp.options .." /nooffset"
+				-- end
+
+				-- if chatvars.words[i] == "air" then
+					-- tmp.options = tmp.options .." /air"
+				-- end
+
+				-- if chatvars.words[i] == "noair" then
+					-- tmp.options = tmp.options .." /noair"
+				-- end
+
+				-- if chatvars.words[i] == "sleepers" then
+					-- tmp.options = tmp.options .." /sleepers"
+				-- end
+
+				-- if chatvars.words[i] == "nosleepers" then
+					-- tmp.options = tmp.options .." /nosleepers"
+				-- end
+			-- end
+
+			-- if tmp.options == "" then
+				-- tmp.options = " /ne"
+			-- end
 
 			if (prefabCopies[chatvars.playerid .. chatvars.words[3]]) and not (string.find(chatvars.command, " at ")) then
 				if tonumber(prefabCopies[chatvars.playerid .. chatvars.words[3]].y1) < tonumber(prefabCopies[chatvars.playerid .. chatvars.words[3]].y2) then
@@ -1352,8 +1415,8 @@ function gmsg_stompy()
 				tmp.coords = chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ
 			end
 
-			sendCommand("bc-import " .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face .. " /ne")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A prefab called " .. tmp.prefab .. " should have spawned.  If it didn't either the prefab isn't called " .. tmp.prefab .. " or it doesn't exist.[-]")
+			sendCommand("bc-import " .. tmp.prefab .. " " .. tmp.coords .. " " .. tmp.face .. tmp.options)
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A prefab called " .. chatvars.wordsOld[3] .. " should have spawned.  If it didn't either the prefab isn't called " .. tmp.prefab .. " or it doesn't exist.[-]")
 			igplayers[chatvars.playerid].undoPrefab = true
 			botman.faultyChat = false
 			return true
@@ -1534,7 +1597,7 @@ function gmsg_stompy()
 				prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 = z2
 
 				sendCommand("bc-export " .. chatvars.words[2] .. " " .. x1 .. " " .. y1 .. " " .. z1 .. " " .. x2 .. " " .. y2 .. " " .. z2)
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You saved a prefab called " .. chatvars.words[2] .. ".[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You saved a prefab called " .. chatvars.wordsOld[2] .. ".[-]")
 			end
 
 			botman.faultyChat = false
@@ -2012,24 +2075,20 @@ function gmsg_stompy()
 
 				if tmp.id ~= 0 then
 					if igplayers[tmp.id] then
-						sendCommand("cpm-targetedhorde " .. igplayers[tmp.id].xPos .. " " .. igplayers[tmp.id].yPos .. " " .. igplayers[tmp.id].zPos .. " " .. chatvars.number)
+						sendCommand("bc-spawn horde /player=" .. tmp.id .. " /count=" .. chatvars.number)
 						irc_chat(server.ircMain, "Horde spawned by bot at " .. igplayers[tmp.id].name .. "'s position at " .. igplayers[tmp.id].xPos .. " " .. igplayers[tmp.id].yPos .. " " .. igplayers[tmp.id].zPos)
 					end
 				else
 					tmp.loc = LookupLocation(chatvars.words[3])
 					if tmp.loc ~= nil then
-						sendCommand("cpm-targetedhorde " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z .. " " .. chatvars.number)
+						sendCommand("bc-spawn horde " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z .. " /count=" .. chatvars.number)
 						irc_chat(server.ircMain, "Horde spawned by bot at " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z)
 					end
 				end
 			else
 				-- spawn horde on self
 				if (chatvars.playername ~= "Server") then
-					if igplayers[chatvars.playerid].horde ~= nil then
-						sendCommand("cpm-targetedhorde " .. igplayers[chatvars.playerid].horde .. " " .. chatvars.number)
-					else
-						sendCommand("cpm-targetedhorde " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ .. " " .. chatvars.number)
-					end
+					sendCommand("bc-spawn horde /player=" .. chatvars.playerid .. " " .. chatvars.number)
 				else
 					irc_chat(chatvars.ircAlias, "You need to be on the server or specify a player that isn't you, or a location.")
 				end

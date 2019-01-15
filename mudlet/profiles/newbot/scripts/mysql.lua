@@ -809,7 +809,7 @@ function alterTables()
 	doSQL("ALTER TABLE `server` CHANGE `moneyName` `moneyName` VARCHAR(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Zenny|Zennies'")
 	doSQL("ALTER TABLE `server` ADD `baseDeadzone` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `reservedSlotTimelimit` INT NOT NULL DEFAULT '0'")
-	doSQL("ALTER TABLE `server` ADD `logPollingInterval` INT NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `server` ADD `logPollingInterval` INT NOT NULL DEFAULT '3'")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 

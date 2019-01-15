@@ -16,12 +16,29 @@ if botman.debugAll then
 end
 
 
+function getBlockName(block)
+	-- find the block in table spawnableItems and return the block name with correct case so we don't need to worry about case.
+	local cursor, errorString, row, rows
+
+	cursor,errorString = conn:execute("SELECT * FROM spawnableItems WHERE itemName LIKE '%" .. block .. "'")
+	rows = cursor:numrows()
+
+	if rows == 1 then
+		row = cursor:fetch({}, "a")
+		return row.itemName
+	else
+		-- found multiple matches so give up and return the block name unchanged
+		return block
+	end
+end
+
+
 function toggleTriggers(event)
 	if event == "api offline" then
 		enableTrigger("Player connected")
 		enableTrigger("Player disconnected")
 		enableTrigger("PVP Police")
-		enableTrigger("Matchall")
+		enableTrigger("MatchAll")
 		enableTrigger("Zombie Scouts")
 		enableTrigger("Game Time")
 		enableTrigger("Collect Ban")
@@ -36,7 +53,7 @@ function toggleTriggers(event)
 		disableTrigger("Player connected")
 		disableTrigger("Player disconnected")
 		disableTrigger("PVP Police")
-		disableTrigger("Matchall")
+		disableTrigger("MatchAll")
 		disableTrigger("Zombie Scouts")
 		disableTrigger("Game Time")
 		disableTrigger("Collect Ban")
@@ -85,7 +102,6 @@ function startUsingAllocsWebAPI()
 		-- verify that the web API is working for us
 		botman.oldAPIPort = server.webPanelPort
 		botman.testAPIPort = server.webPanelPort
-		botman.APIOffline = false
 		message("pm APItest \"test\"")
 	end
 end
@@ -177,7 +193,7 @@ end
 
 function unlockAll(steam)
 	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
-		sendCommand("bc-unlockall " .. igplayers[steam].chunkX .. " " .. igplayers[steam].chunkZ)
+		sendCommand("bc-unlockall /id=" .. steam)
 		return
 	end
 end
@@ -375,7 +391,12 @@ end
 
 onSysDisconnection = function ()
 	botman.botOfflineCount = 0
-	botman.botOffline = true
+	botman.telnetOffline = true
+
+	if botman.APIOffline then
+		botman.botOffline = true
+	end
+
 	botman.lastServerResponseTimestamp = os.time()
 	botman.lastTelnetResponseTimestamp = os.time()
 	botman.botOfflineTimestamp = os.time()
@@ -1295,7 +1316,6 @@ end
 
 
 function isValidSteamID(steam)
-if (debug) then dbug("debug isValidSteamID line " .. debugger.getinfo(1).currentline) end
 	-- here we're testing 2 things.  that the id is numeric and that it contains 17 digits
 	-- I'm also testing that it begins with 7656.  As far as I know all Steam keys begin with this.
 
@@ -1718,6 +1738,12 @@ function downloadHandler(event, ...)
 			return
 		end
 
+		if string.find(..., "apitest.txt") then
+			-- see if the file apitest.txt exists and is not empty
+			checkAPIWorking()
+			return
+		end
+
 		if string.find(..., "banList.txt") then
 			-- read ban list
 			readAPI_BanList()
@@ -1870,25 +1896,31 @@ end
 
 
 function failDownload(event, filePath)
-	-- if string.find(filePath, "Forbidden") then
-		-- dbug("failDownload - webtoken password has been reset")
-		-- server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
-		-- conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
-		-- os.remove(homedir .. "/temp/dummy.txt")
-		-- send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
-	-- end
-end
+	 if string.find(filePath, "Forbidden") and string.find(filePath, "api/", nil, true) then
+		botman.APIOffline = true
+		toggleTriggers("api offline")
 
+		if not botman.telnetOffline then --  and not botman.APITestSilent
+			server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+			conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "'")
+			send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0") -- send help!
+		end
 
-function finishDownload(filePath)
-	-- local file, ln, codeVersion, codeBranch
+		if botman.telnetOffline and botman.APIOffline then
+			botman.botOffline = true
+			return
+		end
+	 end
 
-	-- if isFile(homedir .. "/temp/version.txt") then
-		-- file = io.open(homedir .. "/temp/version.txt", "r")
-		-- codeVersion = file:read "*a"
-		-- codeBranch = file:read "*a"
-		-- file:close()
-	-- end
+	 if string.find(filePath, "Socket operation timed out") then
+		botman.APIOffline = true
+		toggleTriggers("api offline")
+
+		if botman.telnetOffline and botman.APIOffline then
+			botman.botOffline = true
+			return
+		end
+	 end
 end
 
 
@@ -2747,7 +2779,7 @@ function startReboot()
 	-- add a random delay to mess with dupers
 	local rnd = rand(5)
 
-	send("sa")
+	sendCommand("sa")
 	botman.rebootTimerID = tempTimer( 10 + rnd, [[finishReboot()]] )
 end
 
@@ -2807,7 +2839,7 @@ function finishReboot()
 	conn:execute("TRUNCATE TABLE memTracker")
 	conn:execute("TRUNCATE TABLE commandQueue")
 	conn:execute("TRUNCATE TABLE gimmeQueue")
-	send("shutdown")
+	sendCommand("shutdown")
 
 	-- check for bot updates
 	updateBot()
@@ -3010,17 +3042,8 @@ function CheckBlacklist(steam, ip)
 		players[steam].country = "CN"
 		players[steam].ircTranslate = true
 
-		if server.blacklistResponse ~= "ban" and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
-			-- alert players
-			for k, v in pairs(igplayers) do
-				if players[k].exiled~=1 and not players[k].prisoner then
-					message("pm " .. k .. " Player " .. players[steam].name .. " from a blacklisted country has joined.[-]")
-				end
-			end
-		end
-
 		if server.blacklistResponse == 'exile' and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
-			if tonumber(players[steam].exiled) == 0 then
+			if not players[steam].exiled then
 				players[steam].exiled = true
 				if botman.dbConnected then conn:execute("UPDATE players SET country = 'CN', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam) end
 			end

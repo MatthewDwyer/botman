@@ -71,6 +71,12 @@ function gmsg_info()
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is using telnet.[-]")
 				end
 
+				if botman.telnetOffline then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Telnet is offline.[-]")
+				else
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Telnet is online.[-]")
+				end
+
 				-- code branch
 				if server.updateBranch ~= '' then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The code branch is " .. server.updateBranch .. "[-]")

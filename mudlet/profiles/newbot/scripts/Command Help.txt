@@ -394,12 +394,12 @@ Waypoint Commands:
 /clear all waypoints {optional player name}
 Delete all your waypoints (anyone can do this) or those of a named player (only admins)
 
- /waypoints {player name} (list a player's waypoints)
+/waypoints {player name} (list a player's waypoints)
 /waypoints range {distance} (list all waypoints within range of your position)
 /waypoints near {player or location} range {distance} (list all waypoints within range of a player or location)
 List the waypoints of a player or within {distance} of your current position or the location of another player or location.
 
- /set max waypoints {number} (server wide)
+/set max waypoints {number} (server wide)
 /set max waypoints {player name} number {number} (for a specific player)
 /set max waypoints donors {number} (for donors)
 Set the max number of waypoints players can have or a specific player can have.
@@ -656,6 +656,9 @@ If you have set a master password, some bot commands will issue a password chall
 View a numbered list of available backups.
 Use /restore backup, to restore a backup. See the help for /restore backup for additional options.
 
+/list chat colors
+See the bot's chat colours and player chat colours.
+
 /quick reset bot
 Tell the bot to forget only some things, some player info, locations, bases etc.  You will be asked to confirm this, answer with yes.  Say anything else to abort.
 Use this command after wiping the server.  The bot will detect the day change and will ask if you want to reset the bot too.
@@ -681,11 +684,18 @@ Use this command after wiping the server.  The bot will detect the day change an
 /restart bot
 If your Mudlet (the bot's engine) is set up to automatically restart itself you can command the bot to restart.  Also this feature must be enabled.
 
-/restore backup {optional words: bases, cash, donors}
-/restore backup (optional number from numbered list of backups from /list backups)
+/restore backup {optional backup number} {optional words: bases, cash, donors, colors, locations, waypoints, friends, villagers, teleports, hotspots, resets, players}
+/restore backup {optional backup number} {optional words as above} player {name or steam or player id} (note: player {name} must be specified last)
 The bot saves its Lua tables daily at midnight (server time) and each time the server is shut down.
 If the bot gets messed up, you can try to fix it with this command. Other timestamped backups are made before the bot is reset but you will first need to strip the date part off them to restore with this command.
 To only restore player bases, add the word bases, for cash add cash and for donors add donors. If these words are included, nothing else is restored.
+You can also just restore 1 named player.
+To see a list of backups use /list backups.
+
+/set api log read {interval in seconds} (default 1 second)
+In API mode the bot will read the server log at regular intervals with the default being every second.
+You can set a longer delay but the bot won't respond to in-game commands faster than the delay that you set.
+If you think the polling interval is causing server lag you can try slowing it down.
 
 /blacklist action ban (or exile or 'nothing')
 Set what happens to blacklisted players.  The default is to ban them 10 years but if you create a location called exile, the bot can bannish them to there instead.  It acts like a prison.
@@ -943,7 +953,7 @@ Teleport to the current position of a player.  This works with offline players t
 /heal {player name}
 Apply big firstaid buff to a player or yourself if no name given.
 
-/hordme
+/hordeme
 Spawn a horde of 50 random zombies on yourself.  Only admins can do this (but not mods)
 
 /kick {Player name|Steam ID|Game ID} reason {optional reason}
@@ -1118,7 +1128,7 @@ This is useful for testing the bot.  You can also use /test as player (for 5 min
 This setting is not stored and will revert to excluding admins the next time the bot runs.
 
 /ignore/include player {player name}
-An ignored player can have uncraftable inventory and do hacker like activity such as teleporting and flying.
+An ignored player can have uncraftable inventory and do hacker like activity such as teleporting.
 An included player is checked for these things and can be punished or temp banned for them.
 
 /enable/disable pack/revive
@@ -1549,9 +1559,7 @@ Everything after the prefab name is optional and if not given, the stored coords
 Restore a saved prefab in place or place it somewhere else.
 If you provide coords and an optional rotation (default is 0 - north), you will make a new copy of the prefab at those coords.
 If you instead add here, it will load on your current position with optional rotation.
-If you instead add here, it will load on your current position with optional rotation.
 If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy.
-For perfect placement, stand at the south west corner before using this command.
 
 /list (or /li) {partial name of an item or block}
 List all items containing the text you are searching for.
@@ -1665,6 +1673,9 @@ Make the bot check for code updates and apply them.
 
 Command: server
 View basic info about the server and installed mods.
+
+Command: bot info
+Display basic info about the bot.
 
 Command: search blacklist {IP}
 See if an IP is in the blacklist or not.
@@ -1880,7 +1891,7 @@ Make the bot do a DNS lookup on any player.  Mainly useful if a player of intere
 Command: view alerts
 
 Command: view slots
-View information about the bot's player slots and reserved slots.
+View information about the bot's reserved slots and who is occupying them.
 
 Command: show inventory
 View historic inventory movement of a player.  They do not need to be playing right now.
@@ -1914,7 +1925,14 @@ eg. pay joe 1000.  Joe will receive 1000 {monies} and will be alerted with a pri
 Only owners and level 1 admins can do this on IRC.
 
 Command: set player {name} cash {value}
-Reset a player's cash to a specific amount to fix stuff-ups.
+Command: set player everyone cash {value}
+Reset a player's cash to a specific amount to fix stuff-ups, or reset everyone's cash if you type everyone instead of a player name.
+
+Command: set update branch {branch name}
+Tell the bot to switch to a different code branch.
+
+Command: enable/disable debug
+If you have access to Mudlet you can enable or disable debug output to Mudlet's debug and lists windows. This automatically disables itself when Mudlet is closed.
 
 Command: claims {optional player}
 List all of the claims on the server or a specific player's claims.
@@ -1926,6 +1944,11 @@ Command: pm {player} {message}
 
 Command: con {console command}
 Send a console command to the server.  If you don't see the console output on IRC it will be a command that the bot doesn't pipe back to IRC.  The command will still be ran.  This feature is restricted to server owners.
+
+Command: set bot owner {steam ID}
+Assign a steam ID as owner of this bot. Only 1 steam ID can be the bot owner and this can only be assigned once.
+This isn't currently used by the bot but will be used later.
+To use this command you must be a level 0 admin and to have been seen on the server by the bot.
 
 Command: villagers
 List all of the villagers.  It also shows who are the mayors.
@@ -1942,10 +1965,18 @@ View the message of the day.  You can clear it with motd clear.
 Command: set motd {message}
 Change the message of the day.
 
+Command: set api port
+Tell the bot what port the Alloc's API is using.
+
+Command: set api key {API key from 7daystodie-servers.com}
+Tell the bot your servers API key.  DO NOT do this in a public channel!
+Your key is not logged or displayed anywhere.  It is kept out of the database too.
+Once set, your players will be able to use the command /claim vote.
+
 Command: list tables
 List the bot's tables.
 
-Command: show table {table name}
+Command: show table {table name} {optional search string}
 View the contents of one of the bot's tables.  Not all tables will display but you'll soon work out which ones you can view.
 
 Command: reset bot keep money
@@ -1996,11 +2027,14 @@ List all of the village members of a specific village.
 Command: list {optional player} bases
 List all of the player bases or just those of one player.
 
-Command: add bad item {item name}
+Command: add bad item {item name} action {exile, ban or timeout} (timeout is the default)
 Add an item to the bad items list.
 
 Command: remove bad item {item name}
 Remove an item from the bad items list.
+
+Command: bad item {item name} action {exile, ban or timeout}
+Change what the bot does when it detects a specific bad item in inventory.
 
 Command: near player {player}
 Lists players, bases and locations near a player or coordinate.

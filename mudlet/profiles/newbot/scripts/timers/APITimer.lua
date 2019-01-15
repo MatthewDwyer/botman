@@ -41,11 +41,10 @@ function APITimer()
 			end
 
 			if not string.find(url, "#") then
---				os.remove(outputFile)
 				downloadFile(outputFile, url)
 			else
 				cmd = string.sub(url, string.find(url, "command=") + 8, string.find(url, "&adminuser") - 1)
-				send(cmd)
+				sendCommand(cmd)
 			end
 		end
 	end

@@ -8,7 +8,7 @@
 --]]
 
 function OneSecondTimer()
-	if server.useAllocsWebAPI then
+	if server.useAllocsWebAPI and not botman.APIOffline then
 		if not botman.lastLogRead then
 			botman.lastLogRead = os.time()
 			getAPILogUpdates()

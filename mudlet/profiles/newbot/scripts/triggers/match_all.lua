@@ -82,6 +82,8 @@ function matchAll(line, logDate, logTime)
 		debug = true
 	end
 
+if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
 	-- set counter to help detect the bot going offline
 	botman.botOfflineCount = 0
 	botman.botOffline = false
@@ -148,6 +150,23 @@ function matchAll(line, logDate, logTime)
 		end
 	end
 
+
+	if string.find(line, "WRN Invalid Admintoken used from") and string.find(line, server.botsIP) then
+		if server.useAllocsWebAPI and not botman.APITestSilent then
+			server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+			conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+			os.remove(homedir .. "/temp/apitest.txt")
+			server.useAllocsWebAPI = true
+			botman.APIOffline = false
+			botman.APITestSilent = true
+			toggleTriggers("api offline")
+			send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+		end
+
+		return
+	end
+
+
 	if string.find(line, "WRN ") then -- ignore lines containing this.
 		if not string.find(line, "DENSITYMISMATCH") then
 
@@ -188,6 +207,7 @@ function matchAll(line, logDate, logTime)
 		return
 	end
 
+if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	if customMatchAll ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua
@@ -196,17 +216,18 @@ function matchAll(line, logDate, logTime)
 		end
 	end
 
+if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
-	if string.find(line, "INF (BCM) Party:", nil, true) then -- Party time!
-		gmsg(line)
-		return
-	end
+	-- if string.find(line, "INF (BCM) Party:", nil, true) then -- Party time!
+		-- gmsg(line)
+		-- return
+	-- end
 
 
-	if string.find(line, "INF (BCM) Friends:", nil, true) then -- Friend chat
-		gmsg(line)
-		return
-	end
+	-- if string.find(line, "INF (BCM) Friends:", nil, true) then -- Friend chat
+		-- gmsg(line)
+		-- return
+	-- end
 
 
 	if string.find(line, "Web user with name=bot", nil, true) then
@@ -269,9 +290,10 @@ function matchAll(line, logDate, logTime)
 		return
 	end
 
+if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	-- grab the server time
-	if string.find(line, "INF ") then
+	if string.find(line, "INF ") and not server.useAllocsWebAPI then
 		if string.find(string.sub(line, 1, 19), os.date("%Y")) then
 			botman.serverTime = string.sub(line, 1, 10) .. " " .. string.sub(line, 12, 16)
 			botman.serverHour = string.sub(line, 12, 13)
@@ -287,6 +309,7 @@ function matchAll(line, logDate, logTime)
 		end
 	end
 
+if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	if not server.useAllocsWebAPI then
 		if (string.sub(line, 1, 4) == os.date("%Y")) then
@@ -449,6 +472,8 @@ function matchAll(line, logDate, logTime)
 		end
 	end
 
+if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
 	-- look for general stuff
 	died = false
 	if (string.find(line, "INF GMSG") and string.find(line, "eliminated")) then
@@ -463,7 +488,10 @@ function matchAll(line, logDate, logTime)
 		died = true
 	end
 
-	if (string.find(line, "INF GMSG: Player") and string.find(line, " died")) then
+if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
+
+	if (string.find(line, "GMSG: Player") and string.find(line, " died")) then
 		pname = string.sub(line, string.find(line, "GMSG") + 14, string.len(line) - 6)
 		pname = stripQuotes(string.trim(pname))
 		died = true
@@ -504,6 +532,8 @@ function matchAll(line, logDate, logTime)
 
 		return
 	end
+
+if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 
 	if (string.find(line, "ServerMaxPlayerCount set to")) then
@@ -1452,7 +1482,11 @@ function matchAll(line, logDate, logTime)
 	end
 
 
-	if (string.find(line, "INF [NET] ServerShutdown") or string.find(line, "INF World.Unload")) and not string.find(line, "Chat") then
+	if string.find(line, "Server shutting down!") and not string.find(line, "Chat") then
+		irc_chat(server.ircMain, "The server has shut down.")
+		botman.telnetOffline = true
+		botman.APIOffline = true
+		toggleTriggers("api offline")
 		botman.botOffline = true
 
 		return
@@ -1517,6 +1551,7 @@ function matchAll(line, logDate, logTime)
 				server.useAllocsWebAPI = true
 				botman.APIOffline = false
 				botman.APITestSilent = true
+				toggleTriggers("api offline")
 				send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 			else
 				botman.APIOffline = false

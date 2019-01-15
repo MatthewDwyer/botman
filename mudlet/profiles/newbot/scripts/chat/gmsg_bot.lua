@@ -2569,10 +2569,13 @@ function gmsg_bot()
 				end
 
 				server.useAllocsWebAPI = true
-				server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+
+				if server.allocsWebAPIPassword == "" then
+					server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+					send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+				end
+
 				conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
-				os.remove(homedir .. "/temp/apitest.txt")
-				send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 			end
 
 			botman.faultyChat = false

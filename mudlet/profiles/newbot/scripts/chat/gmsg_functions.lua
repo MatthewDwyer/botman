@@ -600,6 +600,8 @@ end
 
 
 function gmsg(line, ircid)
+	local pos
+
 	result = false
 
 	if botman.debugAll then
@@ -670,7 +672,7 @@ function gmsg(line, ircid)
 
 		if ircMsg ~= nil then
 			-- ignore game messages
-			if (chatvars.playername ~= "Server" and chatvars.playerid == nil) or string.find(ircMsg, " INF ") or string.find(ircMsg, "password") or string.find(ircMsg, "pass ") or string.find(string.lower(ircMsg), " api ") then
+			if (chatvars.playername ~= "Server" and chatvars.playerid == nil) or string.find(ircMsg, " INF ") or string.find(ircMsg, "password") or string.find(ircMsg, "pass ") or string.find(string.lower(ircMsg), " api ") or string.find(ircMsg, "GMSG:", nil, true) then
 				return true
 			end
 
@@ -737,6 +739,12 @@ function gmsg(line, ircid)
 	else
 		if string.find(line, "'Global'): ", nil, true) then
 			msg = string.sub(line, string.find(line, "'Global'): ") + 11)
+
+			if not string.find(line, "from '-non-player-'", nil, true) then
+				pos = string.find(line, "7656")
+				chatvars.playerid = string.sub(line, pos, pos + 16)
+			end
+
 			temp = string.split(msg, ":")
 			chatvars.playername = stripQuotes(temp[1])
 
@@ -747,25 +755,33 @@ function gmsg(line, ircid)
 			end
 		end
 
-		if string.find(line, "INF (BCM) Party", nil, true) then
+		if string.find(line, "'Party'): ", nil, true) then
 			chatFlag = "(P) "
-			msg = string.sub(line, string.find(line, "INF (BCM) Party", nil, true) + 16)
+			msg = string.sub(line, string.find(line, "'Party'): ") + 10)
+			pos = string.find(line, "7656")
+			chatvars.playerid = string.sub(line, pos, pos + 16)
 			temp = string.split(msg, ":")
 			chatvars.playername = stripQuotes(temp[1])
 
 			if temp[3] then
-				chatvars.command = string.trim(temp[3])
+				chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
+			else
+				chatvars.command = temp[2]
 			end
 		end
 
-		if string.find(line, "INF (BCM) Friends", nil, true) then
+		if string.find(line, "'Friends'): ", nil, true) then
 			chatFlag = "(F) "
-			msg = string.sub(line, string.find(line, "INF (BCM) Friends", nil, true) + 18)
+			msg = string.sub(line, string.find(line, "'Friends'): ") + 12)
+			pos = string.find(line, "7656")
+			chatvars.playerid = string.sub(line, pos, pos + 16)
 			temp = string.split(msg, ":")
 			chatvars.playername = stripQuotes(temp[1])
 
 			if temp[3] then
-				chatvars.command = string.trim(temp[3])
+				chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
+			else
+				chatvars.command = temp[2]
 			end
 		end
 	end
@@ -827,7 +843,7 @@ function gmsg(line, ircid)
 		chatvars.playername = string.sub(temp[1], 1, string.len(temp[1]) - 4)
 		chatvars.playerid = LookupPlayer(chatvars.playername, "all")
 	else
-		if chatvars.playername ~= nil then
+		if chatvars.playername ~= nil and chatvars.playerid == 0 then
 			chatvars.playerid = LookupPlayer(chatvars.playername, "all")
 		end
 	end

@@ -899,7 +899,7 @@ function gmsg_misc()
 					prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 = chatvars.intY
 					prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 = chatvars.intZ
 
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.words[2] .. " end[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.wordsOld[2] .. " end[-]")
 					if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x1, y1, z1) VALUES (" .. chatvars.playerid .. ",'" .. escape(chatvars.words[2]) .. "'," .. chatvars.intX .. "," .. chatvars.intY -1 .. "," .. chatvars.intZ .. ")") end
 				else
 					prefabCopies[chatvars.playerid .. chatvars.words[2]].owner = chatvars.playerid
@@ -908,7 +908,7 @@ function gmsg_misc()
 					prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 = chatvars.intY
 					prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 = chatvars.intZ
 
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.words[2] .. " start[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.wordsOld[2] .. " start[-]")
 					if botman.dbConnected then conn:execute("INSERT into prefabCopies (owner, name, x2, y2, z2) VALUES (" .. chatvars.playerid .. ",'" .. escape(chatvars.words[2]) .. "'," .. chatvars.intX .. "," .. chatvars.intY -1 .. "," .. chatvars.intZ .. ")") end
 				end
 			else
@@ -919,7 +919,7 @@ function gmsg_misc()
 					prefabCopies[chatvars.playerid .. chatvars.words[2]].y1 = chatvars.intY
 					prefabCopies[chatvars.playerid .. chatvars.words[2]].z1 = chatvars.intZ
 
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.words[2] .. " end[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.wordsOld[2] .. " end[-]")
 					if botman.dbConnected then conn:execute("UPDATE prefabCopies SET x1 = " .. chatvars.intX .. ", y1 = " .. chatvars.intY -1 .. ", z1 = " .. chatvars.intZ .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[2]) .. "'") end
 				else
 					prefabCopies[chatvars.playerid .. chatvars.words[2]].owner = chatvars.playerid
@@ -928,15 +928,16 @@ function gmsg_misc()
 					prefabCopies[chatvars.playerid .. chatvars.words[2]].y2 = chatvars.intY
 					prefabCopies[chatvars.playerid .. chatvars.words[2]].z2 = chatvars.intZ
 
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.words[2] .. " start[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Now move the opposite corner and use " .. server.commandPrefix .. "mark " .. chatvars.wordsOld[2] .. " start[-]")
 					if botman.dbConnected then conn:execute("UPDATE prefabCopies SET x2 = " .. chatvars.intX .. ", y2 = " .. chatvars.intY -1 .. ", z2 = " .. chatvars.intZ .. " WHERE owner = " .. chatvars.playerid .. " AND name = '" .. escape(chatvars.words[2]) .. "'") end
 				end
 			end
 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]When done you can save it with the BC mod by typing " .. server.commandPrefix .. "save " .. chatvars.words[2] .. "[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]When done you can save it..[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]By typing " .. server.commandPrefix .. "save " .. chatvars.wordsOld[2] .. "[-]")
 
 			if server.djkrose then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Or save it with djkrose's scripting mod by typing " .. server.commandPrefix .. "export " .. chatvars.words[2] .. "[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Using djkrose's scripting mod by typing " .. server.commandPrefix .. "export " .. chatvars.wordsOld[2] .. "[-]")
 			end
 
 			botman.faultyChat = false

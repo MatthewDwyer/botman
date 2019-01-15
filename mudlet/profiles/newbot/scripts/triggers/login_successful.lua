@@ -17,7 +17,7 @@ function loginSuccessful(line)
 		botman.botOffline = false
 		botman.telnetOffline = false
 		botman.botConnectedTimestamp = os.time() -- used to measure how long the bot has been offline so we can slow down how often it tries to reconnect.
-		irc_chat(server.ircMain, "Successfully logged in and monitoring server traffic.")
+		irc_chat(server.ircMain, "Successfully logged in to telnet.")
 		botman.getMetrics = false
 	end
 

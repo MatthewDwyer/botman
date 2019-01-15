@@ -16,12 +16,12 @@ function ThirtyMinuteTimer()
 		if not botMaintenance.lastSA then
 			botMaintenance.lastSA = os.time()
 			saveBotMaintenance()
-			send("sa")
+			sendCommand("sa")
 		else
 			if (os.time() - botMaintenance.lastSA) > 30 then
 				botMaintenance.lastSA = os.time()
 				saveBotMaintenance()
-				send("sa")
+				sendCommand("sa")
 			end
 		end
 	end
