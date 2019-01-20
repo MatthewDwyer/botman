@@ -302,7 +302,9 @@ function API_PlayerInfo(data)
 
 	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline) end
 
-	if players[data.steamid].location ~= "" and igplayers[data.steamid].spawnedInWorld and igplayers[data.steamid].teleCooldown < 1 then
+	if players[data.steamid].location ~= "" and igplayers[data.steamid].spawnedInWorld then --  and igplayers[data.steamid].teleCooldown < 1
+		igplayers[data.steamid].teleCooldown = 0
+
 		-- spawn the player at location
 		if (locations[players[data.steamid].location]) then
 			temp = players[data.steamid].location
@@ -1921,6 +1923,57 @@ function readAPI_GG()
 end
 
 
+function readAPI_GT()
+	local file, ln, result, data, k, v, con, q
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/gametime.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
+	end
+
+	file = io.open(homedir .. "/temp/gametime.txt", "r")
+
+	for ln in file:lines() do
+		result = yajl.to_value(ln)
+		data = splitCRLF(result.result)
+
+		for k,v in pairs(data) do
+			for con, q in pairs(conQueue) do
+				if q.command == "gt" then
+					irc_chat(q.ircUser, data[k])
+				end
+			end
+
+			if v ~= "" then
+				gameTimeTrigger(v)
+			end
+		end
+	end
+
+	file:close()
+
+	for con, q in pairs(conQueue) do
+		if q.command == "gt" then
+			conQueue[con] = nil
+		end
+	end
+
+	os.remove(homedir .. "/temp/gametime.txt")
+end
+
+
 function readAPI_Help()
 	local file, ln, result, data, k, v, con, q
 	local fileSize
@@ -2809,6 +2862,14 @@ function readAPI_PUG()
 end
 
 
+function writeAPILog(line)
+	-- log the chat
+	file = io.open(homedir .. "/log/" .. os.date("%Y_%m_%d") .. "_API_log.txt", "a")
+	file:write(botman.serverTime .. "; " .. string.trim(line) .. "\n")
+	file:close()
+end
+
+
 function readAPI_ReadLog()
 	local file, fileSize, ln, result, temp, data, k, v
 	local uptime, date, time, msg, handled
@@ -2844,6 +2905,8 @@ function readAPI_ReadLog()
 			time = v.time
 			botman.serverTime = date .. " " .. time
 			handled = false
+
+			writeAPILog(msg)
 
 			botman.serverHour = string.sub(time, 1, 2)
 			botman.serverMinute = string.sub(time, 4, 5)

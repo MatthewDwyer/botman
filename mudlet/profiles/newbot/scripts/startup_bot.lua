@@ -50,6 +50,7 @@ function checkData()
 	end
 
 	sendCommand("version")
+	sendCommand("gt")
 
 	if server.botsIP == nil then
 		getBotsIP()
@@ -279,7 +280,12 @@ function login()
 
 		botman.nextRebootTest = nil
 		botman.initError = false
-		startLogging(true)
+
+		if botman.APIOffline then
+			startLogging(true)
+		else
+			startLogging(false)
+		end
 
 		getServerData(getAllPlayers)
 
@@ -320,7 +326,11 @@ function login()
 			botman.APITestSilent = true
 			startUsingAllocsWebAPI()
 		end
+	else
+		toggleTriggers("api online")
 	end
+
+	sendCommand("gt")
 
 	if debug then display("debug login end\n") end
 

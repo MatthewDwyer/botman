@@ -120,6 +120,11 @@ function sendCommand(command, api, outputFile)
 				outputFile = "gg.txt"
 			end
 
+			if command == "gt" then
+				api = "executeconsolecommand?command=gt&"
+				outputFile = "gametime.txt"
+			end
+
 			if string.sub(command, 1, 4) == "help" then
 				api = "executeconsolecommand?command=" .. command .. "&"
 				outputFile = "help.txt"

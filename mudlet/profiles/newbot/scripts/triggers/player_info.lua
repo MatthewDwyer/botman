@@ -316,7 +316,9 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if players[steam].location ~= "" and igplayers[steam].spawnedInWorld and igplayers[steam].teleCooldown < 1 then
+	if players[steam].location ~= "" and igplayers[steam].spawnedInWorld then --  and igplayers[steam].teleCooldown < 1
+		igplayers[data.steamid].teleCooldown = 0
+
 		-- spawn the player at location
 		if (locations[players[steam].location]) then
 			temp = players[steam].location

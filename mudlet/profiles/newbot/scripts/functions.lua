@@ -1780,6 +1780,12 @@ function downloadHandler(event, ...)
 			return
 		end
 
+		if string.find(..., "gametime.txt") then
+			-- read gt
+			readAPI_GT()
+			return
+		end
+
 		if string.find(..., "help.txt") then
 			-- read help
 			readAPI_Help() -- help! help!
@@ -2859,8 +2865,10 @@ function newDay()
 		server.dateTest = string.sub(botman.serverTime, 1, 10)
 
 		-- force logging to start a new file
-		startLogging(false)
-		startLogging(true)
+		if botman.APIOffline then
+			startLogging(false)
+			startLogging(true)
+		end
 
 		dailyMaintenance()
 		resetShop()

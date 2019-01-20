@@ -77,6 +77,8 @@ function LookupShop(search,all)
 	shopStock = 0
 	shopPrice = 0
 	shopIndex = 0
+	shopUnits = 0
+	shopQuality = 0
 
 	conn:execute("TRUNCATE memShop")
 
@@ -94,8 +96,10 @@ function LookupShop(search,all)
 		shopIndex = row.idx
 		shopCategory = row.category
 		shopStock = row.stock
+		shopUnits = row.units
+		shopQuality = row.quality
 		shopPrice = (row.price + row.variation) * ((100 - row.special) / 100)
-		conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(row.category) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "')")
+		conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(row.category) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "'," .. row.units .. ")")
 
 		row = cursor:fetch(row, "a")
 	end
@@ -115,8 +119,10 @@ function LookupShop(search,all)
 				shopIndex = row.idx
 				shopCategory = row.category
 				shopStock = row.stock
+				shopUnits = row.units
+				shopQuality = row.quality
 				shopPrice = (row.price + row.variation) * ((100 - row.special) / 100)
-				conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(row.category) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "')")
+				conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(row.category) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "'," .. row.units .. ")")
 				return
 			end
 
@@ -296,7 +302,7 @@ end
 
 
 function doShop(command, playerid, words)
-	local k, v, i, number, cmd, list, cursor, errorString, example
+	local k, v, i, number, cmd, list, cursor, errorString, example, units
 
 if (debug) then
 dbug("debug shop line " .. debugger.getinfo(1).currentline)
@@ -365,13 +371,19 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		row = cursor:fetch({}, "a")
 
 		while row do
+			if tonumber(row.units) == 0 then
+				units = 1
+			else
+				units = row.units
+			end
+
 			if tonumber(row.stock) == -1 then
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price:  " .. row.price .. " UNLIMITED STOCK![-]")
+				message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price:  " .. row.price .. " units:  " .. units .. " UNLIMITED STOCK![-]")
 			else
 				if row.stock == 0 then
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. "[-]  [FF0000]SOLD OUT[-]")
+					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "[-]  [FF0000]SOLD OUT[-]")
 				else
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price.. "  (" .. row.stock .. " left)[-]")
+					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "  (" .. row.stock .. " left)[-]")
 				end
 			end
 
@@ -407,7 +419,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		LookupShop(words[3])
 
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have changed the price variation for " .. shopItem .. " to " .. number .. "[-]")
-		conn:execute("UPDATE shop SET variation = " .. number .. " WHERE item = '" .. escape(shopItem) .. "'")
+		conn:execute("UPDATE shop SET variation = " .. escape(number) .. " WHERE item = '" .. escape(shopItem) .. "'")
 
 		return false
 	end
@@ -425,7 +437,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have changed the shop special for " .. shopItem .. " to " .. number .. "[-]")
 
-		conn:execute("UPDATE shop SET special = " .. number .. " WHERE item = '" .. escape(shopItem) .. "'")
+		conn:execute("UPDATE shop SET special = " .. escape(number) .. " WHERE item = '" .. escape(shopItem) .. "'")
 		return false
 	end
 
@@ -442,7 +454,24 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have changed the shop price for " .. shopItem .. " to " .. number .. "[-]")
 
-		conn:execute("UPDATE shop SET price = " .. number .. " WHERE item = '" .. escape(shopItem) .. "'")
+		conn:execute("UPDATE shop SET price = " .. escape(number) .. " WHERE item = '" .. escape(shopItem) .. "'")
+		return false
+	end
+
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+
+	if (words[2] == "units" and words[3] ~= nil) then
+		if (accessLevel(playerid) > 2) then
+			message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
+			return false
+		end
+
+		LookupShop(words[3])
+		number = tonumber(words[4])
+
+		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have changed the units per sale for " .. shopItem .. " to " .. number .. "[-]")
+
+		conn:execute("UPDATE shop SET units = " .. escape(number) .. " WHERE item = '" .. escape(shopItem) .. "'")
 		return false
 	end
 
@@ -459,7 +488,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		if (tonumber(shopStock) > -1) then
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have added " .. number .. " " .. shopItem .. " to the shop[-]")
 
-			conn:execute("UPDATE shop SET stock = stock + " .. number .. " WHERE item = '" .. escape(shopItem) .. "'")
+			conn:execute("UPDATE shop SET stock = stock + " .. escape(number) .. " WHERE item = '" .. escape(shopItem) .. "'")
 			conn:execute("UPDATE shop SET stock = -1 WHERE stock < 0")
 		end
 
@@ -511,13 +540,19 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			row = cursor:fetch({}, "a")
 
 			while row do
+				if tonumber(row.units) == 0 then
+					units = 1
+				else
+					units = row.units
+				end
+
 				if tonumber(row.stock) == -1 then
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price:  " .. row.price .. " UNLIMITED STOCK![-]")
+					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price:  " .. row.price .. " units:  " .. units .. " UNLIMITED STOCK![-]")
 				else
 					if v.remaining == 0 then
-						message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. "[-]  [FF0000]SOLD OUT[-]")
+						message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "[-]  [FF0000]SOLD OUT[-]")
 					else
-						message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price.. "  (" .. row.stock .. " left)[-]")
+						message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "  (" .. row.stock .. " left)[-]")
 					end
 				end
 
@@ -531,13 +566,25 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 		if (tonumber(players[playerid].cash) > (tonumber(shopPrice) * number)) and ((number <= tonumber(shopStock) or (tonumber(shopStock) == -1))) then
 			players[playerid].cash = tonumber(players[playerid].cash) - (tonumber(shopPrice) * number)
-
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. string.format("%d", players[playerid].cash) .. " " .. server.moneyPlural .. " remaining.[-]")
+			unitsPurchased = number
+
+			if tonumber(shopUnits) > 0 then
+				number = number * shopUnits
+			end
 
 			if server.stompy then
-				sendCommand("bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number .. " /silent")
+				if tonumber(shopQuality) == 0 then
+					sendCommand("bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number  .. " /silent")
+				else
+					sendCommand("bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number  .. " /silent /q=" .. shopQuality)
+				end
 			else
-				sendCommand("give " .. playerid .. " " .. shopItem .. " " .. number)
+				if tonumber(shopQuality) == 0 then
+					sendCommand("give " .. playerid .. " " .. shopItem .. " " .. number)
+				else
+					sendCommand("give " .. playerid .. " " .. shopItem .. " " .. number .. " " .. shopQuality)
+				end
 			end
 
 			if server.stompy then
@@ -547,7 +594,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			end
 
 			conn:execute("UPDATE players SET cash = " .. players[playerid].cash .. " WHERE steam = " .. playerid)
-			conn:execute("UPDATE shop SET stock = " .. shopStock - tonumber(number) .. " WHERE item = '" .. escape(shopItem) .. "'")
+			conn:execute("UPDATE shop SET stock = " .. shopStock - tonumber(unitsPurchased) .. " WHERE item = '" .. escape(shopItem) .. "'")
 
 			return false
 		else
@@ -581,13 +628,19 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		row = cursor:fetch({}, "a")
 
 		while row do
+			if tonumber(row.units) == 0 then
+				units = 1
+			else
+				units = row.units
+			end
+
 			if tonumber(row.stock) == -1 then
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price:  " .. row.price .. " UNLIMITED STOCK![-]")
+				message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price:  " .. row.price .. " units:  " .. units .. " UNLIMITED STOCK![-]")
 			else
 				if v.remaining == 0 then
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. "[-]  [FF0000]SOLD OUT[-]")
+					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "[-]  [FF0000]SOLD OUT[-]")
 				else
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price.. "  (" .. row.stock .. " left)[-]")
+					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "  (" .. row.stock .. " left)[-]")
 				end
 			end
 

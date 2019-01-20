@@ -18,24 +18,27 @@ function pvpPolice(line)
 		return
 	end
 
-	if (not string.find(line, "INF GMSG")) then
-		-- prevent players from tricking the bot into banning players
-		return
-	end
 
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
+
+	if string.find(line, "Chat:", nil, true) or string.find(line, "Global:", nil, true) or string.find(line, "Party:", nil, true) or string.find(line, "Friend:", nil, true) then
+		-- prevent players from tricking the bot into banning players
+		return
+	 end
 
 	r = rand(22)
 	score = string.format("%.1f", math.random() * 10)
 
-	nameStart = string.find(line, "INF GMSG") + 10
+	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
+
+	nameStart = string.find(line, "GMSG") + 13
 
 	if string.find(line, " eliminated") then
 		nameEnd = string.find(line, " eliminated") - 1
 	end
 
 	if string.find(line, " killed by") then
-		nameStart = string.find(line, "INF GMSG") + 17
+		nameStart = string.find(line, "GMSG") + 13
 		nameEnd = string.find(line, " killed by") - 1
 
 		victimName = stripQuotes(string.sub(line, nameStart, nameEnd))

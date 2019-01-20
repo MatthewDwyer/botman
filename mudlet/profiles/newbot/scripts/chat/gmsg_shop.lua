@@ -740,7 +740,7 @@ function gmsg_shop()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set playtime reward {" .. server.moneyPlural .. "}"
-			help[2] = "Set how many " .. server.moneyPlural .. " a player earns for each minutes played. (excludes new players)"
+			help[2] = "Set how many " .. server.moneyPlural .. " a player earns for each minute played. (excludes new players and does not count total time played)"
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -752,7 +752,7 @@ function gmsg_shop()
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pay") or string.find(chatvars.command, "rate"))) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pay") or string.find(chatvars.command, "rate") or string.find(chatvars.command, "cash") or string.find(chatvars.command, "reward") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then

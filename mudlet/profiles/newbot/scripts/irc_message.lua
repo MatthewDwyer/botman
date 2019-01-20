@@ -104,7 +104,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			server.ircAlerts = channel .. "_alerts"
 			server.ircWatch = channel .. "_watch"
 			server.ircTracker = channel .. "_tracker"
-			conn:execute("UPDATE server SET ircMain = '" .. server.ircMain .. "', ircAlerts = '" .. server.ircAlerts .. "', ircWatch = '" .. server.ircWatch .. "', ircTracker = '" .. server.ircTracker .. "'")
+			conn:execute("UPDATE server SET ircMain = '" .. escape(server.ircMain) .. "', ircAlerts = '" .. escape(server.ircAlerts) .. "', ircWatch = '" .. escape(server.ircWatch) .. "', ircTracker = '" .. escape(server.ircTracker) .. "'")
 		end
 	end
 
@@ -1295,7 +1295,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				server.IP = string.sub(msg, string.find(msg, words[3]), string.len(msg))
 				irc_chat(name, "The server address is now " .. server.IP .. ":" .. server.ServerPort)
 				irc_chat(name, ".")
-				conn:execute("UPDATE server SET IP = '" .. server.IP .. "'")
+				conn:execute("UPDATE server SET IP = '" .. escape(server.IP) .. "'")
 				irc_params = {}
 				return
 			end
@@ -2038,7 +2038,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		server.telnetPass = sPass
 		server.telnetPort = sPort
 		telnetPassword = sPass
-		conn:execute("UPDATE server SET IP = '" .. escape(sIP) .. "', telnetPass = '" .. escape(sPass) .. "', telnetPort = " .. sPort)
+		conn:execute("UPDATE server SET IP = '" .. escape(sIP) .. "', telnetPass = '" .. escape(sPass) .. "', telnetPort = " .. escape(sPort))
 
 		-- delete some Mudlet files that store IP and other info forcing Mudlet to regenerate them.
 		os.remove(homedir .. "/ip")
@@ -2125,7 +2125,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		if tmp.prefix ~= "" then
 			server.commandPrefix = tmp.prefix
-			conn:execute("UPDATE server SET commandPrefix = '" .. tmp.prefix .. "'")
+			conn:execute("UPDATE server SET commandPrefix = '" .. escape(tmp.prefix) .. "'")
 			irc_chat(server.ircMain, "Ingame bot commands must now start with a " .. tmp.prefix)
 			message("say [" .. server.chatColour .. "]Commands now begin with a " .. server.commandPrefix .. ". To use commands such as who type " .. server.commandPrefix .. "who.[-]")
 
@@ -3269,7 +3269,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		if pid ~= 0 then
 			players[pid].cash = players[pid].cash + number
-			conn:execute("UPDATE players set cash = " .. players[pid].cash .. " WHERE steam = " .. pid)
+			conn:execute("UPDATE players set cash = " .. escape(players[pid].cash) .. " WHERE steam = " .. pid)
 			message("pm " .. pid .. " " .. players[ircid].name .. " just paid you " .. number .. " " .. server.moneyPlural .. "!  You now have " .. string.format("%d", players[pid].cash) .. " " .. server.moneyPlural .. "!  KA-CHING!!")
 
 			msg = "You just paid " .. number .. " " .. server.moneyPlural .. " to " .. players[pid].name .. " giving them a total of " .. string.format("%d", players[pid].cash) .. " " .. server.moneyPlural .. "."
@@ -3313,7 +3313,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				end
 
 				players[pid].cash = number
-				conn:execute("UPDATE players set cash = " .. players[pid].cash .. " WHERE steam = " .. pid)
+				conn:execute("UPDATE players set cash = " .. escape(players[pid].cash) .. " WHERE steam = " .. pid)
 				msg = "You set " .. players[pid].name .. "'s " .. server.moneyPlural .. " to " .. number
 				irc_chat(name, msg)
 			else
@@ -3336,7 +3336,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				v.cash = number
 			end
 
-			conn:execute("UPDATE players set cash = " .. number)
+			conn:execute("UPDATE players set cash = " .. escape(number))
 			msg = "You set everyone's " .. server.moneyPlural .. " to " .. number
 			irc_chat(name, msg)
 		end
@@ -3708,7 +3708,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		os.remove(homedir .. "/temp/apitest.txt")
 		server.webPanelPort = number
-		conn:execute("UPDATE server SET webPanelPort = " .. number)
+		conn:execute("UPDATE server SET webPanelPort = " .. escape(number))
 		irc_chat(name, "You set the web panel port to " .. number)
 
 		if server.useAllocsWebAPI then
@@ -4075,7 +4075,26 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, "You have changed the price variation for " .. shopItem .. " to " .. words2[4])
 		irc_chat(name, ".")
 
-		conn:execute("UPDATE shop SET variation = " .. tonumber(words2[4]) .. " WHERE item = '" .. escape(shopItem) .. "'")
+		conn:execute("UPDATE shop SET variation = " .. escape(tonumber(words2[4])) .. " WHERE item = '" .. escape(shopItem) .. "'")
+		irc_params = {}
+		return
+	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: shop units {item} {new unit quantity}")
+		irc_chat(name, "Change the number of units sold per sale of the specified item.")
+		irc_chat(name, ".")
+	end
+
+	if (words[1] == "shop" and words[2] == "units" and words[3] ~= nil) then
+		LookupShop(words[3])
+
+		irc_chat(name, "You have changed the units for " .. shopItem .. " to " .. words2[4])
+		irc_chat(name, ".")
+
+		conn:execute("UPDATE shop SET units = " .. escape(tonumber(words2[4])) .. " WHERE item = '" .. escape(shopItem) .. "'")
 		irc_params = {}
 		return
 	end
@@ -4094,7 +4113,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, "You have changed the special for " .. shopItem .. " to " .. words2[4])
 		irc_chat(name, ".")
 
-		conn:execute("UPDATE shop SET special = " .. tonumber(words2[4]) .. " WHERE item = '" .. escape(shopItem) .. "'")
+		conn:execute("UPDATE shop SET special = " .. escape(tonumber(words2[4])) .. " WHERE item = '" .. escape(shopItem) .. "'")
 		irc_params = {}
 		return
 	end
@@ -4119,7 +4138,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, "You have changed the price for " .. shopItem .. " to " .. words2[4])
 		irc_chat(name, ".")
 
-		conn:execute("UPDATE shop SET price = " .. tonumber(words2[4]) .. " WHERE item = '" .. escape(shopItem) .. "'")
+		conn:execute("UPDATE shop SET price = " .. escape(tonumber(words2[4])) .. " WHERE item = '" .. escape(shopItem) .. "'")
 		irc_params = {}
 		return
 	end
@@ -4144,7 +4163,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, "You have changed the max stock level for " .. shopItem .. " to " .. words[4])
 		irc_chat(name, ".")
 
-		conn:execute("UPDATE shop SET maxStock = " .. tonumber(words2[4]) .. " WHERE item = '" .. escape(shopItem) .. "'")
+		conn:execute("UPDATE shop SET maxStock = " .. escape(tonumber(words2[4])) .. " WHERE item = '" .. escape(shopItem) .. "'")
 		irc_params = {}
 		return
 	end
@@ -4174,7 +4193,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "There are now " .. shopStock .. " of " .. shopItem .. " for sale.")
 		end
 
-		conn:execute("UPDATE shop SET stock = " .. shopStock .. " WHERE item = '" .. escape(shopItem) .. "'")
+		conn:execute("UPDATE shop SET stock = " .. escape(shopStock) .. " WHERE item = '" .. escape(shopItem) .. "'")
 		irc_params = {}
 		return
 	end
@@ -5313,8 +5332,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
-		irc_chat(name, "Command: shop add item {item name} category {category} price {price} stock {max stock}")
-		irc_chat(name, "Add an item to the shop.")
+		irc_chat(name, "Command: shop add item {item name} category {category} price {price} stock {max stock} units {units dropped}")
+		irc_chat(name, "Add an item to the shop.  If a unit is given and a player buys 1 item, the bot will give 1 * the unit eg. 10 of the item.")
 		irc_chat(name, ".")
 	end
 
@@ -5327,6 +5346,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			class = "misc"
 			price = 10000
 			stock = 0
+			units = 0
 
 			for i=4,wordCount,1 do
 				if words[i] == "category" then
@@ -5340,11 +5360,15 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				if words[i] == "stock" then
 					stock = tonumber(words[i+1])
 				end
+
+				if words[i] == "units" then
+					units = tonumber(words[i+1])
+				end
 			end
 
 			irc_chat(name, "You added " .. wordsOld[4] .. " to the shop.  You will need to add any missing info such as code, category, price and quantity.")
 
-			conn:execute("INSERT INTO shop (item, category, stock, maxStock, price) VALUES ('" .. escape(wordsOld[4]) .. "','" .. escape(class) .. "'," .. stock .. "," .. stock .. "," .. price .. ")")
+			conn:execute("INSERT INTO shop (item, category, stock, maxStock, price, units) VALUES ('" .. escape(wordsOld[4]) .. "','" .. escape(class) .. "'," .. stock .. "," .. stock .. "," .. price .. "," .. units .. ")")
 
 			reindexShop(class)
 		end

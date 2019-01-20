@@ -850,6 +850,7 @@ function alterTables()
 	doSQL("ALTER TABLE `shop` ADD `validated` TINYINT(1) NOT NULL DEFAULT '1'")
 	doSQL("ALTER TABLE `shop` ADD `units` INT(1) NOT NULL, ADD `quality` INT(0) NOT NULL")
 	doSQL("ALTER TABLE `customCommands_Detail` DROP PRIMARY KEY , ADD PRIMARY KEY (`detailID`,`commandID`)")
+	doSQL("ALTER TABLE `memShop` ADD `units` INT NOT NULL DEFAULT '1'")
 
 	-- fix zero default tp sizes
 	doSQL("UPDATE `teleports` SET size = 1.5 WHERE size = 0")

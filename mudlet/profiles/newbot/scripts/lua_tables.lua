@@ -111,6 +111,8 @@ function saveLuaTables(date, name)
 		table.save(homedir .. "/data_backup/villagers.lua", villagers)
 		table.save(homedir .. "/data_backup/waypoints.lua", waypoints)
 	end
+
+	table.save(homedir .. "/data_backup/igplayers.lua", igplayers)
 end
 
 
