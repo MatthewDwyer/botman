@@ -14,6 +14,10 @@ function listKnownPlayers(line)
 		return
 	end
 
+	if server.useAllocsWebAPI then
+		return
+	end
+
 	botman.readingLKP = true
 	conn:execute("INSERT INTO LKPQueue (line) VALUES ('" .. escape(line) .. "')")
 

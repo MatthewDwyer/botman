@@ -131,7 +131,7 @@ function registerBot()
 			cursor,errorString = connBots:execute("select botID from servers where botID = " .. id)
 		end
 
-		connBots:execute("INSERT INTO servers (ServerPort, IP, botName, serverName, playersOnline, tick, botID, dbName, dbUser, dbPass) VALUES (" .. server.ServerPort .. ",'" .. server.IP .. "','" .. escape(server.botName) .. "','" .. escape(server.serverName) .. "'," .. botman.playersOnline .. ", now()," .. id .. ",'" .. escape(botDB) .. "','" .. escape(botDBUser) .. "','" .. escape(botDBPass) .. "')")
+		connBots:execute("INSERT INTO servers (ServerPort, IP, botName, serverName, playersOnline, tick, botID) VALUES (" .. server.ServerPort .. ",'" .. server.IP .. "','" .. escape(server.botName) .. "','" .. escape(server.serverName) .. "'," .. botman.playersOnline .. ", now()," .. id .. ")")
 		server.botID = id
 		conn:execute("UPDATE server SET botID = " .. id)
 	else
@@ -140,10 +140,10 @@ function registerBot()
 		rows = cursor:numrows()
 
 		if rows == 0 then
-			connBots:execute("INSERT INTO servers (ServerPort, IP, botName, serverName, playersOnline, tick, botID, dbName, dbUser, dbPass) VALUES (" .. server.ServerPort .. ",'" .. escape(server.IP) .. "','" .. escape(server.botName) .. "','" .. escape(server.serverName) .. "'," .. botman.playersOnline .. ", now()," .. server.botID .. ",'" .. escape(botDB) .. "','" .. escape(botDBUser) .. "','" .. escape(botDBPass) .. "')")
+			connBots:execute("INSERT INTO servers (ServerPort, IP, botName, serverName, playersOnline, tick, botID) VALUES (" .. server.ServerPort .. ",'" .. escape(server.IP) .. "','" .. escape(server.botName) .. "','" .. escape(server.serverName) .. "'," .. botman.playersOnline .. ", now()," .. server.botID .. ")")
 		else
 			-- update it with current data
-			connBots:execute("UPDATE servers SET serverName = '" .. escape(server.serverName) .. "', IP = '" .. escape(server.IP) .. "', ServerPort = " .. server.ServerPort .. ", botName = '" .. escape(server.botName) .. "', playersOnline = " .. botman.playersOnline .. ", tick = now(), dbName = '" .. escape(botDB) .. "', dbUser = '" .. escape(botDBUser) .. "', dbPass = '" .. escape(botDBPass) .. "' WHERE botID = " .. server.botID)
+			connBots:execute("UPDATE servers SET serverName = '" .. escape(server.serverName) .. "', IP = '" .. escape(server.IP) .. "', ServerPort = " .. server.ServerPort .. ", botName = '" .. escape(server.botName) .. "', playersOnline = " .. botman.playersOnline .. ", tick = now() WHERE botID = " .. server.botID)
 		end
 	end
 
@@ -638,13 +638,14 @@ function alterTables()
 	doSQL("CREATE TABLE `persistentQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) NOT NULL,`command` varchar(255) NOT NULL,`action` varchar(15) NOT NULL,  `value` int(11) NOT NULL DEFAULT '0',`timerDelay` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `slots` (`slot` int(11) NOT NULL,`steam` bigint(17) NOT NULL DEFAULT '0',`online` tinyint(1) NOT NULL DEFAULT '0',`joinedTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`joinedSession` int(11) NOT NULL DEFAULT '0',`expires` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`reserved` tinyint(1) NOT NULL DEFAULT '0',`staff` tinyint(1) NOT NULL DEFAULT '0',`free` TINYINT(1) NOT NULL DEFAULT '1',`canBeKicked` TINYINT(1) NOT NULL DEFAULT '1',`disconnectedTimestamp` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', PRIMARY KEY (`slot`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `bases` (`steam` bigint(17) NOT NULL,`baseNumber` int(11) NOT NULL DEFAULT '1',`title` varchar(100) NOT NULL DEFAULT '',`x` int(11) NOT NULL DEFAULT '0',`y` int(11) NOT NULL DEFAULT '0',`z` int(11) NOT NULL DEFAULT '0',`exitX` int(11) NOT NULL DEFAULT '0',`exitY` int(11) NOT NULL DEFAULT '0',`exitZ` int(11) NOT NULL DEFAULT '0',`size` int(11) NOT NULL DEFAULT '0',`protect` tinyint(1) NOT NULL DEFAULT '0',`keepOut` tinyint(1) NOT NULL DEFAULT '0',`creationTimestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,`creationGameDay` INT NOT NULL DEFAULT '0',PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
+	doSQL("CREATE TABLE `webInterfaceJSON` (`ident` varchar(50) NOT NULL,`json` text NOT NULL, `sessionID` VARCHAR(32) NOT NULL DEFAULT '', PRIMARY KEY (`ident`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
 
 	-- changes to players table
 	doSQL("ALTER TABLE `players` ADD COLUMN `waypoint2X` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Y` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Z` INT NOT NULL DEFAULT '0', ADD COLUMN `waypointsLinked` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD COLUMN `ircMute` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD COLUMN `chatColour` VARCHAR(8) NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `players` ADD COLUMN `teleCooldown` INT NOT NULL DEFAULT '0'")
-	doSQL("ALTER TABLE `players` ADD COLUMN `reserveSlot` TINYINT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `players` ADD COLUMN `reserveSlot` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD COLUMN `prisonReleaseTime` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD COLUMN `maxWaypoints` INT NOT NULL DEFAULT '2'")
 	doSQL("ALTER TABLE `players` ADD COLUMN ircLogin varchar(20) NOT NULL DEFAULT ''")
@@ -749,8 +750,8 @@ function alterTables()
 	doSQL("ALTER TABLE `server` ADD `hackerTPDetection` TINYINT(1) NOT NULL DEFAULT '1'")
 	doSQL("ALTER TABLE `server` CHANGE `updateBranch` `updateBranch` VARCHAR(30) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'stable'")
 	doSQL("ALTER TABLE `server` CHANGE `moneyName` `moneyName` VARCHAR(40) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'Zenny|Zennies'")
-	doSQL("ALTER TABLE `server` ADD `whitelistCountries` VARCHAR(50) NOT NULL DEFAULT '' , ADD `perMinutePayRate` INT NOT NULL DEFAULT '0' , ADD `disableWatchAlerts` TINYINT NOT NULL DEFAULT '0' , ADD `masterPassword` VARCHAR(50) NOT NULL DEFAULT '', ADD `allowBotRestarts` TINYINT NOT NULL DEFAULT '0', ADD `botOwner` VARCHAR(17) NOT NULL DEFAULT '0'")
-	doSQL("ALTER TABLE `server` CHANGE `pvpAllowProtect` `pvpAllowProtect` TINYINT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `whitelistCountries` VARCHAR(50) NOT NULL DEFAULT '' , ADD `perMinutePayRate` INT NOT NULL DEFAULT '0' , ADD `disableWatchAlerts` TINYINT(1) NOT NULL DEFAULT '0' , ADD `masterPassword` VARCHAR(50) NOT NULL DEFAULT '', ADD `allowBotRestarts` TINYINT(1) NOT NULL DEFAULT '0', ADD `botOwner` VARCHAR(17) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` CHANGE `pvpAllowProtect` `pvpAllowProtect` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `returnCooldown` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` CHANGE `blockCountries` `blacklistCountries` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'CN,HK'")
 	doSQL("ALTER TABLE `server` ADD `botRestartDay` INT NOT NULL DEFAULT '7'")
@@ -810,6 +811,9 @@ function alterTables()
 	doSQL("ALTER TABLE `server` ADD `baseDeadzone` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `reservedSlotTimelimit` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `logPollingInterval` INT NOT NULL DEFAULT '3'")
+	doSQL("ALTER TABLE `server` ADD `commandLagThreshold` INT NOT NULL DEFAULT '15'")
+	doSQL("ALTER TABLE `server` CHANGE `logInventory` `logInventory` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `server` ADD `telnetDisabled` TINYINT(1) NOT NULL DEFAULT '0'")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -822,7 +826,7 @@ function alterTables()
 	doSQL("ALTER TABLE `gimmePrizes` ADD `quality` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `gimmeZombies` ADD `entityID` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `gimmeZombies` ADD `bossZombie` TINYINT(1) NOT NULL DEFAULT '0'")
-	doSQL("ALTER TABLE `gimmeZombies` ADD `doNotSpawn` TINYINT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `gimmeZombies` ADD `doNotSpawn` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `gimmeZombies` ADD `maxHealth` INT NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `memShop` CHANGE `item` `item` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL")
 	doSQL("ALTER TABLE `locations` ADD `timeOpen` INT NOT NULL DEFAULT '0' , ADD `timeClosed` INT NOT NULL DEFAULT '0'")
@@ -865,7 +869,7 @@ function alterTables()
 	doSQL("ALTER TABLE `whitelist` CHANGE `steam` `steam` BIGINT(17) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `memEntities` ENGINE = MEMORY")
 	doSQL("ALTER TABLE `locations` ADD `locationCategory` VARCHAR(20) NOT NULL DEFAULT ''")
-	doSQL("ALTER TABLE `otherEntities` ADD `doNotDespawn` TINYINT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `otherEntities` ADD `doNotDespawn` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `reservedSlots` CHANGE `steam` `steam` BIGINT(17) NOT NULL")
 	doSQL("ALTER TABLE `reservedSlots` ENGINE = MEMORY")
 	doSQL("ALTER TABLE `list` ADD `id` INT NOT NULL DEFAULT '0' , ADD `class` VARCHAR(20) NOT NULL DEFAULT ''")
@@ -881,7 +885,7 @@ function alterTables()
 	doSQL("ALTER TABLE `customMessages` CHANGE `message` `message` VARCHAR(500) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL")
 	doSQL("ALTER TABLE `otherEntities` ADD `remove` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `locations` ADD `isRound` TINYINT(1) NOT NULL DEFAULT '1'")
-	doSQL("ALTER TABLE `locations` ADD `lobby` TINYINT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `locations` ADD `lobby` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `keystones` CHANGE `removed` `removed` INT(11) NOT NULL DEFAULT '0'")
 	doSQL("UPDATE `keystones` SET removed = 0") -- this is necessary to stop the bot giving everyone claims in error due to a table change.
 	doSQL("ALTER TABLE `customCommands_Detail` CHANGE `thing` `thing` VARCHAR(255)")
@@ -902,6 +906,10 @@ function alterTables()
 	doSQL("ALTER TABLE `list` DROP PRIMARY KEY") -- OOPS! Doesn't work too well with indexes.  Down with them I say!
 	doSQL("ALTER TABLE `list` ADD `steam` BIGINT(17) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `playerQueue` ADD `delayTimer` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+	doSQL("ALTER TABLE `webInterfaceQueue` ADD `steam` BIGINT(17) NOT NULL DEFAULT '0', `actionArgs` VARCHAR(1000) NOT NULL DEFAULT '', CHANGE `action` `action` VARCHAR(50), ADD `recipient` VARCHAR(5) NOT NULL DEFAULT '', ADD `expire` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', ADD `sessionID` VARCHAR(32) NOT NULL DEFAULT ''")
+	doSQL("DELETE FROM badItems WHERE item = 'snow'") -- remove a test item that shouldn't be live :O
+	doSQL("INSERT INTO badItems (item, action) VALUES ('*Admin', 'timeout')")
+	doSQL("UPDATE server SET logInventory = 1")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)
@@ -917,6 +925,7 @@ function alterTables()
 	doSQL("CREATE TABLE IF NOT EXISTS `IPTable` (`StartIP` bigint(15) NOT NULL,`EndIP` bigint(15) NOT NULL,`Country` varchar(2) NOT NULL DEFAULT '',`OrgName` varchar(100) NOT NULL DEFAULT '',`IP` varchar(20) NOT NULL DEFAULT '', PRIMARY KEY (`StartIP`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", true)
 	doSQL("CREATE TABLE IF NOT EXISTS `settings` (`DNSLookupCounter` int(11) NOT NULL DEFAULT '0',`DNSResetCounterDate` int(11) NOT NULL DEFAULT '10000101') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", true)
 	doSQL("ALTER TABLE `IPTable` ADD `steam` BIGINT(17) NOT NULL DEFAULT '0', ADD `botID` INT NOT NULL DEFAULT '0'", true)
+	doSQL("ALTER TABLE servers DROP COLUMN dbName, DROP COLUMN dbUser, DROP COLUMN dbPass", true)
 
 	-- change the primary key of table bans from steam to id (an auto incrementing integer field) if the id field does not exist.
 	cursor,errorString = connBots:execute("SHOW COLUMNS FROM `bans` LIKE 'id'")
@@ -951,6 +960,6 @@ end
 function botHeartbeat()
 	-- update the servers table in database bots with the current timestamp so the web interface can see that this bot is awake.
 	if botman.db2Connected then
-		connBots:execute("UPDATE servers SET tick = now() WHERE botID = " .. server.botID)
+		connBots:execute("UPDATE servers SET tick = now(), playersOnline = " .. botman.playersOnline .. " WHERE botID = " .. server.botID)
 	end
 end

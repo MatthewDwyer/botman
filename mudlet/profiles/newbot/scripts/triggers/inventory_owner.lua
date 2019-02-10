@@ -12,6 +12,10 @@ function inventoryOwner(line)
 		return
 	end
 
+	if server.useAllocsWebAPI then
+		return
+	end
+
 	local pname
 
 	pname = string.sub(line, string.find(line, "player ") + 7)

@@ -35,33 +35,47 @@ end
 
 function toggleTriggers(event)
 	if event == "api offline" then
+		enableTrigger("Auto Friend")
+		enableTrigger("Chat")
+		enableTrigger("Collect Ban")
+		enableTrigger("End list players")
+		enableTrigger("Game Time")
+		enableTrigger("Inventory")
+		enableTrigger("InventoryOwner")
+		enableTrigger("InventorySlot")
+		enableTrigger("lkp")
+		enableTrigger("MatchAll")
+		enableTrigger("mem")
+		enableTrigger("Overstack")
+		enableTrigger("playerinfo")
 		enableTrigger("Player connected")
 		enableTrigger("Player disconnected")
 		enableTrigger("PVP Police")
-		enableTrigger("MatchAll")
-		enableTrigger("Zombie Scouts")
-		enableTrigger("Game Time")
-		enableTrigger("Collect Ban")
 		enableTrigger("Unban player")
+		enableTrigger("Zombie Scouts")
 		--enableTrigger("Tele")
-		enableTrigger("Chat")
-		enableTrigger("Overstack")
-		enableTrigger("mem")
 	end
 
 	if event == "api online" then
+		disableTrigger("Auto Friend")
+		disableTrigger("Chat")
+		disableTrigger("Collect Ban")
+		disableTrigger("End list players")
+		disableTrigger("Game Time")
+		disableTrigger("Inventory")
+		disableTrigger("InventoryOwner")
+		disableTrigger("InventorySlot")
+		disableTrigger("lkp")
+		disableTrigger("MatchAll")
+		disableTrigger("mem")
+		disableTrigger("Overstack")
+		disableTrigger("playerinfo")
 		disableTrigger("Player connected")
 		disableTrigger("Player disconnected")
 		disableTrigger("PVP Police")
-		disableTrigger("MatchAll")
-		disableTrigger("Zombie Scouts")
-		disableTrigger("Game Time")
-		disableTrigger("Collect Ban")
 		disableTrigger("Unban player")
+		disableTrigger("Zombie Scouts")
 		--disableTrigger("Tele")
-		disableTrigger("Chat")
-		disableTrigger("Overstack")
-		disableTrigger("mem")
 	end
 end
 function dogeWOW()
@@ -2238,10 +2252,10 @@ function validBasePosition(steam)
 
 	isValid = true -- yay!
 
-	if tonumber(server.baseDeadzone) > (server.baseSize * 2) then
-		minimumDist = server.baseDeadzone
+	if tonumber(server.baseDeadzone) > tonumber(server.baseSize) * 2 then
+		minimumDist = tonumber(server.baseDeadzone)
 	else
-		minimumDist = server.baseSize * 2
+		minimumDist = tonumber(server.baseSize) * 2
 	end
 
 	-- check that y position is between bedrock and the max build height

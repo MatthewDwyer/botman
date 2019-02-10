@@ -579,18 +579,23 @@ end
 
 
 function logInventoryChanges(steam, item, delta, x, y, z, session, flag)
-	local file
+	local file, location
 
 	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
 	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
 	botman.webdavFolderWriteable = false
+	location = ""
+
+	if igplayers[steam] then
+		location = igplayers[steam].inLocation
+	end
 
 	-- log the chat
 	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_inventory.txt", "a")
 	if delta > 0 then
-		file:write("server date " .. botman.serverTime .. "; game " .. server.gameDate .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty +" .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; sess " .. session .. "; " .. flag .. "\n")
+		file:write("server date " .. botman.serverTime .. "; game " .. server.gameDate .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty +" .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; loc " .. location .. " ; sess " .. session .. "; " .. flag .. "\n")
 	else
-		file:write("server date " .. botman.serverTime .. "; game " .. server.gameDate .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty " .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; sess " .. session .. "; " .. flag .. "\n")
+		file:write("server date " .. botman.serverTime .. "; game " .. server.gameDate .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty " .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; loc " .. location .. " ; sess " .. session .. "; " .. flag .. "\n")
 	end
 
 	file:close()
@@ -724,64 +729,77 @@ function gmsg(line, ircid)
 	chatvars.playername = ""
 	chatFlag = ""
 
-	if tonumber(server.gameVersionNumber) < 17 then
-		if string.find(line, "Chat: ", nil, true) then
-			msg = string.sub(line, string.find(line, "Chat: ") + 6)
-			temp = string.split(msg, ":")
-			chatvars.playername = stripQuotes(temp[1])
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-			if temp[3] then
-				chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
-			else
-				chatvars.command = temp[2]
+	if not server.gameVersionNumber and server.gameVersion then
+		temp = string.split(server.gameVersion, " ")
+		server.gameVersionNumber = tonumber(temp[2])
+	end
+
+	if not server.gameDate then
+		server.gameDate	= ""
+	end
+
+	if server.gameVersionNumber then
+		if tonumber(server.gameVersionNumber) < 17 then
+			if string.find(line, "Chat: ", nil, true) then
+				msg = string.sub(line, string.find(line, "Chat: ") + 6)
+				temp = string.split(msg, ":")
+				chatvars.playername = stripQuotes(temp[1])
+
+				if temp[3] then
+					chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
+				else
+					chatvars.command = temp[2]
+				end
 			end
-		end
-	else
-		if string.find(line, "'Global'): ", nil, true) then
-			msg = string.sub(line, string.find(line, "'Global'): ") + 11)
+		else
+			if string.find(line, "'Global'): ", nil, true) then
+				msg = string.sub(line, string.find(line, "'Global'): ") + 11)
 
-			if not string.find(line, "from '-non-player-'", nil, true) then
+				if not string.find(line, "from '-non-player-'", nil, true) then
+					pos = string.find(line, "7656")
+					chatvars.playerid = string.sub(line, pos, pos + 16)
+				end
+
+				temp = string.split(msg, ":")
+				chatvars.playername = stripQuotes(temp[1])
+
+				if temp[3] then
+					chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
+				else
+					chatvars.command = temp[2]
+				end
+			end
+
+			if string.find(line, "'Party'): ", nil, true) then
+				chatFlag = "(P) "
+				msg = string.sub(line, string.find(line, "'Party'): ") + 10)
 				pos = string.find(line, "7656")
 				chatvars.playerid = string.sub(line, pos, pos + 16)
+				temp = string.split(msg, ":")
+				chatvars.playername = stripQuotes(temp[1])
+
+				if temp[3] then
+					chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
+				else
+					chatvars.command = temp[2]
+				end
 			end
 
-			temp = string.split(msg, ":")
-			chatvars.playername = stripQuotes(temp[1])
+			if string.find(line, "'Friends'): ", nil, true) then
+				chatFlag = "(F) "
+				msg = string.sub(line, string.find(line, "'Friends'): ") + 12)
+				pos = string.find(line, "7656")
+				chatvars.playerid = string.sub(line, pos, pos + 16)
+				temp = string.split(msg, ":")
+				chatvars.playername = stripQuotes(temp[1])
 
-			if temp[3] then
-				chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
-			else
-				chatvars.command = temp[2]
-			end
-		end
-
-		if string.find(line, "'Party'): ", nil, true) then
-			chatFlag = "(P) "
-			msg = string.sub(line, string.find(line, "'Party'): ") + 10)
-			pos = string.find(line, "7656")
-			chatvars.playerid = string.sub(line, pos, pos + 16)
-			temp = string.split(msg, ":")
-			chatvars.playername = stripQuotes(temp[1])
-
-			if temp[3] then
-				chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
-			else
-				chatvars.command = temp[2]
-			end
-		end
-
-		if string.find(line, "'Friends'): ", nil, true) then
-			chatFlag = "(F) "
-			msg = string.sub(line, string.find(line, "'Friends'): ") + 12)
-			pos = string.find(line, "7656")
-			chatvars.playerid = string.sub(line, pos, pos + 16)
-			temp = string.split(msg, ":")
-			chatvars.playername = stripQuotes(temp[1])
-
-			if temp[3] then
-				chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
-			else
-				chatvars.command = temp[2]
+				if temp[3] then
+					chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
+				else
+					chatvars.command = temp[2]
+				end
 			end
 		end
 	end
@@ -951,10 +969,13 @@ function gmsg(line, ircid)
 		end
 
 		if chatvars.playerid ~= 0 then
+dbug("last command " .. players[chatvars.playerid].lastCommand .. " by " .. players[chatvars.playerid].name)
+
 			if (players[chatvars.playerid].lastCommand) then
 				-- don't allow identical commands being spammed too quickly
 	--			if ((os.time() - players[chatvars.playerid].lastCommandTimestamp) < 4) and players[chatvars.playerid].lastCommand == chatvars.command then
 				if (os.time() - players[chatvars.playerid].lastCommandTimestamp) < 2 then
+dbug("skipping command " .. chatvars.command .. " by " .. players[chatvars.playerid].name)
 					botman.faultyChat = false
 					result = true
 					return true

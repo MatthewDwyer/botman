@@ -25,8 +25,4 @@ function FiveMinuteTimer()
 			end
 		end
 	end
-
-	if not botman.botOffline and tonumber(botman.playersOnline) == 0 then
-		sendCommand("gt") -- Are you there?   Is this thing on?
-	end
 end

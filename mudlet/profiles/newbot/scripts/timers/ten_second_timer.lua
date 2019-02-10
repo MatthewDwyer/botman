@@ -12,6 +12,8 @@ function TenSecondTimer()
 		return
 	end
 
+	botHeartbeat()
+
 	if customTenSecondTimer ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua
 		if customTenSecondTimer() then
@@ -30,9 +32,9 @@ function TenSecondTimer()
 			if server.enableLagCheck then
 				botman.lagCheckTime = os.time()
 			end
-
-			server.lagged = false
 		end
+
+		server.lagged = false
 	else
 		if tonumber(botman.playersOnline) > 0 and tonumber(botman.playersOnline) < 25 then
 			if server.coppi and tonumber(botman.playersOnline) > 0 then

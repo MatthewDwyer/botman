@@ -144,6 +144,7 @@ function login()
 		server.lagged = false
 		botman.botConnectedTimestamp = os.time()
 		botman.botOfflineCount = 0
+		botman.telnetOfflineCount = 0
 		botman.lastServerResponseTimestamp = os.time()
 		botman.lastTelnetResponseTimestamp = os.time()
 		botman.serverRebooting = false
@@ -166,11 +167,6 @@ function login()
 	if botman.sysDisconnectionID == nil then
 		botman.sysDisconnectionID = registerAnonymousEventHandler("sysDisconnectionEvent", "onSysDisconnection")
 		botman.sysDisconnectionID = 0
-	end
-
-	if botman.updateBotOnlineStatusID == nil then
-		tempRegexTrigger("^(.*)$", [[updateBotOnlineStatus()]])
-		botman.updateBotOnlineStatusID = 0
 	end
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end

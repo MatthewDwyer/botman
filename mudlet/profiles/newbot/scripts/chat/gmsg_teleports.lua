@@ -914,25 +914,13 @@ function gmsg_teleports()
 				cursor,errorString = conn:execute("SELECT x, y, z FROM tracker WHERE steam = " .. chatvars.playerid .. " and ((abs(x - " .. players[chatvars.playerid].deathX .. ") > 0 and abs(x - " .. players[chatvars.playerid].deathX .. ") < 50) and (abs(z - " .. players[chatvars.playerid].deathZ .. ") > 5 and abs(z - " .. players[chatvars.playerid].deathZ .. ") < 50))  ORDER BY trackerid DESC Limit 0, 1")
 				if cursor:numrows() > 0 then
 					row = cursor:fetch({}, "a")
-					cmd = ("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z)
-
-					if server.HideCommandExecutionLog then
-						if tonumber(server.HideCommandExecutionLog) > 0 then
-							cmd = ("tele " .. chatvars.playerid .. " " .. row.x .. " -1 " .. row.z)
-						end
-					end
+					cmd = ("tele " .. chatvars.playerid .. " " .. row.x .. " -1 " .. row.z)
 
 					players[chatvars.playerid].deathX = 0
 					players[chatvars.playerid].deathY = 0
 					players[chatvars.playerid].deathZ = 0
 				else
-					cmd = ("tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].deathX .. " " .. players[chatvars.playerid].deathY .. " " .. players[chatvars.playerid].deathZ)
-
-					if server.HideCommandExecutionLog then
-						if tonumber(server.HideCommandExecutionLog) > 0 then
-							cmd = ("tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].deathX .. " -1 " .. players[chatvars.playerid].deathZ)
-						end
-					end
+					cmd = ("tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].deathX .. " -1 " .. players[chatvars.playerid].deathZ)
 
 					players[chatvars.playerid].deathX = 0
 					players[chatvars.playerid].deathY = 0

@@ -319,6 +319,8 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 			if botman.readGG then
 				botman.readGG = false
+				if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('gg','panel','" .. escape(yajl.to_string(gg)) .. "')") end
+				gg = nil
 			end
 
 			if echoConsole then
@@ -350,6 +352,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 				readVersion = nil
 				resetVersion = nil
 				table.save(homedir .. "/data_backup/modVersions.lua", modVersions)
+				if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('modVersions','panel','" .. escape(yajl.to_string(modVersions)) .. "')") end
 			end
 		end
 
@@ -447,6 +450,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	if not server.useAllocsWebAPI then
 		if string.find(line, "GamePref.") then
 			botman.readGG = true
+			gg = {}
 		end
 	end
 
@@ -1092,7 +1096,13 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 		if (string.find(line, "ServerPort =")) then
 			server.ServerPort = number
-			if botman.dbConnected then conn:execute("UPDATE server SET serverName = '" .. escape(server.serverName) .. "', ServerPort = " .. server.ServerPort) end
+			if botman.dbConnected then
+				conn:execute("UPDATE server SET ServerPort = " .. server.ServerPort)
+			end
+
+			if botman.db2Connected then
+				connBots:execute("UPDATE servers SET ServerPort = " .. server.ServerPort .. " WHERE botID = " .. server.botID)
+			end
 
 			return
 		end
@@ -1105,6 +1115,14 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 		if (string.find(line, "ServerName =")) then
 			server.serverName = string.trim(string.sub(line, 22))
+
+			if botman.dbConnected then
+				conn:execute("UPDATE server SET serverName = '" .. escape(server.serverName) .. "'")
+			end
+
+			if botman.db2Connected then
+				connBots:execute("UPDATE servers SET serverName = '" .. escape(server.serverName) .. "' WHERE botID = " .. server.botID)
+			end
 
 			if string.find(string.lower(server.serverName), "pvp") and not string.find(string.lower(server.serverName), "pve") then
 				server.gameType = "pvp"
@@ -1430,8 +1448,9 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 			metrics.telnetCommandLag = lag
 		end
 
-		if tonumber(lag) > 7 then
+		if tonumber(lag) > server.commandLagThreshold then
 			server.lagged = true
+dbugi("set server.lagged true lag is " .. lag)
 		end
 
 		deleteLine()

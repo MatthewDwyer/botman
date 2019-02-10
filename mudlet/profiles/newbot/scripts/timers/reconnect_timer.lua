@@ -30,11 +30,19 @@ function reconnectTimer()
 		botman.botOfflineCount = 0
 	end
 
+	if botman.telnetOfflineCount == nil then
+		botman.telnetOfflineCount = 0
+	end
+
+	if botman.telnetOffline and not server.telnetDisabled then
+		botman.telnetOfflineCount = tonumber(botman.telnetOfflineCount) + 1
+	end
+
 	if botman.botOffline == nil then
 		botman.botOffline = false
 	end
 
-	if botman.botOffline then
+	if botman.botOffline or (server.useAllocsWebAPI and botman.APIOffline) then
 		botman.botOfflineCount = tonumber(botman.botOfflineCount) + 1
 	end
 
@@ -44,8 +52,21 @@ function reconnectTimer()
 		startUsingAllocsWebAPI()
 	end
 
+	if tonumber(botman.botOfflineCount) > 15 then
+		if server.useAllocsWebAPI and botman.APIOffline and not server.telnetDisabled then
+			-- switch to using telnet
+			server.useAllocsWebAPI = false
+			conn:execute("UPDATE server set useAllocsWebAPI = 0")
+		end
+
+		if server.allowBotRestarts then
+			restartBot()
+			return
+		end
+	end
+
 	if tonumber(botman.playersOnline) > 0 and (os.time() - botman.lastTelnetResponseTimestamp > 90 or botman.botOffline) then
-		if (not server.useAllocsWebAPI) and botman.APIOffline then
+		if (not server.useAllocsWebAPI) and botman.APIOffline and not server.telnetDisabled then
 			reconnect()
 			return
 		end
@@ -57,18 +78,17 @@ function reconnectTimer()
 		return
 	end
 
-	if (os.time() - botman.lastTelnetResponseTimestamp) > 310 then
+	if (os.time() - botman.lastTelnetResponseTimestamp) > 130 and not server.telnetDisabled then
 		if (not server.useAllocsWebAPI) and botman.APIOffline then
 			reconnect()
 			return
 		end
 	end
 
-	if tonumber(botman.botOfflineCount) > 30 then
-		if server.allowBotRestarts then
-			restartBot()
-			return
-		end
+	if tonumber(botman.telnetOfflineCount) > 3 and not server.telnetDisabled then
+		irc_chat(server.ircMain, "Bot is not connected to telnet - attempting reconnection.")
+		reconnect()
+		return
 	end
 
 	if tonumber(botman.botOfflineCount) > 0 then

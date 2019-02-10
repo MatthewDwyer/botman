@@ -528,7 +528,7 @@ function CheckInventory()
 			players[k].yPosOld = 0
 			players[k].zPosOld = 0
 			v.lastLocation = ""
-			gmsg(server.commandPrefix .. "return " .. v.name)
+			gmsg(server.commandPrefix .. "return " .. k)
 		end
 	end
 
@@ -538,6 +538,10 @@ end
 
 function readInventorySlot()
 	local timestamp, slot, item, quantity, quality, pos, words, dupeTest
+
+	if server.useAllocsWebAPI then
+		return
+	end
 
 	if not (string.find(line, "Slot") and string.find(line, ": ")) then
 		-- abort if the line isn't actually a player's inventory

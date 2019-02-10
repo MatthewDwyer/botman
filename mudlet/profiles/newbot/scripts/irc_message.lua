@@ -1082,7 +1082,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				connBots:execute("UPDATE players SET ircAlias = '' WHERE ircAlias = '" .. escape(name) .. "'")
 				connBots:execute("UPDATE players SET ircAlias = '" .. escape(name) .. "', ircAuthenticated = 1 WHERE steam = " .. ircid)
 
-				players[ircid].ircSessionExpiry = os.time() + 10800 -- 3 hours!
+				players[ircid].ircSessionExpiry = os.time() + 86400 -- 1 day
 
 				irc_chat(name, "You have logged in " .. name)
 				irc_chat(name, ".")
@@ -1296,6 +1296,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, "The server address is now " .. server.IP .. ":" .. server.ServerPort)
 				irc_chat(name, ".")
 				conn:execute("UPDATE server SET IP = '" .. escape(server.IP) .. "'")
+
+				if botman.db2Connected then
+					connBots:execute("UPDATE servers SET IP = '" .. escape(server.IP) .. "' WHERE botID = " .. server.botID)
+				end
+
 				irc_params = {}
 				return
 			end
@@ -2038,7 +2043,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		server.telnetPass = sPass
 		server.telnetPort = sPort
 		telnetPassword = sPass
-		conn:execute("UPDATE server SET IP = '" .. escape(sIP) .. "', telnetPass = '" .. escape(sPass) .. "', telnetPort = " .. escape(sPort))
+		conn:execute("UPDATE server SET IP = '" .. escape(server.IP) .. "', telnetPass = '" .. escape(server.telnetPass) .. "', telnetPort = " .. escape(server.telnetPort))
+
+		if botman.db2Connected then
+			connBots:execute("UPDATE servers SET IP = '" .. escape(server.IP) .. "' WHERE botID = " .. server.botID)
+		end
 
 		-- delete some Mudlet files that store IP and other info forcing Mudlet to regenerate them.
 		os.remove(homedir .. "/ip")
@@ -2049,8 +2058,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		reconnect(sIP, sPort, true)
 		saveProfile()
 
-		irc_chat(server.ircMain, "Connecting to new 7 Days to Die server " .. sIP .. " port " .. sPort)
-		irc_chat(chatvars.ircAlias, "Connecting to new 7 Days to Die server " .. sIP .. " port " .. sPort)
+		irc_chat(server.ircMain, "Connecting to new 7 Days to Die server " .. server.IP .. " port " .. server.telnetPort)
+		irc_chat(chatvars.ircAlias, "Connecting to new 7 Days to Die server " .. server.IP .. " port " .. server.telnetPort)
 		irc_params = {}
 		return
 	end
@@ -4966,7 +4975,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "player") then
-		name1 = string.trim(string.sub(msg, string.find(msgLower, "player") + 7))
+		if not string.find(msg, " find ") then
+			name1 = string.trim(string.sub(msg, string.find(msgLower, "player") + 7))
+			search = ""
+		else
+			name1 = string.trim(string.sub(msg, string.find(msgLower, "player") + 7, string.find(msgLower, " find ") - 1))
+			search = string.trim(string.sub(msg, string.find(msgLower, " find ") + 6))
+		end
+
 		pid = LookupOfflinePlayer(name1)
 
 		if (pid ~= 0) then
@@ -4974,7 +4990,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, "Player record of: " .. players[pid].name)
 				for k, v in pairs(players[pid]) do
 					if k ~= "ircPass" then
-						cmd = k .. "," .. tostring(v)
+						if search ~= "" then
+							if string.find(k, search) then
+								cmd = k .. "," .. tostring(v)
+							end
+						else
+							cmd = k .. "," .. tostring(v)
+						end
+
 						irc_chat(name, cmd)
 					end
 				end

@@ -8,7 +8,7 @@
 --]]
 
 function thirtySecondTimer()
-	local k, v, cmd, url
+	local k, v, cmd, url, data
 
 	windowMessage(server.windowDebug, "30 second timer\n")
 
@@ -22,6 +22,11 @@ function thirtySecondTimer()
 			return
 		end
 	end
+
+	data = {}
+	data.botOnline = botman.botOnline
+
+	if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('botman','panel','" .. escape(yajl.to_string(botman)) .. "')") end
 
 	if botman.botOffline then
 		return
@@ -102,8 +107,6 @@ function thirtySecondTimer()
 			if server.enableLagCheck then
 				botman.lagCheckTime = os.time()
 			end
-
-			server.lagged = false
 		end
 	end
 

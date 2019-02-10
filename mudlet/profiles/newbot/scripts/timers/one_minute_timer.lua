@@ -357,9 +357,7 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 	if tonumber(botman.playersOnline) > 0 then
 		if tonumber(botman.playersOnline) < 25 then
 			if server.stompy then
-				--for k, v in pairs(igplayers) do
-					sendCommand("bc-lp /online /filter=steamid,friends,bedroll,pack,walked")
-				--end
+				sendCommand("bc-lp /online /filter=steamid,friends,bedroll,pack,walked,ip,level,crafted,vendor,playtime,session")
 			end
 
 			removeClaims()
@@ -383,8 +381,6 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 	end
 
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
-
-	botHeartbeat()
 
 	-- check for timed events due to run
 	runTimedEvents()

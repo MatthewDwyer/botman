@@ -1091,8 +1091,8 @@ function gmsg_bot()
 	local function cmd_SetAPILogPollingInterval()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
-			help[1] = " {#}set api log read {interval in seconds} (default 1 second)"
-			help[2] = "In API mode the bot will read the server log at regular intervals with the default being every second.\n"
+			help[1] = " {#}set api log read {interval in seconds} (default 3 seconds)"
+			help[2] = "In API mode the bot will read the server log at regular intervals with the default being every 3 seconds.\n"
 			help[2] = help[2] .. "You can set a longer delay but the bot won't respond to in-game commands faster than the delay that you set.\n"
 			help[2] = help[2] .. "If you think the polling interval is causing server lag you can try slowing it down."
 
@@ -1433,6 +1433,10 @@ function gmsg_bot()
 
 			conn:execute("UPDATE server SET botName = '" .. escape(server.botName) .. "'")
 
+			if botman.db2Connected then
+				connBots:execute("UPDATE servers SET botName = '" .. escape(server.botName) .. "' WHERE botID = " .. server.botID)
+			end
+
 			botman.faultyChat = false
 			return true
 		end
@@ -1650,6 +1654,78 @@ function gmsg_bot()
 				end
 
 				hidePlayerChat()
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_SetLagCheck()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set lag check {seconds}"
+			help[2] = "If lag checking is enabled, the bot will send lag check messages to the server which are timed.  If the time delay from sending the message to reading it back exceeds this threshold, the bot will temporarily suspend some bot commands sent to the server regularly.\n"
+			help[2] = help[2] .. "The default is 15 seconds.  If bot commands are not working for a long time, it could be repeatedly flagging the server as lagged.  You can disable the lag check, but if the lag is real it could get longer over time.\n"
+			help[2] = help[2] .. "Setting a very low number will probably make the bot think the server is constantly lagged.  The bot will unflag the server lag every 10 seconds to prevent the bot getting stuck thinking the server is lagged."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,set,lag,check,time"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " set") or string.find(chatvars.command, " lag"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "lag" and chatvars.words[3] == "check" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number == nil then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A number is required.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "A number is required.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			chatvars.number = math.abs(chatvars.number)
+			server.commandLagThreshold = chatvars.number
+			if botman.dbConnected then conn:execute("UPDATE server SET commandLagThreshold = " .. server.commandLagThreshold) end
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Command lag greater than " .. server.commandLagThreshold .. " seconds will trigger the bot's lag counter-measures if lag checking is enabled.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Command lag greater than " .. server.commandLagThreshold .. " seconds will trigger the bot's lag counter-measures if lag checking is enabled.")
 			end
 
 			botman.faultyChat = false
@@ -2321,6 +2397,7 @@ function gmsg_bot()
 
 			if chatvars.words[1] == "enable" then
 				server.enableLagCheck = true
+				server.lagged = false
 				conn:execute("UPDATE server set enableLagCheck = 1")
 
 				if (chatvars.playername ~= "Server") then
@@ -2330,6 +2407,7 @@ function gmsg_bot()
 				end
 			else
 				server.enableLagCheck = false
+				server.lagged = false
 				conn:execute("UPDATE server set enableLagCheck = 0")
 
 				if (chatvars.playername ~= "Server") then
@@ -2888,6 +2966,15 @@ function gmsg_bot()
 
 	if result then
 		if debug then dbug("debug cmd_SetCommandPrefix triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetLagCheck()
+
+	if result then
+		if debug then dbug("debug cmd_SetLagCheck triggered") end
 		return result
 	end
 

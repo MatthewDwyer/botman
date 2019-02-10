@@ -1868,10 +1868,11 @@ end
 
 
 function readAPI_GG()
-	local file, ln, result, data, k, v, con, q
+	local file, ln, result, data, k, v, con, q, gg
 	local fileSize
 
 	fileSize = lfs.attributes (homedir .. "/temp/gg.txt", "size")
+	gg = {}
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
@@ -1905,6 +1906,7 @@ function readAPI_GG()
 
 			if v ~= "" then
 				matchAll(v)
+			    table.insert(gg, v)
 			end
 		end
 
@@ -1918,6 +1920,8 @@ function readAPI_GG()
 			conQueue[con] = nil
 		end
 	end
+
+	if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('gg','panel','" .. escape(yajl.to_string(gg)) .. "')") end
 
 	os.remove(homedir .. "/temp/gg.txt")
 end
@@ -2752,7 +2756,7 @@ end
 
 function readAPI_PlayersOnline()
 	local file, ln, result, index, totalPlayersOnline, con, q
-	local fileSize
+	local fileSize, k, v
 
 	fileSize = lfs.attributes (homedir .. "/temp/playersOnline.txt", "size")
 
@@ -2771,6 +2775,7 @@ function readAPI_PlayersOnline()
 	end
 
 	file = io.open(homedir .. "/temp/playersOnline.txt", "r")
+	playersOnlineList = {}
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
@@ -2778,6 +2783,7 @@ function readAPI_PlayersOnline()
 		botman.playersOnline = table.maxn(result)
 
 		for index=1, botman.playersOnline, 1 do
+			playersOnlineList[result[index].steamid] = {}
 			API_PlayerInfo(result[index])
 
 			for con, q in pairs(conQueue) do
@@ -2793,6 +2799,12 @@ function readAPI_PlayersOnline()
 	for con, q in pairs(conQueue) do
 		if q.command == "lp" then
 			conQueue[con] = nil
+		end
+	end
+
+	for k,v in pairs(igplayers) do
+		if not playersOnlineList[k] then
+			v.killTimer = 2
 		end
 	end
 
@@ -2888,6 +2900,7 @@ function readAPI_ReadLog()
 		botman.botOffline = false
 		botman.botOfflineCount = 0
 		botman.lastServerResponseTimestamp = os.time()
+		botman.lastAPIResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/log.txt", "r")
@@ -2895,7 +2908,7 @@ function readAPI_ReadLog()
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
 
-		botman.lastLogLine = result.lastLine
+		botman.lastLogLine = tonumber(result.lastLine) - 1
 
 		for k,v in pairs(result.entries) do
 			msg = v.msg
@@ -3187,18 +3200,28 @@ function readAPI_webUIUpdates()
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
 		botman.playersOnline = tonumber(result.players)
+		result.newlogs = tonumber(result.newlogs)
 
 		if botman.lastLogLine == nil then
-			botman.lastLogLine = tonumber(result.newlogs)
+			botman.lastLogLine = result.newlogs
 		end
 
-		if tonumber(result.newlogs) >= tonumber(botman.lastLogLine) then
+		if result.newlogs < botman.lastLogLine then
+			botman.lastLogLine = 0
+
+			if result.newlogs - botman.lastLogLine > 500 then
+				botman.lastLogLine = result.newlogs - 100
+			end
+		end
+
+		if result.newlogs >= botman.lastLogLine then
+			botman.lastLogLine = botman.lastLogLine + 1
+
+			if result.newlogs - botman.lastLogLine > 500 and os.time() - botman.lastAPIResponseTimestamp > 30 then
+				botman.lastLogLine = result.newlogs - 100
+			end
+
 			getAPILog()
-			botman.lastLogLine = tonumber(result.newlogs) + 1
-		end
-
-		if botman.lastLogLine > tonumber(result.newlogs) + 1 then
-			botman.lastLogLine = tonumber(result.newlogs)
 		end
 	end
 
@@ -3268,6 +3291,8 @@ function readAPI_Version()
 			conQueue[con] = nil
 		end
 	end
+
+	if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('modVersions','panel','" .. escape(yajl.to_string(modVersions)) .. "')") end
 
 	os.remove(homedir .. "/temp/installedMods.txt")
 	table.save(homedir .. "/data_backup/modVersions.lua", modVersions)

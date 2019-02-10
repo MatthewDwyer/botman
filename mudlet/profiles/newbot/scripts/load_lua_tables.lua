@@ -775,7 +775,13 @@ function loadServer()
 
 		if server.ircBotName ~= "Bot" then
 			if ircSetNick ~= nil then
+				-- TheFae's modded mudlet
 				ircSetNick(server.ircBotName)
+			end
+
+			if setIrcNick ~= nil then
+				-- Mudlet 3.x
+				setIrcNick(pname)
 			end
 		end
 

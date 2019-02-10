@@ -13,7 +13,15 @@ function twoMinuteTimer()
 
 	writeBotmanINI()
 
-	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
+	if botman.botDisabled or botman.botOffline or not botman.dbConnected then
+		return
+	end
+
+	if not botman.botOffline and tonumber(botman.playersOnline) == 0 then
+		sendCommand("gt") -- Are you there?   Is this thing on? *TAP* *TAP*
+	end
+
+	if server.lagged then
 		return
 	end
 

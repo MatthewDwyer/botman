@@ -367,18 +367,18 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 
 	if pathPrefix then
 		if onlyImportThis ~= "" then
-			irc_chat(chatvars.ircMain, "Restoring requested bot data from backup " .. pathPrefix)
+			irc_chat(server.ircMain, "Restoring requested bot data from backup " .. pathPrefix)
 			alertAdmins("Restoring requested bot data from backup " .. pathPrefix)
 		else
-			irc_chat(chatvars.ircMain, "Restoring backup " .. pathPrefix)
+			irc_chat(server.ircMain, "Restoring backup " .. pathPrefix)
 			alertAdmins("Restoring backup " .. pathPrefix)
 		end
 	else
 		if onlyImportThis ~= "" then
-			irc_chat(chatvars.ircMain, "Restoring requested bot data from last backup.")
+			irc_chat(server.ircMain, "Restoring requested bot data from last backup.")
 			alertAdmins("Restoring requested bot data from last backup.")
 		else
-			irc_chat(chatvars.ircMain, "Restoring last backup.")
+			irc_chat(server.ircMain, "Restoring last backup.")
 			alertAdmins("Restoring last backup.")
 		end
 	end
@@ -602,6 +602,6 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 	end
 
 	dbug("Import of Lua tables Complete")
-	irc_chat(chatvars.ircMain, "Bot restore complete. It is now safe to turn off your modem. xD")
+	irc_chat(server.ircMain, "Bot restore complete. It is now safe to turn off your modem. xD")
 	alertAdmins("Bot restore complete. It is now safe to turn off your modem. xD")
 end

@@ -915,7 +915,16 @@ function gmsg_server()
 				irc_chat(chatvars.ircAlias, "The bot's irc nick is now " .. pname)
 			end
 
-			ircSetNick(pname)
+			if setIrcNick ~= nil then
+				-- Mudlet 3.x
+				setIrcNick(pname)
+			end
+
+			if ircSetNick ~= nil then
+				-- TheFae's modded mudlet
+				ircSetNick(pname)
+			end
+
 			server.ircBotName = pname
 			conn:execute("UPDATE server SET ircBotname = '" .. escape(pname) .. "'")
 
@@ -2275,12 +2284,16 @@ function gmsg_server()
 				end
 			else
 				server.IP = tmp
-				conn:execute("UPDATE server SET IP = '" .. escape(tmp) .. "'")
+				conn:execute("UPDATE server SET IP = '" .. escape(server.IP) .. "'")
+
+				if botman.db2Connected then
+					connBots:execute("UPDATE servers SET IP = '" .. escape(server.IP) .. "' WHERE botID = " .. server.botID)
+				end
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The server ip is now " .. tmp .. ".[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The server ip is now " .. server.IP .. ".[-]")
 				else
-					irc_chat(chatvars.ircAlias, "The server ip is now " .. tmp)
+					irc_chat(chatvars.ircAlias, "The server ip is now " .. server.IP)
 				end
 			end
 
@@ -4141,6 +4154,76 @@ function gmsg_server()
 	end
 
 
+	local function cmd_ToggleTelnetDisabled()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set telnet enabled/disabled (enabled is the default)"
+			help[2] = "This doesn't change telnet in the server.  Instead use this to tell the bot if the server's telnet is enabled or disabled.\n"
+			help[2] = help[2] .. "This is used by the bot as part of monitoring the status of telnet.  If telnet is disabled, the bot won't keep trying to connect to it."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,able,telnet"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "able") or string.find(chatvars.command, "telnet") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "telnet" and (chatvars.words[3] == "enabled" or chatvars.words[3] == "disabled") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[3] == "enabled" then
+				server.telnetDisabled = false
+				conn:execute("UPDATE server SET telnetDisabled = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will try to stay connected to telnet even when in API mode.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The bot will try to stay connected to telnet even when in API mode.")
+				end
+			else
+				server.telnetDisabled = true
+				conn:execute("UPDATE server SET telnetDisabled = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot won't keep trying to connect to telnet.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The bot won't keep trying to connect to telnet.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleTranslate()
 		local playerName, isArchived
 
@@ -4412,6 +4495,15 @@ if debug then dbug("debug server") end
 
 	if chatvars.showHelpSections then
 		irc_chat(chatvars.ircAlias, "server")
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleTelnetDisabled()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleTelnetDisabled triggered") end
+		return result
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end

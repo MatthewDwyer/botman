@@ -10,10 +10,6 @@
 function LKPQueue()
 	local row, cursor, errorString, LKPLine
 
-	if not botman.dbConnected then
-		return
-	end
-
 	cursor,errorString = conn:execute("SELECT * FROM LKPQueue ORDER BY id LIMIT 1")
 
 	if cursor then
@@ -30,10 +26,6 @@ end
 
 function miscCommandsTimer()
 	local cursor, errorString, row, temp, steam, command
-
-	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
-		return
-	end
 
 	cursor,errorString = conn:execute("SELECT * FROM miscQueue WHERE timerDelay = '0000-00-00 00:00:00'  ORDER BY id limit 0,1")
 

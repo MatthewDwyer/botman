@@ -729,46 +729,57 @@ function refreshScripts()
 	server.nextCodeReload = "/scripts/triggers/list_entities.lua"
 	checkScript(homedir .. "/scripts/triggers/list_entities.lua")
 
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/triggers/telnetCheck.lua"
+	checkScript(homedir .. "/scripts/triggers/telnetCheck.lua")
+
 if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	-- enable triggers and timers.  No ability to enable scripts in code yet.
 	if not server.useAllocsWebAPI then
-		enableTrigger("Player connected")
-		enableTrigger("Player disconnected")
-		enableTrigger("PVP Police")
-		enableTrigger("Matchall")
-		enableTrigger("Game Time")
-		enableTrigger("Collect Ban")
-		enableTrigger("Unban player")
-		enableTrigger("Overstack")
-		enableTrigger("mem")
-		enableTrigger("Tele")
-		enableTrigger("Chat")
+		toggleTriggers("api offline")
+
+		if server.enableScreamerAlert then
+			enableTrigger("Zombie Scouts")
+		else
+			disableTrigger("Zombie Scouts")
+		end
+
+		if server.enableAirdropAlert then
+			enableTrigger("AirDrop alert")
+		else
+			disableTrigger("AirDrop alert")
+		end
+	else
+		toggleTriggers("api online")
+
+		-- enableTrigger("Player connected")
+		-- enableTrigger("Player disconnected")
+		-- enableTrigger("PVP Police")
+		-- enableTrigger("Matchall")
+		-- enableTrigger("Game Time")
+		-- enableTrigger("Collect Ban")
+		-- enableTrigger("Unban player")
+		-- enableTrigger("Overstack")
+		-- enableTrigger("mem")
+		-- enableTrigger("Tele")
+		-- enableTrigger("Chat")
 	end
 
-	enableTrigger("End list players")
+	--enableTrigger("End list players")
 	--enableTrigger("PVP Police")
 	--enableTrigger("MatchAll")
-	enableTrigger("InventorySlot")
+	--enableTrigger("InventorySlot")
 	--enableTrigger("Player connected")
-	enableTrigger("playerinfo")
+	--enableTrigger("playerinfo")
 	--enableTrigger("Player disconnected")
-	enableTrigger("Inventory")
-	enableTrigger("lkp")
+	--enableTrigger("Inventory")
+	--enableTrigger("lkp")
 
-	if server.enableScreamerAlert then
-		enableTrigger("Zombie Scouts")
-	else
-		disableTrigger("Zombie Scouts")
-	end
 
-	if server.enableAirdropAlert then
-		enableTrigger("AirDrop alert")
-	else
-		disableTrigger("AirDrop alert")
-	end
 
-	enableTrigger("InventoryOwner")
+	--enableTrigger("InventoryOwner")
 	enableTrigger("Spam")
 	enableTrigger("Game Time")
 	enableTrigger("Logon Successful")
@@ -834,6 +845,10 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 
 	if exists("EverySecond", "timer") == 0 then
 	  permTimer("EverySecond", "", 1, [[OneSecondTimer()]])
+	end
+
+	if botman.telnetCheckID == nil then
+		botman.telnetCheckID = tempRegexTrigger("^", [[flagTelnetOnline()]])
 	end
 
 	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
