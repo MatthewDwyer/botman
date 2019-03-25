@@ -25,6 +25,11 @@ function updateBot(forced, steam)
 		return
 	end
 
+	if server.allocs and server.stompy then
+		botMaintenance.modsInstalled = true
+		saveBotMaintenance()
+	end
+
 	if steam == nil then
 		steamID = 0
 	else
@@ -739,58 +744,20 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 	-- enable triggers and timers.  No ability to enable scripts in code yet.
 	if not server.useAllocsWebAPI then
 		toggleTriggers("api offline")
-
-		if server.enableScreamerAlert then
-			enableTrigger("Zombie Scouts")
-		else
-			disableTrigger("Zombie Scouts")
-		end
-
-		if server.enableAirdropAlert then
-			enableTrigger("AirDrop alert")
-		else
-			disableTrigger("AirDrop alert")
-		end
 	else
 		toggleTriggers("api online")
-
-		-- enableTrigger("Player connected")
-		-- enableTrigger("Player disconnected")
-		-- enableTrigger("PVP Police")
-		-- enableTrigger("Matchall")
-		-- enableTrigger("Game Time")
-		-- enableTrigger("Collect Ban")
-		-- enableTrigger("Unban player")
-		-- enableTrigger("Overstack")
-		-- enableTrigger("mem")
-		-- enableTrigger("Tele")
-		-- enableTrigger("Chat")
 	end
 
-	--enableTrigger("End list players")
-	--enableTrigger("PVP Police")
-	--enableTrigger("MatchAll")
-	--enableTrigger("InventorySlot")
-	--enableTrigger("Player connected")
-	--enableTrigger("playerinfo")
-	--enableTrigger("Player disconnected")
-	--enableTrigger("Inventory")
-	--enableTrigger("lkp")
+	-- special case where the bot will use telnet to monitor the server regardless of other API settings
+	if server.readLogUsingTelnet then
+		toggleTriggers("api offline")
+	end
 
-
-
-	--enableTrigger("InventoryOwner")
 	enableTrigger("Spam")
-	enableTrigger("Game Time")
 	enableTrigger("Logon Successful")
-	--enableTrigger("Collect Ban")
-	--enableTrigger("Unban player")
-	--enableTrigger("Overstack")
-	--enableTrigger("mem")
 	enableTrigger("lp")
 	enableTrigger("Tele")
 	enableTrigger("llp")
-	--enableTrigger("Chat")
 
 	enableTimer("APITimer")
 	enableTimer("EverySecond")

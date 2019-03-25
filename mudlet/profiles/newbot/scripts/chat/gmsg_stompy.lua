@@ -90,10 +90,11 @@ function gmsg_stompy()
 	  for i = 1, h*2+1 do
 		for j = 1, w*2+1 do
 		  if map[i][j] then
-			cmd = "bc-blockrpc  fill " .. wall .. " " .. xPos + i .. " " .. yPos .. " " .. zPos + j .. " " .. wall
+			cmd = "bc-block fill " .. xPos + i .. " " .. yPos .. " " .. zPos + j .. " " .. xPos + i .. " " .. yPos + tall .. " " .. zPos + j .. " " .. wall
+
 			if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (0, '" .. escape(cmd) .. "')") end
 		  else
-			cmd = "bc-blockrpc  fill " .. wall .. " " .. xPos + i .. " " .. yPos .. " " .. zPos + j .. " " .. fill
+			cmd = "bc-block fill " .. xPos + i .. " " .. yPos .. " " .. zPos + j .. " " .. xPos + i .. " " .. yPos + tall .. " " .. zPos + j .. " " .. fill
 			if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (0, '" .. escape(cmd) .. "')") end
 		  end
 		end

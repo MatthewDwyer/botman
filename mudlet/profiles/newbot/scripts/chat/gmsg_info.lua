@@ -434,9 +434,6 @@ function gmsg_info()
 				-- land claim size
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Land claim size is " .. server.LandClaimSize .. " meters. Expiry " .. server.LandClaimExpiryTime .. " days[-]")
 
-				-- block durability
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Block durability is " .. server.BlockDurabilityModifier .. "%[-]")
-
 				-- loot abundance
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Loot abundance is " .. server.LootAbundance .. "%[-]")
 
@@ -448,12 +445,44 @@ function gmsg_info()
 				if (server.ZombiesRun == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Zombies never run[-]") end
 				if (server.ZombiesRun == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Zombies always run[-]") end
 
-				-- map limit
-				if players[chatvars.playerid].donor == true then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The world is limited to  " .. (server.mapSize + 10000) / 1000 .. " km from map center[-]")
-				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The world is limited to  " .. server.mapSize / 1000 .. " km from map center[-]")
+				if server.ZombieMove then
+					if (server.ZombieMove == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMove: walk[-]") end
+					if (server.ZombieMove == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMove: jog[-]") end
+					if (server.ZombieMove == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMove: run[-]") end
+					if (server.ZombieMove == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMove: sprint[-]") end
+					if (server.ZombieMove == 4) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMove: nightmare[-]") end
 				end
+
+				if server.ZombieMoveNight then
+					if (server.ZombieMoveNight == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMoveNight: walk[-]") end
+					if (server.ZombieMoveNight == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMoveNight: jog[-]") end
+					if (server.ZombieMoveNight == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMoveNight: run[-]") end
+					if (server.ZombieMoveNight == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMoveNight: sprint[-]") end
+					if (server.ZombieMoveNight == 4) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMoveNight: nightmare[-]") end
+				end
+
+				if server.ZombieFeralMove then
+					if (server.ZombieFeralMove == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieFeralMove: walk[-]") end
+					if (server.ZombieFeralMove == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieFeralMove: jog[-]") end
+					if (server.ZombieFeralMove == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieFeralMove: run[-]") end
+					if (server.ZombieFeralMove == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieFeralMove: sprint[-]") end
+					if (server.ZombieFeralMove == 4) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieFeralMove: nightmare[-]") end
+				end
+
+				if server.ZombieBMMove then
+					if (server.ZombieBMMove == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieBMMove: walk[-]") end
+					if (server.ZombieBMMove == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieBMMove: jog[-]") end
+					if (server.ZombieBMMove == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieBMMove: run[-]") end
+					if (server.ZombieBMMove == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieBMMove: sprint[-]") end
+					if (server.ZombieBMMove == 4) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieBMMove: nightmare[-]") end
+				end
+
+				-- -- map limit
+				-- if players[chatvars.playerid].donor == true then
+					-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The world is limited to  " .. (server.mapSize + 10000) / 1000 .. " km from map center[-]")
+				-- else
+					-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The world is limited to  " .. server.mapSize / 1000 .. " km from map center[-]")
+				-- end
 
 				if server.idleKick then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]When the server is full, idle players are kicked after 15 minutes.[-]")
@@ -484,9 +513,6 @@ function gmsg_info()
 				-- land claim size
 				irc_chat(chatvars.ircAlias, "Land claim size is " .. server.LandClaimSize .. " meters. Expiry 30 days.")
 
-				-- block durability
-				irc_chat(chatvars.ircAlias, "Block durability is " .. server.BlockDurabilityModifier .. "%")
-
 				-- loot abundance
 				irc_chat(chatvars.ircAlias, "Loot abundance is " .. server.LootAbundance .. "%")
 
@@ -498,15 +524,44 @@ function gmsg_info()
 				if (server.ZombiesRun == 1) then irc_chat(chatvars.ircAlias, "Zombies never run.") end
 				if (server.ZombiesRun == 2) then irc_chat(chatvars.ircAlias, "Zombies always run.") end
 
-				-- zombie memory
-				irc_chat(chatvars.ircAlias, "Zombie memory is " .. server.EnemySenseMemory .. " seconds.")
-
-				-- map limit
-				if players[chatvars.ircid].donor or chatvars.accessLevel < 2 then
-					irc_chat(chatvars.ircAlias, "The world is limited to  " .. (server.mapSize + 10000) / 1000 .. " km from map center.")
-				else
-					irc_chat(chatvars.ircAlias, "The world is limited to  " .. server.mapSize / 1000 .. " km from map center.")
+				if server.ZombieMove then
+					if (server.ZombieMove == 0) then irc_chat(chatvars.ircAlias, "ZombieMove: walk") end
+					if (server.ZombieMove == 1) then irc_chat(chatvars.ircAlias, "ZombieMove: jog") end
+					if (server.ZombieMove == 2) then irc_chat(chatvars.ircAlias, "ZombieMove: run") end
+					if (server.ZombieMove == 3) then irc_chat(chatvars.ircAlias, "ZombieMove: sprint") end
+					if (server.ZombieMove == 4) then irc_chat(chatvars.ircAlias, "ZombieMove: nightmare") end
 				end
+
+				if server.ZombieMoveNight then
+					if (server.ZombieMoveNight == 0) then irc_chat(chatvars.ircAlias, "ZombieMoveNight: walk") end
+					if (server.ZombieMoveNight == 1) then irc_chat(chatvars.ircAlias, "ZombieMoveNight: jog") end
+					if (server.ZombieMoveNight == 2) then irc_chat(chatvars.ircAlias, "ZombieMoveNight: run") end
+					if (server.ZombieMoveNight == 3) then irc_chat(chatvars.ircAlias, "ZombieMoveNight: sprint") end
+					if (server.ZombieMoveNight == 4) then irc_chat(chatvars.ircAlias, "ZombieMoveNight: nightmare") end
+				end
+
+				if server.ZombieFeralMove then
+					if (server.ZombieFeralMove == 0) then irc_chat(chatvars.ircAlias, "ZombieFeralMove: walk") end
+					if (server.ZombieFeralMove == 1) then irc_chat(chatvars.ircAlias, "ZombieFeralMove: jog") end
+					if (server.ZombieFeralMove == 2) then irc_chat(chatvars.ircAlias, "ZombieFeralMove: run") end
+					if (server.ZombieFeralMove == 3) then irc_chat(chatvars.ircAlias, "ZombieFeralMove: sprint") end
+					if (server.ZombieFeralMove == 4) then irc_chat(chatvars.ircAlias, "ZombieFeralMove: nightmare") end
+				end
+
+				if server.ZombieBMMove then
+					if (server.ZombieBMMove == 0) then irc_chat(chatvars.ircAlias, "ZombieBMMove: walk") end
+					if (server.ZombieBMMove == 1) then irc_chat(chatvars.ircAlias, "ZombieBMMove: jog") end
+					if (server.ZombieBMMove == 2) then irc_chat(chatvars.ircAlias, "ZombieBMMove: run") end
+					if (server.ZombieBMMove == 3) then irc_chat(chatvars.ircAlias, "ZombieBMMove: sprint") end
+					if (server.ZombieBMMove == 4) then irc_chat(chatvars.ircAlias, "ZombieBMMove: nightmare") end
+				end
+
+				-- -- map limit
+				-- if players[chatvars.ircid].donor or chatvars.accessLevel < 2 then
+					-- irc_chat(chatvars.ircAlias, "The world is limited to  " .. (server.mapSize + 10000) / 1000 .. " km from map center.")
+				-- else
+					-- irc_chat(chatvars.ircAlias, "The world is limited to  " .. server.mapSize / 1000 .. " km from map center.")
+				-- end
 
 				if server.idleKick then
 					irc_chat(chatvars.ircAlias, "When the server is full, idle players are kicked after 15 minutes.")

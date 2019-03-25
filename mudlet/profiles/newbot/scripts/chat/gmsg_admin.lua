@@ -1199,7 +1199,7 @@ function gmsg_admin()
 			reason = "banned"
 			duration = "10 years"
 			unknownPlayer = false
-			playerName = "Not Sure (unknown player)"
+			playerName = "(unknown player)"
 
 			-- someone did ban remove instead of unban so we'll fix their command for them.
 			if string.find(chatvars.command, "ban remove") then
@@ -1597,52 +1597,54 @@ function gmsg_admin()
 		end
 
 		if chatvars.words[1] == "archive" and chatvars.words[2] == "players" then
+			-- if (chatvars.playername ~= "Server") then
+				-- message(string.format("pm %s [%s]This command has been disabled by Smeg until further notice. There's a bug in it.", chatvars.playerid, server.chatColour))
+				-- botman.faultyChat = false
+				-- return true
+			-- else
+				-- irc_chat(chatvars.ircAlias, "This command has been disabled by Smeg until further notice. There's a bug in it.")
+				-- botman.faultyChat = false
+				-- return true
+			-- end
+
+
+
 			if (chatvars.playername ~= "Server") then
-				message(string.format("pm %s [%s]This command has been disabled by Smeg until further notice. There's a bug in it.", chatvars.playerid, server.chatColour))
-				botman.faultyChat = false
-				return true
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
 			else
-				irc_chat(chatvars.ircAlias, "This command has been disabled by Smeg until further notice. There's a bug in it.")
-				botman.faultyChat = false
-				return true
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
 			end
 
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players (except staff and donors) who is not known to the server will be archived.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Players (except staff and donors) who is not known to the server will be archived.")
+			end
 
+			botman.archivePlayers = true
 
-			-- if (chatvars.playername ~= "Server") then
-				-- if (chatvars.accessLevel > 1) then
-					-- message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					-- botman.faultyChat = false
-					-- return true
-				-- end
-			-- else
-				-- if (chatvars.accessLevel > 1) then
-					-- irc_chat(chatvars.ircAlias, "This command is restricted.")
-					-- botman.faultyChat = false
-					-- return true
-				-- end
-			-- end
+			--	first flag everyone except staff and donors as notInLKP.  We will remove that flag as we find them in LKP.
+			for k,v in pairs(players) do
+				v.notInLKP = true
 
-			-- if (chatvars.playername ~= "Server") then
-				-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players (except staff) who have not played in 60 days will be archived.  The bot may become un-responsive during this time.[-]")
-			-- else
-				-- irc_chat(chatvars.ircAlias, "Players (except staff) who have not played in 60 days will be archived.  The bot may become un-responsive during this time.")
-			-- end
+				if tonumber(v.accessLevel) < 11 then
+					v.notInLKP = false
+				end
+			end
 
-			-- botman.archivePlayers = true
+			saveLuaTables(os.date("%Y%m%d_%H%M%S"), "restore_archived_players")
+			sendCommand("lkp")
 
-			-- --	first flag everyone except staff as notInLKP.  We will remove that flag as we find them in LKP.
-			-- for k,v in pairs(players) do
-				-- if tonumber(v.accessLevel) > 3 then
-					-- v.notInLKP = true
-				-- else
-					-- v.notInLKP = false
-				-- end
-			-- end
-
-			-- tempTimer( 10, [[sendCommand("lkp")]] )
-			-- botman.faultyChat = false
-			-- return true
+			botman.faultyChat = false
+			return true
 		end
 	end
 
@@ -4739,8 +4741,13 @@ function gmsg_admin()
 
 			message("say [" .. server.chatColour .. "]" .. players[id].name .. " ate a bad potato and is shitting potatoes everywhere![-]")
 
-			for i = 1, r do
+			if tonumber(server.gameVersionNumber) < 17 then
 				cmd = "give " .. id .. " potato 1"
+			else
+				cmd = "give " .. id .. " foodBakedPotato 1"
+			end
+
+			for i = 1, r do
 				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. id .. ")")
 			end
 
@@ -7922,6 +7929,78 @@ function gmsg_admin()
 	end
 
 
+	local function cmd_ToggleIRCNickUsedBySayCommand()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set say uses name (the default)\n"
+			help[1] = help[1] .. " {#}set say uses nick"
+			help[2] = "The IRC command 'say' uses your player name by default.\n"
+			help[2] = help[2] .. "You can set it to use the IRC nickname instead.  Note:  It will do that for all IRC users."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,irc,say,nick"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "irc") or string.find(chatvars.command, "admin") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "say" and string.find(chatvars.words[3], "use") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[4] == "nick" then
+				server.sayUsesIRCNick = true
+				if botman.dbConnected then conn:execute("UPDATE server SET sayUsesIRCNick = 1") end
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The IRC command 'say' will use the IRC nickname ingame.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The IRC command 'say' will use the IRC nickname ingame.")
+				end
+			else
+				server.sayUsesIRCNick = false
+				if botman.dbConnected then conn:execute("UPDATE server SET sayUsesIRCNick = 0") end
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The IRC command 'say' will use the player name ingame.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The IRC command 'say' will use the player name ingame.")
+				end
+
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_TogglePack()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -9924,6 +10003,15 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleIgnorePlayer triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleIRCNickUsedBySayCommand()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleIRCNickUsedBySayCommand triggered") end
 		return result
 	end
 

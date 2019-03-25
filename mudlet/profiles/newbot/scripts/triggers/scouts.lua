@@ -14,6 +14,10 @@ function scoutsWarning(line)
 
 	local test, dist, xStart, zStart, xEnd, zEnd, direction
 
+	if not server.enableScreamerAlert then
+		return
+	end
+
 	if string.find(line, "towards") then
 		-- get the origin coords
 		if string.find(line, "heading") then

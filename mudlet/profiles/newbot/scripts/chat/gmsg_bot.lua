@@ -2563,6 +2563,77 @@ function gmsg_bot()
 	end
 
 
+	local function cmd_ToggleReadLogUsingTelnet()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}read log using telnet (default)\n"
+			help[1] = help[1] .. " {#}read log using api"
+			help[2] = "Due to ongoing issues with the API log reader skipping lines the default is that in API mode, the bot will monitor the server via telnet.\n"
+			help[2] = help[2] .. "If telnet is disabled or you tell the bot to read the log using the API, then it will monitor the server via the API."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,togg,on,off,able,api,telnet"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "log") or string.find(chatvars.command, "api") or string.find(chatvars.command, "telnet"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "read" and chatvars.words[2] == "log" and chatvars.words[3] == "using" and chatvars.words[4] ~= nil then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[4] == "telnet" then
+				server.readLogUsingTelnet = true
+				conn:execute("UPDATE server set readLogUsingTelnet = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will monitor telnet for server activity.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The bot will monitor telnet for server activity.")
+				end
+			else
+				server.readLogUsingTelnet = false
+				conn:execute("UPDATE server set readLogUsingTelnet = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will use the API to monitor server activity.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The bot will use the API to monitor server activity.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleUseAllocsWebAPI() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -3083,6 +3154,15 @@ function gmsg_bot()
 
 	if result then
 		if debug then dbug("debug cmd_ToggleLogInventory triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleReadLogUsingTelnet()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleReadLogUsingTelnet triggered") end
 		return result
 	end
 

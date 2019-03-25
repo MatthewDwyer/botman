@@ -1146,37 +1146,67 @@ function irc_listAllArchivedPlayers(name) --tested
     local a = {}
 	local n, id, steam, isDonor, isAdmin, isPrisoner, isBanned
 
-	irc_chat(name, "These are all the archived players on record:")
-
     for n in pairs(playersArchived) do
 		table.insert(a, playersArchived[n].name)
 	end
 
 	table.sort(a)
 
-    for k, v in ipairs(a) do
-		steam = LookupArchivedPlayer(v, "all")
+	if irc_params.pname == nil then
+		irc_chat(name, "These are all the archived players on record:")
 
-		if playersArchived[steam].prisoner then
-			isPrisoner = "Prisoner"
-		else
-			isPrisoner = ""
+		for k, v in ipairs(a) do
+			steam = LookupArchivedPlayer(v, "all")
+
+			if playersArchived[steam].prisoner then
+				isPrisoner = "Prisoner"
+			else
+				isPrisoner = ""
+			end
+
+			if playersArchived[steam].donor then
+				isDonor = "Donor"
+			else
+				isDonor = ""
+			end
+
+			if playersArchived[steam].accessLevel < 3 then
+				isAdmin = "Admin"
+			else
+				isAdmin = "Player"
+			end
+
+			cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", playersArchived[steam].id) .. " name: " .. v .. " [ " .. isAdmin .. " " .. isDonor .. " " .. isPrisoner .. " ] seen " .. playersArchived[steam].seen .. " playtime " .. playersArchived[steam].playtime
+			irc_chat(irc_params.name, cmd)
 		end
+	else
+		irc_chat(name, "Archived player " .. irc_params.pname .. ":")
+		steam = LookupArchivedPlayer(irc_params.pname)
 
-		if playersArchived[steam].donor then
-			isDonor = "Donor"
+		if playersArchived[steam] then
+			if playersArchived[steam].prisoner then
+				isPrisoner = "Prisoner"
+			else
+				isPrisoner = ""
+			end
+
+			if playersArchived[steam].donor then
+				isDonor = "Donor"
+			else
+				isDonor = ""
+			end
+
+			if playersArchived[steam].accessLevel < 3 then
+				isAdmin = "Admin"
+			else
+				isAdmin = "Player"
+			end
+
+			cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", playersArchived[steam].id) .. " name: " .. playersArchived[steam].name .. " [ " .. string.trim(isAdmin .. " " .. isDonor .. " " .. isPrisoner) .. " ] seen " .. playersArchived[steam].seen .. " playtime " .. playersArchived[steam].playtime .. " cash " .. playersArchived[steam].cash
+			irc_chat(irc_params.name, cmd)
 		else
-			isDonor = ""
+			irc_chat(irc_params.name, "No player found like " .. irc_params.pname)
 		end
-
-		if playersArchived[steam].accessLevel < 3 then
-			isAdmin = "Admin"
-		else
-			isAdmin = "Player"
-		end
-
-		cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", playersArchived[steam].id) .. " name: " .. v .. " [ " .. isAdmin .. " " .. isDonor .. " " .. isPrisoner .. " ] seen " .. playersArchived[steam].seen .. " playtime " .. playersArchived[steam].playtime
-		irc_chat(irc_params.name, cmd)
 	end
 
 	irc_chat(name, ".")

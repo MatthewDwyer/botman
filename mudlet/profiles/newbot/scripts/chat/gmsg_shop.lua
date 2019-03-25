@@ -116,6 +116,63 @@ function gmsg_shop()
 	end
 
 
+	local function cmd_FixShopQuick()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}quick fix shop"
+			help[2] = "Like {#}fix shop but doesn't re-read all the item names known to the server so it completes much faster."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "shop,fix"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "shop"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "quick" and chatvars.words[2] == "fix" and chatvars.words[3] == "shop" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			removeInvalidItems()
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Try using the shop and see if it is fixed.  If not repeating the command is not going to fix it this time.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Try using the shop and see if it is fixed.  If not repeating the command is not going to fix it this time.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_Gamble()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1366,6 +1423,15 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 
 	if result then
 		if debug then dbug("debug cmd_FixShop triggered") end
+		return result
+	end
+
+if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_FixShopQuick()
+
+	if result then
+		if debug then dbug("debug cmd_FixShopQuick triggered") end
 		return result
 	end
 

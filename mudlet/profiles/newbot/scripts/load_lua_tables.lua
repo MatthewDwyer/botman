@@ -724,12 +724,16 @@ function loadServer()
 
 		botman.chatlogPath = row.chatlogPath
 
+		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
 		if row.moneyName == nil or row.moneyName == "|" then
 			-- fix if missing money
 			temp = string.split("Zenny|Zennies", "|")
 		else
 			temp = string.split(row.moneyName, "|")
 		end
+
+		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 
 		server.moneyName = temp[1]
 
@@ -739,6 +743,8 @@ function loadServer()
 		else
 			server.moneyPlural = temp[2]
 		end
+
+		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 
 		if server.ircServer then
 			if string.find(server.ircServer, ":") then
@@ -760,11 +766,15 @@ function loadServer()
 			end
 		end
 
+		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
 		if server.ircMain == "#new" then
 			server.ircMain = ircChannel
 			server.ircAlerts = ircChannel .. "_alerts"
 			server.ircWatch = ircChannel .. "_watch"
 		end
+
+		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 
 		if server.telnetPass ~= "" then
 			telnetPassword = server.telnetPass
@@ -772,6 +782,8 @@ function loadServer()
 			server.telnetPass = telnetPassword
 			conn:execute("UPDATE server SET telnetPass = '" .. escape(telnetPassword) .. "'")
 		end
+
+		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 
 		if server.ircBotName ~= "Bot" then
 			if ircSetNick ~= nil then
@@ -781,9 +793,11 @@ function loadServer()
 
 			if setIrcNick ~= nil then
 				-- Mudlet 3.x
-				setIrcNick(pname)
+				setIrcNick(server.ircBotName)
 			end
 		end
+
+		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 
 		whitelistedCountries = {}
 		temp = string.split(row.whitelistCountries, ",")
@@ -799,18 +813,6 @@ function loadServer()
 		max = table.maxn(temp)
 		for i=1,max,1 do
 			blacklistedCountries[temp[i]] = {}
-		end
-
-		if server.enableScreamerAlert then
-			enableTrigger("Zombie Scouts")
-		else
-			disableTrigger("Zombie Scouts")
-		end
-
-		if server.enableAirdropAlert then
-			enableTrigger("AirDrop alert")
-		else
-			disableTrigger("AirDrop alert")
 		end
 
 		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end

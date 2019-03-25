@@ -24,14 +24,9 @@ function endListPlayers(line)
 				--	Everyone who is flagged notInLKP gets archived.
 				for k,v in pairs(players) do
 					if v.notInLKP then
-						conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. k)
-						conn:execute("DELETE FROM players WHERE steam = " .. k)
-						players[k] = nil
---						loadPlayersArchived(k)
+						if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (" .. k .. ", 'archive player')") end
 					end
 				end
-
-				loadPlayersArchived()
 			end
 		end
 

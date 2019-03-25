@@ -65,9 +65,9 @@ function gmsg_fun()
 					end
 				else
 					if tonumber(server.gameVersionNumber) < 17 then
-						sendCommand("give " .. chatvars.playerid .. " beer")
+						sendCommand("give " .. chatvars.playerid .. " beer 1")
 					else
-						sendCommand("give " .. chatvars.playerid .. " drinkJarBeer")
+						sendCommand("give " .. chatvars.playerid .. " drinkJarBeer 1")
 					end
 				end
 
@@ -308,6 +308,8 @@ function gmsg_fun()
 					gimme(chatvars.playerid, chatvars.number)
 				else
 					gimme(chatvars.playerid)
+					players[chatvars.playerid].gimmeCooldown = os.time() + server.gimmeRaincheck
+					if botman.dbConnected then conn:execute("UPDATE players SET gimmeCooldown = " .. os.time() + server.gimmeRaincheck .. " WHERE steam = " .. chatvars.playerid) end
 				end
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry, an admin has disabled gimme =([-]")
@@ -579,8 +581,8 @@ function gmsg_fun()
 			end
 		end
 
-		if string.find(chatvars.words[1], "quit") and chatvars.words[2] ==  nil then
-			if string.find(chatvars.words[1], "rage") and chatvars.words[2] ==  nil then
+		if chatvars.words[1] == "quit" or chatvars.words[1] == "ragequit" then
+			if string.find(chatvars.words[1], "rage") then
 				kick(chatvars.playerid, "RAAAAGE! xD")
 			else
 				r = rand(4)
@@ -774,15 +776,15 @@ function gmsg_fun()
 
 					if tonumber(server.gameVersionNumber) < 17 then
 						sendCommand("give " .. chatvars.playerid .. " turd 1") -- A16
-						sendCommand("give " .. chatvars.playerid .. " beer") -- A16
-						sendCommand("give " .. chatvars.playerid .. " coalOre") -- A16
-						sendCommand("give " .. chatvars.playerid .. " pipeBomb") -- A16
-						sendCommand("give " .. chatvars.playerid .. " splint") -- A16
+						sendCommand("give " .. chatvars.playerid .. " beer 1") -- A16
+						sendCommand("give " .. chatvars.playerid .. " coalOre 1") -- A16
+						sendCommand("give " .. chatvars.playerid .. " pipeBomb 1") -- A16
+						sendCommand("give " .. chatvars.playerid .. " splint 1") -- A16
 					else
-						sendCommand("give " .. chatvars.playerid .. " drinkJarBeer") -- A17
-						sendCommand("give " .. chatvars.playerid .. " resourceCoal") -- A17
-						sendCommand("give " .. chatvars.playerid .. " thrownAmmoPipeBomb") -- A17
-						sendCommand("give " .. chatvars.playerid .. " medicalSplint") -- A17
+						sendCommand("give " .. chatvars.playerid .. " drinkJarBeer 1") -- A17
+						sendCommand("give " .. chatvars.playerid .. " resourceCoal 1") -- A17
+						sendCommand("give " .. chatvars.playerid .. " thrownAmmoPipeBomb 1") -- A17
+						sendCommand("give " .. chatvars.playerid .. " medicalSplint 1") -- A17
 					end
 				end
 
@@ -796,9 +798,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " firstAidBandage") -- A16
+							sendCommand("give " .. chatvars.playerid .. " firstAidBandage 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " medicalFirstAidBandage") -- A17
+							sendCommand("give " .. chatvars.playerid .. " medicalFirstAidBandage 1") -- A17
 						end
 					end
 				end
@@ -812,9 +814,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " firstAidKit") -- A16
+							sendCommand("give " .. chatvars.playerid .. " firstAidKit 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " medicalFirstAidKit") -- A17
+							sendCommand("give " .. chatvars.playerid .. " medicalFirstAidKit 1") -- A17
 						end
 					end
 				end
@@ -831,9 +833,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canBeef") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canBeef 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanBeef") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanBeef 1") -- A17
 						end
 					end
 				end
@@ -847,9 +849,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canBoiledWater") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canBoiledWater 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " drinkCanBoiledWater") -- A17
+							sendCommand("give " .. chatvars.playerid .. " drinkCanBoiledWater 1") -- A17
 						end
 					end
 				end
@@ -863,9 +865,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canCatfood") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canCatfood 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanCatfood") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanCatfood 1") -- A17
 						end
 					end
 				end
@@ -879,9 +881,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canChicken") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canChicken 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanChicken") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanChicken 1") -- A17
 						end
 					end
 				end
@@ -895,9 +897,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canChilli") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canChilli 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanChilli") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanChilli 1") -- A17
 						end
 					end
 				end
@@ -919,9 +921,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " candleStick") -- A16
+							sendCommand("give " .. chatvars.playerid .. " candleStick 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " resourceCandleStick") -- A17
+							sendCommand("give " .. chatvars.playerid .. " resourceCandleStick 1") -- A17
 						end
 					end
 				end
@@ -935,9 +937,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " candleTable") -- A16
+							sendCommand("give " .. chatvars.playerid .. " candleTable 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " candleTableLightPlayer") -- A17
+							sendCommand("give " .. chatvars.playerid .. " candleTableLightPlayer 1") -- A17
 						end
 					end
 				end
@@ -951,9 +953,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " candleWall") -- A16
+							sendCommand("give " .. chatvars.playerid .. " candleWall 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " candleWallLightPlayer") -- A17
+							sendCommand("give " .. chatvars.playerid .. " candleWallLightPlayer 1") -- A17
 						end
 					end
 				end
@@ -967,9 +969,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canDogfood") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canDogfood 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanDogfood") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanDogfood 1") -- A17
 						end
 					end
 				end
@@ -983,9 +985,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " candyTin") -- A16
+							sendCommand("give " .. chatvars.playerid .. " candyTin 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " resourceCandyTin") -- A17
+							sendCommand("give " .. chatvars.playerid .. " resourceCandyTin 1") -- A17
 						end
 					end
 				end
@@ -999,9 +1001,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canEmpty") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canEmpty 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " drinkCanEmpty") -- A17
+							sendCommand("give " .. chatvars.playerid .. " drinkCanEmpty 1") -- A17
 						end
 					end
 				end
@@ -1015,9 +1017,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canHam") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canHam 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanHam") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanHam 1") -- A17
 						end
 					end
 				end
@@ -1031,9 +1033,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canLamb") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canLamb 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanLamb") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanLamb 1") -- A17
 						end
 					end
 				end
@@ -1047,9 +1049,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canMiso") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canMiso 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanMiso") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanMiso 1") -- A17
 						end
 					end
 				end
@@ -1063,9 +1065,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canMurkyWater") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canMurkyWater 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " drinkJarRiverWater") -- A17
+							sendCommand("give " .. chatvars.playerid .. " drinkJarRiverWater 1") -- A17
 						end
 					end
 				end
@@ -1079,9 +1081,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canPasta") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canPasta 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanPasta") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanPasta 1") -- A17
 						end
 					end
 				end
@@ -1095,9 +1097,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canPears") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canPears 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanPears") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanPears 1") -- A17
 						end
 					end
 				end
@@ -1111,9 +1113,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canPeas") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canPeas 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanPeas") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanPeas 1") -- A17
 						end
 					end
 				end
@@ -1127,9 +1129,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canSalmon") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canSalmon 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanSalmon") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanSalmon 1") -- A17
 						end
 					end
 				end
@@ -1143,9 +1145,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canSoup") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canSoup 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanSoup") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanSoup 1") -- A17
 						end
 					end
 				end
@@ -1159,9 +1161,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canStock") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canStock 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanStock") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanStock 1") -- A17
 						end
 					end
 				end
@@ -1175,9 +1177,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " canTuna") -- A16
+							sendCommand("give " .. chatvars.playerid .. " canTuna 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " foodCanTuna") -- A17
+							sendCommand("give " .. chatvars.playerid .. " foodCanTuna 1") -- A17
 						end
 					end
 				end
@@ -1191,9 +1193,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " gasCan") -- A16
+							sendCommand("give " .. chatvars.playerid .. " gasCan 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " ammoGasCan") -- A17
+							sendCommand("give " .. chatvars.playerid .. " ammoGasCan 1") -- A17
 						end
 					end
 				end
@@ -1207,9 +1209,9 @@ function gmsg_fun()
 						end
 					else
 						if tonumber(server.gameVersionNumber) < 17 then
-							sendCommand("give " .. chatvars.playerid .. " gasCanSchematic") -- A16
+							sendCommand("give " .. chatvars.playerid .. " gasCanSchematic 1") -- A16
 						else
-							sendCommand("give " .. chatvars.playerid .. " ammoGasCanSchematic") -- A17
+							sendCommand("give " .. chatvars.playerid .. " ammoGasCanSchematic 1") -- A17
 						end
 					end
 				end

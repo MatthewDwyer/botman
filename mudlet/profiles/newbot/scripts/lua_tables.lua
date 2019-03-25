@@ -345,13 +345,16 @@ function importModVersions()
 	if isFile(homedir .. "/data_backup/modVersions.lua") then
 		modVersions = {}
 		table.load(homedir .. "/data_backup/modVersions.lua", modVersions)
-		server.allocs = false
 		server.coppi = false
 		server.csmm = false
-		server.stompy = false
 		server.SDXDetected = false
 		server.ServerToolsDetected = false
 		server.djkrose = false
+
+		if not botMaintenance.modsInstalled then
+			server.stompy = false
+			server.allocs = false
+		end
 
 		for k,v in pairs(modVersions) do
 			matchAll(k)

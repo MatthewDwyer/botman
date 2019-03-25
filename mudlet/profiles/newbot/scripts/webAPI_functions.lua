@@ -1872,7 +1872,7 @@ function readAPI_GG()
 	local fileSize
 
 	fileSize = lfs.attributes (homedir .. "/temp/gg.txt", "size")
-	gg = {}
+	GamePrefs = {}
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
@@ -1906,7 +1906,6 @@ function readAPI_GG()
 
 			if v ~= "" then
 				matchAll(v)
-			    table.insert(gg, v)
 			end
 		end
 
@@ -1921,7 +1920,7 @@ function readAPI_GG()
 		end
 	end
 
-	if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('gg','panel','" .. escape(yajl.to_string(gg)) .. "')") end
+	if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('GamePrefs','panel','" .. escape(yajl.to_string(GamePrefs)) .. "')") end
 
 	os.remove(homedir .. "/temp/gg.txt")
 end
@@ -2268,15 +2267,6 @@ function readAPI_LKP()
 
 	file = io.open(homedir .. "/temp/lkp.txt", "r")
 
-	-- --	first flag everyone except staff as notInLKP.  We will remove that flag as we find them in LKP.
-	-- for k,v in pairs(players) do
-		-- if tonumber(v.accessLevel) > 3 then
-			-- v.notInLKP = true
-		-- else
-			-- v.notInLKP = false
-		-- end
-	-- end
-
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
 		data = splitCRLF(result.result)
@@ -2285,83 +2275,18 @@ function readAPI_LKP()
 			if v ~= "" then
 				if string.sub(v, 1, 5) ~= "Total" then
 					conn:execute("INSERT INTO LKPQueue (line) VALUES ('" .. escape(v) .. "')")
+
+					-- gather the data for the current player
+					temp = string.split(v, ", ")
+
+					if temp[3] ~= nil then
+						steamID = string.match(temp[3], "=(-?%d+)")
+
+						if players[steamID] then
+							players[steamID].notInLKP = false
+						end
+					end
 				end
-
-				-- gather the data for the current player
-				temp = string.split(v, ", ")
-				p1, p2 = string.find(temp[1], ". ")
-				name = string.sub(temp[1], p2+1)
-				gameID = string.match(temp[2], "=(-?%d+)")
-				steamID = string.match(temp[3], "=(-?%d+)")
-				players[steamID].notInLKP = false
-
-				-- p1, p2 = string.find(temp[5], "ip=")
-				-- IP = string.sub(temp[5], p2+1)
-
-				-- p1, p2 = string.find(temp[6], "playtime=")
-				-- playtime = string.match(string.sub(temp[6], p2+1), "(-?%d+) ")
-
-				-- p1, p2 = string.find(temp[7], "seen=")
-				-- seen = string.sub(temp[7], p2+1)
-
-				-- -- skip if no valid gameID
-				-- if tonumber(gameID) > 0 then
-					-- -- skip archived players
-					-- if not playersArchived[steamID] then
-						-- tmp = {}
-						-- tmp.runyear, tmp.runmonth, tmp.runday, tmp.runhour, tmp.runminute = seen:match(pattern)
-						-- seenTimestamp = os.time({year = tmp.runyear, month = tmp.runmonth, day = tmp.runday, hour = tmp.runhour, min = tmp.runminute, 0})
-
-						-- -- initially skip ingame players as this section is for archiving players we haven't seen for months
-						-- if not igplayers[steamID] then
-							-- -- make sure the player record exists so we can add missing players and archive them in one pass
-							-- if not players[steamID] then
-								-- players[steamID] = {}
-
-								-- if gameID ~= "-1" then
-									-- players[steamID].id = gameID
-								-- end
-
-								-- players[steamID].name = name
-								-- players[steamID].steam = steamID
-								-- players[steamID].playtime = playtime
-								-- players[steamID].seen = seen
-
-								-- if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steamID .. "," .. gameID .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "'") end
-							-- else
-								-- -- update the player record since it already exists
-								-- if gameID ~= "-1" then
-									-- players[steamID].id = gameID
-								-- end
-
-								-- players[steamID].name = name
-								-- players[steamID].playtime = playtime
-								-- players[steamID].seen = seen
-								-- players[steamID].notInLKP = false
-
-								-- if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, playtime, seen) VALUES (" .. steamID .. "," .. gameID .. ",'" .. escape(name) .. "'," .. playtime .. ",'" .. seen .. "') ON DUPLICATE KEY UPDATE playtime = " .. playtime .. ", seen = '" .. seen .. "', name = '" .. escape(name) .. "', id = " .. gameID) end
-							-- end
-
-							-- -- add missing fields and give them default values
-							-- fixMissingPlayer(steamID)
-
-							-- -- don't archive if we have already archived players today.  This is mainly to prevent the bot being tied up every time someone commands it to run lkp.
-							-- if os.time() - server.playersLastArchived > 86400 then
-								-- if tonumber(server.archivePlayersLastSeenDays) > 0 then
-									-- -- acrchive players that haven't played in 60 days and aren't an admin
-									-- if ((os.time() - seenTimestamp) > 86400 * server.archivePlayersLastSeenDays or seen == "0001-01-01 00:00") and (accessLevel(steamID) > 3) then
-										-- conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. steamID)
-										-- conn:execute("DELETE FROM players WHERE steam = " .. steamID)
-										-- players[steamID] = nil
-										-- loadPlayersArchived(steamID)
-									-- end
-								-- end
-							-- end
-						-- else
-							-- players[steamID].notInLKP = false
-						-- end
-					-- end
-				-- end
 
 				for con, q in pairs(conQueue) do
 					if q.command == "lkp" then
@@ -2371,29 +2296,19 @@ function readAPI_LKP()
 			end
 		end
 
-		-- if os.time() - server.playersLastArchived > 86400 then
-			-- server.playersLastArchived = os.time()
-			-- conn:execute("UPDATE server SET playersLastArchived = current_timestamp")
-		-- end
+		if result.parameters ~= "-online" and botman.archivePlayers then
+			botman.archivePlayers = nil
+
+			--	Everyone who is flagged notInLKP gets archived.
+			for k,v in pairs(players) do
+				if v.notInLKP then
+					if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (" .. k .. ", 'archive player')") end
+				end
+			end
+		end
 	end
 
 	file:close()
-
-	-- if botman.archivePlayers then
-		-- botman.archivePlayers = nil
-
-		-- --	Everyone who is flagged notInLKP gets archived.
-		-- for k,v in pairs(players) do
-			-- if v.notInLKP then
-				-- conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. k)
-				-- conn:execute("DELETE FROM players WHERE steam = " .. k)
-				-- players[k] = nil
--- --				loadPlayersArchived(k)
-			-- end
-		-- end
-
-		-- loadPlayersArchived()
-	-- end
 
 	for con, q in pairs(conQueue) do
 		if q.command == "lkp" then
@@ -2969,18 +2884,20 @@ function readAPI_ReadLog()
 			end
 
 			if not handled then
-				if string.find(msg, "AIDirector: Spawning scouts", nil, true) then
-					scoutsWarning()
-					handled = true
+				if server.enableScreamerAlert then
+					if string.find(msg, "AIDirector: Spawning scouts", nil, true) then
+						scoutsWarning(msg)
+						handled = true
+					end
 				end
 			end
 
-			-- if not handled then
-				-- if string.find(msg, "Telnet executed 'tele ", nil, true) or string.find(msg, "Executing command 'tele ", nil, true) then
-					-- teleTrigger(msg)
-					-- handled = true
-				-- end
-			-- end
+			if not handled then
+				if string.find(msg, "Telnet executed 'tele ", nil, true) or string.find(msg, "Executing command 'tele ", nil, true) then
+					teleTrigger(msg)
+					handled = true
+				end
+			end
 
 			if not handled then
 				if string.find(msg, "Heap:", nil, true) then
@@ -3023,6 +2940,16 @@ function readAPI_ReadLog()
 					handled = true
 				end
 			end
+
+			if not handled then
+				if server.enableAirdropAlert then
+					if string.find(msg, "AIAirDrop: Spawned supply crate") then
+						airDropAlert(msg)
+						handled = true
+					end
+				end
+			end
+
 
 			if not handled then
 				matchAll(msg, date, time)
@@ -3252,13 +3179,16 @@ function readAPI_Version()
 	end
 
 	modVersions = {}
-	server.allocs = false
 	server.coppi = false
 	server.csmm = false
-	server.stompy = false
 	server.SDXDetected = false
 	server.ServerToolsDetected = false
 	server.djkrose = false
+
+	if not botMaintenance.modsInstalled then
+		server.stompy = false
+		server.allocs = false
+	end
 
 	if botman.dbConnected then
 		conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")

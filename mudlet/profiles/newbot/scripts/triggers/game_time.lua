@@ -32,16 +32,32 @@ function gameTimeTrigger(line)
 	server.gameDate = "Day " .. server.gameDay .. ", " ..string.format("%02d", server.gameHour) .. ":" .. server.gameMinute
 
 	if (server.gameDay % server.hordeNight == 0) then
-		botman.hordeNightToday = true
-		botman.hordeNightYesterday = false
+		if server.BloodMoonRange then
+			if tonumber(server.BloodMoonRange) == 0 then
+				botman.hordeNightToday = true
+				botman.hordeNightYesterday = false
 
-		if server.delayReboot == nil then
-			server.delayReboot = false
-		end
+				if server.delayReboot == nil then
+					server.delayReboot = false
+				end
 
-		if not server.delayReboot and botman.scheduledRestart and tonumber(server.feralRebootDelay) > 0 then
-			message("say [" .. server.chatColour .. "]Feral hordes run today so the server will reboot tomorrow.[-]")
-			server.delayReboot = true
+				if not server.delayReboot and botman.scheduledRestart then
+					message("say [" .. server.chatColour .. "]Feral hordes run today so the server will reboot tomorrow.[-]")
+					server.delayReboot = true
+				end
+			end
+		else
+			botman.hordeNightToday = true
+			botman.hordeNightYesterday = false
+
+			if server.delayReboot == nil then
+				server.delayReboot = false
+			end
+
+			if not server.delayReboot and botman.scheduledRestart then
+				message("say [" .. server.chatColour .. "]Feral hordes run today so the server will reboot tomorrow.[-]")
+				server.delayReboot = true
+			end
 		end
 	else
 		botman.hordeNightToday = false
@@ -50,10 +66,8 @@ function gameTimeTrigger(line)
 		if server.delayReboot and botman.scheduledRestart then
 			if tonumber(server.feralRebootDelay) == 0 then
 				botman.scheduledRestartTimestamp = os.time() + ((server.DayLightLength + server.DayNightLength) * 60)
-				message("say [" .. server.chatColour .. "]The server will reboot in 1 game day (" .. server.DayLightLength + server.DayNightLength .. " minutes).[-]")
 			else
 				botman.scheduledRestartTimestamp = os.time() + (server.feralRebootDelay * 60)
-				message("say [" .. server.chatColour .. "]The server will reboot in " .. server.feralRebootDelay .. " minutes.[-]")
 			end
 		end
 
@@ -61,8 +75,15 @@ function gameTimeTrigger(line)
 	end
 
 	if (botman.hordeNightToday and tonumber(server.gameHour) == 21 and tonumber(server.gameMinute) > 45 and server.despawnZombiesBeforeBloodMoon and server.stompy) then
-		sendCommand("bc-remove /type=EntityZombie")
-		sendCommand("bc-remove /type=EntityZombieCrawl")
+		if server.BloodMoonRange then
+			if tonumber(server.BloodMoonRange) == 0 then
+				sendCommand("bc-remove /type=EntityZombie")
+				sendCommand("bc-remove /type=EntityZombieCrawl")
+			end
+		else
+			sendCommand("bc-remove /type=EntityZombie")
+			sendCommand("bc-remove /type=EntityZombieCrawl")
+		end
 	end
 
 	if (tonumber(server.gameHour) == 0 and server.allowLottery == true) then

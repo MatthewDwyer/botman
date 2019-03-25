@@ -45,6 +45,10 @@ function QuickBotReset()
 	conn:execute("TRUNCATE TABLE inventoryChanges")
 	conn:execute("TRUNCATE TABLE inventoryTracker")
 	conn:execute("TRUNCATE TABLE waypoints")
+
+	-- remove a flag so that the bot will re-test for installed mods.
+	botMaintenance.modsInstalled = false
+	saveBotMaintenance()
 end
 
 
@@ -135,6 +139,11 @@ function ResetBot(keepTheMoney, backupName)
 	conn:execute(sql)
 	loadPlayers()
 	getServerData(true)
+
+	-- remove a flag so that the bot will re-test for installed mods.
+	botMaintenance.modsInstalled = false
+	saveBotMaintenance()
+
 	return true
 end
 
@@ -194,6 +203,10 @@ function ResetServer()
 
 	conn:execute("TRUNCATE TABLE players")
 	conn:execute("TRUNCATE TABLE whitelist")
+
+	-- remove a flag so that the bot will re-test for installed mods.
+	botMaintenance.modsInstalled = false
+	saveBotMaintenance()
 
 	ResetBot()
 	initServer()

@@ -77,6 +77,7 @@ function matchAll(line, logDate, logTime)
 	local pname, pid, number, died, coords, words, temp, msg, claimRemoved
 	local dy, mth, yr, hr, min, sec, pm, reason, timestamp, banDate
 	local fields, values, x, y, z, id, loc, reset, steam, k, v, rows, tmp
+	local pref, value, isChat
 
 	if botman.debugAll then
 		debug = true
@@ -88,6 +89,8 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	botman.botOfflineCount = 0
 	botman.botOffline = false
 	botman.lastServerResponseTimestamp = os.time()
+
+	isChat = false
 
 	if botman.botDisabled then
 		return
@@ -209,6 +212,10 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
+	if string.find(line, "Chat") or string.find(line, "BCM") then
+		isChat = true
+	end
+
 	if customMatchAll ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua
 		if customMatchAll(line) then
@@ -217,18 +224,6 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	end
 
 if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
-
-	-- if string.find(line, "INF (BCM) Party:", nil, true) then -- Party time!
-		-- gmsg(line)
-		-- return
-	-- end
-
-
-	-- if string.find(line, "INF (BCM) Friends:", nil, true) then -- Friend chat
-		-- gmsg(line)
-		-- return
-	-- end
-
 
 	if string.find(line, "Web user with name=bot", nil, true) then
 		startUsingAllocsWebAPI()
@@ -293,7 +288,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	-- grab the server time
-	if string.find(line, "INF ") and not server.useAllocsWebAPI then
+	if string.find(line, "INF ") and (not server.useAllocsWebAPI or server.readLogUsingTelnet) then
 		if string.find(string.sub(line, 1, 19), os.date("%Y")) then
 			botman.serverTime = string.sub(line, 1, 10) .. " " .. string.sub(line, 12, 16)
 			botman.serverHour = string.sub(line, 12, 13)
@@ -319,8 +314,8 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 			if botman.readGG then
 				botman.readGG = false
-				if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('gg','panel','" .. escape(yajl.to_string(gg)) .. "')") end
-				gg = nil
+
+				if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('GamePrefs','panel','" .. escape(yajl.to_string(GamePrefs)) .. "')") end
 			end
 
 			if echoConsole then
@@ -353,6 +348,11 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 				resetVersion = nil
 				table.save(homedir .. "/data_backup/modVersions.lua", modVersions)
 				if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('modVersions','panel','" .. escape(yajl.to_string(modVersions)) .. "')") end
+
+				if server.allocs and server.stompy then
+					botMaintenance.modsInstalled = true
+					saveBotMaintenance()
+				end
 			end
 		end
 
@@ -428,7 +428,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 			irc_chat(server.ircAlerts, "Player " .. tmp.pid .. " " .. igplayers[tmp.pid].name .. " spawned at " .. igplayers[tmp.pid].spawnedXPos .. " " .. igplayers[tmp.pid].spawnedYPos .. " " .. igplayers[tmp.pid].spawnedZPos)
 
 			if players[tmp.pid].accessLevel == 0 and not server.allocs then
-				message(string.format("say [%s]ALERT! The bot requires Alloc's mod but it appears to be missing. The bot will not work well without it.[-]", server.warnColour))
+				message("pm " .. tmp.pid .. " [" .. server.warnColour .. "]ALERT! The bot requires Alloc's mod but it appears to be missing. The bot will not work well without it.[-]")
 			end
 		end
 
@@ -449,8 +449,11 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 	if not server.useAllocsWebAPI then
 		if string.find(line, "GamePref.") then
+			if not botman.readGG then
+				GamePrefs = {}
+			end
+
 			botman.readGG = true
-			gg = {}
 		end
 	end
 
@@ -538,6 +541,18 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	end
 
 if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
+	if string.find(line, "INF BloodMoon starting") and not isChat then
+		server.delayReboot = true
+
+		if botman.scheduledRestart then
+			if tonumber(server.feralRebootDelay) == 0 then
+				botman.scheduledRestartTimestamp = os.time() + ((server.DayLightLength + server.DayNightLength) * 60)
+			else
+				botman.scheduledRestartTimestamp = os.time() + (server.feralRebootDelay * 60)
+			end
+		end
+	end
 
 
 	if (string.find(line, "ServerMaxPlayerCount set to")) then
@@ -713,7 +728,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 
 
-		if string.find(line, "Executing command 'version") or string.find(line, "Game version:", nil, true) then
+		if string.find(line, "Executing command 'version") or string.find(line, "Game version:", nil, true) and string.find(line, server.botsIP) then
 			readVersion = true
 			resetVersion = true
 		end
@@ -748,7 +763,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'version") then
+			if string.find(line, "Executing command 'version") and string.find(line, server.botsIP) then
 				echoConsole = true
 			end
 
@@ -960,7 +975,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	-- ===================================
 
 	if not server.useAllocsWebAPI then
-		if string.find(line, "Executing command 'le'") then
+		if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
 			if string.find(line, server.botsIP) then
 				botman.listEntities = true
 				botman.lastListEntities = os.time()
@@ -971,7 +986,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 
 
-		if string.find(line, "Executing command 'li ") then
+		if string.find(line, "Executing command 'li ") and string.find(line, server.botsIP) then
 			if string.find(line, server.botsIP) and playerListItems == nil then
 				botman.listItems = true
 			end
@@ -980,12 +995,10 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 
 
-		if string.find(line, "Executing command 'admin list'") and server.botsIP then
-			if string.find(line, server.botsIP) then
-				flagAdminsForRemoval()
+		if string.find(line, "Executing command 'admin list'") and string.find(line, server.botsIP) then
+			flagAdminsForRemoval()
 
-				return
-			end
+			return
 		end
 
 
@@ -1009,6 +1022,11 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 	if botman.readGG then
 		number = tonumber(string.match(line, " (%d+)"))
+
+		temp = string.split(line, " = ")
+		pref = string.sub(temp[1], 10)
+		value = string.sub(line, string.find(line, " = ") + 3)
+		GamePrefs[pref] = value
 
 		if (string.find(line, "HideCommandExecutionLog =")) then
 			server.HideCommandExecutionLog = number
@@ -1113,6 +1131,44 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 			return
 		end
 
+		if (string.find(line, "ZombieMove =")) then
+			server.ZombiesRun = -1
+			server.ZombieMove = number
+
+			return
+		end
+
+		if (string.find(line, "ZombieMoveNight =")) then
+			server.ZombieMoveNight = number
+
+			return
+		end
+
+		if (string.find(line, "ZombieBMMove =")) then
+			server.ZombieBMMove = number
+
+			return
+		end
+
+		if (string.find(line, "ZombieFeralMove =")) then
+			server.ZombieFeralMove = number
+
+			return
+		end
+
+		if (string.find(line, "BloodMoonFrequency =")) then
+			server.BloodMoonFrequency = number
+			server.hordeNight = number
+
+			return
+		end
+
+		if (string.find(line, "BloodMoonRange =")) then
+			server.BloodMoonRange = number
+
+			return
+		end
+
 		if (string.find(line, "ServerName =")) then
 			server.serverName = string.trim(string.sub(line, 22))
 
@@ -1205,13 +1261,16 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	if string.sub(line, 1, 4) == "Mod " then
 		if resetVersion and not server.useAllocsWebAPI then
 			modVersions = {}
-			server.allocs = false
 			server.coppi = false
 			server.csmm = false
-			server.stompy = false
 			server.SDXDetected = false
 			server.ServerToolsDetected = false
 			server.djkrose = false
+
+			if not botMaintenance.modsInstalled then
+				server.stompy = false
+				server.allocs = false
+			end
 
 			if botman.dbConnected then
 				conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
@@ -1450,7 +1509,6 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 		if tonumber(lag) > server.commandLagThreshold then
 			server.lagged = true
-dbugi("set server.lagged true lag is " .. lag)
 		end
 
 		deleteLine()
@@ -1568,6 +1626,12 @@ dbugi("set server.lagged true lag is " .. lag)
 				conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
 				os.remove(homedir .. "/temp/apitest.txt")
 				server.useAllocsWebAPI = true
+
+				if not server.telnetDisabled then
+					server.readLogUsingTelnet = true
+					conn:execute("UPDATE server set readLogUsingTelnet = 1")
+				end
+
 				botman.APIOffline = false
 				botman.APITestSilent = true
 				toggleTriggers("api offline")

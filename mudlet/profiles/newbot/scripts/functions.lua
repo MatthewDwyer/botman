@@ -34,7 +34,8 @@ end
 
 
 function toggleTriggers(event)
-	if event == "api offline" then
+	if event == "api offline" or server.readLogUsingTelnet then
+		enableTrigger("AirDrop alert")
 		enableTrigger("Auto Friend")
 		enableTrigger("Chat")
 		enableTrigger("Collect Ban")
@@ -44,6 +45,8 @@ function toggleTriggers(event)
 		enableTrigger("InventoryOwner")
 		enableTrigger("InventorySlot")
 		enableTrigger("lkp")
+		enableTrigger("llp")
+		enableTrigger("lp")
 		enableTrigger("MatchAll")
 		enableTrigger("mem")
 		enableTrigger("Overstack")
@@ -53,10 +56,11 @@ function toggleTriggers(event)
 		enableTrigger("PVP Police")
 		enableTrigger("Unban player")
 		enableTrigger("Zombie Scouts")
-		--enableTrigger("Tele")
+		enableTrigger("Tele")
 	end
 
-	if event == "api online" then
+	if event == "api online" and not server.readLogUsingTelnet then
+		disableTrigger("AirDrop alert")
 		disableTrigger("Auto Friend")
 		disableTrigger("Chat")
 		disableTrigger("Collect Ban")
@@ -66,6 +70,8 @@ function toggleTriggers(event)
 		disableTrigger("InventoryOwner")
 		disableTrigger("InventorySlot")
 		disableTrigger("lkp")
+		disableTrigger("llp")
+		disableTrigger("lp")
 		disableTrigger("MatchAll")
 		disableTrigger("mem")
 		disableTrigger("Overstack")
@@ -75,7 +81,13 @@ function toggleTriggers(event)
 		disableTrigger("PVP Police")
 		disableTrigger("Unban player")
 		disableTrigger("Zombie Scouts")
-		--disableTrigger("Tele")
+		disableTrigger("Tele")
+	end
+
+	if event == "api online" and server.readLogUsingTelnet then
+		disableTrigger("lkp")
+		disableTrigger("llp")
+		disableTrigger("lp")
 	end
 end
 function dogeWOW()
@@ -348,28 +360,8 @@ function processLKPLine(line)
 		return
 	end
 
-	-- if playersArchived[tmp.steam] then
-		-- -- don't process if this player has been archived
-		-- return
-	-- end
-
-	-- local pattern = "(%d+)-(%d+)-(%d+) (%d+):(%d+)"
-	-- local runyear, runmonth, runday, runhour, runminute = tmp.seen:match(pattern)
-	-- local seenTimestamp = os.time({year = runyear, month = runmonth, day = runday, hour = runhour, min = runminute, 0})
-
-	-- if (not igplayers[tmp.steam]) and players[tmp.steam] then
-		-- -- acrchive players that haven't played in 60 days and aren't an admin
-		-- if (os.time() - seenTimestamp) > 86400 * server.archivePlayersLastSeenDays and (accessLevel(tmp.steam) > 3) then
-			-- conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. tmp.steam)
-			-- conn:execute("DELETE FROM players WHERE steam = " .. tmp.steam)
-			-- players[tmp.steam] = nil
-			-- loadPlayersArchived(tmp.steam)
-			-- return
-		-- end
-	-- end
-
 	if playersArchived[tmp.steam] then
-		-- abort if the player has been archived
+		-- don't process if this player has been archived
 		return
 	end
 
@@ -1055,9 +1047,14 @@ function removeInvalidItems()
 	conn:execute("UPDATE restrictedItems INNER JOIN spawnableItems ON spawnableItems.itemName = restrictedItems.item SET restrictedItems.item = spawnableItems.itemName")
 
 	-- try to convert shop items to A17
-	if math.floor(server.gameVersionNumber) == 17 then
+	if math.floor(server.gameVersionNumber) >= 17 then
 		updateShopItemsForA17()
 		updateGimmeForA17()
+
+		-- do some manual fixes
+		conn:execute("UPDATE shop SET item = 'resourceOil' WHERE item = 'oil'")
+		conn:execute("UPDATE shop SET item = 'drugAntibiotics' WHERE item = 'antibiotics'")
+		conn:execute("UPDATE shop SET item = 'drinkJarBeer' WHERE item = 'beer'")
 	end
 
 	-- don't remove anything from the tables, badItems or restrictedItems as those can contain wildcards
@@ -1393,10 +1390,9 @@ end
 
 
 function fixBot()
-	local k, v, fixTables, faultCount
+	local k, v
 
-	fixTables = false
-	faultCount = 0
+	botman.fixingBot = false
 
 	fixMissingStuff()
 	fixShop()
@@ -1408,26 +1404,12 @@ function fixBot()
 		joinIRCServer()
 	end
 
-	botman.fixingBot = false
-
-	-- check in game player's coordinates. If all are 0 0 0, there's a fault.  It could be a missing table change so force the bot to redo them all.
-	for k,v in pairs(igplayers) do
-		if v.xPos == 0 and v.yPos == 0 and v.zPos == 0 then
-			faultCount = faultCount + 1
-		end
+	if botman.dbConnected then
+		conn:execute("TRUNCATE altertables")
+		alertAdmins("The bot may become unresponsive for a while doing database maintenance. A bot restart after the bot starts talking again may also help.", "alert")
+		irc_chat(server.ircMain, "The bot may become unresponsive for a while doing database maintenance. A bot restart after the bot starts talking again may also help.")
+		tempTimer( 5, [[alterTables()]] )
 	end
-
-	if tonumber(faultCount) > 0 then
-		if botman.dbConnected then
-			conn:execute("TRUNCATE altertables")
-			alertAdmins("The bot may become unresponsive for a while, it will do table maintenance in one minute.  When it comes back, the bot will need to be restarted to complete the maintenance.", "alert")
-			irc_chat(server.ircMain, "The bot may become unresponsive for a while, it will do table maintenance in one minute.  When it comes back, the bot will need to be restarted to complete the maintenance.")
-			tempTimer( 60, [[alterTables()]] )
-		end
-	end
-
-	--irc_chat(server.ircMain, "Validating shop and gimme prize items.")
-	--collectSpawnableItemsList()
 end
 
 

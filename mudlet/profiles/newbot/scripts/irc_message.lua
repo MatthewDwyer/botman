@@ -28,7 +28,7 @@ local function requireLogin(name, silent)
 			return false
 		end
 
-		cursor,errorString = connBots:execute("SELECT * FROM players where ircAlias = '" .. escape(name) .. "' and steam = " .. steam)
+		cursor,errorString = conn:execute("SELECT * FROM players where ircAlias = '" .. escape(name) .. "' and steam = " .. steam)
 		if cursor:numrows() == 0 then
 			if not silent then
 				irc_chat(name, "Your bot login has expired. Login and repeat your command.")
@@ -39,9 +39,8 @@ local function requireLogin(name, silent)
 			row = cursor:fetch(row, "a")
 
 			if row.ircAuthenticated then
-				players[steam].ircSessionExpiry = os.time() + 10800
+				players[steam].ircSessionExpiry = os.time() + 86400 -- 1 day
 				players[steam].ircAuthenticated = true
-				players[steam].ircAlias = name
 				ircid = steam
 				return false
 			end
@@ -86,6 +85,8 @@ IRCMessage = function (event, name, channel, msg)
 			server.ircBotName = getIrcNick()
 		end
 
+		botman.getIRCNick = false
+	else
 		botman.getIRCNick = false
 	end
 
@@ -373,10 +374,19 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				end
 			else
 				irc_chat(name, "API is online.")
-				irc_chat(name, "The bot is using Alloc's web API to talk to the server.")
+
+				if server.readLogUsingTelnet then
+					irc_chat(name, "The bot is using Alloc's web API only to send commands to the server.")
+				else
+					irc_chat(name, "The bot is using Alloc's web API to command and monitor the server.")
+				end
 			end
 		else
 			irc_chat(name, "The bot is using telnet to talk to the server.")
+		end
+
+		if server.readLogUsingTelnet then
+			irc_chat(name, "The bot is using telnet to monitor server traffic.")
 		end
 
 		-- code branch
@@ -949,9 +959,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			requireLogin(name, true)
 		else
 			-- keep login session alive
-			players[ircid].ircSessionExpiry = os.time() + 10800
-
-			connBots:execute("UPDATE players SET ircAuthenticated = 1 WHERE steam = " .. ircid)
+			players[ircid].ircSessionExpiry = os.time() + 86400 -- 1 day
+			--connBots:execute("UPDATE players SET ircAuthenticated = 1 WHERE steam = " .. ircid)
+			conn:execute("UPDATE players SET ircAuthenticated = 1 WHERE steam = " .. ircid)
 		end
 
 		if debug then dbug("IRC: " .. name .. " access " .. players[ircid].accessLevel .. " said " .. msg) end
@@ -969,7 +979,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if ircid and ircid ~= 0 then
 			players[ircid].ircAuthenticated = false
 			players[ircid].ircSessionExpiry = os.time()
-			connBots:execute("UPDATE players SET ircAuthenticated = 0 WHERE steam = " .. ircid)
+			conn:execute("UPDATE players SET ircAuthenticated = 0 WHERE steam = " .. ircid)
+			--connBots:execute("UPDATE players SET ircAuthenticated = 0 WHERE steam = " .. ircid)
 			irc_chat(name, "You have logged out.  To log back in type your bot login or type bow before me.")
 		end
 
@@ -1384,7 +1395,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			if ircid == "76561197983251951" then
 				message("say [FFD700]Bot Master[-] " .. players[ircid].name .. "-irc: [i]" .. msg .. "[/i][-]")
 			else
-				message("say " .. players[ircid].name .. "-irc: [i]" .. msg .. "[/i][-]")
+				if server.sayUsesIRCNick then
+					message("say " .. name .. "-irc: [i]" .. msg .. "[/i][-]")
+				else
+					message("say " .. players[ircid].name .. "-irc: [i]" .. msg .. "[/i][-]")
+				end
 			end
 		else
 			irc_chat(name, "Sorry you have been muted")
@@ -2730,8 +2745,6 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			if server.coppi then
 				irc_chat(name, "Coppi's mod version is " .. server.coppiVersion)
-			else
-				irc_chat(name, "Coppi's mod is not installed.  You are missing out on many great features but the bot will function.")
 			end
 
 			if server.stompy then
@@ -4955,12 +4968,16 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
-		irc_chat(name, "Command: archived players")
-		irc_chat(name, "Get a list of all the players that have been archived.")
+		irc_chat(name, "Command: archived players {optional player name}")
+		irc_chat(name, "Get a list of all the players that have been archived or a specific player.")
 		irc_chat(name, ".")
 	end
 
-	if (msgLower == "archived players") and players[ircid].accessLevel == 0 then
+	if words[1] == "archived" and words[2] == "players" and players[ircid].accessLevel < 3 then
+		if words[3] ~= nil then
+			irc_params.pname = string.sub(msg, 18)
+		end
+
 		irc_listAllArchivedPlayers(name)
 		irc_params = {}
 		return
@@ -4970,7 +4987,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if displayIRCHelp then
 		irc_chat(name, "Command: player {name}")
-		irc_chat(name, "View the permanent record for a player.")
+		irc_chat(name, "Command: player {name} find {search string}")
+		irc_chat(name, "View the permanent record for a player or you can just list specific info using find.  eg player smegz find home.")
 		irc_chat(name, ".")
 	end
 
@@ -4981,24 +4999,82 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		else
 			name1 = string.trim(string.sub(msg, string.find(msgLower, "player") + 7, string.find(msgLower, " find ") - 1))
 			search = string.trim(string.sub(msg, string.find(msgLower, " find ") + 6))
+			search = string.lower(search)
 		end
 
 		pid = LookupOfflinePlayer(name1)
 
 		if (pid ~= 0) then
 			if (players[pid]) then
-				irc_chat(name, "Player record of: " .. players[pid].name)
+				irc_chat(name, "Player record of: " .. pid .. " " .. players[pid].name)
 				for k, v in pairs(players[pid]) do
+					cmd = ""
+
 					if k ~= "ircPass" then
 						if search ~= "" then
-							if string.find(k, search) then
+							if string.find(string.lower(k), search) then
 								cmd = k .. "," .. tostring(v)
 							end
 						else
 							cmd = k .. "," .. tostring(v)
 						end
 
-						irc_chat(name, cmd)
+						if cmd ~= "" then
+							irc_chat(name, cmd)
+						end
+					end
+				end
+			else
+				irc_chat(name, ".")
+				irc_chat(name, "I do not know a player called " .. name1)
+			end
+
+			irc_chat(name, ".")
+		end
+
+		irc_params = {}
+		return
+	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: archived player {name}")
+		irc_chat(name, "Command: archived player {name} find {search string}")
+		irc_chat(name, "View the permanent record for an archived player or you can just list specific info using find.  eg archived player smegz find home.")
+		irc_chat(name, ".")
+	end
+
+	if words[1] == "archived" and words[2] == "player" then
+		if not string.find(msg, " find ") then
+			name1 = string.trim(string.sub(msg, string.find(msgLower, "player") + 7))
+			search = ""
+		else
+			name1 = string.trim(string.sub(msg, string.find(msgLower, "player") + 7, string.find(msgLower, " find ") - 1))
+			search = string.trim(string.sub(msg, string.find(msgLower, " find ") + 6))
+			search = string.lower(search)
+		end
+
+		pid = LookupArchivedPlayer(name1)
+
+		if (pid ~= 0) then
+			if (playersArchived[pid]) then
+				irc_chat(name, "Archived player record of: " .. pid .. " " .. playersArchived[pid].name)
+				for k, v in pairs(playersArchived[pid]) do
+					cmd = ""
+
+					if k ~= "ircPass" then
+						if search ~= "" then
+							if string.find(string.lower(k), search) then
+								cmd = k .. "," .. tostring(v)
+							end
+						else
+							cmd = k .. "," .. tostring(v)
+						end
+
+						if cmd ~= "" then
+							irc_chat(name, cmd)
+						end
 					end
 				end
 			else

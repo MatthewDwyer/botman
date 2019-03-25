@@ -13,11 +13,29 @@ local debug, result, x, z, id, pname, noWaypoint, temp, chatStringStart, cmd, ms
 debug = false -- should be false unless testing
 
 function day7(steam)
+	local warning
+
+	warning = " "
+
+	if server.BloodMoonRange then
+		if tonumber(server.BloodMoonRange) > 0 then
+			warning = " about "
+		end
+	end
+
 	if (server.gameDay % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes will run tonight![-]")
+			if warning == " " then
+				message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes will run tonight![-]")
+			else
+				message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes may run tonight![-]")
+			end
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes will run tonight![-]")
+			if warning == " " then
+				message("say [" .. server.chatColour .. "]Feral hordes will run tonight![-]")
+			else
+				message("say [" .. server.chatColour .. "]Feral hordes may run tonight![-]")
+			end
 		end
 
 		botman.faultyChat = false
@@ -26,9 +44,17 @@ function day7(steam)
 
 	if ((server.gameDay + 1) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected tomorrow[-]")
+			if warning == " " then
+				message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected tomorrow![-]")
+			else
+				message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes could arrive tomorrow![-]")
+			end
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected tomorrow[-]")
+			if warning == " " then
+				message("say [" .. server.chatColour .. "]Feral hordes are expected tomorrow![-]")
+			else
+				message("say [" .. server.chatColour .. "]Feral hordes could arrive tomorrow![-]")
+			end
 		end
 
 		botman.faultyChat = false
@@ -37,9 +63,9 @@ function day7(steam)
 
 	if ((server.gameDay + 2) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 2 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "2 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 2 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "2 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -48,9 +74,9 @@ function day7(steam)
 
 	if ((server.gameDay + 3) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 3 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "3 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 3 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "3 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -59,9 +85,9 @@ function day7(steam)
 
 	if ((server.gameDay + 4) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 4 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "4 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 4 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "4 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -70,9 +96,9 @@ function day7(steam)
 
 	if ((server.gameDay + 5) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 5 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "5 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 5 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "5 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -81,9 +107,9 @@ function day7(steam)
 
 	if ((server.gameDay + 6) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 6 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "6 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 6 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "6 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -92,9 +118,9 @@ function day7(steam)
 
 	if ((server.gameDay + 7) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 7 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "7 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 7 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "7 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -103,9 +129,9 @@ function day7(steam)
 
 	if ((server.gameDay + 8) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 8 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "8 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 8 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "8 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -114,9 +140,9 @@ function day7(steam)
 
 	if ((server.gameDay + 9) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 9 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "9 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 9 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "9 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -125,9 +151,9 @@ function day7(steam)
 
 	if ((server.gameDay + 10) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 10 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "10 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 10 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "10 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -136,9 +162,9 @@ function day7(steam)
 
 	if ((server.gameDay + 11) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 11 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "11 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 11 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "11 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -147,9 +173,9 @@ function day7(steam)
 
 	if ((server.gameDay + 12) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 12 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "12 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 12 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "12 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -158,9 +184,9 @@ function day7(steam)
 
 	if ((server.gameDay + 13) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 13 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "13 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 13 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "13 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -169,9 +195,9 @@ function day7(steam)
 
 	if ((server.gameDay + 14) % server.hordeNight == 0) then
 		if steam ~= nil then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in 14 days[-]")
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "14 days[-]")
 		else
-			message("say [" .. server.chatColour .. "]Feral hordes are expected in 14 days[-]")
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "14 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -968,14 +994,13 @@ function gmsg(line, ircid)
 			return true
 		end
 
-		if chatvars.playerid ~= 0 then
-dbug("last command " .. players[chatvars.playerid].lastCommand .. " by " .. players[chatvars.playerid].name)
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
+		if chatvars.playerid ~= 0 then
 			if (players[chatvars.playerid].lastCommand) then
 				-- don't allow identical commands being spammed too quickly
 	--			if ((os.time() - players[chatvars.playerid].lastCommandTimestamp) < 4) and players[chatvars.playerid].lastCommand == chatvars.command then
 				if (os.time() - players[chatvars.playerid].lastCommandTimestamp) < 2 then
-dbug("skipping command " .. chatvars.command .. " by " .. players[chatvars.playerid].name)
 					botman.faultyChat = false
 					result = true
 					return true

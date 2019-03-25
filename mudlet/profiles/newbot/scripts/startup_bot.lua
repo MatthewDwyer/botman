@@ -230,7 +230,7 @@ function login()
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
-		if closeMudlet ~= nil then
+		if closeMudlet ~= nil or addCustomLine ~= nil then
 			botman.customMudlet = true
 		end
 
@@ -324,6 +324,11 @@ function login()
 		end
 	else
 		toggleTriggers("api online")
+	end
+
+	-- special case where the bot will use telnet to monitor the server regardless of other API settings
+	if server.readLogUsingTelnet then
+		toggleTriggers("api offline")
 	end
 
 	sendCommand("gt")

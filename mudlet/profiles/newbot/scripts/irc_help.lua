@@ -9,9 +9,6 @@
 
 
 function irc_HelpAccess()
-	local id
-	id = LookupIRCAlias(irc_params.name)
-
 	irc_chat(irc_params.name, "Access Levels:")
 	irc_chat(irc_params.name, "==============")
 	irc_chat(irc_params.name, "Access levels control who can do what.  Commands that are above a players level return unknown command.")

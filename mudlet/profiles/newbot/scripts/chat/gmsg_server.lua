@@ -3197,8 +3197,8 @@ function gmsg_server()
 					irc_chat(chatvars.ircAlias, "All zombies will despawn one or more times during 9pm before bloodmoon begins.")
 				end
 			else
-				server.despawnZombiesBeforeBloodMoon = true
-				conn:execute("UPDATE server SET despawnZombiesBeforeBloodMoon = 1")
+				server.despawnZombiesBeforeBloodMoon = false
+				conn:execute("UPDATE server SET despawnZombiesBeforeBloodMoon = 0")
 
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Zombies will not be despawned before bloodmoon begins.[-]")

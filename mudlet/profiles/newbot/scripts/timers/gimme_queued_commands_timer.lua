@@ -25,7 +25,7 @@ end
 
 
 function miscCommandsTimer()
-	local cursor, errorString, row, temp, steam, command
+	local cursor, errorString, row, temp, steam, action, value, command
 
 	cursor,errorString = conn:execute("SELECT * FROM miscQueue WHERE timerDelay = '0000-00-00 00:00:00'  ORDER BY id limit 0,1")
 
@@ -33,9 +33,20 @@ function miscCommandsTimer()
 		row = cursor:fetch({}, "a")
 
 		if row then
+			steam = row.steam
+			action = row.action
+			value = row.value
 			command = row.command
 			conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
-			sendCommand(command)
+
+			if command == "archive player" then
+				conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. steam)
+				conn:execute("DELETE FROM players WHERE steam = " .. steam)
+				players[steam] = nil
+				loadPlayersArchived(steam)
+			else
+				sendCommand(command)
+			end
 		end
 	end
 
@@ -46,6 +57,9 @@ function miscCommandsTimer()
 		row = cursor:fetch({}, "a")
 
 		if row then
+			steam = row.steam
+			action = row.action
+			value = row.value
 			command = row.command
 
 			if row.delay - os.time() <= 0 then

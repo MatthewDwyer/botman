@@ -214,6 +214,7 @@ function everyMinute()
 			end
 		end
 
+		server.delayReboot = false
 		finishReboot()
 	end
 

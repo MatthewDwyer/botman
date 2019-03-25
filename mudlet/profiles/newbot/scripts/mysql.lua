@@ -551,7 +551,7 @@ function migrateWaypoints()
 end
 
 
-local function doSQL(sql, botsDB)
+local function doSQL(sql, botsDB, forced)
 	local shortSQL = string.sub(sql, 1, 1000) -- truncate the sql to 1000 chars
 	local newSQL
 
@@ -564,7 +564,7 @@ local function doSQL(sql, botsDB)
 		conn:execute(newSQL)
 	end
 
-	if not statements[shortSQL] then
+	if not statements[shortSQL] or forced ~= nil then
 		statements[shortSQL] = {}
 
 		if botsDB then
@@ -575,6 +575,32 @@ local function doSQL(sql, botsDB)
 			conn:execute(sql)
 		end
 	end
+end
+
+
+function refreshMySQLMemoryTables()
+	-- all we're doing here is ensuring that all of the memory tables have had all of their table changes applied.
+	doSQL("CREATE TABLE `list` (`thing` varchar(255) NOT NULL) ENGINE=MEMORY DEFAULT CHARSET=latin1 COMMENT='For sorting a list'", false, true)
+	doSQL("CREATE TABLE `memEntities` (`entityID` bigint(20) NOT NULL,`type` varchar(20) NOT NULL DEFAULT '',`name` varchar(30) NOT NULL DEFAULT '',`x` int(11) NOT NULL DEFAULT '0',`y` int(11) NOT NULL DEFAULT '0',`z` int(11) DEFAULT '0',`dead` tinyint(1) NOT NULL DEFAULT '0',`health` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`entityID`)) ENGINE=MEMORY DEFAULT CHARSET=latin1", false, true)
+	doSQL("CREATE TABLE `miscQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) NOT NULL,`command` varchar(100) NOT NULL,`action` varchar(15) NOT NULL,`value` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8", false, true)
+	doSQL("CREATE TABLE `connectQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `steam` bigint(17) NOT NULL, `command` varchar(255) NOT NULL, `processed` TINYINT(1) NOT NULL DEFAULT '0', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	doSQL("CREATE TABLE `APIQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`URL` varchar(500) NOT NULL,`OutputFile` varchar(500) NOT NULL, PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	doSQL("CREATE TABLE `LKPQueue` (`id` int(11) NOT NULL AUTO_INCREMENT, `line` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	doSQL("CREATE TABLE `persistentQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) NOT NULL,`command` varchar(255) NOT NULL,`action` varchar(15) NOT NULL,  `value` int(11) NOT NULL DEFAULT '0',`timerDelay` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	doSQL("CREATE TABLE `slots` (`slot` int(11) NOT NULL,`steam` bigint(17) NOT NULL DEFAULT '0',`online` tinyint(1) NOT NULL DEFAULT '0',`joinedTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`joinedSession` int(11) NOT NULL DEFAULT '0',`expires` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`reserved` tinyint(1) NOT NULL DEFAULT '0',`staff` tinyint(1) NOT NULL DEFAULT '0',`free` TINYINT(1) NOT NULL DEFAULT '1',`canBeKicked` TINYINT(1) NOT NULL DEFAULT '1',`disconnectedTimestamp` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', PRIMARY KEY (`slot`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	doSQL("ALTER TABLE `memShop` CHANGE `item` `item` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL", false, true)
+	doSQL("ALTER TABLE `miscQueue` CHANGE `command` `command` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL", false, true)
+	doSQL("ALTER TABLE `miscQueue` CHANGE `id` `id` BIGINT( 20 ) NOT NULL AUTO_INCREMENT", false, true)
+	doSQL("ALTER TABLE `miscQueue` ADD `timerDelay` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00'", false, true)
+	doSQL("ALTER TABLE `memShop` ADD `units` INT NOT NULL DEFAULT '1'", false, true)
+	doSQL("ALTER TABLE `memEntities` ENGINE = MEMORY", false, true)
+	doSQL("ALTER TABLE `reservedSlots` ENGINE = MEMORY", false, true)
+	doSQL("ALTER TABLE `list` ADD `id` INT NOT NULL DEFAULT '0' , ADD `class` VARCHAR(20) NOT NULL DEFAULT ''", false, true)
+	doSQL("ALTER TABLE `LKPQueue` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT", false, true) -- to fix missing auto increment for some bots that helped with testing
+	doSQL("ALTER TABLE `list` DROP INDEX `thing`, ADD PRIMARY KEY(`id`)", false, true)
+	doSQL("ALTER TABLE `list` DROP PRIMARY KEY", false, true) -- OOPS! Doesn't work too well with indexes.  Down with them I say!
+	doSQL("ALTER TABLE `list` ADD `steam` BIGINT(17) NOT NULL DEFAULT '0'", false, true)
+	doSQL("ALTER TABLE `playerQueue` ADD `delayTimer` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", false, true)
 end
 
 
@@ -609,30 +635,30 @@ function alterTables()
 	doSQL("CREATE TABLE `badWords` (`badWord` varchar(15) NOT NULL,`cost` int(11) NOT NULL DEFAULT '10',`counter` int(11) NOT NULL DEFAULT '0') ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE `list` (`thing` varchar(255) NOT NULL) ENGINE=MEMORY DEFAULT CHARSET=latin1 COMMENT='For sorting a list'")
 	doSQL("CREATE TABLE `prefabCopies` (`owner` bigint(17) NOT NULL DEFAULT '0',`name` varchar(50) NOT NULL DEFAULT '',`x1` int(11) NOT NULL DEFAULT '0',`x2` int(11) NOT NULL DEFAULT '0',`y1` int(11) NOT NULL DEFAULT '0',`y2` int(11) NOT NULL DEFAULT '0',`z1` int(11) NOT NULL DEFAULT '0',`z2` int(11) NOT NULL DEFAULT '0',`blockName` VARCHAR(50) NOT NULL DEFAULT '',`rotation` INT NOT NULL DEFAULT '0', PRIMARY KEY (`owner`,`name`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE `memEntities` (`entityID` bigint(20) NOT NULL,`type` varchar(20) NOT NULL DEFAULT '',`name` varchar(30) NOT NULL DEFAULT '',`x` int(11) NOT NULL DEFAULT '0',`y` int(11) NOT NULL DEFAULT '0',`z` int(11) DEFAULT '0',`dead` tinyint(1) NOT NULL DEFAULT '0',`health` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`entityID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `memEntities` (`entityID` bigint(20) NOT NULL,`type` varchar(20) NOT NULL DEFAULT '',`name` varchar(30) NOT NULL DEFAULT '',`x` int(11) NOT NULL DEFAULT '0',`y` int(11) NOT NULL DEFAULT '0',`z` int(11) DEFAULT '0',`dead` tinyint(1) NOT NULL DEFAULT '0',`health` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`entityID`)) ENGINE=MEMORY DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE `waypoints` (`steam` varchar(17) NOT NULL,`name` varchar(20) NOT NULL,`x` int(11) NOT NULL DEFAULT '0',`y` int(11) NOT NULL DEFAULT '0',`z` int(11) NOT NULL DEFAULT '0',`shared` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`steam`,`name`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE `gimmeZombies` (`zombie` varchar(50) NOT NULL,`minPlayerLevel` int(11) NOT NULL DEFAULT '1',`minArenaLevel` int(11) NOT NULL DEFAULT '1', PRIMARY KEY (`zombie`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE `miscQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) NOT NULL,`command` varchar(100) NOT NULL,`action` varchar(15) NOT NULL,`value` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8")
 	doSQL("CREATE TABLE `customCommands` (`commandID` int(11) NOT NULL AUTO_INCREMENT, `command` varchar(50) NOT NULL, `accessLevel` int(11) NOT NULL DEFAULT '2', `help` varchar(255) NOT NULL, PRIMARY KEY (`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE `whitelist` (`steam` varchar(17) NOT NULL, PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE `otherEntities` (`entity` varchar(50) NOT NULL,`entityID` int(11) NOT NULL DEFAULT '0',`doNotSpawn` tinyint(4) NOT NULL DEFAULT '0', PRIMARY KEY (`entity`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `helpCommands` (`commandID` int(11) NOT NULL AUTO_INCREMENT,`command` varchar(255) NOT NULL,`description` varchar(255) NOT NULL,`notes` text NOT NULL,`keywords` varchar(150) NOT NULL,`lastUpdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`accessLevel` int(11) NOT NULL DEFAULT '99',`ingameOnly` tinyint(1) NOT NULL DEFAULT '0', PRIMARY KEY (`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `helpTopicCommands` (`topicID` int(11) NOT NULL,`commandID` int(11) NOT NULL, PRIMARY KEY (`topicID`, `commandID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `helpTopics` (`topicID` int(11) NOT NULL AUTO_INCREMENT,`topic` varchar(20) NOT NULL,`description` varchar(200) NOT NULL, PRIMARY KEY (`topicID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `helpCommands` (`commandID` int(11) NOT NULL AUTO_INCREMENT,`command` varchar(255) NOT NULL,`description` varchar(255) NOT NULL,`notes` text NOT NULL,`keywords` varchar(150) NOT NULL,`lastUpdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`accessLevel` int(11) NOT NULL DEFAULT '99',`ingameOnly` tinyint(1) NOT NULL DEFAULT '0', PRIMARY KEY (`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `helpTopicCommands` (`topicID` int(11) NOT NULL,`commandID` int(11) NOT NULL, PRIMARY KEY (`topicID`, `commandID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `helpTopics` (`topicID` int(11) NOT NULL AUTO_INCREMENT,`topic` varchar(20) NOT NULL,`description` varchar(200) NOT NULL, PRIMARY KEY (`topicID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE `staff` (`steam` bigint(17) NOT NULL DEFAULT '0',`adminLevel` int(11) NOT NULL DEFAULT '2',`blockDelete` tinyint(1) NOT NULL DEFAULT '0', PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `spawnableItems` (`itemName` varchar(100) NOT NULL, `deleteItem` tinyint(1) NOT NULL DEFAULT '0', `accessLevelRestriction` int(11) NOT NULL DEFAULT '99', `category` varchar(20) NOT NULL DEFAULT 'None', `price` int(11) NOT NULL DEFAULT '10000', `stock` int(11) NOT NULL DEFAULT '5000', `idx` int(11) NOT NULL DEFAULT '0', `maxStock` int(11) NOT NULL DEFAULT '5000', `inventoryResponse` varchar(10) NOT NULL DEFAULT 'none', `StackLimit` int(11) NOT NULL DEFAULT '1000', `newPlayerMaxInventory` int(11) NOT NULL DEFAULT '-1', `units` int(11) NOT NULL DEFAULT '1', PRIMARY KEY (`itemName`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `reservedSlots` (`steam` varchar(17) NOT NULL,`timeAdded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`reserved` tinyint(1) NOT NULL DEFAULT '0',`staff` tinyint(1) NOT NULL DEFAULT '0',`totalPlayTime` int(11) NOT NULL DEFAULT '0',`deleteRow` TINYINT(1) NOT NULL DEFAULT '0',PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `botCommands` (`cmdCode` varchar(5) NOT NULL,`cmdIndex` int(11) NOT NULL,`accessLevel` int(11) NOT NULL DEFAULT '0',`enabled` tinyint(1) NOT NULL DEFAULT '1',`keywords` varchar(150) NOT NULL DEFAULT '',`shortDescription` varchar(255) NOT NULL DEFAULT '',`longDescription` varchar(1000) NOT NULL DEFAULT '',`sortOrder` int(11) NOT NULL DEFAULT '0',PRIMARY KEY (`cmdCode`,`cmdIndex`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `timedEvents` (`timer` varchar(20) NOT NULL DEFAULT '',`delayMinutes` int(11) NOT NULL DEFAULT '10',`nextTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`disabled` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`timer`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `botChat` (`botChatID` int(11) NOT NULL AUTO_INCREMENT,`triggerWords` varchar(255) NOT NULL DEFAULT '',`triggerPhrase` varchar(255) NOT NULL DEFAULT '',`accessLevelRestriction` int(11) NOT NULL DEFAULT '99',`mustAddressBot` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`botChatID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `botChatResponses` (`botChatResponseID` int(11) NOT NULL AUTO_INCREMENT,`botChatID` int(11) NOT NULL DEFAULT '0',`response` varchar(300) NOT NULL DEFAULT '',PRIMARY KEY (`botChatResponseID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `webInterfaceQueue` (`id` int(11) NOT NULL AUTO_INCREMENT,`action` varchar(10) NOT NULL DEFAULT '',`actionTable` varchar(50) NOT NULL DEFAULT '',`actionQuery` text NOT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
-	doSQL("CREATE TABLE IF NOT EXISTS `locationCategories` (`categoryName` varchar(20) NOT NULL,`minAccessLevel` int(11) NOT NULL DEFAULT '99',`maxAccessLevel` int(11) NOT NULL DEFAULT '0',PRIMARY KEY (`categoryName`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `spawnableItems` (`itemName` varchar(100) NOT NULL, `deleteItem` tinyint(1) NOT NULL DEFAULT '0', `accessLevelRestriction` int(11) NOT NULL DEFAULT '99', `category` varchar(20) NOT NULL DEFAULT 'None', `price` int(11) NOT NULL DEFAULT '10000', `stock` int(11) NOT NULL DEFAULT '5000', `idx` int(11) NOT NULL DEFAULT '0', `maxStock` int(11) NOT NULL DEFAULT '5000', `inventoryResponse` varchar(10) NOT NULL DEFAULT 'none', `StackLimit` int(11) NOT NULL DEFAULT '1000', `newPlayerMaxInventory` int(11) NOT NULL DEFAULT '-1', `units` int(11) NOT NULL DEFAULT '1', PRIMARY KEY (`itemName`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `reservedSlots` (`steam` varchar(17) NOT NULL,`timeAdded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`reserved` tinyint(1) NOT NULL DEFAULT '0',`staff` tinyint(1) NOT NULL DEFAULT '0',`totalPlayTime` int(11) NOT NULL DEFAULT '0',`deleteRow` TINYINT(1) NOT NULL DEFAULT '0',PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `botCommands` (`cmdCode` varchar(5) NOT NULL,`cmdIndex` int(11) NOT NULL,`accessLevel` int(11) NOT NULL DEFAULT '0',`enabled` tinyint(1) NOT NULL DEFAULT '1',`keywords` varchar(150) NOT NULL DEFAULT '',`shortDescription` varchar(255) NOT NULL DEFAULT '',`longDescription` varchar(1000) NOT NULL DEFAULT '',`sortOrder` int(11) NOT NULL DEFAULT '0',PRIMARY KEY (`cmdCode`,`cmdIndex`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `timedEvents` (`timer` varchar(20) NOT NULL DEFAULT '',`delayMinutes` int(11) NOT NULL DEFAULT '10',`nextTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`disabled` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`timer`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `botChat` (`botChatID` int(11) NOT NULL AUTO_INCREMENT,`triggerWords` varchar(255) NOT NULL DEFAULT '',`triggerPhrase` varchar(255) NOT NULL DEFAULT '',`accessLevelRestriction` int(11) NOT NULL DEFAULT '99',`mustAddressBot` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`botChatID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `botChatResponses` (`botChatResponseID` int(11) NOT NULL AUTO_INCREMENT,`botChatID` int(11) NOT NULL DEFAULT '0',`response` varchar(300) NOT NULL DEFAULT '',PRIMARY KEY (`botChatResponseID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `webInterfaceQueue` (`id` int(11) NOT NULL AUTO_INCREMENT,`action` varchar(10) NOT NULL DEFAULT '',`actionTable` varchar(50) NOT NULL DEFAULT '',`actionQuery` text NOT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
+	doSQL("CREATE TABLE `locationCategories` (`categoryName` varchar(20) NOT NULL,`minAccessLevel` int(11) NOT NULL DEFAULT '99',`maxAccessLevel` int(11) NOT NULL DEFAULT '0',PRIMARY KEY (`categoryName`)) ENGINE=InnoDB DEFAULT CHARSET=latin1")
 	doSQL("CREATE TABLE `gimmeGroup` (`groupName` varchar(30) NOT NULL DEFAULT '',PRIMARY KEY (`groupName`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `connectQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `steam` bigint(17) NOT NULL, `command` varchar(255) NOT NULL, `processed` TINYINT(1) NOT NULL DEFAULT '0', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `commandAccessRestrictions` (`id` int(11) NOT NULL, `functionName` varchar(100) NOT NULL DEFAULT '', `accessLevel` int(11) NOT NULL DEFAULT '3', PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
-	doSQL("CREATE TABLE IF NOT EXISTS `customCommands_Detail` (`detailID` int(11) NOT NULL, `commandID` int(11) NOT NULL, `action` varchar(5) NOT NULL DEFAULT '' COMMENT 'say,give,tele,spawn,buff,cmd', `thing` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`detailID`,`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
-	doSQL("CREATE TABLE IF NOT EXISTS playersArchived LIKE players")
+	doSQL("CREATE TABLE `customCommands_Detail` (`detailID` int(11) NOT NULL, `commandID` int(11) NOT NULL, `action` varchar(5) NOT NULL DEFAULT '' COMMENT 'say,give,tele,spawn,buff,cmd', `thing` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`detailID`,`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
+	doSQL("CREATE TABLE playersArchived LIKE players")
 	doSQL("CREATE TABLE `APIQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`URL` varchar(500) NOT NULL,`OutputFile` varchar(500) NOT NULL, PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `LKPQueue` (`id` int(11) NOT NULL AUTO_INCREMENT, `line` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `persistentQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) NOT NULL,`command` varchar(255) NOT NULL,`action` varchar(15) NOT NULL,  `value` int(11) NOT NULL DEFAULT '0',`timerDelay` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
@@ -672,6 +698,7 @@ function alterTables()
 	doSQL("ALTER TABLE `players` ADD `claimsExpired` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `players` ADD `showLocationMessages` TINYINT(1) NOT NULL DEFAULT '1'") -- this is just here for backwards compatibility
 	doSQL("ALTER TABLE `players` ADD `DNSLookupCount` INT NOT NULL DEFAULT '0', ADD `lastDNSLookup` DATE NOT NULL DEFAULT '1000-01-01'")
+	doSQL("ALTER TABLE `players` ADD `ircAuthenticated` TINYINT(1) NOT NULL DEFAULT '0'")
 
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
@@ -814,6 +841,8 @@ function alterTables()
 	doSQL("ALTER TABLE `server` ADD `commandLagThreshold` INT NOT NULL DEFAULT '15'")
 	doSQL("ALTER TABLE `server` CHANGE `logInventory` `logInventory` TINYINT(1) NOT NULL DEFAULT '1'")
 	doSQL("ALTER TABLE `server` ADD `telnetDisabled` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `sayUsesIRCNick` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `readLogUsingTelnet` TINYINT(1) NOT NULL DEFAULT '0'")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -900,7 +929,7 @@ function alterTables()
 	doSQL("ALTER TABLE `polls` CHANGE `option5` `option5` VARCHAR(255)")
 	doSQL("ALTER TABLE `polls` CHANGE `option6` `option6` VARCHAR(255)")
 	doSQL("ALTER TABLE `teleports` CHANGE `name` `name` VARCHAR(100)")
-	doSQL("ALTER TABLE `waypoints` CHANGE `name` `name` VARCHAR(50")
+	doSQL("ALTER TABLE `waypoints` CHANGE `name` `name` VARCHAR(50)")
 	doSQL("ALTER TABLE `bases` DROP PRIMARY KEY, ADD PRIMARY KEY(`steam`,`baseNumber`)")
 	doSQL("ALTER TABLE `list` DROP INDEX `thing`, ADD PRIMARY KEY(`id`)")
 	doSQL("ALTER TABLE `list` DROP PRIMARY KEY") -- OOPS! Doesn't work too well with indexes.  Down with them I say!
@@ -910,6 +939,9 @@ function alterTables()
 	doSQL("DELETE FROM badItems WHERE item = 'snow'") -- remove a test item that shouldn't be live :O
 	doSQL("INSERT INTO badItems (item, action) VALUES ('*Admin', 'timeout')")
 	doSQL("UPDATE server SET logInventory = 1")
+	doSQL("ALTER TABLE `inventoryTracker` CHANGE `pack` `pack` VARCHAR(1100)")
+	doSQL("ALTER TABLE `IPBlacklist` ADD `Country` VARCHAR(2) DEFAULT ''")
+	doSQL("ALTER TABLE `webInterfaceJSON` ADD `recipient` varchar(5) NOT NULL DEFAULT '', ADD `expire` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)
@@ -953,6 +985,14 @@ function alterTables()
 
 	if benchmarkBot then
 		display("function alterTables elapsed time: " .. string.format("%.2f", os.clock() - benchStart))
+	end
+
+	if botman.fixingBot then
+		botman.fixingBot = false
+
+		if server.allowBotRestarts then
+			restartBot()
+		end
 	end
 end
 
