@@ -2659,16 +2659,18 @@ function gmsg_server()
 
 			if string.find(chatvars.command, "show players") then
 				sendCommand("webpermission add webapi.viewallplayers 2000")
-				irc_chat(chatvars.ircAlias, "webapi.getplayerslocation 2000")
+				sendCommand("webpermission add webapi.GetPlayersLocation 2000")
 			else
 				sendCommand("webpermission add webapi.viewallplayers 2")
-				irc_chat(chatvars.ircAlias, "webapi.getplayerslocation 2")
+				sendCommand("webpermission add webapi.GetPlayersLocation 0")
 			end
 
 			if string.find(chatvars.command, "show claims") then
 				sendCommand("webpermission add webapi.viewallclaims 2000")
+				sendCommand("webpermission add webapi.getlandclaims 2000")
 			else
 				sendCommand("webpermission add webapi.viewallclaims 2")
+				sendCommand("webpermission add webapi.getlandclaims 1000")
 			end
 
 			if string.find(chatvars.command, "show inventory") then

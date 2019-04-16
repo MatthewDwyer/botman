@@ -6090,6 +6090,64 @@ function gmsg_admin()
 	end
 
 
+	local function cmd_SetDeathCost()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set death cost {cash} (default is 0)"
+			help[2] = "Set a cost penalty for dying.  The player's cash balance won't drop below zero."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,player,death,cost"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "death") or string.find(chatvars.command, "cost") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if string.find(chatvars.command, "set death cost") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			server.deathCost = math.abs(math.floor(chatvars.number))
+			if botman.dbConnected then conn:execute("UPDATE server SET deathCost = " .. server.deathCost) end
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Dying will cost a player " .. server.deathCost .. " " .. server.moneyPlural .. ".[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Dying will cost a player " .. server.deathCost .. " " .. server.moneyPlural)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_SetDropMiningWarningThreshold()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -6707,7 +6765,8 @@ function gmsg_admin()
 	local function cmd_SetWatchPlayerTimer()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
-			help[1] = " {#}set watch timer {number in seconds}"
+			help[1] = " {#}set watch timer {number in seconds}\n"
+			help[1] = help[1] .. " {#}set watch player {name} timer {number in seconds}"
 			help[2] = "When a new player joins, in-game admins will be messaged when the player adds or removes inventory.  They will automatically stop being watched after a delay.  The default is 3 days.\n"
 			help[2] = help[2] .. "You can also set a different watch duration for an individual player.\n"
 			help[2] = help[2] .. "1 hour = 3,600  1 day = 86,400  1 week = 604,800  4 weeks = 2,419,200\n"
@@ -6735,7 +6794,7 @@ function gmsg_admin()
 			end
 		end
 
-		if chatvars.words[1] == "set" and chatvars.words[2] == "watch" and chatvars.words[3] == "timer" then
+		if chatvars.words[1] == "set" and chatvars.words[2] == "watch" and (chatvars.words[3] == "player" or chatvars.words[3] == "timer") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -6756,13 +6815,61 @@ function gmsg_admin()
 				chatvars.number = 259200 -- 3 days in seconds.  Time flies!
 			end
 
-			server.defaultWatchTimer = chatvars.number
-			conn:execute("UPDATE server SET defaultWatchTimer = " .. chatvars.number)
+			if chatvars.words[3] == "player" then
+				if not string.find(chatvars.command, " timer ") then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Missing timer.  Please use {#}set watch player {name} timer {number in seconds}[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Missing timer.  Please use {#}set watch player {name} timer {number in seconds}")
+					end
 
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A player's inventory will be reported live for " .. chatvars.number .. " seconds from when inventory watching starts for them.[-]")
+					botman.faultyChat = false
+					return true
+				end
+
+				pname = string.sub(chatvars.command, string.find(chatvars.command, " player ") + 8, string.find(chatvars.command, " timer ") - 1)
+				id = LookupPlayer(pname)
+				isArchived = false
+
+				if id == 0 then
+					id = LookupArchivedPlayer(pname)
+
+					if not (id == 0) then
+						isArchived = true
+						pname = playersArchived[id].name
+					else
+						if (chatvars.playername ~= "Server") then
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+						else
+							irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+						end
+
+						botman.faultyChat = false
+						return true
+					end
+				end
+
+				if isArchived then
+					playersArchived[id].watchPlayerTimer = chatvars.number
+					conn:execute("UPDATE playersArchived SET watchPlayerTimer = " .. chatvars.number .. " WHERE steam = " .. id)
+				else
+					pname = players[id].name
+					players[id].watchPlayerTimer = chatvars.number
+					conn:execute("UPDATE players SET watchPlayerTimer = " .. chatvars.number .. " WHERE steam = " .. id)
+				end
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. pname .. " will be watched for " .. (chatvars.number / 60) .. " minutes.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Player " .. pname .. " will be watched for " .. (chatvars.number / 60) .. " minutes.")
+				end
 			else
-				irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
+				server.defaultWatchTimer = chatvars.number
+				conn:execute("UPDATE server SET defaultWatchTimer = " .. chatvars.number)
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A player's inventory will be reported live for " .. chatvars.number .. " seconds from when inventory watching starts for them.[-]")
+				end
 			end
 
 			botman.faultyChat = false
@@ -9814,6 +9921,15 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_SendPlayerToPlayer triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetDeathCost()
+
+	if result then
+		if debug then dbug("debug cmd_SetDeathCost triggered") end
 		return result
 	end
 

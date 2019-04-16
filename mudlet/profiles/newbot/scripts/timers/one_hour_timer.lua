@@ -63,7 +63,5 @@ function oneHourTimer()
 		fixMissingPlayer(k)
 	end
 
-	if tonumber(server.gameVersionNumber) >= 17 then
-		sendCommand("llp")
-	end
+	--sendCommand("llp parseable")
 end

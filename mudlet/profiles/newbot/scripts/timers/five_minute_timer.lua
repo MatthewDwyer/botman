@@ -24,5 +24,7 @@ function FiveMinuteTimer()
 				end
 			end
 		end
+
+		sendCommand("llp parseable")
 	end
 end

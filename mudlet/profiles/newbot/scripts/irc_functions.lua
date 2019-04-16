@@ -69,6 +69,9 @@ function irc_chat(name, msg)
 
 	-- replace any placeholder text with actual values
 	msg = msg:gsub("{#}", server.commandPrefix)
+	msg = msg:gsub("{server}", server.serverName)
+	msg = msg:gsub("{money}", server.moneyName)
+	msg = msg:gsub("{monies}", server.moneyPlural)
 
 	multilineText = string.split(msg, "\n")
 

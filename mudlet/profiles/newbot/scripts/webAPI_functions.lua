@@ -2481,6 +2481,7 @@ function readAPI_LLP()
 
 					if string.find(b, "location") then
 						b = string.sub(b, string.find(b, "location") + 9)
+						claimRemoved = false
 
 						coords = string.split(b, ",")
 						x = tonumber(coords[1])
@@ -2492,17 +2493,17 @@ function readAPI_LLP()
 								conn:execute("UPDATE keystones SET removed = 0 WHERE steam = " .. steam .. " AND x = " .. x .. " AND y = " .. y .. " AND z = " .. z)
 							end
 
-							if not keystones[x .. y .. z] then
-								keystones[x .. y .. z] = {}
-								keystones[x .. y .. z].x = x
-								keystones[x .. y .. z].y = y
-								keystones[x .. y .. z].z = z
-								keystones[x .. y .. z].steam = steam
-							end
+							-- if not keystones[x .. y .. z] then
+								-- keystones[x .. y .. z] = {}
+								-- keystones[x .. y .. z].x = x
+								-- keystones[x .. y .. z].y = y
+								-- keystones[x .. y .. z].z = z
+								-- keystones[x .. y .. z].steam = steam
+							-- end
 
-							keystones[x .. y .. z].expired = players[steam].claimsExpired
-							keystones[x .. y .. z].removed = 0
-							keystones[x .. y .. z].remove = false
+							-- keystones[x .. y .. z].expired = players[steam].claimsExpired
+							-- keystones[x .. y .. z].removed = 0
+							-- keystones[x .. y .. z].remove = false
 
 							if not noPlayer then
 								if not archived then
@@ -2527,26 +2528,58 @@ function readAPI_LLP()
 								if not noPlayer then
 									if not archived then
 										if (resetRegions[region] or reset or players[steam].removeClaims) and not players[steam].testAsPlayer then
-											if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove, removed, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. ", 1, 0," .. dbBool(expired) .. ") ON DUPLICATE KEY UPDATE remove = 1, removed = 0, expired = " .. dbBool(expired)) end
+											claimRemoved = true
+											if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. steam .. ",'" .. escape("rlp " .. x .. " " .. y .. " " .. z) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 5) .. "')") end
+
+											--if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove, removed, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. ", 1, 0," .. dbBool(expired) .. ") ON DUPLICATE KEY UPDATE remove = 1, removed = 0, expired = " .. dbBool(expired)) end
 										else
 											if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ")") end
 										end
 									else
 										if (resetRegions[region] or reset or playersArchived[steam].removeClaims) and not playersArchived[steam].testAsPlayer then
-											if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove, removed, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. ", 1, 0," .. dbBool(expired) .. ") ON DUPLICATE KEY UPDATE remove = 1, removed = 0, expired = " .. dbBool(expired)) end
+											claimRemoved = true
+											if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. steam .. ",'" .. escape("rlp " .. x .. " " .. y .. " " .. z) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 5) .. "')") end
+
+											--if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove, removed, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. ", 1, 0," .. dbBool(expired) .. ") ON DUPLICATE KEY UPDATE remove = 1, removed = 0, expired = " .. dbBool(expired)) end
 										else
 											if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ")") end
 										end
 									end
 								else
 									if (resetRegions[region] or reset) and server.removeExpiredClaims then
-										if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove, removed, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. ", 1, 0," .. dbBool(expired) .. ") ON DUPLICATE KEY UPDATE remove = 1, removed = 0, expired = " .. dbBool(expired)) end
+										claimRemoved = true
+										if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. steam .. ",'" .. escape("rlp " .. x .. " " .. y .. " " .. z) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 5) .. "')") end
+
+										--if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, remove, removed, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. ", 1, 0," .. dbBool(expired) .. ") ON DUPLICATE KEY UPDATE remove = 1, removed = 0, expired = " .. dbBool(expired)) end
 									else
 										if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ")") end
 									end
 								end
 							else
 								if botman.dbConnected then conn:execute("INSERT INTO keystones (steam, x, y, z, expired) VALUES (" .. steam .. "," .. x .. "," .. y .. "," .. z .. "," .. dbBool(expired) .. ")") end
+							end
+
+							if not claimRemoved then
+								if not keystones[x .. y .. z] then
+									keystones[x .. y .. z] = {}
+									keystones[x .. y .. z].x = x
+									keystones[x .. y .. z].y = y
+									keystones[x .. y .. z].z = z
+									keystones[x .. y .. z].steam = steam
+								end
+
+								keystones[x .. y .. z].removed = 0
+								keystones[x .. y .. z].remove = false
+
+								if archived then
+									keystones[x .. y .. z].expired = playersArchived[steam].claimsExpired
+								else
+									if not noPlayer then
+										keystones[x .. y .. z].expired = players[steam].claimsExpired
+									else
+										keystones[x .. y .. z].expired = true
+									end
+								end
 							end
 						end
 					end

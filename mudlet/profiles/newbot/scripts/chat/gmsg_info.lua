@@ -1444,7 +1444,7 @@ function gmsg_info()
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
-			help[1] = " {#}who visited {player name} days {days} hours {hrs} range {dist} height {ht}"
+			help[1] = " {#}who visited player {player name} days {days} hours {hrs} range {dist} height {ht}"
 			help[2] = "See who visited a player location or base.\n"
 			help[2] = help[2] .. "Example with defaults: {#}who visited player smeg days 1 hours 0 range 10 height 5\n"
 			help[2] = help[2] .. " {#}who visited bed smeg\n"

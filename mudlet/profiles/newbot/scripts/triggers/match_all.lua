@@ -522,6 +522,14 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 			players[pid].deathY = igplayers[pid].yPos
 			players[pid].deathZ = igplayers[pid].zPos
 
+			if tonumber(server.deathCost) > 0 then
+				players[pid].cash = tonumber(players[pid].cash) - server.deathCost
+
+				if tonumber(players[pid].cash) < 0 then
+					players[pid].cash = 0
+				end
+			end
+
 			irc_chat(server.ircMain, "Player " .. pid .. " name: " .. pname .. "'s death recorded at " .. igplayers[pid].deadX .. " " .. igplayers[pid].deadY .. " " .. igplayers[pid].deadZ)
 			irc_chat(server.ircAlerts, "Player " .. pid .. " name: " .. pname .. "'s death recorded at " .. igplayers[pid].deadX .. " " .. igplayers[pid].deadY .. " " .. igplayers[pid].deadZ)
 
@@ -1584,6 +1592,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		x = string.match(temp[6], "(-?%d+)")
 		y = string.match(temp[7], "(-?%d+)")
 		z = string.match(temp[8], "(-?%d+)")
+		claimRemoved = false
 
 		if players[pid].accessLevel > 2 then
 			if accessLevel(pid) > 3 then

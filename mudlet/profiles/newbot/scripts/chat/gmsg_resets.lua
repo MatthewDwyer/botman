@@ -86,8 +86,10 @@ function gmsg_resets()
 	local function cmd_ToggleResetZone()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
-			help[1] = " {#}add/remove reset zone"
-			help[2] = "Flag or unflag an entire region as a reset zone."
+			help[1] = " {#}add/remove reset\n"
+			help[1] = help[1] .. " {#}add/remove reset x-coord z-coord"
+			help[2] = "Flag or unflag an entire region as a reset zone.  If you don't specify an x and z coord, you need to be playing and standing inside the region.\n"
+			help[2] = help[2] .. "Example with coords: /add reset -1 3.  This will make region r.-1.3.7rg a reset zone."
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -95,7 +97,7 @@ function gmsg_resets()
 				tmp.accessLevel = 2
 				tmp.description = help[2]
 				tmp.notes = ""
-				tmp.ingameOnly = 1
+				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -111,26 +113,56 @@ function gmsg_resets()
 			end
 		end
 
-		if ((chatvars.words[1] == "add" or chatvars.words[1] == "remove" or chatvars.words[1] == "delete") and chatvars.words[2] == "reset" and (chatvars.words[3] == "region" or chatvars.words[3] == "zone")) then
-			if (chatvars.accessLevel > 3) then
-				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+		if (chatvars.words[1] == "add" or chatvars.words[1] == "remove" or chatvars.words[1] == "delete") and chatvars.words[2] == "reset" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if (not igplayers[chatvars.playerid]) and table.maxn(chatvars.numbers) < 2 then
+				irc_chat(chatvars.ircAlias, "Please specify an x and z coord. eg {#}add reset -1 3, or join the server and repeat the command while standing in the region.")
 				botman.faultyChat = false
 				return true
 			end
 
-			x = math.floor(igplayers[chatvars.playerid].xPos / 512)
-			z = math.floor(igplayers[chatvars.playerid].zPos / 512)
+			if table.maxn(chatvars.numbers) == 0 then
+				x = math.floor(igplayers[chatvars.playerid].xPos / 512)
+				z = math.floor(igplayers[chatvars.playerid].zPos / 512)
+			else
+				x = math.floor(chatvars.numbers[1])
+				z = math.floor(chatvars.numbers[2])
+			end
+
 			region = "r." .. x .. "." .. z .. ".7rg"
 
 			if (chatvars.words[1] == "add") then
 				resetRegions[region] = {}
 				conn:execute("INSERT INTO resetZones (region) VALUES ('" .. region .. "')")
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Region " .. region .. " is now a reset zone.[-]")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Region " .. region .. " is now a reset zone.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Region " .. region .. " is now a reset zone.")
+				end
 			else
 				resetRegions[region] = nil
 				conn:execute("DELETE FROM resetZones WHERE region = '" .. region .. "'")
 				conn:execute("UPDATE keystones SET remove = 0") -- clear the remove flag from the keystones table to prevent removals that we don't want.
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Region " .. region .. " is no longer a reset zone.[-]")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Region " .. region .. " is no longer a reset zone.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Region " .. region .. " is no longer a reset zone.")
+				end
 			end
 
 			botman.faultyChat = false
@@ -291,15 +323,6 @@ function gmsg_resets()
 	end
 
 	if debug then dbug("debug resets end of remote commands") end
-
-	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
-		botman.faultyChat = false
-		return false
-	end
-	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-
-	if (debug) then dbug("debug resets line " .. debugger.getinfo(1).currentline) end
 
 	result = cmd_ToggleResetZone()
 
