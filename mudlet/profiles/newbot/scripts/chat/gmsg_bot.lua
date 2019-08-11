@@ -1425,6 +1425,10 @@ function gmsg_bot()
 				return true
 			end
 
+			if server.botman then
+				sendCommand("bm-change botname [" .. server.botNameColour .. "]" .. server.botName)
+			end
+
 			server.botName = tmp
 			message("say [" .. server.chatColour .. "]I shall henceforth be known as " .. server.botName .. ".[-]")
 
@@ -1435,6 +1439,84 @@ function gmsg_bot()
 
 			if botman.db2Connected then
 				connBots:execute("UPDATE servers SET botName = '" .. escape(server.botName) .. "' WHERE botID = " .. server.botID)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_SetBotNameColour()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set bot name colour {hex colour code}"
+			help[2] = "Set the colour of the bot's name.  Requires the botman mod."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,set,colo,name"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "name") or string.find(chatvars.command, "colo"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "bot" and chatvars.words[3] == "name" and string.find(chatvars.words[4], "colo") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[5] == nil then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Please specify a colour code. eg. FF0000[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Please specify a colour code. eg. FF0000")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			server.botNameColour = string.upper(chatvars.words[5])
+
+			-- strip out any # characters
+			server.botNameColour = server.botNameColour:gsub("#", "")
+			server.botNameColour = string.sub(server.botNameColour, 1, 6)
+
+			conn:execute("UPDATE server SET botNameColour = '" .. escape(server.botNameColour) .. "'")
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have changed the colour of the bot's name in server messages.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "You have changed the colour of the bot's name in server messages.")
+			end
+
+			if server.botman then
+				sendCommand("bm-change botname [" .. server.botNameColour .. "]" .. server.botName)
 			end
 
 			botman.faultyChat = false
@@ -1797,6 +1879,90 @@ function gmsg_bot()
 				else
 					irc_chat(chatvars.ircAlias, "You have set a password to protect important bot commands.")
 				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_SetTelnetLogKeepDays()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set max log days {number}"
+			help[2] = "The default is 14 days. Setting this too long will result in lots of log files on disk.\n"
+			help[2] = help[2] .. "To prevent this causing issues on my hosted bots, the max you can set this is 60 days.\n"
+			help[2] = help[2] .. "To set it higher you need to edit telnetlogkeepdays in the server table in the database."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,set,telnet,log"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "log") or string.find(chatvars.command, "telnet"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if string.find(chatvars.command, "set max log day") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number == nil then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A number is required.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "A number is required.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			chatvars.number = math.abs(chatvars.number)
+
+			if chatvars.number < 7 then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You need some logging![-]")
+				else
+					irc_chat(chatvars.ircAlias, "You need some logging!")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			server.telnetLogKeepDays = chatvars.number
+			if botman.dbConnected then conn:execute("UPDATE server SET telnetLogKeepDays = " .. chatvars.number) end
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will keep logs for " .. server.telnetLogKeepDays .. " days. Some logs (eg. chat) are kept forever.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "The bot will keep logs for " .. server.telnetLogKeepDays .. " days. Some logs (eg. chat) are kept forever.")
 			end
 
 			botman.faultyChat = false
@@ -3015,6 +3181,15 @@ function gmsg_bot()
 
 	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_SetBotNameColour()
+
+	if result then
+		if debug then dbug("debug cmd_SetBotNameColour triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_SetBotRestartDay()
 
 	if result then
@@ -3055,6 +3230,15 @@ function gmsg_bot()
 
 	if result then
 		if debug then dbug("debug cmd_SetMasterPassword triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetTelnetLogKeepDays()
+
+	if result then
+		if debug then dbug("debug cmd_SetTelnetLogKeepDays triggered") end
 		return result
 	end
 

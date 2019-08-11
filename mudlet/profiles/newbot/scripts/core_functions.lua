@@ -115,9 +115,13 @@ function sendCommand(command, api, outputFile)
 				outputFile = "bc-lp.txt"
 			end
 
+			-- don't send gg to the API for now as it messes up in the BC mod's JSON encoding if the Server Login Confirmation Text contains any /r/n's which is probably fairly common.
 			if command == "gg" then
-				api = "executeconsolecommand?command=gg&"
-				outputFile = "gg.txt"
+				-- instead send it to telnet as that parses it just fine.
+				send(command)
+
+				--api = "executeconsolecommand?command=gg&"
+				--outputFile = "gg.txt"
 			end
 
 			if command == "gt" then
@@ -209,7 +213,9 @@ function sendCommand(command, api, outputFile)
 			logBotCommand(botman.serverTime, url)
 		end
 
-		downloadFile(homedir .. "/temp/" .. outputFile, url)
+		if command ~= "gg" then
+			downloadFile(homedir .. "/temp/" .. outputFile, url)
+		end
 
 		-- should be able to remove list later.  Just put it here to fix an issue with older bots updating and not having the metrics table.
 		if type(metrics) ~= "table" then
@@ -324,7 +330,6 @@ function stripBBCodes(text)
 
 
 	text = string.gsub(text, "%[[%/%!]-[^%[%]]-]", "")
-	--text = string.match(text, "^[(.*)]$")
 
 	if text == nil then
 		text = oldtext
@@ -467,7 +472,15 @@ end
 
 function message(msg, steam)
 	-- parse msg and enclose the actual message in double quotes
-	local words, word, skip, url, k, v
+	local words, word, skip, url, k, v, sayCommand, pmCommand
+
+	if server.botman then
+		sayCommand = "bm-say"
+		pmCommand = "bm-sayprivate"
+	else
+		sayCommand = "say"
+		pmCommand = "pm"
+	end
 
 	msg = msg:gsub("{#}", server.commandPrefix)
 
@@ -486,136 +499,60 @@ function message(msg, steam)
 	end
 
 	if string.sub(msg, 1, 4) == "say " then
-		if tonumber(server.gameVersionNumber) < 17 then
-			-- A16 code
-			-- say the message in public chat
-			if server.useAllocsWebAPI then
-				if not server.allocs then
-					-- Alloc's mod is missing or not detected
-					msg = "say \"" .. string.sub(msg, 5) .. "\""
-					send(msg)
+		-- say the message in public chat
+		if server.useAllocsWebAPI then
+			if not server.allocs then
+				-- Alloc's mod is missing or not detected
+				msg = sayCommand .. " \"" .. string.sub(msg, 5) .. "\""
+				send(msg)
 
-					if server.logBotCommands then
-						logBotCommand(botman.serverTime, msg)
-					end
-
-					metrics.commands = metrics.commands + 1
-				else
-					-- Alloc's mod is installed so send all public messages as individual PM's
-					msg = string.sub(msg, 5)
-					irc_chat(server.ircMain, stripBBCodes(msg))
-
-					for k,v in pairs(igplayers) do
-						url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=pm " .. k .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
-
-						if botman.dbConnected then
-							conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
-						end
-					end
+				if server.logBotCommands then
+					logBotCommand(botman.serverTime, msg)
 				end
+
+				metrics.commands = metrics.commands + 1
 			else
-				if not server.allocs then
-					-- Alloc's mod is missing or not detected
-					msg = "say \"" .. string.sub(msg, 5) .. "\""
-					send(msg)
+				msg = string.sub(msg, 5)
+				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=" .. sayCommand .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
 
-					if server.logBotCommands then
-						logBotCommand(botman.serverTime, msg)
-					end
-
-					metrics.commands = metrics.commands + 1
-				else
-					-- Alloc's mod is installed so send all public messages as individual PM's
-					irc_chat(server.ircMain, stripBBCodes(string.sub(msg, 5)))
-					msg = "\"" .. string.sub(msg, 5) .. "\""
-
-
-					for k,v in pairs(igplayers) do
-						send("pm " .. k .. " " .. msg)
-
-						if server.logBotCommands then
-							logBotCommand(botman.serverTime, msg)
-						end
-
-						metrics.commands = metrics.commands + 1
-					end
+				if botman.dbConnected then
+					conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
 				end
 			end
 		else
-			-- A17 code
-			-- say the message in public chat
-			if server.useAllocsWebAPI then
-				if not server.allocs then
-					-- Alloc's mod is missing or not detected
-					msg = "say \"" .. string.sub(msg, 5) .. "\""
-					send(msg)
+			msg = sayCommand .. " \"" .. string.sub(msg, 5) .. "\""
+			send(msg)
 
-					if server.logBotCommands then
-						logBotCommand(botman.serverTime, msg)
-					end
-
-					metrics.commands = metrics.commands + 1
-				else
-					msg = string.sub(msg, 5)
-					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=say \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
-
-					if botman.dbConnected then
-						conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
-					end
-				end
-			else
-				--if not server.allocs then
-					msg = "say \"" .. string.sub(msg, 5) .. "\""
-					send(msg)
-
-					if server.logBotCommands then
-						logBotCommand(botman.serverTime, msg)
-					end
-
-					metrics.commands = metrics.commands + 1
-				-- else
-					-- -- Alloc's mod is installed so send all public messages as individual PM's
-					-- irc_chat(server.ircMain, stripBBCodes(string.sub(msg, 5)))
-					-- msg = "\"" .. string.sub(msg, 5) .. "\""
-
-
-					-- for k,v in pairs(igplayers) do
-						-- send("pm " .. k .. " " .. msg)
-
-						-- if server.logBotCommands then
-							-- logBotCommand(botman.serverTime, msg)
-						-- end
-
-						-- metrics.commands = metrics.commands + 1
-					-- end
-				-- end
+			if server.logBotCommands then
+				logBotCommand(botman.serverTime, msg)
 			end
+
+			metrics.commands = metrics.commands + 1
 		end
+
 	else
 		if players[words[2]] then
-			if not players[words[2]].exiled then
-				if server.useAllocsWebAPI then
-					msg = string.sub(msg, 22)
-					url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=pm " .. words[2] .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+			if server.useAllocsWebAPI then
+				msg = string.sub(msg, 22)
+				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=" .. pmCommand .. " " .. words[2] .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
 
-					if botman.dbConnected then
-						conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
-					end
-				else
-					msg = "pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
-					send(msg)
-
-					if server.logBotCommands then
-						logBotCommand(botman.serverTime, msg)
-					end
-
-					metrics.commands = metrics.commands + 1
+				if botman.dbConnected then
+					conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
 				end
+			else
+				msg = pmCommand .. " " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
+				send(msg)
+
+				if server.logBotCommands then
+					logBotCommand(botman.serverTime, msg)
+				end
+
+				metrics.commands = metrics.commands + 1
 			end
 		else
 			if server.useAllocsWebAPI then
 				msg = string.sub(msg, 22)
-				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=pm " .. words[2] .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=" .. pmCommand .. " " .. words[2] .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
 
 				if botman.dbConnected then
 					if words[2] == "APItest" then
@@ -625,7 +562,7 @@ function message(msg, steam)
 					end
 				end
 			else
-				msg = "pm " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
+				msg = pmCommand .. " " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
 				send(msg)
 
 				if server.logBotCommands then
@@ -783,18 +720,23 @@ end
 
 function LookupPlayer(search, match)
 	-- try to find the player amoung those who are playing right now
-	local steam, owner, k, v, test
+	local steam, owner, k, v, test, name
 
 	if string.trim(search) == "" then
 		return 0, 0
 	end
 
+	test = tonumber(search)
+
 	-- if the search is a steam ID, don't bother walking through the list of in game players, just check that it is a member of the lua table igplayers
 	if string.len(search) == 17 then
-		test = tonumber(search)
 		if (test ~= nil) then
 			if igplayers[test] then
 				return test
+			end
+
+			if igplayers[search] then
+				return search
 			end
 		end
 	end
@@ -812,20 +754,24 @@ function LookupPlayer(search, match)
 				return k, v.steamOwner
 			end
 		else
-			if search == v.id then
-				-- matched the player id
-				return k, v.steamOwner
-			end
+			if test ~= nil then
+				if test == v.id then
+					-- matched the player id
+					return k, v.steamOwner
+				end
 
-			if k == search or v.steamOwner == search then
-				-- matched the steam id or steamOwner id
-				return k, v.steamOwner
+				if k == test or v.steamOwner == test then
+					-- matched the steam id or steamOwner id
+					return k, v.steamOwner
+				end
 			end
 
 			if (v.name ~= nil) then
+				name = string.lower(v.name)
+
 				if match == "all" then
 					-- look for an exact match
-					if (search == string.lower(v.name)) then
+					if (search == name) then
 						return k, v.steamOwner
 					end
 
@@ -834,7 +780,7 @@ function LookupPlayer(search, match)
 					end
 				else
 					-- if it contains the search it is a match
-					if (search == string.lower(v.name)) or (string.find(string.lower(v.name), search, nil, true)) then
+					if (search == name) or (string.find(name, search, nil, true)) then
 						return k, v.steamOwner
 					end
 
@@ -855,18 +801,23 @@ end
 
 
 function LookupOfflinePlayer(search, match)
-	local k, v, test
+	local k, v, test, name
 
 	if string.trim(search) == "" then
 		return 0, 0
 	end
 
+	test = tonumber(search)
+
 	-- if the search is a steam ID, don't bother walking through the list of players, just check that it is a member of the lua table players
 	if string.len(search) == 17 then
-		test = tonumber(search)
 		if (test ~= nil) then
 			if players[test] then
 				return test, players[test].steamOwner
+			end
+
+			if players[search] then
+				return search, players[search].steamOwner
 			end
 		end
 	end
@@ -885,8 +836,10 @@ function LookupOfflinePlayer(search, match)
 			end
 		else
 			if (v.name ~= nil) then
+				name = string.lower(v.name)
+
 				if match == "all" then
-					if (search == string.lower(v.name)) then
+					if (search == name) then
 						return k, v.steamOwner
 					end
 
@@ -894,18 +847,20 @@ function LookupOfflinePlayer(search, match)
 						return k, v.steamOwner
 					end
 				else
-					if (search == string.lower(v.name)) or (string.find(string.lower(v.name), search, nil, true)) then
+					if (search == name) or (string.find(name, search, nil, true)) then
 						return k, v.steamOwner
 					end
 				end
 			end
 
-			if search == v.id then
-				return k, v.steamOwner
-			end
+			if test ~= nil then
+				if test == v.id then
+					return k, v.steamOwner
+				end
 
-			if k == search or v.steamOwner == search then
-				return k, v.steamOwner
+				if k == test or v.steamOwner == test then
+					return k, v.steamOwner
+				end
 			end
 		end
 	end
@@ -916,18 +871,23 @@ end
 
 
 function LookupArchivedPlayer(search, match)
-	local k, v, test
+	local k, v, test, name
 
 	if string.trim(search) == "" then
 		return 0, 0
 	end
 
+	test = tonumber(search)
+
 	-- if the search is a steam ID, don't bother walking through the list of players, just check that it is a member of the lua table playersArchived
 	if string.len(search) == 17 then
-		test = tonumber(search)
 		if (test ~= nil) then
 			if playersArchived[test] then
 				return test
+			end
+
+			if playersArchived[search] then
+				return search
 			end
 		end
 	end
@@ -946,8 +906,10 @@ function LookupArchivedPlayer(search, match)
 			end
 		else
 			if (v.name ~= nil) then
+				name = string.lower(v.name)
+
 				if match == "all" then
-					if (search == string.lower(v.name)) then
+					if (search == name) then
 						return k, v.steamOwner
 					end
 
@@ -955,18 +917,20 @@ function LookupArchivedPlayer(search, match)
 						return k, v.steamOwner
 					end
 				else
-					if (search == string.lower(v.name)) or (string.find(string.lower(v.name), search, nil, true)) then
+					if (search == name) or (string.find(name, search, nil, true)) then
 						return k, v.steamOwner
 					end
 				end
 			end
 
-			if search == v.id then
-				return k, v.steamOwner
-			end
+			if test ~= nil then
+				if test == v.id then
+					return k, v.steamOwner
+				end
 
-			if k == search or v.steamOwner == search then
-				return k, v.steamOwner
+				if k == test or v.steamOwner == test then
+					return k, v.steamOwner
+				end
 			end
 		end
 	end
@@ -1324,7 +1288,7 @@ function getCompass(x1, z1, x2, z2)
 	while angle > tonumber(testangle) do
 	    index = index + 1
 	    if(index > 8) then
-        return direction[1] --roll over
+			return direction[1] --roll over
 		end
 
 		testangle = testangle + increment
@@ -2035,15 +1999,6 @@ function fixMissingIGPlayer(steam)
 	if igplayers[steam].flyingHeight == nil then
 		igplayers[steam].flyingHeight = 0
 	end
-
-	-- if (igplayers[steam].greet == nil) then
--- display("fix missing greet = false")
-		-- igplayers[steam].greet = false
-	-- end
-
-	-- if (igplayers[steam].greetdelay == nil) then
-		-- igplayers[steam].greetdelay = 0
-	-- end
 
 	if igplayers[steam].hackerTPScore == nil then
 		igplayers[steam].hackerTPScore = 0

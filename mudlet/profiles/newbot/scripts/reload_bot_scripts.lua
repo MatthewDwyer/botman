@@ -25,7 +25,7 @@ function updateBot(forced, steam)
 		return
 	end
 
-	if server.allocs and server.stompy then
+	if server.allocs and (server.stompy or server.botman) then
 		botMaintenance.modsInstalled = true
 		saveBotMaintenance()
 	end
@@ -493,13 +493,18 @@ function refreshScripts()
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	server.nextCodeReload = "/scripts/chat/gmsg_coppi.lua"
-	checkScript(homedir .. "/scripts/chat/gmsg_coppi.lua")
+	server.nextCodeReload = "/scripts/chat/gmsg_botman.lua"
+	checkScript(homedir .. "/scripts/chat/gmsg_botman.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	server.nextCodeReload = "/scripts/chat/gmsg_djkrose.lua"
-	checkScript(homedir .. "/scripts/chat/gmsg_djkrose.lua")
+	--server.nextCodeReload = "/scripts/chat/gmsg_coppi.lua"
+	--checkScript(homedir .. "/scripts/chat/gmsg_coppi.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	--server.nextCodeReload = "/scripts/chat/gmsg_djkrose.lua"
+	--checkScript(homedir .. "/scripts/chat/gmsg_djkrose.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 

@@ -713,6 +713,10 @@ function gmsg(line, ircid)
 				ircMsg = string.gsub(ircMsg, "Server:", playerName .. ":")
 			end
 
+			if string.find(ircMsg, server.botName .. ":") and playerName ~= "Server" then
+				ircMsg = string.gsub(ircMsg, server.botName .. ":", playerName .. ":")
+			end
+
 			irc_chat(server.ircMain, ircMsg)
 			windowMessage(server.windowGMSG, playerName .. ": " .. chatvars.command .. "\n", true)
 
@@ -747,8 +751,10 @@ function gmsg(line, ircid)
 	botman.ExceptionCount = 0
 	chatvars.oldLine = line
 	chatvars.playerid = 0
+	chatvars.gameid = 0
 	chatvars.accessLevel = 99
 	chatvars.command = line
+	chatvars.nonBotCommand = false
 	chatvars.ircid = 0
 	chatvars.ircAlias = ""
 	chatvars.helpRead = false
@@ -767,11 +773,12 @@ function gmsg(line, ircid)
 	end
 
 	if server.gameVersionNumber then
-		if tonumber(server.gameVersionNumber) < 17 then
+		--if tonumber(server.gameVersionNumber) < 17 then
 			if string.find(line, "Chat: ", nil, true) then
 				msg = string.sub(line, string.find(line, "Chat: ") + 6)
 				temp = string.split(msg, ":")
-				chatvars.playername = stripQuotes(temp[1])
+				chatvars.playername = stripAllQuotes(temp[1])
+				chatvars.playername = stripBBCodes(chatvars.playername)
 
 				if temp[3] then
 					chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
@@ -779,7 +786,7 @@ function gmsg(line, ircid)
 					chatvars.command = temp[2]
 				end
 			end
-		else
+		--else
 			if string.find(line, "'Global'): ", nil, true) then
 				msg = string.sub(line, string.find(line, "'Global'): ") + 11)
 
@@ -789,7 +796,12 @@ function gmsg(line, ircid)
 				end
 
 				temp = string.split(msg, ":")
-				chatvars.playername = stripQuotes(temp[1])
+				chatvars.playername = stripAllQuotes(temp[1])
+				chatvars.playername = stripBBCodes(chatvars.playername)
+
+				if chatvars.playername == server.botName then
+					chatvars.playername = "Server"
+				end
 
 				if temp[3] then
 					chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
@@ -804,7 +816,8 @@ function gmsg(line, ircid)
 				pos = string.find(line, "7656")
 				chatvars.playerid = string.sub(line, pos, pos + 16)
 				temp = string.split(msg, ":")
-				chatvars.playername = stripQuotes(temp[1])
+				chatvars.playername = stripAllQuotes(temp[1])
+				chatvars.playername = stripBBCodes(chatvars.playername)
 
 				if temp[3] then
 					chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
@@ -819,7 +832,8 @@ function gmsg(line, ircid)
 				pos = string.find(line, "7656")
 				chatvars.playerid = string.sub(line, pos, pos + 16)
 				temp = string.split(msg, ":")
-				chatvars.playername = stripQuotes(temp[1])
+				chatvars.playername = stripAllQuotes(temp[1])
+				chatvars.playername = stripBBCodes(chatvars.playername)
 
 				if temp[3] then
 					chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
@@ -827,7 +841,7 @@ function gmsg(line, ircid)
 					chatvars.command = temp[2]
 				end
 			end
-		end
+		--end
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -835,7 +849,8 @@ function gmsg(line, ircid)
 	if string.find(line, "INF GMSG: ", nil, true) then
 		msg = string.sub(line, string.find(line, "INF GMSG: ") + 10)
 		temp = string.split(msg, ":")
-		chatvars.playername = stripQuotes(temp[1])
+		chatvars.playername = stripAllQuotes(temp[1])
+		chatvars.playername = stripBBCodes(chatvars.playername)
 
 		if temp[3] then
 			chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
@@ -849,7 +864,12 @@ function gmsg(line, ircid)
 	if string.find(line, "INF Chatting colored: ", nil, true) then
 		msg = string.sub(line, string.find(line, "INF Chatting colored: ") + 22)
 		temp = string.split(msg, ":")
-		chatvars.playername = stripQuotes(temp[1])
+		chatvars.playername = stripAllQuotes(temp[1])
+		chatvars.playername = stripBBCodes(chatvars.playername)
+
+		if chatvars.playername == server.botName then
+			chatvars.playername = "Server"
+		end
 
 		if temp[3] then
 			chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
@@ -873,7 +893,14 @@ function gmsg(line, ircid)
 	end
 
 	if string.find(line, "-irc:") then
-		msg = string.sub(line, string.find(line, "'Server': ") + 10)
+		if string.find(line, "'Server': ") then
+			msg = string.sub(line, string.find(line, "'Server': ") + 10)
+		end
+
+		if string.find(line, server.botName .. "': ") then
+			msg = string.sub(line, string.find(line, "'" .. server.botName .. "': ") + 10)
+		end
+
 		temp = string.split(msg, ":")
 
 		if temp[3] then
@@ -886,6 +913,12 @@ function gmsg(line, ircid)
 
 		chatvars.playername = string.sub(temp[1], 1, string.len(temp[1]) - 4)
 		chatvars.playerid = LookupPlayer(chatvars.playername, "all")
+		chatvars.playername = stripAllQuotes(chatvars.playername)
+		chatvars.playername = stripBBCodes(chatvars.playername)
+
+		if chatvars.playername == server.botName then
+			chatvars.playername = "Server"
+		end
 	else
 		if chatvars.playername ~= nil and chatvars.playerid == 0 then
 			chatvars.playerid = LookupPlayer(chatvars.playername, "all")
@@ -944,6 +977,11 @@ function gmsg(line, ircid)
 		if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 		if string.find(chatvars.oldLine, "'Server':", nil, true) and not string.find(line, "-irc:") then
+			chatvars.playername = "Server"
+			botman.faultyChat = false
+		end
+
+		if string.find(chatvars.oldLine, server.botName .. "':", nil, true) and not string.find(line, "-irc:") then
 			chatvars.playername = "Server"
 			botman.faultyChat = false
 		end
@@ -1066,6 +1104,13 @@ function gmsg(line, ircid)
 
 	if (string.sub(chatvars.words[1], 1, 1) == server.commandPrefix) then
 		chatvars.words[1] = string.sub(chatvars.words[1], 2, string.len(chatvars.words[1]))
+		chatvars.wordsOld[1] = string.sub(chatvars.wordsOld[1], 2, string.len(chatvars.wordsOld[1]))
+	end
+
+	if not string.match(string.sub(chatvars.words[1], 1, 1), "(%w)") then
+		chatvars.words[1] = string.sub(chatvars.words[1], 2, string.len(chatvars.words[1]))
+		chatvars.wordsOld[1] = string.sub(chatvars.wordsOld[1], 2, string.len(chatvars.wordsOld[1]))
+		chatvars.nonBotCommand = true
 	end
 
 	-- todo: stop using chatvars.number and use the new chatvars.numbers table
@@ -1085,9 +1130,9 @@ function gmsg(line, ircid)
 		end
 	end
 
-	if (debug) then
-		display(chatvars)
-	end
+	-- if (debug) then
+		-- display(chatvars)
+	-- end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
@@ -1158,23 +1203,25 @@ function gmsg(line, ircid)
 	if chatvars.playername ~= "Server" then
 		players[chatvars.playerid].lastCommandTimestamp = os.time()
 
-		if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) then
+		if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) or chatvars.nonBotCommand then
 			if chatvars.command ~= server.commandPrefix .. "undo" then -- don't record undo so we can repeat the previous command if we want to.
 				players[chatvars.playerid].lastCommand = chatvars.command
 				players[chatvars.playerid].lastChatLine = chatvars.oldLine -- used for storing the telnet line from the last command
 			end
 
-			if players[chatvars.playerid].commandCooldown == 0 or (os.time() - players[chatvars.playerid].commandCooldown >= server.commandCooldown) then
-				players[chatvars.playerid].commandCooldown = os.time()
-			else
-				if chatvars.accessLevel > 2 then
-					-- warn the player once about the command cooldown after that silently ignore the command if its spammed too soon.
-					if not igplayers[chatvars.playerid].commandSpamAlert then
-						igplayers[chatvars.playerid].commandSpamAlert = true
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can do 1 command every " .. server.commandCooldown .. " seconds. To repeat your last command just type " .. server.commandPrefix .."[-]")
-					end
+			if not chatvars.nonBotCommand then
+				if players[chatvars.playerid].commandCooldown == 0 or (os.time() - players[chatvars.playerid].commandCooldown >= server.commandCooldown) then
+					players[chatvars.playerid].commandCooldown = os.time()
+				else
+					if chatvars.accessLevel > 2 then
+						-- warn the player once about the command cooldown after that silently ignore the command if its spammed too soon.
+						if not igplayers[chatvars.playerid].commandSpamAlert then
+							igplayers[chatvars.playerid].commandSpamAlert = true
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can do 1 command every " .. server.commandCooldown .. " seconds. To repeat your last command just type " .. server.commandPrefix .."[-]")
+						end
 
-					return true
+						return true
+					end
 				end
 			end
 		end
@@ -1398,6 +1445,16 @@ function gmsg(line, ircid)
 
 			botman.faultyChat = false
 		end
+	end
+
+	if tonumber(chatvars.playerid) > 0 then
+		if players[chatvars.playerid] then
+			chatvars.gameid = players[chatvars.playerid].id
+		end
+	end
+
+	if (debug) then
+		display(chatvars)
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -1681,59 +1738,22 @@ function gmsg(line, ircid)
 		return true
 	end
 
-	-- make Stompy's BC mod override Coppi/CPM mod commands wherever they clash
-	if tonumber(server.gameVersionNumber) < 17 then
-		if server.coppi then
-			if debug then dbug("debug entering gmsg_coppi") end
-			if gmsg_coppi ~= nil then
-				result = gmsg_coppi()
+	if server.botman then
+		if debug then dbug("debug entering gmsg_botman") end
+		result = gmsg_botman()
 
-				if result then
-					if debug then dbug("debug ran command in gmsg_coppi") end
-					return true
-				end
-			end
-		end
-
-		if server.stompy then
-			if debug then dbug("debug entering gmsg_stompy") end
-			result = gmsg_stompy()
-
-			if result then
-				if debug then dbug("debug ran command in gmsg_stompy") end
-				return true
-			end
-		end
-	else
-		if server.stompy then
-			if debug then dbug("debug entering gmsg_stompy") end
-			result = gmsg_stompy()
-
-			if result then
-				if debug then dbug("debug ran command in gmsg_stompy") end
-				return true
-			end
-		end
-
-		if server.coppi then
-			if debug then dbug("debug entering gmsg_coppi") end
-			if gmsg_coppi ~= nil then
-				result = gmsg_coppi()
-
-				if result then
-					if debug then dbug("debug ran command in gmsg_coppi") end
-					return true
-				end
-			end
+		if result then
+			if debug then dbug("debug ran command in gmsg_botman") end
+			return true
 		end
 	end
 
-	if server.djkrose then
-		if debug then dbug("debug entering gmsg_djkrose") end
-		result = gmsg_djkrose()
+	if server.stompy then
+		if debug then dbug("debug entering gmsg_stompy") end
+		result = gmsg_stompy()
 
 		if result then
-			if debug then dbug("debug ran command in gmsg_djkrose") end
+			if debug then dbug("debug ran command in gmsg_stompy") end
 			return true
 		end
 	end

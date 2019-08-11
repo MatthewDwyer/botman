@@ -16,6 +16,73 @@ if botman.debugAll then
 end
 
 
+function getMaxGimmePrizes()
+	local cursor,errorString,row
+
+	cursor,errorString = conn:execute("select count(name) as totalPrizes from gimmePrizes")
+	row = cursor:fetch({}, "a")
+	return tonumber(row.totalPrizes)
+end
+
+
+function rewardServerVote(playerID)
+	local i, r, quantity, quality
+
+	if serverVoteReward == "entity" then
+		sendCommand("se " .. playerID .. " " .. serverVoteRewardItem)
+		return true
+	end
+
+	if serverVoteReward == "crate" then
+		sendCommand("se " .. playerID .. " sc_General")
+		return true
+	end
+
+	if serverVoteReward == "item" then
+		if string.find(serverVoteRewardItem, "sc_") then
+			sendCommand("se " .. playerID .. " " .. serverVoteRewardItem)
+		else
+			if server.stompy then
+				sendCommand("bc-give " .. playerID .. " " .. serverVoteRewardItem .. " /c=1 /silent")
+			else
+				sendCommand("give " .. playerID .. " " .. serverVoteRewardItem .. " 1")
+			end
+		end
+
+		return true
+	end
+
+	if serverVoteReward == "random" then
+		if serverVoteRewardQuantity == 0 then
+			quantity = rand(5,3)
+		else
+			quantity = serverVoteRewardQuantity
+		end
+
+		for i=1,quantity,1 do
+			if serverVoteRewardQuality == 0 then
+				quality = rand(6)
+			else
+				quality = serverVoteRewardQuality
+			end
+
+
+		end
+
+
+
+		return true
+	end
+
+	if serverVoteReward == "list" then
+
+		return true
+	end
+
+	return false
+end
+
+
 function getBlockName(block)
 	-- find the block in table spawnableItems and return the block name with correct case so we don't need to worry about case.
 	local cursor, errorString, row, rows
@@ -591,6 +658,19 @@ function readAPI()
 	if isFile(homedir .. "/api.ini") then
 		dofile(homedir .. "/api.ini")
 	end
+
+	if serverVoteReward == nil then
+		serverVoteReward = "crate"
+		serverVoteRewardItem = "sc_General"
+	end
+
+	if serverVoteRewardList ~= nil then
+		if serverVoteRewardList == "" then
+			return
+		end
+
+		serverVoteRewardList = yajl.to_value(serverVoteRewardList)
+	end
 end
 
 
@@ -605,6 +685,39 @@ function writeAPI()
 
 	if serverAPI ~= nil then
 		file:write("serverAPI=\"" .. serverAPI .. "\"\n")
+	end
+
+	if serverVoteReward ~= nil then
+		file:write("serverVoteReward=\"" .. serverVoteReward .. "\"\n")
+	else
+		file:write("serverVoteReward=\"sc_General\"\n")
+		serverVoteReward="sc_General"
+	end
+
+	if serverVoteRewardQuantity ~= nil then
+		file:write("serverVoteRewardQuantity=" .. tonumber(serverVoteRewardQuantity) .. "\n")
+	else
+		file:write("serverVoteRewardQuantity=0\n")
+		serverVoteRewardQuantity=0
+	end
+
+	if serverVoteRewardQuality ~= nil then
+		file:write("serverVoteRewardQuality=" .. tonumber(serverVoteRewardQuality) .. "\n")
+	else
+		file:write("serverVoteRewardQuality=0\n")
+		serverVoteRewardQuality=0
+	end
+
+	if type(serverVoteRewardList) ~= "table" then
+		serverVoteRewardList = {}
+	end
+
+	file:write("serverVoteRewardList=\"" .. yajl.to_string(serverVoteRewardList) .. "\"\n")
+
+	if serverVoteRewardItem ~= nil then
+		file:write("serverVoteRewardItem=\"" .. serverVoteRewardItem .. "\"\n")
+	else
+		file:write("serverVoteRewardItem=\"\"\n")
 	end
 
 	if botmanAPI ~= nil then
@@ -643,7 +756,9 @@ function readServerVote(steam)
 
 			-- reward the player.  Good Player!  Have a biscuit.
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Thanks for voting for us!  Your reward should spawn beside you.[-]")
-			sendCommand("se " .. players[steam].id .. " sc_General")
+			rewardServerVote(chatvars.gameid)
+			igplayers[steam].voteRewarded = os.time()
+			igplayers[steam].voteRewardOwing = 0
 			file:close()
 
 			return
@@ -1729,144 +1844,216 @@ function downloadHandler(event, ...)
 		end
 
 		if string.find(..., "adminList.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read admin list
 			readAPI_AdminList()
 			return
 		end
 
 		if string.find(..., "apitest.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- see if the file apitest.txt exists and is not empty
 			checkAPIWorking()
 			return
 		end
 
 		if string.find(..., "banList.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read ban list
 			readAPI_BanList()
 			return
 		end
 
 		if string.find(..., "bc-go.txt", nil, true) then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read bc-go from Stompy's BC mod to get a list of game objects
 			readAPI_BCGo()
 			return
 		end
 
 		if string.find(..., "bc-lp.txt", nil, true) then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read bc-lp from Stompy's BC mod
 			readAPI_BCLP()
 			return
 		end
 
 		if string.find(..., "bc-time.txt", nil, true) then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read bc-time from Stompy's BC mod to get current server real time
 			readAPI_BCTime()
 			return
 		end
 
 		if string.find(..., "command.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read output of API command
 			readAPI_Command()
 			return
 		end
 
 		if string.find(..., "gg.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read gg
 			readAPI_GG()
 			return
 		end
 
 		if string.find(..., "gametime.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read gt
 			readAPI_GT()
 			return
 		end
 
 		if string.find(..., "help.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read help
 			readAPI_Help() -- help! help!
 			return
 		end
 
 		if string.find(..., "hostiles.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read hostiles
 			readAPI_Hostiles() -- GRR!  ARGH!
 			return
 		end
 
 		if string.find(..., "installedMods.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read version
 			readAPI_Version()
 			return
 		end
 
 		if string.find(..., "inventories.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read inventories
 			readAPI_Inventories()
 			return
 		end
 
 		if string.find(..., "le.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read le
 			readAPI_LE()
 			return
 		end
 
 		if string.find(..., "li.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read li
 			readAPI_LI()
 			return
 		end
 
 		if string.find(..., "lkp.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read lkp
 			readAPI_LKP()
 			return
 		end
 
 		if string.find(..., "llp.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read llp
 			readAPI_LLP()
 			return
 		end
 
 		if string.find(..., "log.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read log
 			readAPI_ReadLog()
 			return
 		end
 
 		if string.find(..., "lpf.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read lpf
 			readAPI_LPF()
 			return
 		end
 
 		if string.find(..., "mem.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read mem
 			readAPI_MEM()
 			return
 		end
 
 		if string.find(..., "pgd.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read pgd
 			readAPI_PGD()
 			return
 		end
 
 		if string.find(..., "playersOnline.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read players online
 			readAPI_PlayersOnline()
 			return
 		end
 
 		if string.find(..., "pug.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read pug
 			readAPI_PUG()
 			return
 		end
 
 		if string.find(..., "se.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read se
 			readAPI_SE()
 			return
@@ -1886,6 +2073,9 @@ function downloadHandler(event, ...)
 		end
 
 		if string.find(..., "webUIUpdates.txt") then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
 			-- read webUIUpdates
 			readAPI_webUIUpdates()
 			return

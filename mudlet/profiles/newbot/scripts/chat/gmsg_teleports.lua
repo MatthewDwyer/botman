@@ -520,6 +520,75 @@ function gmsg_teleports()
 	end
 
 
+	local function cmd_ToggleFetch()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable fetch"
+			help[2] = "Allow or block players using the fetch command to teleport friends to them."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "tele,able,fetch"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "able") or string.find(chatvars.command, "fetch"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "fetch" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if (chatvars.words[1] == "enable") then
+				server.disableFetch = false
+				conn:execute("UPDATE server SET disableFetch = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message(string.format("pm %s [%s]Players can use the {#}fetch command.[-]", chatvars.playerid, server.chatColour))
+				else
+					irc_chat(chatvars.ircAlias, "Players can use the {#}fetch command.")
+				end
+			else
+				server.disableFetch = true
+				conn:execute("UPDATE server SET disableFetch = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message(string.format("pm %s [%s]Players can not use the {#}fetch command.[-]", chatvars.playerid, server.chatColour))
+				else
+					irc_chat(chatvars.ircAlias, "Players can not use the {#}fetch command.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleIndividualPlayerTeleporting()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -817,7 +886,7 @@ function gmsg_teleports()
 			end
 
 			-- reject if not an admin and player to player teleporting has been disabled
-			if tonumber(chatvars.accessLevel) > 2 and not server.allowPlayerToPlayerTeleporting then
+			if tonumber(chatvars.accessLevel) > 2 and server.disableFetch then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Fetching friends has been disabled on this server.[-]")
 				botman.faultyChat = false
 				return true
@@ -2566,6 +2635,15 @@ function gmsg_teleports()
 
 	if result then
 		if debug then dbug("debug cmd_DeleteTeleport triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleFetch()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleFetch triggered") end
 		return result
 	end
 

@@ -112,6 +112,18 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		return
 	end
 
+	if string.find(line, "SleeperVolume") then -- ignore lines containing this.
+		if botman.getMetrics then
+			metrics.errors = metrics.errors + 1
+		end
+
+		if not debug then
+			deleteLine()
+		end
+
+		return
+	end
+
 	if string.find(line, "ERR ") then -- ignore lines containing this.
 		if botman.getMetrics then
 			metrics.errors = metrics.errors + 1
@@ -349,10 +361,13 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 				table.save(homedir .. "/data_backup/modVersions.lua", modVersions)
 				if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('modVersions','panel','" .. escape(yajl.to_string(modVersions)) .. "')") end
 
-				if server.allocs and server.stompy then
+				if server.allocs and (server.stompy or server.botman) then
 					botMaintenance.modsInstalled = true
-					saveBotMaintenance()
+				else
+					botMaintenance.modsInstalled = false
 				end
+
+				saveBotMaintenance()
 			end
 		end
 
@@ -405,6 +420,11 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 				if igplayers[tmp.pid].spawnedCoordsOld ~= igplayers[tmp.pid].spawnedCoords then
 					igplayers[tmp.pid].tp = tonumber(igplayers[tmp.pid].tp) - 1
+				end
+
+				if server.coppi and string.sub(players[tmp.pid].lastCommand, 2, 4) == "bag" then
+					igplayers[tmp.pid].tp = tonumber(igplayers[tmp.pid].tp) + 1
+					igplayers[tmp.pid].spawnChecked = true
 				end
 			end
 
@@ -982,6 +1002,19 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	-- infrequent telnet events below here
 	-- ===================================
 
+	if string.find(line, "No spawn point found near player!") then
+		for k,v in pairs(igplayers) do
+			if v.voteRewarded then
+				if os.time() - v.voteRewarded < 10 then
+					v.voteRewardOwing = 1
+					message("pm " .. k .. " [" .. server.warnColour .. "]Oh no! Your reward failed to spawn.  Move outside to somewhere more open and try again by typing {#}claim vote[-]")
+					message("pm " .. k .. " [" .. server.warnColour .. "]Claim it before you leave the server.[-]")
+					break
+				end
+			end
+		end
+	end
+
 	if not server.useAllocsWebAPI then
 		if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
 			if string.find(line, server.botsIP) then
@@ -1269,16 +1302,14 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	if string.sub(line, 1, 4) == "Mod " then
 		if resetVersion and not server.useAllocsWebAPI then
 			modVersions = {}
+			server.allocs = false
+			server.botman = false
 			server.coppi = false
 			server.csmm = false
 			server.SDXDetected = false
+			server.stompy = false
 			server.ServerToolsDetected = false
 			server.djkrose = false
-
-			if not botMaintenance.modsInstalled then
-				server.stompy = false
-				server.allocs = false
-			end
 
 			if botman.dbConnected then
 				conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
@@ -1300,10 +1331,6 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		server.coppiRelease = temp[1]
 		server.coppiVersion = tonumber(temp[2])
 
-		if server.hideCommands then
-			hidePlayerChat(server.commandPrefix)
-		end
-
 		return
 	end
 
@@ -1316,15 +1343,6 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		temp = string.split(line, ":")
 		server.coppiRelease = temp[1]
 		server.coppiVersion = tonumber(temp[2])
-
-		if not isFile(homedir .. "/blockScripts.txt") then
-			os.remove(homedir .. "/scripts/chat/gmsg_coppi.lua")
-			os.execute("wget http://www.botman.nz/FUP/Coppis\\ command\\ additions\\ Light/gmsg_coppi.lua -P \"" .. homedir .. "\"/scripts/chat/")
-		end
-
-		if server.hideCommands then
-			hidePlayerChat(server.commandPrefix)
-		end
 
 		return
 	end
@@ -1420,11 +1438,11 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		return
 	end
 
-	-- detect djkrose's scripting mod
-	if string.find(line, "Mod djkrose's Scripting Mod:") then
-		server.djkrose = true
+	-- detect Botman mod
+	if string.find(line, "Mod Botman:") then
+		server.botman = true
 		temp = string.split(line, ":")
-		server.djkroseVersion = temp[2]
+		server.botmanVersion = temp[2]
 
 		return
 	end
@@ -1650,6 +1668,17 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 				botman.APITestSilent = true
 				startUsingAllocsWebAPI()
 			end
+		end
+	end
+
+
+	if string.find(line, "INF StartGame done") then
+		tempTimer( 10, [[sendCommand("version")]] )
+		tempTimer( 15, [[sendCommand("admin list")]] )
+		tempTimer( 20, [[sendCommand("gg")]] )
+
+		if server.botman then
+			sendCommand("bm-change botname [" .. server.botNameColour .. "]" .. server.botName)
 		end
 	end
 end

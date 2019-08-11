@@ -119,7 +119,7 @@ function CheckInventory()
 							if tmp.itemsFound == "" then
 								tmp.itemsFound = table2[2] .. "(" .. table2[1] .. ")"
 							else
-								tmp.itemsFound = badItemsFound .. ", " .. table2[2] .. "(" .. table2[1] .. ")"
+								tmp.itemsFound = tmp.itemsFound .. ", " .. table2[2] .. "(" .. table2[1] .. ")"
 							end
 						else
 							if tmp.badItemFound then

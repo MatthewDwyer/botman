@@ -69,7 +69,7 @@ You can recall the alerts with the irc command view alerts {optional days}
 /info {player}
 Displays info about a player.  Only staff can specify a player.  Players just see their own info.
 
-/who visited player {player name} days {days} hours {hrs} range {dist} height {ht}
+/who visited {player name} days {days} hours {hrs} range {dist} height {ht}
 See who visited a player location or base.
 Example with defaults: /who visited player smeg days 1 hours 0 range 10 height 5
 /who visited bed smeg
@@ -444,9 +444,6 @@ Shop Commands:
 Attempt to automatically fix the shop.  It reloads the shop categories, checks for any missing categories in shop items and assigns them to misc then reindexes the shop.
 This fix is experimental and might not actually fix whatever is wrong with your shop.
 
-/quick fix shop
-Like /fix shop but doesn't re-read all the item names known to the server so it completes much faster.
-
 /reset shop
 Restock the shop to the max quantity of each item.
 
@@ -475,7 +472,7 @@ Enter a number from 0 to 23 which will be the game hour that the shop opens or c
 Turn on or off the daily lottery.  It is on be default.
 
 /set playtime reward {Zennies}
-Set how many Zennies a player earns for each minute played. (excludes new players and does not count total time played)
+Set how many Zennies a player earns for each minutes played. (excludes new players)
 
 /set zombie reward {Zennies}
 Set how many Zennies a player earns for each zombie killed.
@@ -695,8 +692,8 @@ To only restore player bases, add the word bases, for cash add cash and for dono
 You can also just restore 1 named player.
 To see a list of backups use /list backups.
 
-/set api log read {interval in seconds} (default 3 seconds)
-In API mode the bot will read the server log at regular intervals with the default being every 3 seconds.
+/set api log read {interval in seconds} (default 1 second)
+In API mode the bot will read the server log at regular intervals with the default being every second.
 You can set a longer delay but the bot won't respond to in-game commands faster than the delay that you set.
 If you think the polling interval is causing server lag you can try slowing it down.
 
@@ -723,11 +720,6 @@ Set the colour of server warning messages.
 
 /set command prefix / (or no symbol or any symbol except \ )
 Change bot commands from using / to using nothing or another symbol.
-
-/set lag check {seconds}
-If lag checking is enabled, the bot will send lag check messages to the server which are timed.  If the time delay from sending the message to reading it back exceeds this threshold, the bot will temporarily suspend some bot commands sent to the server re
-The default is 15 seconds.  If bot commands are not working for a long time, it could be repeatedly flagging the server as lagged.  You can disable the lag check, but if the lag is real it could get longer over time.
-Setting a very low number will probably make the bot think the server is constantly lagged.  The bot will unflag the server lag every 10 seconds to prevent the bot getting stuck thinking the server is lagged.
 
 /set master password {secret password up to 50 characters}
 Protect important commands such as /reset bot with a password.
@@ -778,11 +770,6 @@ Only server owners can enable this log.
 
 /enable/disable inventory log. (disabled by default)
 The bot logs inventory and inventory changes to the database all the time.  You can also have inventory changes recorded to a daily text file along with the other daily logs.
-
-/read log using telnet (default)
-/read log using api
-Due to ongoing issues with the API log reader skipping lines the default is that in API mode, the bot will monitor the server via telnet.
-If telnet is disabled or you tell the bot to read the log using the API, then it will monitor the server via the API.
 
 /use telnet (this is the default now but the API is planned to become the new default soon)
 /use api
@@ -1070,9 +1057,6 @@ Teleport a player to their first or second base.
 /send {player} to {other player}
 Teleport a player to another player even if the other player is offline.
 
-/set death cost {cash} (default is 0)
-Set a cost penalty for dying.  The player's cash balance won't drop below zero.
-
 /set drop mining warning {number of blocks} (default is 99)
 Set how many blocks can fall off the world every minute before the bot alerts admins to it.
 Disable by setting it to 0
@@ -1102,7 +1086,6 @@ You can add a delay to the return command.  Does not affect staff.
 You can record or view the reason for a player being arrested.  If they are released, this record is destroyed.
 
 /set watch timer {number in seconds}
-/set watch player {name} timer {number in seconds}
 When a new player joins, in-game admins will be messaged when the player adds or removes inventory.  They will automatically stop being watched after a delay.  The default is 3 days.
 You can also set a different watch duration for an individual player.
 1 hour = 3,600  1 day = 86,400  1 week = 604,800  4 weeks = 2,419,200
@@ -1147,11 +1130,6 @@ This setting is not stored and will revert to excluding admins the next time the
 /ignore/include player {player name}
 An ignored player can have uncraftable inventory and do hacker like activity such as teleporting.
 An included player is checked for these things and can be punished or temp banned for them.
-
-/set say uses name (the default)
-/set say uses nick
-The IRC command 'say' uses your player name by default.
-You can set it to use the IRC nickname instead.  Note:  It will do that for all IRC users.
 
 /enable/disable pack/revive
 Players can teleport close to where they last died to retrieve their pack.
@@ -1208,10 +1186,11 @@ The bot will forget all the reset zones so you can start over marking new ones.
 /reset zones
 List all of the regions that are reset zones.
 
-/add/remove reset
-/add/remove reset x-coord z-coord
-Flag or unflag an entire region as a reset zone.  If you don't specify an x and z coord, you need to be playing and standing inside the region.
-Example with coords: /add reset -1 3.  This will make region r.-1.3.7rg a reset zone.
+/add/remove reset zone
+Flag or unflag an entire region as a reset zone.
+
+
+Tracker Commands:
 
 /track {player name} session {number} range {distance}
 /next (track the next session)
@@ -1260,9 +1239,6 @@ Remove the current base and protection that the tracker has teleported you to.  
 
 
 Server Commands:
-/set telnet enabled/disabled (enabled is the default)
-This doesn't change telnet in the server.  Instead use this to tell the bot if the server's telnet is enabled or disabled.
-This is used by the bot as part of monitoring the status of telnet.  If telnet is disabled, the bot won't keep trying to connect to it.
 
 /say{2 letter language code} {something you want translated}
 If the translator utility is installed, the bot can translate from english what you say into the language you specify.

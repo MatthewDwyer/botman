@@ -27,8 +27,122 @@ function WebPanelQueue()
 			actionQuery = row.actionQuery
 			actionArgs = row.actionArgs
 			sessionID = row.sessionID
-			temp = string.split(actionArgs, "/,/")
+			temp = string.split(actionArgs, "||")
 			conn:execute("DELETE FROM webInterfaceQueue WHERE id = " .. row.id)
+
+			if action == "encode" and actionTable == "botman" then
+				if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, expires, json, sessionID) VALUES ('botman','panel','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 60) .. "','" .. escape(yajl.to_string(botman)) .. "','" .. escape(sessionID) .. "')") end
+			end
+
+			if action == "fix bot" then
+				fixBot()
+			end
+
+			if action == "fix shop" then
+				fixShop()
+			end
+
+			if action == "kick" then
+				kick(temp[1], temp[2])
+			end
+
+			if action == "reload bot" then
+				reloadBot()
+			end
+
+			if action == "reload scripts" then
+				reloadCode()
+			end
+
+			if action == "reload table" then
+				if actionTable == "" then
+					loadTables(true)
+				end
+
+				if actionTable == "locations" then
+					loadLocations()
+				end
+
+				if actionTable == "badItems" then
+					loadBadItems()
+				end
+
+				if actionTable == "bans" then
+					loadBans()
+				end
+
+				if actionTable == "bases" then
+					loadBases()
+				end
+
+				if actionTable == "customMessages" then
+					loadCustomMessages()
+				end
+
+				if actionTable == "friends" then
+					loadFriends()
+				end
+
+				if actionTable == "gimmeZombies" then
+					loadGimmeZombies()
+				end
+
+				if actionTable == "hotspots" then
+					loadHotspots()
+				end
+
+				if actionTable == "locationCategories" then
+					loadLocationCategories()
+				end
+
+				if actionTable == "otherEntities" then
+					loadOtherEntities()
+				end
+
+				if actionTable == "players" then
+					if steam ~= 0 then
+						loadPlayers(steam)
+					else
+						loadPlayers()
+					end
+				end
+
+				if actionTable == "resetZones" then
+					loadResetZones()
+				end
+
+				if actionTable == "restrictedItems" then
+					loadRestrictedItems()
+				end
+
+				if actionTable == "server" then
+					loadServer()
+				end
+
+				if actionTable == "shopCategories" then
+					loadShopCategories()
+				end
+
+				if actionTable == "teleports" then
+					loadTeleports()
+				end
+
+				if actionTable == "villagers" then
+					loadVillagers()
+				end
+
+				if actionTable == "waypoints" then
+					if steam ~= 0 then
+						loadWaypoints(steam)
+					else
+						loadWaypoints()
+					end
+				end
+
+				if actionTable == "whitelist" then
+					loadWhitelist()
+				end
+			end
 
 			if action == "restart bot" then
 				if server.allowBotRestarts then
@@ -54,24 +168,9 @@ function WebPanelQueue()
 				end
 			end
 
-			if action == "fix bot" then
-				fixBot()
+			if action == "say" then
+				message(temp[1], temp[2])
 			end
-
-			if action == "kick" then
-				kick(temp[1], temp[2])
-			end
-
-			if action == "encode" and actionTable == "botman" then
-				if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, expires, json, sessionID) VALUES ('botman','panel','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 60) .. "','" .. escape(yajl.to_string(botman)) .. "','" .. escape(sessionID) .. "')") end
-			end
-
-			if action == "reload table" then
-				if actionTable == "locations" then
-					loadLocations()
-				end
-			end
-
 
 			row = cursor:fetch(row, "a")
 		end

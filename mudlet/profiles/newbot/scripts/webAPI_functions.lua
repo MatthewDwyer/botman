@@ -1640,23 +1640,23 @@ function readAPI_BCGo()
 					-- end
 
 
-					-- if ircListItems ~= nil then
-						-- if ircListItemsFilter ~= "" then
-							-- if string.find(string.lower(b), ircListItemsFilter, nil, true) then
-								-- irc_chat(players[ircListItems].ircAlias, b)
-							-- end
-						-- else
-							-- irc_chat(players[ircListItems].ircAlias, b)
-						-- end
-					-- end
+					if ircListItems ~= nil then
+						if ircListItemsFilter ~= "" then
+							if string.find(string.lower(b), ircListItemsFilter, nil, true) then
+								irc_chat(players[ircListItems].ircAlias, b)
+							end
+						else
+							irc_chat(players[ircListItems].ircAlias, b)
+						end
+					end
 				end
 			end
 		end
 	end
 
 	file:close()
-	--ircListItems = nil
-	--ircListItemsFilter = nil
+	ircListItems = nil
+	ircListItemsFilter = nil
 
 	-- if task == "read items" then
 		-- removeInvalidItems()
@@ -2190,8 +2190,8 @@ end
 
 function readAPI_LE()
 --TODO:  Not finished
-	local file, ln, result, temp, data, k, v, entityID, entity, cursor, errorString,  con, q
-	local fileSize
+	local file, ln, result, temp, data, k, v, entityID, entity, cursor, errorString,  con, q, tmp
+	local fileSize, i
 
 	fileSize = lfs.attributes (homedir .. "/temp/le.txt", "size")
 
@@ -2209,15 +2209,24 @@ function readAPI_LE()
 		botman.lastServerResponseTimestamp = os.time()
 	end
 
+	conn:execute("TRUNCATE memEntities")
 	file = io.open(homedir .. "/temp/le.txt", "r")
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
 
+		if string.find(result.result, "\n") then
+			data = splitCRLF(result.result)
+
+			for k,v in pairs(data) do
+				listEntities(data[k])
+			end
+		end
+
 		for con, q in pairs(conQueue) do
 			if q.command == result.command then
 				if string.find(result.result, "\n") then
-					data = splitCRLF(result.result)
+					--data = splitCRLF(result.result)
 
 					for k,v in pairs(data) do
 						irc_chat(q.ircUser, data[k])
@@ -2848,7 +2857,7 @@ function readAPI_ReadLog()
 		botman.botOffline = false
 		botman.botOfflineCount = 0
 		botman.lastServerResponseTimestamp = os.time()
-		botman.lastAPIResponseTimestamp = os.time()
+		-- botman.lastAPIResponseTimestamp = os.time()
 	end
 
 	file = io.open(homedir .. "/temp/log.txt", "r")
@@ -3212,16 +3221,14 @@ function readAPI_Version()
 	end
 
 	modVersions = {}
+	server.allocs = false
+	server.botman = false
 	server.coppi = false
 	server.csmm = false
 	server.SDXDetected = false
 	server.ServerToolsDetected = false
+	server.stompy = false
 	server.djkrose = false
-
-	if not botMaintenance.modsInstalled then
-		server.stompy = false
-		server.allocs = false
-	end
 
 	if botman.dbConnected then
 		conn:execute("UPDATE server SET SDXDetected = 0, ServerToolsDetected = 0")
@@ -3254,6 +3261,14 @@ function readAPI_Version()
 			conQueue[con] = nil
 		end
 	end
+
+	if server.allocs and (server.stompy or server.botman) then
+		botMaintenance.modsInstalled = true
+	else
+		botMaintenance.modsInstalled = false
+	end
+
+	saveBotMaintenance()
 
 	if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('modVersions','panel','" .. escape(yajl.to_string(modVersions)) .. "')") end
 

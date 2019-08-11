@@ -174,9 +174,7 @@ end
 
 
 function irc_ListBases(steam)
-	local prot1
-	local prot2
-	local msg
+	local prot1, prot2, msg, cursor, errorString, row
 
 	if steam ~= nil then
 		cursor,errorString = conn:execute("SELECT steam, name, bedX, bedY, bedZ, homeX, homeY, homeZ, home2X, home2Y, home2Z, protect, protect2, protectSize, protect2Size from players where steam = " .. steam .. " order by name")
@@ -259,7 +257,7 @@ function irc_PlayersNearPlayer(name, name1, range, xPos, zPos, offline, otherTar
 				end
 
 				if dist <= range then
-					irc_chat(name, v.name .. " distance: " .. string.format("%-4.2d", dist) .. " meters")
+					irc_chat(name, v.name .. " steam: " .. k .. " distance: " .. string.format("%-4.2d", dist) .. " meters")
 					alone = false
 				end
 			end
@@ -292,7 +290,7 @@ function irc_PlayersNearPlayer(name, name1, range, xPos, zPos, offline, otherTar
 						flag = " OFFLINE"
 					end
 
-					irc_chat(name, v.name .. " distance: " .. string.format("%-4.2d", dist) .. " meters" .. flag)
+					irc_chat(name, v.name .. " steam: " .. k .. " distance: " .. string.format("%-4.2d", dist) .. " meters" .. flag)
 					alone = false
 				end
 			end
@@ -350,7 +348,7 @@ function irc_BasesNearPlayer(name, name1, range, xPos, zPos, otherTarget)
 					protected = " unprotected"
 				end
 
-				irc_chat(name, v.name .. " distance: " .. string.format("%-.2d", dist) .. " meters" .. protected)
+				irc_chat(name, v.name .. " steam: " .. k .. " distance: " .. string.format("%-.2d", dist) .. " meters" .. protected)
 				alone = false
 			end
 		end
@@ -369,7 +367,7 @@ function irc_BasesNearPlayer(name, name1, range, xPos, zPos, otherTarget)
 					protected = " unprotected"
 				end
 
-				irc_chat(name, v.name .. " (base 2) distance: " .. string.format("%-.2d", dist) .. " meters" .. protected)
+				irc_chat(name, v.name .. " steam: " .. k .. " (base 2) distance: " .. string.format("%-.2d", dist) .. " meters" .. protected)
 				alone = false
 			end
 		end
@@ -421,6 +419,59 @@ function irc_LocationsNearPlayer(name, name1, range, xPos, zPos, otherTarget)
 			irc_chat(name, v.name .. " distance: " .. string.format("%-.2d", dist) .. " meters")
 			alone = false
 		end
+	end
+
+	if (alone == true) then
+		if name1 ~= "" then
+			irc_chat(name, "There are none within " .. range .. " meters of " .. players[name1].name)
+		end
+
+		if otherTarget ~= nil then
+			irc_chat(name, "There are none within " .. range .. " meters of " .. otherTarget)
+		end
+
+		if name1 == "" and otherTarget == nil then
+			irc_chat(name, "There are none within " .. range .. " meters of " .. players[name].name)
+		end
+	end
+
+	irc_chat(name, ".")
+end
+
+
+function irc_EntitiesNearPlayer(name, name1, range, xPos, zPos, otherTarget)
+	local alone, dist, cursor, errorString, row
+
+	alone = true
+
+	if name1 ~= "" then
+		irc_chat(name, "Entities within " .. range .. " meters of " .. players[name1].name .. " are:")
+	end
+
+	if otherTarget ~= nil then
+		irc_chat(name, "Entities within " .. range .. " meters of " .. otherTarget .. " are:")
+	end
+
+	if name1 == "" and otherTarget == nil then
+		irc_chat(name, "Entities within " .. range .. " meters of " .. players[name].name .. " are:")
+	end
+
+	cursor,errorString = conn:execute("SELECT * from memEntities where type <> 'EntityPlayer'")
+
+	row = cursor:fetch({}, "a")
+	while row do
+		if name1 ~= "" then
+			dist = distancexz(players[name1].xPos, players[name1].zPos, row.x, row.z)
+		else
+			dist = distancexz(xPos, zPos, row.x, row.z)
+		end
+
+		if dist <= tonumber(range) then
+			irc_chat(name, row.name .. " id: " .. row.entityID .. " distance: " .. string.format("%-.2d", dist))
+			alone = false
+		end
+
+		row = cursor:fetch(row, "a")
 	end
 
 	if (alone == true) then
@@ -1221,9 +1272,20 @@ function irc_IGPlayerInfo()
 		if igplayers[irc_params.pid] then
 			irc_chat(irc_params.name, "In-Game Player record of: " .. irc_params.pname)
 			for k, v in pairs(igplayers[irc_params.pid]) do
+				cmd = ""
+
 				if k ~= "inventory" and k ~= "inventoryLast" then
-					cmd = k .. "," .. tostring(v)
-					irc_chat(irc_params.name, cmd)
+					if irc_params.search ~= "" then
+						if string.find(string.lower(k), irc_params.search) then
+							cmd = k .. "," .. tostring(v)
+						end
+					else
+						cmd = k .. "," .. tostring(v)
+					end
+
+					if cmd ~= "" then
+						irc_chat(irc_params.name, cmd)
+					end
 				end
 			end
 		else

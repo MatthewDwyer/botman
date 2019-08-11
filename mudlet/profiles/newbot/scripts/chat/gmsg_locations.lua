@@ -444,7 +444,6 @@ function gmsg_locations()
 			end
 
 			locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[4]))
-			--locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "reset ") + 6)
 			locationName = string.trim(locationName)
 
 			loc = LookupLocation(locationName)
@@ -457,12 +456,12 @@ function gmsg_locations()
 				end
 			else
 				locations[loc].resetZone = false
-				conn:execute("UPDATE locations set resetZone = 0 WHERE name = '" .. escape(locationName) .. "'")
+				conn:execute("UPDATE locations set resetZone = 0 WHERE name = '" .. escape(loc) .. "'")
 
-				message("say [" .. server.chatColour .. "]The location called " .. locationName .. " is no longer a reset zone[-]")
+				message("say [" .. server.chatColour .. "]The location called " .. loc .. " is no longer a reset zone[-]")
 
 				if (chatvars.playername ~= "Server") then
-					irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is no longer a reset zone.")
+					irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is no longer a reset zone.")
 				end
 			end
 
@@ -523,9 +522,9 @@ function gmsg_locations()
 				conn:execute("DELETE FROM locationSpawns WHERE location = '" .. escape(loc) .. "'")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Location " .. locationName .. "'s teleports have been deleted.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Location " .. loc .. "'s teleports have been deleted.[-]")
 				else
-					irc_chat(chatvars.ircAlias, "Location " .. locationName .. "'s teleports have been deleted.")
+					irc_chat(chatvars.ircAlias, "Location " .. loc .. "'s teleports have been deleted.")
 				end
 			else
 				if (chatvars.playername ~= "Server") then
@@ -589,7 +588,7 @@ function gmsg_locations()
 			if loc ~= nil then
 				dist = distancexz(locations[loc].x, locations[loc].z, igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].zPos)
 				locations[loc].size = string.format("%d", dist)
-				conn:execute("UPDATE locations set size = " .. locations[loc].size .. ", protectSize = " .. locations[loc].size .. " WHERE name = '" .. locationName .. "'")
+				conn:execute("UPDATE locations set size = " .. locations[loc].size .. ", protectSize = " .. locations[loc].size .. " WHERE name = '" .. loc .. "'")
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. loc .. " now spans " .. string.format("%d", dist * 2) .. " meters.[-]")
 
 				if loc == "Prison" then
@@ -653,7 +652,7 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if (loc ~= nil) then
-				cursor,errorString = conn:execute("SELECT * FROM locations WHERE name = '" .. locationName .."'")
+				cursor,errorString = conn:execute("SELECT * FROM locations WHERE name = '" .. loc .."'")
 				row = cursor:fetch({}, "a")
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Location: " .. row.name .. "[-]")
@@ -823,7 +822,6 @@ function gmsg_locations()
 			end
 
 			locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[4]))
-			--locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "reset ") + 6)
 			locationName = string.trim(locationName)
 
 			loc = LookupLocation(locationName)
@@ -836,12 +834,12 @@ function gmsg_locations()
 				end
 			else
 				locations[loc].resetZone = true
-				conn:execute("UPDATE locations set resetZone = 1 WHERE name = '" .. escape(locationName) .. "'")
+				conn:execute("UPDATE locations set resetZone = 1 WHERE name = '" .. escape(loc) .. "'")
 
-				message("say [" .. server.chatColour .. "]The location called " .. locationName .. " is now a reset zone[-]")
+				message("say [" .. server.chatColour .. "]The location called " .. loc .. " is now a reset zone[-]")
 
 				if (chatvars.playername ~= "Server") then
-					irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now a reset zone.")
+					irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now a reset zone.")
 				end
 			end
 
@@ -895,7 +893,6 @@ function gmsg_locations()
 			end
 
 			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-			--locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "move ") + 5)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -908,9 +905,9 @@ function gmsg_locations()
 				locations[loc].y = chatvars.intY
 				locations[loc].z = chatvars.intZ
 
-				conn:execute("INSERT INTO locations (name, x, y, z) VALUES ('" .. escape(locationName) .. "'," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ") ON DUPLICATE KEY UPDATE x = " .. chatvars.intX .. ", y = " .. chatvars.intY .. ", z = " .. chatvars.intZ)
-				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','location moved','Location " .. escape(locationName) .. " moved'," .. chatvars.playerid .. ")")
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have moved a location called " .. locationName .. "[-]")
+				conn:execute("INSERT INTO locations (name, x, y, z) VALUES ('" .. escape(loc) .. "'," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ") ON DUPLICATE KEY UPDATE x = " .. chatvars.intX .. ", y = " .. chatvars.intY .. ", z = " .. chatvars.intZ)
+				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','location moved','Location " .. escape(loc) .. " moved'," .. chatvars.playerid .. ")")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have moved a location called " .. loc .. "[-]")
 			end
 
 			botman.faultyChat = false
@@ -1017,7 +1014,6 @@ function gmsg_locations()
 			end
 
 			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-			--locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "remove ") + 7)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -1037,13 +1033,13 @@ function gmsg_locations()
 				end
 			else
 				locations[loc] = nil
-				conn:execute("DELETE FROM locationSpawns WHERE location = '" .. escape(locationName) .. "'")
-				conn:execute("DELETE FROM locations WHERE name = '" .. escape(locationName) .. "'")
+				conn:execute("DELETE FROM locationSpawns WHERE location = '" .. escape(loc) .. "'")
+				conn:execute("DELETE FROM locations WHERE name = '" .. escape(loc) .. "'")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You removed a location called " .. locationName .. ".[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You removed a location called " .. loc .. ".[-]")
 				else
-					irc_chat(chatvars.ircAlias, "You removed a location called " .. locationName)
+					irc_chat(chatvars.ircAlias, "You removed a location called " .. loc)
 				end
 			end
 
@@ -1353,9 +1349,9 @@ function gmsg_locations()
 				conn:execute("UPDATE locations set accessLevel = " .. locations[loc].accessLevel .. " WHERE name = '" .. escape(locationName) .. "'")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. locationName .. " is restricted to players with access level " .. locations[loc].accessLevel .. " and above.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. loc .. " is restricted to players with access level " .. locations[loc].accessLevel .. " and above.[-]")
 				else
-					irc_chat(chatvars.ircAlias, "The location " .. locationName .. " is restricted to players with access level " .. locations[loc].accessLevel .. " and above.")
+					irc_chat(chatvars.ircAlias, "The location " .. loc .. " is restricted to players with access level " .. locations[loc].accessLevel .. " and above.")
 				end
 			end
 
@@ -1517,12 +1513,12 @@ function gmsg_locations()
 
 			if chatvars.number ~= nil and loc ~= nil then
 				locations[loc].coolDownTimer = math.floor(tonumber(chatvars.number))
-				conn:execute("UPDATE locations set coolDownTimer = " .. math.floor(tonumber(chatvars.number)) .. " WHERE name = '" .. escape(locationName) .. "'")
+				conn:execute("UPDATE locations set coolDownTimer = " .. math.floor(tonumber(chatvars.number)) .. " WHERE name = '" .. escape(loc) .. "'")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. locationName .. " now has a cooldown timer of " .. locations[loc].coolDownTimer .. " seconds.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. loc .. " now has a cooldown timer of " .. locations[loc].coolDownTimer .. " seconds.[-]")
 				else
-					irc_chat(chatvars.ircAlias, "The location " .. locationName .. " now has a cooldown timer of " .. locations[loc].coolDownTimer .. " seconds.")
+					irc_chat(chatvars.ircAlias, "The location " .. loc .. " now has a cooldown timer of " .. locations[loc].coolDownTimer .. " seconds.")
 				end
 			end
 
@@ -1597,9 +1593,9 @@ function gmsg_locations()
 				conn:execute("UPDATE locations set cost = " .. math.floor(tonumber(chatvars.number)) .. ", currency = '" .. escape(locations[loc].currency) .. "' WHERE name = '" .. escape(locationName) .. "'")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. locationName .. " requires " .. locations[loc].cost .. " " .. locations[loc].currency .. " to teleport.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. loc .. " requires " .. locations[loc].cost .. " " .. locations[loc].currency .. " to teleport.[-]")
 				else
-					irc_chat(chatvars.ircAlias, "The location " .. locationName .. " requires " .. locations[loc].cost .. " " .. locations[loc].currency .. " to teleport.")
+					irc_chat(chatvars.ircAlias, "The location " .. loc .. " requires " .. locations[loc].cost .. " " .. locations[loc].currency .. " to teleport.")
 				end
 			end
 
@@ -1773,9 +1769,9 @@ function gmsg_locations()
 				conn:execute("UPDATE locations set miniGame = '" .. escape(miniGame) .. "' WHERE name = '" .. escape(loc) .. "'")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. locationName .. " is the mini-game " .. miniGame .. ".[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. loc .. " is the mini-game " .. miniGame .. ".[-]")
 				else
-					irc_chat(chatvars.ircAlias, "The location " .. locationName .. " is the mini-game " .. miniGame)
+					irc_chat(chatvars.ircAlias, "The location " .. loc .. " is the mini-game " .. miniGame)
 				end
 			end
 
@@ -2161,9 +2157,9 @@ function gmsg_locations()
 				conn:execute("UPDATE locations set size = " .. math.floor(tonumber(chatvars.number)) .. ", protectSize = " .. math.floor(tonumber(chatvars.number)) .. " WHERE name = '" .. escape(locationName) .. "'")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. locations[loc].name .. " now spans " .. tonumber(chatvars.number * 2) .. " metres.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. loc .. " now spans " .. tonumber(chatvars.number * 2) .. " metres.[-]")
 				else
-					irc_chat(chatvars.ircAlias, "The location " .. locations[loc].name .. " now spans " .. tonumber(chatvars.number * 2) .. " metres.")
+					irc_chat(chatvars.ircAlias, "The location " .. loc .. " now spans " .. tonumber(chatvars.number * 2) .. " metres.")
 				end
 
 				if loc == string.lower("prison") then
@@ -2230,13 +2226,12 @@ function gmsg_locations()
 
 			if chatvars.words[3] ~= nil then
 				locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-				--locationName = string.sub(chatvars.command, string.find(chatvars.command, " tp ") + 4, string.len(chatvars.command))
 				locationName = string.trim(locationName)
 				loc = LookupLocation(locationName)
 
-				if locations[chatvars.words[3]] then
+				if loc ~= nil then
 					conn:execute("INSERT INTO locationSpawns (location, x, y, z) VALUES ('" .. chatvars.words[3] .. "'," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ")")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Random TP added to " .. chatvars.words[3] .. "[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Random TP added to " .. loc .. "[-]")
 
 					botman.faultyChat = false
 					return true
@@ -2304,7 +2299,6 @@ function gmsg_locations()
 			end
 
 			locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[4]))
-			--locationName = string.sub(chatvars.command, string.find(chatvars.command, "base ") + 5)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -2317,21 +2311,21 @@ function gmsg_locations()
 			else
 				if chatvars.words[2] == "allow" then
 					locations[loc].allowBase = true
-					conn:execute("UPDATE locations SET allowBase = 1 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations SET allowBase = 1 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players may setbase in " .. locationName .. ".[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players may setbase in " .. loc .. ".[-]")
 					else
-						irc_chat(chatvars.ircAlias, "Players may setbase in " .. locationName .. ".")
+						irc_chat(chatvars.ircAlias, "Players may setbase in " .. loc .. ".")
 					end
 				else
 					locations[loc].allowBase = false
-					conn:execute("UPDATE locations SET allowBase = 0 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations SET allowBase = 0 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players cannot setbase in " .. locationName .. ".[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players cannot setbase in " .. loc .. ".[-]")
 					else
-						irc_chat(chatvars.ircAlias, "Players cannot setbase in " .. locationName .. ".")
+						irc_chat(chatvars.ircAlias, "Players cannot setbase in " .. loc .. ".")
 					end
 				end
 			end
@@ -2386,13 +2380,6 @@ function gmsg_locations()
 			end
 
 			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-
-			-- if chatvars.words[2] == "enable" then
-				-- locationName = string.sub(chatvars.command, string.find(chatvars.command, "enable ") + 7)
-			-- else
-				-- locationName = string.sub(chatvars.command, string.find(chatvars.command, "disable ") + 8)
-			-- end
-
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -2405,21 +2392,21 @@ function gmsg_locations()
 			else
 				if chatvars.words[2] == "enable" then
 					locations[loc].active = true
-					conn:execute("UPDATE locations set active = 1 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set active = 1 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " is now enabled.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now enabled.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now enabled.")
+						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now enabled.")
 					end
 				else
 					locations[loc].active = false
-					conn:execute("UPDATE locations set active = 0 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set active = 0 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " is now disabled.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now disabled.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now disabled.")
+						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now disabled.")
 					end
 				end
 			end
@@ -2474,7 +2461,6 @@ function gmsg_locations()
 			end
 
 			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-			--locationName = string.sub(chatvars.command, string.find(chatvars.command, "hide ") + 5)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -2487,21 +2473,21 @@ function gmsg_locations()
 			else
 				if chatvars.words[2] == "hide" then
 					locations[loc].hidden = true
-					conn:execute("UPDATE locations set hidden = 1 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set hidden = 1 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " is now hidden from players.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now hidden from players.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now hidden from players.")
+						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now hidden from players.")
 					end
 				else
 					locations[loc].hidden = false
-					conn:execute("UPDATE locations set hidden = 0 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set hidden = 0 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " can be seen by players.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. loc .. " can be seen by players.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " can be seen by players.")
+						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " can be seen by players.")
 					end
 				end
 			end
@@ -2569,25 +2555,25 @@ function gmsg_locations()
 			else
 				if chatvars.words[2] == "lobby" then
 					locations[loc].lobby = true
-					conn:execute("UPDATE locations set lobby = 1 WHERE name = '" .. escape(locationName) .. "'")
-					conn:execute("UPDATE locations set lobby = 0 WHERE name <> '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set lobby = 1 WHERE name = '" .. escape(loc) .. "'")
+					conn:execute("UPDATE locations set lobby = 0 WHERE name <> '" .. escape(loc) .. "'")
 
 					-- reload the locations table
 					loadLocations()
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " is now the lobby.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now the lobby.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now the lobby.")
+						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now the lobby.")
 					end
 				else
 					locations[loc].lobby = false
-					conn:execute("UPDATE locations set lobby = 0 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set lobby = 0 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " is no longer the lobby.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. loc .. " is no longer the lobby.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is no longer the lobby.")
+						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is no longer the lobby.")
 					end
 				end
 			end
@@ -2656,21 +2642,21 @@ function gmsg_locations()
 			else
 				if chatvars.words[2] == "round" or chatvars.words[2] == "circle" then
 					locations[loc].isRound = true
-					conn:execute("UPDATE locations set isRound = 1 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set isRound = 1 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " is now a circle with radius " .. locations[loc].size .. ".[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now a circle with radius " .. locations[loc].size .. ".[-]")
 					else
-						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now a circle with radius " .. locations[loc].size .. ".")
+						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now a circle with radius " .. locations[loc].size .. ".")
 					end
 				else
 					locations[loc].isRound = false
-					conn:execute("UPDATE locations set isRound = 0 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set isRound = 0 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. locationName .. " is now a square with radius " .. locations[loc].size .. ".[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now a square with radius " .. locations[loc].size .. ".[-]")
 					else
-						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now a square with radius " .. locations[loc].size .. ".")
+						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now a square with radius " .. locations[loc].size .. ".")
 					end
 				end
 			end
@@ -2725,13 +2711,6 @@ function gmsg_locations()
 			end
 
 			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-
-			-- if chatvars.words[2] == "private" then
-				-- locationName = string.sub(chatvars.command, string.find(chatvars.command, "private ") + 8)
-			-- else
-				-- locationName = string.sub(chatvars.command, string.find(chatvars.command, "public ") + 7)
-			-- end
-
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -2744,21 +2723,21 @@ function gmsg_locations()
 			else
 				if chatvars.words[2] == "private" then
 					locations[loc].public = false
-					conn:execute("UPDATE locations set public = 0 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set public = 0 WHERE name = '" .. escape(loc) .. "'")
 
-					message("say [" .. server.chatColour .. "]The location called " .. locationName .. " is now private[-]")
+					message("say [" .. server.chatColour .. "]The location called " .. loc .. " is now private[-]")
 
 					if (chatvars.playername ~= "Server") then
-						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now private.")
+						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now private.")
 					end
 				else
 					locations[loc].public = true
-					conn:execute("UPDATE locations set public = 1 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set public = 1 WHERE name = '" .. escape(loc) .. "'")
 
-					message("say [" .. server.chatColour .. "]The location called " .. locationName .. " is now public[-]")
+					message("say [" .. server.chatColour .. "]The location called " .. loc .. " is now public[-]")
 
 					if (chatvars.playername ~= "Server") then
-						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now public.")
+						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now public.")
 					end
 
 				end
@@ -2822,19 +2801,19 @@ function gmsg_locations()
 			if loc ~= nil then
 				if string.find(chatvars.command, "pve") then
 					locations[loc].pvp = false
-					conn:execute("UPDATE locations set pvp = 0 WHERE name = '" .. escape(locationName) .. "'")
-					message("say [" .. server.chatColour .. "]The location " .. locations[loc].name .. " is now a PVE zone.[-]")
+					conn:execute("UPDATE locations set pvp = 0 WHERE name = '" .. escape(loc) .. "'")
+					message("say [" .. server.chatColour .. "]The location " .. loc .. " is now a PVE zone.[-]")
 
 					if (chatvars.playername ~= "Server") then
-						irc_chat(chatvars.ircAlias, "The location " .. locations[loc].name .. " is now a PVE zone.")
+						irc_chat(chatvars.ircAlias, "The location " .. loc .. " is now a PVE zone.")
 					end
 				else
 					locations[loc].pvp = true
-					conn:execute("UPDATE locations set pvp = 1 WHERE name = '" .. escape(locationName) .. "'")
-					message("say [" .. server.chatColour .. "]The location " .. locations[loc].name .. " is now a PVP zone![-]")
+					conn:execute("UPDATE locations set pvp = 1 WHERE name = '" .. escape(loc) .. "'")
+					message("say [" .. server.chatColour .. "]The location " .. loc .. " is now a PVP zone![-]")
 
 					if (chatvars.playername ~= "Server") then
-						irc_chat(chatvars.ircAlias, "The location " .. locations[loc].name .. " is now a PVP zone.")
+						irc_chat(chatvars.ircAlias, "The location " .. loc .. " is now a PVP zone.")
 					end
 				end
 			else
@@ -2900,24 +2879,26 @@ function gmsg_locations()
 				temp = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[2]), string.find(chatvars.command, "enable") - 2)
 			end
 
-			if locations[temp] then
+			loc = LookupLocation(temp)
+
+			if loc ~= nil then
 				if string.find(chatvars.command, "disable") then
 					locations[temp].allowReturns = false
-					conn:execute("UPDATE locations set allowReturns = 0 WHERE name = '" .. escape(temp) .. "'")
+					conn:execute("UPDATE locations set allowReturns = 0 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will not be able to use returns in " .. locations[temp].name .. ".[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will not be able to use returns in " .. loc .. ".[-]")
 					else
-						irc_chat(chatvars.ircAlias, "Players will not be able to use returns in " .. locations[temp].name)
+						irc_chat(chatvars.ircAlias, "Players will not be able to use returns in " .. loc)
 					end
 				else
 					locations[temp].allowReturns = true
-					conn:execute("UPDATE locations set allowReturns = 1 WHERE name = '" .. escape(temp) .. "'")
+					conn:execute("UPDATE locations set allowReturns = 1 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players can use returns in " .. locations[temp].name .. ".[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players can use returns in " .. loc .. ".[-]")
 					else
-						irc_chat(chatvars.ircAlias, "Players can use returns in " .. locations[temp].name)
+						irc_chat(chatvars.ircAlias, "Players can use returns in " .. loc)
 					end
 				end
 			end
@@ -2974,13 +2955,6 @@ function gmsg_locations()
 			end
 
 			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-
-			-- if chatvars.words[2] == "safe" then
-				-- locationName = string.sub(chatvars.command, string.find(chatvars.command, "safe ") + 5)
-			-- else
-				-- locationName = string.sub(chatvars.command, string.find(chatvars.command, "unsafe ") + 7)
-			-- end
-
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -2994,22 +2968,22 @@ function gmsg_locations()
 				if chatvars.words[2] == "safe" then
 					locations[loc].killZombies = true
 					server.scanZombies = true
-					conn:execute("UPDATE locations set killZombies = 1 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set killZombies = 1 WHERE name = '" .. escape(loc) .. "'")
 
-					message("say [" .. server.chatColour .. "]The location called " .. locationName .. " is now a safezone.[-]")
+					message("say [" .. server.chatColour .. "]The location called " .. loc .. " is now a safezone.[-]")
 
 					if (chatvars.playername ~= "Server") then
-						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is now a safezone.")
+						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now a safezone.")
 					end
 				else
 					locations[loc].killZombies = true
 					server.scanZombies = true
-					conn:execute("UPDATE locations set killZombies = 0 WHERE name = '" .. escape(locationName) .. "'")
+					conn:execute("UPDATE locations set killZombies = 0 WHERE name = '" .. escape(loc) .. "'")
 
-					message("say [" .. server.chatColour .. "]The location called " .. locationName .. " is no longer a safezone![-]")
+					message("say [" .. server.chatColour .. "]The location called " .. loc .. " is no longer a safezone![-]")
 
 					if (chatvars.playername ~= "Server") then
-						irc_chat(chatvars.ircAlias, "The location called " .. locationName .. " is no longer a safezone.")
+						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is no longer a safezone.")
 					end
 
 				end
@@ -3103,6 +3077,8 @@ function gmsg_locations()
 
 
 	local function cmd_ToggleLocationWaypoints()
+		local loc
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}location {name} enable (or disable) waypoints"
@@ -3151,24 +3127,26 @@ function gmsg_locations()
 				temp = string.sub(chatvars.command, string.find(chatvars.command, "location") + 9, string.find(chatvars.command, "enable") - 2)
 			end
 
-			if locations[temp] then
+			loc = LookupLocation(temp)
+
+			if locations[loc] then
 				if string.find(chatvars.command, "disable") then
-					locations[temp].allowWaypoints = false
-					conn:execute("UPDATE locations set allowWaypoints = 0 WHERE name = '" .. escape(temp) .. "'")
+					locations[loc].allowWaypoints = false
+					conn:execute("UPDATE locations set allowWaypoints = 0 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will not be able to set waypoints in " .. locations[temp].name .. ".[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will not be able to set waypoints in " .. loc .. ".[-]")
 					else
-						irc_chat(chatvars.ircAlias, "Players will not be able to set waypoints in " .. locations[temp].name)
+						irc_chat(chatvars.ircAlias, "Players will not be able to set waypoints in " .. loc)
 					end
 				else
 					locations[temp].allowWaypoints = true
-					conn:execute("UPDATE locations set allowWaypoints = 1 WHERE name = '" .. escape(temp) .. "'")
+					conn:execute("UPDATE locations set allowWaypoints = 1 WHERE name = '" .. escape(loc) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players can set waypoints in " .. locations[temp].name .. ".[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players can set waypoints in " .. loc .. ".[-]")
 					else
-						irc_chat(chatvars.ircAlias, "Players can set waypoints in " .. locations[temp].name)
+						irc_chat(chatvars.ircAlias, "Players can set waypoints in " .. loc)
 					end
 				end
 			end
@@ -3292,7 +3270,6 @@ function gmsg_locations()
 			end
 
 			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-			--locationName = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 

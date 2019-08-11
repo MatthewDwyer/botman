@@ -194,9 +194,6 @@ function login()
 		initDB() -- this lives in mysql.lua
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
-		-- nuke the memory tables to keep them minty fresh every time Mudlet starts
-		resetMySQLMemoryTables()
-
 		botman.dbConnected = isDBConnected()
 		botman.db2Connected = isDBBotsConnected()
 		botman.initError = true
@@ -309,6 +306,10 @@ function login()
 	-- join the irc server
 	if botman.customMudlet then
 		joinIRCServer()
+	end
+
+	if server.botman then
+		sendCommand("bm-change botname [" .. server.botNameColour .. "]" .. server.botName)
 	end
 
 	if custom_startup ~= nil then

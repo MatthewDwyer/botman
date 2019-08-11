@@ -520,7 +520,19 @@ function gmsg_misc()
 			end
 
 			if not server.JimsCommands then
-				checkServerVote(chatvars.playerid)
+				if igplayers[chatvars.playerid].voteRewardOwing then
+					if tonumber(igplayers[chatvars.playerid].voteRewardOwing) > 0 then
+						-- reward the player.  Good Player!  Have biscuit.
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Check the ground for your reward if it is not added directly to your inventory. If it doesn't, move and repeat {#}claim vote[-]")
+						rewardServerVote(chatvars.gameid)
+						igplayers[chatvars.playerid].voteRewarded = os.time()
+						igplayers[chatvars.playerid].voteRewardOwing = 0
+					else
+						checkServerVote(chatvars.playerid)
+					end
+				else
+					checkServerVote(chatvars.playerid)
+				end
 			else
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This server is using {#}votecrate.  Please use that command instead of {#}claim vote.[-]")
 			end

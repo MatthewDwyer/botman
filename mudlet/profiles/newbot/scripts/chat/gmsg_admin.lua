@@ -3986,10 +3986,10 @@ function gmsg_admin()
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I scan for these restricted items in inventory:[-]")
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Item      Quantity      Min Access Level[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Item | Quantity | Access Level | Action[-]")
 			else
 				irc_chat(chatvars.ircAlias, "I scan for these restricted items in inventory:")
-				irc_chat(chatvars.ircAlias, "Item.........Quantity..........Min Access Level")
+				irc_chat(chatvars.ircAlias, "Item | Quantity | Access Level | Action")
 			end
 
 			for k, v in pairs(restrictedItems) do
@@ -5145,6 +5145,105 @@ function gmsg_admin()
 			-- run admin list
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reading admin list[-]")
 			sendCommand("admin list")
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_RemoveEntity()
+		local cursor, errorString, row, dist, sql, entityRemoved
+
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}remove entity/trader/npc {optional id}"
+			help[2] = "The bot will despawn any trader within 2 blocks of you in-game or by entity id if given."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "remov,entity,trade,spawn"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "remov") or string.find(chatvars.command, "trader"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "remove" and (chatvars.words[2] == "trader" or chatvars.words[2] == "entity" or chatvars.words[2] == "npc") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+
+				if not chatvars.number and (chatvars.playername ~= "Server") then
+					irc_chat(chatvars.ircAlias, "An entity ID is required because you didn't issue this command in-game.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			entityRemoved = false
+
+			if chatvars.number ~= nil then
+				sql = "SELECT * from memEntities where type <> 'EntityPlayer' and entityID = " .. chatvars.number
+				cursor,errorString = conn:execute(sql)
+			else
+				sql = "SELECT * from memEntities where type <> 'EntityPlayer'"
+				cursor,errorString = conn:execute(sql)
+			end
+
+			row = cursor:fetch({}, "a")
+			while row do
+				if chatvars.number ~= nil then
+					dist = 0
+				else
+					dist = distancexz(chatvars.intX, chatvars.intZ, row.x, row.z)
+				end
+
+				if dist <= 2 then
+					sendCommand("bc-remove " .. row.entityID)
+					entityRemoved = true
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.name .. " type: " .. row.type .. " removed.[-]")
+					else
+						irc_chat(chatvars.ircAlias, row.name .. " type: " .. row.type .. " removed.")
+					end
+				end
+
+				row = cursor:fetch(row, "a")
+			end
+
+			sendCommand("le")
+
+			if not entityRemoved then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Nothing was removed but entities have been re-scanned. Try again now.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Nothing was removed but entities have been re-scanned. Try again now.")
+				end
+			end
+
 			botman.faultyChat = false
 			return true
 		end
@@ -9849,6 +9948,15 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_ReloadAdmins triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_RemoveEntity()
+
+	if result then
+		if debug then dbug("debug cmd_RemoveEntity triggered") end
 		return result
 	end
 

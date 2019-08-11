@@ -205,8 +205,10 @@ function queueGimmeHell(wave, level, silent)
 			p = pickRandomArenaPlayer()
 
 			if tonumber(p) > 0 then
-				cmd = "se " .. arenaPlayers[p].id .. " " .. zed
-				conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. cmd .. "', true, " .. p .. ")")
+				if gimmeZombies[zed] then
+					cmd = "se " .. arenaPlayers[p].id .. " " .. zed
+					conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. cmd .. "', true, " .. p .. ")")
+				end
 			end
 		end
 	end
@@ -557,10 +559,11 @@ function gimme(pid, testGimme)
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if (r == botman.maxGimmeZombies + 1) then
-		cursor,errorString = conn:execute("select * from gimmePrizes")
-		rows = tonumber(cursor:numrows())
-		r = rand(rows)
+		if botman.maxGimmePrizes == nil then
+			botman.maxGimmePrizes = getMaxGimmePrizes()
+		end
 
+		r = rand(botman.maxGimmePrizes)
 		cursor,errorString = conn:execute("select * from gimmePrizes limit " .. r - 1 .. ",1")
 		row = cursor:fetch({}, "a")
 
@@ -1077,8 +1080,11 @@ function gimme(pid, testGimme)
 
 			for i = 1, r do
 				z = PicknMix(players[pid].level)
-				cmd = "se " .. playerid .. " " .. z
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+
+				if gimmeZombies[z] then
+					cmd = "se " .. playerid .. " " .. z
+					conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+				end
 			end
 
 			botman.faultyGimme = false
@@ -1250,36 +1256,36 @@ function gimme(pid, testGimme)
 
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
-	if (r == botman.maxGimmeZombies + 14) then
-		if (not server.gimmePeace) then
-			message("say [" .. server.chatColour .. "]" .. pname .. " won an air drop, but it is guarded by a boss zombie!  Show him who's boss.[-]")
-		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]You won an air drop, but it is guarded by a boss zombie!  Show him who's boss.[-]")
-		end
+	-- if (r == botman.maxGimmeZombies + 14) then
+		-- if (not server.gimmePeace) then
+			-- message("say [" .. server.chatColour .. "]" .. pname .. " won an air drop, but it is guarded by a boss zombie!  Show him who's boss.[-]")
+		-- else
+			-- message("pm " .. pid .. " [" .. server.chatColour .. "]You won an air drop, but it is guarded by a boss zombie!  Show him who's boss.[-]")
+		-- end
 
-		tmp = {}
-		for k,v in pairs(otherEntities) do
-			if string.find(v.entity, "eneral") then
-				tmp.entityid = k
-			end
-		end
+		-- tmp = {}
+		-- for k,v in pairs(otherEntities) do
+			-- if string.find(v.entity, "eneral") then
+				-- tmp.entityid = k
+			-- end
+		-- end
 
-		cmd = "se " .. playerid .. " " .. tmp.entityid
-		conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+		-- cmd = "se " .. playerid .. " " .. tmp.entityid
+		-- conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 
-		tmp = {}
-		for k,v in pairs(gimmeZombies) do
-			if string.find(v.zombie, "ZombieDog") then
-				tmp.entityid = v.entityID
-			end
-		end
+		-- tmp = {}
+		-- for k,v in pairs(gimmeZombies) do
+			-- if string.find(v.zombie, "ZombieDog") then
+				-- tmp.entityid = v.entityID
+			-- end
+		-- end
 
-		cmd = "se " .. playerid .. " " .. tmp.entityid
-		conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+		-- cmd = "se " .. playerid .. " " .. tmp.entityid
+		-- conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 
-		botman.faultyGimme = false
-		return
-	end
+		-- botman.faultyGimme = false
+		-- return
+	-- end
 
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
@@ -1400,9 +1406,12 @@ if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 		end
 
 if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
+		r = tostring(r)
 
-		cmd = "se " .. playerid .. " " .. r
-		conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+		if gimmeZombies[r] then
+			cmd = "se " .. playerid .. " " .. r
+			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+		end
 
 		if (specialDay == "valentine") then
 			z = rand(4)
@@ -1438,8 +1447,12 @@ if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 			end
 		else
 			for i = 1, spawnCount do
-				cmd = "se " .. playerid .. " " .. r
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+				r = tostring(r)
+
+				if gimmeZombies[r] then
+					cmd = "se " .. playerid .. " " .. r
+					conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+				end
 
 				if (specialDay == "valentine") then
 					z = rand(4)

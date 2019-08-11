@@ -21,5 +21,5 @@ function loginSuccessful(line)
 		botman.getMetrics = false
 	end
 
-	sendCommand("gt")
+	send("gt")
 end

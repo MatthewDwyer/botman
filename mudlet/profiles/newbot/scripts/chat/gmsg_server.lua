@@ -1354,6 +1354,17 @@ function gmsg_server()
 			if chatvars.number ~= nil then
 				chatvars.number = math.abs(math.floor(chatvars.number))
 
+				if chatvars.number == 0 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The minimum uptime allowed is 1 hour. Max uptime has not been changed.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The minimum uptime allowed is 1 hour. Max uptime has not been changed.")
+					end
+
+					botman.faultyChat = false
+					return true
+				end
+
 				server.maxServerUptime = chatvars.number
 				conn:execute("UPDATE server SET maxServerUptime = " .. chatvars.number)
 
@@ -2154,6 +2165,176 @@ function gmsg_server()
 	end
 
 
+	local function cmd_SetServerVoteReward()
+		local cursor, errorString, row, item, i, quantity, quality
+
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set server vote reward {default/random/list/item/entity}\n"
+			help[1] = " {#}set server vote reward random quantity {number} quality {number}"
+			help[2] = "The default reward is the sc_General supply crate. \n"
+			help[2] = help[2] .. "If you set a random reward you can optionally set a quantity and quality.\n"
+			help[2] = help[2] .. "Quality is random if not specified.\n"
+			help[2] = help[2] .. "Quantity is the number of random items, not a quantity of the same item (except by chance). If quantity is not set the bot will give between 3 and 5 random items.\n"
+			help[2] = help[2] .. "If you set the reward as list you will need additional commands to manage the reward items. For commands type {#}help reward list.\n"
+			help[2] = help[2] .. "If you set the reward as item, the player will be given the item that you specify.\n"
+			help[2] = help[2] .. "If you have a custom entity (eg sc_General2) type {#}set server vote reward entity sc_General2."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,vote,reward"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "vote") or string.find(chatvars.command, "reward") or string.find(chatvars.command, "set") or string.find(chatvars.command, "server"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "server" and chatvars.words[3] == "vote" and chatvars.words[4] == "reward" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			item = ""
+			quantity = 0
+			quality = 0
+
+			if chatvars.words[5] ~= "crate" and chatvars.words[5] ~= "random" and chatvars.words[5] ~= "list" and chatvars.words[5] ~= "item" and chatvars.words[5] ~= "entity" then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Valid options are crate, random, list, or item.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]eg. {#}set server vote reward {crate/random/list/item}[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Valid options are crate, random, list, or item.")
+					irc_chat(chatvars.ircAlias, "eg. {#}set server vote reward {crate/random/list/item}")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if chatvars.words[5] == "crate" then
+				serverVoteReward = "crate"
+				serverVoteRewardItem = "sc_General"
+				writeAPI()
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server votes will be rewarded with an sc_General crate next to the player.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Server votes will be rewarded with an sc_General crate next to the player.")
+				end
+			end
+
+			if chatvars.words[5] == "random" then
+				serverVoteReward = "random"
+				serverVoteRewardItem = ""
+
+				for i=6,chatvars.wordCount,1 do
+					if chatvars.words[i] == "quantity" then
+						quantity = chatvars.wordsOld[i+1]
+					end
+
+					if chatvars.words[i] == "quality" then
+						quality = chatvars.wordsOld[i+1]
+					end
+				end
+
+				serverVoteRewardQuantity = tonumber(quantity)
+				serverVoteRewardQuality = tonumber(quality)
+				writeAPI()
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server votes will be rewarded with random items.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Server votes will be rewarded with random items.")
+				end
+			end
+
+			if chatvars.words[5] == "list" then
+				serverVoteReward = "list"
+				serverVoteRewardItem = ""
+
+				if serverVoteRewardList == nil then
+					serverVoteRewardList = {}
+				end
+
+				writeAPI()
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server votes will be rewarded with set items from a list.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Server votes will be rewarded with set items from a list.")
+				end
+			end
+
+			if chatvars.words[5] == "item" then
+				cursor,errorString = conn:execute("SELECT itemName FROM spawnableItems WHERE itemName = '" .. escape(chatvars.words[6]) .. "'")
+				row = cursor:fetch({}, "a")
+
+				if not row then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The item " .. chatvars.wordsOld[6] .. " does not exist or is wrong.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The item " .. chatvars.wordsOld[6] .. " does not exist or is wrong.")
+					end
+
+					botman.faultyChat = false
+					return true
+				else
+					item = row.itemName
+				end
+
+
+				serverVoteReward = "item"
+				serverVoteRewardItem = row.itemName
+				writeAPI()
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server votes will be rewarded with an " .. serverVoteRewardItem .. " spawned next to the player.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Server votes will be rewarded with an " .. serverVoteRewardItem .. " spawned next to the player.")
+				end
+			end
+
+			if chatvars.words[5] == "entity" then
+				serverVoteReward = "entity"
+				serverVoteRewardItem = chatvars.wordsOld[6]
+				writeAPI()
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server votes will be rewarded with an " .. serverVoteRewardItem .. " spawned next to the player.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Server votes will be rewarded with an " .. serverVoteRewardItem .. " spawned next to the player.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_SetServerGroup()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -2921,6 +3102,59 @@ function gmsg_server()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New welcome message " .. msg .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, "New welcome message " .. msg)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_TestVoteReward()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}test vote reward"
+			help[2] = "Admin and in-game only. The bot will try to spawn the server vote reward beside you."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "test,vote,reward"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "test") or string.find(chatvars.command, "vote") or string.find(chatvars.command, "rewa"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "test" and chatvars.words[2] == "vote" and chatvars.words[3] == "reward" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				irc_chat(chatvars.ircAlias, "This command is in-game only.")
+				botman.faultyChat = false
+				return true
+			end
+
+			rewardServerVote(chatvars.gameid)
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The server vote reward item or entity should have spawned beside you or been added to inventory.[-]")
 			end
 
 			botman.faultyChat = false
@@ -4797,6 +5031,15 @@ if debug then dbug("debug server") end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_SetServerVoteReward()
+
+	if result then
+		if debug then dbug("debug cmd_SetServerVoteReward triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_SetServerGroup()
 
 	if result then
@@ -4873,6 +5116,15 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetWelcomeMessage triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_TestVoteReward()
+
+	if result then
+		if debug then dbug("debug cmd_TestVoteReward triggered") end
 		return result
 	end
 

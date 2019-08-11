@@ -319,7 +319,20 @@ function importBaditems()
 	dbug("Importing Bad Items")
 
 	for k,v in pairs(badItems) do
-		conn:execute("INSERT INTO badItems (item) VALUES ('" .. escape(k) .. "')")
+		conn:execute("INSERT INTO badItems (item, action) VALUES ('" .. escape(k) .. "','" .. escape(v.action) .. "')")
+	end
+
+	dbug("Bad Items Imported")
+end
+
+
+function importRestricteditems()
+	local k, v
+
+	dbug("Importing Restricted Items")
+
+	for k,v in pairs(restrictedItems) do
+		conn:execute("INSERT INTO restrictedItems (item, qty, accessLevel, action) VALUES ('" .. escape(k) .. "'," .. v.qty .. "," .. v.accessLevel .. ",'" .. escape(v.action) .. "')")
 	end
 
 	dbug("Bad Items Imported")
@@ -449,12 +462,14 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		conn:execute("TRUNCATE locationCategories")
 		conn:execute("TRUNCATE players")
 		conn:execute("TRUNCATE resetZones")
+		conn:execute("TRUNCATE restrictedItems")
 		conn:execute("TRUNCATE shopCategories")
 		conn:execute("TRUNCATE teleports")
 		conn:execute("TRUNCATE villagers")
 		conn:execute("TRUNCATE waypoints")
 
 		importBaditems()
+		importRestricteditems()
 		importHotspots()
 		importLocationCategories()
 		importLocations()
