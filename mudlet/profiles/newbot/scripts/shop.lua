@@ -122,7 +122,7 @@ function LookupShop(search,all)
 				shopUnits = row.units
 				shopQuality = row.quality
 				shopPrice = (row.price + row.variation) * ((100 - row.special) / 100)
-				conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(row.category) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "'," .. row.units .. ")")
+				conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units, quality) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(row.category) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "'," .. row.units .. "," .. row.quality .. ")")
 				return
 			end
 
@@ -302,7 +302,7 @@ end
 
 
 function doShop(command, playerid, words)
-	local k, v, i, number, cmd, list, cursor, errorString, example, units
+	local k, v, i, number, cmd, list, cursor, errorString, example, units, cmd
 
 if (debug) then
 dbug("debug shop line " .. debugger.getinfo(1).currentline)
@@ -314,6 +314,7 @@ end
 	if server.moneyName == nil then server.moneyName = "Zenny" end
 	if server.moneyPlural == nil then server.moneyPlural = "Zennies" end
 
+	cmd = ""
 	list = ""
 	for k, v in pairs(shopCategories) do
 		if k ~= "misc" then
@@ -573,19 +574,29 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 				number = number * shopUnits
 			end
 
+			if tonumber(shopQuality) == 0 then
+				cmd = "give " .. playerid .. " " .. shopItem .. " " .. number
+			else
+				cmd = "give " .. playerid .. " " .. shopItem .. " " .. number .. " " .. shopQuality
+			end
+
 			if server.stompy then
 				if tonumber(shopQuality) == 0 then
-					sendCommand("bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number  .. " /silent")
+					cmd = "bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number  .. " /silent"
 				else
-					sendCommand("bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number  .. " /silent /q=" .. shopQuality)
-				end
-			else
-				if tonumber(shopQuality) == 0 then
-					sendCommand("give " .. playerid .. " " .. shopItem .. " " .. number)
-				else
-					sendCommand("give " .. playerid .. " " .. shopItem .. " " .. number .. " " .. shopQuality)
+					cmd = "bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number  .. " /silent /q=" .. shopQuality
 				end
 			end
+
+			if server.botman then
+				if tonumber(shopQuality) == 0 then
+					cmd = "bm-give " .. playerid .. " " .. shopItem .. " " .. number
+				else
+					cmd = "bm-give " .. playerid .. " " .. shopItem .. " " .. number  .. " " .. shopQuality
+				end
+			end
+
+			sendCommand(cmd)
 
 			if server.stompy then
 				message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase should be in your inventory but may be at your feet.  Check the ground.[-]")

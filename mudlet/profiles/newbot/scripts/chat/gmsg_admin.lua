@@ -607,10 +607,8 @@ function gmsg_admin()
 				sendCommand("ban remove " .. tmp.id)
 
 				-- create or update the donor record on the shared database
-				if server.serverGroup ~= "" then
-					connBots:execute("INSERT INTO donors (donor, donorLevel, donorExpiry, steam, botID, serverGroup) VALUES (1, " .. tmp.level .. ", " .. tmp.expiry .. ", " .. tmp.id .. "," .. server.botID .. ",'" .. escape(server.serverGroup) .. "')")
-					connBots:execute("UPDATE donors SET donor = 1, donorLevel = " .. tmp.level .. ", donorExpiry = " .. tmp.expiry .. " WHERE steam = " .. tmp.id .. " AND serverGroup = '" .. escape(server.serverGroup) .. "'")
-				end
+				connBots:execute("INSERT INTO donors (donor, donorLevel, donorExpiry, steam, botID, serverGroup) VALUES (1, " .. tmp.level .. ", " .. tmp.expiry .. ", " .. tmp.id .. "," .. server.botID .. ",'" .. escape(server.serverGroup) .. "')")
+				connBots:execute("UPDATE donors SET donor = 1, donorLevel = " .. tmp.level .. ", donorExpiry = " .. tmp.expiry .. ", serverGroup = '" .. escape(server.serverGroup) ..  "' WHERE steam = " .. tmp.id .. " AND botID = " .. server.botID)
 
 				message("pm " .. tmp.id .. " [" .. server.chatColour .. "]You have been given donor privileges until " .. os.date("%d-%b-%Y",  tmp.expiry) .. ". Thank you for being awesome! =D[-]")
 				irc_chat(server.ircMain, playerName .. " donor status expires on " .. os.date("%d-%b-%Y",  tmp.expiry))
@@ -1538,11 +1536,7 @@ function gmsg_admin()
 				return true
 			end
 
-			if tonumber(server.gameVersionNumber) < 17 then
-				sendCommand("bc-buffplayer " .. id .. " burning") -- yeah baby!
-			else
-				sendCommand("buffplayer " .. id .. " buffBurningMolotov") -- yeah baby!
-			end
+			sendCommand("buffplayer " .. id .. " buffBurningMolotov") -- yeah baby!
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You set " .. players[id].name .. " on fire![-]")
@@ -1850,11 +1844,7 @@ function gmsg_admin()
 				return true
 			end
 
-			if tonumber(server.gameVersionNumber) < 17 then
-				sendCommand("buffplayer " .. id .. " redTeaCooling")  -- stay frosty
-			else
-				sendCommand("bc-buffplayer " .. id .. " buffYuccaJuiceCooling")  -- stay frosty
-			end
+			sendCommand("buffplayer " .. id .. " buffYuccaJuiceCooling")  -- stay frosty
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is cooling down.[-]")
@@ -1949,27 +1939,14 @@ function gmsg_admin()
 				return true
 			end
 
-			if tonumber(server.gameVersionNumber) < 17 then
-				sendCommand("bc-buffplayer " .. id .. " cured")
-				sendCommand("bc-debuffplayer " .. id .. " dysentery")  -- It's Debuffy The Zombie Slayer! :D
-				sendCommand("bc-debuffplayer " .. id .. " dysentery2")
-				sendCommand("bc-debuffplayer " .. id .. " foodPoisoning")
-				sendCommand("bc-debuffplayer " .. id .. " infection")
-				sendCommand("bc-debuffplayer " .. id .. " infection1")
-				sendCommand("bc-debuffplayer " .. id .. " infection2")
-				sendCommand("bc-debuffplayer " .. id .. " infection3")
-				sendCommand("bc-debuffplayer " .. id .. " infection4")
-			else
-				sendCommand("bc-debuffplayer " .. id .. " buffIllDysentery1")  -- It's Debuffy The Zombie Slayer! :D
-				sendCommand("bc-debuffplayer " .. id .. " buffIllDysentery2")
-				sendCommand("bc-debuffplayer " .. id .. " buffIllFoodPoisoning1")
-				sendCommand("bc-debuffplayer " .. id .. " buffIllFoodPoisoning2")
-				sendCommand("bc-debuffplayer " .. id .. " buffIllPneumonia1")
-				sendCommand("bc-debuffplayer " .. id .. " buffIllInfection1")
-				sendCommand("bc-debuffplayer " .. id .. " buffIllInfection1")
-				sendCommand("bc-debuffplayer " .. id .. " buffIllInfection1")
-
-			end
+			sendCommand("debuffplayer " .. id .. " buffIllDysentery1")  -- It's Debuffy The Zombie Slayer! :D
+			sendCommand("debuffplayer " .. id .. " buffIllDysentery2")
+			sendCommand("debuffplayer " .. id .. " buffIllFoodPoisoning1")
+			sendCommand("debuffplayer " .. id .. " buffIllFoodPoisoning2")
+			sendCommand("debuffplayer " .. id .. " buffIllPneumonia1")
+			sendCommand("debuffplayer " .. id .. " buffIllInfection1")
+			sendCommand("debuffplayer " .. id .. " buffIllInfection1")
+			sendCommand("debuffplayer " .. id .. " buffIllInfection1")
 
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You cured " .. players[id].name .. "[-]")
@@ -1994,25 +1971,25 @@ function gmsg_admin()
 			end
 
 			if not ignoreQuality then
-				if tonumber(server.gameVersionNumber) < 17 then
-					if server.stompy then
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " " .. item .. " /c=" .. quantity .. " /q=600 /silent"
-					else
-						tmp.cmd = "give " .. chatvars.playerid .. " " .. item .. " " .. quantity .. " 600"
-					end
-				else
-					if server.stompy then
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " " .. item .. " /c=" .. quantity .. " /q=6 /silent"
-					else
-						tmp.cmd = "give " .. chatvars.playerid .. " " .. item .. " " .. quantity .. " 6"
-					end
+				tmp.cmd = "give " .. chatvars.playerid .. " " .. item .. " " .. quantity .. " 6"
+
+				if server.stompy then
+					tmp.cmd = "bc-give " .. chatvars.playerid .. " " .. item .. " /c=" .. quantity .. " /q=6 /silent"
+				end
+
+				if server.botman then
+					tmp.cmd = "bm-give " .. chatvars.playerid .. " " .. item .. " " .. quantity .. " 6"
 				end
 			else
 				if tmp.quantity < quantity then
+					tmp.cmd = "give " .. chatvars.playerid .. " " .. item .. " " .. quantity - tonumber(tmp.quantity)
+
 					if server.stompy then
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " " .. item .. " /c=" .. 10 - tonumber(tmp.quantity) .. " /silent"
-					else
-						tmp.cmd = "give " .. chatvars.playerid .. " " .. item .. " " .. 10 - tonumber(tmp.quantity)
+						tmp.cmd = "bc-give " .. chatvars.playerid .. " " .. item .. " " .. quantity - tonumber(tmp.quantity) .. " /silent"
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. chatvars.playerid .. " " .. item .. " " .. quantity - tonumber(tmp.quantity)
 					end
 
 					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
@@ -2356,42 +2333,30 @@ function gmsg_admin()
 			tmp.equipment = igplayers[chatvars.playerid].equipment
 
 			if not string.find(tmp.inventory, "edTea") then
+				tmp.cmd = "give " .. chatvars.playerid .. " drinkJarRedTea 10"
+
 				if server.stompy then
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " redTea /c=10 /silent" -- A16
-					else
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " drinkJarRedTea /c=10 /silent" -- A17
-					end
-				else
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "give " .. chatvars.playerid .. " redTea 10"
-					else
-						tmp.cmd = "give " .. chatvars.playerid .. " drinkJarRedTea 10"
-					end
+						tmp.cmd = "bc-give " .. chatvars.playerid .. " drinkJarRedTea /c=10 /silent"
+				end
+
+				if server.botman then
+					tmp.cmd = "bm-give " .. chatvars.playerid .. " drinkJarRedTea 10"
 				end
 
 				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
-				if tonumber(server.gameVersionNumber) < 17 then
-					tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "redTea")
-				else
-					tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "drinkJarRedTea")
-				end
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "drinkJarRedTea")
 
 				if tonumber(tmp.quantity) < 10 then
+					tmp.cmd = "give " .. chatvars.playerid .. " drinkJarRedTea " .. 10 - tonumber(tmp.quantity)
+
 					if server.stompy then
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " redTea /c=" .. 10 - tonumber(tmp.quantity) .. " /silent"
-						else
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " drinkJarRedTea /c=" .. 10 - tonumber(tmp.quantity) .. " /silent"
-						end
-					else
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "give " .. chatvars.playerid .. " redTea " .. 10 - tonumber(tmp.quantity)
-						else
-							tmp.cmd = "give " .. chatvars.playerid .. " drinkJarRedTea " .. 10 - tonumber(tmp.quantity)
-						end
+						tmp.cmd = "bc-give " .. chatvars.playerid .. " drinkJarRedTea /c=" .. 10 - tonumber(tmp.quantity) .. " /silent"
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. chatvars.playerid .. " drinkJarRedTea " .. 10 - tonumber(tmp.quantity)
 					end
 
 					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
@@ -2401,42 +2366,30 @@ function gmsg_admin()
 
 
 			if not string.find(string.lower(tmp.inventory), "ascan") then
+				tmp.cmd = "give " .. chatvars.playerid .. " ammoGasCan 400"
+
 				if server.stompy then
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " gasCan /c=400 /silent"
-					else
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " ammoGasCan /c=400 /silent"
-					end
-				else
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "give " .. chatvars.playerid .. " gasCan 400"
-					else
-						tmp.cmd = "give " .. chatvars.playerid .. " ammoGasCan 400"
-					end
+					tmp.cmd = "bc-give " .. chatvars.playerid .. " ammoGasCan /c=400 /silent"
+				end
+
+				if server.botman then
+					tmp.cmd = "bm-give " .. chatvars.playerid .. " ammoGasCan 400"
 				end
 
 				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
-				if tonumber(server.gameVersionNumber) < 17 then
-					tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "gasCan")
-				else
-					tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "ammoGasCan")
-				end
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "ammoGasCan")
 
 				if tonumber(tmp.quantity) < 400 then
+					tmp.cmd = "give " .. chatvars.playerid .. " ammoGasCan " .. 400 - tonumber(tmp.quantity)
+
 					if server.stompy then
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " gasCan /c=" .. 400 - tonumber(tmp.quantity) .. " /silent"
-						else
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " ammoGasCan /c=" .. 400 - tonumber(tmp.quantity) .. " /silent"
-						end
-					else
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "give " .. chatvars.playerid .. " gasCan " .. 400 - tonumber(tmp.quantity)
-						else
-							tmp.cmd = "give " .. chatvars.playerid .. " ammoGasCan " .. 400 - tonumber(tmp.quantity)
-						end
+						tmp.cmd = "bc-give " .. chatvars.playerid .. " ammoGasCan /c=" .. 400 - tonumber(tmp.quantity) .. " /silent"
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. chatvars.playerid .. " ammoGasCan /" .. 400 - tonumber(tmp.quantity)
 					end
 
 					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
@@ -2446,42 +2399,30 @@ function gmsg_admin()
 
 
 			if not string.find(tmp.inventory, "eatStew") then
+				tmp.cmd = "give " .. chatvars.playerid .. " foodMeatStew 20"
+
 				if server.stompy then
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " meatStew /c=20 /silent"
-					else
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " foodMeatStew /c=20 /silent"
-					end
-				else
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "give " .. chatvars.playerid .. " meatStew 20"
-					else
-						tmp.cmd = "give " .. chatvars.playerid .. " foodMeatStew 20"
-					end
+					tmp.cmd = "bc-give " .. chatvars.playerid .. " foodMeatStew /c=20 /silent"
+				end
+
+				if server.botman then
+					tmp.cmd = "bm-give " .. chatvars.playerid .. " foodMeatStew 20"
 				end
 
 				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
-				if tonumber(server.gameVersionNumber) < 17 then
-					tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "meatStew")
-				else
-					tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "foodMeatStew")
-				end
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "foodMeatStew")
 
 				if tonumber(tmp.quantity) < 20 then
+					tmp.cmd = "give " .. chatvars.playerid .. " foodMeatStew " .. 20 - tonumber(tmp.quantity)
+
 					if server.stompy then
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " meatStew /c=" .. 20 - tonumber(tmp.quantity) .. " /silent"
-						else
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " foodMeatStew /c=" .. 20 - tonumber(tmp.quantity) .. " /silent"
-						end
-					else
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "give " .. chatvars.playerid .. " meatStew " .. 20 - tonumber(tmp.quantity)
-						else
-							tmp.cmd = "give " .. chatvars.playerid .. " foodMeatStew " .. 20 - tonumber(tmp.quantity)
-						end
+						tmp.cmd = "bc-give " .. chatvars.playerid .. " foodMeatStew /c=" .. 20 - tonumber(tmp.quantity) .. " /silent"
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. chatvars.playerid .. " foodMeatStew " .. 20 - tonumber(tmp.quantity)
 					end
 
 					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
@@ -2491,42 +2432,30 @@ function gmsg_admin()
 
 
 			if not string.find(tmp.inventory, "irstAidKit") then
+				tmp.cmd = "give " .. chatvars.playerid .. " medicalFirstAidKit 10"
+
 				if server.stompy then
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " firstAidKit /c=10 /silent"
-					else
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " medicalFirstAidKit /c=10 /silent"
-					end
-				else
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "give " .. chatvars.playerid .. " firstAidKit 10"
-					else
-						tmp.cmd = "give " .. chatvars.playerid .. " medicalFirstAidKit 10"
-					end
+					tmp.cmd = "bc-give " .. chatvars.playerid .. " medicalFirstAidKit /c=10 /silent"
+				end
+
+				if server.botman then
+					tmp.cmd = "bm-give " .. chatvars.playerid .. " medicalFirstAidKit 10"
 				end
 
 				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
-				if tonumber(server.gameVersionNumber) < 17 then
-					tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "firstAidKit")
-				else
-					tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "medicalFirstAidKit")
-				end
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "medicalFirstAidKit")
 
 				if tonumber(tmp.quantity) < 10 then
+					tmp.cmd = "give " .. chatvars.playerid .. " medicalFirstAidKit " .. 10 - tonumber(tmp.quantity)
+
 					if server.stompy then
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " firstAidKit /c=" .. 10 - tonumber(tmp.quantity) .. " /silent"
-						else
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " medicalFirstAidKit /c=" .. 10 - tonumber(tmp.quantity) .. " /silent"
-						end
-					else
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "give " .. chatvars.playerid .. " firstAidKit " .. 10 - tonumber(tmp.quantity)
-						else
-							tmp.cmd = "give " .. chatvars.playerid .. " medicalFirstAidKit " .. 10 - tonumber(tmp.quantity)
-						end
+						tmp.cmd = "bc-give " .. chatvars.playerid .. " medicalFirstAidKit /c=" .. 10 - tonumber(tmp.quantity) .. " /silent"
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. chatvars.playerid .. " medicalFirstAidKit " .. 10 - tonumber(tmp.quantity)
 					end
 
 					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
@@ -2536,42 +2465,30 @@ function gmsg_admin()
 
 
 			if not string.find(tmp.inventory, "ntibiotics") then
+				tmp.cmd = "give " .. chatvars.playerid .. " drugAntibiotics 10"
+
 				if server.stompy then
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " antibiotics /c=10 /silent"
-					else
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " drugAntibiotics /c=10 /silent"
-					end
-				else
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "give " .. chatvars.playerid .. " antibiotics 10"
-					else
-						tmp.cmd = "give " .. chatvars.playerid .. " drugAntibiotics 10"
-					end
+					tmp.cmd = "bc-give " .. chatvars.playerid .. " drugAntibiotics /c=10 /silent"
+				end
+
+				if server.botman then
+					tmp.cmd = "bm-give " .. chatvars.playerid .. " drugAntibiotics 10"
 				end
 
 				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
-				if tonumber(server.gameVersionNumber) < 17 then
-					tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "antibiotics")
-				else
-					tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "drugAntibiotics")
-				end
+				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "drugAntibiotics")
 
 				if tonumber(tmp.quantity) < 10 then
+					tmp.cmd = "give " .. chatvars.playerid .. " drugAntibiotics " .. 10 - tonumber(tmp.quantity)
+
 					if server.stompy then
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " antibiotics /c=" .. 10 - tonumber(tmp.quantity) .. " /silent"
-						else
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " drugAntibiotics /c=" .. 10 - tonumber(tmp.quantity) .. " /silent"
-						end
-					else
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "give " .. chatvars.playerid .. " antibiotics " .. 10 - tonumber(tmp.quantity)
-						else
-							tmp.cmd = "give " .. chatvars.playerid .. " drugAntibiotics " .. 10 - tonumber(tmp.quantity)
-						end
+						tmp.cmd = "bc-give " .. chatvars.playerid .. " drugAntibiotics /c=" .. 10 - tonumber(tmp.quantity) .. " /silent"
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. chatvars.playerid .. " drugAntibiotics " .. 10 - tonumber(tmp.quantity)
 					end
 
 					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
@@ -2581,14 +2498,14 @@ function gmsg_admin()
 
 
 			if not string.find(tmp.inventory, "shotgunShell") then
+				tmp.cmd = "give " .. chatvars.playerid .. " shotgunShell 500"
+
 				if server.stompy then
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " shotgunShell /c=500 /silent"
-					end
-				else
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "give " .. chatvars.playerid .. " shotgunShell 500"
-					end
+					tmp.cmd = "bc-give " .. chatvars.playerid .. " shotgunShell /c=500 /silent"
+				end
+
+				if server.botman then
+					tmp.cmd = "bm-give " .. chatvars.playerid .. " shotgunShell 500"
 				end
 
 				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
@@ -2597,14 +2514,14 @@ function gmsg_admin()
 				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "shotgunShell")
 
 				if tonumber(tmp.quantity) < 500 then
+					tmp.cmd = "give " .. chatvars.playerid .. " shotgunShell " .. 500 - tonumber(tmp.quantity)
+
 					if server.stompy then
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " shotgunShell /c=" .. 500 - tonumber(tmp.quantity) .. " /silent"
-						end
-					else
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "give " .. chatvars.playerid .. " shotgunShell " .. 500 - tonumber(tmp.quantity)
-						end
+						tmp.cmd = "bc-give " .. chatvars.playerid .. " shotgunShell /c=" .. 500 - tonumber(tmp.quantity) .. " /silent"
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. chatvars.playerid .. " shotgunShell " .. 500 - tonumber(tmp.quantity)
 					end
 
 					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
@@ -2614,50 +2531,34 @@ function gmsg_admin()
 
 
 			if not string.find(tmp.inventory .. tmp.equipment, "iningHelmet") then
+				tmp.cmd = "give " .. chatvars.playerid .. " armorMiningHelmet 1 6"
+
 				if server.stompy then
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " miningHelmet /c=1 /q=600 /silent"
-					else
-						tmp.cmd = "bc-give " .. chatvars.playerid .. " armorMiningHelmet /c=1 /q=6 /silent"
-					end
-				else
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.cmd = "give " .. chatvars.playerid .. " miningHelmet 1 600"
-					else
-						tmp.cmd = "give " .. chatvars.playerid .. " armorMiningHelmet 1 6"
-					end
+					tmp.cmd = "bc-give " .. chatvars.playerid .. " armorMiningHelmet /c=1 /q=6 /silent"
+				end
+
+				if server.botman then
+					tmp.cmd = "bm-give " .. chatvars.playerid .. " armorMiningHelmet 1 6"
 				end
 
 				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
-				if tonumber(server.gameVersionNumber) < 17 then
-					tmp.found, tmp.quality = getEquipment(tmp.equipment, "miningHelmet")
-				else
-					tmp.found, tmp.quality = getEquipment(tmp.equipment, "armorMiningHelmet")
+				tmp.found, tmp.quality = getEquipment(tmp.equipment, "armorMiningHelmet")
+
+				if not tmp.found then
+					tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "armorMiningHelmet")
 				end
 
 				if not tmp.found then
-					if tonumber(server.gameVersionNumber) < 17 then
-						tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "miningHelmet")
-					else
-						tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "armorMiningHelmet")
-					end
-				end
+					tmp.cmd = "give " .. chatvars.playerid .. " armorMiningHelmet 1 6"
 
-				if not tmp.found then
 					if server.stompy then
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " miningHelmet /c=1 /q=600 /silent"
-						else
-							tmp.cmd = "bc-give " .. chatvars.playerid .. " armorMiningHelmet /c=1 /q=6 /silent"
-						end
-					else
-						if tonumber(server.gameVersionNumber) < 17 then
-							tmp.cmd = "give " .. chatvars.playerid .. " miningHelmet 1 600"
-						else
-							tmp.cmd = "give " .. chatvars.playerid .. " armorMiningHelmet 1 6"
-						end
+						tmp.cmd = "bc-give " .. chatvars.playerid .. " armorMiningHelmet /c=1 /q=6 /silent"
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. chatvars.playerid .. " armorMiningHelmet 1 6"
 					end
 
 					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
@@ -2710,11 +2611,17 @@ function gmsg_admin()
 			CheckClaimsRemoved(chatvars.playerid)
 
 			if players[chatvars.playerid].removedClaims > 0 then
+				tmp.cmd = "give " .. chatvars.playerid .. " keystoneBlock " .. players[chatvars.playerid].removedClaims
+
 				if server.stompy then
-					sendCommand("bc-give " .. chatvars.playerid .. " keystoneBlock /c=" .. players[chatvars.playerid].removedClaims .. " /silent")
-				else
-					sendCommand("give " .. chatvars.playerid .. " keystoneBlock " .. players[chatvars.playerid].removedClaims)
+					tmp.cmd = "bc-give " .. chatvars.playerid .. " keystoneBlock /c=" .. players[chatvars.playerid].removedClaims .. " /silent"
 				end
+
+				if server.botman then
+					tmp.cmd = "bm-give " .. chatvars.playerid .. " keystoneBlock " .. players[chatvars.playerid].removedClaims
+				end
+
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I was holding " .. players[chatvars.playerid].removedClaims .. " keystones for you. Check the ground for them if they didn't go directly into your inventory.[-]")
 				players[chatvars.playerid].removedClaims = 0
@@ -2787,21 +2694,31 @@ function gmsg_admin()
 			end
 
 			for k, v in pairs(igplayers) do
+				message(string.format("pm %s [%s]>FREE< STUFF!  Press e to pick up some %s now. =D[-]", k, server.chatColour, chatvars.wordsOld[3]))
+
 				if tmp.quality then
+					tmp.cmd = "give " .. v.id .. " " .. chatvars.wordsOld[3] .. " " .. tmp.quantity .. " " .. tmp.quality
+
 					if server.stompy then
-						sendCommand("bc-give " .. k .. " " .. chatvars.wordsOld[3] .. " /c=" .. tmp.quantity .. " /q=" .. tmp.quality .. " /silent")
-					else
-						sendCommand("give " .. v.id .. " " .. chatvars.wordsOld[3] .. " " .. tmp.quantity .. " " .. tmp.quality)
-						message(string.format("pm %s [%s]>FREE< STUFF!  Press e to pick up some %s now. =D[-]", k, server.chatColour, chatvars.wordsOld[3]))
+						tmp.cmd = "bc-give " .. k .. " " .. chatvars.wordsOld[3] .. " /c=" .. tmp.quantity .. " /q=" .. tmp.quality .. " /silent"
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. k .. " " .. chatvars.wordsOld[3] .. " " .. tmp.quantity .. " " .. tmp.quality
 					end
 				else
+					tmp.cmd = "give " .. v.id .. " " .. chatvars.wordsOld[3] .. " " .. tmp.quantity
+
 					if server.stompy then
-						sendCommand("bc-give " .. k .. " " .. chatvars.wordsOld[3] .. " /c=" .. tmp.quantity .. " /silent")
-					else
-						sendCommand("give " .. v.id .. " " .. chatvars.wordsOld[3] .. " " .. tmp.quantity)
-						message(string.format("pm %s [%s]>FREE< STUFF!  Press e to pick up some %s now. =D[-]", k, server.chatColour, chatvars.wordsOld[3]))
+						tmp.cmd = "bc-give " .. k .. " " .. chatvars.wordsOld[3] .. " /c=" .. tmp.quantity .. " /silent"
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. k .. " " .. chatvars.wordsOld[3] .. " " .. tmp.quantity
 					end
 				end
+
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. k .. ")") end
 			end
 
 			if (chatvars.playername ~= "Server") then
@@ -2904,23 +2821,31 @@ function gmsg_admin()
 			end
 
 			if igplayers[tmp.id] then
+				message(string.format("pm %s [%s]>FREE< STUFF!  Press e to pick up some %s now. =D[-]", tmp.id, server.chatColour, tmp.item))
+
 				if tmp.quality then
+					tmp.cmd = "give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity .. " " .. tmp.quality
+
 					if server.stompy then
-					dbug("bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity .. " /q=" .. tmp.quality)
 						sendCommand("bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity .. " /q=" .. tmp.quality)
-					else
-						sendCommand("give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity .. " " .. tmp.quality)
-						message(string.format("pm %s [%s]>FREE< STUFF!  Press e to pick up some %s now. =D[-]", tmp.id, server.chatColour, tmp.item))
+					end
+
+					if server.botman then
+						sendCommand("bm-give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity .. " " .. tmp.quality)
 					end
 				else
+					tmp.cmd = "give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity
+
 					if server.stompy then
-					dbug("bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity)
-						sendCommand("bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity)
-					else
-						sendCommand("give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity)
-						message(string.format("pm %s [%s]>FREE< STUFF!  Press e to pick up some %s now. =D[-]", tmp.id, server.chatColour, tmp.item))
+						tmp.cmd = "bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity
 					end
 				end
+
+				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. tmp.id .. ")") end
 
 				if (chatvars.playername ~= "Server") then
 					message(string.format("pm %s [%s]You gave %s %s %s[-]",chatvars.playerid, server.chatColour, players[tmp.id].name, tmp.quantity, tmp.item))
@@ -2930,16 +2855,24 @@ function gmsg_admin()
 			else
 				-- queue the give and optional message for later when the player joins the server
 				if tmp.quality then
+					tmp.cmd = "give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity .. " " .. tmp.quality
+
 					if server.stompy then
 						tmp.cmd = "bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity .. " /q=" .. tmp.quality
-					else
-						tmp.cmd = "give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity .. " " .. tmp.quality
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity .. " " .. tmp.quality
 					end
 				else
+					tmp.cmd = "give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity
+
 					if server.stompy then
 						tmp.cmd = "bc-give " .. tmp.id .. " " .. tmp.item .. " /c=" .. tmp.quantity
-					else
-						tmp.cmd = "give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity
+					end
+
+					if server.botman then
+						tmp.cmd = "bm-give " .. tmp.id .. " " .. tmp.item .. " " .. tmp.quantity
 					end
 				end
 
@@ -3049,118 +2982,6 @@ function gmsg_admin()
 			end
 
 			teleport(cmd, chatvars.playerid)
-
-			botman.faultyChat = false
-			return true
-		end
-	end
-
-
-	local function cmd_HealPlayer() --tested
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
-			help = {}
-			help[1] = " {#}heal {player name}"
-			help[2] = "Apply big firstaid buff to a player or yourself if no name given."
-
-			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "heal,play,buff"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
-				registerHelp(tmp)
-			end
-
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "heal") or string.find(chatvars.command, "player"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, help[1])
-
-				if not shortHelp then
-					irc_chat(chatvars.ircAlias, help[2])
-					irc_chat(chatvars.ircAlias, ".")
-				end
-
-				chatvars.helpRead = true
-			end
-		end
-
-		if (chatvars.words[1] == "heal") then
-			if locations["heal"] then
-				botman.faultyChat = false
-				return false
-			end
-
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
-			end
-
-			if tonumber(server.gameVersionNumber) >= 17 then
-				message(string.format("pm %s [%s]This command is for A16 only.", chatvars.playerid, server.chatColour))
-				botman.faultyChat = false
-				return true
-			end
-
-			id = chatvars.playerid
-
-			if (chatvars.words[2] ~= nil) then
-				pname = chatvars.words[2]
-				id = LookupPlayer(pname)
-
-				if id == 0 then
-					id = LookupArchivedPlayer(pname)
-
-					if not (id == 0) then
-						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
-						else
-							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server and repeat this command.")
-						end
-
-						botman.faultyChat = false
-						return true
-					else
-						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
-						else
-							irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
-						end
-
-						botman.faultyChat = false
-						return true
-					end
-				end
-			end
-
-			if not igplayers[id] then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. igplayers[id].name .. " is not playing right now so get your filthy ape hands off them![-]")
-				else
-					irc_chat(chatvars.ircAlias, igplayers[id].name .. " is not playing right now so get your filthy ape hands off them!")
-				end
-
-				botman.faultyChat = false
-				return true
-			end
-
-			if tonumber(server.gameVersionNumber) < 17 then
-				sendCommand("bc-buffplayer " .. id .. " firstAid") -- Pills here!
-			end
-
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You gave " .. players[id].name .. " firstaid.[-]")
-			else
-				irc_chat(chatvars.ircAlias, "You gave " .. players[id].name .. " firstaid.")
-			end
 
 			botman.faultyChat = false
 			return true
@@ -4291,13 +4112,10 @@ function gmsg_admin()
 
 
 			if tonumber(server.gameVersionNumber) < 17 then
-				sendCommand("bc-debuffplayer " .. id .. " sprainedLeg")
-				sendCommand("bc-debuffplayer " .. id .. " brokenLeg")
-			else
-				sendCommand("bc-debuffplayer " .. id .. " buffLegSprained")
-				sendCommand("bc-debuffplayer " .. id .. " buffLegBroken")
-				sendCommand("bc-debuffplayer " .. id .. " buffLegSplinted")
-				sendCommand("bc-debuffplayer " .. id .. " buffLegCast")
+				sendCommand("debuffplayer " .. id .. " buffLegSprained")
+				sendCommand("debuffplayer " .. id .. " buffLegBroken")
+				sendCommand("debuffplayer " .. id .. " buffLegSplinted")
+				sendCommand("debuffplayer " .. id .. " buffLegCast")
 			end
 
 			if (chatvars.playername ~= "Server") then
@@ -5982,9 +5800,15 @@ function gmsg_admin()
 
 				if (chatvars.words[1] == "sendhome") then
 					if (players[id].homeX == 0 and players[id].homeZ == 0) then
-						if server.coppi or server.stompy then
+						if server.botman or server.stompy then
 							prepareTeleport(id, "")
-							sendPlayerHome(id)
+
+							if server.botman then
+								sendCommand("bm-teleportplayerhome " .. id)
+							else
+								cmd = "tele " .. id .. " " .. players[id].bedX .. " " .. players[id].bedY .. " " .. players[id].bedZ
+								teleport(cmd, id)
+							end
 
 							if (chatvars.playername ~= "Server") then
 								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. players[id].name .. " has been sent to their bed.[-]")
@@ -7069,11 +6893,7 @@ function gmsg_admin()
 				message("pm " .. id .. " [" .. server.alertColour .. "]" .. players[chatvars.playerid].name .. " cast shit on you.  It is super effective.[-]")
 			end
 
-			if tonumber(server.gameVersionNumber) < 17 then
-				sendCommand("bc-buffplayer " .. id .. " dysentery")
-			else
-				sendCommand("bc-givebuff " .. id .. " buffIllDysentery1")
-			end
+			sendCommand("buffplayer " .. id .. " buffIllDysentery1")
 
 
 			if tonumber(server.gameVersionNumber) < 17 then
@@ -9209,118 +9029,6 @@ function gmsg_admin()
 	end
 
 
-	local function cmd_WarmPlayer() --tested
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
-			help = {}
-			help[1] = " {#}warm {player name}"
-			help[2] = "Warm a player or yourself if no name given."
-
-			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "warm,play,buff"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
-				registerHelp(tmp)
-			end
-
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "warm") or string.find(chatvars.command, "player"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, help[1])
-
-				if not shortHelp then
-					irc_chat(chatvars.ircAlias, help[2])
-					irc_chat(chatvars.ircAlias, ".")
-				end
-
-				chatvars.helpRead = true
-			end
-		end
-
-		if (chatvars.words[1] == "warm") then
-			if locations["warm"] then
-				botman.faultyChat = false
-				return false
-			end
-
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
-			end
-
-			if tonumber(server.gameVersionNumber) >= 17 then
-				message(string.format("pm %s [%s]This command is for A16 only.", chatvars.playerid, server.chatColour))
-				botman.faultyChat = false
-				return true
-			end
-
-			id = chatvars.playerid
-
-			if (chatvars.words[2] ~= nil) then
-				pname = chatvars.words[2]
-				id = LookupPlayer(pname)
-
-				if id == 0 then
-					id = LookupArchivedPlayer(pname)
-
-					if not (id == 0) then
-						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server and repeat this command.[-]")
-						else
-							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[id].name .. " was archived. Get them to rejoin the server and repeat this command.")
-						end
-
-						botman.faultyChat = false
-						return true
-					else
-						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
-						else
-							irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
-						end
-
-						botman.faultyChat = false
-						return true
-					end
-				end
-			end
-
-			if not igplayers[id] then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. igplayers[id].name .. " is not playing right now and is left out in the cold.[-]")
-				else
-					irc_chat(chatvars.ircAlias, igplayers[id].name .. " is not playing right now and is left out in the cold.")
-				end
-
-				botman.faultyChat = false
-				return true
-			end
-
-			if tonumber(server.gameVersionNumber) < 17 then
-				sendCommand("bc-buffplayer " .. id .. " stewWarming")
-			end
-
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is warming up.[-]")
-			else
-				irc_chat(chatvars.ircAlias, players[id].name .. " is warming up.")
-			end
-
-			botman.faultyChat = false
-			return true
-		end
-	end
-
-
 	local function cmd_WhitelistAddRemovePlayer()
 		local playerName
 
@@ -9741,15 +9449,6 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_GotoPlayer triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_HealPlayer()
-
-	if result then
-		if debug then dbug("debug cmd_HealPlayer triggered") end
 		return result
 	end
 
@@ -10326,15 +10025,6 @@ if debug then dbug("debug admin") end
 
 	if result then
 		if debug then dbug("debug cmd_VisitPlayerBase triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug admin line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_WarmPlayer()
-
-	if result then
-		if debug then dbug("debug cmd_WarmPlayer triggered") end
 		return result
 	end
 

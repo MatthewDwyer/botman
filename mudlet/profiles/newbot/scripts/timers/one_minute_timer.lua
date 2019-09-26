@@ -340,10 +340,6 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 		end
 	end
 
-	if server.stompy and server.useAllocsWebAPI then
-		sendCommand("bc-time")
-	end
-
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	everyMinute()
@@ -356,6 +352,10 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 	end
 
 	if tonumber(botman.playersOnline) > 0 then
+		if server.botman then
+			sendCommand("bm-listplayerbed")
+		end
+
 		if tonumber(botman.playersOnline) < 25 then
 			if server.stompy then
 				sendCommand("bc-lp /online /filter=steamid,friends,bedroll,pack,walked,ip,level,crafted,vendor,playtime,session")
@@ -379,6 +379,8 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 				end
 			end
 		end
+	else
+		sendCommand("mem")
 	end
 
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end

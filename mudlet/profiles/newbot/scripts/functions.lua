@@ -16,10 +16,64 @@ if botman.debugAll then
 end
 
 
+function newBotProfile()
+	loadServer()
+
+	if botman.db2Connected then
+		connBots:execute("UPDATE servers SET IP = '" .. escape(server.IP) .. "' WHERE botID = " .. server.botID)
+	end
+
+	-- delete some Mudlet files that store IP and other info forcing Mudlet to regenerate them.
+	os.remove(homedir .. "/ip")
+	os.remove(homedir .. "/port")
+	os.remove(homedir .. "/password")
+	os.remove(homedir .. "/url")
+
+	reconnect(server.IP, server.telnetPort, true)
+
+	os.execute("rm " .. homedir .. "/current/*")
+	saveProfile()
+
+	irc_chat(server.ircMain, "Connecting to new 7 Days to Die server " .. server.IP .. " port " .. server.telnetPort)
+end
+
+
+function ForgetPlayers()
+	local k, v, cursor,errorString,row
+
+	conn:execute("TRUNCATE TABLE list")
+
+	for k,v in pairs(staffList) do
+		conn:execute("INSERT INTO list(steam) VALUES (" .. k ..")")
+	end
+
+	-- now that we have all of the steam id's of the admins in the list table we can use it to nuke other tables except for those id's
+	conn:execute("DELETE FROM alerts WHERE steam NOT IN (SELECT steam FROM list)")
+	conn:execute("DELETE FROM bases WHERE steam NOT IN (SELECT steam FROM list)")
+	conn:execute("DELETE FROM bookmarks WHERE steam NOT IN (SELECT steam FROM list)")
+	conn:execute("DELETE FROM friends WHERE steam NOT IN (SELECT steam FROM list)")
+	conn:execute("DELETE FROM hotspots WHERE owner NOT IN (SELECT steam FROM list)")
+	conn:execute("DELETE FROM keystones WHERE steam NOT IN (SELECT steam FROM list)")
+	conn:execute("DELETE FROM players WHERE steam NOT IN (SELECT steam FROM list)")
+	conn:execute("DELETE FROM villagers WHERE steam NOT IN (SELECT steam FROM list)")
+	conn:execute("DELETE FROM waypoints WHERE steam NOT IN (SELECT steam FROM list)")
+	conn:execute("TRUNCATE TABLE playersArchived")
+
+	-- refresh the bot's Lua tables from the database tables
+	loadBases()
+	loadFriends()
+	loadHotspots()
+	loadKeystones()
+	loadPlayers()
+	loadVillagers()
+	loadWaypoints()
+end
+
+
 function getMaxGimmePrizes()
 	local cursor,errorString,row
 
-	cursor,errorString = conn:execute("select count(name) as totalPrizes from gimmePrizes")
+	cursor,errorString = conn:execute("SELECT COUNT(name) AS totalPrizes FROM gimmePrizes")
 	row = cursor:fetch({}, "a")
 	return tonumber(row.totalPrizes)
 end
@@ -200,6 +254,7 @@ function startUsingAllocsWebAPI()
 end
 
 function removeEntityCommand(entityID)
+-- TODO:  Replace Coppi when Botman has bm-removeentity
 	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
 		sendCommand("bc-remove " .. entityID)
 		return
@@ -218,49 +273,49 @@ end
 
 
 function hidePlayerChat(prefix)
-	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
-		if prefix then
+	if prefix then
+		-- hide commands
+		if server.botman then
+			-- if server.stompy then
+				-- -- disable this feature in the BC mod
+				-- sendCommand("bc-chatprefix \"\"")
+			-- end
+
+			-- -- then enable it in the botman mod
+			-- sendCommand("bm-chatcommands prefix " .. prefix)
+			-- sendCommand("bm-chatcommands hide true")
+			-- return
+		end
+
+		if server.stompy then
 			sendCommand("bc-chatprefix " .. prefix)
-		else
+			return
+		end
+	else
+		-- don't hide commands
+		if server.stompy then
 			sendCommand("bc-chatprefix \"\"")
 		end
 
-		return
-	end
-
-	if server.coppi then
-		if tonumber(server.gameVersionNumber) < 17 then
-			if prefix then
-				sendCommand("tcch " .. prefix)
-			else
-				sendCommand("tcch")
-			end
-		else
-			if prefix then
-				sendCommand("cpm-hidechatcommand " .. prefix)
-			else
-				sendCommand("cpm-hidechatcommand")
-			end
+		if server.botman then
+			sendCommand("bm-chatcommands hide false")
 		end
-
-		return
 	end
 end
 
 
 function mutePlayerChat(steam, toggle)
-	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
-		sendCommand("bc-mute " .. steam .. " " .. toggle)
+	if server.botman then
+		if server.stompy then
+			sendCommand("bc-mute " .. steam .. " false")
+		end
+
+		sendCommand("bm-muteplayer " .. steam .. " " .. toggle)
 		return
 	end
 
-	if server.coppi then
-		if tonumber(server.gameVersionNumber) < 17 then
-			sendCommand("mpc " .. steam .. " " .. toggle)
-		else
-			sendCommand("cpm-mutechatplayer " .. steam .. " " .. toggle)
-		end
-
+	if server.stompy then
+		sendCommand("bc-mute " .. steam .. " " .. toggle)
 		return
 	end
 end
@@ -293,42 +348,46 @@ end
 
 
 function setPlayerChatLimit(steam, length)
-	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
-		sendCommand("bc-chatmax " .. length)
+	if server.botman then
+		if server.stompy then
+			sendCommand("bc-chatmax 0")
+		end
+
+		sendCommand("bm-playerchatmaxlength " .. steam .. " " .. length)
 		return
 	end
 
-	if server.coppi then
-		if tonumber(server.gameVersionNumber) < 17 then
-			sendCommand("pcml " .. steam .. " " .. length)
-		else
-			sendCommand("cpm-playerchatmaxlength " .. steam .. " " .. length)
-		end
-
+	if server.stompy then
+		sendCommand("bc-chatmax " .. length)
 		return
 	end
 end
 
 
 function setPlayerColour(steam, colour)
-	colour = string.lower(colour)
+	colour = string.upper(colour)
 
+	if server.botman then
+		if server.stompy then
+			if colour == "FFFFFF" then
+				sendCommand("bc-chatcolor " .. steam .. " clear")
+			end
+		end
 
-	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
-		sendCommand("bc-chatcolor " .. steam .. " " .. colour .. " false")
+		sendCommand("bm-chatplayercolor " .. steam .. " " .. colour .. " 1")
 
-		if colour == "ffffff" then
-			sendCommand("bc-chatcolor " .. steam .. " clear")
+		if colour == "FFFFFF" then
+			sendCommand("bm-chatplayercolor " .. steam .. " FFFFFF 1")
 		end
 
 		return
 	end
 
-	if server.coppi then
-		if tonumber(server.gameVersionNumber) < 17 then
-			sendCommand("cpc " .. steam .. " " .. colour .. " 1")
-		else
-			sendCommand("cpm-playerchatcolor " .. steam .. " " .. colour .. " 1")
+	if server.stompy then
+		sendCommand("bc-chatcolor " .. steam .. " " .. colour .. " false")
+
+		if colour == "FFFFFF" then
+			sendCommand("bc-chatcolor " .. steam .. " clear")
 		end
 
 		return
@@ -337,29 +396,25 @@ end
 
 
 function setOverrideChatName(steam, newName, clear)
-	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
-		sendCommand("bc-chatcolor " .. steam .. " " .. colour .. " false")
+	if server.botman then
+		if server.stompy then
+			sendCommand("bc-playername override " .. steam)
+		end
 
-		if colour == "ffffff" then
-			sendCommand("bc-chatcolor " .. steam .. " clear")
+		if clear then
+			sendCommand("bm-overridechatname " .. steam .. " " .. players[steam].name)
+		else
+			sendCommand("bm-overridechatname " .. steam .. " " .. newName)
 		end
 
 		return
 	end
 
-	if server.coppi then
-		if tonumber(server.gameVersionNumber) < 17 then
-			if clear then
-				sendCommand("ocn " .. steam .. " clear")
-			else
-				sendCommand("ocn " .. steam .. " " .. newName)
-			end
+	if server.stompy then
+		if clear then
+			sendCommand("bc-playername override " .. steam)
 		else
-			if clear then
-				sendCommand("cpm-ocn " .. steam .. " clear")
-			else
-				sendCommand("cpm-ocn " .. steam .. " " .. newName)
-			end
+			sendCommand("bc-playername override " .. steam .. " " .. newName)
 		end
 
 		return
@@ -756,7 +811,7 @@ function readServerVote(steam)
 
 			-- reward the player.  Good Player!  Have a biscuit.
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Thanks for voting for us!  Your reward should spawn beside you.[-]")
-			rewardServerVote(chatvars.gameid)
+			rewardServerVote(players[steam].id)
 			igplayers[steam].voteRewarded = os.time()
 			igplayers[steam].voteRewardOwing = 0
 			file:close()
@@ -1019,7 +1074,7 @@ function sendNextAnnouncement()
 		end
 	end
 
-	server.nextAnnouncement = server.nextAnnouncement + 1
+	server.nextAnnouncement = tonumber(server.nextAnnouncement) + 1
 	if (server.nextAnnouncement > rows) then server.nextAnnouncement = 1 end
 	conn:execute("UPDATE server SET nextAnnouncement = " .. server.nextAnnouncement)
 end
@@ -1894,6 +1949,14 @@ function downloadHandler(event, ...)
 
 			-- read bc-time from Stompy's BC mod to get current server real time
 			readAPI_BCTime()
+			return
+		end
+
+		if string.find(..., "bm-listplayerbed.txt", nil, true) then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
+			readAPI_BMListPlayerBed()
 			return
 		end
 
@@ -3001,8 +3064,6 @@ end
 function finishReboot()
 	local k, v
 
-	tempTimer( 30, [[clearRebootFlags()]] )
-
 	if (botman.rebootTimerID) then
 		killTimer(botman.rebootTimerID)
 		botman.rebootTimerID = nil
@@ -3028,6 +3089,7 @@ function finishReboot()
 		v.botQuestion = ""
 	end
 
+	clearRebootFlags()
 	conn:execute("TRUNCATE TABLE memTracker")
 	conn:execute("TRUNCATE TABLE commandQueue")
 	conn:execute("TRUNCATE TABLE gimmeQueue")
@@ -3756,6 +3818,12 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].zPosOld = 0
 	players[steam].zPosOld2 = 0
 
+	sendPlayerToLobby(steam)
+	return true
+end
+
+
+function sendPlayerToLobby(steam)
 	-- flag the player to be sent to the lobby if a lobby or spawn location exists.
 	if locations["spawn"] or locations["Spawn"] then
 		players[steam].location = "spawn"
@@ -3764,18 +3832,16 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	-- a location called lobby always overrides a location called spawn. Don't have both if you want lobby to be spawn.
 	if locations["lobby"] or locations["Lobby"] then
 		players[steam].location = "lobby"
-		return true
+		return
 	end
 
 	-- check for any locations that have been flagged as lobby.  We'll only use the first one we find so there's no point having multiples of them.
 	for k, v in pairs(locations) do
 		if v.lobby then
 			players[steam].location = k
-			return true
+			return
 		end
 	end
-
-	return true
 end
 
 

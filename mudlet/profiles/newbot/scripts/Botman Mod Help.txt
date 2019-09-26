@@ -1,0 +1,394 @@
+Botman Mod Command Help
+
+The botman mod is a port of Coppi's mod version 3.6 with new commands and features being added.  The latest version is in the download page on this site.  The bot supports a growing list of these commands as bot commands as well as being used directly by the bot to perform various tasks.
+Note:  These are console commands not in-game chat commands.
+If you find any bugs in the Botman mod, please let me know.
+
+bm-additemloot
+
+Add item to Secure Loot Container below the given player
+Usage:
+1. bm-additemloot <name / entity id> <loot_slot_number> <item name> <stackSize> <quality> <used>
+2. bm-additemloot <name / entity id> <item name> <stackSize> <quality> <usedTimes>
+1. add an item at SecureLoot at slot_number
+2. add an item at SecureLoot at first slot available
+*if the item does not have quality, set the quality number as 1
+*if the item does not have used, set the number as 0. This number is a % of used. 0% means new full item. 100 means totally broken
+
+bm-anticheattrees
+
+Usage:
+1. bm-anticheattrees enable
+2. bm-anticheattrees disable
+1. Players will not be able to remove trees from client side command
+2. Players will have the option to remove trees if they choose to.
+
+bm-change
+
+Changes Bot name and/or color responses:
+Usage:
+1. bm-change botname <name>
+2. bm-change public-color <color>
+3. bm-change private-color <color>
+1. Changes Botname. To add colors, use rgb color codes. ex. "bm-change botname [00ff00]botman" for green botman name.
+2. Changes public response color.
+3. Changes private response color
+*For options 2 and 3, only a 6 digit rgb color code needs to be used.
+
+bm-chatcommands
+
+Usage:
+1: bm-chatcommands
+2: bm-chatcommands hide <true/false>
+3: bm-chatcommands prefix <prefix>
+1. Returns current chat command prefix and current hidden status.
+2. Enables/Disables suppression of all commands beginning with assigned prefix in public chat.
+3. Assigns command prefixes.
+
+bm-chatplayercolor
+
+Change the player`s chat and/or response color.
+Usage:
+1. bm-chatplayercolor <steam id/player name/entity id> <color> <nameOnly>
+the <color> must be a 6 hex characters. Example: FF00FF
+the <nameOnly> must be a 1 to color only name and 0 to color all text
+the default chat color is FFFFFF
+
+bm-checkloot
+
+Check items from SecureLoot below the given entity
+Usage:
+1. bm-checkloot <name / entity id>
+1. check items of Secure Loot under a player
+
+bm-clan
+
+Usage:
+1. bm-clan list
+2. bm-clan add clan [clanname] [leadername]
+3. bm-clan add member [clanname] [playername]
+4. bm-clan remove clan [clanname]
+5. bm-clan remove member [playername]
+6. bm-clan replace [leadername] [newleadername]
+7. bm-clan max clans [number]
+8. bm-clan max player [number]
+9. bm-clan enable
+10. bm-clan disable
+11. bm-clan toggle [clanname]
+   1. returns list of clans and members
+   2. adds a new clan and places an admin
+   3. adds a member to an existing clan
+   4. removes a clan and all of its members
+   5. removes a player from any clan they are in
+   6. replaces leadership (must be in same clan)
+   7. sets maximum amount of allowable clans
+   8. sets maxmimum amount of allowable players in a clan
+   9. enables the clan system
+   10. disables the clan system
+   11. toggles the clan to invite only or public for all to join.
+
+bm-pdup
+
+Usage:
+1. bm-pdup <x1> <x2> <y1> <y2> <z1> <z2> <x> <y> <z> <rot>
+2. bm-pdup p1
+3. bm-pdup p2
+4. bm-pdup <x> <y> <z> <rot>
+5. bm-pdup <rot>
+1. duplicate the defined area on x,y,z
+2. Store on position 1 your current location
+3. Store on position 2 your current location
+4. use stored position 1 and 2 to duplicate on x,y,z
+5. use stored position 1 and 2 to duplicate on your current location
+<rot> prefab rotation -> need to be equal 0,1,2 or 3
+
+bm-fixdeathloop
+
+Fixes a player stuck with a black screen (Death Loop)
+Usage:
+1. bm-fixdeathloop <steamId/playername>
+1. Use quotes around playername if name has spaces
+
+bm-getowner
+
+Discover owner of SecureLoot/SecureDoor at location
+Usage:
+1. bm-getowner <x> <y> <z>
+2. bm-getowner <entity_id>
+3. bm-getowner
+1. x,y,z defines the location of SecureLoot/SecureDoor/Signs you would like to check
+2. The location of secure SecureLoot/SecureDoor/Signs below specified player
+3. The location of secure SecureLoot/SecureDoor/Signs below player running command
+
+bm-getskills
+
+Returns a players skills and levels
+Usage:
+1. bm-getskills <playername/steamid>
+
+bm-give
+
+Usage:
+1. bm-give (playername/steamid/entityid) (itemname) (count) (qual)
+2. bm-give all (itemname) (count) (qual)
+1. Sends the specified item to a players inventory.
+2. Sends the specified item to all online players inventory
+*If no quality is added and item has a quality, default is set to 1.
+
+bm-giveat
+
+Give an item to a a location
+Usage:
+1. bm-giveat <x> <y> <z> <item name> <amount>
+2. bm-giveat <x> <y> <z> <item name> <amount> <quality>
+Item name has to be the exact name of an item as listed by "listitems".
+Amount is the number of instances of this item to drop (as a single stack).
+Quality is the quality of the dropped items for items that have a quality.
+
+bm-givexp
+
+Gives XP to a player
+Usage:
+1. bm-givexp <name/entity id> <amount xp>
+
+bm-help
+
+Usage:
+1. bm-help
+1. Returns All Console Commands for Botman
+
+bm-listplayerbed
+
+Usage:
+1. bm-listplayerbed <steam id / player name / entity id>2. bm-listplayerbed  *List bedroll locations of all players online
+
+bm-listplayerfriends
+
+Usage:
+1. bm-listplayerfriends <steam id / player name / entity id>  2. bm-listplayerfriends * List all online players friends
+
+bm-mutePlayer
+
+Usage:
+1. bm-muteplayer <steam id/player name/entity id> [true/false]
+If the optional parameter is not given the command will show the current status.
+
+bm-overridechatname
+
+Change the player`s chat name.
+Usage:
+1. bm-overridechatname <steam id/player name/entity id> <newname>
+
+bm-pblock
+
+Usage:
+1. bm-pblock <block_name> <x1> <x2> <y1> <y2> <z1> <z2> <rot>
+2. bm-pblock <block_name> <x>@<qnt> <y>@<qnt> <z>@<qnt> <rot>
+3. bm-pblock <block_name> <qnt> <qnt> <qnt> <rot>
+4. bm-pblock <block_name>
+5. bm-pblock p1      or    pblock L1
+6. bm-pblock p2 <block_name>
+1. fill blocks with block_name from x1,y1,z1 to x2,y2,z2
+2. fill blocks with block_name from x,y,z each quantity. Quantity can be 0, posivite or negative.
+2. fill blocks with block_name from your position each quantity. Quantity can be 0, posivite or negative.
+4. Search for block names. Fill with * to list all.
+5. Store your position to be used on method 6. p1 store player position,  L1 store the position where player is looking for
+6. Place blocks with block_name from position stored on method 5 until your current location.
+
+bm-playerchatmaxlength
+
+Set the maximum number of characters a player can write in a single message.
+Usage:
+1. bm-playerchatmaxlength <steam id/player name/entity id> <chat length>
+
+bm-playergrounddistance
+
+Usage:
+1. bm-playergrounddistance <steam id / player name / entity id>
+2. bm-playergrounddistance
+1. Lists the specified players ground distance
+2. List all online players ground distance
+
+bm-playerunderground
+
+Usage:
+1. bm-playerunderground <steam id / player name / entity id>
+2. bm-playerunderground
+1. Returns True/False. True = The specified player is underground
+2. Returns True/False for all players online. True =  the player is underground
+* Not to be confused with a player being below ground level. If a result shows True, player is being naughty.
+
+bm-prender
+
+Usage:
+1. bm-prender <prefab_file_name> <x> <y> <z> <rot>
+2. bm-prender <prefab_file_name> <rot>
+3. bm-prender <prefab_file_name> <rot> <depth>
+1. Render prefab on <x> <y> <z> location
+2. Render prefab on your position
+3. Render prefab on your position with y deslocated <depth blocks>
+*<rot> prefab rotation -> needs to be 0,1,2 or 3
+
+bm-pundo
+
+Usage:
+1. bm-pundo
+1. Undoes prefab commands. It works with bm-prender, bm-pblock and bm-pdup
+* By default, the size of undo history is set to 1. You can change the undo history size using "bm-setpundosize"
+
+bm-removeitem
+
+Removes all items from Secure Loot Container below the given player
+Usage:
+1. bm-remitem <name / entity id>
+   1. Removes all items from Secure Loot Container under player
+
+bm-repblock
+
+Usage:
+1. bm-repblock <block_to_be_replaced> <block_name> <x1> <x2> <y1> <y2> <z1> <z2> <rot>
+2. bm-repblock <block_to_be_replaced> <block_name> <x>@<qnt> <y>@<qnt> <z>@<qnt> <rot>
+3. bm-repblock <block_to_be_replaced> <block_name> <qnt> <qnt> <qnt> <rot>
+4. bm-repblock <block_name>
+5. bm-repblock p1
+6. bm-repblock p2 <block_to_be_replaced_name or id> <block_name>
+1. replace blocks block_to_be_replaced with block_name from x1,y1,z1 to x2,y2,z2
+2. replace blocks block_to_be_replaced with block_name from x,y,z each quantity. Quantity can be 0, posivite or negative.
+2. replace blocks block_to_be_replaced with block_name from your position each quantity. Quantity can be 0, posivite or negative.
+4. Search for block names. Fill with * to list all.
+5. Store your position to be used on method 6.
+6. replace blocks block_to_be_replaced with block_name from position stored on method 5 until your current location.
+
+bm-resetplayer
+
+Resets a players profile. Warning, can not be undone
+Usage:
+1. bm-resetplayer <steamId/entityId> <optional=(true)>
+1. Resets a players profile. If the player is offline, they will log in to new profile.
+*If true is used in optional parameter, the players location will be marked and they will return on login.
+
+bm-resetregions
+
+Usage:
+1. bm-resetregions enable/disable
+2. bm-resetregions enable/disable auto
+3. bm-resetregions delay <num>
+4. bm-resetregions minprefabs <num>
+5. bm-resetregions list
+6. bm-resetregions add
+7. bm-resetregions add <x.z>
+8. bm-resetregions remove
+9. bm-resetregions remove <x.z>
+10. bm-resetregions exemptlist add
+11. bm-resetregions exemptlist add <x.z>
+12. bm-resetregions exemptlist remove
+13. bm-resetregions exemptlist remove <x.z.>
+14. bm-resetregions now
+1. Enables/Disables Reset Regions
+2. Enables/Disables Automatic Reset Regions based on minprefabs in a region
+3. Sets the delay of days between resets. 0 for every reboot.
+4. Sets the minimum # of prefabs in a region for Auto Regions to detect it.
+5. Lists all Exempt, Auto and Manual zones
+6. Manually adds a region based off where the player is standing
+7. Manually adds a region based off the region file x.z
+8. Manually removes a region based off where the player is standing
+9. Manually removes a region based off the region file x.z
+10. Sets regions that WILL not get reset, even if auto detects them. Based off where player is standing.
+11. Sets regions that WILL not get reset, even if auto detects them. Based off region file x.z
+12. Removes from exempt list, based off where player is standing.
+13. Removes from exempt list, based off region file x.z   \
+14. Restarts server and resets regions immediately.
+
+bm-safe
+
+Usage:
+1. bm-safe <add/del> <x1> <x2> <y1> <y2> <z1> <z2>
+2. bm-safe <add/del> <x>@<qnt> <y>@<qnt> <z>@<qnt>
+3. bm-safe <add/del> <qnt> <qnt> <qnt>
+4. bm-safe p1
+5. bm-safe p2 <add/del>
+1. protect or unprotect blocks from x1,y1,z1 to x2,y2,z2
+2. protect or unprotect blocks from x,y,z each quantity. Quantity can be posivite or negative.
+3. protect or unprotect blocks from your position each quantity. Quantity can be posivite or negative.
+4. Store your position to be used on method 5. p1 store player position
+5. protect or unprotect block from position stored on method 4 until your current location.
+
+bm-say
+
+Usage:
+1. bm-say Hello World
+
+bm-sayprivate
+
+Usage:
+1.  bm-sayprivate (playername,steamid,entityid) Hello World
+* If the players name has spaces, use quotation marks around name.
+
+bm-setowner
+
+Define an owner for SecureLoot/SecureDoor for a player. After using this command you may need to leave and reenter the game to take effect.
+1. Usage:
+1. bm-setowner <x> <y> <z> <entity_id>
+2. bm-setowner <x> <y> <z>
+3. bm-setowner <entity_id> <entity_id_new_owner>
+4. bm-setowner <entity_id>
+5. bm-setowner
+1. x,y,z defines the location of SecureLoot/SecureDoor/Signs and the entity_id is the new owner
+2. x,y,z defines the location of SecureLoot/SecureDoor/Signs and you are the new owner
+3. the location of secure SecureLoot/SecureDoor/Signs if bellow entity_id and the entity_id_new_owner is the new owner
+4. the location of secure SecureLoot/SecureDoor/Signs if bellow your player and the entity_id is the new owner
+5. the location of secure SecureLoot/SecureDoor/Signs if bellow your player and you are the new owner
+
+bm-setpundosize
+
+Set the size of history on pundoUsage:
+1. bm-setpundosize <size>
+2. bm-setpundosize
+   1. Sets the Pundo History Size
+   2. Gets the Pundo History Size
+
+bm-spawnhorde
+
+Spawn horde near a player/location.Usage:
+1. bm-spawnhorde <steam id/player name/entity id> <qty>
+2. bm-spawnhorde <x> <y> <z> <qty>
+1. Spawns a horde near specified player   1. Spawns a horde near specified location
+
+bm-teleportplayerhome
+
+Usage:
+1. bm-teleportplayerhome <steam id / player name / entity id>
+
+bm-unlockall
+
+Unlock all secure loots, chests and doors for the current player.
+
+bm-zombieannouncer
+
+Usage:
+1. bm-zombieannouncer list
+2. bm-zombieannouncer add (zombiename) (message)
+3. bm-zombieannouncer remove (zombiename)
+4. bm-zombieannouncer enable/disable
+1. Lists all zombies and their announcement message.
+2. Adds the zombie and message to list
+3. Removes specified zombie and message attached
+4. Enables/Disables zombie announcer
+
+bm-zone
+
+Control Zones to handle zombies
+Usage:
+1. bm-zone p1
+2. bm-zone p2 <name>
+3. bm-zone add <name> <x1> <y1> <z1> <x2> <y2> <z2>
+4. bm-zone list
+5. bm-zone remove <name>
+6. bm-zone enable/disable
+  1. store the first corner of zone being created
+  2. creates a zone with specified name
+  3. creates a zone with specified name w/out having to move around
+  4. lists all zones
+  5. remove zone with specified name
+  5. turns zones on/off
+*If adding a zone from control panel/telnet, use command 3.

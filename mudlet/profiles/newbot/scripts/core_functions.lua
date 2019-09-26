@@ -115,13 +115,15 @@ function sendCommand(command, api, outputFile)
 				outputFile = "bc-lp.txt"
 			end
 
+			if string.find(command, "bm-listplayerbed", nil, true) then
+				api = "executeconsolecommand?command=" .. command .. "&"
+				outputFile = "bm-listplayerbed.txt"
+			end
+
 			-- don't send gg to the API for now as it messes up in the BC mod's JSON encoding if the Server Login Confirmation Text contains any /r/n's which is probably fairly common.
 			if command == "gg" then
 				-- instead send it to telnet as that parses it just fine.
 				send(command)
-
-				--api = "executeconsolecommand?command=gg&"
-				--outputFile = "gg.txt"
 			end
 
 			if command == "gt" then
@@ -977,6 +979,8 @@ function LookupIRCPass(login, pass)
 			end
 		end
 	end
+
+	return 0
 end
 
 

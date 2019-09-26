@@ -326,6 +326,19 @@ function importBaditems()
 end
 
 
+function importDonors()
+	local k, v
+
+	dbug("Importing Donors")
+
+	for k,v in pairs(donors) do
+		conn:execute("INSERT INTO donors (steam, level, expiry) VALUES (" .. k .. "," .. v.level .. "," .. v.expiry .. ")")
+	end
+
+	dbug("Donors Imported")
+end
+
+
 function importRestricteditems()
 	local k, v
 
@@ -456,6 +469,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		table.load(path .. pathPrefix .. "waypoints.lua", waypoints)
 
 		conn:execute("TRUNCATE badItems")
+		conn:execute("TRUNCATE donors")
 		conn:execute("TRUNCATE friends")
 		conn:execute("TRUNCATE hotspots")
 		conn:execute("TRUNCATE locations")
@@ -469,6 +483,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		conn:execute("TRUNCATE waypoints")
 
 		importBaditems()
+		importDonors()
 		importRestricteditems()
 		importHotspots()
 		importLocationCategories()

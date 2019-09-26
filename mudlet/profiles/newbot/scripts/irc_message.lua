@@ -67,7 +67,6 @@ IRCMessage = function (event, name, channel, msg)
 	result = false
 
 	if debug then
-		dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		dbug(event .. " " .. name .. " " .. channel .. " " .. msg)
 	end
 
@@ -4172,6 +4171,56 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
+		irc_chat(name, "Command: shop units {item} {new units}")
+		irc_chat(name, "Change the number of units given when buying a specific item in the shop.")
+		irc_chat(name, ".")
+	end
+
+	if (words[1] == "shop" and words[2] == "units" and words[3] ~= nil) then
+		LookupShop(words[3], true)
+
+		if shopItem == "" then
+			irc_chat(name, "The item " .. words[3] .. " does not exist.")
+			irc_params = {}
+			return
+		end
+
+		irc_chat(name, "You have changed the units given for " .. shopItem .. " to " .. words2[4])
+		irc_chat(name, ".")
+
+		conn:execute("UPDATE shop SET units = " .. escape(tonumber(words2[4])) .. " WHERE item = '" .. escape(shopItem) .. "'")
+		irc_params = {}
+		return
+	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: shop quality {item} {new quality 0-6 or custom number}")
+		irc_chat(name, "Change the quality of an item given when buying a specific item in the shop.")
+		irc_chat(name, ".")
+	end
+
+	if (words[1] == "shop" and words[2] == "quality" and words[3] ~= nil) then
+		LookupShop(words[3], true)
+
+		if shopItem == "" then
+			irc_chat(name, "The item " .. words[3] .. " does not exist.")
+			irc_params = {}
+			return
+		end
+
+		irc_chat(name, "You have changed the quality given for " .. shopItem .. " to " .. words2[4])
+		irc_chat(name, ".")
+
+		conn:execute("UPDATE shop SET quality = " .. escape(tonumber(words2[4])) .. " WHERE item = '" .. escape(shopItem) .. "'")
+		irc_params = {}
+		return
+	end
+
+	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
 		irc_chat(name, "Command: shop max {item} {max stock level}")
 		irc_chat(name, "Set the maximum quantity of an item for sale in the shop.")
 		irc_chat(name, ".")
@@ -5448,8 +5497,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
-		irc_chat(name, "Command: shop add item {item name} category {category} price {price} stock {max stock} units {units dropped}")
+		irc_chat(name, "Command: shop add item {item name} category {category} price {price} stock {max stock} units {units spawned} quality {0-6}")
 		irc_chat(name, "Add an item to the shop.  If a unit is given and a player buys 1 item, the bot will give 1 * the unit eg. 10 of the item.")
+		irc_chat(name, "If quality is set to 0 the spawned item will have a random quality.  You can set any number that is supported by your server (usually 1-6).")
 		irc_chat(name, ".")
 	end
 
@@ -5463,6 +5513,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			price = 10000
 			stock = 0
 			units = 0
+			quality = 0
 
 			for i=4,wordCount,1 do
 				if words[i] == "category" then
@@ -5480,11 +5531,15 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				if words[i] == "units" then
 					units = tonumber(words[i+1])
 				end
+
+				if words[i] == "quality" then
+					quality = tonumber(words[i+1])
+				end
 			end
 
-			irc_chat(name, "You added " .. wordsOld[4] .. " to the shop.  You will need to add any missing info such as code, category, price and quantity.")
+			irc_chat(name, "You added " .. wordsOld[4] .. " to the shop.  You will need to add any missing info such as code, category, units, price, quality and quantity.")
 
-			conn:execute("INSERT INTO shop (item, category, stock, maxStock, price, units) VALUES ('" .. escape(wordsOld[4]) .. "','" .. escape(class) .. "'," .. stock .. "," .. stock .. "," .. price .. "," .. units .. ")")
+			conn:execute("INSERT INTO shop (item, category, stock, maxStock, price, units, quality) VALUES ('" .. escape(wordsOld[4]) .. "','" .. escape(class) .. "'," .. stock .. "," .. stock .. "," .. price .. "," .. units .. "," .. quality .. ")")
 
 			reindexShop(class)
 		end

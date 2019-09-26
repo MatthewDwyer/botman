@@ -1712,8 +1712,8 @@ function readAPI_BCLP()
 				if v.Bedroll then
 					if type(v.Bedroll) == "table" then
 						players[steam].bedX = math.floor(v.Bedroll.x)
-						players[steam].bedX = math.floor(v.Bedroll.y)
-						players[steam].bedX = math.floor(v.Bedroll.z)
+						players[steam].bedY = math.floor(v.Bedroll.y)
+						players[steam].bedZ = math.floor(v.Bedroll.z)
 					end
 				end
 
@@ -1781,6 +1781,60 @@ function readAPI_BCTime()
 
 	file:close()
 	os.remove(homedir .. "/temp/bc-time.txt")
+end
+
+
+function readAPI_BMListPlayerBed()
+	local file, ln, result, data, temp, pname, pid, x, y, z, i
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/bm-listplayerbed.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
+	end
+
+	file = io.open(homedir .. "/temp/bm-listplayerbed.txt", "r")
+
+	for ln in file:lines() do
+		result = yajl.to_value(ln)
+		data = splitCRLF(result.result)
+
+		for k,v in pairs(data) do
+			if v ~= "" then
+				temp = string.split(v, ": ")
+				pname = temp[1]
+
+				temp = string.split(v, ", ")
+				i = table.maxn(temp)
+
+				x = temp[i - 2]
+				x = string.split(x, " ")
+				x = x[table.maxn(x)]
+
+				y = temp[i - 1]
+				z = temp[i]
+
+				pid = LookupPlayer(pname, "all")
+				players[pid].bedX = x
+				players[pid].bedY = y
+				players[pid].bedZ = z
+			end
+		end
+	end
+
+	file:close()
+	os.remove(homedir .. "/temp/bm-listplayerbed.txt")
 end
 
 

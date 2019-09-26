@@ -73,10 +73,12 @@ function reconnectTimer()
 
 
 	if not botman.botOffline and server.useAllocsWebAPI and tonumber(botman.APIOfflineCount) > 5 and tonumber(server.webPanelPort) > 0 then
-		if server.useAllocsWebAPI and botman.APIOffline and not server.telnetDisabled then
-			-- switch to using telnet
-			server.useAllocsWebAPI = false
-			conn:execute("UPDATE server set useAllocsWebAPI = 0")
+		if server.telnetFallback then -- don't let the bot stop trying to use Alloc's web API unless telnetFallback is enabled.
+			if server.useAllocsWebAPI and botman.APIOffline and not server.telnetDisabled then
+				-- switch to using telnet
+				server.useAllocsWebAPI = false
+				conn:execute("UPDATE server set useAllocsWebAPI = 0")
+			end
 		end
 	end
 
@@ -86,6 +88,13 @@ function reconnectTimer()
 
 	if (os.time() - botman.lastTelnetResponseTimestamp) > 540 and not server.telnetDisabled then
 		send("gt")
+	end
+
+	if tonumber(botman.botOfflineCount) > 180 then
+		if server.allowBotRestarts then
+			restartBot()
+			return
+		end
 	end
 
 	if (botman.telnetOffline or botman.botOffline) and not server.telnetDisabled then
@@ -123,13 +132,6 @@ function reconnectTimer()
 		end
 
 		return
-	end
-
-	if tonumber(botman.botOfflineCount) > 180 then
-		if server.allowBotRestarts then
-			restartBot()
-			return
-		end
 	end
 
 	if server.useAllocsWebAPI and not botman.botOffline then

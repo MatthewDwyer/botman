@@ -188,6 +188,22 @@ function gmsg_unslashed()
 		end
 	end
 
+	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
+
+	if (chatvars.playername ~= "Server") then
+		if players[chatvars.playerid].botQuestion == "forget players" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players? Who needs em? Out with the trash I say. All players forgotten and their stuff except for admins.[-]")
+			ForgetPlayers()
+
+			players[chatvars.playerid].botQuestion = ""
+			players[chatvars.playerid].botQuestionID = nil
+			players[chatvars.playerid].botQuestionValue = nil
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+	if (debug) then dbug("debug unslashed line " .. debugger.getinfo(1).currentline) end
 
 	if string.find(chatvars.command, "hack") or string.find(chatvars.command, "cheat") or string.find(chatvars.command, "grief") or string.find(chatvars.command, "flying") then
 		scanForPossibleHackersNearby(chatvars.playerid)

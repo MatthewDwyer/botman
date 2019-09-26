@@ -42,8 +42,26 @@ function WebPanelQueue()
 				fixShop()
 			end
 
+			if action == "forget players" then
+				ForgetPlayers()
+			end
+
 			if action == "kick" then
 				kick(temp[1], temp[2])
+			end
+
+			if action == "new profile" then
+				newBotProfile()
+			end
+
+			if action == "pause bot" then
+				irc_chat(server.ircMain, "The bot is paused.")
+				message("say [" .. server.warnColour .. "]The bot is paused.  Most commands are disabled. D:[-]")
+				botman.botDisabled = false
+			end
+
+			if action == "quick reset bot" then
+				QuickResetBot()
 			end
 
 			if action == "reload bot" then
@@ -144,6 +162,14 @@ function WebPanelQueue()
 				end
 			end
 
+			if action == "reset bot" then
+				ResetBot()
+			end
+
+			if action == "reset bot keep cash" then
+				ResetBot(true)
+			end
+
 			if action == "restart bot" then
 				if server.allowBotRestarts then
 					restartBot()
@@ -170,6 +196,16 @@ function WebPanelQueue()
 
 			if action == "say" then
 				message(temp[1], temp[2])
+			end
+
+			if action == "update bot" then
+				updateBot(true)
+			end
+
+			if action == "unpause bot" then
+				irc_chat(server.ircMain, "The bot is no longer paused.")
+				message("say [" .. server.warnColour .. "]The bot is now accepting commands again! :D[-]")
+				botman.botDisabled = false
 			end
 
 			row = cursor:fetch(row, "a")

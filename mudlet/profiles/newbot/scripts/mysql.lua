@@ -17,26 +17,7 @@ local statements = {}
 
 function resetMySQLMemoryTables()
 	-- make sure the tables exist
-	conn:execute("CREATE TABLE IF NOT EXISTS `APIQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`URL` varchar(500) NOT NULL,`OutputFile` varchar(500) NOT NULL, PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
-	conn:execute("CREATE TABLE IF NOT EXISTS `connectQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `steam` bigint(17) NOT NULL, `command` varchar(255) NOT NULL, `processed` tinyint(1) NOT NULL DEFAULT '0', PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
-	conn:execute("CREATE TABLE IF NOT EXISTS `commandQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) NOT NULL,`command` varchar(100) NOT NULL,PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8")
-	conn:execute("CREATE TABLE IF NOT EXISTS `gimmeQueue` (`id` int(11) NOT NULL AUTO_INCREMENT,`command` varchar(255) NOT NULL,`steam` bigint(17) NOT NULL DEFAULT '0',PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8")
-	conn:execute("CREATE TABLE IF NOT EXISTS `ircQueue` (`id` int(11) NOT NULL AUTO_INCREMENT,`name` varchar(20) NOT NULL,`command` varchar(255) NOT NULL,PRIMARY KEY (`id`)) ENGINE=MEMORY AUTO_INCREMENT=6836 DEFAULT CHARSET=utf8")
-	conn:execute("CREATE TABLE IF NOT EXISTS `list` (`thing` varchar(255) NOT NULL,`id` int(11) NOT NULL DEFAULT '0',`class` varchar(20) NOT NULL DEFAULT '',`steam` bigint(17) NOT NULL DEFAULT '0') ENGINE=MEMORY DEFAULT CHARSET=latin1 COMMENT='For sorting a list'")
-	conn:execute("CREATE TABLE IF NOT EXISTS `LKPQueue` (`id` int(11) NOT NULL AUTO_INCREMENT,`line` varchar(255) NOT NULL DEFAULT '',PRIMARY KEY (`id`)) ENGINE=MEMORY AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4")
-	conn:execute("CREATE TABLE IF NOT EXISTS `memEntities` (`entityID` bigint(20) NOT NULL,`type` varchar(20) NOT NULL DEFAULT '',`name` varchar(30) NOT NULL DEFAULT '',`x` int(11) NOT NULL DEFAULT '0',`y` int(11) NOT NULL DEFAULT '0',`z` int(11) DEFAULT '0',`dead` tinyint(1) NOT NULL DEFAULT '0',`health` int(11) NOT NULL DEFAULT '0',UNIQUE KEY `entityID` (`entityID`)) ENGINE=MEMORY DEFAULT CHARSET=latin1")
-	conn:execute("CREATE TABLE IF NOT EXISTS `memIgnoredItems` (`item` varchar(50) NOT NULL,`qty` int(11) NOT NULL DEFAULT '65',PRIMARY KEY (`item`)) ENGINE=MEMORY DEFAULT CHARSET=latin1")
-	conn:execute("CREATE TABLE IF NOT EXISTS `memLottery` (`steam` bigint(17) NOT NULL DEFAULT '0',`ticket` int(11) NOT NULL DEFAULT '0',PRIMARY KEY (`steam`,`ticket`)) ENGINE=MEMORY DEFAULT CHARSET=latin1")
-	conn:execute("CREATE TABLE IF NOT EXISTS `memRestrictedItems` (`item` varchar(50) NOT NULL,`qty` int(11) NOT NULL DEFAULT '65',`accessLevel` int(11) NOT NULL DEFAULT '90',`action` varchar(30) NOT NULL,PRIMARY KEY (`item`)) ENGINE=MEMORY DEFAULT CHARSET=latin1")
-	conn:execute("CREATE TABLE IF NOT EXISTS `memShop` (`item` varchar(50) NOT NULL,`category` varchar(20) NOT NULL,`price` int(11) NOT NULL DEFAULT '50',`stock` int(11) NOT NULL DEFAULT '50',`idx` int(11) NOT NULL DEFAULT '0',`code` varchar(10) NOT NULL,`units` int(11) NOT NULL DEFAULT '1',PRIMARY KEY (`item`)) ENGINE=MEMORY DEFAULT CHARSET=utf8")
-	conn:execute("CREATE TABLE IF NOT EXISTS `memTracker` (`trackerID` bigint(20) NOT NULL AUTO_INCREMENT,`admin` bigint(17) NOT NULL,`steam` bigint(17) NOT NULL,`timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,`x` int(11) NOT NULL,`y` int(11) NOT NULL,`z` int(11) NOT NULL,`session` int(11) DEFAULT '0',`flag` varchar(10) DEFAULT NULL,PRIMARY KEY (`trackerID`)) ENGINE=MEMORY DEFAULT CHARSET=utf8")
-	conn:execute("CREATE TABLE IF NOT EXISTS `messageQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`sender` bigint(17) NOT NULL DEFAULT '0',`recipient` bigint(20) NOT NULL DEFAULT '0',`message` varchar(1000) NOT NULL,PRIMARY KEY (`id`)) ENGINE=MEMORY AUTO_INCREMENT=2 DEFAULT CHARSET=utf8")
-	conn:execute("CREATE TABLE IF NOT EXISTS `miscQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) NOT NULL,`command` varchar(255) NOT NULL,`action` varchar(15) NOT NULL,`value` int(11) NOT NULL DEFAULT '0',`timerDelay` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8")
-	conn:execute("CREATE TABLE IF NOT EXISTS `persistentQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) NOT NULL,`command` varchar(255) NOT NULL,`action` varchar(15) NOT NULL,`value` int(11) NOT NULL DEFAULT '0',`timerDelay` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',PRIMARY KEY (`id`)) ENGINE=MEMORY AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4")
-	conn:execute("CREATE TABLE IF NOT EXISTS `playerQueue` (`id` int(11) NOT NULL AUTO_INCREMENT,`command` varchar(255) NOT NULL,`arena` tinyint(1) NOT NULL DEFAULT '0',`boss` tinyint(1) NOT NULL DEFAULT '0',`steam` bigint(17) NOT NULL DEFAULT '0',`delayTimer` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8")
-	conn:execute("CREATE TABLE IF NOT EXISTS `reservedSlots` (`steam` bigint(17) NOT NULL,`timeAdded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`reserved` tinyint(1) NOT NULL DEFAULT '0',`staff` tinyint(1) NOT NULL DEFAULT '0',`totalPlayTime` int(11) NOT NULL DEFAULT '0',`deleteRow` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`steam`)) ENGINE=MEMORY DEFAULT CHARSET=latin1")
-	conn:execute("CREATE TABLE IF NOT EXISTS `searchResults` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`owner` bigint(17) NOT NULL,`steam` bigint(17) NOT NULL,`x` int(11) DEFAULT NULL,`y` int(11) DEFAULT NULL,`z` int(11) DEFAULT NULL,`session` int(11) DEFAULT NULL,`date` varchar(20) DEFAULT NULL,`counter` int(11) NOT NULL DEFAULT '0',PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8")
-	conn:execute("CREATE TABLE IF NOT EXISTS `slots` (`slot` int(11) NOT NULL,`steam` bigint(17) NOT NULL DEFAULT '0',`online` tinyint(1) NOT NULL DEFAULT '0',`joinedTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`joinedSession` int(11) NOT NULL DEFAULT '0',`expires` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`reserved` tinyint(1) NOT NULL DEFAULT '0',`staff` tinyint(1) NOT NULL DEFAULT '0',`free` tinyint(1) NOT NULL DEFAULT '1',`canBeKicked` tinyint(1) NOT NULL DEFAULT '1',`disconnectedTimestamp` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',PRIMARY KEY (`slot`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
+	refreshMySQLMemoryTables()
 
 	-- nuke the memory tables to keep them minty fresh
 	conn:execute("TRUNCATE TABLE APIQueue")
@@ -56,6 +37,9 @@ function resetMySQLMemoryTables()
 	conn:execute("TRUNCATE TABLE playerQueue")
 	-- we don't touch the reservedSlots memory table so that we can preserve it across restarts later
 	conn:execute("TRUNCATE TABLE searchResults")
+
+	conn:execute("INSERT INTO memRestrictedItems (select * from restrictedItems)")
+	conn:execute("INSERT INTO memLottery (select * from lottery)")
 end
 
 
@@ -422,17 +406,9 @@ end
 
 function initDB()
 	if debug then display("initDB start") end
+	refreshMySQLMemoryTables()
 	resetMySQLMemoryTables()
 	alterTables()
-
-	--conn:execute("TRUNCATE TABLE ircQueue")
-	--conn:execute("TRUNCATE TABLE memTracker")
-	--conn:execute("TRUNCATE TABLE messageQueue")
-	--conn:execute("TRUNCATE TABLE commandQueue")
-	--conn:execute("TRUNCATE TABLE gimmeQueue")
-	--conn:execute("TRUNCATE TABLE searchResults")
-
-	--conn:execute("TRUNCATE TABLE memRestrictedItems")
 	conn:execute("INSERT INTO memRestrictedItems (SELECT * from restrictedItems)")
 
 	getServerFields()
@@ -688,6 +664,7 @@ function alterTables()
 	doSQL("CREATE TABLE `slots` (`slot` int(11) NOT NULL,`steam` bigint(17) NOT NULL DEFAULT '0',`online` tinyint(1) NOT NULL DEFAULT '0',`joinedTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`joinedSession` int(11) NOT NULL DEFAULT '0',`expires` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`reserved` tinyint(1) NOT NULL DEFAULT '0',`staff` tinyint(1) NOT NULL DEFAULT '0',`free` TINYINT(1) NOT NULL DEFAULT '1',`canBeKicked` TINYINT(1) NOT NULL DEFAULT '1',`disconnectedTimestamp` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', PRIMARY KEY (`slot`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `bases` (`steam` bigint(17) NOT NULL,`baseNumber` int(11) NOT NULL DEFAULT '1',`title` varchar(100) NOT NULL DEFAULT '',`x` int(11) NOT NULL DEFAULT '0',`y` int(11) NOT NULL DEFAULT '0',`z` int(11) NOT NULL DEFAULT '0',`exitX` int(11) NOT NULL DEFAULT '0',`exitY` int(11) NOT NULL DEFAULT '0',`exitZ` int(11) NOT NULL DEFAULT '0',`size` int(11) NOT NULL DEFAULT '0',`protect` tinyint(1) NOT NULL DEFAULT '0',`keepOut` tinyint(1) NOT NULL DEFAULT '0',`creationTimestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,`creationGameDay` INT NOT NULL DEFAULT '0',PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
 	doSQL("CREATE TABLE `webInterfaceJSON` (`ident` varchar(50) NOT NULL,`json` text NOT NULL, `sessionID` VARCHAR(32) NOT NULL DEFAULT '', PRIMARY KEY (`ident`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
+	doSQL("CREATE TABLE `donors` (`steam` int(11) NOT NULL, `level` int(11) NOT NULL DEFAULT '0', `expiry` int(11) DEFAULT NULL, PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
 
 	-- changes to players table
 	doSQL("ALTER TABLE `players` ADD COLUMN `waypoint2X` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Y` INT NOT NULL DEFAULT '0' , ADD COLUMN `waypoint2Z` INT NOT NULL DEFAULT '0', ADD COLUMN `waypointsLinked` TINYINT(1) NOT NULL DEFAULT '0'")
@@ -722,7 +699,7 @@ function alterTables()
 	doSQL("ALTER TABLE `players` ADD `showLocationMessages` TINYINT(1) NOT NULL DEFAULT '1'") -- this is just here for backwards compatibility
 	doSQL("ALTER TABLE `players` ADD `DNSLookupCount` INT NOT NULL DEFAULT '0', ADD `lastDNSLookup` DATE NOT NULL DEFAULT '1000-01-01'")
 	doSQL("ALTER TABLE `players` ADD `ircAuthenticated` TINYINT(1) NOT NULL DEFAULT '0'")
-
+	doSQL("ALTER TABLE `players` ADD `p2pCooldown` INT NOT NULL DEFAULT '0'")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -869,6 +846,8 @@ function alterTables()
 	doSQL("ALTER TABLE `server` ADD `ircMainPassword` VARCHAR(30) NOT NULL DEFAULT '', ADD `ircAlertsPassword` VARCHAR(30) NOT NULL DEFAULT '', ADD `ircWatchPassword` VARCHAR(30) NOT NULL DEFAULT ''")
 	doSQL("ALTER TABLE `server` ADD `chatColourPrivate` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF', ADD `botNameColour` VARCHAR(6) NOT NULL DEFAULT 'FFFFFF'")
 	doSQL("ALTER TABLE `server` ADD `disableFetch` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `p2pCooldown` INT NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `telnetFallback` TINYINT(1) NOT NULL DEFAULT '0' COMMENT 'Use telnet when API not working'")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -910,6 +889,7 @@ function alterTables()
 	doSQL("ALTER TABLE `shop` ADD `units` INT(1) NOT NULL, ADD `quality` INT(0) NOT NULL")
 	doSQL("ALTER TABLE `customCommands_Detail` DROP PRIMARY KEY , ADD PRIMARY KEY (`detailID`,`commandID`)")
 	doSQL("ALTER TABLE `memShop` ADD `units` INT NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `memShop` ADD `quality` INT NOT NULL DEFAULT '0'")
 
 	-- fix zero default tp sizes
 	doSQL("UPDATE `teleports` SET size = 1.5 WHERE size = 0")
@@ -969,6 +949,7 @@ function alterTables()
 	doSQL("ALTER TABLE `IPBlacklist` ADD `Country` VARCHAR(2) DEFAULT ''")
 	doSQL("ALTER TABLE `webInterfaceJSON` ADD `recipient` varchar(5) NOT NULL DEFAULT '', ADD `expire` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'")
 	doSQL("ALTER TABLE `locations` ADD `height` INT NOT NULL DEFAULT '-1'")
+	doSQL("ALTER TABLE `locations` ADD `allowPack` TINYINT(1) NOT NULL DEFAULT '1'")
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)

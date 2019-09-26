@@ -289,6 +289,14 @@ function login()
 			connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID)
 		end
 
+		if not server.telnetDisabled then
+			if not server.readLogUsingTelnet then
+				conn:execute("UPDATE server set readLogUsingTelnet = 1")
+			end
+
+			server.readLogUsingTelnet = true
+		end
+
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 	end
 

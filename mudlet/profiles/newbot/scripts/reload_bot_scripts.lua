@@ -113,7 +113,7 @@ function unpackScripts()
 end
 
 
-function fixTables() -- waiter!  Where's my table!?
+function fixTables() -- Waiter!  Where's my table!?
 	if type(admins) ~= "table" then
 		admins = {}
 	end
@@ -134,6 +134,10 @@ function fixTables() -- waiter!  Where's my table!?
 		botman = {}
 	end
 
+	if type(botMaintenance) ~= "table" then
+		botMaintenance = {}
+	end
+
 	if type(conQueue) ~= "table" then
 		conQueue = {}
 	end
@@ -142,8 +146,8 @@ function fixTables() -- waiter!  Where's my table!?
 		customMessages = {}
 	end
 
-	if type(botMaintenance) ~= "table" then
-		botMaintenance = {}
+	if type(donors) ~= "table" then
+		donors = {}
 	end
 
 	if type(fallingBlocks) ~= "table" then

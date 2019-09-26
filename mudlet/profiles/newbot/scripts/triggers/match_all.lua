@@ -175,9 +175,9 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 			botman.APIOffline = false
 			botman.APITestSilent = true
 			toggleTriggers("api offline")
-			send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 		end
 
+		send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 		return
 	end
 
@@ -318,18 +318,16 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
+	if (string.sub(line, 1, 4) == os.date("%Y")) then
+		if botman.readGG then
+			botman.readGG = false
+
+			if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('GamePrefs','panel','" .. escape(yajl.to_string(GamePrefs)) .. "')") end
+		end
+	end
+
 	if not server.useAllocsWebAPI then
 		if (string.sub(line, 1, 4) == os.date("%Y")) then
-			-- if botman.readTokens then
-				-- botman.readTokens = false
-			-- end
-
-			if botman.readGG then
-				botman.readGG = false
-
-				if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('GamePrefs','panel','" .. escape(yajl.to_string(GamePrefs)) .. "')") end
-			end
-
 			if echoConsole then
 				echoConsole = false
 				echoConsoleTo = nil
@@ -422,7 +420,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 					igplayers[tmp.pid].tp = tonumber(igplayers[tmp.pid].tp) - 1
 				end
 
-				if server.coppi and string.sub(players[tmp.pid].lastCommand, 2, 4) == "bag" then
+				if string.sub(players[tmp.pid].lastCommand, 2, 4) == "bag" then
 					igplayers[tmp.pid].tp = tonumber(igplayers[tmp.pid].tp) + 1
 					igplayers[tmp.pid].spawnChecked = true
 				end
@@ -467,14 +465,12 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	end
 
 
-	if not server.useAllocsWebAPI then
-		if string.find(line, "GamePref.") then
-			if not botman.readGG then
-				GamePrefs = {}
-			end
-
-			botman.readGG = true
+	if string.find(line, "GamePref.") then
+		if not botman.readGG then
+			GamePrefs = {}
 		end
+
+		botman.readGG = true
 	end
 
 
@@ -1653,11 +1649,6 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 				conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
 				os.remove(homedir .. "/temp/apitest.txt")
 				server.useAllocsWebAPI = true
-
-				if not server.telnetDisabled then
-					server.readLogUsingTelnet = true
-					conn:execute("UPDATE server set readLogUsingTelnet = 1")
-				end
 
 				botman.APIOffline = false
 				botman.APITestSilent = true

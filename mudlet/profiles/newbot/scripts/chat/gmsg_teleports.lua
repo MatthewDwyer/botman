@@ -931,6 +931,8 @@ function gmsg_teleports()
 
 
 	local function cmd_PackTeleport()
+		local loc
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}pack\n"
@@ -968,6 +970,16 @@ function gmsg_teleports()
 			end
 
 			if tonumber(players[chatvars.playerid].deathX) ~= 0 then
+				loc = inLocation(players[chatvars.playerid].deathX, players[chatvars.playerid].deathZ)
+
+				if locations[loc] then
+					if not locations[loc].allowPack then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You died in a location that does not allow the {#}" .. chatvars.words[1] .. " command.[-]")
+						botman.faultyChat = false
+						return true
+					end
+				end
+
 				if players[chatvars.playerid].packCooldown > os.time() then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can " .. server.commandPrefix .. "pack in " .. os.date("%M minutes %S seconds", players[chatvars.playerid].packCooldown - os.time()) .. " seconds.[-]")
 					botman.faultyChat = false
@@ -980,21 +992,21 @@ function gmsg_teleports()
 					return true
 				end
 
-				cursor,errorString = conn:execute("SELECT x, y, z FROM tracker WHERE steam = " .. chatvars.playerid .. " and ((abs(x - " .. players[chatvars.playerid].deathX .. ") > 0 and abs(x - " .. players[chatvars.playerid].deathX .. ") < 50) and (abs(z - " .. players[chatvars.playerid].deathZ .. ") > 5 and abs(z - " .. players[chatvars.playerid].deathZ .. ") < 50))  ORDER BY trackerid DESC Limit 0, 1")
-				if cursor:numrows() > 0 then
-					row = cursor:fetch({}, "a")
-					cmd = ("tele " .. chatvars.playerid .. " " .. row.x .. " -1 " .. row.z)
+				-- cursor,errorString = conn:execute("SELECT x, y, z FROM tracker WHERE steam = " .. chatvars.playerid .. " and ((abs(x - " .. players[chatvars.playerid].deathX .. ") > 0 and abs(x - " .. players[chatvars.playerid].deathX .. ") < 50) and (abs(z - " .. players[chatvars.playerid].deathZ .. ") > 5 and abs(z - " .. players[chatvars.playerid].deathZ .. ") < 50))  ORDER BY trackerid DESC Limit 0, 1")
+				-- if cursor:numrows() > 0 then
+					-- row = cursor:fetch({}, "a")
+					-- cmd = ("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y + 1 .. " " .. row.z)
+
+					-- players[chatvars.playerid].deathX = 0
+					-- players[chatvars.playerid].deathY = 0
+					-- players[chatvars.playerid].deathZ = 0
+				-- else
+					cmd = ("tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].deathX .. " " .. players[chatvars.playerid].deathY + 1 .. " " .. players[chatvars.playerid].deathZ)
 
 					players[chatvars.playerid].deathX = 0
 					players[chatvars.playerid].deathY = 0
 					players[chatvars.playerid].deathZ = 0
-				else
-					cmd = ("tele " .. chatvars.playerid .. " " .. players[chatvars.playerid].deathX .. " -1 " .. players[chatvars.playerid].deathZ)
-
-					players[chatvars.playerid].deathX = 0
-					players[chatvars.playerid].deathY = 0
-					players[chatvars.playerid].deathZ = 0
-				end
+				-- end
 
 				-- first record their current x y z
 				savePosition(chatvars.playerid)
@@ -2182,6 +2194,68 @@ function gmsg_teleports()
 	end
 
 
+	local function cmd_SetP2PCooldownTimer()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set p2p cooldown {number in seconds}"
+			help[2] = "Set a cooldown after players teleport to friends before they can teleport to friends again.  Default is 0."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "tele,set,cool,delay,time,p2p"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "p2p") or string.find(chatvars.command, "time") or string.find(chatvars.command, "cool"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "p2p" and chatvars.words[3] == "cooldown" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number ~= nil then
+				chatvars.number = math.abs(math.floor(chatvars.number))
+
+				server.p2pCooldown = chatvars.number
+				conn:execute("UPDATE server SET p2pCooldown = " .. chatvars.number)
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]After teleporting to a friend a player must wait " .. chatvars.number .. " seconds before they can teleport to a friend again.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "After teleporting to a friend a player must wait " .. chatvars.number .. " seconds before they can teleport to a friend again.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleP2PTeleporting()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -2779,6 +2853,15 @@ function gmsg_teleports()
 
 	if result then
 		if debug then dbug("debug cmd_SetPackCost triggered") end
+		return result
+	end
+
+	if debug then dbug("debug teleports end of remote commands") end
+
+	result = cmd_SetP2PCooldownTimer()
+
+	if result then
+		if debug then dbug("debug cmd_SetP2PCooldownTimer triggered") end
 		return result
 	end
 

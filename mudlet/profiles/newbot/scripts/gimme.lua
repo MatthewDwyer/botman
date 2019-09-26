@@ -95,45 +95,28 @@ function setupArenaPlayers(pid)
 			arenaPlayers[k].steam = k
 
 			-- give arena players stuff
-			if server.stompy then
-				if tonumber(server.gameVersionNumber) < 17 then
-					sendCommand("bc-give " .. k .. " firstAidBandage /c=1 /silent") -- A16
-					sendCommand("bc-give " .. k .. " splint /c=1 /silent") -- A16
-					sendCommand("bc-give " .. k .. " beer /c=1 /silent") -- A16
-					sendCommand("bc-give " .. k .. " turd /c=1 /silent") -- A16
-					sendCommand("bc-give " .. k .. " trapSpikesNew 3 /silent") -- A16
-				else
-					sendCommand("bc-give " .. k .. " medicalFirstAidBandage /c=1 /silent") -- A17
-					sendCommand("bc-give " .. k .. " medicalSplint /c=1 /silent") -- A17
-					sendCommand("bc-give " .. k .. " drinkJarBeer /c=1 /silent") -- A17
-					sendCommand("bc-give " .. k .. " trapSpikesNew 3 /silent") -- A1617
-				end
-			else
-				if tonumber(server.gameVersionNumber) < 17 then
-					sendCommand("give " .. k .. " firstAidBandage 1") -- A16
-					sendCommand("give " .. k .. " splint 1") -- A16
-					sendCommand("give " .. k .. " beer 1") -- A16
-					sendCommand("give " .. k .. " turd 1") -- A16
-					sendCommand("give " .. k .. " trapSpikesNew 3") -- A16
-				else
-					sendCommand("give " .. k .. " medicalFirstAidBandage 1") -- A17
-					sendCommand("give " .. k .. " medicalSplint 1") -- A17
-					sendCommand("give " .. k .. " drinkJarBeer 1") -- A17
-					sendCommand("give " .. k .. " trapSpikesNew 3") -- A1617
-				end
+			if not server.botman and not server.stompy then
+				sendCommand("give " .. k .. " medicalFirstAidBandage 1")
+				sendCommand("give " .. k .. " medicalSplint 1")
+				sendCommand("give " .. k .. " drinkJarBeer 1")
+				sendCommand("give " .. k .. " trapSpikesNew 3")
 			end
 
-			if server.stompy then
-				if tonumber(server.gameVersionNumber) < 17 then
-					sendCommand("bc-give " .. k .. " boneShiv /c=1 /q=600 /silent") -- A16
-				end
+			if server.stompy and not server.botman then
+				sendCommand("bc-give " .. k .. " medicalFirstAidBandage /c=1 /silent")
+				sendCommand("bc-give " .. k .. " medicalSplint /c=1 /silent")
+				sendCommand("bc-give " .. k .. " drinkJarBeer /c=1 /silent")
+				sendCommand("bc-give " .. k .. " trapSpikesNew /c=3 /silent")
 			end
 
-			if server.stompy then
-				message("pm " .. k .. " [" .. server.chatColour .. "]Check the ground at your feet for supplies. You have 10 seconds to prepare! (4 rounds)[-]")
-			else
-				message("pm " .. k .. " [" .. server.chatColour .. "]Supplies for the battle have been dropped at your feet. You have 10 seconds to prepare! (4 rounds)[-]")
+			if server.botman then
+				sendCommand("bm-give " .. k .. " medicalFirstAidBandage 1")
+				sendCommand("bm-give " .. k .. " medicalSplint 1")
+				sendCommand("bm-give " .. k .. " drinkJarBeer 1")
+				sendCommand("bm-give " .. k .. " trapSpikesNew 3")
 			end
+
+			message("pm " .. k .. " [" .. server.chatColour .. "]You have 10 seconds to prepare for battle![-]")
 		end
 	end
 
@@ -878,19 +861,30 @@ function gimme(pid, testGimme)
 			message("pm " .. pid .. " [" .. server.chatColour .. "]You won " .. description .. "[-]")
 		end
 
+		cmd = ""
 		if qual ~= 0 then
+			cmd = "give " .. pid .. " " .. prize .. " " .. qty .. " " .. quality
+
 			if server.stompy then
-				sendCommand("bc-give " .. pid .. " " .. prize .. " /c=" .. qty .. " /q=" .. quality .. " /silent")
-			else
-				sendCommand("give " .. pid .. " " .. prize .. " " .. qty .. " " .. quality)
+				cmd = "bc-give " .. pid .. " " .. prize .. " /c=" .. qty .. " /q=" .. quality .. " /silent"
+			end
+
+			if server.botman then
+				cmd = "bm-give " .. pid .. " " .. prize .. " " .. qty .. " " .. quality
 			end
 		else
+			cmd = "give " .. pid .. " " .. prize .. " " .. qty
+
 			if server.stompy then
-				sendCommand("bc-give " .. pid .. " " .. prize .. " /c=" .. qty .. " /silent")
-			else
-				sendCommand("give " .. pid .. " " .. prize .. " " .. qty)
+				cmd = "bc-give " .. pid .. " " .. prize .. " /c=" .. qty .. " /silent"
+			end
+
+			if server.botman then
+				cmd = "bm-give " .. pid .. " " .. prize .. " " .. qty
 			end
 		end
+
+		sendCommand(cmd)
 
 		botman.faultyGimme = false
 		return
@@ -978,14 +972,14 @@ function gimme(pid, testGimme)
 				if (r == 6) then litter = "bulletCasing" end -- A16
 				if (r == 7) then litter = "emptyJar" end -- A16
 			else
-				if (r == 1) then litter = "drinkCanEmpty" end -- A17
-				if (r == 2) then litter = "resourceCandyTin" end -- A17
-				if (r == 3) then litter = "resourcePaper" end -- A17
-				if (r == 4) then litter = "resourceRockSmall" end -- A17
-				if (r == 5) then litter = "resourceYuccaFibers" end -- A17
-				if (r == 6) then litter = "resourceScrapIron" end -- A17
-				if (r == 6) then litter = "resourceBulletCasing" end -- A17
-				if (r == 7) then litter = "drinkJarEmpty" end -- A17
+				if (r == 1) then litter = "drinkCanEmpty" end
+				if (r == 2) then litter = "resourceCandyTin" end
+				if (r == 3) then litter = "resourcePaper" end
+				if (r == 4) then litter = "resourceRockSmall" end
+				if (r == 5) then litter = "resourceYuccaFibers" end
+				if (r == 6) then litter = "resourceScrapIron" end
+				if (r == 6) then litter = "resourceBulletCasing" end
+				if (r == 7) then litter = "drinkJarEmpty" end
 			end
 
 			cmd = "give " .. pid .. " " .. litter .. " 1"
@@ -1015,27 +1009,33 @@ function gimme(pid, testGimme)
 			if (item == 11) then prize = "goldenRodTea" end -- A16
 			if (item == 12) then prize = "coffee" end -- A16
 		else
-			if (item == 1) then prize = "foodCanBeef" end -- A17
-			if (item == 2) then prize = "foodCcanChili" end -- A17
-			if (item == 3) then prize = "foodCcanPasta" end -- A17
-			if (item == 4) then prize = "ammoGasCan" end -- A17
-			if (item == 5) then prize = "medicalFirstAidBandage" end -- A17
-			if (item == 6) then prize = "drinkJarBeer" end -- A17
-			if (item == 7) then prize = "shades" end -- A17
-			if (item == 8) then prize = "drinkJarBoiledWater" end -- A17
-			if (item == 9) then prize = "foodBaconAndEggs" end -- A17
-			if (item == 10) then prize = "foodVegetableStew" end -- A17
-			if (item == 11) then prize = "drinkJarGoldenRodTea" end -- A17
-			if (item == 12) then prize = "drinkJarCoffee" end -- A17
+			if (item == 1) then prize = "foodCanBeef" end
+			if (item == 2) then prize = "foodCcanChili" end
+			if (item == 3) then prize = "foodCcanPasta" end
+			if (item == 4) then prize = "ammoGasCan" end
+			if (item == 5) then prize = "medicalFirstAidBandage" end
+			if (item == 6) then prize = "drinkJarBeer" end
+			if (item == 7) then prize = "shades" end
+			if (item == 8) then prize = "drinkJarBoiledWater" end
+			if (item == 9) then prize = "foodBaconAndEggs" end
+			if (item == 10) then prize = "foodVegetableStew" end
+			if (item == 11) then prize = "drinkJarGoldenRodTea" end
+			if (item == 12) then prize = "drinkJarCoffee" end
 		end
 
 		for k, v in pairs(igplayers) do
 			if (k ~= pid) then
+				cmd = "give " .. k .. " " .. prize .. " 1"
+
 				if server.stompy then
-					sendCommand("bc-give " .. k .. " " .. prize .. " /c=1 /silent")
-				else
-					sendCommand("give " .. k .. " " .. prize .. " 1")
+					cmd = "bc-give " .. k .. " " .. prize .. " /c=1 /silent"
 				end
+
+				if server.botman then
+					cmd = "bm-give " .. k .. " " .. prize .. " 1"
+				end
+
+				sendCommand(cmd)
 			end
 		end
 

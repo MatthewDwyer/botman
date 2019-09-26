@@ -8,8 +8,8 @@
 --]]
 
 function twoMinuteTimer()
-	-- to fix a weird bug where the bot would stop responding to chat but could be woken up by irc chatter we send the bot a wake up call
-	irc_chat(server.ircBotName, "Keep alive")
+	-- -- to fix a weird bug where the bot would stop responding to chat but could be woken up by irc chatter we send the bot a wake up call
+	irc_chat(server.ircMain .. "_debug", "ircCheck")
 
 	writeBotmanINI()
 

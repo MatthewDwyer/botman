@@ -26,8 +26,12 @@ end
 function initServer()
 	local cursor, errorString
 
+	botman.ignoreAdmins = true
+	botman.chatlogPath = homedir .. "/chatlogs"
+
 	server.accessLevelOverride = 99
 	server.alertColour = "DC143C"
+	server.alertLevelHack = false
 	server.allowBank = true
 	server.allowGarbageNames = true
 	server.allowGimme = false
@@ -52,16 +56,17 @@ function initServer()
 	server.botID = 0
 	server.botName = "Bot"
 	server.chatColour = "D4FFD4"
-	botman.chatlogPath = homedir .. "/chatlogs"
+	server.checkLevelHack = false
 	server.commandPrefix = "/"
 	server.disableBaseProtection = false
+	server.disableFetch = true
 	server.enableRegionPM = false
 	server.gameType = "pve"
 	server.gimmePeace = false
+	server.hackerTPDetection = false
 	server.hardcore = false
 	server.hideCommands = true
 	server.idleKick = false
-	botman.ignoreAdmins = true
 	server.IP = "0.0.0.0"
 	server.ircAlerts = "#bot_alerts"
 	server.ircBotName = "Bot"
@@ -81,7 +86,7 @@ function initServer()
 	server.maxWaypoints = 2
 	server.moneyName = "Zenny"
 	server.moneyPlural = "Zennies"
-	server.MOTD = "We have a new server bot!"
+	server.MOTD = ""
 	server.newPlayerTimer = 120
 	server.northeastZone = ""
 	server.northwestZone = ""
@@ -92,6 +97,7 @@ function initServer()
 	server.playersCanFly = false
 	server.prisonSize = 100
 	server.protectionMaxDays = 31
+	server.readLogUsingTelnet = true
 	server.rebootHour = -1
 	server.rebootMinute = 0
 	server.reservedSlots = 0

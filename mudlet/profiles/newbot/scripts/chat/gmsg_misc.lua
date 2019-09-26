@@ -543,6 +543,21 @@ function gmsg_misc()
 	end
 
 
+	local function cmd_IgnoredCommands()
+		-- these commands are defined here just so the bot won't say unknown command when it sees them
+
+		if string.find(chatvars.command, "clan") then
+			botman.faultyChat = false
+			return true
+		end
+
+		if (chatvars.words[1] == "bag" and chatvars.words[2] == nil) then
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ListCustomCommands() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1110,6 +1125,17 @@ function gmsg_misc()
 				return true
 			end
 
+			if players[chatvars.playerid].botQuestion == "forget players" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players? Who needs em? Out with the trash I say. All players forgotten and their stuff except for admins.[-]")
+				ForgetPlayers()
+
+				players[chatvars.playerid].botQuestion = ""
+				players[chatvars.playerid].botQuestionID = nil
+				players[chatvars.playerid].botQuestionValue = nil
+				botman.faultyChat = false
+				return true
+			end
+
 			botman.faultyChat = false
 			return true
 		end
@@ -1286,6 +1312,17 @@ if debug then dbug("debug misc") end
 		if debug then dbug("debug cmd_Yes triggered") end
 		return result
 	end
+
+	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_IgnoredCommands()
+
+	if result then
+		if debug then dbug("debug cmd_IgnoredCommands triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Miscellaneous commands help registered ****")

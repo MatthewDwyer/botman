@@ -1817,6 +1817,13 @@ function gmsg(line, ircid)
 				return true
 			end
 
+			-- reject if not an admin and p2pCooldown is non-zero and in the future
+			if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].p2pCooldown - os.time() > 0) then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You must wait " .. players[chatvars.playerid].p2pCooldown - os.time() .. " seconds before you can teleport to friends again.[-]")
+				botman.faultyChat = false
+				return true
+			end
+
 			-- reject if not an admin or a friend
 			if (not isFriend(id,  chatvars.playerid)) and (chatvars.accessLevel > 2) and (id ~= chatvars.playerid) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only friends of " .. players[id].name .. " and staff can do this.[-]")
@@ -1866,6 +1873,11 @@ function gmsg(line, ircid)
 
 			-- then teleport to the friend
 			cmd = "tele " .. chatvars.playerid .. " " .. players[id].xPos .. " " .. players[id].yPos .. " " .. players[id].zPos
+
+			if tonumber(server.p2pCooldown) > 0 then
+				players[chatvars.playerid].p2pCooldown = os.time() + server.p2pCooldown
+				conn:execute("UPDATE players SET p2pCooldown = " .. players[chatvars.playerid].p2pCooldown .. " WHERE steam = " .. chatvars.playerid)
+			end
 
 			players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.teleportCost
 

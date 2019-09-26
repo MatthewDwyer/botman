@@ -2667,6 +2667,87 @@ function gmsg_locations()
 	end
 
 
+	local function cmd_ToggleLocationPack()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}location pack enable/disable {name} (default is enabled)"
+			help[2] = "When disabled, the {#}pack command will not work if the player died inside the location."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "locat,pack,able,set"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "locat") or string.find(chatvars.command, "pack") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "location" and (chatvars.words[2] == "pack" or chatvars.words[2] == "revive") and string.find(chatvars.words[3], "able") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[4]))
+			locationName = string.trim(locationName)
+			loc = LookupLocation(locationName)
+
+			if (loc == nil) then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]That location does not exist.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				end
+			else
+				if chatvars.words[3] == "enable" then
+					locations[loc].allowPack = true
+					conn:execute("UPDATE locations set allowPack = 1 WHERE name = '" .. escape(loc) .. "'")
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players that die in the location " .. loc .. " can use the {#}pack command.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Players that die in the location " .. loc .. " can use the {#}pack command.")
+					end
+				else
+					locations[loc].allowPack = false
+					conn:execute("UPDATE locations set allowPack = 0 WHERE name = '" .. escape(loc) .. "'")
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The {#}pack command is not available to players that die in the location " .. loc .. "[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The {#}pack command is not available to players that die in the location " .. loc .. "")
+					end
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleLocationPrivate()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -2676,7 +2757,7 @@ function gmsg_locations()
 			if botman.registerHelp then
 				tmp.command = help[1]
 				tmp.keywords = "locat,priv,pub,set"
-				tmp.accessLevel = 2
+				tmp.accessLevel = 1
 				tmp.description = help[2]
 				tmp.notes = ""
 				tmp.ingameOnly = 0
@@ -2697,13 +2778,13 @@ function gmsg_locations()
 
 		if chatvars.words[1] == "location" and (chatvars.words[2] == "private" or chatvars.words[2] == "public") then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
@@ -2759,7 +2840,7 @@ function gmsg_locations()
 			if botman.registerHelp then
 				tmp.command = help[1]
 				tmp.keywords = "locat,pve,pvp,set"
-				tmp.accessLevel = 2
+				tmp.accessLevel = 1
 				tmp.description = help[2]
 				tmp.notes = ""
 				tmp.ingameOnly = 0
@@ -2780,13 +2861,13 @@ function gmsg_locations()
 
 		if chatvars.words[1] == "location" and (string.find(chatvars.command, "pvp") or string.find(chatvars.command, "pve")) then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
@@ -2920,7 +3001,7 @@ function gmsg_locations()
 			if botman.registerHelp then
 				tmp.command = help[1]
 				tmp.keywords = "locat,safe,zone"
-				tmp.accessLevel = 2
+				tmp.accessLevel = 1
 				tmp.description = help[2]
 				tmp.notes = ""
 				tmp.ingameOnly = 0
@@ -2941,13 +3022,13 @@ function gmsg_locations()
 
 		if chatvars.words[1] == "location" and (chatvars.words[2] == "safe" or chatvars.words[2] == "unsafe") then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
@@ -3235,7 +3316,7 @@ function gmsg_locations()
 			if botman.registerHelp then
 				tmp.command = help[1]
 				tmp.keywords = "locat,prot"
-				tmp.accessLevel = 2
+				tmp.accessLevel = 1
 				tmp.description = help[2]
 				tmp.notes = ""
 				tmp.ingameOnly = 0
@@ -3256,13 +3337,13 @@ function gmsg_locations()
 
 		if (chatvars.words[1] == "unprotect" and chatvars.words[2] == "location") then
 			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 					botman.faultyChat = false
 					return true
 				end
 			else
-				if (chatvars.accessLevel > 2) then
+				if (chatvars.accessLevel > 1) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
 					botman.faultyChat = false
 					return true
@@ -3616,6 +3697,15 @@ function gmsg_locations()
 
 	if result then
 		if debug then dbug("debug cmd_ToggleLocationIsRound triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleLocationPack()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationPack triggered") end
 		return result
 	end
 

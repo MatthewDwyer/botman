@@ -143,6 +143,26 @@ function loadCustomMessages()
 end
 
 
+function loadDonors()
+	local cursor, errorString, row
+	-- load donors
+
+	getTableFields("donors")
+
+    donors = {}
+	cursor,errorString = conn:execute("select * from donors")
+	row = cursor:fetch({}, "a")
+	while row do
+		donors[row.steam] = {}
+		bans[row.steam].steam = row.steam
+		bans[row.steam].level = row.level
+		bans[row.steam].expiry = row.expiry
+
+		row = cursor:fetch(row, "a")
+	end
+end
+
+
 function loadFriends()
 	local cursor, errorString, row
 
@@ -679,144 +699,135 @@ function loadServer()
 	-- load server
 	getServerFields()
 
-	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
-
 	if type(server) ~= "table" then
 		server = {}
 	end
 
 	cursor,errorString = conn:execute("select * from server")
 	rows = tonumber(cursor:numrows())
-	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
 	if rows == 0 then
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 		initServer()
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
-	else
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
-		row = cursor:fetch({}, "a")
-
-		for k,v in pairs(serverFields) do
-			if v.type == "var" or v.type == "big" then
-				server[k] = row[k]
-			end
-
-			if v.type == "int" then
-				server[k] = tonumber(row[k])
-			end
-
-			if v.type == "flo" then
-				server[k] = tonumber(row[k])
-			end
-
-			if v.type == "tin" then
-				server[k] = dbTrue(row[k])
-			end
-		end
-
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
-
-		if row.chatlogPath == "" or row.chatlogPath == nil then
-			botman.chatlogPath = homedir .. "/chatlogs"
-		end
-
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
-
-		botman.chatlogPath = row.chatlogPath
-
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
-
-		if row.moneyName == nil or row.moneyName == "|" then
-			-- fix if missing money
-			temp = string.split("Zenny|Zennies", "|")
-		else
-			temp = string.split(row.moneyName, "|")
-		end
-
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
-
-		server.moneyName = temp[1]
-
-		if temp[2] == nil then
-			-- fix if missing money plural
-			server.moneyPlural = temp[1]
-		else
-			server.moneyPlural = temp[2]
-		end
-
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
-
-		if server.ircServer then
-			if string.find(server.ircServer, ":") then
-				temp = string.split(server.ircServer, ":")
-				server.ircServer = temp[1]
-				server.ircPort = temp[2]
-			end
-		else
-			if row.ircServer ~= "" then
-				server.ircServer = row.ircServer
-			else
-				server.ircServer = ircServer
-			end
-
-			if row.ircPort ~= "" then
-				server.ircPort = row.ircPort
-			else
-				server.ircPort = ircPort
-			end
-		end
-
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
-
-		if server.ircMain == "#new" then
-			server.ircMain = ircChannel
-			server.ircAlerts = ircChannel .. "_alerts"
-			server.ircWatch = ircChannel .. "_watch"
-		end
-
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
-
-		if server.telnetPass ~= "" then
-			telnetPassword = server.telnetPass
-		else
-			server.telnetPass = telnetPassword
-			conn:execute("UPDATE server SET telnetPass = '" .. escape(telnetPassword) .. "'")
-		end
-
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
-
-		if server.ircBotName ~= "Bot" then
-			if ircSetNick ~= nil then
-				-- TheFae's modded mudlet
-				ircSetNick(server.ircBotName)
-			end
-
-			if setIrcNick ~= nil then
-				-- Mudlet 3.x
-				setIrcNick(server.ircBotName)
-			end
-		end
-
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
-
-		whitelistedCountries = {}
-		temp = string.split(row.whitelistCountries, ",")
-
-		max = table.maxn(temp)
-		for i=1,max,1 do
-			whitelistedCountries[temp[i]] = {}
-		end
-
-		blacklistedCountries = {}
-		temp = string.split(row.blacklistCountries, ",")
-
-		max = table.maxn(temp)
-		for i=1,max,1 do
-			blacklistedCountries[temp[i]] = {}
-		end
-
-		if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 	end
+
+
+	cursor,errorString = conn:execute("select * from server")
+	row = cursor:fetch({}, "a")
+
+	for k,v in pairs(serverFields) do
+		if v.type == "var" or v.type == "big" then
+			server[k] = row[k]
+		end
+
+		if v.type == "int" then
+			server[k] = tonumber(row[k])
+		end
+
+		if v.type == "flo" then
+			server[k] = tonumber(row[k])
+		end
+
+		if v.type == "tin" then
+			server[k] = dbTrue(row[k])
+		end
+	end
+
+	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	if row.chatlogPath == "" or row.chatlogPath == nil then
+		botman.chatlogPath = homedir .. "/chatlogs"
+	end
+
+	botman.chatlogPath = row.chatlogPath
+
+	if row.moneyName == nil or row.moneyName == "|" then
+		-- fix if missing money
+		temp = string.split("Zenny|Zennies", "|")
+	else
+		temp = string.split(row.moneyName, "|")
+	end
+
+	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.moneyName = temp[1]
+
+	if temp[2] == nil then
+		-- fix if missing money plural
+		server.moneyPlural = temp[1]
+	else
+		server.moneyPlural = temp[2]
+	end
+
+	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	if server.ircServer then
+		if string.find(server.ircServer, ":") then
+			temp = string.split(server.ircServer, ":")
+			server.ircServer = temp[1]
+			server.ircPort = temp[2]
+		end
+	else
+		if row.ircServer ~= "" then
+			server.ircServer = row.ircServer
+		else
+			server.ircServer = ircServer
+		end
+
+		if row.ircPort ~= "" then
+			server.ircPort = row.ircPort
+		else
+			server.ircPort = ircPort
+		end
+	end
+
+	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	if server.ircMain == "#new" then
+		server.ircMain = ircChannel
+		server.ircAlerts = ircChannel .. "_alerts"
+		server.ircWatch = ircChannel .. "_watch"
+	end
+
+	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	if server.telnetPass ~= "" then
+		telnetPassword = server.telnetPass
+	else
+		server.telnetPass = telnetPassword
+		conn:execute("UPDATE server SET telnetPass = '" .. escape(telnetPassword) .. "'")
+	end
+
+	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	if server.ircBotName ~= "Bot" then
+		if ircSetNick ~= nil then
+			-- TheFae's modded mudlet
+			ircSetNick(server.ircBotName)
+		end
+
+		if setIrcNick ~= nil then
+			-- Mudlet 3.x
+			setIrcNick(server.ircBotName)
+		end
+	end
+
+	whitelistedCountries = {}
+	temp = string.split(row.whitelistCountries, ",")
+
+	max = table.maxn(temp)
+	for i=1,max,1 do
+		whitelistedCountries[temp[i]] = {}
+	end
+
+	blacklistedCountries = {}
+	temp = string.split(row.blacklistCountries, ",")
+
+	max = table.maxn(temp)
+	for i=1,max,1 do
+		blacklistedCountries[temp[i]] = {}
+	end
+
+	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 end
 
 
@@ -923,6 +934,9 @@ function loadTables(skipPlayers)
 
 	loadBases()
 	if (debug) then display("debug loaded bases\n") end
+
+	loadDonors()
+	if (debug) then display("debug loaded donors\n") end
 
 	loadBotMaintenance()
 

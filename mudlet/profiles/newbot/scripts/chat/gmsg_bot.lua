@@ -209,6 +209,50 @@ function gmsg_bot()
 	end
 
 
+	local function cmd_ForgetPlayers()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}forget players"
+			help[2] = "Makes the bot forget everything about players as if they were new again. It does not touch admins (nasty filthy adminses)."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "bot,forget,play"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 1
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "forget") or string.find(chatvars.command, "players"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "forget" and chatvars.words[2] == "players" then
+			if chatvars.accessLevel > 0 then
+				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+				botman.faultyChat = false
+				return true
+			end
+
+			message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Are you sure you want to forget all players excluding admins? Answer yes to proceed or anything else to cancel.[-]")
+			players[chatvars.playerid].botQuestion = "forget players"
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_GuessPassword()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1425,11 +1469,12 @@ function gmsg_bot()
 				return true
 			end
 
+			server.botName = tmp
+
 			if server.botman then
 				sendCommand("bm-change botname [" .. server.botNameColour .. "]" .. server.botName)
 			end
 
-			server.botName = tmp
 			message("say [" .. server.chatColour .. "]I shall henceforth be known as " .. server.botName .. ".[-]")
 
 			msg = "say [" .. server.chatColour .. "]Hello I am the server bot, " .. server.botName .. ". Pleased to meet you. :3[-]"
@@ -2739,7 +2784,7 @@ function gmsg_bot()
 
 			if botman.registerHelp then
 				tmp.command = help[1]
-				tmp.keywords = "bot,togg,on,off,able,api,telnet"
+				tmp.keywords = "togg,on,off,able,api,telnet"
 				tmp.accessLevel = 0
 				tmp.description = help[2]
 				tmp.notes = ""
@@ -2791,6 +2836,77 @@ function gmsg_bot()
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will use the API to monitor server activity.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The bot will use the API to monitor server activity.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ToggleTelnetFallback()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable telnet fallback (default is disabled)"
+			help[2] = "When the bot is using Alloc's web API, if the API becomes unreachable the bot will stop using the API and switch to telnet only if telnet fallback is enabled.\n"
+			help[2] = help[2] .. "The default behaviour is to keep using the API. Previously the default was to fallback to telnet.\n"
+			help[2] = help[2] .. "Note that the bot should not confuse the server being offline with the API not working as it checks API and telnet activity before making the switch."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "togg,on,off,able,telnet"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "able") or string.find(chatvars.command, "telnet"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "telnet" and chatvars.words[3] == "fallback" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "enable" then
+				server.telnetFallback = true
+				conn:execute("UPDATE server set telnetFallback = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will fallback to using telnet when the API stops working.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The bot will fallback to using telnet when the API stops working.")
+				end
+			else
+				server.telnetFallback = false
+				conn:execute("UPDATE server set telnetFallback = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will keep using the API even if the API stops working.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The bot will keep using the API even if the API stops working.")
 				end
 			end
 
@@ -2887,10 +3003,10 @@ function gmsg_bot()
 
 				if server.allocsWebAPIPassword == "" then
 					server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
-					send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 				end
 
 				conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+				send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 			end
 
 			botman.faultyChat = false
@@ -3032,6 +3148,15 @@ function gmsg_bot()
 
 	if result then
 		if debug then dbug("debug cmd_ClearBotsWhitelist triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ForgetPlayers()
+
+	if result then
+		if debug then dbug("debug cmd_ForgetPlayers triggered") end
 		return result
 	end
 
@@ -3347,6 +3472,15 @@ function gmsg_bot()
 
 	if result then
 		if debug then dbug("debug cmd_ToggleReadLogUsingTelnet triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug bot line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleTelnetFallback()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleTelnetFallback triggered") end
 		return result
 	end
 

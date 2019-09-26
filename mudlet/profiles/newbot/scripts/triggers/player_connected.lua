@@ -392,7 +392,7 @@ function playerConnected(line)
 		irc_chat(server.ircWatch, server.gameDate .. " " .. tmp.steam .. " " .. tmp.player .. " new player connected")
 		logChat(botman.serverTime, "Server", "New player joined " .. botman.serverTime .. " " .. server.gameDate .. " " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
 
-		alertAdmins("New player joined " .. tmp.entityid .. " " .. tmp.player, "warn")
+		alertAdmins("New player joined " .. tmp.player, "warn")
 
 		if botman.dbConnected then conn:execute("INSERT INTO players (steam, steamOwner, id, name, protectSize, protect2Size, firstSeen) VALUES (" .. tmp.steam .. "," .. tmp.steamOwner .. "," .. tmp.entityid .. ",'" .. escape(tmp.player) .. "'," .. server.baseSize .. "," .. server.baseSize .. "," .. os.time() .. ")") end
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','new player','New player joined " .. escape(tmp.player) .. " steam: " .. tmp.steam .. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid .. "'," .. tmp.steam .. ")") end
@@ -421,7 +421,9 @@ function playerConnected(line)
 				players[tmp.steam].testAsPlayer = nil
 			end
 
-			tempTimer( 30, [[sendCommand("bc-lp ]] .. tmp.steam .. [[ /full")]] )
+			if server.stompy then
+				tempTimer( 30, [[sendCommand("bc-lp ]] .. tmp.steam .. [[ /full")]] )
+			end
 		end
 	end
 
