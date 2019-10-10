@@ -759,6 +759,8 @@ function gmsg(line, ircid)
 	chatvars.ircAlias = ""
 	chatvars.helpRead = false
 	chatvars.playername = ""
+	chatvars.chatPublic = true
+	chatvars.inLocation = ""
 	chatFlag = ""
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -811,6 +813,7 @@ function gmsg(line, ircid)
 			end
 
 			if string.find(line, "'Party'): ", nil, true) then
+				chatvars.chatPublic = false
 				chatFlag = "(P) "
 				msg = string.sub(line, string.find(line, "'Party'): ") + 10)
 				pos = string.find(line, "7656")
@@ -827,6 +830,7 @@ function gmsg(line, ircid)
 			end
 
 			if string.find(line, "'Friends'): ", nil, true) then
+				chatvars.chatPublic = false
 				chatFlag = "(F) "
 				msg = string.sub(line, string.find(line, "'Friends'): ") + 12)
 				pos = string.find(line, "7656")
@@ -1035,6 +1039,8 @@ function gmsg(line, ircid)
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 		if chatvars.playerid ~= 0 then
+			chatvars.inLocation = players[chatvars.playerid].inLocation
+
 			if (players[chatvars.playerid].lastCommand) then
 				-- don't allow identical commands being spammed too quickly
 	--			if ((os.time() - players[chatvars.playerid].lastCommandTimestamp) < 4) and players[chatvars.playerid].lastCommand == chatvars.command then
@@ -1815,6 +1821,19 @@ function gmsg(line, ircid)
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleporting to friends has been disabled on this server.[-]")
 				botman.faultyChat = false
 				return true
+			end
+
+			-- reject if not an admin and the p2p target player is in a location that does not allow p2p teleports
+			if tonumber(chatvars.accessLevel) > 2 then
+				loc = players[id].inLocation
+
+				if locations[loc] then
+					if not locations[loc].allowP2P then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your friend is in a location that does not allow p2p teleporting.[-]")
+						botman.faultyChat = false
+						return true
+					end
+				end
 			end
 
 			-- reject if not an admin and p2pCooldown is non-zero and in the future

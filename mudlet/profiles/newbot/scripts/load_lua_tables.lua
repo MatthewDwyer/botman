@@ -104,21 +104,21 @@ function loadBases()
 	cursor,errorString = conn:execute("select * from bases")
 	row = cursor:fetch({}, "a")
 	while row do
-		bases[row.Steam .. "_" .. row.baseNumber] = {}
-		bases[row.Steam .. "_" .. row.baseNumber].steam = row.Steam
-		bases[row.Steam .. "_" .. row.baseNumber].baseNumber = row.baseNumber
-		bases[row.Steam .. "_" .. row.baseNumber].title = row.title
-		bases[row.Steam .. "_" .. row.baseNumber].x = row.x
-		bases[row.Steam .. "_" .. row.baseNumber].y = row.y
-		bases[row.Steam .. "_" .. row.baseNumber].z = row.z
-		bases[row.Steam .. "_" .. row.baseNumber].exitX = row.exitX
-		bases[row.Steam .. "_" .. row.baseNumber].exitY = row.exitY
-		bases[row.Steam .. "_" .. row.baseNumber].exitZ = row.exitZ
-		bases[row.Steam .. "_" .. row.baseNumber].size = row.size
-		bases[row.Steam .. "_" .. row.baseNumber].protect = row.protect
-		bases[row.Steam .. "_" .. row.baseNumber].keepOut = row.keepOut
-		bases[row.Steam .. "_" .. row.baseNumber].creationTimestamp = row.creationTimestamp
-		bases[row.Steam .. "_" .. row.baseNumber].creationGameDay = row.creationGameDay
+		bases[row.steam .. "_" .. row.baseNumber] = {}
+		bases[row.steam .. "_" .. row.baseNumber].steam = row.steam
+		bases[row.steam .. "_" .. row.baseNumber].baseNumber = row.baseNumber
+		bases[row.steam .. "_" .. row.baseNumber].title = row.title
+		bases[row.steam .. "_" .. row.baseNumber].x = row.x
+		bases[row.steam .. "_" .. row.baseNumber].y = row.y
+		bases[row.steam .. "_" .. row.baseNumber].z = row.z
+		bases[row.steam .. "_" .. row.baseNumber].exitX = row.exitX
+		bases[row.steam .. "_" .. row.baseNumber].exitY = row.exitY
+		bases[row.steam .. "_" .. row.baseNumber].exitZ = row.exitZ
+		bases[row.steam .. "_" .. row.baseNumber].size = row.size
+		bases[row.steam .. "_" .. row.baseNumber].protect = row.protect
+		bases[row.steam .. "_" .. row.baseNumber].keepOut = row.keepOut
+		bases[row.steam .. "_" .. row.baseNumber].creationTimestamp = row.creationTimestamp
+		bases[row.steam .. "_" .. row.baseNumber].creationGameDay = row.creationGameDay
 
 		row = cursor:fetch(row, "a")
 	end
@@ -154,10 +154,9 @@ function loadDonors()
 	row = cursor:fetch({}, "a")
 	while row do
 		donors[row.steam] = {}
-		bans[row.steam].steam = row.steam
-		bans[row.steam].level = row.level
-		bans[row.steam].expiry = row.expiry
-
+		donors[row.steam].steam = row.steam
+		donors[row.steam].level = row.level
+		donors[row.steam].expiry = row.expiry
 		row = cursor:fetch(row, "a")
 	end
 end
@@ -827,6 +826,10 @@ function loadServer()
 		blacklistedCountries[temp[i]] = {}
 	end
 
+	if not server.uptime then
+		server.uptime = 0
+	end
+
 	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 end
 
@@ -939,6 +942,8 @@ function loadTables(skipPlayers)
 	if (debug) then display("debug loaded donors\n") end
 
 	loadBotMaintenance()
+
+	migrateDonors() -- if the donors table is empty, try to populate it from donors in the players table.
 
 	if (debug) then display("debug loadTables completed\n") end
 end

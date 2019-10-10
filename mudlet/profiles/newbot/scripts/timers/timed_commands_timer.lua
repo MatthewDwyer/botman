@@ -43,7 +43,7 @@ function WebPanelQueue()
 			end
 
 			if action == "forget players" then
-				ForgetPlayers()
+				forgetPlayers()
 			end
 
 			if action == "kick" then
@@ -57,11 +57,11 @@ function WebPanelQueue()
 			if action == "pause bot" then
 				irc_chat(server.ircMain, "The bot is paused.")
 				message("say [" .. server.warnColour .. "]The bot is paused.  Most commands are disabled. D:[-]")
-				botman.botDisabled = false
+				botman.botDisabled = true
 			end
 
 			if action == "quick reset bot" then
-				QuickResetBot()
+				quickBotReset()
 			end
 
 			if action == "reload bot" then
@@ -170,6 +170,10 @@ function WebPanelQueue()
 				ResetBot(true)
 			end
 
+			if action == "reset server" or action == "fresh bot" then
+				ResetServer()
+			end
+
 			if action == "restart bot" then
 				if server.allowBotRestarts then
 					restartBot()
@@ -190,7 +194,8 @@ function WebPanelQueue()
 					rebootTimerDelayID = nil
 					botman.scheduledRestartPaused = false
 					botman.scheduledRestart = true
-					botman.scheduledRestartTimestamp = os.time() + 120
+					botman.scheduledRestartTimestamp = os.time() + 60
+					message("say [" .. server.chatColour .. "]The server is restarting in 1 minute.[-]")
 				end
 			end
 
@@ -198,7 +203,7 @@ function WebPanelQueue()
 				message(temp[1], temp[2])
 			end
 
-			if action == "update bot" then
+			if action == "update bot" or action == "update code" then
 				updateBot(true)
 			end
 
@@ -216,6 +221,9 @@ end
 
 function timedCommandsTimer()
 	local cursor, errorString, row, steam, command
+
+	-- piggyback on this timer and process the web panel queue
+	WebPanelQueue()
 
 	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected then
 		return
@@ -243,7 +251,4 @@ function timedCommandsTimer()
 			CheckInventory()
 		end
 	end
-
-	-- piggyback on this timer and process the web panel queue
-	WebPanelQueue()
 end

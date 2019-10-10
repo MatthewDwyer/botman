@@ -597,7 +597,9 @@ function gmsg_admin()
 					playersArchived[tmp.id].maxWaypoints = server.maxWaypointsDonors
 				end
 
-				if botman.dbConnected then conn:execute(tmp.sql .. " WHERE steam = " .. tmp.id) end
+				conn:execute(tmp.sql .. " WHERE steam = " .. tmp.id)
+				conn:execute("INSERT INTO donors (steam, level, expiry) VALUES (" .. tmp.id .. "," .. tmp.level .. "," .. tmp.expiry .. ")")
+				loadDonors()
 
 				-- also add them to the bot's whitelist
 				whitelist[tmp.id] = {}
@@ -640,6 +642,9 @@ function gmsg_admin()
 
 					if botman.dbConnected then conn:execute("UPDATE playersArchived SET donor = 0, donorLevel = 0, donorExpiry = " .. os.time() - 1 .. " WHERE steam = " .. tmp.id) end
 				end
+
+				conn:execute("DELETE FROM donors WHERE steam = " .. tmp.id)
+				loadDonors()
 
 				-- to prevent the player having too many waypoints, we delete them.
 				if botman.dbConnected then conn:execute("DELETE FROM waypoints WHERE steam = " .. tmp.id) end
@@ -5006,9 +5011,21 @@ function gmsg_admin()
 					botman.faultyChat = false
 					return true
 				end
+
+				if not server.stompy and not server.botman then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command requires either the Botman mod or the BC mod installed on the server.[-]")
+					botman.faultyChat = false
+					return true
+				end
 			else
 				if (chatvars.accessLevel > 1) then
 					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+
+				if not server.stompy and not server.botman then
+					irc_chat(chatvars.ircAlias, "This command requires either the Botman mod or the BC mod installed on the server.")
 					botman.faultyChat = false
 					return true
 				end
@@ -5039,7 +5056,12 @@ function gmsg_admin()
 				end
 
 				if dist <= 2 then
-					sendCommand("bc-remove " .. row.entityID)
+					if server.stompy and not server.botman then
+						sendCommand("bc-remove " .. row.entityID)
+					else
+						sendCommand("bm-remove " .. row.entityID)
+					end
+
 					entityRemoved = true
 
 					if (chatvars.playername ~= "Server") then

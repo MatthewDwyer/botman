@@ -963,10 +963,6 @@ function gmsg_misc()
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]When done you can save it..[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]By typing " .. server.commandPrefix .. "save " .. chatvars.wordsOld[2] .. "[-]")
 
-			if server.djkrose then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Using djkrose's scripting mod by typing " .. server.commandPrefix .. "export " .. chatvars.wordsOld[2] .. "[-]")
-			end
-
 			botman.faultyChat = false
 			return true
 		end
@@ -1071,7 +1067,7 @@ function gmsg_misc()
 
 		if chatvars.words[1] == "yes" and chatvars.words[2] == nil and chatvars.playername ~= "Server" then
 			if players[chatvars.playerid].botQuestion == "reset server" and chatvars.accessLevel == 0 then
-				message("say [" .. server.chatColour .. "]Deleting all bot data and starting fresh..[-]")
+				message("say [" .. server.chatColour .. "]Deleting bot data and starting minty fresh..[-]")
 				tempTimer(5, [[ResetServer()]])
 
 				players[chatvars.playerid].botQuestion = ""
@@ -1107,7 +1103,7 @@ function gmsg_misc()
 			end
 
 			if players[chatvars.playerid].botQuestion == "quick reset bot" and chatvars.accessLevel == 0 then
-				QuickBotReset()
+				quickBotReset()
 				message("say [" .. server.chatColour .. "]I have been reset except for players, locations and reset zones.[-]")
 
 				players[chatvars.playerid].botQuestion = ""
@@ -1127,7 +1123,7 @@ function gmsg_misc()
 
 			if players[chatvars.playerid].botQuestion == "forget players" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players? Who needs em? Out with the trash I say. All players forgotten and their stuff except for admins.[-]")
-				ForgetPlayers()
+				forgetPlayers()
 
 				players[chatvars.playerid].botQuestion = ""
 				players[chatvars.playerid].botQuestionID = nil

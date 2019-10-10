@@ -38,7 +38,7 @@ function newBotProfile()
 end
 
 
-function ForgetPlayers()
+function forgetPlayers()
 	local k, v, cursor,errorString,row
 
 	conn:execute("TRUNCATE TABLE list")
@@ -276,15 +276,15 @@ function hidePlayerChat(prefix)
 	if prefix then
 		-- hide commands
 		if server.botman then
-			-- if server.stompy then
-				-- -- disable this feature in the BC mod
-				-- sendCommand("bc-chatprefix \"\"")
-			-- end
+			if server.stompy then
+				-- disable this feature in the BC mod
+				sendCommand("bc-chatprefix \"\"")
+			end
 
-			-- -- then enable it in the botman mod
-			-- sendCommand("bm-chatcommands prefix " .. prefix)
-			-- sendCommand("bm-chatcommands hide true")
-			-- return
+			-- then enable it in the botman mod
+			sendCommand("bm-chatcommands prefix " .. prefix)
+			sendCommand("bm-chatcommands hide true")
+			return
 		end
 
 		if server.stompy then
@@ -340,7 +340,11 @@ end
 
 
 function unlockAll(steam)
-	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
+	if server.botman then
+-- TODO:  Add bot support once the console command accepts a steam id.
+	end
+
+	if server.stompy then
 		sendCommand("bc-unlockall /id=" .. steam)
 		return
 	end
@@ -1891,11 +1895,6 @@ function downloadHandler(event, ...)
 			if customAPIHandler(...) then
 				return
 			end
-		end
-
-		if string.find(..., "gmsg_coppi.lua") then
-			dofile(homedir .. "/scripts/chat/gmsg_coppi.lua")
-			return
 		end
 
 		if string.find(..., "adminList.txt") then

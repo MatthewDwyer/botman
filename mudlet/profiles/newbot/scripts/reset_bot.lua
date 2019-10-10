@@ -8,7 +8,7 @@
 --]]
 
 
-function QuickBotReset()
+function quickBotReset()
 	-- reset stuff but don't touch players or locations or reset zones.
 	teleports = {}
 	invTemp = {}
@@ -55,6 +55,8 @@ end
 function resetBases()
 	local sql
 
+	conn:execute("TRUNCATE TABLE bases")
+
 	-- reset bases in the players table
 	sql = "UPDATE players SET homeX=0, home2X=0, homeY=0, home2Y=0, homeZ=0, home2Z=0, exitX=0, exit2X=0, exitY=0, exit2Y=0, exitZ=0, exit2Z=0, baseCooldown=0, protect=0, protect2=0, protectSize=" .. server.LandClaimSize .. ", protect2Size=" .. server.LandClaimSize
 	conn:execute(sql)
@@ -87,13 +89,8 @@ function ResetBot(keepTheMoney, backupName)
 	waypoints = {}
 
 	server.lottery = 0
-	server.mapSize = 10000
-	server.prisonSize = 100
 	server.warnBotReset = false
-
-	if math.floor(tonumber(server.gameVersionNumber)) > 16 then
-		server.playersCanFly = true -- set to true for A17+ now that players can fly.
-	end
+	server.playersCanFly = true
 
 	conn:execute("TRUNCATE TABLE alerts")
 	conn:execute("TRUNCATE TABLE bases")
@@ -144,7 +141,10 @@ function ResetBot(keepTheMoney, backupName)
 	botMaintenance.modsInstalled = false
 	saveBotMaintenance()
 
-	return true
+	if botman.resetServer then
+		botman.resetServer = nil
+		restartBot()
+	end
 end
 
 
@@ -152,6 +152,9 @@ function ResetServer()
 	-- This will wipe everything from the bot about the server and its players and it will ask the server for players and other info.
 	-- For anything else, default values will be set until you change them.
 
+	saveLuaTables(os.date("%Y%m%d_%H%M%S"), "undo_reset_server")
+
+	botman.resetServer = true
 	botman.serverTime = ""
 	botman.feralWarning = false
 	homedir = getMudletHomeDir()
@@ -162,7 +165,6 @@ function ResetServer()
 	lfs.mkdir(homedir .. "/chatlogs")
 	lfs.mkdir(homedir .. "/data_backup")
 
-	admins = {}
 	friends = {}
 	gimmeQueuedCommands = {}
 	hotspots = {}
@@ -170,19 +172,13 @@ function ResetServer()
 	invTemp = {}
 	lastHotspots = {}
 	locations = {}
-	mods = {}
-	owners = {}
-	players = {}
 	resetRegions = {}
-	server = {}
 	shop = {}
 	shopCategories = {}
 	stackLimits = {}
 	teleports = {}
 	villagers = {}
 	waypoints = {}
-
-	Smegz0r = "76561197983251951"
 
 	if (botman.ExceptionCount == nil) then
 		botman.ExceptionCount = 0
@@ -201,16 +197,6 @@ function ResetServer()
 		server.lottery = 0
 	end
 
-	conn:execute("TRUNCATE TABLE players")
-	conn:execute("TRUNCATE TABLE whitelist")
-
-	-- remove a flag so that the bot will re-test for installed mods.
-	botMaintenance.modsInstalled = false
-	saveBotMaintenance()
-
+	forgetPlayers()
 	ResetBot()
-	initServer()
-
-	botman.botStarted = nil
-	login()
 end

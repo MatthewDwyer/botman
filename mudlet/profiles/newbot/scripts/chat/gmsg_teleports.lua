@@ -892,6 +892,19 @@ function gmsg_teleports()
 				return true
 			end
 
+			-- reject if not an admin and the player is in a location that does not allow p2p teleporting
+			if tonumber(chatvars.accessLevel) > 2 then
+				loc = players[chatvars.playerid].inLocation
+
+				if locations[loc] then
+					if not locations[loc].allowP2P then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in a location that does not allow fetching friends.[-]")
+						botman.faultyChat = false
+						return true
+					end
+				end
+			end
+
 			if (accessLevel(id) < 3) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Staff cannot be teleported by other staff.[-]")
 				botman.faultyChat = false

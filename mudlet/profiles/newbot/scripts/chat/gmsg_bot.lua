@@ -374,7 +374,7 @@ function gmsg_bot()
 				end
 
 				if players[id].botQuestion == "quick reset bot" and chatvars.accessLevel == 0 then
-					QuickBotReset()
+					quickBotReset()
 
 					message("say [" .. server.chatColour .. "]The bot has been reset except for players, locations and reset zones.[-]")
 

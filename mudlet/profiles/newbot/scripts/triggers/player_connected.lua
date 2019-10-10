@@ -233,7 +233,7 @@ debug = false -- should be false unless testing
 function playerConnected(line)
 	local temp_table, temp, debug, commas, freeSlots, test, tmp
 	local timestamp = os.time()
-	local cursor, errorString, rows
+	local cursor, errorString, rows, row
 
 	if botman.debugAll then
 		debug = true -- this should be true
@@ -457,6 +457,21 @@ function playerConnected(line)
 						alertAdmins("ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.", "alert")
 					end
 				end
+			end
+		end
+
+		-- check for player in donors table and restore donor status if missing in players table
+		cursor,errorString = conn:execute("SELECT * FROM donors WHERE steam = " .. tmp.steam)
+		rows = cursor:numrows()
+
+		if tonumber(rows) > 0 then
+			row = cursor:fetch({}, "a")
+
+			if not players[tmp.steam].donor then
+				players[tmp.steam].donor = true
+				players[tmp.steam].donorLevel = row.level
+				players[tmp.steam].donorExpiry = row.expiry
+				players[tmp.steam].maxWaypoints = server.maxWaypointsDonors
 			end
 		end
 

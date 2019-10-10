@@ -1161,7 +1161,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			players[ircID].ircAuthenticated = true
 			players[ircID].ircAlias = name
 			irc_chat(name, "You have logged in " .. name)
-			irc_chat(name)
+			irc_chat(name, ".")
 
 			conn:execute("UPDATE players SET ircAlias = '" .. escape(name) .. "' WHERE steam = " .. ircID)
 			connBots:execute("UPDATE players SET ircAlias = '" .. escape(name) .. "', ircAuthenticated = 1 WHERE steam = " .. ircID)
@@ -5277,11 +5277,19 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if words[2] == nil then
 			irc_chat(name, "These are all the donors on record:")
 
-			for k,v in pairs(players) do
-				if (v.donor) then
-					conn:execute("INSERT INTO list (thing, class, steam) VALUES ('" .. escape(v.name) .. "','" .. k .. "'," .. ircID .. ")")
-					tmp.count = tmp.count + 1
+			for k,v in pairs(donors) do
+				name1 = ""
+
+				if players[k] then
+					name1 = players[k].name
 				end
+
+				if playersArchived[k] then
+					name1 = playersArchived[k].name
+				end
+
+				conn:execute("INSERT INTO list (thing, class, steam) VALUES ('" .. escape(name1) .. "','" .. k .. "'," .. ircID .. ")")
+				tmp.count = tmp.count + 1
 			end
 
 			cursor,errorString = conn:execute("SELECT * FROM list where steam = " .. ircID .. " order by thing")
@@ -5289,7 +5297,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			while row do
 				tmp.steam = row.class
 
-				diff = os.difftime(players[tmp.steam].donorExpiry, os.time()) -- diff = os.difftime(players[tmp.steam].donorExpiry, os.time(dateNow))
+				diff = os.difftime(players[tmp.steam].donorExpiry, os.time())
 				days = math.floor(diff / 86400)
 
 				if (days > 0) then
@@ -5315,7 +5323,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			conn:execute("DELETE FROM list WHERE steam = " .. ircID)
 
-			irc_chat(name, tmp.count .. " current donors")
+			irc_chat(name, "Total donors: " .. tmp.count)
 		else
 			tmp.name = string.sub(msg, 8)
 			tmp.steam = LookupPlayer(tmp.name)

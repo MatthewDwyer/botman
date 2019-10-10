@@ -52,14 +52,14 @@ function everyMinute()
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	zombiePlayers = {}
-	diff = server.uptime
-	days = math.floor(diff / 86400)
+	-- diff = server.uptime
+	-- days = math.floor(diff / 86400)
 
-	if (days > 0) then
-		diff = diff - (days * 86400)
-	end
+	-- if (days > 0) then
+		-- diff = diff - (days * 86400)
+	-- end
 
-	hours = math.floor(diff / 3600)
+	-- hours = math.floor(diff / 3600)
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
@@ -220,9 +220,11 @@ function everyMinute()
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
-	if (botman.playersOnline == 0 and server.uptime < 0) and (scheduledReboot ~= true) and server.allowReboot and not botman.serverRebooting then
-		botman.rebootTimerID = tempTimer( 60, [[startReboot()]] )
-		scheduledReboot = true
+	if server.uptime then
+		if (botman.playersOnline == 0 and server.uptime < 0) and (scheduledReboot ~= true) and server.allowReboot and not botman.serverRebooting then
+			botman.rebootTimerID = tempTimer( 60, [[startReboot()]] )
+			scheduledReboot = true
+		end
 	end
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end

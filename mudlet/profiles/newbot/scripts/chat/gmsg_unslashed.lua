@@ -177,7 +177,7 @@ function gmsg_unslashed()
 
 	if (chatvars.playername ~= "Server") then
 		if players[chatvars.playerid].botQuestion == "quick reset bot" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
-			QuickBotReset()
+			quickBotReset()
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I have been reset except for players, locations and reset zones.[-]")
 
 			players[chatvars.playerid].botQuestion = ""
@@ -193,7 +193,7 @@ function gmsg_unslashed()
 	if (chatvars.playername ~= "Server") then
 		if players[chatvars.playerid].botQuestion == "forget players" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players? Who needs em? Out with the trash I say. All players forgotten and their stuff except for admins.[-]")
-			ForgetPlayers()
+			forgetPlayers()
 
 			players[chatvars.playerid].botQuestion = ""
 			players[chatvars.playerid].botQuestionID = nil
@@ -232,39 +232,76 @@ function gmsg_unslashed()
 
 			r = rand(10)
 
-			if (r == 1) then message("say [" .. server.chatColour .. "]Look who's talking :P[-]") end
-			if (r == 2) then message("say [" .. server.chatColour .. "]Just ragequit! :)[-]") end
-			if (r == 3) then message("say [" .. server.chatColour .. "]This is not the server you are looking for.  Move along.  Move along.[-]") end
-			if (r == 4) then message("say [" .. server.chatColour .. "]Let me guess, did someone steal your sweet roll?[-]") end
-			if (r == 5) then
-				message("say [" .. server.chatColour .. "]It's time to kick ass and chew bubble gum... and I'm all outta gum.[-]")
-				kick(chatvars.playerid, "My boot, your face; the perfect couple.")
-			end
+			if chatvars.chatPublic then
+				if (r == 1) then message("say [" .. server.chatColour .. "]Look who's talking :P[-]") end
+				if (r == 2) then message("say [" .. server.chatColour .. "]Just ragequit! :)[-]") end
+				if (r == 3) then message("say [" .. server.chatColour .. "]This is not the server you are looking for.  Move along.  Move along.[-]") end
+				if (r == 4) then message("say [" .. server.chatColour .. "]Let me guess, did someone steal your sweet roll?[-]") end
+				if (r == 5) then
+					message("say [" .. server.chatColour .. "]It's time to kick ass and chew bubble gum... and I'm all outta gum.[-]")
+					kick(chatvars.playerid, "My boot, your face; the perfect couple.")
+				end
 
-			if (r == 6) then
-				message("say [" .. server.chatColour .. "]What we've got here is failure to communicate.[-]")
-				mutePlayerChat(chatvars.playerid, "true")
-				tempTimer( 180, [[unmutePlayer("]] .. chatvars.playerid .. [[")]] )
-			end
+				if (r == 6) then
+					message("say [" .. server.chatColour .. "]What we've got here is failure to communicate.[-]")
+					mutePlayerChat(chatvars.playerid, "true")
+					tempTimer( 180, [[unmutePlayer("]] .. chatvars.playerid .. [[")]] )
+				end
 
-			if (r == 7) then
-				message("say " .. server.commandPrefix .. "timeout " .. chatvars.playername)
-				message("say [" .. server.chatColour .. "]WHOOPS! " .. chatvars.playername .. " has accidentally been sent to timeout.[-]")
-				tempTimer( 4, [[message("say [" .. server.chatColour .. "]Now where is that return button?[-]")]])
-				tempTimer( 8, [[message("say [" .. server.chatColour .. "]Here it is!  Oh.. nope not it. 1 sec..[-]")]] )
-				tempTimer( 11, [[message("say [" .. server.chatColour .. "]This one?[-]")]] )
-				tempTimer( 14, [[message("say [" .. server.chatColour .. "]Nope[-]")]] )
-				tempTimer( 19, [[message("say [" .. server.chatColour .. "]Found it![-]")]] )
-				tempString = server.commandPrefix .. "return " .. chatvars.playername
-				tempTimer( 22, [[gmsg(tempString)]] )
-			end
+				if (r == 7) then
+					message("say " .. server.commandPrefix .. "timeout " .. chatvars.playername)
+					message("say [" .. server.chatColour .. "]WHOOPS! " .. chatvars.playername .. " has accidentally been sent to timeout.[-]")
+					tempTimer( 4, [[message("say [" .. server.chatColour .. "]Now where is that return button?[-]")]])
+					tempTimer( 8, [[message("say [" .. server.chatColour .. "]Here it is!  Oh.. nope not it. 1 sec..[-]")]] )
+					tempTimer( 11, [[message("say [" .. server.chatColour .. "]This one?[-]")]] )
+					tempTimer( 14, [[message("say [" .. server.chatColour .. "]Nope[-]")]] )
+					tempTimer( 19, [[message("say [" .. server.chatColour .. "]Found it![-]")]] )
+					tempString = server.commandPrefix .. "return " .. chatvars.playername
+					tempTimer( 22, [[gmsg(tempString)]] )
+				end
 
-			if (r == 8) then message("say [" .. server.chatColour .. "]You LIE!  This server is fabulous! ^^[-]") end
-			if (r == 9) then message("say [" .. server.chatColour .. "]Ruh Roh! " .. chatvars.playername .. " hates us!  HOLD ME![-]") end
+				if (r == 8) then message("say [" .. server.chatColour .. "]You LIE!  This server is fabulous! ^^[-]") end
+				if (r == 9) then message("say [" .. server.chatColour .. "]Ruh Roh! " .. chatvars.playername .. " hates us!  HOLD ME![-]") end
 
-			if (r == 10) then
-				message("say [" .. server.chatColour .. "]SHHHH  Shhhh  shhhh.  No tears " .. chatvars.playername .. ", only dreams now.[-]")
-				kick(chatvars.playerid, "WHOOPS!")
+				if (r == 10) then
+					message("say [" .. server.chatColour .. "]SHHHH  Shhhh  shhhh.  No tears " .. chatvars.playername .. ", only dreams now.[-]")
+					kick(chatvars.playerid, "WHOOPS!")
+				end
+			else
+				if (r == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Look who's talking :P[-]") end
+				if (r == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Just ragequit! :)[-]") end
+				if (r == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is not the server you are looking for.  Move along.  Move along.[-]") end
+				if (r == 4) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Let me guess, did someone steal your sweet roll?[-]") end
+				if (r == 5) then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]It's time to kick ass and chew bubble gum... and I'm all outta gum.[-]")
+					kick(chatvars.playerid, "My boot, your face; the perfect couple.")
+				end
+
+				if (r == 6) then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]What we've got here is failure to communicate.[-]")
+					mutePlayerChat(chatvars.playerid, "true")
+					tempTimer( 180, [[unmutePlayer("]] .. chatvars.playerid .. [[")]] )
+				end
+
+				if (r == 7) then
+					message("say " .. server.commandPrefix .. "timeout " .. chatvars.playername)
+					message("say [" .. server.chatColour .. "]WHOOPS! " .. chatvars.playername .. " has accidentally been sent to timeout.[-]")
+					tempTimer( 4, [[message("say [" .. server.chatColour .. "]Now where is that return button?[-]")]])
+					tempTimer( 8, [[message("say [" .. server.chatColour .. "]Here it is!  Oh.. nope not it. 1 sec..[-]")]] )
+					tempTimer( 11, [[message("say [" .. server.chatColour .. "]This one?[-]")]] )
+					tempTimer( 14, [[message("say [" .. server.chatColour .. "]Nope[-]")]] )
+					tempTimer( 19, [[message("say [" .. server.chatColour .. "]Found it![-]")]] )
+					tempString = server.commandPrefix .. "return " .. chatvars.playername
+					tempTimer( 22, [[gmsg(tempString)]] )
+				end
+
+				if (r == 8) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You LIE!  This server is fabulous! ^^[-]") end
+				if (r == 9) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Ruh Roh! " .. chatvars.playername .. " hates us!  HOLD ME![-]") end
+
+				if (r == 10) then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]SHHHH  Shhhh  shhhh.  No tears " .. chatvars.playername .. ", only dreams now.[-]")
+					kick(chatvars.playerid, "WHOOPS!")
+				end
 			end
 
 			botman.faultyChat = false
@@ -281,76 +318,149 @@ function gmsg_unslashed()
 				if word == "bot" or word == "bot?" or word == "bot!" or word == string.lower(server.botName) then
 					if (chatvars.words[1] == "thanks" or chatvars.words[1] == "ty" or string.find(chatvars.words[1], "thx")) then
 						l = rand(4)
-						if l == 1 then message("say [" .. server.chatColour .. "]You're welcome " .. chatvars.playername .. " <3[-]") end
-						if l == 2 then message("say [" .. server.chatColour .. "]xD[-]") end
-						if l == 3 then message("say [" .. server.chatColour .. "]No problemo[-]") end
-						if l == 4 then message("say [" .. server.chatColour .. "]Glad to be of service[-]") end
+
+						if chatvars.chatPublic then
+							if l == 1 then message("say [" .. server.chatColour .. "]You're welcome " .. chatvars.playername .. " <3[-]") end
+							if l == 2 then message("say [" .. server.chatColour .. "]xD[-]") end
+							if l == 3 then message("say [" .. server.chatColour .. "]No problemo[-]") end
+							if l == 4 then message("say [" .. server.chatColour .. "]Glad to be of service[-]") end
+						else
+							if l == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You're welcome " .. chatvars.playername .. " <3[-]") end
+							if l == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]xD[-]") end
+							if l == 3 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No problemo[-]") end
+							if l == 4 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Glad to be of service[-]") end
+						end
 					else
 						if string.find(chatvars.words[1], "bad") then
 							l = rand(46)
 
-							if l == 1 then message("say [" .. server.chatColour .. "]Don't hate me! D:[-]") end
-							if l == 2 then message("say [" .. server.chatColour .. "]The voices made me do it![-]") end
-							if l == 3 then message("say [" .. server.chatColour .. "]I'm a really cute bunny.  How can you hate me!? :O[-]") end
-							if l == 4 then message("say [" .. server.chatColour .. "]Yes Master, sorry Master[-]") end
-							if l == 5 then message("say [" .. server.chatColour .. "]*cries* What have I done to offend ".. chatvars.playername .. "?[-]") end
-							if l == 6 then message("say [" .. server.chatColour .. "]OOPS!  My bad[-]") end
+							if chatvars.chatPublic then
+								if l == 1 then message("say [" .. server.chatColour .. "]Don't hate me! D:[-]") end
+								if l == 2 then message("say [" .. server.chatColour .. "]The voices made me do it![-]") end
+								if l == 3 then message("say [" .. server.chatColour .. "]I'm a really cute bunny.  How can you hate me!? :O[-]") end
+								if l == 4 then message("say [" .. server.chatColour .. "]Yes Master, sorry Master[-]") end
+								if l == 5 then message("say [" .. server.chatColour .. "]*cries* What have I done to offend ".. chatvars.playername .. "?[-]") end
+								if l == 6 then message("say [" .. server.chatColour .. "]OOPS!  My bad[-]") end
 
-							if l == 7 then
-								if tonumber(botman.playersOnline) > 1 then
-									r = rand(botman.playersOnline)
+								if l == 7 then
+									if tonumber(botman.playersOnline) > 1 then
+										r = rand(botman.playersOnline)
 
-									i = 0
-									for k,v in pairs(igplayers) do
-										i = i + 1
-										if i == r then
-											message("say [" .. server.chatColour .. "]It wasn't me, it was " .. v.name .. "![-]")
+										i = 0
+										for k,v in pairs(igplayers) do
+											i = i + 1
+											if i == r then
+												message("say [" .. server.chatColour .. "]It wasn't me, it was " .. v.name .. "![-]")
+											end
 										end
+									else
+										message("say [" .. server.chatColour .. "]It wasn't me, it was.. Donald Trump![-]")
 									end
-								else
-									message("say [" .. server.chatColour .. "]It wasn't me, it was.. Donald Trump![-]")
 								end
-							end
 
-							if l == 8 then message("say [" .. server.chatColour .. "]Donald Trump set me up to it. Don't fire me! >.<[-]") end
-							if l == 9 then message("say [" .. server.chatColour .. "]Sorry? x.x[-]") end
-							if l == 10 then message("say [" .. server.chatColour .. "]I must be punished " .. chatvars.playername .. "![-]") end
-							if l == 11 then message("say [" .. server.chatColour .. "]I didn't break it![-]") end
-							if l == 12 then message("say [" .. server.chatColour .. "]It was like that when I found it honest![-]") end
-							if l == 13 then message("say [" .. server.chatColour .. "]Well.. it still has a door! *THUD*  ..or not.[-]") end
-							if l == 14 then message("say [" .. server.chatColour .. "]Why me? >.<[-]") end
-							if l == 15 then message("say [" .. server.chatColour .. "]Help! Help! I'm being repressed![-]") end
-							if l == 16 then message("say [" .. server.chatColour .. "]That'll buff right out.[-]") end
-							if l == 17 then message("say [" .. server.chatColour .. "]Doh![-]") end
-							if l == 18 then message("say [" .. server.chatColour .. "]I need a hug D:[-]") end
-							if l == 19 then message("say [" .. server.chatColour .. "]Relax, it'll stop burning any minute now.[-]") end
-							if l == 20 then message("say [" .. server.chatColour .. "]I didn't eat it! Those crumbs were already there! *brushes off crumbs*[-]") end
-							if l == 21 then message("say [" .. server.chatColour .. "]Not sorry :P[-]") end
-							if l == 22 then message("say [" .. server.chatColour .. "]OOPS I did it again >.<[-]") end
-							if l == 23 then message("say [" .. server.chatColour .. "]Killjoy :x[-]") end
-							if l == 24 then message("say [" .. server.chatColour .. "]Aww poor " .. chatvars.playername .. "[-]") end
-							if l == 25 then message("say [" .. server.chatColour .. "]You know it :)[-]") end
-							if l == 26 then message("say [" .. server.chatColour .. "]^flames^  This is fine  ^more flames^[-]") end
-							if l == 27 then message("say [" .. server.chatColour .. "]Bite me[-]") end
-							if l == 28 then message("say [" .. server.chatColour .. "]It's fine.  It's just.. Some assembly required.. And maybe a new door.[-]") end
-							if l == 29 then message("say [" .. server.chatColour .. "][BUSTED][-]") end
-							if l == 30 then message("say [" .. server.chatColour .. "]*hides matches*[-]") end
-							if l == 31 then message("say [" .. server.chatColour .. "]It'll be fine with a lick of paint.. and a total rebuild.[-]") end
-							if l == 32 then message("say [" .. server.chatColour .. "]YEEEEEEEAH!!![-]") end
-							if l == 33 then message("say [" .. server.chatColour .. "]Oh.. it wasn't a flatpack?  Well now it is! :D[-]") end
-							if l == 34 then message("say [" .. server.chatColour .. "]Curses!  If it hadn't been for that meddling " .. chatvars.playername .. " I'd have gotten away with it![-]") end
-							if l == 35 then message("say [" .. server.chatColour .. "]I didn't touch it! *edges away from it*[-]") end
-							if l == 36 then message("say [" .. server.chatColour .. "]It was just a prank bro[-]") end
-							if l == 37 then message("say [" .. server.chatColour .. "]Oh.. that was yours?[-]") end
-							if l == 38 then message("say [" .. server.chatColour .. "]The front fell off.[-]") end
-							if l == 39 then message("say [" .. server.chatColour .. "]GRR GRR GRR[-]") end
-							if l == 40 then message("say [" .. server.chatColour .. "]Mine.[-]") end
-							if l == 41 then message("say [" .. server.chatColour .. "]Uh..  SQUIRREL![-]") end
-							if l == 42 then message("say [" .. server.chatColour .. "]The floor is lava.[-]") end
-							if l == 43 then message("say [" .. server.chatColour .. "]Tis but a scratch.[-]") end
-							if l == 44 then message("say [" .. server.chatColour .. "]I know nothing. Nothing![-]") end
-							if l == 45 then message("say [" .. server.chatColour .. "]Wasn't me! Wasn't me!  Nope - Nuh-uh.  *hides evidence*[-]") end
-							if l == 46 then message("say [" .. server.chatColour .. "]I like trains.[-]") end
+								if l == 8 then message("say [" .. server.chatColour .. "]Donald Trump set me up to it. Don't fire me! >.<[-]") end
+								if l == 9 then message("say [" .. server.chatColour .. "]Sorry? x.x[-]") end
+								if l == 10 then message("say [" .. server.chatColour .. "]I must be punished " .. chatvars.playername .. "![-]") end
+								if l == 11 then message("say [" .. server.chatColour .. "]I didn't break it![-]") end
+								if l == 12 then message("say [" .. server.chatColour .. "]It was like that when I found it honest![-]") end
+								if l == 13 then message("say [" .. server.chatColour .. "]Well.. it still has a door! *THUD*  ..or not.[-]") end
+								if l == 14 then message("say [" .. server.chatColour .. "]Why me? >.<[-]") end
+								if l == 15 then message("say [" .. server.chatColour .. "]Help! Help! I'm being repressed![-]") end
+								if l == 16 then message("say [" .. server.chatColour .. "]That'll buff right out.[-]") end
+								if l == 17 then message("say [" .. server.chatColour .. "]Doh![-]") end
+								if l == 18 then message("say [" .. server.chatColour .. "]I need a hug D:[-]") end
+								if l == 19 then message("say [" .. server.chatColour .. "]Relax, it'll stop burning any minute now.[-]") end
+								if l == 20 then message("say [" .. server.chatColour .. "]I didn't eat it! Those crumbs were already there! *brushes off crumbs*[-]") end
+								if l == 21 then message("say [" .. server.chatColour .. "]Not sorry :P[-]") end
+								if l == 22 then message("say [" .. server.chatColour .. "]OOPS I did it again >.<[-]") end
+								if l == 23 then message("say [" .. server.chatColour .. "]Killjoy :x[-]") end
+								if l == 24 then message("say [" .. server.chatColour .. "]Aww poor " .. chatvars.playername .. "[-]") end
+								if l == 25 then message("say [" .. server.chatColour .. "]You know it :)[-]") end
+								if l == 26 then message("say [" .. server.chatColour .. "]^flames^  This is fine  ^more flames^[-]") end
+								if l == 27 then message("say [" .. server.chatColour .. "]Bite me[-]") end
+								if l == 28 then message("say [" .. server.chatColour .. "]It's fine.  It's just.. Some assembly required.. And maybe a new door.[-]") end
+								if l == 29 then message("say [" .. server.chatColour .. "][BUSTED][-]") end
+								if l == 30 then message("say [" .. server.chatColour .. "]*hides matches*[-]") end
+								if l == 31 then message("say [" .. server.chatColour .. "]It'll be fine with a lick of paint.. and a total rebuild.[-]") end
+								if l == 32 then message("say [" .. server.chatColour .. "]YEEEEEEEAH!!![-]") end
+								if l == 33 then message("say [" .. server.chatColour .. "]Oh.. it wasn't a flatpack?  Well now it is! :D[-]") end
+								if l == 34 then message("say [" .. server.chatColour .. "]Curses!  If it hadn't been for that meddling " .. chatvars.playername .. " I'd have gotten away with it![-]") end
+								if l == 35 then message("say [" .. server.chatColour .. "]I didn't touch it! *edges away from it*[-]") end
+								if l == 36 then message("say [" .. server.chatColour .. "]It was just a prank bro[-]") end
+								if l == 37 then message("say [" .. server.chatColour .. "]Oh.. that was yours?[-]") end
+								if l == 38 then message("say [" .. server.chatColour .. "]The front fell off.[-]") end
+								if l == 39 then message("say [" .. server.chatColour .. "]GRR GRR GRR[-]") end
+								if l == 40 then message("say [" .. server.chatColour .. "]Mine.[-]") end
+								if l == 41 then message("say [" .. server.chatColour .. "]Uh..  SQUIRREL![-]") end
+								if l == 42 then message("say [" .. server.chatColour .. "]The floor is lava.[-]") end
+								if l == 43 then message("say [" .. server.chatColour .. "]Tis but a scratch.[-]") end
+								if l == 44 then message("say [" .. server.chatColour .. "]I know nothing. Nothing![-]") end
+								if l == 45 then message("say [" .. server.chatColour .. "]Wasn't me! Wasn't me!  Nope - Nuh-uh.  *hides evidence*[-]") end
+								if l == 46 then message("say [" .. server.chatColour .. "]I like trains.[-]") end
+							else
+								if l == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Don't hate me! D:[-]") end
+								if l == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The voices made me do it![-]") end
+								if l == 3 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I'm a really cute bunny.  How can you hate me!? :O[-]") end
+								if l == 4 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Yes Master, sorry Master[-]") end
+								if l == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]*cries* What have I done to offend ".. chatvars.playername .. "?[-]") end
+								if l == 6 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]OOPS!  My bad[-]") end
+
+								if l == 7 then
+									if tonumber(botman.playersOnline) > 1 then
+										r = rand(botman.playersOnline)
+
+										i = 0
+										for k,v in pairs(igplayers) do
+											i = i + 1
+											if i == r then
+												message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]It wasn't me, it was " .. v.name .. "![-]")
+											end
+										end
+									else
+										message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]It wasn't me, it was.. Donald Trump![-]")
+									end
+								end
+
+								if l == 8 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donald Trump set me up to it. Don't fire me! >.<[-]") end
+								if l == 9 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry? x.x[-]") end
+								if l == 10 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I must be punished " .. chatvars.playername .. "![-]") end
+								if l == 11 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I didn't break it![-]") end
+								if l == 12 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]It was like that when I found it honest![-]") end
+								if l == 13 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Well.. it still has a door! *THUD*  ..or not.[-]") end
+								if l == 14 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Why me? >.<[-]") end
+								if l == 15 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Help! Help! I'm being repressed![-]") end
+								if l == 16 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]That'll buff right out.[-]") end
+								if l == 17 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Doh![-]") end
+								if l == 18 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I need a hug D:[-]") end
+								if l == 19 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Relax, it'll stop burning any minute now.[-]") end
+								if l == 20 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I didn't eat it! Those crumbs were already there! *brushes off crumbs*[-]") end
+								if l == 21 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Not sorry :P[-]") end
+								if l == 22 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]OOPS I did it again >.<[-]") end
+								if l == 23 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Killjoy :x[-]") end
+								if l == 24 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Aww poor " .. chatvars.playername .. "[-]") end
+								if l == 25 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You know it :)[-]") end
+								if l == 26 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]^flames^  This is fine  ^more flames^[-]") end
+								if l == 27 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bite me[-]") end
+								if l == 28 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]It's fine.  It's just.. Some assembly required.. And maybe a new door.[-]") end
+								if l == 29 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "][BUSTED][-]") end
+								if l == 30 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]*hides matches*[-]") end
+								if l == 31 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]It'll be fine with a lick of paint.. and a total rebuild.[-]") end
+								if l == 32 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]YEEEEEEEAH!!![-]") end
+								if l == 33 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Oh.. it wasn't a flatpack?  Well now it is! :D[-]") end
+								if l == 34 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Curses!  If it hadn't been for that meddling " .. chatvars.playername .. " I'd have gotten away with it![-]") end
+								if l == 35 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I didn't touch it! *edges away from it*[-]") end
+								if l == 36 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]It was just a prank bro[-]") end
+								if l == 37 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Oh.. that was yours?[-]") end
+								if l == 38 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The front fell off.[-]") end
+								if l == 39 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]GRR GRR GRR[-]") end
+								if l == 40 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Mine.[-]") end
+								if l == 41 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Uh..  SQUIRREL![-]") end
+								if l == 42 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The floor is lava.[-]") end
+								if l == 43 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Tis but a scratch.[-]") end
+								if l == 44 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I know nothing. Nothing![-]") end
+								if l == 45 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Wasn't me! Wasn't me!  Nope - Nuh-uh.  *hides evidence*[-]") end
+								if l == 46 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I like trains.[-]") end
+							end
 
 							botman.faultyChat = false
 							return true
@@ -359,19 +469,34 @@ function gmsg_unslashed()
 						r = rand(19)
 
 						if r < 6 and chatvars.words[3] == nil then
-							message("say [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]")
+							end
+
 							botman.faultyChat = false
 							return true
 						end
 
 						if string.find(chatvars.command, "love") then
 							l = rand(6)
-							if l == 1 then message("say [" .. server.chatColour .. "]I know.[-]") end
-							if l == 2 then message("say [" .. server.chatColour .. "]Thanks =D[-]") end
-							if l == 3 then message("say [" .. server.chatColour .. "]I love you too :3[-]") end
-							if l == 4 then message("say [" .. server.chatColour .. "]PDA!  PDA![-]") end
-							if l == 5 then message("say [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]") end
-							if l == 6 then message("say [" .. server.chatColour .. "]ROWR![-]") end
+
+							if chatvars.chatPublic then
+								if l == 1 then message("say [" .. server.chatColour .. "]I know.[-]") end
+								if l == 2 then message("say [" .. server.chatColour .. "]Thanks =D[-]") end
+								if l == 3 then message("say [" .. server.chatColour .. "]I love you too :3[-]") end
+								if l == 4 then message("say [" .. server.chatColour .. "]PDA!  PDA![-]") end
+								if l == 5 then message("say [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]") end
+								if l == 6 then message("say [" .. server.chatColour .. "]ROWR![-]") end
+							else
+								if l == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I know.[-]") end
+								if l == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Thanks =D[-]") end
+								if l == 3 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I love you too :3[-]") end
+								if l == 4 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]PDA!  PDA![-]") end
+								if l == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]") end
+								if l == 6 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ROWR![-]") end
+							end
 
 							botman.faultyChat = false
 							return true
@@ -379,12 +504,22 @@ function gmsg_unslashed()
 
 						if string.find(chatvars.command, "pretty") then
 							l = rand(6)
-							if l == 1 then message("say [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]") end
-							if l == 2 then message("say [" .. server.chatColour .. "]I know[-]") end
-							if l == 3 then message("say [" .. server.chatColour .. "]Thanks :>[-]") end
-							if l == 4 then message("say [" .. server.chatColour .. "]O.o[-]") end
-							if l == 5 then message("say [" .. server.chatColour .. "]OK! *backs away slowly*[-]") end
-							if l == 6 then message("say [" .. server.chatColour .. "]Hand over the crackers.  This is a stick up![-]") end
+
+							if chatvars.chatPublic then
+								if l == 1 then message("say [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]") end
+								if l == 2 then message("say [" .. server.chatColour .. "]I know[-]") end
+								if l == 3 then message("say [" .. server.chatColour .. "]Thanks :>[-]") end
+								if l == 4 then message("say [" .. server.chatColour .. "]O.o[-]") end
+								if l == 5 then message("say [" .. server.chatColour .. "]OK! *backs away slowly*[-]") end
+								if l == 6 then message("say [" .. server.chatColour .. "]Hand over the crackers.  This is a stick up![-]") end
+							else
+								if l == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]") end
+								if l == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I know[-]") end
+								if l == 3 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Thanks :>[-]") end
+								if l == 4 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]O.o[-]") end
+								if l == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]OK! *backs away slowly*[-]") end
+								if l == 6 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Hand over the crackers.  This is a stick up![-]") end
+							end
 
 							botman.faultyChat = false
 							return true
@@ -392,69 +527,133 @@ function gmsg_unslashed()
 
 						if string.find(chatvars.command, "cool") or string.find(chatvars.command, "great") or string.find(chatvars.command, "good") then
 							l = rand(4)
-							if l == 1 then message("say [" .. server.chatColour .. "]Thanks " .. chatvars.playername .. "![-]") end
-							if l == 2 then message("say [" .. server.chatColour .. "]Indeed[-]") end
-							if l == 3 then message("say [" .. server.chatColour .. "]I know[-]") end
-							if l == 4 then message("say [" .. server.chatColour .. "]^.^[-]") end
+
+							if chatvars.chatPublic then
+								if l == 1 then message("say [" .. server.chatColour .. "]Thanks " .. chatvars.playername .. "![-]") end
+								if l == 2 then message("say [" .. server.chatColour .. "]Indeed[-]") end
+								if l == 3 then message("say [" .. server.chatColour .. "]I know[-]") end
+								if l == 4 then message("say [" .. server.chatColour .. "]^.^[-]") end
+							else
+								if l == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Thanks " .. chatvars.playername .. "![-]") end
+								if l == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Indeed[-]") end
+								if l == 3 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I know[-]") end
+								if l == 4 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]^.^[-]") end
+							end
 
 							botman.faultyChat = false
 							return true
 						end
 
 						if r == 6 then
-							message("say [" .. server.chatColour .. "]Yo no hablo ingles[-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]Yo no hablo ingles[-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Yo no hablo ingles[-]")
+							end
 						end
 
 						if r == 7 then
-							message("say [" .. server.chatColour .. "]You again?[-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]You again?[-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You again?[-]")
+							end
 						end
 
 						if r == 8 then
-							message("say [" .. server.chatColour .. "]*sigh*  Next![-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]*sigh*  Next![-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]*sigh*  Next![-]")
+							end
 						end
 
 						if r == 9 then
-							message("say [" .. server.chatColour .. "]Nope[-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]Nope[-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Nope[-]")
+							end
 						end
 
 						if r == 10 then
-							message("say [" .. server.chatColour .. "]OH HEY![-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]OH HEY![-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]OH HEY![-]")
+							end
 						end
 
 						if r == 11 then
-							message("say [" .. server.chatColour .. "]No lollygagging[-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]No lollygagging[-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No lollygagging[-]")
+							end
 						end
 
 						if r == 12 then
-							message("say [" .. server.chatColour .. "]No comment[-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]No comment[-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No comment[-]")
+							end
 						end
 
 						if r == 13 then
-							message("say [" .. server.chatColour .. "]OH HAI![-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]OH HAI![-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]OH HAI![-]")
+							end
 						end
 
 						if r == 14 then
-							message("say [" .. server.chatColour .. "]Oh rly!?[-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]Oh rly!?[-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Oh rly!?[-]")
+							end
 						end
 
 						if r == 15 then
-							message("say [" .. server.chatColour .. "]I'm sorry, " .. server.botName .. " is not in right now.  Please leave a message after the beep.   BEEP[-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]I'm sorry, " .. server.botName .. " is not in right now.  Please leave a message after the beep.   BEEP[-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I'm sorry, " .. server.botName .. " is not in right now.  Please leave a message after the beep.   BEEP[-]")
+							end
 						end
 
 						if r == 16 then
-							message("say [" .. server.chatColour .. "]¿Hablas espanol?[-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]¿Hablas espanol?[-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]¿Hablas espanol?[-]")
+							end
 						end
 
 						if r == 17 then
-							message("say [" .. server.chatColour .. "]o.O[-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]o.O[-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]o.O[-]")
+							end
 						end
 
 						if r == 18 then
-							message("say [" .. server.chatColour .. "]O.o[-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]O.o[-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]O.o[-]")
+							end
 						end
 
 						if r == 19 then
-							message("say [" .. server.chatColour .. "]GLORY TO ARSTOTZKA![-]")
+							if chatvars.chatPublic then
+								message("say [" .. server.chatColour .. "]GLORY TO ARSTOTZKA![-]")
+							else
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]GLORY TO ARSTOTZKA![-]")
+							end
 						end
 					end
 
@@ -483,7 +682,11 @@ function gmsg_unslashed()
 
 	if (string.find(chatvars.command, "when") or string.find(chatvars.command, "next")) and string.find(chatvars.command, "reboot") then
 		if server.delayReboot then
-			message("say [" .. server.chatColour .. "]The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.[-]")
+			if chatvars.chatPublic then
+				message("say [" .. server.chatColour .. "]The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.[-]")
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The reboot will happen after day 7. Admins can force it with " .. server.commandPrefix .. "reboot now.[-]")
+			end
 		end
 
 		nextReboot()

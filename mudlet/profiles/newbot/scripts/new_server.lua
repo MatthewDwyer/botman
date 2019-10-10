@@ -55,6 +55,7 @@ function initServer()
 	server.blacklistCountries = "CN,HK"
 	server.botID = 0
 	server.botName = "Bot"
+	server.botNameColour = "6495ED"
 	server.chatColour = "D4FFD4"
 	server.checkLevelHack = false
 	server.commandPrefix = "/"

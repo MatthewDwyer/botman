@@ -23,6 +23,97 @@ restart bot
 If your bot is launched from a custom script with the ability to restart itself, you can command your bot to restart.
 All of Smegz0r's hosted bots have this feature. Contact Smeg if you need help adding it to your bot.
 
+
+Botman commands:
+
+/save {name}
+After marking out the area you want to copy, you can save it.
+
+/set new player/player/donor/prisoner/mod/admin/owner chat colour FFFFFF
+/reset chat colour
+Set the default chat colour for a class of player.  You can also set chat colour for a named player.
+eg. /set player joe chat colour B0E0E6
+To disable automatic chat colouring, set it to white which is FFFFFF
+To reset everyone to white type /reset chat colour everyone
+
+/set/clear horde
+Marks your current position to spawn a horde there with /spawn horde.
+Clear horde doesn't remove the horde. It only clears the saved coordinate.
+
+/spawn horde {optional player or location name} {number of zombies}
+Spawn a horde around a player or location or at a marked coordinate.  See /set horde.
+
+/mute/unmute {player name}
+Muting a player blocks their ingame chat from being seen by other players.  You will still see it from the web client.
+It does not block voice chat sadly.
+
+/show/hide commands
+Hide commands from ingame chat which makes them all PM's or show them which makes them public.  They will still appear in the web client.
+
+/trader add/trader del {named area}
+After marking out a named area with the /mark command, you can add or remove trader protection on it.
+
+
+/stop/cancel maze
+Aborts any maze(s) that you have told the bot to create.
+
+/delete save {number taken from /list saves}
+After /list saves, you can delete a save from the list.
+Note that the list is temporary, but will last until the next time a list is generated.  If it doesn't work, do another /list saves.
+
+/dig (or fill) {optional number} (default 5)
+Dig a hole or fill a hole.
+This can also be used to make tunnels and walls.
+When not digging or filling up or down, a compass direction is needed (north, south, east, west)
+There are several optional parts, wide, block, tall, base and long.
+Default block is air, base is at your feet and the others default to 5.
+Examples:
+/dig north wide 3 tall 3 long 100
+/dig bedrock wide 1
+/dig up (makes a 5x5 room)
+/dig up (or room) wide 5 tall 10 (makes a 10x10 room)
+/fill east base 70 wide 2 tall 10 long 50 block steelBlock
+/fill bedrock wide 2 block stone
+/fill {saved prefab} block stone
+
+You can repeat the last command with /again and change direction with /again west
+
+
+/erase {optional number} (default 5)
+/erase block {block name} replace {with other block name} {optional number}
+eg. /erase block stone replace air 20
+
+Replace an area around you with air blocks.  Add a number to change the size.
+
+/list (or /li) {partial name of an item or block}
+List all items containing the text you are searching for.
+
+/list saves {optional player name}
+List all your saved marked areas or those of someone else.  This list is coordinate pairs of places in the world that you have marked for some block command.
+You can use a named save with the block commands.
+You can teleport to them with /tp #{name of marked area}.
+You can delete one /delete save {list number of marked area}.
+
+/load prefab {name}
+/load prefab {name} at {x} {y} {z} face {0-3}
+/load prefab {name} here
+Everything after the prefab name is optional and if not given, the stored coords and rotation will be used.
+Restore a saved prefab in place or place it somewhere else.
+If you provide coords and an optional rotation (default is 0 - north), you will make a new copy of the prefab at those coords.
+If you instead add here, it will load on your current position with optional rotation.
+If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy.
+
+/make maze (default maze 20 x 20)
+/make maze wall {block name} fill {air block} width {number} length {number} height {number} x {x coord} y {y coord} z {z coord}
+The bot also accepts wide, long, and tall instead of width, length, and height.
+Generate and build a random maze.  Someone must stay there until the maze completes or it will fail to spawn fully.
+Default values: wall steelBlock fill air width 20 length 20 height 3. It uses your current position for x, y and z if not given.
+
+/undo
+The block commands bm-prender, bm-pdup and bm-repblock allow for the last command to be undone, however since more than one person can command the bot to do block commands
+it is possible that other block commands have been done by the bot since your last block command.  If the last block command came from you, the bot will undo it.
+
+
 Info Commands:
 
 /bot info
@@ -69,7 +160,7 @@ You can recall the alerts with the irc command view alerts {optional days}
 /info {player}
 Displays info about a player.  Only staff can specify a player.  Players just see their own info.
 
-/who visited {player name} days {days} hours {hrs} range {dist} height {ht}
+/who visited player {player name} days {days} hours {hrs} range {dist} height {ht}
 See who visited a player location or base.
 Example with defaults: /who visited player smeg days 1 hours 0 range 10 height 5
 /who visited bed smeg
@@ -254,6 +345,12 @@ To do that use /set tp {location}.  This will add a random teleport destination 
 Locations are circles by default with a central coord and a radius.  You can make the location a square (with equal sides).
 The location's size is always its radius.
 
+/location p2p enable/disable {name} (default is enabled)
+When disabled, players will not be able to teleport to friends or fetch friends in the location.
+
+/location pack enable/disable {name} (default is enabled)
+When disabled, the /pack command will not work if the player died inside the location.
+
 /location private/public {name} (default is private)
 Flag the location as private or public.  Players can only use public locations.
 
@@ -291,6 +388,9 @@ Teleport Commands:
 
 /tele {name} delete
 Delete a teleport.
+
+/enable/disable fetch
+Allow or block players using the fetch command to teleport friends to them.
 
 /enabletp {player name}
 /disabletp {player name}
@@ -349,6 +449,9 @@ By default players can type /pack when they respawn after a death to return to c
 
 /set pack cost {number}
 By default players can type /pack or /revive when they respawn after a death to return to close to their pack.  You can set a delay and/or a cost before the command is available after a death.
+
+/set p2p cooldown {number in seconds}
+Set a cooldown after players teleport to friends before they can teleport to friends again.  Default is 0.
 
 /tp {player name}
 /tp {name of teleport}
@@ -444,6 +547,9 @@ Shop Commands:
 Attempt to automatically fix the shop.  It reloads the shop categories, checks for any missing categories in shop items and assigns them to misc then reindexes the shop.
 This fix is experimental and might not actually fix whatever is wrong with your shop.
 
+/quick fix shop
+Like /fix shop but doesn't re-read all the item names known to the server so it completes much faster.
+
 /reset shop
 Restock the shop to the max quantity of each item.
 
@@ -472,7 +578,7 @@ Enter a number from 0 to 23 which will be the game hour that the shop opens or c
 Turn on or off the daily lottery.  It is on be default.
 
 /set playtime reward {Zennies}
-Set how many Zennies a player earns for each minutes played. (excludes new players)
+Set how many Zennies a player earns for each minute played. (excludes new players and does not count total time played)
 
 /set zombie reward {Zennies}
 Set how many Zennies a player earns for each zombie killed.
@@ -649,6 +755,9 @@ Make a backup of the bot's data before doing something to the bot. :O
 /clear whitelist
 Remove everyone from the bot's whitelist.
 
+/forget players
+Makes the bot forget everything about players as if they were new again. It does not touch admins (nasty filthy adminses).
+
 /password {some password or phrase}
 If you have set a master password, some bot commands will issue a password challenge.  Use this command to send the password to the bot.
 
@@ -692,8 +801,8 @@ To only restore player bases, add the word bases, for cash add cash and for dono
 You can also just restore 1 named player.
 To see a list of backups use /list backups.
 
-/set api log read {interval in seconds} (default 1 second)
-In API mode the bot will read the server log at regular intervals with the default being every second.
+/set api log read {interval in seconds} (default 3 seconds)
+In API mode the bot will read the server log at regular intervals with the default being every 3 seconds.
 You can set a longer delay but the bot won't respond to in-game commands faster than the delay that you set.
 If you think the polling interval is causing server lag you can try slowing it down.
 
@@ -711,6 +820,9 @@ Set the colour of server messages.  Player chat will be the default colour.
 /name bot {some cool name}
 The default name is Bot.  Help give your bot a personality by giving it a name.
 
+/set bot name colour {hex colour code}
+Set the colour of the bot's name.  Requires the botman mod.
+
 /set bot restart {0+} (total bot days running)
 The bot can automatically restart itself after running for days. The restart helps fix issues and keeps the bot fresh.
 The default is 7 days between bot restarts. You can disable it by setting it to 0. Also it will only activate if bot restarts are enabled.
@@ -721,10 +833,20 @@ Set the colour of server warning messages.
 /set command prefix / (or no symbol or any symbol except \ )
 Change bot commands from using / to using nothing or another symbol.
 
+/set lag check {seconds}
+If lag checking is enabled, the bot will send lag check messages to the server which are timed.  If the time delay from sending the message to reading it back exceeds this threshold, the bot will temporarily suspend some bot commands sent to the server regularly.
+The default is 15 seconds.  If bot commands are not working for a long time, it could be repeatedly flagging the server as lagged.  You can disable the lag check, but if the lag is real it could get longer over time.
+Setting a very low number will probably make the bot think the server is constantly lagged.  The bot will unflag the server lag every 10 seconds to prevent the bot getting stuck thinking the server is lagged.
+
 /set master password {secret password up to 50 characters}
 Protect important commands such as /reset bot with a password.
 This will prevent you or another server owner from accidentally doing something stupid (hopefully).
 To remove it use /clear master password.
+
+/set max log days {number}
+The default is 14 days. Setting this too long will result in lots of log files on disk.
+To prevent this causing issues on my hosted bots, the max you can set this is 60 days.
+To set it higher you need to edit telnetlogkeepdays in the server table in the database.
 
 /set update branch
 Bot updates are released in code branches such as stable and testing.  The stable branch will not update as often and should have less issues than testing.
@@ -770,6 +892,16 @@ Only server owners can enable this log.
 
 /enable/disable inventory log. (disabled by default)
 The bot logs inventory and inventory changes to the database all the time.  You can also have inventory changes recorded to a daily text file along with the other daily logs.
+
+/read log using telnet (default)
+/read log using api
+Due to ongoing issues with the API log reader skipping lines the default is that in API mode, the bot will monitor the server via telnet.
+If telnet is disabled or you tell the bot to read the log using the API, then it will monitor the server via the API.
+
+/enable/disable telnet fallback (default is disabled)
+When the bot is using Alloc's web API, if the API becomes unreachable the bot will stop using the API and switch to telnet only if telnet fallback is enabled.
+The default behaviour is to keep using the API. Previously the default was to fallback to telnet.
+Note that the bot should not confuse the server being offline with the API not working as it checks API and telnet activity before making the switch.
 
 /use telnet (this is the default now but the API is planned to become the new default soon)
 /use api
@@ -950,9 +1082,6 @@ Spawn various items on you like equip admin does but no armour or guns.  The bot
 /goto {player or steam or game ID}
 Teleport to the current position of a player.  This works with offline players too.
 
-/heal {player name}
-Apply big firstaid buff to a player or yourself if no name given.
-
 /hordeme
 Spawn a horde of 50 random zombies on yourself.  Only admins can do this (but not mods)
 
@@ -1028,6 +1157,9 @@ Release a player from prison and move them to your location.
 /reload admins
 Make the bot run admin list to reload the admins from the server's list.
 
+/remove entity/trader/npc {optional id}
+The bot will despawn any trader within 2 blocks of you in-game or by entity id if given.
+
 /remove claims {player name}
 The bot will automatically remove the player's claims whenever possible. The chunk has to be loaded and the bot takes several minutes to remove them but it will remove them.
 
@@ -1056,6 +1188,9 @@ Teleport a player to their first or second base.
 
 /send {player} to {other player}
 Teleport a player to another player even if the other player is offline.
+
+/set death cost {cash} (default is 0)
+Set a cost penalty for dying.  The player's cash balance won't drop below zero.
 
 /set drop mining warning {number of blocks} (default is 99)
 Set how many blocks can fall off the world every minute before the bot alerts admins to it.
@@ -1086,6 +1221,7 @@ You can add a delay to the return command.  Does not affect staff.
 You can record or view the reason for a player being arrested.  If they are released, this record is destroyed.
 
 /set watch timer {number in seconds}
+/set watch player {name} timer {number in seconds}
 When a new player joins, in-game admins will be messaged when the player adds or removes inventory.  They will automatically stop being watched after a delay.  The default is 3 days.
 You can also set a different watch duration for an individual player.
 1 hour = 3,600  1 day = 86,400  1 week = 604,800  4 weeks = 2,419,200
@@ -1131,6 +1267,11 @@ This setting is not stored and will revert to excluding admins the next time the
 An ignored player can have uncraftable inventory and do hacker like activity such as teleporting.
 An included player is checked for these things and can be punished or temp banned for them.
 
+/set say uses name (the default)
+/set say uses nick
+The IRC command 'say' uses your player name by default.
+You can set it to use the IRC nickname instead.  Note:  It will do that for all IRC users.
+
 /enable/disable pack/revive
 Players can teleport close to where they last died to retrieve their pack.
 You can disable the pack and revive commands.  They are enabled by default.
@@ -1167,9 +1308,6 @@ Teleport to the coords where a player was when they got arrested.
 /playerbase2/playerhome2 {player name}
 Teleport yourself to the first or second base of a player.
 
-/warm {player name}
-Warm a player or yourself if no name given.
-
 /whitelist add/remove {player name}
 Add (or remove) a player to the bot's whitelist. This is not the server's whitelist and it works differently.
 It exempts the player from bot restrictions such as ping kicks and the country blacklist.
@@ -1186,8 +1324,10 @@ The bot will forget all the reset zones so you can start over marking new ones.
 /reset zones
 List all of the regions that are reset zones.
 
-/add/remove reset zone
-Flag or unflag an entire region as a reset zone.
+/add/remove reset
+/add/remove reset x-coord z-coord
+Flag or unflag an entire region as a reset zone.  If you don't specify an x and z coord, you need to be playing and standing inside the region.
+Example with coords: /add reset -1 3.  This will make region r.-1.3.7rg a reset zone.
 
 
 Tracker Commands:
@@ -1239,6 +1379,10 @@ Remove the current base and protection that the tracker has teleported you to.  
 
 
 Server Commands:
+
+/set telnet enabled/disabled (enabled is the default)
+This doesn't change telnet in the server.  Instead use this to tell the bot if the server's telnet is enabled or disabled.
+This is used by the bot as part of monitoring the status of telnet.  If telnet is disabled, the bot won't keep trying to connect to it.
 
 /say{2 letter language code} {something you want translated}
 If the translator utility is installed, the bot can translate from english what you say into the language you specify.
@@ -1351,6 +1495,15 @@ To display the rules type /rules
 Your API key is not recorded in logs or the databases and no bot command reports it.  It is used to determine if a player has voted for your server today.
 While the bot takes precautions to keep your API key a secret, you should be careful not to type it anywhere in public.  The safest place to give it to the bot is in private chat on IRC or on the bot's web interface when that is available.
 
+/set server vote reward random quantity {number} quality {number}
+The default reward is the sc_General supply crate.
+If you set a random reward you can optionally set a quantity and quality.
+Quality is random if not specified.
+Quantity is the number of random items, not a quantity of the same item (except by chance). If quantity is not set the bot will give between 3 and 5 random items.
+If you set the reward as list you will need additional commands to manage the reward items. For commands type /help reward list.
+If you set the reward as item, the player will be given the item that you specify.
+If you have a custom entity (eg sc_General2) type /set server vote reward entity sc_General2.
+
 /set server group {group name} (one word)
 This is used by the bots database which could be a cloud database.  It is used to identify this bot as belonging to a group if you have more than one server.  You do not need to set this.
 
@@ -1400,6 +1553,9 @@ Tell the bot the URL of your website or steam group so your players can ask for 
 /clear welcome message
 You can set a custom welcome message that will override the default greeting message when a player joins.
 
+/test vote reward
+Admin and in-game only. The bot will try to spawn the server vote reward beside you.
+
 /allow/disallow/kick bad names
 Auto-kick players with numeric names or names that contain no letters such as ascii art crap.
 They will see a kick message asking them to change their name.
@@ -1422,7 +1578,7 @@ Scan for entities server wide every 30 seconds.
 The resulting list is copied to the entities Lua table where it can be further processed for other bot features.
 
 /enable/disable error scan (disabled by default)
-The server can automatically scan for and fix some errors using console commands if you have Coppi's mod or djkrose's scripting mod installed.
+The server can automatically scan for and fix some errors using console commands if you have the BC mod or Botman mod installed.
 You can disable the scan if you suspect it is creating lag.
 
 /enable/disable hardcore mode
@@ -1440,7 +1596,7 @@ If IRC is private, the bot won't share the url or info with players and players 
 When public, players can find the IRC info with /help irc and they can create irc invites for themselves and others.
 
 /enable/disable noclip scan (the default)
-Using Coppi's mod version 2.5+ you can detect players that are noclipping under the map.
+Using the BC mod or Botman mod you can detect players that are noclipping under the map.
 It can false flag but it is still a useful early warning of a possible hacker.  The bot will ban a player found clipping a lot for one week.
 
 /allow/disallow overstack or /enable/disable overstack
@@ -1565,22 +1721,6 @@ If you only provide the name of the saved prefab, it will restore the prefab in 
 List all items containing the text you are searching for.
 
 
-djkrose Commands:
-
-/export {named area}
-This command requires that you have previously marked out an area to be exported using the /mark command.
-Everything within the marked area will be saved as a prefab file including he contents of all containers and ownership.
-
-/import {named area}
-Optional extras: replace, empty, face {0-3}
-This command requires that you have previously marked out an area to be exported using the /mark command.
-You can rotate the prefab with face. 0 = unmodified 1 = 90Â° right 2 = 180Â° right 3 = 270Â° right.
-Add 'replace' if you want to replace the original prefab or it will spawn at your current position and elevation.
-Add 'empty' if you don't want to restore the contents of containers.  Note: Currently this only works if the container has been destroyed.
-
-/regen {optional distance} (max 30)
-Regenerate the chunk you are standing in and surrounding chunks if you specify a distance.
-Note: The console command used, dj-regen calculates the chunks so if it doesn't regenerate a small part, just move to the effected area and repeat the command.
 
 
 

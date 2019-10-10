@@ -81,6 +81,51 @@ function migratePlayers()
 	end
 end
 
+
+function migrateBases()
+	local cursor, errorString, rows, k, v
+
+	cursor,errorString = conn:execute("SELECT * FROM bases")
+	rows = cursor:numrows()
+
+	if tonumber(rows) == 0 then
+		for k,v in pairs(players) do
+			if tonumber(v.homeX) + tonumber(v.homeY) + tonumber(v.homeZ) ~= 0 then
+				conn:execute("INSERT INTO bases (steam, baseNumber, x, y, z, exitX, exitY, exitZ, size, protect) VALUES (" .. k .. ",1," .. v.homeX .. "," .. v.homeY .. "," .. v.homeZ .. "," .. v.exitX .. "," .. v.exitY .. "," .. v.exitZ .. "," .. v.protectSize .. "," .. dbBool(v.protect) .. ")")
+			end
+
+			if tonumber(v.home2X) + tonumber(v.home2Y) + tonumber(v.home2Z) ~= 0 then
+				conn:execute("INSERT INTO bases (steam, baseNumber, x, y, z, exitX, exitY, exitZ, size, protect) VALUES (" .. k .. ",2," .. v.home2X .. "," .. v.home2Y .. "," .. v.home2Z .. "," .. v.exit2X .. "," .. v.exit2Y .. "," .. v.exit2Z .. "," .. v.protect2Size .. "," .. dbBool(v.protect2) .. ")")
+			end
+		end
+	else
+		return
+	end
+
+	loadBases()
+end
+
+
+function migrateDonors()
+	local cursor, errorString, rows, k, v
+
+	cursor,errorString = conn:execute("SELECT * FROM donors")
+	rows = cursor:numrows()
+
+	if tonumber(rows) == 0 then
+		conn:execute("INSERT INTO donors (steam, level, expiry) SELECT steam, donorLevel, donorExpiry FROM players WHERE donor = 1")
+	else
+		return
+	end
+
+	loadDonors()
+
+	for k,v in pairs(donors) do
+		connBots:execute("INSERT INTO donors (donor, donorLevel, donorExpiry, steam, botID, serverGroup) VALUES (1, " .. v.level .. ", " .. v.expiry .. ", " .. k .. "," .. server.botID .. ",'" .. escape(server.serverGroup) .. "')")
+	end
+end
+
+
 function initBotsData()
 	local IP, country
 
@@ -950,6 +995,8 @@ function alterTables()
 	doSQL("ALTER TABLE `webInterfaceJSON` ADD `recipient` varchar(5) NOT NULL DEFAULT '', ADD `expire` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'")
 	doSQL("ALTER TABLE `locations` ADD `height` INT NOT NULL DEFAULT '-1'")
 	doSQL("ALTER TABLE `locations` ADD `allowPack` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `locations` ADD `allowP2P` TINYINT(1) NOT NULL DEFAULT '1'")
+	doSQL("ALTER TABLE `donors` CHANGE `steam` `steam` BIGINT(17) NOT NULL") -- oops >.<
 
 	-- bots db
 	doSQL("ALTER TABLE `bans` ADD `GBLBan` TINYINT(1) NOT NULL DEFAULT '0'", true)

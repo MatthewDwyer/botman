@@ -67,6 +67,10 @@ function irc_chat(name, msg)
 		return
 	end
 
+	if not msg then
+		return
+	end
+
 	-- replace any placeholder text with actual values
 	msg = msg:gsub("{#}", server.commandPrefix)
 	msg = msg:gsub("{server}", server.serverName)

@@ -3523,7 +3523,7 @@ function gmsg_server()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}enable/disable error scan (disabled by default)"
-			help[2] = "The server can automatically scan for and fix some errors using console commands if you have Coppi's mod or djkrose's scripting mod installed.\n"
+			help[2] = "The server can automatically scan for and fix some errors using console commands if you have the BC mod or Botman mod installed.\n"
 			help[2] = help[2] .. "You can disable the scan if you suspect it is creating lag."
 
 			if botman.registerHelp then
@@ -3872,7 +3872,7 @@ function gmsg_server()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}enable/disable noclip scan (the default)"
-			help[2] = "Using Coppi's mod version 2.5+ you can detect players that are noclipping under the map.\n"
+			help[2] = "Using the BC mod or Botman mod you can detect players that are noclipping under the map.\n"
 			help[2] = help[2] .. "It can false flag but it is still a useful early warning of a possible hacker.  The bot will ban a player found clipping a lot for one week."
 
 			if botman.registerHelp then

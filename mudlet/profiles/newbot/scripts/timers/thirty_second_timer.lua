@@ -66,11 +66,13 @@ function thirtySecondTimer()
 			botman.scheduledRestart = true
 			botman.scheduledRestartTimestamp = os.time() + 900
 		else
-			if server.uptime / 60 >= (server.maxServerUptime * 60) and botman.scheduledRestart == false then
-				message("say [" .. server.chatColour .. "]The server will reboot in 15 minutes.[-]")
-				botman.scheduledRestartPaused = false
-				botman.scheduledRestart = true
-				botman.scheduledRestartTimestamp = os.time() + 900
+			if server.uptime then
+				if server.uptime / 60 >= (server.maxServerUptime * 60) and botman.scheduledRestart == false then
+					message("say [" .. server.chatColour .. "]The server will reboot in 15 minutes.[-]")
+					botman.scheduledRestartPaused = false
+					botman.scheduledRestart = true
+					botman.scheduledRestartTimestamp = os.time() + 900
+				end
 			end
 		end
 	end

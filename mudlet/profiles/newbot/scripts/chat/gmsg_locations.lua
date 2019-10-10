@@ -363,7 +363,7 @@ function gmsg_locations()
 			if (id ~= 0) then
 				-- if the player is ingame, send them to the lobby otherwise flag it to happen when they rejoin
 				if (igplayers[id]) then
-					cmd = "tele " .. id .. " " .. locations[lobby].x .. " " .. locations[lobby].y .. " " .. locations[lobby].z
+					cmd = "tele " .. id .. " " .. locations[lobby].x .. " " .. locations[lobby].y + 1 .. " " .. locations[lobby].z
 					teleport(cmd, id)
 
 					if (chatvars.playername ~= "Server") then
@@ -443,8 +443,16 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[4]))
-			locationName = string.trim(locationName)
+			locationName = ""
+
+			if chatvars.words[4] then
+				locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[4]))
+				locationName = string.trim(locationName)
+			end
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
 
 			loc = LookupLocation(locationName)
 
@@ -499,7 +507,7 @@ function gmsg_locations()
 			end
 		end
 
-		if chatvars.words[1] == "location" and string.find(chatvars.command, "clear") then
+		if chatvars.words[1] == "location" and chatvars.words[chatvars.wordCount] == "clear" then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -516,6 +524,11 @@ function gmsg_locations()
 
 			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "clear") - 2)
 			locationName = string.trim(locationName)
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if loc ~= nil then
@@ -748,7 +761,7 @@ function gmsg_locations()
 			end
 		end
 
-		if (chatvars.words[1] == "location" and string.find(chatvars.command, "random")) then
+		if (chatvars.words[1] == "location" and chatvars.words[chatvars.wordCount] == "random") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -763,6 +776,11 @@ function gmsg_locations()
 
 			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "random") - 2)
 			locationName = string.trim(locationName)
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if loc ~= nil then
@@ -821,8 +839,16 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[4]))
-			locationName = string.trim(locationName)
+			locationName = ""
+
+			if chatvars.words[4] then
+				locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[4]))
+				locationName = string.trim(locationName)
+			end
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
 
 			loc = LookupLocation(locationName)
 
@@ -1207,6 +1233,10 @@ function gmsg_locations()
 				tmp.category = string.trim(string.sub(chatvars.commandOld, string.find(chatvars.command, " category ") + 10))
 
 				if tmp.location == "" then
+					tmp.location = chatvars.inLocation
+				end
+
+				if tmp.location == "" then
 					if (chatvars.playername ~= "Server") then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Location name required.[-]")
 					else
@@ -1256,6 +1286,10 @@ function gmsg_locations()
 				end
 			else
 				tmp.location = string.trim(string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, " clear") - 1))
+
+				if tmp.location == "" then
+					tmp.location = chatvars.inLocation
+				end
 
 				if tmp.location == "" then
 					if (chatvars.playername ~= "Server") then
@@ -1340,8 +1374,14 @@ function gmsg_locations()
 				end
 			end
 
+			locationName = ""
 			locationName = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "access") - 2)
 			locationName = string.trim(locationName)
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if chatvars.number ~= nil and loc ~= nil then
@@ -1414,6 +1454,11 @@ function gmsg_locations()
 
 			locationName = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "close") - 2)
 			locationName = string.trim(locationName)
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if loc == nil then
@@ -2298,8 +2343,17 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[4]))
-			locationName = string.trim(locationName)
+			locationName = ""
+
+			if chatvars.words[4] then
+				locationName = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[4]))
+				locationName = string.trim(locationName)
+			end
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
@@ -2379,8 +2433,17 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-			locationName = string.trim(locationName)
+			locationName = ""
+
+			if chatvars.words[3] then
+				locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+				locationName = string.trim(locationName)
+			end
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
@@ -2445,7 +2508,7 @@ function gmsg_locations()
 			end
 		end
 
-		if chatvars.words[1] == "location" and (chatvars.words[2] == "hide" or chatvars.words[2] == "unhide") then
+		if chatvars.words[1] == "location" and (chatvars.words[2] == "hide" or chatvars.words[2] == "unhide" or chatvars.words[2] == "show") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 1) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -2460,8 +2523,17 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-			locationName = string.trim(locationName)
+			locationName = ""
+
+			if chatvars.words[3] then
+				locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+				locationName = string.trim(locationName)
+			end
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
@@ -2542,8 +2614,14 @@ function gmsg_locations()
 				end
 			end
 
+			locationName = ""
 			locationName = string.sub(chatvars.command, string.find(chatvars.command, " lobby ") + 7)
 			locationName = string.trim(locationName)
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
@@ -2628,8 +2706,16 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-			locationName = string.trim(locationName)
+			locationName = ""
+
+			if chatvars.words[3] then
+				locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+				locationName = string.trim(locationName)
+			end
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
 
 			loc = LookupLocation(locationName)
 
@@ -2657,6 +2743,96 @@ function gmsg_locations()
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now a square with radius " .. locations[loc].size .. ".[-]")
 					else
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now a square with radius " .. locations[loc].size .. ".")
+					end
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ToggleLocationP2P()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}location p2p enable/disable {name} (default is enabled)"
+			help[2] = "When disabled, players will not be able to teleport to friends or fetch friends in the location."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "locat,p2p,able,set"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "locat") or string.find(chatvars.command, "p2p") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "location" and chatvars.words[2] == "p2p" and string.find(chatvars.words[3], "able") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			locationName = ""
+
+			if chatvars.words[4] then
+				locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[4]))
+				locationName = string.trim(locationName)
+			end
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
+			loc = LookupLocation(locationName)
+
+			if (loc == nil) then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]That location does not exist.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				end
+			else
+				if chatvars.words[3] == "enable" then
+					locations[loc].allowP2P = true
+					conn:execute("UPDATE locations set allowP2P = 1 WHERE name = '" .. escape(loc) .. "'")
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. loc .. " allows players to teleport to friends and fetch friends.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The location " .. loc .. " allows players to teleport to friends and fetch friends.")
+					end
+				else
+					locations[loc].allowP2P = false
+					conn:execute("UPDATE locations set allowP2P = 0 WHERE name = '" .. escape(loc) .. "'")
+
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The location " .. loc .. " will not let players to teleport to friends or fetch friends.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The location " .. loc .. " will not let players to teleport to friends or fetch friends.")
 					end
 				end
 			end
@@ -2710,8 +2886,17 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[4]))
-			locationName = string.trim(locationName)
+			locationName = ""
+
+			if chatvars.words[4] then
+				locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[4]))
+				locationName = string.trim(locationName)
+			end
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
@@ -2737,7 +2922,7 @@ function gmsg_locations()
 					if (chatvars.playername ~= "Server") then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The {#}pack command is not available to players that die in the location " .. loc .. "[-]")
 					else
-						irc_chat(chatvars.ircAlias, "The {#}pack command is not available to players that die in the location " .. loc .. "")
+						irc_chat(chatvars.ircAlias, "The {#}pack command is not available to players that die in the location " .. loc)
 					end
 				end
 			end
@@ -2791,8 +2976,17 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-			locationName = string.trim(locationName)
+			locationName = ""
+
+			if chatvars.words[3] then
+				locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+				locationName = string.trim(locationName)
+			end
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
@@ -2874,9 +3068,13 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = ""
 			locationName = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, " pv") - 1)
 			locationName = string.trim(locationName)
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if loc ~= nil then
@@ -3035,8 +3233,17 @@ function gmsg_locations()
 				end
 			end
 
-			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
-			locationName = string.trim(locationName)
+			locationName = ""
+
+			if chatvars.words[3] then
+				locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
+				locationName = string.trim(locationName)
+			end
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
@@ -3352,6 +3559,11 @@ function gmsg_locations()
 
 			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, chatvars.words[3]))
 			locationName = string.trim(locationName)
+
+			if locationName == "" then
+				locationName = chatvars.inLocation
+			end
+
 			loc = LookupLocation(locationName)
 
 			if loc ~= nil then
@@ -3702,6 +3914,15 @@ function gmsg_locations()
 
 	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_ToggleLocationP2P()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleLocationP2P triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug locations line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_ToggleLocationPack()
 
 	if result then
@@ -3883,7 +4104,7 @@ function gmsg_locations()
 					if cursor:numrows() > 0 then
 						randomTP(chatvars.playerid, loc)
 					else
-						cmd = "tele " .. chatvars.playerid .. " " .. locations[loc].x .. " " .. locations[loc].y .. " " .. locations[loc].z
+						cmd = "tele " .. chatvars.playerid .. " " .. locations[loc].x .. " " .. locations[loc].y + 1 .. " " .. locations[loc].z
 						teleport(cmd, chatvars.playerid)
 					end
 
@@ -4002,7 +4223,7 @@ function gmsg_locations()
 				players[chatvars.playerid]["loc_" .. loc] = os.time() + locations[loc].coolDownTimer
 			end
 
-			cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
+			cmd = "tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y + 1 .. " " .. row.z
 
 			if tonumber(server.playerTeleportDelay) == 0 or tonumber(players[chatvars.playerid].accessLevel) < 2 then --  or not igplayers[chatvars.playerid].currentLocationPVP
 				teleport(cmd, chatvars.playerid)

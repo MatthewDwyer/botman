@@ -502,16 +502,6 @@ function refreshScripts()
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	--server.nextCodeReload = "/scripts/chat/gmsg_coppi.lua"
-	--checkScript(homedir .. "/scripts/chat/gmsg_coppi.lua")
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
-	--server.nextCodeReload = "/scripts/chat/gmsg_djkrose.lua"
-	--checkScript(homedir .. "/scripts/chat/gmsg_djkrose.lua")
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
 	server.nextCodeReload = "/scripts/chat/gmsg_teleports.lua"
 	checkScript(homedir .. "/scripts/chat/gmsg_teleports.lua")
 

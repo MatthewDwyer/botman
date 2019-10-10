@@ -984,6 +984,27 @@ function LookupIRCPass(login, pass)
 end
 
 
+function LookupMarkedArea(name, steam)
+	local k,v
+
+	name = string.lower(name)
+
+	for k,v in pairs(prefabCopies) do
+		if (name == string.lower(v.name)) then
+			if steam ~= nil then
+				if (steam == v.steam) then
+					return k
+				end
+			else
+				return k
+			end
+		end
+	end
+
+	return ""
+end
+
+
 function LookupLocation(command)
 	local k,v
 
