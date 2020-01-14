@@ -774,6 +774,89 @@ function gmsg_server()
 	end
 
 
+	local function cmd_SetIdleKickTimer()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set idle kick {seconds} (default 900. 15 minutes)"
+			help[2] = "How many seconds a player can be idle for before being kicked from the server. Does not include joining players that have not spawned yet."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,idle,kick,time,delay"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "idle") or string.find(chatvars.command, "kick"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "idle" and chatvars.words[3] == "kick" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number == nil then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Number expected.  Default is 900 seconds which is 15 minutes.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Number expected.  Default is 900 seconds which is 15 minutes.")
+				end
+
+				botman.faultyChat = false
+				return true
+			else
+				chatvars.number = math.abs(chatvars.number)
+			end
+
+			if chatvars.number == 0 then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Timer can't be zero seconds.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Timer can't be zero seconds.")
+				end
+
+				botman.faultyChat = false
+				return true
+			else
+				server.idleKickTimer = chatvars.number
+				server.idleKick = true
+				conn:execute("UPDATE server SET idleKick = 1, idleKickTimer = " .. server.idleKickTimer)
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Idle players will be kicked after " .. server.idleKickTimer .. " seconds. Those slackers![-]")
+				else
+					irc_chat(chatvars.ircAlias, "Idle players will be kicked after " .. server.idleKickTimer .. " seconds. Those slackers!")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_SetIRCChannels()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -2961,7 +3044,7 @@ function gmsg_server()
 
 			if server.useAllocsWebAPI then
 				-- verify that the web API is working for us
-				tempTimer( 2, [[message("pm APItest \"test\"")]] )
+				tempTimer( 2, [[message("pm APItest")]] )
 				tempTimer( 5, [[checkAPIWorking()]] )
 			end
 
@@ -3719,6 +3802,75 @@ function gmsg_server()
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will not be kicked for idling on the server.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players will not be kicked for idling on the server.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ToggleIdleKickAnytime()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}allow/disallow idling (allowed is default)"
+			help[2] = "If idle kick is enabled the default is to only kick idle players when the server is full. By setting disallow idling, players can be kicked for idling any time."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "allow,idle,kick"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "kick"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "allow" or chatvars.words[1] == "disallow") and chatvars.words[2] == "idling" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "allow" then
+				server.idleKickAnytime = false
+				conn:execute("UPDATE server SET idleKickAnytime = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Idle players will only be kicked when the server is full and idle kicking is enabled.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Idle players will only be kicked when the server is full and idle kicking is enabled.")
+				end
+			else
+				server.idleKickAnytime = true
+				conn:execute("UPDATE server SET idleKickAnytime = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Idle players can be kicked any time if idle kicking is enabled.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Idle players can be kicked any time if idle kicking is enabled.")
 				end
 			end
 
@@ -4678,13 +4830,134 @@ function gmsg_server()
 		end
 	end
 
+
+	local function cmd_VisitMap()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}visit map\n"
+			help[1] = help[1] .. " {#}visit map x1 z1 x2 z2\n"
+			help[1] = help[1] .. " {#}visit map range {distance}\n"
+			help[1] = help[1] .. " {#}visit map stop"
+			help[2] = "Make the server explore the map while you hit up some zombie chicks.\n"
+			help[2] = help[2] .. "If you add the optional word 'check' at the end of the command it will also check chunk density.\n"
+			help[2] = help[2] .. "To visit the entire map do not include coordinates or a range."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "visit,map,stop"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "visit") or string.find(chatvars.command, "map"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "visit" and chatvars.words[2] == "map") or chatvars.words[1] == "visitmap" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if string.find(chatvars.command, "stop") then
+				sendCommand("visitmap stop")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Stopping then visitmap command.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Stopping then visitmap command.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			tmp = {}
+			tmp.check = ""
+
+			if string.find(chatvars.command, "check") then
+				tmp.check = "check"
+			end
+
+			if string.find(chatvars.command, "range") then
+				if (chatvars.playername == "Server") then
+					irc_chat(chatvars.ircAlias, "Range can only be used in-game.")
+
+					botman.faultyChat = false
+					return true
+				end
+
+				for i=2,chatvars.wordCount,1 do
+					if chatvars.words[i] == "range" then
+						tmp.range = tonumber(chatvars.words[i+1])
+					end
+				end
+			end
+
+			if chatvars.numberCount == 4 then
+				-- doing visit map x1 z1 x2 z2
+				tmp.x1 = chatvars.numbers[1]
+				tmp.z1 = chatvars.numbers[2]
+				tmp.x2 = chatvars.numbers[3]
+				tmp.z2 = chatvars.numbers[4]
+				tmp.range = nil
+			else
+				if tmp.range then
+					-- doing a ranged area around the in-game player
+					tmp.x1 = chatvars.intX - tmp.range
+					tmp.z1 = chatvars.intZ + tmp.range
+					tmp.x2 = chatvars.intX + tmp.range
+					tmp.z2 = chatvars.intZ - tmp.range
+				else
+					-- doing the whole world.
+					tmp.mapSize = math.floor(GamePrefs.WorldGenSize)
+					tmp.x1 = -tmp.mapSize
+					tmp.z1 = tmp.mapSize
+					tmp.x2 = tmp.mapSize
+					tmp.z2 = -tmp.mapSize
+				end
+			end
+
+			sendCommand(string.trim("visitmap " .. tmp.x1 .. " " .. tmp.z1 .. " " .. tmp.x2  .. " " .. tmp.z2 .. " " .. tmp.check))
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sending the visitmap command to the server.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Sending the visitmap command to the server.")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
 -- ################## End of command functions ##################
 
 if debug then dbug("debug server") end
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - server commands ====")
-		dbug("Registering help - server commands")
+		if debug then dbug("Registering help - server commands") end
 
 		tmp = {}
 		tmp.topicDescription = "Server commands mainly cover settings that change the nature of the server or turn features on or off that relate to the server."
@@ -4855,6 +5128,15 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetClearViewMOTD triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetIdleKickTimer()
+
+	if result then
+		if debug then dbug("debug cmd_SetIdleKickTimer triggered") end
 		return result
 	end
 
@@ -5202,6 +5484,15 @@ if debug then dbug("debug server") end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_ToggleIdleKickAnytime()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleIdleKickAnytime triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_ToggleIgnorePlayerFlying()
 
 	if result then
@@ -5292,9 +5583,18 @@ if debug then dbug("debug server") end
 
 	if debug then dbug("debug server end of remote commands") end
 
+	result = cmd_VisitMap()
+
+	if result then
+		if debug then dbug("debug cmd_VisitMap triggered") end
+		return result
+	end
+
+	if debug then dbug("debug server end of remote commands") end
+
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Server commands help registered ****")
-		dbug("Server commands help registered")
+		if debug then dbug("Server commands help registered") end
 		topicID = topicID + 1
 	end
 

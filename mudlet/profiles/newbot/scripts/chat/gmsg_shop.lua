@@ -1393,7 +1393,7 @@ function gmsg_shop()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - shop commands ====")
-		dbug("Registering help - shop commands")
+		if debug then dbug("Registering help - shop commands") end
 
 		tmp = {}
 		tmp.topicDescription = "The bot's shop allows players to buy items for " .. server.moneyPlural .. ".\n"
@@ -1628,7 +1628,7 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Shop commands help registered ****")
-		dbug("Shop commands help registered")
+		if debug then dbug("Shop commands help registered") end
 		topicID = topicID + 1
 	end
 

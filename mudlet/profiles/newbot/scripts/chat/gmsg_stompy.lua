@@ -356,6 +356,7 @@ function gmsg_stompy()
 			help[2] = help[2] .. " {#}dig bedrock wide 1\n"
 			help[2] = help[2] .. " {#}dig up (makes a 5x5 room)\n"
 			help[2] = help[2] .. " {#}dig up (or room) wide 5 tall 10 (makes a 10x10 room)\n"
+			help[2] = help[2] .. " {#}dig up wide 50 tall 30 replace air block terrStone\n"
 			help[2] = help[2] .. " {#}fill east base 70 wide 2 tall 10 long 50 block steelBlock\n"
 			help[2] = help[2] .. " {#}fill bedrock wide 2 block stone\n"
 			help[2] = help[2] .. " {#}fill {saved prefab} block stone\n"
@@ -1852,7 +1853,7 @@ function gmsg_stompy()
 				end
 
 				for k,v in pairs(igplayers) do
-					if (accessLevel(k) > 3 and accessLevel(k) < 11) and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
+					if (players[k].donor) and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
 						setPlayerColour(k, tmp.colour)
 					end
 				end
@@ -2335,6 +2336,25 @@ function gmsg_stompy()
 
 -- ################## End of command functions ##################
 
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "==== Registering help - BC commands ====")
+		if debug then dbug("Registering help - BC commands") end
+
+		tmp = {}
+		tmp.topicDescription = "The BC mod adds special features to the bot such as hiding commands from chat, digging big holes and lots more.\n"
+		tmp.topicDescription = tmp.topicDescription .. "The bot will work just fine without it."
+
+		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'BC'")
+		rows = cursor:numrows()
+		if rows == 0 then
+			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
+			row = cursor:fetch(row, "a")
+			tmp.topicID = row.Auto_increment
+
+			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('BC', '" .. escape(tmp.topicDescription) .. "')")
+		end
+	end
+
 	if (debug) then dbug("debug stompy line " .. debugger.getinfo(1).currentline) end
 
 	-- ###################  Staff only beyond this point ################
@@ -2654,7 +2674,7 @@ function gmsg_stompy()
 	if debug then dbug("debug stompy end") end
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** BC commands help registered ****")
-		dbug("BC commands help registered")
+		if debug then dbug("BC commands help registered") end
 		topicID = topicID + 1
 	end
 

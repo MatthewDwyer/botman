@@ -27,17 +27,15 @@ function thirtySecondTimer()
 	data.botOnline = botman.botOnline
 
 	if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('botman','panel','" .. escape(yajl.to_string(botman)) .. "')") end
+	if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('server','panel','" .. escape(yajl.to_string(server)) .. "')") end
 
 	if botman.botOffline then
 		return
 	end
 
-	if tonumber(botman.playersOnline) ~= 0 then
-		sendCommand("gt")
-	end
 
-	if not server.botsIP then
-		getBotsIP()
+	if server.botsIP == "0.0.0.0" then
+		send("pm BotStartupCheck \"test\"")
 	end
 
 	if (botman.announceBot == true) then
@@ -114,4 +112,14 @@ function thirtySecondTimer()
 
 	-- update the shared database (bots) server table (mainly for players online and a timestamp so others can see we're still online
 	updateBotsServerTable()
+
+	if tonumber(server.uptime) == 0 then
+		if server.botman and not server.stompy then
+			sendCommand("bm-uptime")
+		end
+
+		if not server.botman and server.stompy then
+			sendCommand("bc-time")
+		end
+	end
 end

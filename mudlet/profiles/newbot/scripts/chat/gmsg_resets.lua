@@ -71,6 +71,10 @@ function gmsg_resets()
 			conn:execute("TRUNCATE resetZones")
 			conn:execute("UPDATE keystones SET remove = 0") -- clear the remove flag from the keystones table to prevent removals that we don't want.
 
+			if server.botman then
+				sendCommand("bm-resetregions clearall")
+			end
+
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]All reset zones have been forgotten.[-]")
 			else
@@ -146,12 +150,16 @@ function gmsg_resets()
 
 			if (chatvars.words[1] == "add") then
 				resetRegions[region] = {}
-				conn:execute("INSERT INTO resetZones (region) VALUES ('" .. region .. "')")
+				conn:execute("INSERT INTO resetZones (region, x, z) VALUES ('" .. escape(region) .. "'," .. x .. "," .. z .. ")")
 
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Region " .. region .. " is now a reset zone.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Region " .. region .. " is now a reset zone.")
+				end
+
+				if server.botman then
+					sendCommand("bm-resetregions add " .. x .. "." .. z)
 				end
 			else
 				resetRegions[region] = nil
@@ -163,6 +171,8 @@ function gmsg_resets()
 				else
 					irc_chat(chatvars.ircAlias, "Region " .. region .. " is no longer a reset zone.")
 				end
+
+				sendCommand("bm-resetregions remove " .. x .. "." .. z)
 			end
 
 			botman.faultyChat = false
@@ -251,7 +261,7 @@ function gmsg_resets()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - reset commands ====")
-		dbug("Registering help - reset commands")
+		if debug then dbug("Registering help - reset commands") end
 
 		tmp = {}
 		tmp.topicDescription = "Reset zones tell a player where when they can't place claims or setbase in a location or region.  The bot is not able to actually delete parts of the map and that must be done manually with the server offline.  The bot does provide a list of regions that are reset zones if any regions have been flagged as such."
@@ -333,7 +343,7 @@ function gmsg_resets()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Reset commands help registered ****")
-		dbug("Reset commands help registered")
+		if debug then dbug("Reset commands help registered") end
 		topicID = topicID + 1
 	end
 

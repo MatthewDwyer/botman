@@ -7,7 +7,8 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
--- a17 items done
+-- magic characters in Lua  ( ) . % + - * ? [ ^ $
+-- these must be escaped with a %  eg string.split(line, "%.")
 
 local debug
 
@@ -16,7 +17,126 @@ if botman.debugAll then
 end
 
 
+function connectToAPI()
+	server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+	send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+	botman.lastBotCommand = "webtokens add bot"
+	conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+	botman.APIOffline = false
+	toggleTriggers("api online")
+end
+
+
+function panelWho() --who? who?
+	local whoIsOnline = {}
+
+	for k, v in pairs(igplayers) do
+		x = math.floor(v.xPos / 512)
+		z = math.floor(v.zPos / 512)
+
+		flags = ""
+		line = ""
+		sort = 999
+
+		if tonumber(players[k].accessLevel) < 3 then
+			flags = flags .. "admin"
+			if sort == 999 then sort = 1 end
+		end
+
+		if players[k].newPlayer then
+			if flags == "" then
+				flags = "new player"
+			else
+				flags = flags .. ",new player"
+			end
+
+			if sort == 999 then sort = 3 end
+		end
+
+		if players[k].donor then
+			if flags == "" then
+				flags = "donor"
+			else
+				flags = flags .. ",donor"
+			end
+
+			if sort == 999 then sort = 2 end
+		end
+
+		if players[k].prisoner then
+			if flags == "" then
+				flags = "prisoner"
+			else
+				flags = flags .. ",prisoner"
+			end
+		end
+
+		if players[k].timeout then
+			if flags == "" then
+				flags = "timeout"
+			else
+				flags = flags .. ",timeout"
+			end
+		end
+
+		if tonumber(players[k].hackerScore) > 0 then
+			if flags == "" then
+				flags = "hacking"
+			else
+				flags = flags .. ",hacking"
+			end
+
+			if v.flying then
+				if flags == "" then
+					flags = "flying"
+				else
+					flags = flags .. ",flying"
+				end
+			end
+
+			if v.noclip then
+				if flags == "" then
+					flags = "clipping"
+				else
+					flags = flags .. ",clipping"
+				end
+			end
+
+			if sort == 999 then sort = 0 end
+		end
+
+		whoIsOnline[k] = {}
+		whoIsOnline[k].panelSortID = sort
+		whoIsOnline[k].steam = k
+		whoIsOnline[k].name = v.name
+		whoIsOnline[k].country = players[k].country
+		whoIsOnline[k].ping = v.ping
+		whoIsOnline[k].gameID = v.id
+		whoIsOnline[k].score = v.score
+		whoIsOnline[k].pvpKills = v.playerKills
+		whoIsOnline[k].zombies = v.zombies
+		whoIsOnline[k].level = v.level
+		whoIsOnline[k].inRegion = "r." .. x .. "." .. z .. ".7rg"
+		whoIsOnline[k].inLocation = v.inLocation
+		whoIsOnline[k].rank = flags
+		whoIsOnline[k].coordX = v.xPos
+		whoIsOnline[k].coordY = v.yPos
+		whoIsOnline[k].coordZ = v.zPos
+		whoIsOnline[k].hackerScore = players[k].hackerScore
+	end
+
+	conn:execute("DELETE FROM webInterfaceJSON WHERE ident = 'playersOnline'")
+	conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('playersOnline','panel','" .. escape(yajl.to_string(whoIsOnline)) .. "')")
+end
+
+
 function newBotProfile()
+	local file, file_copy, ln, foundInitBot, foundIP, foundTelnet
+
+	foundInitBot = false
+	foundIP = false
+	foundTelnet = false
+
 	loadServer()
 
 	if botman.db2Connected then
@@ -29,9 +149,50 @@ function newBotProfile()
 	os.remove(homedir .. "/password")
 	os.remove(homedir .. "/url")
 
-	reconnect(server.IP, server.telnetPort, true)
-
 	os.execute("rm " .. homedir .. "/current/*")
+	connectToServer(server.IP, server.telnetPort, true)
+
+	file = io.open(homedir .. "/scripts/edit_me.lua", "r")
+	file_copy = io.open(homedir .. "/scripts/edit_me_new.lua", "a")
+
+	for ln in file:lines() do
+		if string.find(ln, "function initBot") then
+			foundInitBot = true
+		end
+
+		if string.find(ln, "telnetPort") then
+			foundTelnet = true
+			file_copy:write("telnetPort = " .. server.telnetPort .. "\n")
+		end
+
+		if string.find(ln, "serverIP") then
+			foundIP = true
+			file_copy:write("serverIP = \"" .. server.IP .. "\"\n")
+		end
+
+		if ln == "end" and foundInitBot then
+			foundInitBot = false
+
+			if not foundIP then
+				file_copy:write("serverIP = \"" .. server.IP .. "\"\n")
+			end
+
+			if not foundTelnet then
+				file_copy:write("telnetPort = " .. server.telnetPort .. "\n")
+			end
+		end
+
+		if not string.find(ln, "telnetPort") and not string.find(ln, "serverIP") then
+			file_copy:write(ln .. "\n")
+		end
+	end
+
+	file_copy:close()
+	file:close()
+
+	os.remove(homedir .. "/scripts/edit_me.lua")
+	os.rename(homedir .. "/scripts/edit_me_new.lua", homedir .. "/scripts/edit_me.lua")
+
 	saveProfile()
 
 	irc_chat(server.ircMain, "Connecting to new 7 Days to Die server " .. server.IP .. " port " .. server.telnetPort)
@@ -60,13 +221,7 @@ function forgetPlayers()
 	conn:execute("TRUNCATE TABLE playersArchived")
 
 	-- refresh the bot's Lua tables from the database tables
-	loadBases()
-	loadFriends()
-	loadHotspots()
-	loadKeystones()
-	loadPlayers()
-	loadVillagers()
-	loadWaypoints()
+	loadTables()
 end
 
 
@@ -247,26 +402,18 @@ end
 function startUsingAllocsWebAPI()
 	if tonumber(server.webPanelPort) > 0 then
 		-- verify that the web API is working for us
-		botman.oldAPIPort = server.webPanelPort
-		botman.testAPIPort = server.webPanelPort
-		message("pm APItest \"test\"")
+		message("pm APItest")
 	end
 end
 
 function removeEntityCommand(entityID)
--- TODO:  Replace Coppi when Botman has bm-removeentity
-	if server.stompy and tonumber(server.gameVersionNumber) >= 17 then
-		sendCommand("bc-remove " .. entityID)
+	if server.botman then
+		sendCommand("bm-remove " .. entityID)
 		return
 	end
 
-	if server.coppi then
-		if tonumber(server.gameVersionNumber) < 17 then
-			sendCommand("removeentity " .. entityID)
-		else
-			sendCommand("cpm-entityremove " .. entityID)
-		end
-
+	if server.stompy then
+		sendCommand("bc-remove " .. entityID)
 		return
 	end
 end
@@ -380,18 +527,14 @@ function setPlayerColour(steam, colour)
 
 		sendCommand("bm-chatplayercolor " .. steam .. " " .. colour .. " 1")
 
-		if colour == "FFFFFF" then
-			sendCommand("bm-chatplayercolor " .. steam .. " FFFFFF 1")
-		end
-
 		return
 	end
 
 	if server.stompy then
-		sendCommand("bc-chatcolor " .. steam .. " " .. colour .. " false")
-
 		if colour == "FFFFFF" then
 			sendCommand("bc-chatcolor " .. steam .. " clear")
+		else
+			sendCommand("bc-chatcolor " .. steam .. " " .. colour .. " false")
 		end
 
 		return
@@ -549,6 +692,10 @@ end
 function getBotsIP()
 	local file, fileSize, ln, temp
 
+	if true then
+		return
+	end
+
 	-- this will break the bot if it only returns the local LAN IP!  So far it seems to always return the internet IP.
 	os.remove(homedir .. "/temp/botsIP.txt")
 	os.execute("hostname -i > " .. homedir .. "/temp/botsIP.txt")
@@ -569,12 +716,14 @@ function getBotsIP()
 		end
 	end
 
+	conn:execute("UPDATE server SET botsIP = '" .. server.botsIP .. "")
+
 	file:close()
 end
 
 
 function sleep(s)
-	dbug("sleeping " .. s)
+	if debug then dbug("sleeping " .. s) end
 
 	local ntime = os.time() + s
 	repeat until os.time() > ntime
@@ -659,12 +808,26 @@ end
 
 function reloadBot(getAllPlayers)
 	-- send several commands to the server to gather info.  Each command is sent 5 seconds apart to slow down the telnet spam.
-	if not server.botsIP then
-		getBotsIP()
+	if server.allocs then
+		send("pm BotStartupCheck \"test\"")
+	end
+
+	if server.useAllocsWebAPI and tonumber(server.webPanelPort) > 0 and botman.APIOffline and server.allocs then
+		server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+		send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+		botman.lastBotCommand = "webtokens add bot"
+		conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+		botman.APIOffline = false
+		toggleTriggers("api online")
 	end
 
 	-- got the time?  Hey that's a nice watch.  Can I have it?
-	tempTimer( 3, [[sendCommand("gt")]] )
+	if server.botman then
+		tempTimer( 3, [[sendCommand("bm-uptime")]] )
+	else
+		tempTimer( 3, [[sendCommand("gt")]] )
+	end
+
 	tempTimer( 5, [[sendCommand("version")]] )
 	tempTimer( 10, [[sendCommand("gg")]] )
 	tempTimer( 15, [[sendCommand("admin list")]] )
@@ -1254,10 +1417,6 @@ function collectSpawnableItemsList()
 	end
 
 	sendCommand("li *")
-
-	if not server.useAllocsWebAPI then
-		tempTimer( 30, [[sendCommand("pm bot_RemoveInvalidItems \"test\""))]] )
-	end
 end
 
 
@@ -1366,28 +1525,34 @@ function setChatColour(steam, level)
 		end
 	end
 
-	if (access > 3 and access < 11) then
-		setPlayerColour(steam, server.chatColourDonor)
-	end
-
-	if access == 0 then
+	if tonumber(access) == 0 then
 		setPlayerColour(steam, server.chatColourOwner)
+		return
 	end
 
-	if access == 1 then
+	if tonumber(access) == 1 then
 		setPlayerColour(steam, server.chatColourAdmin)
+		return
 	end
 
-	if access == 2 then
+	if tonumber(access) == 2 then
 		setPlayerColour(steam, server.chatColourMod)
+		return
 	end
 
-	if access == 90 then
+	if (players[steam].donor == true) then
+		setPlayerColour(steam, server.chatColourDonor)
+		return
+	end
+
+	if tonumber(access) == 90 then
 		setPlayerColour(steam, server.chatColourPlayer)
+		return
 	end
 
-	if access == 99 then
+	if tonumber(access) == 99 then
 		setPlayerColour(steam, server.chatColourNewPlayer)
+		return
 	end
 end
 
@@ -1793,58 +1958,52 @@ end
 
 
 function updateGimmeZombies(entityID, zombie)
-	local k, v, zombieLower
+	local k, v, a, b, zombieLower, found
 
 	zombieLower = string.lower(zombie)
+	found = false
 
-	if gimmeZombies[entityID] == nil then
+	for k,v in pairs(gimmeZombies) do
+		if v.entityID == entityID then
+			found = true
+
+			if v.zombie ~= zombie then
+				-- the zombie for this entityid has changed so look for and remove the old zombie
+				for a,b in pairs(gimmeZombies) do
+					if b.zombie == zombie then
+						gimmeZombies[a] = nil
+					end
+				end
+
+				-- coz I am lazy we'll set found to false so that the code below adds this zombie.
+				found = false
+			end
+		end
+	end
+
+	if not found then
 		-- new zombie so add it to gimmeZombies
 		gimmeZombies[entityID] = {}
+		gimmeZombies[entityID].entityID = entityID
 		gimmeZombies[entityID].zombie = zombie
 		gimmeZombies[entityID].minPlayerLevel = 1
 		gimmeZombies[entityID].minArenaLevel = 1
 		gimmeZombies[entityID].bossZombie = false
 		gimmeZombies[entityID].doNotSpawn = false
-
-		if string.find(zombieLower, "cop") or string.find(zombieLower, "dog") or string.find(zombieLower, "bear") or string.find(zombieLower, "feral") or string.find(zombieLower, "radiated") or string.find(zombieLower, "behemoth") or string.find(zombieLower, "template") then
-			if string.find(zombieLower, "radiated") then
-				if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 1, doNotSpawn = 0 WHERE entityID = " .. entityID) end
-			else
-				gimmeZombies[entityID].doNotSpawn = true
-				if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
-			end
-		else
-			if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end
-		end
-
 		gimmeZombies[entityID].maxHealth = 0
-	else
-		-- not new zombie but entityID for this zombie has changed so look for and remove the old zombie and add it with the new entityID
-		if gimmeZombies[entityID].zombie ~= zombie then
-			for k,v in pairs(gimmeZombies) do
-				if v.zombie == zombie then
-					gimmeZombies[k] = nil
-				end
-			end
+	end
 
-			-- now add the zombie again with the new entityID
-			gimmeZombies[entityID] = {}
-			gimmeZombies[entityID].zombie = zombie
-			gimmeZombies[entityID].minPlayerLevel = 1
-			gimmeZombies[entityID].minArenaLevel = 1
-			gimmeZombies[entityID].bossZombie = false
-			gimmeZombies[entityID].doNotSpawn = false
+	-- set up the boss zombies and prevent them and a few others spawning until we want them to.
+	if string.find(zombieLower, "cop") or string.find(zombieLower, "dog") or string.find(zombieLower, "bear") or string.find(zombieLower, "feral") or string.find(zombieLower, "radiated") or string.find(zombieLower, "behemoth") or string.find(zombieLower, "template") then
+		gimmeZombies[entityID].doNotSpawn = true
 
-			if string.find(zombieLower, "cop") or string.find(zombieLower, "dog") or string.find(zombieLower, "bear") or string.find(zombieLower, "feral") or string.find(zombieLower, "radiated") or string.find(zombieLower, "behemoth") or string.find(zombieLower, "template") then
-				gimmeZombies[entityID].doNotSpawn = true
-				if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
-			else
-				if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end
-			end
-
-			gimmeZombies[entityID].maxHealth = 0
-			gimmeZombies[entityID].remove = nil
+		if string.find(zombieLower, "radiated") or string.find(zombieLower, "feral") then
+			if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 1, doNotSpawn = 1 WHERE entityID = " .. entityID) end
+		else
+			if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 1 WHERE entityID = " .. entityID) end
 		end
+	else
+		if botman.dbConnected then conn:execute("UPDATE gimmeZombies SET bossZombie = 0, doNotSpawn = 0 WHERE entityID = " .. entityID) end
 	end
 end
 
@@ -1897,7 +2056,7 @@ function downloadHandler(event, ...)
 			end
 		end
 
-		if string.find(..., "adminList.txt") then
+		if string.find(..., "adminList.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -1906,7 +2065,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "apitest.txt") then
+		if string.find(..., "apitest.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -1915,7 +2074,12 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "banList.txt") then
+		if string.find(..., "apicheck.txt", nil, true) then
+			botman.APICheckPassed = true
+			return
+		end
+
+		if string.find(..., "banList.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -1959,7 +2123,24 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "command.txt") then
+		if string.find(..., "bm-resetregions-list.txt", nil, true) then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
+			readAPI_BMResetRegionsList()
+			return
+		end
+
+		if string.find(..., "bm-uptime.txt", nil, true) then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
+			-- read bm-uptime
+			readAPI_BMUptime()
+			return
+		end
+
+		if string.find(..., "command.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -1968,7 +2149,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "gg.txt") then
+		if string.find(..., "gg.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -1977,7 +2158,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "gametime.txt") then
+		if string.find(..., "gametime.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -1986,7 +2167,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "help.txt") then
+		if string.find(..., "help.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -1995,7 +2176,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "hostiles.txt") then
+		if string.find(..., "hostiles.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2004,7 +2185,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "installedMods.txt") then
+		if string.find(..., "installedMods.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2013,7 +2194,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "inventories.txt") then
+		if string.find(..., "inventories.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2022,7 +2203,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "le.txt") then
+		if string.find(..., "le.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2031,7 +2212,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "li.txt") then
+		if string.find(..., "li.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2040,7 +2221,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "lkp.txt") then
+		if string.find(..., "lkp.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2049,7 +2230,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "llp.txt") then
+		if string.find(..., "llp.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2058,7 +2239,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "log.txt") then
+		if string.find(..., "log.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2067,7 +2248,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "lpf.txt") then
+		if string.find(..., "lpf.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2076,7 +2257,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "mem.txt") then
+		if string.find(..., "mem.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2085,7 +2266,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "pgd.txt") then
+		if string.find(..., "pgd.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2094,7 +2275,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "playersOnline.txt") then
+		if string.find(..., "playersOnline.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2103,7 +2284,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "pug.txt") then
+		if string.find(..., "pug.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2112,7 +2293,7 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "se.txt") then
+		if string.find(..., "se.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2121,20 +2302,20 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "voteCheck_") then
+		if string.find(..., "voteCheck_", nil, true) then
 			-- check vote response from 7daystodie-servers.com
 			steam = string.sub(..., string.find(..., "voteCheck_") + 10, string.find(..., ".txt") - 1)
 			readServerVote(steam)
 			return
 		end
 
-		if string.find(..., "voteClaim_") then
+		if string.find(..., "voteClaim_", nil, true) then
 			-- we don't need to process or keep this file.  Just delete it.
 			os.remove(...)
 			return
 		end
 
-		if string.find(..., "webUIUpdates.txt") then
+		if string.find(..., "webUIUpdates.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
@@ -2153,12 +2334,6 @@ function failDownload(event, filePath)
 	 if string.find(filePath, "Forbidden") and string.find(filePath, "api/", nil, true) then
 		botman.APIOffline = true
 		toggleTriggers("api offline")
-
-		if not botman.telnetOffline then --  and not botman.APITestSilent
-			server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
-			conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "'")
-			send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0") -- send help!
-		end
 
 		if botman.telnetOffline and botman.APIOffline then
 			botman.botOffline = true
@@ -2534,13 +2709,13 @@ function savePosition(steam, temp)
 		-- store the player's current x y z
 		if temp == nil then
 			players[steam].xPosOld = players[steam].xPos
-			players[steam].yPosOld = players[steam].yPos
+			players[steam].yPosOld = players[steam].yPos + 1
 			players[steam].zPosOld = players[steam].zPos
 
 			if botman.dbConnected then conn:execute("UPDATE players SET xPosOld = " .. players[steam].xPosOld .. ", yPosOld = " .. players[steam].yPosOld .. ", zPosOld = " .. players[steam].zPosOld .. " WHERE steam = " .. steam) end
 		else
 			players[steam].xPosOld2 = players[steam].xPos
-			players[steam].yPosOld2 = players[steam].yPos
+			players[steam].yPosOld2 = players[steam].yPos + 1
 			players[steam].zPosOld2 = players[steam].zPos
 
 			if botman.dbConnected then conn:execute("UPDATE players SET xPosOld2 = " .. players[steam].xPosOld2 .. ", yPosOld2 = " .. players[steam].yPosOld2 .. ", zPosOld2 = " .. players[steam].zPosOld2 .. " WHERE steam = " .. steam) end
@@ -2643,7 +2818,7 @@ function kick(steam, reason)
 	end
 
 	sendCommand("kick " .. steam .. " " .. " \"" .. reason .. "\"")
-	botman.playersOnline = botman.playersOnline - 1
+	botman.playersOnline = tonumber(botman.playersOnline) - 1
 	irc_chat(server.ircMain, "Player " .. players[steam].name .. " kicked. Reason: " .. reason)
 end
 
@@ -2826,7 +3001,7 @@ function arrest(steam, reason, bail, releaseTime)
 		igplayers[steam].yPosOld = igplayers[steam].yPos
 		igplayers[steam].zPosOld = igplayers[steam].zPos
 		irc_chat(server.ircAlerts, server.gameDate .. " " .. players[steam].name .. " has been sent to prison for " .. reason .. " at " .. igplayers[steam].xPosOld .. " " .. igplayers[steam].yPosOld .. " " .. igplayers[steam].zPosOld)
-		setChatColour(steam)
+		setChatColour(steam, players[steam].accessLevel)
 	else
 		players[steam].prisonxPosOld = players[steam].xPos
 		players[steam].prisonyPosOld = players[steam].yPos
@@ -3702,7 +3877,14 @@ end
 
 
 function initNewPlayer(steam, player, entityid, steamOwner)
-	local k, v
+	local pid
+
+	pid = LookupPlayer(steam)
+
+	if pid ~= 0 then
+		-- abort! abort! The player record exists!
+		return
+	end
 
 	if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, steamOwner) VALUES (" .. steam .. "," .. entityid .. ",'" .. escape(player) .. "'," .. steamOwner .. ")") end
 
@@ -3765,6 +3947,7 @@ function initNewPlayer(steam, player, entityid, steamOwner)
 	players[steam].overstackItems = ""
 	players[steam].overstackScore = 0
 	players[steam].overstackTimeout = false
+	players[steam].p2pCooldown = 0
 	players[steam].packCooldown = 0
 	players[steam].pendingBans = 0
 	players[steam].permanentBan = false
@@ -3824,7 +4007,11 @@ end
 
 function sendPlayerToLobby(steam)
 	-- flag the player to be sent to the lobby if a lobby or spawn location exists.
-	if locations["spawn"] or locations["Spawn"] then
+	if locations["spawn"] and locations["spawn"].lobby then
+		players[steam].location = "spawn"
+	end
+
+	if locations["Spawn"] and locations["Spawn"].lobby then
 		players[steam].location = "spawn"
 	end
 

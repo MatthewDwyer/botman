@@ -71,7 +71,7 @@ function ResetBot(keepTheMoney, backupName)
 		saveLuaTables(os.date("%Y%m%d_%H%M%S"))
 	end
 
-	-- save some additional tables in from mysql
+	-- save some additional tables from mysql
 	dumpTable("events")
 	dumpTable("announcements")
 	dumpTable("locationSpawns")

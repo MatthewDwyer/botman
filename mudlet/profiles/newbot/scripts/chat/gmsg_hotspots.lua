@@ -668,7 +668,7 @@ function gmsg_hotspots()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - hotspot commands ====")
-		dbug("Registering help - hotspot commands")
+		if debug then dbug("Registering help - hotspot commands") end
 
 		tmp = {}
 		tmp.topicDescription = "Hotspots are proximity triggered PM's that say something to an individual player.  Additional functions are being added and admins will be able to queue multiple actions when a specific hotspot is triggered."
@@ -789,7 +789,7 @@ function gmsg_hotspots()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Hotspot commands help registered ****")
-		dbug("Hotspot commands help registered")
+		if debug then dbug("Hotspot commands help registered") end
 		topicID = topicID + 1
 	end
 

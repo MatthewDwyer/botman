@@ -12,6 +12,100 @@ local debug, result, x, z, id, pname, noWaypoint, temp, chatStringStart, cmd, ms
 -- enable debug to see where the code is stopping. Any error will be after the last debug line.
 debug = false -- should be false unless testing
 
+
+function day7ForPanel()
+	if (server.gameDay % server.hordeNight == 0) then
+		return 0
+	end
+
+	if ((server.gameDay + 1) % server.hordeNight == 0) then
+		return 1
+	end
+
+	if ((server.gameDay + 2) % server.hordeNight == 0) then
+		return 2
+	end
+
+	if ((server.gameDay + 3) % server.hordeNight == 0) then
+		return 3
+	end
+
+	if ((server.gameDay + 4) % server.hordeNight == 0) then
+		return 4
+	end
+
+	if ((server.gameDay + 5) % server.hordeNight == 0) then
+		return 5
+	end
+
+	if ((server.gameDay + 6) % server.hordeNight == 0) then
+		return 6
+	end
+
+	if ((server.gameDay + 7) % server.hordeNight == 0) then
+		return 7
+	end
+
+	if ((server.gameDay + 8) % server.hordeNight == 0) then
+		return 8
+	end
+
+	if ((server.gameDay + 9) % server.hordeNight == 0) then
+		return 9
+	end
+
+	if ((server.gameDay + 10) % server.hordeNight == 0) then
+		return 10
+	end
+
+	if ((server.gameDay + 11) % server.hordeNight == 0) then
+		return 11
+	end
+
+	if ((server.gameDay + 12) % server.hordeNight == 0) then
+		return 12
+	end
+
+	if ((server.gameDay + 13) % server.hordeNight == 0) then
+		return 13
+	end
+
+	if ((server.gameDay + 14) % server.hordeNight == 0) then
+		return 14
+	end
+
+	if ((server.gameDay + 15) % server.hordeNight == 0) then
+		return 15
+	end
+
+	if ((server.gameDay + 16) % server.hordeNight == 0) then
+		return 16
+	end
+
+	if ((server.gameDay + 17) % server.hordeNight == 0) then
+		return 17
+	end
+
+	if ((server.gameDay + 18) % server.hordeNight == 0) then
+		return 18
+	end
+
+	if ((server.gameDay + 19) % server.hordeNight == 0) then
+		return 19
+	end
+
+	if ((server.gameDay + 20) % server.hordeNight == 0) then
+		return 20
+	end
+
+	if ((server.gameDay + 21) % server.hordeNight == 0) then
+		return 21
+	end
+
+	return 99
+end
+
+
 function day7(steam)
 	local warning
 
@@ -198,6 +292,83 @@ function day7(steam)
 			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "14 days[-]")
 		else
 			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "14 days[-]")
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if ((server.gameDay + 15) % server.hordeNight == 0) then
+		if steam ~= nil then
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "15 days[-]")
+		else
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "15 days[-]")
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if ((server.gameDay + 16) % server.hordeNight == 0) then
+		if steam ~= nil then
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "16 days[-]")
+		else
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "16 days[-]")
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if ((server.gameDay + 17) % server.hordeNight == 0) then
+		if steam ~= nil then
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "17 days[-]")
+		else
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "17 days[-]")
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if ((server.gameDay + 18) % server.hordeNight == 0) then
+		if steam ~= nil then
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "18 days[-]")
+		else
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "18 days[-]")
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if ((server.gameDay + 19) % server.hordeNight == 0) then
+		if steam ~= nil then
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "19 days[-]")
+		else
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "19 days[-]")
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if ((server.gameDay + 20) % server.hordeNight == 0) then
+		if steam ~= nil then
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "20 days[-]")
+		else
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "20 days[-]")
+		end
+
+		botman.faultyChat = false
+		return true
+	end
+
+	if ((server.gameDay + 21) % server.hordeNight == 0) then
+		if steam ~= nil then
+			message("pm " .. steam .. " [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "21 days[-]")
+		else
+			message("say [" .. server.chatColour .. "]Feral hordes are expected in" .. warning .. "21 days[-]")
 		end
 
 		botman.faultyChat = false
@@ -630,6 +801,47 @@ function logInventoryChanges(steam, item, delta, x, y, z, session, flag)
 end
 
 
+function logPanelCommand(commandTime, command)
+	local action, actionTable, actionQuery, actionArgs
+	local file
+
+	if botman.webdavFolderWriteable == false  then
+		return
+	end
+
+	action = command.action
+
+	if command.actionTable then
+		actionTable = command.actionTable
+	else
+		actionTable = ""
+	end
+
+	if command.actionQuery then
+		actionQuery = command.actionQuery
+	else
+		actionQuery = ""
+	end
+
+	if command.actionArgs then
+		actionArgs = command.actionArgs
+	else
+		actionArgs = ""
+	end
+
+	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
+	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
+	botman.webdavFolderWriteable = false
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_panel.txt", "a")
+	file:write(commandTime .. "; " .. action .. "; " .. actionTable .. "; " .. actionArgs .. "; " .. actionQuery .. "\n")
+	file:close()
+
+	botman.webdavFolderWriteable = true
+end
+
+
 function gmsg(line, ircid)
 	local pos
 
@@ -641,6 +853,11 @@ function gmsg(line, ircid)
 
 	if not server.gameVersionNumber then
 		sendCommand("version")
+	end
+
+	if botman.worldGenerating then
+		-- wake the bot up
+		botman.worldGenerating = nil
 	end
 
 	-- Hi there! ^^  Welcome to the function that parses player chat.  It builds a lua table called chatvars filled with lots of info
@@ -737,7 +954,7 @@ function gmsg(line, ircid)
 		display("line " .. line)
 
 		if ircid ~= nil then
-			dbug("ircid " .. ircid)
+			if debug then dbug("ircid " .. ircid) end
 		end
 	end
 
@@ -775,77 +992,75 @@ function gmsg(line, ircid)
 	end
 
 	if server.gameVersionNumber then
-		--if tonumber(server.gameVersionNumber) < 17 then
-			if string.find(line, "Chat: ", nil, true) then
-				msg = string.sub(line, string.find(line, "Chat: ") + 6)
-				temp = string.split(msg, ":")
-				chatvars.playername = stripAllQuotes(temp[1])
-				chatvars.playername = stripBBCodes(chatvars.playername)
+		if string.find(line, "Chat: ", nil, true) then
+			msg = string.sub(line, string.find(line, "Chat: ") + 6)
+			temp = string.split(msg, ":")
+			chatvars.playername = stripAllQuotes(temp[1])
+			chatvars.playername = stripBBCodes(chatvars.playername)
 
-				if temp[3] then
-					chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
-				else
-					chatvars.command = temp[2]
-				end
+			if temp[3] then
+				chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
+			else
+				chatvars.command = temp[2]
 			end
-		--else
-			if string.find(line, "'Global'): ", nil, true) then
-				msg = string.sub(line, string.find(line, "'Global'): ") + 11)
+		end
 
-				if not string.find(line, "from '-non-player-'", nil, true) then
-					pos = string.find(line, "7656")
-					chatvars.playerid = string.sub(line, pos, pos + 16)
-				end
+		if string.find(line, "'Global'): ", nil, true) then
+			msg = string.sub(line, string.find(line, "'Global'): ") + 11)
 
-				temp = string.split(msg, ":")
-				chatvars.playername = stripAllQuotes(temp[1])
-				chatvars.playername = stripBBCodes(chatvars.playername)
-
-				if chatvars.playername == server.botName then
-					chatvars.playername = "Server"
-				end
-
-				if temp[3] then
-					chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
-				else
-					chatvars.command = temp[2]
-				end
-			end
-
-			if string.find(line, "'Party'): ", nil, true) then
-				chatvars.chatPublic = false
-				chatFlag = "(P) "
-				msg = string.sub(line, string.find(line, "'Party'): ") + 10)
+			if not string.find(line, "from '-non-player-'", nil, true) then
 				pos = string.find(line, "7656")
 				chatvars.playerid = string.sub(line, pos, pos + 16)
-				temp = string.split(msg, ":")
-				chatvars.playername = stripAllQuotes(temp[1])
-				chatvars.playername = stripBBCodes(chatvars.playername)
-
-				if temp[3] then
-					chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
-				else
-					chatvars.command = temp[2]
-				end
 			end
 
-			if string.find(line, "'Friends'): ", nil, true) then
-				chatvars.chatPublic = false
-				chatFlag = "(F) "
-				msg = string.sub(line, string.find(line, "'Friends'): ") + 12)
-				pos = string.find(line, "7656")
-				chatvars.playerid = string.sub(line, pos, pos + 16)
-				temp = string.split(msg, ":")
-				chatvars.playername = stripAllQuotes(temp[1])
-				chatvars.playername = stripBBCodes(chatvars.playername)
+			temp = string.split(msg, ":")
+			chatvars.playername = stripAllQuotes(temp[1])
+			chatvars.playername = stripBBCodes(chatvars.playername)
 
-				if temp[3] then
-					chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
-				else
-					chatvars.command = temp[2]
-				end
+			if chatvars.playername == server.botName then
+				chatvars.playername = "Server"
 			end
-		--end
+
+			if temp[3] then
+				chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
+			else
+				chatvars.command = temp[2]
+			end
+		end
+
+		if string.find(line, "'Party'): ", nil, true) then
+			chatvars.chatPublic = false
+			chatFlag = "(P) "
+			msg = string.sub(line, string.find(line, "'Party'): ") + 10)
+			pos = string.find(line, "7656")
+			chatvars.playerid = string.sub(line, pos, pos + 16)
+			temp = string.split(msg, ":")
+			chatvars.playername = stripAllQuotes(temp[1])
+			chatvars.playername = stripBBCodes(chatvars.playername)
+
+			if temp[3] then
+				chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
+			else
+				chatvars.command = temp[2]
+			end
+		end
+
+		if string.find(line, "'Friends'): ", nil, true) then
+			chatvars.chatPublic = false
+			chatFlag = "(F) "
+			msg = string.sub(line, string.find(line, "'Friends'): ") + 12)
+			pos = string.find(line, "7656")
+			chatvars.playerid = string.sub(line, pos, pos + 16)
+			temp = string.split(msg, ":")
+			chatvars.playername = stripAllQuotes(temp[1])
+			chatvars.playername = stripBBCodes(chatvars.playername)
+
+			if temp[3] then
+				chatvars.command = temp[2] .. ":" .. string.sub(msg, string.find(msg, temp[3], nil, true))
+			else
+				chatvars.command = temp[2]
+			end
+		end
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -980,12 +1195,7 @@ function gmsg(line, ircid)
 	else
 		if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-		if string.find(chatvars.oldLine, "'Server':", nil, true) and not string.find(line, "-irc:") then
-			chatvars.playername = "Server"
-			botman.faultyChat = false
-		end
-
-		if string.find(chatvars.oldLine, server.botName .. "':", nil, true) and not string.find(line, "-irc:") then
+		if string.find(line, "from '-non-player-'", nil, true) and string.find(line, "entity id '-1'", nil, true) then
 			chatvars.playername = "Server"
 			botman.faultyChat = false
 		end
@@ -1449,6 +1659,8 @@ function gmsg(line, ircid)
 				players[chatvars.playerid].lastCommandTimestamp = os.time()
 			end
 
+			os.remove(homedir .. "/temp/help.txt")
+
 			botman.faultyChat = false
 		end
 	end
@@ -1502,7 +1714,7 @@ function gmsg(line, ircid)
 			return true
 		end
 
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+		if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 		if chatvars.words[1] == "hardcore" and chatvars.words[2] == "mode" and (chatvars.words[3] == "on" or chatvars.words[3] == "enable" or chatvars.words[3] == "activate") then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will not help you.[-]")
@@ -1518,6 +1730,13 @@ function gmsg(line, ircid)
 			return true
 		end
 
+		if players[chatvars.playerid].silentBob == true and chatvars.accessLevel > 2 then
+			result = true
+			botman.faultyChat = false
+			return true
+		end
+	end
+
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if chatvars.words[1] == "restore" and chatvars.words[2] == "admin" then
@@ -1529,15 +1748,6 @@ function gmsg(line, ircid)
 
 		botman.faultyChat = false
 		return true
-	end
-
-	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
-
-		if players[chatvars.playerid].silentBob == true and chatvars.accessLevel > 2 then
-			result = true
-			botman.faultyChat = false
-			return true
-		end
 	end
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
@@ -1789,132 +1999,6 @@ function gmsg(line, ircid)
 		return true
 	end
 
-	if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) and (chatvars.playername ~= "Server") and not result then  -- THIS COMMAND MUST BE LAST OR IT STOPS SLASH COMMANDS BELOW IT WORKING.
-		pname = nil
-		pname = string.sub(chatvars.command, 2)
-		pname = string.trim(pname)
-
-		id = LookupPlayer(pname)
-
-		if (players[chatvars.playerid].prisoner or not players[chatvars.playerid].canTeleport) then
-			botman.faultyChat = false
-			return true
-		end
-
-		if (id ~= 0) then
-			-- reject if not an admin and server is in hardcore mode
-			if isServerHardcore(chatvars.playerid) then
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is disabled.[-]")
-				botman.faultyChat = false
-				return true
-			end
-
-			-- reject if not an admin and player teleporting has been disabled
-			if tonumber(chatvars.accessLevel) > 2 and not server.allowTeleporting then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleporting has been disabled on this server.[-]")
-				botman.faultyChat = false
-				return true
-			end
-
-			-- reject if not an admin and player to player teleporting has been disabled
-			if tonumber(chatvars.accessLevel) > 2 and not server.allowPlayerToPlayerTeleporting then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleporting to friends has been disabled on this server.[-]")
-				botman.faultyChat = false
-				return true
-			end
-
-			-- reject if not an admin and the p2p target player is in a location that does not allow p2p teleports
-			if tonumber(chatvars.accessLevel) > 2 then
-				loc = players[id].inLocation
-
-				if locations[loc] then
-					if not locations[loc].allowP2P then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your friend is in a location that does not allow p2p teleporting.[-]")
-						botman.faultyChat = false
-						return true
-					end
-				end
-			end
-
-			-- reject if not an admin and p2pCooldown is non-zero and in the future
-			if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].p2pCooldown - os.time() > 0) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You must wait " .. players[chatvars.playerid].p2pCooldown - os.time() .. " seconds before you can teleport to friends again.[-]")
-				botman.faultyChat = false
-				return true
-			end
-
-			-- reject if not an admin or a friend
-			if (not isFriend(id,  chatvars.playerid)) and (chatvars.accessLevel > 2) and (id ~= chatvars.playerid) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only friends of " .. players[id].name .. " and staff can do this.[-]")
-				botman.faultyChat = false
-				return true
-			end
-
-			-- if pvpZone(players[id].xPos, players[id].zPos) and chatvars.accessLevel > 2 then
-				-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not allowed to teleport to players in PVP zones.[-]")
-				-- botman.faultyChat = false
-				-- result = true
-				-- return true
-			-- end
-
-			if not igplayers[id] and chatvars.accessLevel > 2 then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is offline at the moment.  You will have to wait till they return or start walking.[-]")
-				botman.faultyChat = false
-				return true
-			end
-
-			if players[id].xPos == 0 and players[id].yPos == 0 and players[id].zPos == 0 then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has not played here since the last map wipe.[-]")
-				botman.faultyChat = false
-				return true
-			end
-
-			-- teleport to a friend if sufficient zennies
-			if tonumber(server.teleportCost) > 0 and (chatvars.accessLevel > 2) then
-				if tonumber(players[chatvars.playerid].cash) < tonumber(server.teleportCost) then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You do not have enough " .. server.moneyPlural .. ".  Kill some zombies, gamble, trade or beg to earn more.[-]")
-					botman.faultyChat = false
-					return true
-				end
-			end
-
-			if (os.time() - igplayers[chatvars.playerid].lastTPTimestamp < 5) and (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport is recharging.  Wait a few seconds.  You can repeat your last command by typing " .. server.commandPrefix .."[-]")
-				botman.faultyChat = false
-				return true
-			end
-
-			-- first record the current x y z
-			players[chatvars.playerid].xPosOld = chatvars.intX
-			players[chatvars.playerid].yPosOld = chatvars.intY
-			players[chatvars.playerid].zPosOld = chatvars.intZ
-			igplayers[chatvars.playerid].lastLocation = ""
-
-			-- then teleport to the friend
-			cmd = "tele " .. chatvars.playerid .. " " .. players[id].xPos .. " " .. players[id].yPos .. " " .. players[id].zPos
-
-			if tonumber(server.p2pCooldown) > 0 then
-				players[chatvars.playerid].p2pCooldown = os.time() + server.p2pCooldown
-				conn:execute("UPDATE players SET p2pCooldown = " .. players[chatvars.playerid].p2pCooldown .. " WHERE steam = " .. chatvars.playerid)
-			end
-
-			players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.teleportCost
-
-			if tonumber(server.playerTeleportDelay) == 0 or not igplayers[chatvars.playerid].currentLocationPVP or tonumber(players[chatvars.playerid].accessLevel) < 2 then
-				if teleport(cmd, chatvars.playerid) then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have teleported to " .. players[id].name .. "'s location.[-]")
-				end
-			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. players[id].name .. "'s location in " .. server.playerTeleportDelay .. " seconds.[-]")
-				if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
-				igplayers[chatvars.playerid].lastTPTimestamp = os.time() -- this won't really stop additional tp commands stacking but it will slow the player down a little.
-			end
-
-			botman.faultyChat = false
-			return true
-		end
-	end
-
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	if botman.registerHelp then
@@ -1924,7 +2008,7 @@ function gmsg(line, ircid)
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The command help has been registered.[-]")
 		else
 			if not chatvars.showHelp then
-				irc_chat(players[chatvars.ircid].ircAlias, "Command help registration complete.")
+				irc_chat(players[chatvars.ircid].ircAlias, "Command help saved to " .. homedir .. "/temp/help.txt")
 			end
 		end
 	end
@@ -1935,10 +2019,24 @@ function gmsg(line, ircid)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
+	-- these commands are defined here just so the bot won't say unknown command when it sees them
+	if string.find(chatvars.command, "clan") then
+		botman.faultyChat = false
+		return true
+	end
+
+	if (chatvars.words[1] == "bag" and chatvars.words[2] == nil) then
+		botman.faultyChat = false
+		return true
+	end
+
+	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
+
 	if not result then
 		if (string.sub(chatvars.command, 1, 1) == server.commandPrefix) and not server.hideUnknownCommand then
 			if (chatvars.playername ~= "Server") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Unknown command: " .. chatvars.command .. " Type " .. server.commandPrefix .. "help or " .. server.commandPrefix .. "commands for commands.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]To teleport to a friend use {#}visit eg. {#}visit joe[-]")
 			else
 				if not chatvars.showHelp then
 					irc_chat(players[chatvars.ircid].ircAlias, "Unknown command")

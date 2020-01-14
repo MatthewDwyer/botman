@@ -231,7 +231,7 @@ end
 debug = false -- should be false unless testing
 
 function playerConnected(line)
-	local temp_table, temp, debug, commas, freeSlots, test, tmp
+	local temp_table, temp, debug, commas, freeSlots, test, tmp, cmd, pid
 	local timestamp = os.time()
 	local cursor, errorString, rows, row
 
@@ -286,47 +286,54 @@ function playerConnected(line)
 	temp_table = string.split(line, ",")
 	timeConnected = string.sub(line, 1, 19)
 
-	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
-
-	if string.find(line, "steamid=") then
-		tmp.player = string.trim(string.sub(temp_table[3], string.find(temp_table[3], "name=") + 5, string.find(temp_table[3], ",")))
-		tmp.steam = string.sub(temp_table[4], string.find(temp_table[4], "steamid=") + 8, string.find(temp_table[4], ","))
-		tmp.entityid = string.sub(temp_table[2], string.find(temp_table[2], "entityid=") + 9, string.find(temp_table[2], ","))
-		if string.find(line, "steamOwner") then
-			tmp.steamOwner = string.sub(temp_table[5], string.find(temp_table[5], "steamOwner=") + 11)
-			tmp.ip = string.sub(temp_table[6], string.find(temp_table[6], "ip=") + 3)
-			tmp.ip = tmp.ip:gsub("::ffff:","")
-		else
-			tmp.steamOwner = tmp.steam
-			tmp.ip = string.sub(temp_table[5], string.find(temp_table[5], "ip=") + 3)
-			tmp.ip = tmp.ip:gsub("::ffff:","")
-		end
+	if string.find(line, "entityid=") then
+		temp = string.split(temp_table[2], "=")
+		tmp.entityid = temp[2]
 	end
 
-	if string.find(line, "PlayerID=") then
-		tmp.player = string.trim(string.sub(temp_table[5], string.find(temp_table[5], "PlayerName=") + 12))
-		tmp.player = stripQuotes(tmp.player)
+	if string.find(line, "name=") then
+		temp = string.split(temp_table[3], "name=")
+		tmp.player = temp[2]
+	end
 
-		tmp.steam = string.sub(temp_table[3], string.find(temp_table[3], "PlayerID=") + 10)
-		tmp.steam = stripQuotes(tmp.steam)
+	if string.find(line, "steamid=") then
+		temp = string.split(temp_table[4], "=")
+		tmp.steam = temp[2]
+	end
 
-		tmp.steamOwner = string.sub(temp_table[4], string.find(temp_table[4], "OwnerID=") + 9)
-		tmp.steamOwner = stripQuotes(tmp.steamOwner)
+	if string.find(line, "steamOwner=") then
+		temp = string.split(temp_table[5], "=")
+		tmp.steamOwner = temp[2]
+	end
 
-		tmp.entityid = -1
+	if string.find(line, "ip=") then
+		temp = string.split(temp_table[6], "=")
+		tmp.ip = temp[2]
+		tmp.ip = tmp.ip:gsub("::ffff:","")
+	end
+
+	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
+
+	if tmp.steam then
+		pid = LookupOfflinePlayer(tmp.steam)
+	else
+		pid = LookupOfflinePlayer(tmp.entityid)
+	end
+
+	if not tmp.steam and pid ~= 0 then
+		-- fix a Pimps bug where the INF Player connected line has a rogue line break causing the line to be missing everything after entityid
+		-- fill in the missing info from our records
+		tmp.steam = pid
+		tmp.steamOwner = players[pid].steamOwner
+		tmp.player = players[pid].name
+		tmp.ip = players[pid].ip
 	end
 
 	if tmp.ip == nil then tmp.ip = "" end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
-	-- if string.find(line, "OwnerID=") and not string.find(line, "OwnerID=''") then
-		-- tmp.steam = string.sub(line, string.find(line, "OwnerID=") + 9, string.find(line, "PlayerName=") - 4)
-		-- tmp.player = string.trim(string.sub(line, string.find(line, "PlayerName=") + 12, string.len(line) - 1))
-		-- tmp.entityid = string.sub(line, string.find(line, "EntityID=") + 9, string.find(line, "PlayerID=") - 3)
-	-- end
-
-	if string.find(line, "steamid=") then
+	if tmp.steam then
 		-- log the player connection in events table
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")") end
 
@@ -373,7 +380,7 @@ function playerConnected(line)
 
 		-- check playersArchived and move the player record back to the players table if found
 		if playersArchived[tmp.steam] then
-			dbug("Restoring player " .. tmp.steam .. " " .. tmp.player .. " from archive")
+			if debug then dbug("Restoring player " .. tmp.steam .. " " .. tmp.player .. " from archive") end
 			conn:execute("INSERT INTO players SELECT * from playersArchived WHERE steam = " .. tmp.steam)
 			conn:execute("DELETE FROM playersArchived WHERE steam = " .. tmp.steam)
 			playersArchived[tmp.steam] = nil
@@ -383,21 +390,23 @@ function playerConnected(line)
 	end
 
 	-- add to players table
-	if (players[tmp.steam] == nil) then
+	if pid == 0 and tmp.steam then
 		initNewPlayer(tmp.steam, tmp.player, tmp.entityid, tmp.steamOwner)
 		fixMissingPlayer(tmp.steam, tmp.steamOwner)
 
-		irc_chat(server.ircMain, "###  New player joined " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid .. " ###")
-		irc_chat(server.ircAlerts, "New player joined " .. server.gameDate .. " " .. line:gsub("%,", ""))
-		irc_chat(server.ircWatch, server.gameDate .. " " .. tmp.steam .. " " .. tmp.player .. " new player connected")
-		logChat(botman.serverTime, "Server", "New player joined " .. botman.serverTime .. " " .. server.gameDate .. " " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
+		if not string.find(line, "INF Steam authentication successful") then
+			irc_chat(server.ircMain, "###  New player joined " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid .. " ###")
+			irc_chat(server.ircAlerts, "New player joined " .. server.gameDate .. " " .. line:gsub("%,", ""))
+			irc_chat(server.ircWatch, server.gameDate .. " " .. tmp.steam .. " " .. tmp.player .. " new player connected")
+			logChat(botman.serverTime, "Server", "New player joined " .. botman.serverTime .. " " .. server.gameDate .. " " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
 
-		alertAdmins("New player joined " .. tmp.player, "warn")
+			alertAdmins("New player joined " .. tmp.player, "warn")
+		end
 
 		if botman.dbConnected then conn:execute("INSERT INTO players (steam, steamOwner, id, name, protectSize, protect2Size, firstSeen) VALUES (" .. tmp.steam .. "," .. tmp.steamOwner .. "," .. tmp.entityid .. ",'" .. escape(tmp.player) .. "'," .. server.baseSize .. "," .. server.baseSize .. "," .. os.time() .. ")") end
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','new player','New player joined " .. escape(tmp.player) .. " steam: " .. tmp.steam .. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid .. "'," .. tmp.steam .. ")") end
 	else
-		if string.find(line, "steamid=") then
+		if tmp.steam then
 			irc_chat(server.ircMain, server.gameDate .. " " .. tmp.steam .. " " .. tmp.player .. " connected")
 			irc_chat(server.ircAlerts, server.gameDate .. " " .. tmp.steam .. " " .. tmp.player .. " connected")
 			logChat(botman.serverTime, "Server", tmp.steam .. " " .. tmp.player .. " connected")
@@ -422,12 +431,12 @@ function playerConnected(line)
 			end
 
 			if server.stompy then
-				tempTimer( 30, [[sendCommand("bc-lp ]] .. tmp.steam .. [[ /full")]] )
+				tempTimer( 10, [[sendCommand("bc-lp ]] .. tmp.steam .. [[ /full")]] )
 			end
 		end
 	end
 
-	if string.find(line, "steamid=") then
+	if tmp.steam then
 		-- add to in-game players table
 		if not igplayers[tmp.steam] then
 			initNewIGPlayer(tmp.steam, tmp.player, tmp.entityid, tmp.steamOwner)
@@ -523,20 +532,13 @@ function playerConnected(line)
 
 		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
-		if server.coppi then
-			if players[tmp.steam].mute then
-				tempTimer( 32, [[ mutePlayerChat(]] .. tmp.steam .. [[, "true") ]])
-			end
+		botman.playersOnline = tonumber(botman.playersOnline) + 1
+		igplayers[tmp.steam].playerConnectCounter = playerConnectCounter
+		igplayers[tmp.steam].doFirstSpawnedTasks = true
 
-			if players[tmp.steam].chatColour ~= "" then
-				if string.upper(string.sub(players[tmp.steam].chatColour, 1, 6)) ~= "FFFFFF" then
-					tempTimer( 35, [[ setPlayerColour(]] .. tmp.steam, stripAllQuotes(players[tmp.steam].chatColour .. [[) ]] ))
-				else
-					tempTimer( 35, [[ setChatColour(]] .. tmp.steam .. [[) ]] )
-				end
-			else
-				tempTimer( 35, [[ setChatColour(]] .. tmp.steam .. [[) ]] )
-			end
+		if tonumber(botman.playersOnline) == tonumber(server.ServerMaxPlayerCount) and tonumber(server.reservedSlots) > 0 then
+			kick(tmp.steam, "Server is full :(")
+			return
 		end
 
 		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
@@ -588,11 +590,6 @@ function playerConnected(line)
 		-- delete read mail that isn't flagged as saved (status = 2).
 		if botman.dbConnected then conn:execute("DELETE FROM mail WHERE id = " .. tmp.steam .. " and status = 1") end
 
-		if server.coppi then
-			-- limit ingame chat length to block chat bombs.
-			tempTimer( 40, [[ setPlayerChatLimit(]] .. tmp.steam .. [[, 300) ]] )
-		end
-
 		if tonumber(players[tmp.steam].donorExpiry) < os.time() and players[tmp.steam].donor then
 			irc_chat(server.ircAlerts, "Player " .. tmp.player ..  " " .. tmp.steam .. " donor status has expired.")
 			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','donor','" .. escape(tmp.player) .. " " .. tmp.steam .. " donor status expired.'," .. tmp.steam ..")") end
@@ -621,10 +618,10 @@ function playerConnected(line)
 			irc_chat(server.ircAlerts, "Inventory watching of player " .. tmp.player .. " has expired. They will no longer be watched.")
 		end
 
-		tempTimer( 45, [[ sendCommand("lkp ]] .. tmp.steam .. [[") ]] )
+		tempTimer( 15, [[ sendCommand("lkp ]] .. tmp.steam .. [[") ]] )
 
 		-- check how many claims they have placed
-		tempTimer( 50, [[ sendCommand("llp ]] .. tmp.steam .. [[ parseable") ]] )
+		tempTimer( 20, [[ sendCommand("llp ]] .. tmp.steam .. [[ parseable") ]] )
 
 		if customPlayerConnected ~= nil then
 			-- read the note on overriding bot code in custom/custom_functions.lua

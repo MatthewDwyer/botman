@@ -10,11 +10,6 @@
 
 function gatherServerData()
 	-- read a bunch of info from the server.  The bot will capture it elsewhere.
-
-	if not server.botsIP then
-		getBotsIP()
-	end
-
 	sendCommand("lkp -online")
 	sendCommand("version")
 	sendCommand("gg")
@@ -68,7 +63,13 @@ function initServer()
 	server.hardcore = false
 	server.hideCommands = true
 	server.idleKick = false
-	server.IP = "0.0.0.0"
+
+	if serverIP then
+		server.IP = serverIP
+	else
+		server.IP = "0.0.0.0"
+	end
+
 	server.ircAlerts = "#bot_alerts"
 	server.ircBotName = "Bot"
 	server.ircMain = "#bot"
@@ -115,6 +116,14 @@ function initServer()
 	server.teleportCost = 0
 	server.teleportPublicCooldown = 0
 	server.teleportPublicCost = 0
+
+	if telnetPort then
+		server.telnetPort = tonumber(telnetPort)
+	else
+		server.telnetPort = 0
+	end
+
+	server.updateBot = true
 	server.warnColour = "FFA500"
 	server.waypointCooldown = 0
 	server.waypointCost = 0

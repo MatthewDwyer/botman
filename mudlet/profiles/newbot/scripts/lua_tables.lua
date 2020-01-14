@@ -117,7 +117,7 @@ end
 
 
 function importServer()
-	dbug("Importing Server")
+	if debug then dbug("Importing Server") end
 
 	conn:execute("DELETE FROM server)")
 	conn:execute("INSERT INTO server (ircMain, ircAlerts, ircWatch, rules, shopCountdown, gimmePeace, allowGimme, mapSize, baseCooldown, MOTD, allowShop, chatColour, botName, lottery, allowWaypoints, prisonSize, baseSize) VALUES ('" .. escape(server.ircMain) .. "','" .. escape(server.ircAlerts) .. "','" .. escape(server.ircWatch) .. "','" .. escape(server.rules) .. "',0," .. dbBool(server.gimmePeace) .. "," .. dbBool(server.allowGimme) .. "," .. server.mapSize .. "," .. server.baseCooldown .. ",'" .. escape(server.MOTD) .. "'," .. dbBool(server.allowShop) .. ",'" .. server.chatColour .. "','" .. escape(server.botName) .. "'," .. server.lottery .. "," .. dbBool(server.allowWaypoints) .. "," .. server.prisonSize .. "," .. server.baseSize .. ")")
@@ -132,39 +132,39 @@ end
 
 
 function importShopCategories()
-	dbug("Importing Shop Categories")
+	if debug then dbug("Importing Shop Categories") end
 
 	for k,v in pairs(shopCategories) do
 		conn:execute("INSERT INTO shopCategories (category, idx, code) VALUES ('" .. escape(k) .. "'," .. v.idx .. ",'" .. v.code .. "')")
 	end
 
-	dbug("Shop Categories Imported")
+	if debug then dbug("Shop Categories Imported") end
 end
 
 
 function importPlayers()
-	dbug("Importing Players")
+	if debug then dbug("Importing Players") end
 
 	for k,v in pairs(players) do
-		dbug("Importing " .. k .. " " .. v.id .. " " .. v.name)
+		if debug then dbug("Importing " .. k .. " " .. v.id .. " " .. v.name) end
 		conn:execute("INSERT INTO players (steam, id, name) VALUES (" .. k .. "," .. v.id .. ",'" .. escape(v.name) .. "')")
 		conn:execute("INSERT INTO persistentQueue (steam, command) VALUES (" .. k .. ",'update player')")
 	end
 
 	for k,v in pairs(playersArchived) do
-		dbug("Importing archived " .. k .. " " .. v.id .. " " .. v.name)
+		if debug then dbug("Importing archived " .. k .. " " .. v.id .. " " .. v.name) end
 		conn:execute("INSERT INTO playersArchived (steam, id, name) VALUES (" .. k .. "," .. v.id .. ",'" .. escape(v.name) .. "')")
 		conn:execute("INSERT INTO persistentQueue (steam, command) VALUES (" .. k .. ",'update archived player')")
 	end
 
-	dbug("Players Imported")
+	if debug then dbug("Players Imported") end
 end
 
 
 function importTeleports()
 	local k, v
 
-	dbug("Importing Teleports")
+	if debug then dbug("Importing Teleports") end
 
 	for k,v in pairs(teleports) do
 		conn:execute("INSERT INTO teleports (name, active, public, oneway, friends, x, y, z, dx, dy, dz, owner) VALUES ('" .. escape(v.name) .. "'," .. dbBool(v.active) .. "," .. dbBool(v.public) .. "," .. dbBool(v.oneway) .. "," .. dbBool(v.friends) .. "," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. v.dx .. "," .. v.dy .. "," .. v.owner .. ")")
@@ -175,20 +175,20 @@ end
 function importLocationCategories()
 	local k, v
 
-	dbug("Importing locationCategories")
+	if debug then dbug("Importing locationCategories") end
 
 	for k,v in pairs(locationCategories) do
 		conn:execute("INSERT INTO locationCategories (categoryName, minAccessLevel, maxAccessLevel) VALUES (" .. escape(k) .. "," .. v.minAccessLevel .. "," .. v.maxAccessLevel .. ")")
 	end
 
-	dbug("locationCategories Imported")
+	if debug then dbug("locationCategories Imported") end
 end
 
 
 function importLocations()
 	local sql, fields, values, k, v
 
-	dbug("Importing Locations")
+	if debug then dbug("Importing Locations") end
 
 	for k,v in pairs(locations) do
 		fields = "name, x, y, z, public, active"
@@ -244,17 +244,17 @@ function importLocations()
 		conn:execute(sql)
 	end
 
-	dbug("Locations Imported")
+	if debug then dbug("Locations Imported") end
 end
 
 
 function importFriends()
 	local friendlist, i, max, k, v
 
-	dbug("Importing Friends")
+	if debug then dbug("Importing Friends") end
 
 	for k,v in pairs(friends) do
-		dbug("Importing friends of " .. k)
+		if debug then dbug("Importing friends of " .. k) end
 
 		friendlist = string.split(v.friends, ",")
 
@@ -266,27 +266,27 @@ function importFriends()
 		end
 	end
 
-	dbug("Friends Imported")
+	if debug then dbug("Friends Imported") end
 end
 
 
 function importVillagers()
 	local k, v
 
-	dbug("Importing Villagers")
+	if debug then dbug("Importing Villagers") end
 
 	for k,v in pairs(villagers) do
 		conn:execute("INSERT INTO villagers (steam, village) VALUES (" .. k .. ",'" .. escape(v.village) .. "')")
 	end
 
-	dbug("Villagers Imported")
+	if debug then dbug("Villagers Imported") end
 end
 
 
 function importHotspots()
 	local k, v
 
-	dbug("Importing Hotspots")
+	if debug then dbug("Importing Hotspots") end
 
 	for k,v in pairs(hotspots) do
 		if v.radius then
@@ -296,72 +296,73 @@ function importHotspots()
 		end
 	end
 
-	dbug("Hotspots Imported")
+	if debug then dbug("Hotspots Imported") end
 end
 
 
 function importResets()
-	local k, v
+	local k, v, temp
 
-	dbug("Importing Reset Zones")
+	if debug then dbug("Importing Reset Zones") end
 
 	for k,v in pairs(resetRegions) do
-		conn:execute("INSERT INTO resetZones (region) VALUES ('" .. escape(k) .. "')")
+		temp = string.split(k, "%.")
+		conn:execute("INSERT INTO resetZones (region, x, z) VALUES ('" .. escape(k) .. "'," .. temp[2] .. "," .. temp[3] .. ")")
 	end
 
-	dbug("Resets Imported")
+	if debug then dbug("Resets Imported") end
 end
 
 
 function importBaditems()
 	local k, v
 
-	dbug("Importing Bad Items")
+	if debug then dbug("Importing Bad Items") end
 
 	for k,v in pairs(badItems) do
 		conn:execute("INSERT INTO badItems (item, action) VALUES ('" .. escape(k) .. "','" .. escape(v.action) .. "')")
 	end
 
-	dbug("Bad Items Imported")
+	if debug then dbug("Bad Items Imported") end
 end
 
 
 function importDonors()
 	local k, v
 
-	dbug("Importing Donors")
+	if debug then dbug("Importing Donors") end
 
 	for k,v in pairs(donors) do
 		conn:execute("INSERT INTO donors (steam, level, expiry) VALUES (" .. k .. "," .. v.level .. "," .. v.expiry .. ")")
 	end
 
-	dbug("Donors Imported")
+	if debug then dbug("Donors Imported") end
 end
 
 
 function importRestricteditems()
 	local k, v
 
-	dbug("Importing Restricted Items")
+	if debug then dbug("Importing Restricted Items") end
 
 	for k,v in pairs(restrictedItems) do
 		conn:execute("INSERT INTO restrictedItems (item, qty, accessLevel, action) VALUES ('" .. escape(k) .. "'," .. v.qty .. "," .. v.accessLevel .. ",'" .. escape(v.action) .. "')")
 	end
 
-	dbug("Bad Items Imported")
+	if debug then dbug("Bad Items Imported") end
 end
 
 
 function importWaypoints()
 	local k, v
 
-	dbug("Importing Waypoints")
+	if debug then dbug("Importing Waypoints") end
 
 	for k,v in pairs(waypoints) do
 		conn:execute("INSERT INTO waypoints (steam, name, x, y, z, linked, shared) VALUES (" .. v.steam .. ",'" .. escape(v.name) .. "'," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. v.linked .. "," .. dbBool(v.shared) .. ")")
 	end
 
-	dbug("Waypoints Imported")
+	if debug then dbug("Waypoints Imported") end
 end
 
 
@@ -390,9 +391,11 @@ end
 
 
 function importLuaData(pathPrefix, onlyImportThis, path)
-	local k, v, id, temp
+	local k, v, id, temp, pos, importedAPlayer
 
-	dbug("Importing Lua Tables")
+	if debug then dbug("Importing Lua Tables") end
+
+	importedAPlayer = false
 
 	if pathPrefix then
 		if onlyImportThis ~= "" then
@@ -421,50 +424,50 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 	end
 
 	if onlyImportThis == "" then
-		dbug("Loading bad items")
+		if debug then dbug("Loading bad items") end
 		badItems = {}
 		table.load(path .. pathPrefix .. "badItems.lua", badItems)
 
-		dbug("Loading friends")
+		if debug then dbug("Loading friends") end
 		friends = {}
 		table.load(path .. pathPrefix .. "friends.lua", friends)
 
-		dbug("Loading hotspots")
+		if debug then dbug("Loading hotspots") end
 		hotspots = {}
 		table.load(path .. pathPrefix .. "hotspots.lua", hotspots)
 
-		dbug("Loading locationCategories")
+		if debug then dbug("Loading locationCategories") end
 		locationCategories = {}
 		table.load(path .. pathPrefix .. "locationCategories.lua", locationCategories)
 
-		dbug("Loading locations")
+		if debug then dbug("Loading locations") end
 		locations = {}
 		table.load(path .. pathPrefix .. "locations.lua", locations)
 
-		dbug("Loading players")
+		if debug then dbug("Loading players") end
 		players = {}
 		table.load(path .. pathPrefix .. "players.lua", players)
 
-		dbug("Loading reset zones")
+		if debug then dbug("Loading reset zones") end
 		resetZones = {}
 		table.load(path .. pathPrefix .. "resetRegions.lua", resetRegions)
 
-		dbug("Loading server")
+		if debug then dbug("Loading server") end
 		table.load(path .. pathPrefix .. "server.lua", server)
 
-		dbug("Loading shop categories")
+		if debug then dbug("Loading shop categories") end
 		shopCategories = {}
 		table.load(path .. pathPrefix .. "shopCategories.lua", shopCategories)
 
-		dbug("Loading teleports")
+		if debug then dbug("Loading teleports") end
 		teleports = {}
 		table.load(path .. pathPrefix .. "teleports.lua", teleports)
 
-		dbug("Loading villagers")
+		if debug then dbug("Loading villagers") end
 		villagers = {}
 		table.load(path .. pathPrefix .. "villagers.lua", villagers)
 
-		dbug("Loading waypoints")
+		if debug then dbug("Loading waypoints") end
 		waypoints = {}
 		table.load(path .. pathPrefix .. "waypoints.lua", waypoints)
 
@@ -497,7 +500,15 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		importPlayers()
 	else
 		-- restore bases and cash for the players table
+		playersTemp = {}
 		table.load(path .. pathPrefix .. "players.lua", playersTemp)
+
+		if string.find(onlyImportThis, " player ", nil, true) then
+			pos = string.find(onlyImportThis, " player ") + 8
+			temp = string.sub(onlyImportThis, pos)
+			temp = string.trim(temp)
+			id = LookupPlayer(temp)
+		end
 
 		for k,v in pairs(playersTemp) do
 			if string.find(onlyImportThis, "bases") then
@@ -540,15 +551,13 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 				end
 			end
 
-			if string.find(onlyImportThis, " player ") then
-				temp = string.split(onlyImportThis, " ")
-				id = temp[2]
-
-				if players[id] then
-					players[id] = {}
-					players[id] = playersTemp[id]
+			if string.find(onlyImportThis, " player ", nil, true) then
+				if k == id then
+					players[k] = {}
+					players[k] = playersTemp[k]
 					conn:execute("INSERT INTO players (steam) VALUES (" .. k .. ")")
 					conn:execute("INSERT INTO persistentQueue (steam, command) VALUES (" .. k .. ",'update player')")
+					importedAPlayer = true
 				end
 			end
 		end
@@ -557,7 +566,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 	end
 
 	if string.find(onlyImportThis, "friends") then
-		dbug("Loading friends")
+		if debug then dbug("Loading friends") end
 		friends = {}
 		table.load(path .. pathPrefix .. "friends.lua", friends)
 
@@ -566,7 +575,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 	end
 
 	if string.find(onlyImportThis, "hotspots") then
-		dbug("Loading hotspots")
+		if debug then dbug("Loading hotspots") end
 		hotspots = {}
 		table.load(path .. pathPrefix .. "hotspots.lua", hotspots)
 
@@ -575,11 +584,11 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 	end
 
 	if string.find(onlyImportThis, "locations") then
-		dbug("Loading locationCategories")
+		if debug then dbug("Loading locationCategories") end
 		locationCategories = {}
 		table.load(path .. pathPrefix .. "locationCategories.lua", locationCategories)
 
-		dbug("Loading locations")
+		if debug then dbug("Loading locations") end
 		locations = {}
 		table.load(path .. pathPrefix .. "locations.lua", locations)
 
@@ -590,7 +599,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 	end
 
 	if string.find(onlyImportThis, "players") then
-		dbug("Loading players")
+		if debug then dbug("Loading players") end
 		players = {}
 		table.load(path .. pathPrefix .. "players.lua", players)
 
@@ -599,7 +608,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 	end
 
 	if string.find(onlyImportThis, "resets") then
-		dbug("Loading reset zones")
+		if debug then dbug("Loading reset zones") end
 		resetZones = {}
 		table.load(path .. pathPrefix .. "resetRegions.lua", resetRegions)
 
@@ -608,7 +617,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 	end
 
 	if string.find(onlyImportThis, "teleports") then
-		dbug("Loading teleports")
+		if debug then dbug("Loading teleports") end
 		teleports = {}
 		table.load(path .. pathPrefix .. "teleports.lua", teleports)
 
@@ -617,7 +626,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 	end
 
 	if string.find(onlyImportThis, "villagers") then
-		dbug("Loading villagers")
+		if debug then dbug("Loading villagers") end
 		villagers = {}
 		table.load(path .. pathPrefix .. "villagers.lua", villagers)
 
@@ -626,7 +635,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 	end
 
 	if string.find(onlyImportThis, "waypoints") then
-		dbug("Loading waypoints")
+		if debug then dbug("Loading waypoints") end
 		waypoints = {}
 		table.load(path .. pathPrefix .. "waypoints.lua", waypoints)
 
@@ -634,7 +643,18 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		importWaypoints()
 	end
 
-	dbug("Import of Lua tables Complete")
-	irc_chat(server.ircMain, "Bot restore complete. It is now safe to turn off your modem. xD")
-	alertAdmins("Bot restore complete. It is now safe to turn off your modem. xD")
+	if debug then dbug("Import of Lua tables Complete") end
+
+	if importedAPlayer then
+		irc_chat(server.ircMain, "Player " .. id .. " " .. players[id].name .. " has been restored from backup.")
+		alertAdmins("Player " .. id .. " " .. players[id].name .. " has been restored from backup.")
+	else
+		if string.find(onlyImportThis, " player ", nil, true) then
+			irc_chat(server.ircMain, "Nothing restored.  That player wasn't found.  Either the name is wrong or the player is archived.")
+			alertAdmins("Nothing restored.  That player wasn't found.  Either the name is wrong or the player is archived.")
+		else
+			irc_chat(server.ircMain, "Bot restore complete. It is now safe to turn off your modem. xD")
+			alertAdmins("Bot restore complete. It is now safe to turn off your modem. xD")
+		end
+	end
 end

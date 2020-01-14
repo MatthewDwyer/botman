@@ -8,7 +8,7 @@
 --]]
 
 function gameTimeTrigger(line)
-	local word, words, k, v, closed, closingSoon, oldGameDay
+	local word, words, k, v, closed, closingSoon, oldGameDay, temp
 
 	if botman.botDisabled then
 		return
@@ -108,6 +108,10 @@ function gameTimeTrigger(line)
 				end
 			end
 		end
+	end
+
+	if tonumber(server.gameDay) > tonumber(oldGameDay) or not botman.day7Message then
+		botman.HordeInDays = day7ForPanel()
 	end
 
 	if botman.dbConnected then conn:execute("UPDATE server SET server.gameDay = " .. server.gameDay) end

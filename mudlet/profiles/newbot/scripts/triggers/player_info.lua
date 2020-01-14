@@ -21,7 +21,7 @@ function playerInfo(faultyInfo)
 
 	local debug, id, name, posX, posY, posZ, lastX, lastY, lastZ, lastDist, mapCenterDistance, regionX, regionZ, chunkX, chunkZ
 	local deaths, zombies, kills, score, level, steam, steamtest, admin, lastGimme, lastLogin, playerAccessLevel, temp
-	local xPosOld, yPosOld, zPosOld, rawPosition, rawRotation, outsideMap, outsideMapDonor, fields, values, flag
+	local xPosOld, yPosOld, zPosOld, rawPosition, rawRotation, outsideMap, outsideMapDonor, fields, values, flag, cmd
 	local timestamp = os.time()
 	local region = ""
 	local resetZone = false
@@ -38,7 +38,7 @@ function playerInfo(faultyInfo)
 
 	debug = false -- should be false unless testing
 
-if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if debugPlayerInfo == nil then debugPlayerInfo = 0 end
 
@@ -46,8 +46,10 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	debugPlayerInfo = 0 -- should be 0 unless testing against a steam id
 
 	if (debugPlayerInfo ~= 0) then
-		dbug("debug playerinfo " .. debugPlayerInfo, true)
-		dbug(line, true)
+		if debug then
+			dbug("debug playerinfo " .. debugPlayerInfo, true)
+			dbug(line, true)
+		end
 	end
 
 	flag = ""
@@ -65,7 +67,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	-- it is probably a read error
 	if (table.maxn(name_table) < 18) then
 		faultyPlayerinfoID = 0
-		dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true)
+		if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 		return
 	end
 
@@ -128,8 +130,11 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	ping = temp[2]
 
 	if badData then
-		dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true)
-		dbug("Bad lp line: " .. line .. "\n", true)
+		if debug then
+			dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true)
+			dbug("Bad lp line: " .. line .. "\n", true)
+		end
+
 		return
 	end
 
@@ -512,7 +517,11 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				if (r == 14) then message("say [" .. server.chatColour .. "]" .. name .. " reached a new low with that death. Six feet under.[-]") end
 
 				if tonumber(server.packCooldown) > 0 then
-					players[steam].packCooldown = os.time() + server.packCooldown
+					if players[steam].donor then
+						players[steam].packCooldown = os.time() + math.floor(server.packCooldown / 2)
+					else
+						players[steam].packCooldown = os.time() + server.packCooldown
+					end
 				end
 			end
 		end
@@ -849,15 +858,17 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if (players[steam].newPlayer == true and (igplayers[steam].sessionPlaytime + players[steam].timeOnServer > (server.newPlayerTimer * 60))) then
-		players[steam].newPlayer = false
-		players[steam].watchPlayer = false
-		players[steam].watchPlayerTimer = 0
-		message("pm " .. steam .. " [" .. server.chatColour .. "]Your new player status has been lifted. :D[-]")
-		if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. steam) end
+	if players[steam].newPlayer == true then
+		if (igplayers[steam].sessionPlaytime + players[steam].timeOnServer > (server.newPlayerTimer * 60) or tonumber(level) > server.newPlayerMaxLevel) then
+			players[steam].newPlayer = false
+			players[steam].watchPlayer = false
+			players[steam].watchPlayerTimer = 0
 
-		if string.upper(players[steam].chatColour) == "FFFFFF" then
-			setChatColour(steam)
+			if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. steam) end
+
+			if string.upper(players[steam].chatColour) == "FFFFFF" then
+				setChatColour(steam, players[steam].accessLevel)
+			end
 		end
 	end
 
@@ -1013,6 +1024,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				igplayers[steam].alertBaseExit = nil
 				igplayers[steam].alertBaseID = nil
 				igplayers[steam].alertBase = nil
+				if botman.dbConnected then conn:execute("UPDATE players SET protect = 1 WHERE steam = " .. data.steamid) end
 
 				faultyPlayerinfo = false
 				deleteLine()
@@ -1068,6 +1080,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				igplayers[steam].alertBaseExit = nil
 				igplayers[steam].alertBaseID = nil
 				igplayers[steam].alertBase = nil
+				if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 1 WHERE steam = " .. data.steamid) end
 
 				faultyPlayerinfo = false
 				deleteLine()
@@ -1459,9 +1472,22 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if igplayers[steam].rawPosition ~= rawPosition then
-		igplayers[steam].afk = os.time() + 900
+		igplayers[steam].afk = os.time() + tonumber(server.idleKickTimer)
 		igplayers[steam].rawPosition = rawPosition
 	end
+
+	if (igplayers[steam].rawRotation ~= rawRotation) and rawRotation ~= nil then
+		igplayers[steam].rawRotation = rawRotation
+	end
+
+
+	if (tonumber(botman.playersOnline) >= tonumber(server.maxPlayers) or server.idleKickAnytime) and (playerAccessLevel > 3) and server.idleKick then
+		if (igplayers[steam].afk - os.time() < 0) then
+			kick(steam, "You were kicked because you idled too long, but you can rejoin at any time.")
+		end
+	end
+
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if igplayers[steam].spawnedInWorld then
 		if igplayers[steam].greet then
@@ -1474,20 +1500,31 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		if tonumber(igplayers[steam].teleCooldown) > 100 then
 			igplayers[steam].teleCooldown = 3
 		end
-	end
 
-	if (igplayers[steam].rawRotation ~= rawRotation) and rawRotation ~= nil then
-		igplayers[steam].rawRotation = rawRotation
-	end
+		if igplayers[steam].doFirstSpawnedTasks then
+			igplayers[steam].doFirstSpawnedTasks = nil
 
+			if server.botman or server.stompy then
+				if players[steam].mute then
+					mutePlayerChat(steam , "true")
+				end
 
-	if tonumber(botman.playersOnline) >= tonumber(server.maxPlayers) and (playerAccessLevel > 3) and server.idleKick then
-		if (igplayers[steam].afk - os.time() < 0) then
-			kick(steam, "Server is full.  You were kicked because you idled too long, but you can rejoin at any time. Thanks for playing! xD")
+				if players[steam].chatColour ~= "" then
+					if string.upper(string.sub(players[steam].chatColour, 1, 6)) ~= "FFFFFF" then
+						setPlayerColour(steam, stripAllQuotes(players[steam].chatColour))
+					else
+						setChatColour(steam, players[steam].accessLevel)
+					end
+				else
+					setChatColour(steam, players[steam].accessLevel)
+				end
+
+				-- limit ingame chat length to block chat bombs.
+				cmd = steam .. ", 300"
+				setPlayerChatLimit(cmd)
+			end
 		end
 	end
-
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if igplayers[steam].currentLocationPVP then
 		if players[steam].alertPVP == true then
@@ -1515,7 +1552,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	faultyPlayerinfo = false
 
 	if (steam == debugPlayerInfo) then
-		dbug("end playerinfo", true)
+		if debug then dbug("end playerinfo", true) end
 	end
 
 	deleteLine()
@@ -1547,7 +1584,7 @@ function playerInfoTrigger(line)
 				fixMissingIGPlayer(faultyPlayerinfoID)
 			end
 
-			dbug("debug playerinfo faulty player " .. faultyPlayerinfoID, true)
+			if debug then dbug("debug playerinfo faulty player " .. faultyPlayerinfoID, true) end
 
 			windowMessage(server.windowDebug, "!! Fault detected in playerinfo trigger\n")
 			windowMessage(server.windowDebug, faultyPlayerinfoLine .. "\n")

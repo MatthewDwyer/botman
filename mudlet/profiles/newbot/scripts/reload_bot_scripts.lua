@@ -36,10 +36,6 @@ function updateBot(forced, steam)
 		steamID = steam
 	end
 
-	if not server.botsIP then
-		getBotsIP()
-	end
-
 	if server.updateBranch ~= "" then
 		os.remove(homedir .. "/temp/scripts.zip")
 		os.remove(homedir .. "/temp/version.txt")
@@ -132,6 +128,7 @@ function fixTables() -- Waiter!  Where's my table!?
 
 	if type(botman) ~= "table" then
 		botman = {}
+		botman.playersOnline = 0
 	end
 
 	if type(botMaintenance) ~= "table" then
@@ -192,6 +189,14 @@ function fixTables() -- Waiter!  Where's my table!?
 
 	if type(mods) ~= "table" then
 		mods = {}
+	end
+
+	if type(modVersions) ~= "table" then
+		modVersions = {}
+	end
+
+	if type(modBotman) ~= "table" then
+		modBotman = {}
 	end
 
 	if type(proxies) ~= "table" then
@@ -437,6 +442,11 @@ function refreshScripts()
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
+	server.nextCodeReload = "/scripts/chat/gmsg_botman.lua"
+	checkScript(homedir .. "/scripts/chat/gmsg_botman.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
 	server.nextCodeReload = "/scripts/chat/gmsg_friends.lua"
 	checkScript(homedir .. "/scripts/chat/gmsg_friends.lua")
 
@@ -494,11 +504,6 @@ function refreshScripts()
 
 	server.nextCodeReload = "/scripts/chat/gmsg_stompy.lua"
 	checkScript(homedir .. "/scripts/chat/gmsg_stompy.lua")
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
-	server.nextCodeReload = "/scripts/chat/gmsg_botman.lua"
-	checkScript(homedir .. "/scripts/chat/gmsg_botman.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 

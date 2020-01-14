@@ -32,6 +32,11 @@ function endListPlayers(line)
 
 		if botman.listPlayers and not botman.listEntities then
 			botman.playersOnline = tonumber(string.match(line, "%d+"))
+
+			if not botman.playersOnline then
+				botman.playersOnline = 0
+			end
+
 			playerConnectCounter = botman.playersOnline
 
 			if (botman.playersOnline == 0) then

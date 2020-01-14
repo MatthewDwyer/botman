@@ -13,7 +13,7 @@ local debug
 debug = false
 
 function playerDisconnected(line)
-	local steam, playerID, entityID, name, pos, temp
+	local steam, playerID, entityID, name, pos, temp, pid
 
 if (debug) then dbug("debug playerDisconnected line " .. line) end
 
@@ -34,15 +34,23 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 		steam = string.match(temp[2], "(%d+)")
 		name = stripQuotes(string.sub(temp[4], 13, string.len(temp[4])))
 
+		if igplayers[steam] then
+			irc_chat(server.ircMain, botman.serverTime .. " " .. server.gameDate .. " " .. steam .. " " .. name .. " disconnected")
+			irc_chat(server.ircAlerts, server.gameDate .. " " .. steam .. " " .. name .. " disconnected")
+			logChat(botman.serverTime, "Server", botman.serverTime .. " " .. server.gameDate .. " " .. steam .. " " .. name .. " disconnected")
+		end
+
 		conn:execute("delete from reservedSlots where steam = " .. steam)
 
-		if players[steam] == nil then
+		pid = LookupPlayer(steam)
+
+		if pid == 0 then
 			initNewPlayer(steam, name, entityID, steam)
 		end
 
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
 
-		if igplayers[steam] == nil then
+		if not igplayers[steam] then
 			initNewIGPlayer(steam, name, entityID, steam)
 		end
 
@@ -72,13 +80,9 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 			end
 		end
 
-		dbug("Saving disconnected player " .. igplayers[steam].name)
+		if debug then dbug("Saving disconnected player " .. igplayers[steam].name) end
 
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
-
-		irc_chat(server.ircMain, botman.serverTime .. " " .. server.gameDate .. " " .. steam .. " " .. players[steam].name .. " disconnected")
-		irc_chat(server.ircAlerts, server.gameDate .. " " .. steam .. " " .. players[steam].name .. " disconnected")
-		logChat(botman.serverTime, "Server", botman.serverTime .. " " .. server.gameDate .. " " .. steam .. " " .. players[steam].name .. " disconnected")
 
 		if players[steam].watchPlayer then
 			irc_chat(server.ircWatch, server.gameDate .. " " .. steam .. " " .. players[steam].name .. " disconnected")

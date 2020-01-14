@@ -1494,7 +1494,11 @@ function gmsg_waypoints()
 				players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.waypointCost
 
 				if tonumber(server.waypointCooldown) > 0 then
-					players[chatvars.playerid].waypointCooldown = os.time() + server.waypointCooldown
+					if players[chatvars.playerid].donor then
+						players[chatvars.playerid].waypointCooldown = os.time() + math.floor(server.waypointCooldown / 2)
+					else
+						players[chatvars.playerid].waypointCooldown = os.time() + server.waypointCooldown
+					end
 				end
 			else
 				if tmp.friend ~= 0 then
@@ -1517,7 +1521,7 @@ function gmsg_waypoints()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - waypoint commands ====")
-		dbug("Registering help - waypoint commands")
+		if debug then dbug("Registering help - waypoint commands") end
 
 		tmp = {}
 		tmp.topicDescription = "Waypoints are player managed personal teleports.\n"
@@ -1732,7 +1736,7 @@ function gmsg_waypoints()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Waypoint commands help registered ****")
-		dbug("Waypoint commands help registered")
+		if debug then dbug("Waypoint commands help registered") end
 		topicID = topicID + 1
 	end
 

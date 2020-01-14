@@ -1,6 +1,7 @@
 function loginTrigger()
 	if type(botman) ~= "table" then
 		botman = {}
+		botman.playersOnline = 0
 	end
 
 	lastAction = "Login"

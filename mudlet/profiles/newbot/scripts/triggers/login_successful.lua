@@ -11,15 +11,12 @@ function loginSuccessful(line)
 	-- relogCount is used to detect excessive relogging which is indicative of a server crash.
 	if relogCount == nil then relogCount = 0 end
 
-	if string.find(line, "Logon successful.") then
-		botman.botOfflineCount = 0
-		relogCount = relogCount + 1
-		botman.botOffline = false
-		botman.telnetOffline = false
-		botman.botConnectedTimestamp = os.time() -- used to measure how long the bot has been offline so we can slow down how often it tries to reconnect.
-		irc_chat(server.ircMain, "Successfully logged in to telnet.")
-		botman.getMetrics = false
-	end
-
-	send("gt")
+	send("pm BotStartupCheck \"test\"")
+	botman.botOfflineCount = 0
+	relogCount = relogCount + 1
+	botman.botOffline = false
+	botman.telnetOffline = false
+	botman.botConnectedTimestamp = os.time() -- used to measure how long the bot has been offline so we can slow down how often it tries to reconnect.
+	irc_chat(server.ircMain, "Successfully logged in to telnet.")
+	botman.getMetrics = false
 end

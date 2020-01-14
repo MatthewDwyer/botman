@@ -72,7 +72,12 @@ function teleport(cmd, steam, justTeleport)
 
 	if not justTeleport then
 		if tonumber(server.returnCooldown) > 0 and accessLevel(steam) > 2 then
-			delay = os.time() + server.returnCooldown
+			if players[steam].donor then
+				delay = os.time() + math.floor(server.returnCooldown / 2)
+			else
+				delay = os.time() + server.returnCooldown
+			end
+
 			players[steam].returnCooldown = delay
 			if botman.dbConnected then conn:execute("UPDATE players SET returnCooldown = " .. delay .. " WHERE steam = " .. steam) end
 		end

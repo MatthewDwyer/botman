@@ -10,7 +10,7 @@
 function APITimer()
 	local row, cursor, errorString, url, outputFile, cmd
 
-	if not botman.dbConnected then
+	if not botman.dbConnected or botman.botOffline then
 		return
 	end
 

@@ -76,9 +76,7 @@ function gmsg_unslashed()
 	end
 	-- ####################################################################################
 
-	if debug then
-		dbug(chatvars.playername)
-	end
+	if debug then dbug(chatvars.playername)	end
 
 	-- ###################  do not allow the bot to respond to itself ################
 	if string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and chatvars.playername == "Server" then

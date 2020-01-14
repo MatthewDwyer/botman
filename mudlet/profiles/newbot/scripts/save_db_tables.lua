@@ -37,7 +37,7 @@ function updatePlayer(steam)
 	local k,v,value,temp
 
 	if tonumber(steam) == nil or (string.len(steam) < 17) then
-		dbug("skipping player " .. v.name .. " for invalid steam id")
+		if debug then dbug("skipping player " .. v.name .. " for invalid steam id") end
 
 		-- don't process if steam is invalid
 		return
@@ -62,6 +62,12 @@ function updatePlayer(steam)
 			if v.type == "tim" and value ~= nil then
 				sql[v.field].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", value) .. "'"
 			end
+
+			 if v.type == "dat" and value ~= nil then
+				if string.sub(value, 1, 1) ~= "'" then
+					sql[v.field].value = "'" .. value .. "'"
+				end
+			 end
 		end
 	end
 
@@ -75,7 +81,7 @@ function updateArchivedPlayer(steam)
 	local k,v,value,temp
 
 	if tonumber(steam) == nil or (string.len(steam) < 17) then
-		dbug("skipping player " .. steam .. " for invalid steam id")
+		if debug then dbug("skipping player " .. steam .. " for invalid steam id") end
 
 		-- don't process if steam is invalid
 		return
@@ -100,6 +106,12 @@ function updateArchivedPlayer(steam)
 			if v.type == "tim" and value ~= nil then
 				sql[v.field].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", value) .. "'"
 			end
+
+			if v.type == "dat" and value ~= nil then
+				if string.sub(value, 1, 1) ~= "'" then
+					sql[v.field].value = "'" .. value .. "'"
+				end
+			 end
 		end
 	end
 
@@ -168,6 +180,12 @@ function saveServer()
 			if serverFields[k].type == "tim" and v ~= nil then
 				value = "'" .. os.date("%Y-%m-%d %H:%M:%S", v) .. "'"
 			end
+
+			 if serverFields[k].type == "dat" and v ~= nil then
+				if string.sub(v, 1, 1) ~= "'" then
+					value = "'" .. v .. "'"
+				end
+			 end
 
 			if value ~= nil then
 				field = k
@@ -264,6 +282,12 @@ function savePlayer(steam, action)
 					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"
 				end
 
+				 if v.type == "dat" and sql[k].value ~= nil then
+					if string.sub(sql[k].value, 1, 1) ~= "'" then
+						sql[k].value = "'" .. sql[k].value .. "'"
+					end
+				 end
+
 				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. "=" .. sql[k].value .. ","
 			end
 		end
@@ -289,6 +313,12 @@ function savePlayer(steam, action)
 					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"
 				end
 
+				 if v.type == "dat" and sql[k].value ~= nil then
+					if string.sub(sql[k].value, 1, 1) ~= "'" then
+						sql[k].value = "'" .. sql[k].value .. "'"
+					end
+				 end
+
 				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. ","
 				sqlValues = sqlValues .. sql[k].value .. ","
 			end
@@ -308,7 +338,7 @@ function savePlayer(steam, action)
 	if status == 0 then
 		if debugdb then
 			dbug("save player failed")
-			dbug(status .. " " .. errorString )
+			dbug(status .. " " .. errorString)
 		end
 
 		getPlayerFields()
@@ -354,6 +384,12 @@ function saveArchivedPlayer(steam, action)
 					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"
 				end
 
+				 if v.type == "dat" and sql[k].value ~= nil then
+					if string.sub(sql[k].value, 1, 1) ~= "'" then
+						sql[k].value = "'" .. sql[k].value .. "'"
+					end
+				 end
+
 				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. "=" .. sql[k].value .. ","
 			end
 		end
@@ -378,6 +414,12 @@ function saveArchivedPlayer(steam, action)
 				if v.type == "tim" then
 					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"
 				end
+
+				 if v.type == "dat" and sql[k].value ~= nil then
+					if string.sub(sql[k].value, 1, 1) ~= "'" then
+						sql[k].value = "'" .. sql[k].value .. "'"
+					end
+				 end
 
 				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. ","
 				sqlValues = sqlValues .. sql[k].value .. ","

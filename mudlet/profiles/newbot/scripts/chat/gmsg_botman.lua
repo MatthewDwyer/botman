@@ -359,6 +359,7 @@ function gmsg_botman()
 			help[2] = help[2] .. " {#}dig bedrock wide 1\n"
 			help[2] = help[2] .. " {#}dig up (makes a 5x5 room)\n"
 			help[2] = help[2] .. " {#}dig up (or room) wide 5 tall 10 (makes a 10x10 room)\n"
+			help[2] = help[2] .. " {#}dig up wide 50 tall 30 replace air block terrStone\n"
 			help[2] = help[2] .. " {#}fill east base 70 wide 2 tall 10 long 50 block steelBlock\n"
 			help[2] = help[2] .. " {#}fill bedrock wide 2 block stone\n"
 			help[2] = help[2] .. " {#}fill {saved prefab} block stone\n"
@@ -1723,7 +1724,7 @@ function gmsg_botman()
 				end
 
 				for k,v in pairs(igplayers) do
-					if (accessLevel(k) > 3 and accessLevel(k) < 11) and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
+					if (players[k].donor) and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
 						setPlayerColour(k, tmp.colour)
 					end
 				end
@@ -1867,6 +1868,450 @@ function gmsg_botman()
 	end
 
 
+-- ###################  clan commands ################
+
+
+	local function cmd_SetMaxClans()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set max clans {number of clans}"
+			help[2] = "Set the maximum number of clans."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,max,clan"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "botman") or string.find(chatvars.command, "clan")) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "max" and chatvars.words[3] == "clans" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number == nil then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Number required.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Number required.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			modBotman.clanMaxClans = math.abs(chatvars.number)
+			conn:execute("UPDATE modBotman set clanMaxClans = " .. math.abs(chatvars.number))
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A maximum of " .. modBotman.clanMaxClans .. " clans can be created.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "A maximum of " .. modBotman.clanMaxClans .. " clans can be created.")
+			end
+
+			sendCommand("bm-clan max clans " .. modBotman.clanMaxClans)
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_SetMaxClanPlayers()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set max clan players {number of players}"
+			help[2] = "Set the maximum number of players clans can have."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,max,clan"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "botman") or string.find(chatvars.command, "clan"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "max" and chatvars.words[3] == "clan" and chatvars.words[4] == "players" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number == nil then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Number required.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Number required.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			modBotman.clanMaxPlayers = math.abs(chatvars.number)
+			conn:execute("UPDATE modBotman set clanMaxPlayers = " .. modBotman.clanMaxPlayers)
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Clans can have a maximum of " .. modBotman.clanMaxPlayers .. " players.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Clans can have a maximum of " .. modBotman.clanMaxPlayers .. " players.")
+			end
+
+			sendCommand("bm-clan max players " .. modBotman.clanMaxPlayers)
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_SetMinClanLevel()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set min clan level {player level}"
+			help[2] = "Set the minimum player level required to join a clan."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "set,min,clan"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "botman") or string.find(chatvars.command, "clan")) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "min" and chatvars.words[3] == "clan" and chatvars.words[4] == "level" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number == nil then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Number required.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Number required.")
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			modBotman.clanMinLevel = math.abs(chatvars.number)
+			conn:execute("UPDATE modBotman set clanMinLevel = " .. modBotman.clanMinLevel)
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players must have a minimum player level of " .. modBotman.clanMinLevel .. " to join clans.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Players must have a minimum player level of " .. modBotman.clanMinLevel .. " to join clans.")
+			end
+
+			sendCommand("bm-clan min_level " .. modBotman.clanMinLevel)
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ToggleClans()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable clans"
+			help[2] = "Enable or disable the clan feature in the Botman mod.  Default is disabled."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,clan"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "able") or string.find(chatvars.command, "clan")) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if string.find(chatvars.words[1], "able") and chatvars.words[2] == "clans" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "enable" then
+				modBotman.clanEnabled = true
+				conn:execute("UPDATE modBotman set clanEnabled = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The clan feature of the Botman mod is enabled.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The clan feature of the Botman mod is enabled.")
+				end
+
+				sendCommand("bm-clan enable")
+			else
+				modBotman.clanEnabled = true
+				conn:execute("UPDATE modBotman set clanEnabled = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The clan feature of the Botman mod is turned off.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The clan feature of the Botman mod is turned off.")
+				end
+
+				sendCommand("bm-clan disable")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+-- ###################  reset region commands ################
+
+	local function cmd_ToggleResetRegions()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable reset regions"
+			help[2] = "Enable or disable the Botman mod's reset regions feature.  Default is disabled.\n"
+			help[2] = help[2] .. "This is very similar to the bot's reset zones except that they are limited to whole regions and can actually reset the region or just prefabs or just remove claims."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "able,reset"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "able") or string.find(chatvars.command, "reset") or string.find(chatvars.command, "region")) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if string.find(chatvars.words[1], "able") and chatvars.words[2] == "reset" and chatvars.words[3] == "regions" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "enable" then
+				modBotman.resetsEnabled = true
+				conn:execute("UPDATE modBotman set resetsEnabled = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The reset regions feature of the Botman mod is enabled.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The reset regions feature of the Botman mod is enabled.")
+				end
+
+				sendCommand("bm-resetregions enable")
+			else
+				modBotman.resetsEnabled = false
+				conn:execute("UPDATE modBotman set resetsEnabled = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The reset regions feature of the Botman mod is disabled.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "The reset regions feature of the Botman mod is disabled.")
+				end
+
+				sendCommand("bm-resetregions disable")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ToggleResetRegionsClaims()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}reset regions remove/leave claims (default is leave claims)"
+			help[2] = "Reset regions can remove or leave claim blocks."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "claim,lcb,reset,region"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "claim") or string.find(chatvars.command, "reset") or string.find(chatvars.command, "region") or string.find(chatvars.command, "lcb")) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if string.find(chatvars.words[1], "reset") and chatvars.words[2] == "regions" and (chatvars.words[3] == "remove" or chatvars.words[3] == "leave") and chatvars.words[4] == "claims" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "remove" then
+				modBotman.resetsRemoveLCB = true
+				conn:execute("UPDATE modBotman set resetsRemoveLCB = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reset regions will remove claim blocks.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Reset regions will remove claim blocks.")
+				end
+
+				sendCommand("bm-resetregions removelcbs true")
+			else
+				modBotman.resetsRemoveLCB = false
+				conn:execute("UPDATE modBotman set resetsRemoveLCB = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reset regions will leave claim blocks unless the entire region is reset.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Reset regions will leave claim blocks unless the entire region is reset.")
+				end
+
+				sendCommand("bm-resetregions removelcbs false")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+-- ###################  zombie announcer commands ################
+
+
+
+-- ####################################################################################
+
+
 	local function cmd_SpawnHorde()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1952,6 +2397,7 @@ function gmsg_botman()
 					end
 				else
 					tmp.loc = LookupLocation(chatvars.words[3])
+
 					if tmp.loc ~= nil then
 						sendCommand("bm-spawnhorde " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z .. " " .. chatvars.number)
 						irc_chat(server.ircMain, "Horde spawned by bot at " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z)
@@ -2194,6 +2640,25 @@ function gmsg_botman()
 
 -- ################## End of command functions ##################
 
+	if botman.registerHelp then
+		irc_chat(chatvars.ircAlias, "==== Registering help - Botman commands ====")
+		if debug then dbug("Registering help - Botman commands") end
+
+		tmp = {}
+		tmp.topicDescription = "The Botman mod adds special features to the bot such as hiding commands from chat, digging big holes and lots more.\n"
+		tmp.topicDescription = tmp.topicDescription .. "The bot will work just fine without it."
+
+		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'Botman'")
+		rows = cursor:numrows()
+		if rows == 0 then
+			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
+			row = cursor:fetch(row, "a")
+			tmp.topicID = row.Auto_increment
+
+			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('Botman', '" .. escape(tmp.topicDescription) .. "')")
+		end
+	end
+
 	if (debug) then dbug("debug botman line " .. debugger.getinfo(1).currentline) end
 
 	-- ###################  Staff only beyond this point ################
@@ -2272,6 +2737,60 @@ function gmsg_botman()
 
 	if result then
 		if debug then dbug("debug cmd_SpawnHorde triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug botman line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetMaxClans()
+
+	if result then
+		if debug then dbug("debug cmd_SetMaxClans triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug botman line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetMaxClanPlayers()
+
+	if result then
+		if debug then dbug("debug cmd_SetMaxClanPlayers triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug botman line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetMinClanLevel()
+
+	if result then
+		if debug then dbug("debug cmd_SetMinClanLevel triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug botman line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleClans()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleClans triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug botman line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleResetRegions()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleResetRegions triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug botman line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleResetRegionsClaims()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleResetRegionsClaims triggered") end
 		return result
 	end
 
@@ -2391,9 +2910,10 @@ function gmsg_botman()
 	end
 
 	if debug then dbug("debug botman end") end
+
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Botman commands help registered ****")
-		dbug("Botman commands help registered")
+		if debug then dbug("Botman commands help registered") end
 		topicID = topicID + 1
 	end
 

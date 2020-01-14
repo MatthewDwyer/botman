@@ -833,7 +833,7 @@ function gmsg_tracker()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - tracker commands ====")
-		dbug("Registering help - tracker commands")
+		if debug then dbug("Registering help - tracker commands") end
 
 		tmp = {}
 		tmp.topicDescription = "All player movement is recorded every 3 seconds.\n"
@@ -1032,7 +1032,7 @@ function gmsg_tracker()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Tracker commands help registered ****")
-		dbug("Tracker commands help registered")
+		if debug then dbug("Tracker commands help registered") end
 		topicID = topicID + 1
 	end
 

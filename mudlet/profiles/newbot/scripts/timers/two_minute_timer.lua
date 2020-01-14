@@ -9,7 +9,7 @@
 
 function twoMinuteTimer()
 	-- -- to fix a weird bug where the bot would stop responding to chat but could be woken up by irc chatter we send the bot a wake up call
-	irc_chat(server.ircMain .. "_debug", "ircCheck")
+	--irc_chat(server.ircMain .. "_debug", "ircCheck")
 
 	writeBotmanINI()
 
@@ -17,18 +17,14 @@ function twoMinuteTimer()
 		return
 	end
 
-	if not botman.botOffline then
-		sendCommand("gt") -- Are you there?   Is this thing on? *TAP* *TAP*
-	end
-
 	if server.lagged then
 		return
 	end
 
 	if tonumber(botman.playersOnline) > 0 then
-		if server.scanErrors and server.coppi then
+		if server.scanErrors then
 			for k,v in pairs(igplayers) do
-				sendCommand("rcd " .. math.floor(v.xPos) .. " " .. math.floor(v.zPos))
+				sendCommand("rcd " .. math.floor(v.xPos) .. " " .. math.floor(v.zPos) .. " fix")
 			end
 		end
 	end

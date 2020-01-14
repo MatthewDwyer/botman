@@ -52,14 +52,6 @@ function everyMinute()
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	zombiePlayers = {}
-	-- diff = server.uptime
-	-- days = math.floor(diff / 86400)
-
-	-- if (days > 0) then
-		-- diff = diff - (days * 86400)
-	-- end
-
-	-- hours = math.floor(diff / 3600)
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
@@ -82,7 +74,7 @@ function everyMinute()
 		end
 
 		if server.ServerMaxPlayerCount then
-			if tonumber(v.afk - os.time()) < 300 and tonumber(v.afk - os.time()) > 60 and (botman.playersOnline >= server.ServerMaxPlayerCount) and (accessLevel(steam) > 2) and server.idleKick then
+			if tonumber(v.afk - os.time()) < 300 and tonumber(v.afk - os.time()) > 60 and (botman.playersOnline >= server.ServerMaxPlayerCount or server.idleKickAnytime) and (accessLevel(steam) > 2) and server.idleKick then
 				message("pm " .. v.steam .. " [" .. server.warnColour .. "]You appear to be away from your keyboard.  You will be kicked in " .. os.date("%M minutes %S seconds",v.afk - os.time()) .. " for being afk.  If you move, talk or do things you will not be kicked.[-]")
 			end
 		end
@@ -174,7 +166,7 @@ function everyMinute()
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	for k, v in pairs(zombiePlayers) do
-		dbug("Removing zombie player " .. players[k].name .. "\n")
+		if debug then dbug("Removing zombie player " .. players[k].name .. "\n") end
 		igplayers[k] = nil
 	end
 
@@ -289,6 +281,10 @@ function everyMinute()
 			botman.resendGG = false
 		end
 
+		if type(modVersions) ~= "table" then
+			modVersions = {}
+		end
+
 		if botman.resendVersion or tablelength(modVersions) == 0 or not server.allocs then
 			sendCommand("version")
 			botman.resendVersion = false
@@ -304,6 +300,12 @@ function oneMinuteTimer()
 
 	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
 	debug = false
+
+	if botman.APICheckTimestamp then
+		if (os.time() - botman.APICheckTimestamp) > 180 and not botman.APICheckPassed and server.allowBotRestarts then
+			restartBot()
+		end
+	end
 
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
@@ -333,6 +335,14 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 
 	if botman.botDisabled or botman.botOffline or server.lagged then
 		return
+	end
+
+	if server.useAllocsWebAPI and not botman.APIOffline then
+		sendCommand("APICheck")
+	end
+
+	if tonumber(botman.playersOnline) ~= 0 then
+		sendCommand("gt")
 	end
 
 	if customOneMinuteTimer ~= nil then
@@ -382,10 +392,13 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 			end
 		end
 	else
-		sendCommand("mem")
+--		sendCommand("mem")
 	end
 
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+	-- build list of players that are online for the panel
+	panelWho()
 
 	-- check for timed events due to run
 	runTimedEvents()

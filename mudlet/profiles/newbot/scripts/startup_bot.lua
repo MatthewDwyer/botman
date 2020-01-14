@@ -11,9 +11,6 @@ debugger = require "debug"
 mysql = require "luasql.mysql"
 local debug
 
--- record start and end execution times of code and report it.  At the moment I'm sending the timing info to the bot's lists window.
-benchmarkBot = false
-
 
 function dbugi(text)
 	-- send text to the special debug irc channel
@@ -30,6 +27,10 @@ function dbug(text)
 		return
 	end
 
+	if not server.enableWindowMessages then
+		server.enableWindowMessages = true
+	end
+
 	if server.windowLists then
 		windowMessage(server.windowLists, text .. "\n")
 	end
@@ -37,8 +38,6 @@ end
 
 
 function checkData()
-	local benchStart = os.clock()
-
 	if botman.botDisabled or botman.botOffline then
 		return
 	end
@@ -52,8 +51,9 @@ function checkData()
 	sendCommand("version")
 	sendCommand("gt")
 
-	if server.botsIP == nil then
-		getBotsIP()
+	if server.botman then
+		sendCommand("bm-uptime")
+		sendCommand("bm-resetregions list")
 	end
 
 	if tablelength(shopCategories) == 0 then
@@ -74,30 +74,23 @@ function checkData()
 	if tablelength(owners) == 0 then
 		sendCommand("admin list")
 	end
-
-	if benchmarkBot then
-		dbug("function checkData elapsed time: " .. string.format("%.2f", os.clock() - benchStart))
-	end
 end
 
 
 function getServerData(getAllPlayers)
-	local benchStart = os.clock()
-
 	if botman.botDisabled or botman.botOffline then
 		return
 	end
 
-	reloadBot(getAllPlayers)
-
-	if benchmarkBot then
-		dbug("function getServerData elapsed time: " .. string.format("%.2f", os.clock() - benchStart))
+	if getAllPlayers then
+		reloadBot(getAllPlayers)
+	else
+		reloadBot()
 	end
 end
 
 
 function login()
-	local benchStart = os.clock()
 	local getAllPlayers = false
 	local randomChannel, r
 
@@ -115,6 +108,20 @@ function login()
 		botman.botOffline = true
 		botman.APIOffline = true
 		botman.telnetOffline = true
+		botman.playersOnline = 0
+		botman.botConnectedTimestamp = os.time()
+		botman.botOfflineCount = 0
+		botman.telnetOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
+		botman.lastTelnetResponseTimestamp = os.time()
+		botman.serverRebooting = false
+		botman.scheduledRestartPaused = false
+		botman.scheduledRestartForced = false
+		botman.scheduledRestart = false
+		botman.scheduledRestartTimestamp = os.time()
+		botman.lastBlockCommandOwner =	0
+		botman.initReservedSlots = true
+		botman.webdavFolderWriteable = true
 	end
 
 	tempTimer( 40, [[checkData()]] )
@@ -133,21 +140,7 @@ function login()
 		server.ircAlerts = randomChannel .. "_alerts"
 		server.ircWatch = randomChannel .. "_watch"
 		server.ircPort = 6667
-
-		botman.scheduledRestartPaused = false
-		botman.scheduledRestartForced = false
-		botman.scheduledRestart = false
-		botman.scheduledRestartTimestamp = os.time()
-		botman.lastBlockCommandOwner =	0
-		botman.initReservedSlots = true
-		botman.webdavFolderWriteable = true
 		server.lagged = false
-		botman.botConnectedTimestamp = os.time()
-		botman.botOfflineCount = 0
-		botman.telnetOfflineCount = 0
-		botman.lastServerResponseTimestamp = os.time()
-		botman.lastTelnetResponseTimestamp = os.time()
-		botman.serverRebooting = false
 	end
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -167,6 +160,16 @@ function login()
 	if botman.sysDisconnectionID == nil then
 		botman.sysDisconnectionID = registerAnonymousEventHandler("sysDisconnectionEvent", "onSysDisconnection")
 		botman.sysDisconnectionID = 0
+	end
+
+	if botman.sysDownloadDoneID == nil then
+		botman.sysDownloadDoneID = registerAnonymousEventHandler("sysDownloadDone", "downloadHandler")
+		botman.sysDownloadDoneID = 0
+	end
+
+	if botman.sysDownloadErrorID == nil then
+		botman.sysDownloadErrorID = registerAnonymousEventHandler("sysDownloadError", "failDownload")
+		botman.sysDownloadErrorID = 0
 	end
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -328,8 +331,7 @@ function login()
 		toggleTriggers("api offline")
 
 		if server.useAllocsWebAPI then
-			botman.APITestSilent = true
-			startUsingAllocsWebAPI()
+			tempTimer( 5, [[connectToAPI()]] )
 		end
 	else
 		toggleTriggers("api online")
@@ -340,11 +342,5 @@ function login()
 		toggleTriggers("api offline")
 	end
 
-	sendCommand("gt")
-
 	if debug then display("debug login end\n") end
-
-	if benchmarkBot then
-		dbug("function login elapsed time: " .. string.format("%.2f", os.clock() - benchStart))
-	end
 end

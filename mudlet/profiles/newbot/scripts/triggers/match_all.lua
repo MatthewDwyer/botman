@@ -77,13 +77,13 @@ function matchAll(line, logDate, logTime)
 	local pname, pid, number, died, coords, words, temp, msg, claimRemoved
 	local dy, mth, yr, hr, min, sec, pm, reason, timestamp, banDate
 	local fields, values, x, y, z, id, loc, reset, steam, k, v, rows, tmp
-	local pref, value, isChat
+	local pref, value, isChat, cmd
 
 	if botman.debugAll then
 		debug = true
 	end
 
-if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	-- set counter to help detect the bot going offline
 	botman.botOfflineCount = 0
@@ -113,10 +113,6 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	end
 
 	if string.find(line, "SleeperVolume") then -- ignore lines containing this.
-		if botman.getMetrics then
-			metrics.errors = metrics.errors + 1
-		end
-
 		if not debug then
 			deleteLine()
 		end
@@ -168,16 +164,13 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 	if string.find(line, "WRN Invalid Admintoken used from") and string.find(line, server.botsIP) then
 		if server.useAllocsWebAPI and not botman.APITestSilent then
-			server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
-			conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
-			os.remove(homedir .. "/temp/apitest.txt")
 			server.useAllocsWebAPI = true
 			botman.APIOffline = false
 			botman.APITestSilent = true
 			toggleTriggers("api offline")
 		end
 
-		send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+		send("webtokens list")
 		return
 	end
 
@@ -222,7 +215,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		return
 	end
 
-if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	if string.find(line, "Chat") or string.find(line, "BCM") then
 		isChat = true
@@ -235,12 +228,12 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 	end
 
-if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
-	if string.find(line, "Web user with name=bot", nil, true) then
-		startUsingAllocsWebAPI()
-		return
-	end
+	-- if string.find(line, "Web user with name=bot", nil, true) then
+		-- startUsingAllocsWebAPI()
+		-- return
+	-- end
 
 
 	if string.find(line, "*** ERROR: unknown command 'webtokens'") then -- revert to using telnet
@@ -274,30 +267,12 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 	end
 
-	-- -- fix deathloop
-	-- if server.coppi and (tonumber(server.coppiVersion) > 4.4 or server.coppiRelease == "Mod Coppis command additions Light") then
-		-- if string.find(line, "Spawned entity with wrong pos") then
-			-- if string.find(line, "type=EntityPlayer") then
-				-- temp = string.split(line, ",")
-
-				-- pname = string.sub(temp[2], string.find(temp[2], "=") + 1)
-				-- pid = LookupPlayer(string.trim(pname))
-
-				-- if pid ~= 0 then
-					-- sendCommand("fdl " .. pid)
-
-					-- irc_chat(server.ircAlerts, "Fixed death loop for player " ..  igplayers[pid].name)
-				-- end
-			-- end
-		-- end
-	-- end
-
 	if string.find(line, "WRN ") then
 		deleteLine()
 		return
 	end
 
-if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	-- grab the server time
 	if string.find(line, "INF ") and (not server.useAllocsWebAPI or server.readLogUsingTelnet) then
@@ -316,13 +291,33 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 	end
 
-if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	if (string.sub(line, 1, 4) == os.date("%Y")) then
 		if botman.readGG then
 			botman.readGG = false
 
 			if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('GamePrefs','panel','" .. escape(yajl.to_string(GamePrefs)) .. "')") end
+		end
+
+		if readWebTokens then
+			readWebTokens = nil
+
+			if not botTokenFound then
+				botTokenFound = nil
+
+				if server.useAllocsWebAPI then
+					server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+					conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "'")
+					os.remove(homedir .. "/temp/apitest.txt")
+					botman.APIOffline = false
+					botman.APITestSilent = true
+					toggleTriggers("api offline")
+					send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+					botman.lastBotCommand = "webtokens add bot"
+				end
+				return
+			end
 		end
 	end
 
@@ -333,6 +328,10 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 				echoConsoleTo = nil
 			end
 
+			readWebTokens = nil
+			botTokenFound = nil
+			botman.listItems = false
+
 			if getZombies then
 				getZombies = nil
 
@@ -341,12 +340,6 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 				if botman.dbConnected then conn:execute("DELETE FROM otherEntities WHERE remove = 1") end
 				loadOtherEntities()
-
-				if botman.dbConnected then
-					cursor,errorString = conn:execute("SELECT MAX(entityID) AS maxZeds FROM gimmeZombies")
-					row = cursor:fetch({}, "a")
-					botman.maxGimmeZombies = tonumber(row.maxZeds)
-				end
 			end
 
 			if collectBans then
@@ -365,6 +358,8 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 					botMaintenance.modsInstalled = false
 				end
 
+				if botman.dbConnected then conn:execute("DELETE FROM webInterfaceJSON WHERE ident = 'modVersions'") end
+				if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('modVersions','panel','" .. escape(yajl.to_string(modVersions)) .. "')") end
 				saveBotMaintenance()
 			end
 		end
@@ -465,7 +460,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	end
 
 
-	if string.find(line, "GamePref.") then
+	if string.find(line, "GamePref.", nil, true) then
 		if not botman.readGG then
 			GamePrefs = {}
 		end
@@ -495,7 +490,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 	end
 
-if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	-- look for general stuff
 	died = false
@@ -511,7 +506,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		died = true
 	end
 
-if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 
 	if (string.find(line, "GMSG: Player") and string.find(line, " died")) then
@@ -550,7 +545,11 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 			irc_chat(server.ircAlerts, "Player " .. pid .. " name: " .. pname .. "'s death recorded at " .. igplayers[pid].deadX .. " " .. igplayers[pid].deadY .. " " .. igplayers[pid].deadZ)
 
 			if tonumber(server.packCooldown) > 0 then
-				players[pid].packCooldown = os.time() + server.packCooldown
+				if players[pid].donor then
+					players[pid].packCooldown = os.time() + math.floor(server.packCooldown / 2)
+				else
+					players[pid].packCooldown = os.time() + server.packCooldown
+				end
 			end
 
 			-- nuke their gimme queue of zeds
@@ -564,7 +563,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		return
 	end
 
-if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	if string.find(line, "INF BloodMoon starting") and not isChat then
 		server.delayReboot = true
@@ -602,6 +601,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		return
 	end
 
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	if not server.useAllocsWebAPI then
 		if getAdminList then
@@ -740,9 +740,13 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 
 
-		if botman.listItems and playerListItems == nil then
+		if botman.listItems then
 			if string.find(line, " matching items.") then
 				botman.listItems = false
+
+				if not server.useAllocsWebAPI then
+					send("pm bot_RemoveInvalidItems \"Test\"")
+				end
 			else
 				if botman.dbConnected then
 					temp = string.trim(line)
@@ -752,75 +756,79 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 
 
-		if string.find(line, "Executing command 'version") or string.find(line, "Game version:", nil, true) and string.find(line, server.botsIP) then
+		if string.find(line, "Executing command 'version") or string.find(line, "Game version:", nil, true) then
 			readVersion = true
 			resetVersion = true
 		end
 
 
 		if echoConsoleTo ~= nil then
-			if string.find(line, "Executing command 'webpermission list") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'webpermission list") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'lpf") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'bm-listplayerfriends") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'lpb") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'bm-listplayerbed") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'lps") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'lps") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'SystemInfo") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'SystemInfo") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'traderlist") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'traderlist") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'help") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'help") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'version") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'version") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'le'") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'li ") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'li ") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'se'") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'se'") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'si ") and string.find(line, server.botsIP) and string.find(line, echoConsoleTrigger) then
+			if string.find(line, "Executing command 'si ") and string.find(line, echoConsoleTrigger) then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'gg'") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'gg'") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'ggs'") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'ggs'") then
 				echoConsole = true
 			end
 
-			if string.find(line, "Executing command 'llp") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'llp") then
 				echoConsole = true
 				conn:execute("DELETE FROM keystones WHERE x = 0 AND y = 0 AND z = 0")
 			end
 
-			if string.find(line, "Executing command 'ban list'") and string.find(line, server.botsIP) then
+			if string.find(line, "Executing command 'ban list'") then
+				echoConsole = true
+			end
+
+			if string.find(line, "Executing command 'admin list'") then
 				echoConsole = true
 			end
 		end
@@ -1011,6 +1019,8 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 	end
 
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
 	if not server.useAllocsWebAPI then
 		if string.find(line, "Executing command 'le'") and string.find(line, server.botsIP) then
 			if string.find(line, server.botsIP) then
@@ -1023,17 +1033,8 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 
 
-		if string.find(line, "Executing command 'li ") and string.find(line, server.botsIP) then
-			if string.find(line, server.botsIP) and playerListItems == nil then
-				botman.listItems = true
-			end
-
-			return
-		end
-
-
-		if string.find(line, "Executing command 'admin list'") and string.find(line, server.botsIP) then
-			flagAdminsForRemoval()
+		if string.find(line, "Executing command 'li ") then
+			botman.listItems = true
 
 			return
 		end
@@ -1049,6 +1050,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 		-- update owners, admins and mods
 		if string.find(line, "Level: SteamID (Player name if online)", nil, true) then
+			flagAdminsForRemoval()
 			getAdminList = true
 			staffList = {}
 
@@ -1056,12 +1058,22 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 	end
 
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
+	if botman.readGG and not string.find(line, "GamePref.", nil, true) then
+		botman.readGG = false
+	end
 
 	if botman.readGG then
 		number = tonumber(string.match(line, " (%d+)"))
 
 		temp = string.split(line, " = ")
 		pref = string.sub(temp[1], 10)
+
+		if not temp[2] then
+			return
+		end
+
 		value = string.sub(line, string.find(line, " = ") + 3)
 		GamePrefs[pref] = value
 
@@ -1256,11 +1268,15 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 			return
 		end
 
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
 		if (string.find(line, "GameName =")) then
 			server.GameName = string.trim(string.sub(line, 20))
 
 			return
 		end
+
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 		if (string.find(line, "ServerMaxPlayerCount =")) then
 			number = tonumber(string.match(line, " (%d+)"))
@@ -1285,6 +1301,8 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 			return
 		end
 
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
 		if (string.find(line, "MaxSpawnedZombies =")) then
 			server.MaxSpawnedZombies = number
 			-- If we detect this line it means we are receiving data from the server so we set a flag to let us know elsewhere that we got server data ok.
@@ -1294,6 +1312,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 	end
 
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	if string.sub(line, 1, 4) == "Mod " then
 		if resetVersion and not server.useAllocsWebAPI then
@@ -1322,20 +1341,6 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	if string.find(line, "Mod CSMM Patrons") then
 		server.coppi = true
 		server.csmm = true
-
-		temp = string.split(line, ":")
-		server.coppiRelease = temp[1]
-		server.coppiVersion = tonumber(temp[2])
-
-		return
-	end
-
-
-	-- detect Coppi's Mod
-	if string.find(line, "Mod Coppis command additions") then
-		server.coppi = true
-
-
 		temp = string.split(line, ":")
 		server.coppiRelease = temp[1]
 		server.coppiVersion = tonumber(temp[2])
@@ -1399,7 +1404,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		return
 	end
 
-	if string.find(line, "ERROR: unknown command 'pug'") then
+	if string.find(line, "ERROR: unknown command 'bm-playerunderground'") then
 		server.scanNoclip = false
 
 		if not debug then
@@ -1480,6 +1485,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		end
 	end
 
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	if server.coppi then
 		-- player bed
@@ -1518,7 +1524,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 
 	-- check for lag
-	if string.find(line, "pm LagCheck ") and string.find(line, server.botsIP) then
+	if string.find(line, "pm LagCheck ") then
 		temp = string.split(line, "'")
 		timestamp = tonumber(string.match(temp[2], " (%d+)"))
 
@@ -1540,10 +1546,6 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 	if string.find(line, "Playername or entity ID not found.") then
 		deleteLine()
-
-		if not debug then
-			deleteLine()
-		end
 
 		return
 	end
@@ -1581,16 +1583,30 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	end
 
 
-	if string.find(line, "Server shutting down!") and not string.find(line, "Chat") then
+	if string.find(line, "Server stopped") and not string.find(line, "Chat") then
 		irc_chat(server.ircMain, "The server has shut down.")
 		botman.telnetOffline = true
 		botman.APIOffline = true
 		toggleTriggers("api offline")
 		botman.botOffline = true
+		botman.playersOnline = 0
+		server.uptime = 0
 
 		return
 	end
 
+
+	if string.find(line, "INF StartGame done") and not string.find(line, "Chat") then
+		botman.worldGenerating = nil
+		botman.APIOffline = false
+		toggleTriggers("api offline")
+		botman.playersOnline = 0
+		server.uptime = 0
+
+		return
+	end
+
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	if string.find(line, "INF Loading permissions file done") then
 		if not string.find(botman.lastBotCommand, "webtokens") then
@@ -1638,12 +1654,69 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	end
 
 
-	if string.find(line, "INF Started Webserver") then
-		if tonumber(server.webPanelPort) == 0 then
-			temp = string.sub(line, string.find(line, " on ") + 4)
-			temp = tonumber(temp) - 2
-			server.webPanelPort = temp
+	if getuptime then
+		getuptime = nil
+		temp = string.split(line, ":")
 
+		tmp  = tonumber(string.match(temp[1], "(%d+)"))
+		server.uptime = tmp * 60 * 60
+
+		tmp  = tonumber(string.match(temp[2], "(%d+)"))
+		server.uptime = server.uptime + tmp
+
+		botman.lastUptimeRead = os.time()
+		return
+	end
+
+
+	if string.find(line, "INF Executing command 'bm-uptime'")  then
+		getuptime = true
+		return
+	end
+
+
+	if string.find(line, "BotStartupCheck")  then
+		if string.find(line, "by Telnet from ") then
+			temp = string.sub(line, string.find(line, "by Telnet from ") + 15)
+			temp = string.split(temp, ":")
+			server.botsIP = temp[1]
+
+			conn:execute("UPDATE server SET botsIP = '" .. server.botsIP .. "'")
+			return
+		end
+	end
+
+
+	if string.find(line, "INF StartGame done") then
+		send("gt")
+		tempTimer( 2, [[sendCommand("admin list")]] )
+		tempTimer( 5, [[sendCommand("version")]] )
+		tempTimer( 10, [[sendCommand("gg")]] )
+
+		if server.botman then
+			cmd = "bm-change botname [" .. server.botNameColour .. "]" .. server.botName
+			tempTimer( 10, [[sendCommand("]] .. cmd .. [[")]] )
+		end
+	end
+
+
+	if string.find(line, "Server IP:") and not string.find(line, "Chat") then
+		if server.IP == "0.0.0.0" then
+			temp = string.split(line, ": ")
+			server.IP = string.trim(temp[2])
+			conn:execute("UPDATE server SET IP = '" .. server.IP .. "'")
+		end
+	end
+
+
+	if string.find(line, "INF Started Webserver") then
+		botman.worldGenerating = nil
+		temp = string.sub(line, string.find(line, " on ") + 4)
+		temp = tonumber(temp) - 2
+		server.webPanelPort = temp
+		conn:execute("UPDATE server set webPanelPort = " .. server.webPanelPort)
+
+		if tonumber(server.webPanelPort) == 0 then
 			if not server.useAllocsWebAPI then
 				server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
 				conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
@@ -1654,6 +1727,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 				botman.APITestSilent = true
 				toggleTriggers("api offline")
 				send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+				botman.lastBotCommand = "webtokens add bot"
 			else
 				botman.APIOffline = false
 				botman.APITestSilent = true
@@ -1663,14 +1737,56 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 	end
 
 
-	if string.find(line, "INF StartGame done") then
-		tempTimer( 10, [[sendCommand("version")]] )
-		tempTimer( 15, [[sendCommand("admin list")]] )
-		tempTimer( 20, [[sendCommand("gg")]] )
+	if string.find(line, "INF VisitMap") then
+		temp = string.sub(line, string.find(line, "INF") + 4)
+		irc_chat(server.ircMain, temp)
+		return
+	end
 
-		if server.botman then
-			sendCommand("bm-change botname [" .. server.botNameColour .. "]" .. server.botName)
+
+	if string.find(line, "INF WorldGenerator:Generating", nil, true) then
+		if not botman.worldGenerating then
+			botman.worldGenerating = true
+			irc_chat(server.ircMain, "The bot is temporarily paused while the world is being generated.  If it is still paused by the time you can join the server type " .. server.commandPrefix .. "unpause bot")
 		end
+	end
+
+
+	if botman.worldGenerating then
+		temp = string.sub(line, string.find(line, "INF") + 4)
+		irc_chat(server.ircMain, temp)
+	end
+
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
+	if readWebTokens and not string.find(line, "Defined") then
+		if string.find(line, " bot ") then
+			readWebTokens = nil
+			botTokenFound = nil
+			server.useAllocsWebAPI = true
+			server.allocsWebAPIUser = "bot"
+			server.allocsWebAPIPassword = string.sub(line, string.find(line, " / ") + 3)
+			conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+	end
+
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
+	if string.find(line, "webtokens list", nil, true) then
+		botTokenFound = false
+		readWebTokens = true
+	end
+
+--if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
+	if string.find(line, "webtokens add bot")  then
+		server.useAllocsWebAPI = true
+		server.allocsWebAPIUser = "bot"
+		conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+		botman.APIOffline = false
+		toggleTriggers("api online")
 	end
 end
 

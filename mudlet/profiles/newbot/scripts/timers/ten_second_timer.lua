@@ -57,7 +57,7 @@ function TenSecondTimer()
 
 			if (server.scanZombies or server.scanEntities) then
 				if server.useAllocsWebAPI then
-					sendCommand("gethostilelocation", "gethostilelocation?", "hostiles.txt")
+					sendCommand("gethostilelocation")
 				end
 			end
 		end

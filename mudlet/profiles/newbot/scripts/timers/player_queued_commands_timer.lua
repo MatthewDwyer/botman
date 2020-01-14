@@ -94,5 +94,10 @@ function playerQueuedCommands()
 
 		-- we can probably remove this line but just incase none of the tests above delete it, we'll try to delete the row here too.
 		conn:execute("delete from playerQueue where id = " .. row.id)
+	else
+		-- if the arena game fails to stop when the table is empty, stop the arena game
+		if botman.gimmeHell == 1 then
+			botman.gimmeHell = 0
+		end
 	end
 end

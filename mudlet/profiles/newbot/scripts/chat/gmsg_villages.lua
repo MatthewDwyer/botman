@@ -797,7 +797,7 @@ function gmsg_villages()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - village commands ====")
-		dbug("Registering help - village commands")
+		if debug then dbug("Registering help - village commands") end
 
 		tmp = {}
 		tmp.topicDescription = "Villages work like protected bases except that they can have many players (villagers) and a mayor.\n"
@@ -940,7 +940,7 @@ function gmsg_villages()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Village commands help registered ****")
-		dbug("Village commands help registered")
+		if debug then dbug("Village commands help registered") end
 		topicID = topicID + 1
 	end
 

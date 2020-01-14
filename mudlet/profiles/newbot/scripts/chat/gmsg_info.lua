@@ -420,10 +420,11 @@ function gmsg_info()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A full day runs " .. server.DayNightLength .. " minutes[-]")
 
 				-- drop on death
-				if (server.DropOnDeath == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop everything on death[-]") end
-				if (server.DropOnDeath == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop toolbelt on death[-]") end
-				if (server.DropOnDeath == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop backpack on death[-]") end
-				if (server.DropOnDeath == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You permanently lose everything on death[-]") end
+				if (server.DropOnDeath == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop nothing on death[-]") end
+				if (server.DropOnDeath == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop everything on death[-]") end
+				if (server.DropOnDeath == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop toolbelt on death[-]") end
+				if (server.DropOnDeath == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop backpack on death[-]") end
+				if (server.DropOnDeath == 4) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You permanently lose everything on death[-]") end
 
 				-- drop on quit
 				if (server.DropOnQuit == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You keep everything on quit[-]") end
@@ -485,7 +486,7 @@ function gmsg_info()
 				-- end
 
 				if server.idleKick then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]When the server is full, idle players are kicked after 15 minutes.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]When the server is full, idle players are kicked after " .. server.idleKickTimer .. " seconds.[-]")
 				end
 			else
 				-- Server name
@@ -1726,7 +1727,7 @@ function gmsg_info()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - info commands ====")
-		dbug("Registering help - info commands")
+		if debug then dbug("Registering help - info commands") end
 
 		tmp = {}
 		tmp.topicDescription = "Info commands show players information about specific things such as rules, when the next horde night is, etc."
@@ -1988,7 +1989,7 @@ function gmsg_info()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Info commands help registered ****")
-		dbug("Info commands help registered")
+		if debug then dbug("Info commands help registered") end
 		topicID = topicID + 1
 	end
 

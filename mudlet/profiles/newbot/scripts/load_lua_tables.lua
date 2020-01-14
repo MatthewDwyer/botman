@@ -12,7 +12,7 @@ debug = false -- should be false unless testing
 
 
 function loadBadItems()
-	local cursor, errorString, row
+	local cursor, errorString, row, k, v
 
 	--debug = false
 	calledFunction = "badItems"
@@ -189,7 +189,7 @@ end
 
 
 function loadGimmeZombies()
-	local cursor, errorString, row, idx, max, k, v, n, m
+	local cursor, errorString, row, rows, idx, k, v, n, m, strIdx
 
 	--debug = false
 	calledFunction = "gimmeZombies"
@@ -199,49 +199,38 @@ function loadGimmeZombies()
 	getTableFields("gimmeZombies")
 
 	gimmeZombies = {}
-	max = 0
+
 	cursor,errorString = conn:execute("select * from gimmeZombies")
+	rows = tonumber(cursor:numrows())
 	row = cursor:fetch({}, "a")
+
+	botman.maxGimmeZombies = tonumber(rows)
 
 	if row then
 		cols = cursor:getcolnames()
 	end
 
+	idx = 0
+
 	while row do
-		if tonumber(row.entityID) > max then
-			max = tonumber(row.entityID)
-		end
-
-		idx = row.entityID
-		gimmeZombies[idx] = {}
-
-		for k,v in pairs(cols) do
-			for n,m in pairs(row) do
-				if n == _G["gimmeZombiesFields"][v].field then
-					if _G["gimmeZombiesFields"][v].type == "var" or _G["gimmeZombiesFields"][v].type == "big" then
-						gimmeZombies[idx][n] = m
-					end
-
-					if _G["gimmeZombiesFields"][v].type == "int" then
-						gimmeZombies[idx][n] = tonumber(m)
-					end
-
-					if _G["gimmeZombiesFields"][v].type == "tin" then
-						gimmeZombies[idx][n] = dbTrue(m)
-					end
-				end
-			end
-		end
+		idx = idx + 1
+		strIdx = tostring(idx)
+		gimmeZombies[strIdx] = {}
+		gimmeZombies[strIdx].entityID = row.entityID
+		gimmeZombies[strIdx].zombie = row.zombie
+		gimmeZombies[strIdx].minPlayerLevel = row.minPlayerLevel
+		gimmeZombies[strIdx].minArenaLevel = row.minArenaLevel
+		gimmeZombies[strIdx].bossZombie = dbTrue(row.bossZombie)
+		gimmeZombies[strIdx].doNotSpawn = dbTrue(row.doNotSpawn)
+		gimmeZombies[strIdx].maxHealth = row.maxHealth
+		gimmeZombies[strIdx].remove = dbTrue(row.remove)
 
 		row = cursor:fetch(row, "a")
 	end
 
-	botman.maxGimmeZombies = max
-
 	for k,v in pairs(gimmeZombies) do
-		if string.find(v.zombie, "Radiated") then
+		if string.find(v.zombie, "Radiated") or string.find(v.zombie, "Feral") then
 			v.bossZombie = true
-			v.doNotSpawn = false
 		end
 	end
 
@@ -428,6 +417,25 @@ function loadLocations(loc)
 end
 
 
+function loadModBotman()
+	local cursor, errorString, row
+	-- load modBotman
+
+	getTableFields("modBotman")
+
+    modBotman = {}
+	cursor,errorString = conn:execute("select * from modBotman")
+	row = cursor:fetch({}, "a")
+
+	if row then
+		modBotman.clanEnabled = row.clanEnabled
+		modBotman.clanMaxClans = row.clanMaxClans
+		modBotman.clanMaxPlayers = row.clanMaxPlayers
+		modBotman.clanMinLevel = row.clanMinLevel
+	end
+end
+
+
 function loadOtherEntities()
 	local idx
 	local cursor, errorString, row
@@ -464,7 +472,7 @@ function loadPlayers(steam)
 	-- load players table)
 	getPlayerFields()
 
-	if steam == nil then
+	if not steam then
 		players = {}
 		cursor,errorString = conn:execute("select * from players")
 	else
@@ -494,21 +502,6 @@ function loadPlayers(steam)
 
 				if v.type == "tin" then
 					players[row.steam][k] = dbTrue(row[k])
-				end
-			end
-
-			if tonumber(row.accessLevel) < 3 then
-				-- add the steamid to the admins table
-				if tonumber(row.accessLevel) == 0 then
-					owners[players[row.steam].steam] = {}
-				end
-
-				if tonumber(row.accessLevel) == 1 then
-					admins[players[row.steam].steam] = {}
-				end
-
-				if tonumber(row.accessLevel) == 2 then
-					mods[players[row.steam].steam] = {}
 				end
 			end
 		end
@@ -644,7 +637,7 @@ end
 
 
 function loadRestrictedItems()
-	local cursor, errorString, row
+	local cursor, errorString, row, k, v
 
 	--debug = false
 	calledFunction = "restrictedItems"
@@ -688,7 +681,7 @@ end
 
 
 function loadServer()
-	local temp, cursor, errorString, row, rows
+	local temp, cursor, errorString, row, rows, k, v
 
 --	debug = false
 	calledFunction = "loadServer"
@@ -810,6 +803,15 @@ function loadServer()
 		end
 	end
 
+-- somehow these irc reconnects are crashing the bot if the code is reloaded.  the bot connects to irc without them anyway it seems.
+	-- if restartIrc ~= nil then
+		-- restartIrc()
+	-- end
+
+	-- if ircReconnect ~= nil then
+		-- ircReconnect()
+	-- end
+
 	whitelistedCountries = {}
 	temp = string.split(row.whitelistCountries, ",")
 
@@ -830,7 +832,47 @@ function loadServer()
 		server.uptime = 0
 	end
 
+	if telnetPort then
+		if server.telnetPort == 0 then
+			server.telnetPort = telnetPort
+		end
+	end
+
 	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	-- stuff to do after loading the server table when applicable
+
+	-- set everyone's chat colour
+	for k,v in pairs(igplayers) do
+		setChatColour(k, players[k].accessLevel)
+	end
+
+	-- if using botman mod
+	if server.botman then
+		-- set the colour of the bot's name
+		sendCommand("bm-change botname [" .. server.botNameColour .. "]" .. server.botName)
+
+		-- update the command prefix
+		sendCommand("bm-chatcommands prefix " .. server.commandPrefix)
+
+		if server.commandPrefix == "" then
+			sendCommand("bm-chatcommands hide false")
+		end
+
+		return
+	end
+
+	-- if using BC mod
+	if server.stompy then
+		-- update the command prefix
+		sendCommand("bc-chatprefix " .. prefix)
+
+		if server.commandPrefix == "" then
+			sendCommand("bc-chatprefix \"\"")
+		end
+
+		return
+	end
 end
 
 
@@ -860,6 +902,39 @@ function loadShopCategories()
 end
 
 
+function loadStaff()
+	local cursor, errorString, row, adminLevel
+	-- load staff
+
+	getTableFields("staff")
+
+    staffList = {}
+	cursor,errorString = conn:execute("select * from staff")
+	row = cursor:fetch({}, "a")
+
+	while row do
+		adminLevel = tonumber(row.adminLevel)
+
+		staffList[row.steam] = {}
+		staffList[row.steam].adminLevel = row.adminLevel
+
+		if adminLevel == 0 then
+			owners[row.steam] = {}
+		end
+
+		if adminLevel == 1 then
+			admins[row.steam] = {}
+		end
+
+		if adminLevel == 2 then
+			mods[row.steam] = {}
+		end
+
+		row = cursor:fetch(row, "a")
+	end
+end
+
+
 function loadTables(skipPlayers)
 	if (debug) then display("debug loadTables\n") end
 
@@ -875,6 +950,9 @@ function loadTables(skipPlayers)
 		loadPlayers()
 		if (debug) then display("debug loaded players\n") end
 	end
+
+	loadStaff()
+	if (debug) then display("debug loaded staff list\n") end
 
 	loadResetZones()
 	if (debug) then display("debug loaded reset zones\n") end
@@ -941,6 +1019,9 @@ function loadTables(skipPlayers)
 	loadDonors()
 	if (debug) then display("debug loaded donors\n") end
 
+	loadModBotman()
+	if (debug) then display("debug loaded modBotman\n") end
+
 	loadBotMaintenance()
 
 	migrateDonors() -- if the donors table is empty, try to populate it from donors in the players table.
@@ -950,7 +1031,7 @@ end
 
 
 function loadTeleports(tp)
-	local cursor, errorString, row
+	local cursor, errorString, row, k, v
 
 --	debug = false
 	calledFunction = "teleports"

@@ -1032,7 +1032,7 @@ function gmsg_bot()
 
 
 	local function cmd_RestoreBackup()
-		local cursor, errorString, row, onlyImportThis
+		local cursor, errorString, row, onlyImportThis, pos
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1097,6 +1097,11 @@ function gmsg_bot()
 
 			if string.find(chatvars.command, " donor") then
 				onlyImportThis = onlyImportThis .. "donors"
+			end
+
+			if string.find(chatvars.command, " player") then
+				pos = string.find(chatvars.command, " player ") + 8
+				onlyImportThis = onlyImportThis .. " player " .. string.sub(chatvars.command, pos)
 			end
 
 			if chatvars.number then
@@ -1769,7 +1774,11 @@ function gmsg_bot()
 					irc_chat(server.ircMain, "Ingame bot commands must now start with a " .. tmp.prefix)
 				end
 
-				hidePlayerChat(tmp.prefix)
+				if server.botman then
+					sendCommand("bm-chatcommands prefix " .. server.commandPrefix)
+				else
+					hidePlayerChat(tmp.prefix)
+				end
 			else
 				server.commandPrefix = ""
 				conn:execute("UPDATE server SET commandPrefix = ''")
@@ -2970,11 +2979,11 @@ function gmsg_bot()
 					irc_chat(chatvars.ircAlias, "The bot is now using telnet.")
 				end
 			else
-				if tonumber(server.allocsMap) < 26 then
+				if not server.allocs then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This feature requires Allocs MapRendering and Webinterface version 26.  Your version is " .. server.allocsMap .. ".  Please update your copy of Alloc's mod.[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This feature requires Allocs mod.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "This feature requires Allocs MapRendering and Webinterface version 26.  Your version is " .. server.allocsMap .. ".  Please update your copy of Alloc's mod.")
+						irc_chat(chatvars.ircAlias, "This feature requires Allocs mod.  You can grab it at https://7dtd.illy.bz/wiki/Server%20fixes#Download")
 					end
 
 					botman.faultyChat = false
@@ -2983,9 +2992,9 @@ function gmsg_bot()
 
 				if tonumber(server.webPanelPort) == 0 then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You must first set the web panel port. This is normally port 8080 but yours may be different.  To set it type {#}set web panel port {the port number}[-]")
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You must first set the web panel port. This is normally port 8080 but yours may be different.  To set it type {#}set web panel port {the port number} or just restart the server.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "You must first set the web panel port. This is normally port 8080 but yours may be different.  To set it type {#}set web panel port {the port number}")
+						irc_chat(chatvars.ircAlias, "You must first set the web panel port. This is normally port 8080 but yours may be different.  To set it type {#}set web panel port {the port number} or just restart the server.")
 					end
 
 					botman.faultyChat = false
@@ -3000,13 +3009,11 @@ function gmsg_bot()
 				end
 
 				server.useAllocsWebAPI = true
-
-				if server.allocsWebAPIPassword == "" then
-					server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
-				end
-
+				server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
 				conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
 				send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+				botman.APIOffline = false
+				toggleTriggers("api online")
 			end
 
 			botman.faultyChat = false
@@ -3067,7 +3074,7 @@ function gmsg_bot()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - bot commands ====")
-		dbug("Registering help - bot commands")
+		if debug then dbug("Registering help - bot commands") end
 
 		tmp = {}
 		tmp.topicDescription = "Bot commands in this section as commands that alter settings relating to the bot itself."
@@ -3538,7 +3545,7 @@ function gmsg_bot()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Bot commands help registered ****")
-		dbug("Bot commands help registered")
+		if debug then dbug("Bot commands help registered") end
 		topicID = topicID + 1
 	end
 

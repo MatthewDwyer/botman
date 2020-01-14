@@ -455,11 +455,19 @@ function gmsg_base()
 		end
 
 		if (chatvars.words[1] == "protect" or chatvars.words[1] == "protect2") and chatvars.words[2] ~= "village" and chatvars.words[2] ~= "location" then
-			if server.disableBaseProtection or pvpZone(chatvars.intX, chatvars.intZ) then
+			if server.disableBaseProtection then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base protection is disabled on this server.  Use claim blocks instead.[-]")
 				botman.faultyChat = false
 				return true
 			end
+
+			if pvpZone(chatvars.intX, chatvars.intZ) and not server.pvpAllowProtect then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base protection is disabled on this server.  Use claim blocks instead.[-]")
+				botman.faultyChat = false
+				return true
+			end
+
+
 
 			-- allow base protection after player has played 30 minutes
 			if (players[chatvars.playerid].newPlayer == true) and (players[chatvars.playerid].timeOnServer + igplayers[chatvars.playerid].sessionPlaytime < 1800) then
@@ -1055,13 +1063,7 @@ function gmsg_base()
 			end
 		end
 
-		if ((chatvars.words[1] == "setbase" or chatvars.words[1] == "sethome" and chatvars.words[2] ~= nil) and not players[chatvars.playerid].prisoner) then
-			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Type setbase without anything after it.[-]")
-				botman.faultyChat = false
-				return true
-			end
-
+		if (chatvars.words[1] == "setbase" or chatvars.words[1] == "sethome") and chatvars.words[2] ~= nil and (chatvars.accessLevel < 3) then
 			if (chatvars.playername == "Server") then
 				irc_chat(chatvars.ircAlias, "This command is ingame only.")
 				botman.faultyChat = false
@@ -1141,13 +1143,7 @@ function gmsg_base()
 			end
 		end
 
-		if ((chatvars.words[1] == "setbase2" or chatvars.words[1] == "sethome2" and chatvars.words[2] ~= nil) and not players[chatvars.playerid].prisoner) then
-			if (chatvars.accessLevel > 2) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Type setbase2 without anything after it.[-]")
-				botman.faultyChat = false
-				return true
-			end
-
+		if (chatvars.words[1] == "setbase2" or chatvars.words[1] == "sethome2") and chatvars.words[2] ~= nil and (chatvars.accessLevel < 3) then
 			pname = chatvars.words[chatvars.wordCount]
 			pname = string.trim(pname)
 			id = LookupPlayer(pname)
@@ -1928,7 +1924,7 @@ if debug then dbug("debug base") end
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - base commands ====")
-		dbug("Registering help - base commands")
+		if debug then dbug("Registering help - base commands") end
 
 		tmp = {}
 		tmp.topicDescription = "Base commands includes commands for admins to set various restrictions on players using base commands and commands for players to set and protect their base(s)."
@@ -1988,15 +1984,6 @@ if debug then dbug("debug base") end
 
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
-	result = cmd_SetBase()
-
-	if result then
-		if debug then dbug("debug cmd_SetBase triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
-
 	result = cmd_SetBaseCooldownTimer()
 
 	if result then
@@ -2046,15 +2033,6 @@ if debug then dbug("debug base") end
 
 	if result then
 		if debug then dbug("debug cmd_SetDefaultBaseSize triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ProtectBase()
-
-	if result then
-		if debug then dbug("debug cmd_ProtectBase triggered") end
 		return result
 	end
 
@@ -2137,10 +2115,28 @@ if debug then dbug("debug base") end
 
 	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_SetBase()
+
+	if result then
+		if debug then dbug("debug cmd_SetBase triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_TestBase()
 
 	if result then
 		if debug then dbug("debug cmd_TestBase triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug base line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ProtectBase()
+
+	if result then
+		if debug then dbug("debug cmd_ProtectBase triggered") end
 		return result
 	end
 
@@ -2161,7 +2157,7 @@ if debug then dbug("debug base") end
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Base commands help registered ****")
-		dbug("Base commands help registered")
+		if debug then dbug("Base commands help registered") end
 		topicID = topicID + 1
 	end
 

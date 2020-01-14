@@ -9,11 +9,4 @@
 function trialCode()
 	local tmp = {}
 
-	dbug("running trialCode()")
-	dbugi("running trialCode()")
-
-
-
-	dbugi("trialCode() finished")
-	dbug("trialCode() finished")
 end

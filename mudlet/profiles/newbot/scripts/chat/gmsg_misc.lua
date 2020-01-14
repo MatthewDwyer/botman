@@ -543,21 +543,6 @@ function gmsg_misc()
 	end
 
 
-	local function cmd_IgnoredCommands()
-		-- these commands are defined here just so the bot won't say unknown command when it sees them
-
-		if string.find(chatvars.command, "clan") then
-			botman.faultyChat = false
-			return true
-		end
-
-		if (chatvars.words[1] == "bag" and chatvars.words[2] == nil) then
-			botman.faultyChat = false
-			return true
-		end
-	end
-
-
 	local function cmd_ListCustomCommands() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -674,7 +659,7 @@ function gmsg_misc()
 	local function cmd_InvitePlayerToIRC() -- tested
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
-			help[1] = " {#}invite {player}"
+			help[1] = " {#}irc invite {player}"
 			help[2] = "Invite a player to join the IRC server.  Choose carefully who you invite."
 
 			if botman.registerHelp then
@@ -699,7 +684,7 @@ function gmsg_misc()
 			end
 		end
 
-		if chatvars.words[1] == "invite" and chatvars.words[2] ~= nil then
+		if chatvars.words[1] == "irc" and chatvars.words[2] == "invite" and chatvars.words[3] ~= nil then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 0) then
 					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
@@ -1141,7 +1126,7 @@ function gmsg_misc()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - misc commands ====")
-		dbug("Registering help - misc commands")
+		if debug then dbug("Registering help - misc commands") end
 
 		tmp = {}
 		tmp.topicDescription = "Miscellaneous commands are commands that don't really belong in other sections or haven't been put in one yet :("
@@ -1311,18 +1296,9 @@ if debug then dbug("debug misc") end
 
 	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
 
-	result = cmd_IgnoredCommands()
-
-	if result then
-		if debug then dbug("debug cmd_IgnoredCommands triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug misc line " .. debugger.getinfo(1).currentline) end
-
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Miscellaneous commands help registered ****")
-		dbug("Miscellaneous commands help registered")
+		if debug then dbug("Miscellaneous commands help registered") end
 		topicID = topicID + 1
 	end
 

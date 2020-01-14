@@ -663,7 +663,7 @@ function gmsg_friends()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - friend commands ====")
-		dbug("Registering help - friend commands")
+		if debug then dbug("Registering help - friend commands") end
 
 		tmp = {}
 		tmp.topicDescription = "These commands are adding/removing or viewing a player's friends."
@@ -785,7 +785,7 @@ function gmsg_friends()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Friend commands help registered ****")
-		dbug("Friend commands help registered")
+		if debug then dbug("Friend commands help registered") end
 		topicID = topicID + 1
 	end
 

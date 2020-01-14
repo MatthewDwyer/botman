@@ -135,18 +135,42 @@ end
 
 
 function reindexShop(category)
-	local nextidx, cursor, errorString, row
+	local nextidx, cursor, cursorCat, errorString, row, rowCat
 
-	cursor,errorString = conn:execute("UPDATE shop SET idx = 0 WHERE category = '" .. escape(category) .. "'")
-	cursor,errorString = conn:execute("SELECT * FROM shop WHERE category = '" .. escape(category) .. "' ORDER BY item")
-	row = cursor:fetch({}, "a")
+	if category then
+		cursor,errorString = conn:execute("UPDATE shop SET idx = 0 WHERE category = '" .. escape(category) .. "'")
+		cursor,errorString = conn:execute("SELECT * FROM shop WHERE category = '" .. escape(category) .. "' ORDER BY item")
 
-	nextidx = 1
-	while row do
-		conn:execute("UPDATE shop SET idx = " .. nextidx .. " WHERE item = '" .. escape(row.item) .. "'")
-		nextidx = nextidx + 1
+		row = cursor:fetch({}, "a")
 
-		row = cursor:fetch(row, "a")
+		nextidx = 1
+		while row do
+			conn:execute("UPDATE shop SET idx = " .. nextidx .. " WHERE item = '" .. escape(row.item) .. "'")
+			nextidx = nextidx + 1
+
+			row = cursor:fetch(row, "a")
+		end
+	else
+		cursor,errorString = conn:execute("UPDATE shop SET idx = 0")
+
+		cursorCat,errorString = conn:execute("SELECT * FROM shopCategories")
+		rowCat = cursorCat:fetch({}, "a")
+
+		while rowCat do
+			-- only cool cats here
+			cursor,errorString = conn:execute("SELECT * FROM shop WHERE category = '" .. escape(rowCat.category) .. "' ORDER BY item")
+			row = cursor:fetch({}, "a")
+
+			nextidx = 1
+			while row do
+				conn:execute("UPDATE shop SET idx = " .. nextidx .. " WHERE item = '" .. escape(row.item) .. "'")
+				nextidx = nextidx + 1
+
+				row = cursor:fetch(row, "a")
+			end
+
+			rowCat = cursorCat:fetch(rowCat, "a")
+		end
 	end
 end
 
@@ -596,7 +620,11 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 				end
 			end
 
+			-- No cheese, Gromit?
+
 			sendCommand(cmd)
+
+			-- Not even Wensleydale?
 
 			if server.stompy then
 				message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase should be in your inventory but may be at your feet.  Check the ground.[-]")

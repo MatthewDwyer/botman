@@ -51,7 +51,7 @@ end
 
 
 ircStatusMessage = function (name, message, code)
-	dbug(name .. " " .. message .. " " .. code)
+	if debug then dbug(name .. " " .. message .. " " .. code) end
 end
 
 
@@ -66,9 +66,7 @@ IRCMessage = function (event, name, channel, msg)
 
 	result = false
 
-	if debug then
-		dbug(event .. " " .. name .. " " .. channel .. " " .. msg)
-	end
+	if debug then dbug(event .. " " .. name .. " " .. channel .. " " .. msg) end
 
 	-- try once to get the irc nick of the bot.
 	if botman.getIRCNick == nil then
@@ -110,11 +108,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	-- block Mudlet from reacting to its own messages
-	if (name == server.botName or name == server.ircBotName or string.find(msg, "<" .. server.ircBotName .. ">", nil, true)) then
-		irc_params = {}
-		return
-	end
+	-- -- block Mudlet from reacting to its own messages
+	-- if (name == server.botName or name == server.ircBotName or string.find(msg, "<" .. server.ircBotName .. ">", nil, true)) then
+		-- irc_params = {}
+		-- return
+	-- end
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
@@ -206,26 +204,27 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "use" and words[2] == "api") then
-		if tonumber(server.allocsMap) < 26 then
-			irc_chat(name, "This feature requires Allocs MapRendering and Webinterface version 26.  Your version is " .. server.allocsMap .. ".  Please update your copy of Alloc's mod.")
-			return
+		if not server.allocs then
+			irc_chat(chatvars.ircAlias, "This feature requires Allocs mod.  You can grab it at https://7dtd.illy.bz/wiki/Server%20fixes#Download")
+
+			botman.faultyChat = false
+			return true
 		end
 
 		if tonumber(server.webPanelPort) == 0 then
-			irc_chat(name, "You must first set the web panel port. This is normally port 8080 but yours may be different.  To set it type {#}set web panel port {the port number}")
+			irc_chat(name, "You must first set the web panel port. This is normally port 8080 but yours may be different.  To set it type {#}set web panel port {the port number} or just restart the server.")
 			return
 		end
 
 		-- the message must be sent first because we change the webtoken password next which would block the message.
-		irc_chat(name, "The bot will test using Alloc's web API.")
+		irc_chat(name, "The bot will use Alloc's web API.")
 		server.useAllocsWebAPI = true
-
-		if server.allocsWebAPIPassword == "" then
-			server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
-			send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
-		end
-
+		server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+		send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+		botman.lastBotCommand = "webtokens add bot"
 		conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+		botman.APIOffline = false
+		toggleTriggers("api online")
 		return
 	end
 
@@ -346,6 +345,34 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			irc_uptime(name)
 			irc_chat(name, ".")
+			irc_params = {}
+			return
+		end
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: version")
+		irc_chat(name, "View the installed mods.")
+		irc_chat(name, ".")
+	end
+
+	if (words[1] == "version") then
+		if words[2] == nil then
+			irc_chat(name, "Game version is " .. server.gameVersion)
+
+			if modVersions then
+				irc_chat(name, ".")
+				irc_chat(name, "The server is running these mods:")
+
+				for k, v in pairs(modVersions) do
+					irc_chat(name, k)
+				end
+
+				irc_chat(name, ".")
+			end
+
 			irc_params = {}
 			return
 		end
@@ -921,7 +948,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 
-	if words[1] == string.lower(server.botName) or words[1] == string.lower(server.ircBotName) and words[2] == nil then
+	if (words[1] == string.lower(server.botName) or words[1] == string.lower(server.ircBotName)) and words[2] == nil then
 		irc_chat(name, "Hi " .. name)
 		irc_params = {}
 		return
@@ -2567,7 +2594,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 
 			if server.idleKick then
-				irc_chat(name, "Idle players are kicked after 15 minutes when the server is full")
+				irc_chat(name, "Idle players are kicked after " .. server.idleKickTimer .. " seconds when the server is full")
 			else
 				irc_chat(name, "Idle players are never kicked")
 			end
@@ -3125,7 +3152,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if words[1] == "delete" and words[2] == "announcement" and words[3] ~= nil then
+	if (words[1] == "delete" or words[1] == "remove") and words[2] == "announcement" and words[3] ~= nil then
 		counter = 1
 		cursor,errorString = conn:execute("SELECT * FROM announcements")
 		row = cursor:fetch({}, "a")
@@ -5278,7 +5305,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "These are all the donors on record:")
 
 			for k,v in pairs(donors) do
-				name1 = ""
+				name1 = v.name
 
 				if players[k] then
 					name1 = players[k].name
@@ -5294,10 +5321,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			cursor,errorString = conn:execute("SELECT * FROM list where steam = " .. ircID .. " order by thing")
 			row = cursor:fetch({}, "a")
+
 			while row do
 				tmp.steam = row.class
+				tmp.name = row.thing
+				tmp.id = "n/a"
+				tmp.cash = 0
 
-				diff = os.difftime(players[tmp.steam].donorExpiry, os.time())
+				diff = os.difftime(donors[tmp.steam].expiry, os.time())
 				days = math.floor(diff / 86400)
 
 				if (days > 0) then
@@ -5312,10 +5343,15 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 				minutes = math.floor(diff / 60)
 
+				if players[tmp.steam] then
+					tmp.id = players[tmp.steam].id
+					tmp.cash = players[tmp.steam].cash
+				end
+
 				if tonumber(days) < 0 then
-					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " ..string.format("%d",  players[tmp.steam].cash) .. " *** expired ***")
+					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. tmp.id .. " name: " .. tmp.name .. " cash " .. tmp.cash .. " *** expired ***")
 				else
-					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. string.format("%-8d", players[tmp.steam].id) .. " name: " .. players[tmp.steam].name .. " cash " .. string.format("%d", players[tmp.steam].cash) .. " expires in " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
+					irc_chat(name, "steam: " .. tmp.steam .. " id: " .. tmp.id .. " name: " .. tmp.name .. " cash " .. tmp.cash .. " expires in " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
 				end
 
 				row = cursor:fetch(row, "a")
@@ -5331,7 +5367,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			if players[tmp.steam] then
 				irc_chat(name, "Donor record of " .. tmp.name .. ":")
 
-				diff = os.difftime(players[tmp.steam].donorExpiry, os.time())
+				diff = os.difftime(donors[tmp.steam].expiry, os.time())
 				days = math.floor(diff / 86400)
 
 				if (days > 0) then

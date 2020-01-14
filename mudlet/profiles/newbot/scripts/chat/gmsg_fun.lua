@@ -13,12 +13,13 @@ local result, debug, help, tmp
 local shortHelp = false
 local skipHelp = false
 
-debug = false -- should be false unless testing
-
 function gmsg_fun()
 	calledFunction = "gmsg_fun"
 	result = false
 	tmp = {}
+
+	debug = false -- should be false unless testing
+	--server.enableWindowMessages = true
 
 	if botman.debugAll then
 		debug = true -- this should be true
@@ -321,7 +322,7 @@ function gmsg_fun()
 
 
 	local function cmd_PlayGimmeHell()
-		local k, v
+		local k, v, r, level
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -357,6 +358,7 @@ function gmsg_fun()
 
 		if (chatvars.words[1] == "gimmezombies" or chatvars.words[1] == "gimmehell" or chatvars.words[1] == "gimmeinsane" or chatvars.words[1] == "gimmedeath") and chatvars.words[2] == nil then
 			botman.gimmeDifficulty = 1
+			level = igplayers[chatvars.playerid].level
 
 			if chatvars.words[1] == "gimmehell" then
 				botman.gimmeDifficulty = 2
@@ -377,28 +379,22 @@ function gmsg_fun()
 				return true
 			end
 
-			if gimmeZombieBosses == nil then
+			if not maxBossZombies then
 				gimmeZombieBosses = {}
-				maxBossZombies = 1
+				maxBossZombies = 0
 
 				for k,v in pairs(gimmeZombies) do
 					if v.bossZombie then
+						maxBossZombies = maxBossZombies + 1
 						gimmeZombieBosses[maxBossZombies] = {}
 						gimmeZombieBosses[maxBossZombies].zombie = v.zombie
 						gimmeZombieBosses[maxBossZombies].entityID = k
-						maxBossZombies = maxBossZombies + 1
 					end
 				end
 			end
 
 			-- abort if not in arena
 			dist = distancexyz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].yPos, igplayers[chatvars.playerid].zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z)
-
-			if (tonumber(dist) > tonumber(locations["arena"].size)) and (tonumber(dist) < tonumber(locations["arena"].size) + 5) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Nobody is in the arena.  You can't play from the spectator area.  Get in the arena coward.[-]")
-				botman.faultyChat = false
-				return true
-			end
 
 			if (tonumber(dist) > tonumber(locations["arena"].size)) then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command can only be issued in the arena[-]")
@@ -410,58 +406,74 @@ function gmsg_fun()
 				botman.gimmeHell = 1
 				setupArenaPlayers(chatvars.playerid)
 
+				if (botman.arenaCount == 0) then
+					botman.gimmeHell = 0
+					return true
+				end
+
 				if botman.gimmeDifficulty == 1 then
 					announceGimmeHell(1, 15)
-					queueGimmeHell(1, igplayers[chatvars.playerid].level)
+					queueGimmeHell(1, level)
 					announceGimmeHell(2, 60)
-					queueGimmeHell(2, igplayers[chatvars.playerid].level)
+					queueGimmeHell(2, level)
 					announceGimmeHell(3, 120)
-					queueGimmeHell(3, igplayers[chatvars.playerid].level)
+					queueGimmeHell(3, level)
 					announceGimmeHell(4, 180)
-					queueGimmeHell(4, igplayers[chatvars.playerid].level)
+					queueGimmeHell(4, level)
 				end
 
 				if botman.gimmeDifficulty == 2 then
 					announceGimmeHell(1, 15)
-					queueGimmeHell(1, igplayers[chatvars.playerid].level)
+					queueGimmeHell(1, level)
 					announceGimmeHell(2, 50)
-					queueGimmeHell(2, igplayers[chatvars.playerid].level)
+					queueGimmeHell(2, level)
 					announceGimmeHell(3, 100)
-					queueGimmeHell(3, igplayers[chatvars.playerid].level)
+					queueGimmeHell(3, level)
 					announceGimmeHell(4, 150)
-					queueGimmeHell(4, igplayers[chatvars.playerid].level, true)
-					queueGimmeHell(4, igplayers[chatvars.playerid].level)
+					queueGimmeHell(4, level)
+					queueGimmeHell(4, level)
 				end
 
 				if botman.gimmeDifficulty == 3 then
 					announceGimmeHell(1, 5)
-					queueGimmeHell(1, igplayers[chatvars.playerid].level)
+					queueGimmeHell(1, level)
 					announceGimmeHell(2, 40)
-					queueGimmeHell(2, igplayers[chatvars.playerid].level)
+					queueGimmeHell(2, level)
 					announceGimmeHell(3, 80)
-					queueGimmeHell(3, igplayers[chatvars.playerid].level)
+					queueGimmeHell(3, level)
 					announceGimmeHell(4, 120)
-					queueGimmeHell(4, igplayers[chatvars.playerid].level, true)
-					queueGimmeHell(4, igplayers[chatvars.playerid].level, true)
-					queueGimmeHell(4, igplayers[chatvars.playerid].level)
+					queueGimmeHell(4, level)
+					queueGimmeHell(4, level)
+					queueGimmeHell(4, level)
 				end
 
 				if botman.gimmeDifficulty == 4 then
 					announceGimmeHell(1, 5)
-					queueGimmeHell(1, igplayers[chatvars.playerid].level)
-					queueGimmeHell(1, igplayers[chatvars.playerid].level)
+					queueGimmeHell(1, level)
+					queueGimmeHell(1, level)
 					announceGimmeHell(2, 30)
-					queueGimmeHell(2, igplayers[chatvars.playerid].level)
-					queueGimmeHell(2, igplayers[chatvars.playerid].level)
+					queueGimmeHell(2, level)
+					queueGimmeHell(2, level)
 					announceGimmeHell(3, 60)
-					queueGimmeHell(3, igplayers[chatvars.playerid].level)
-					queueGimmeHell(3, igplayers[chatvars.playerid].level)
+					queueGimmeHell(3, level)
+					queueGimmeHell(3, level)
 					announceGimmeHell(4, 90)
-					queueGimmeHell(4, igplayers[chatvars.playerid].level, true)
-					queueGimmeHell(4, igplayers[chatvars.playerid].level, true)
-					queueGimmeHell(4, igplayers[chatvars.playerid].level, true)
-					queueGimmeHell(4, igplayers[chatvars.playerid].level)
+					queueGimmeHell(4, level)
+					queueGimmeHell(4, level)
+					queueGimmeHell(4, level)
+					queueGimmeHell(4, level)
 				end
+
+				-- add the ending
+				r = rand(5)
+				if r == 1 then cmd = "Congratulations!  You have survived to the end of the fight!  Er.. once you've finished mopping up." end
+				if r == 2 then cmd = "GG!!  The arena game has ended." end
+				if r == 3 then cmd = "Curses!  You survived my arena OF DOOM!  It's so hard to find good help these days." end
+				if r == 4 then cmd = "You survived!  What a mess.  Now clean it up!" end
+				if r == 5 then cmd = "GAME OVER.  Press F to pay respects." end
+
+				conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('" .. escape(cmd) .. "', true, 0)")
+				conn:execute("INSERT into playerQueue (command, arena, steam) VALUES ('reset', true, 0)")
 
 				faultChat = false
 				return true
@@ -693,8 +705,8 @@ function gmsg_fun()
 	local function cmd_ResetGimmeHell()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
-			help[1] = " {#}reset gimmearena"
-			help[2] = "Cancel a gimmearena game in progress."
+			help[1] = " {#}reset arena"
+			help[2] = "Cancel an arena game in progress."
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -718,7 +730,7 @@ function gmsg_fun()
 			end
 		end
 
-		if chatvars.words[1] == "reset" and (chatvars.words[2] == "gimmehell" or chatvars.words[2] == "gimmearena") then
+		if chatvars.words[1] == "reset" and (chatvars.words[2] == "gimmehell" or chatvars.words[2] == "gimmearena" or chatvars.words[2] == "arena") then
 			if (chatvars.playername == "Server") then
 				resetGimmeArena()
 				irc_chat(server.ircMain, "The Gimme Arena game has been reset.")
@@ -750,15 +762,15 @@ function gmsg_fun()
 		local cmd
 
 		-- HO
-		-- HO
-		-- HO
+		-- HO HO
+		-- HO HO HO
 
 		-- A special command for Ho's
 		if (chatvars.words[1] == "santa" and chatvars.words[2] == nil and specialDay == "christmas") then
 			if (not players[chatvars.playerid].santa) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HO HO HO  Merry Christmas!  Press e now, don't let the Grinch steal Christmas.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HO HO HO  Merry Christmas![-]")
 				if not server.botman and not server.stompy then
-					sendCommand("give " .. chatvars.playerid .. " shades 1")
+					sendCommand("give " .. chatvars.playerid .. " apparelShades 1")
 					sendCommand("give " .. chatvars.playerid .. " drinkJarBeer 1")
 					sendCommand("give " .. chatvars.playerid .. " resourceCoal 1")
 					sendCommand("give " .. chatvars.playerid .. " thrownAmmoPipeBomb 1")
@@ -766,7 +778,7 @@ function gmsg_fun()
 				end
 
 				if server.stompy and not server.botman then
-					sendCommand("bc-give " .. chatvars.playerid .. " shades /c=1 /silent")
+					sendCommand("bc-give " .. chatvars.playerid .. " apparelShades /c=1 /silent")
 					sendCommand("bc-give " .. chatvars.playerid .. " drinkJarBeer /c=1 /silent")
 					sendCommand("bc-give " .. chatvars.playerid .. " resourceCoal /c=1 /silent")
 					sendCommand("bc-give " .. chatvars.playerid .. " thrownAmmoPipeBomb /c=1 /silent")
@@ -774,7 +786,7 @@ function gmsg_fun()
 				end
 
 				if server.botman then
-					sendCommand("bm-give " .. chatvars.playerid .. " shades 1")
+					sendCommand("bm-give " .. chatvars.playerid .. " apparelShades 1")
 					sendCommand("bm-give " .. chatvars.playerid .. " drinkJarBeer 1")
 					sendCommand("bm-give " .. chatvars.playerid .. " resourceCoal 1")
 					sendCommand("bm-give " .. chatvars.playerid .. " thrownAmmoPipeBomb 1")
@@ -828,14 +840,14 @@ function gmsg_fun()
 				end
 
 				if r == 2 then
-					cmd = "give " .. chatvars.playerid .. " drinkCanBoiledWater 1"
+					cmd = "give " .. chatvars.playerid .. " drinkJarBoiledWater 1"
 
 					if server.stompy then
-						cmd = "bc-give " .. chatvars.playerid .. " drinkCanBoiledWater /c=1 /silent"
+						cmd = "bc-give " .. chatvars.playerid .. " drinkJarBoiledWater /c=1 /silent"
 					end
 
 					if server.botman then
-						cmd = "bm-give " .. chatvars.playerid .. " drinkCanBoiledWater 1"
+						cmd = "bm-give " .. chatvars.playerid .. " drinkJarBoiledWater 1"
 					end
 
 					sendCommand(cmd)
@@ -982,14 +994,14 @@ function gmsg_fun()
 				end
 
 				if r == 13 then
-					cmd = "give " .. chatvars.playerid .. " foodCanHam 1"
+					cmd = "give " .. chatvars.playerid .. " foodCanSham 1"
 
 					if server.stompy then
-						cmd = "bc-give " .. chatvars.playerid .. " foodCanHam /c=1 /silent"
+						cmd = "bc-give " .. chatvars.playerid .. " foodCanSham /c=1 /silent"
 					end
 
 					if server.botman then
-						cmd = "bm-give " .. chatvars.playerid .. " foodCanHam 1"
+						cmd = "bm-give " .. chatvars.playerid .. " foodCanSham 1"
 					end
 
 					sendCommand(cmd)
@@ -1179,7 +1191,7 @@ function gmsg_fun()
 
 				players[chatvars.playerid].santa = "hohoho"
 			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HO HO You have already received your stocking stuffer Ho.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HO HO You have already received your stocking stuffer HO.[-]")
 			end
 
 			botman.faultyChat = false
@@ -1758,7 +1770,7 @@ function gmsg_fun()
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - fun commands ====")
-		dbug("Registering help - fun commands")
+		if debug then dbug("Registering help - fun commands") end
 
 		tmp = {}
 		tmp.topicDescription = "Fun commands are miscellaneous commands that include gimme, bounties and a few silly commands."
@@ -1993,7 +2005,7 @@ if debug then dbug("debug fun") end
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Fun commands help registered ****")
-		dbug("Fun commands help registered")
+		if debug then dbug("Fun commands help registered") end
 		topicID = topicID + 1
 	end
 

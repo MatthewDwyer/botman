@@ -33,48 +33,27 @@ function checkAPIWorking()
 
 	-- if the API is working a file called dummy.txt will not be empty.
 	if fileSize == nil or tonumber(fileSize) == 0 then
-		-- oh no!  it's empty! maybe its 2 above or below?  Let's find out :D
-		if botman.testAPIPort == botman.oldAPIPort then
-			-- re-test 2 above the port we were given
-			botman.testAPIPort = botman.oldAPIPort + 2
-		else
-			if botman.testAPIPort == botman.oldAPIPort + 2 then
-				-- welp that didn't work.  Lets test 2 below the port we were given
-				botman.testAPIPort = botman.oldAPIPort - 2
-			else
-				-- well shit.  We can't find the API.  Stop testing and give up.
-				botman.testAPIPort = nil
-			end
-		end
+		foundAPI = false
 	else
-		-- yay! we found the API.  Update the webPanelPort. Those silly humans!
-		conn:execute("UPDATE server SET webPanelPort = " .. botman.testAPIPort)
-		botman.testAPIPort = nil
 		foundAPI = true
 	end
 
-	if botman.testAPIPort then
-		server.webPanelPort = botman.testAPIPort
-		message("pm APItest test")
-		return
+	if foundAPI then
+		botman.APIOffline = false
+		toggleTriggers("api online")
+
+		-- report our success
+		if not botman.APITestSilent then
+			irc_chat(server.ircMain, "The bot is now using Alloc's web API.")
+		end
 	else
-		if foundAPI then
-			botman.APIOffline = false
-			toggleTriggers("api online")
+		botman.APIOffline = true
+		toggleTriggers("api offline")
+		send("webtokens list")
 
-			-- report our success
-			if not botman.APITestSilent then
-				irc_chat(server.ircMain, "The bot is now using Alloc's web API.")
-			end
-		else
-			botman.APIOffline = true
-			toggleTriggers("api offline")
-			server.webPanelPort = botman.oldAPIPort
-
-			-- report our failure :O
-			if not botman.APITestSilent then
-				irc_chat(server.ircMain, "The API test failed. The bot is using telnet.")
-			end
+		-- report our failure :O
+		if not botman.APITestSilent then
+			irc_chat(server.ircMain, "The API test failed. The bot is using telnet.")
 		end
 	end
 
@@ -498,7 +477,11 @@ function API_PlayerInfo(data)
 				if (r == 14) then message("say [" .. server.chatColour .. "]" .. data.name .. " reached a new low with that death. Six feet under.[-]") end
 
 				if tonumber(server.packCooldown) > 0 then
-					players[data.steamid].packCooldown = os.time() + server.packCooldown
+					if players[data.steamid].donor then
+						players[data.steamid].packCooldown = os.time() + math.floor(server.packCooldown / 2)
+					else
+						players[data.steamid].packCooldown = os.time() + server.packCooldown
+					end
 				end
 			end
 		end
@@ -770,15 +753,17 @@ function API_PlayerInfo(data)
 
 	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline) end
 
-	if (players[data.steamid].newPlayer == true and (igplayers[data.steamid].sessionPlaytime + players[data.steamid].timeOnServer > (server.newPlayerTimer * 60))) then
-		players[data.steamid].newPlayer = false
-		players[data.steamid].watchPlayer = false
-		players[data.steamid].watchPlayerTimer = 0
-		message("pm " .. data.steamid .. " [" .. server.chatColour .. "]Your new player status has been lifted. :D[-]")
-		if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. data.steamid) end
+	if players[data.steamid].newPlayer == true then
+		if (igplayers[data.steamid].sessionPlaytime + players[data.steamid].timeOnServer > (server.newPlayerTimer * 60) or tonumber(data.level) > server.newPlayerMaxLevel) then
+			players[data.steamid].newPlayer = false
+			players[data.steamid].watchPlayer = false
+			players[data.steamid].watchPlayerTimer = 0
 
-		if string.upper(players[data.steamid].chatColour) == "FFFFFF" then
-			setChatColour(data.steamid)
+			if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. data.steamid) end
+
+			if string.upper(players[data.steamid].chatColour) == "FFFFFF" then
+				setChatColour(data.steamid, players[data.steamid].accessLevel)
+			end
 		end
 	end
 
@@ -882,7 +867,7 @@ function API_PlayerInfo(data)
 		if igplayers[data.steamid].alertBase == 1 then
 			if (dist >  tonumber(players[igplayers[data.steamid].alertBaseID].protectSize) + 15) and (dist <  tonumber(players[igplayers[data.steamid].alertBaseID].protectSize) + 50) then
 				players[igplayers[data.steamid].alertBaseID].exitX = intX
-				players[igplayers[data.steamid].alertBaseID].exitY = intY
+				players[igplayers[data.steamid].alertBaseID].exitY = intY + 1
 				players[igplayers[data.steamid].alertBaseID].exitZ = intZ
 
 				if (playerAccessLevel < 3) then
@@ -929,6 +914,7 @@ function API_PlayerInfo(data)
 				igplayers[data.steamid].alertBaseExit = nil
 				igplayers[data.steamid].alertBaseID = nil
 				igplayers[data.steamid].alertBase = nil
+				if botman.dbConnected then conn:execute("UPDATE players SET protect = 1 WHERE steam = " .. data.steamid) end
 
 				faultyPlayerinfo = false
 				return
@@ -936,7 +922,7 @@ function API_PlayerInfo(data)
 		else
 			if (dist >  tonumber(players[igplayers[data.steamid].alertBaseID].protect2Size) + 15) and (dist <  tonumber(players[igplayers[data.steamid].alertBaseID].protect2Size) + 50) then
 				players[igplayers[data.steamid].alertBaseID].exit2X = intX
-				players[igplayers[data.steamid].alertBaseID].exit2Y = intY
+				players[igplayers[data.steamid].alertBaseID].exit2Y = intY + 1
 				players[igplayers[data.steamid].alertBaseID].exit2Z = intZ
 
 				if (playerAccessLevel < 3) then
@@ -983,6 +969,7 @@ function API_PlayerInfo(data)
 				igplayers[data.steamid].alertBaseExit = nil
 				igplayers[data.steamid].alertBaseID = nil
 				igplayers[data.steamid].alertBase = nil
+				if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 1 WHERE steam = " .. data.steamid) end
 
 				faultyPlayerinfo = false
 				return
@@ -1301,7 +1288,7 @@ function API_PlayerInfo(data)
 		if botman.dbConnected then conn:execute("INSERT INTO tracker (steam, x, y, z, session, flag) VALUES (" .. data.steamid .. "," .. intX .. "," .. intY .. "," .. intZ .. "," .. players[data.steamid].sessionCount .. ",'" .. flag .. "')") end
 
 		if igplayers[data.steamid].location ~= nil then
-			if botman.dbConnected then conn:execute("INSERT INTO locationSpawns (location, x, y, z) VALUES ('" .. igplayers[data.steamid].location .. "'," .. intX .. "," .. intY .. "," .. intZ .. ")") end
+			if botman.dbConnected then conn:execute("INSERT INTO locationSpawns (location, x, y, z) VALUES ('" .. igplayers[data.steamid].location .. "'," .. intX .. "," .. intY + 1 .. "," .. intZ .. ")") end
 		end
 	end
 
@@ -1361,9 +1348,17 @@ function API_PlayerInfo(data)
 	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline) end
 
 	if igplayers[data.steamid].rawPosition ~= position then
-		igplayers[data.steamid].afk = os.time() + 900
+		igplayers[data.steamid].afk = os.time() + tonumber(server.idleKickTimer)
 		igplayers[data.steamid].rawPosition = position
 	end
+
+	if (tonumber(botman.playersOnline) >= tonumber(server.maxPlayers) or server.idleKickAnytime) and (playerAccessLevel > 3) and server.idleKick then
+		if (igplayers[data.steamid].afk - os.time() < 0) then
+			kick(steam, "You were kicked because you idled too long, but you can rejoin at any time.")
+		end
+	end
+
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline) end
 
 	if igplayers[data.steamid].spawnedInWorld then
 		if igplayers[data.steamid].greet then
@@ -1376,16 +1371,31 @@ function API_PlayerInfo(data)
 		if tonumber(igplayers[data.steamid].teleCooldown) > 100 then
 			igplayers[data.steamid].teleCooldown = 3
 		end
-	end
 
+		if igplayers[data.steamid].doFirstSpawnedTasks then
+			igplayers[data.steamid].doFirstSpawnedTasks = nil
 
-	if tonumber(botman.playersOnline) >= tonumber(server.maxPlayers) and (playerAccessLevel > 3) and server.idleKick then
-		if (igplayers[data.steamid].afk - os.time() < 0) then
-			kick(data.steamid, "Server is full.  You were kicked because you idled too long, but you can rejoin at any time. Thanks for playing! xD")
+			if server.botman or server.stompy then
+				if players[data.steamid].mute then
+					mutePlayerChat(data.steamid , "true")
+				end
+
+				if players[data.steamid].chatColour ~= "" then
+					if string.upper(string.sub(players[data.steamid].chatColour, 1, 6)) ~= "FFFFFF" then
+						setPlayerColour(data.steamid, stripAllQuotes(players[data.steamid].chatColour))
+					else
+						setChatColour(data.steamid, players[data.steamid].accessLevel)
+					end
+				else
+					setChatColour(data.steamid, players[data.steamid].accessLevel)
+				end
+
+				-- limit ingame chat length to block chat bombs.
+				cmd = data.steamid .. ", 300"
+				setPlayerChatLimit(cmd)
+			end
 		end
 	end
-
-	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline) end
 
 	if igplayers[data.steamid].currentLocationPVP then
 		if players[data.steamid].alertPVP == true then
@@ -1413,7 +1423,7 @@ function API_PlayerInfo(data)
 	faultyPlayerinfo = false
 
 	if (data.steamid == debugPlayerInfo) then
-		dbug("end API_Playerinfo", true)
+		if debug then dbug("end API_Playerinfo", true) end
 	end
 end
 
@@ -1495,7 +1505,6 @@ function readAPI_AdminList()
 				players[steam].testAsPlayer = nil
 
 				if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 0, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. level .. " WHERE steam = " .. steam) end
-				--if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. steam .. "," .. level .. ")") end
 
 				if players[steam].botTimeout and igplayers[steam] then
 					gmsg(server.commandPrefix .. "return " .. v.name)
@@ -1784,6 +1793,45 @@ function readAPI_BCTime()
 end
 
 
+function readAPI_BMUptime()
+	local file, ln, result, data, temp, tmp
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/bm-uptime.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
+	end
+
+	file = io.open(homedir .. "/temp/bm-uptime.txt", "r")
+
+	for ln in file:lines() do
+		temp = string.split(ln, ":")
+
+		tmp  = tonumber(string.match(temp[4], "(%d+)"))
+		server.uptime = tmp * 60 * 60
+
+		tmp  = tonumber(string.match(temp[5], "(%d+)"))
+		server.uptime = tonumber(server.uptime) + (tmp * 60)
+
+		botman.lastUptimeRead = os.time()
+	end
+
+	file:close()
+	os.remove(homedir .. "/temp/bm-uptime.txt")
+end
+
+
 function readAPI_BMListPlayerBed()
 	local file, ln, result, data, temp, pname, pid, x, y, z, i
 	local fileSize
@@ -1812,29 +1860,72 @@ function readAPI_BMListPlayerBed()
 
 		for k,v in pairs(data) do
 			if v ~= "" then
-				temp = string.split(v, ": ")
-				pname = temp[1]
+				if not string.find(v, "The player") then
+					temp = string.split(v, ": ")
+					pname = temp[1]
 
-				temp = string.split(v, ", ")
-				i = table.maxn(temp)
+					temp = string.split(v, ", ")
+					i = table.maxn(temp)
 
-				x = temp[i - 2]
-				x = string.split(x, " ")
-				x = x[table.maxn(x)]
+					x = temp[i - 2]
+					x = string.split(x, " ")
+					x = x[table.maxn(x)]
 
-				y = temp[i - 1]
-				z = temp[i]
+					y = temp[i - 1]
+					z = temp[i]
 
-				pid = LookupPlayer(pname, "all")
-				players[pid].bedX = x
-				players[pid].bedY = y
-				players[pid].bedZ = z
+					pid = LookupPlayer(pname, "all")
+					players[pid].bedX = x
+					players[pid].bedY = y
+					players[pid].bedZ = z
+
+					if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. x .. ", bedY = " .. y .. ", bedZ = " .. z.. " WHERE steam = " .. pid) end
+				else
+					pid = string.sub(v, 11, string.find(v, " does ") - 1)
+					players[pid].bedX = 0
+					players[pid].bedY = 0
+					players[pid].bedZ = 0
+					if botman.dbConnected then conn:execute("UPDATE players SET bedX = 0, bedY = 0, bedZ = 0 WHERE steam = " .. pid) end
+				end
 			end
 		end
 	end
 
 	file:close()
 	os.remove(homedir .. "/temp/bm-listplayerbed.txt")
+end
+
+
+function readAPI_BMResetRegionsList()
+	local file, ln, result, data, temp, pname, pid, x, y, z, i
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/bm-resetregions-list.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
+	end
+
+	file = io.open(homedir .. "/temp/bm-resetregions-list.txt", "r")
+
+	for ln in file:lines() do
+		result = yajl.to_value(ln)
+		data = splitCRLF(result.result)
+
+	end
+
+	file:close()
+	--os.remove(homedir .. "/temp/bm-resetregions-list.txt")
 end
 
 
@@ -2663,65 +2754,6 @@ function readAPI_LLP()
 end
 
 
-function readAPI_LPB()
-	local file, ln, result, data, k, v, temp, pid, con, q
-	local fileSize
-
-	fileSize = lfs.attributes (homedir .. "/temp/lpb.txt", "size")
-
-	-- abort if the file is empty
-	if fileSize == nil or tonumber(fileSize) == 0 then
-		return
-	end
-
-	botman.lastServerResponseTimestamp = os.time()
-	file = io.open(homedir .. "/temp/lpb.txt", "r")
-
-	for ln in file:lines() do
-		result = yajl.to_value(ln)
-		data = splitCRLF(result.result)
-
-		for k,v in pairs(data) do
-			for con, q in pairs(conQueue) do
-				if string.sub(q.command, 1, 3) == "lpb" then
-					irc_chat(q.ircUser, data[k])
-				end
-			end
-
-			if v ~= "" then
-				if not string.find(v, "The player") then
-					temp = string.split(data, ": ")
-					pid = temp[1]
-					temp = string.split(temp[2], ", ")
-
-					players[pid].bedX = temp[1]
-					players[pid].bedY = temp[2]
-					players[pid].bedZ = temp[3]
-					if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. temp[1] .. ", bedY = " .. temp[2] .. ", bedZ = " .. temp[3].. " WHERE steam = " .. pid) end
-				else
-					pid = string.sub(v, 11, string.find(v, " does ") - 1)
-					players[pid].bedX = 0
-					players[pid].bedY = 0
-					players[pid].bedZ = 0
-					if botman.dbConnected then conn:execute("UPDATE players SET bedX = 0, bedY = 0, bedZ = 0 WHERE steam = " .. pid) end
-				end
-			end
-		end
-
-	end
-
-	file:close()
-
-	for con, q in pairs(conQueue) do
-		if (q.command == result.command) or (q.command == result.command .. " " .. result.parameters) then
-			conQueue[con] = nil
-		end
-	end
-
-	os.remove(homedir .. "/temp/lpb.txt")
-end
-
-
 function readAPI_LPF()
 	local file, ln, result, data, k, v, con, q
 	local fileSize
@@ -2791,7 +2823,11 @@ function readAPI_PlayersOnline()
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
 
-		botman.playersOnline = table.maxn(result)
+		if result == "[]" then
+			botman.playersOnline =	0
+		else
+			botman.playersOnline = table.maxn(result)
+		end
 
 		for index=1, botman.playersOnline, 1 do
 			playersOnlineList[result[index].steamid] = {}
@@ -3222,7 +3258,6 @@ function readAPI_webUIUpdates()
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
-		botman.playersOnline = tonumber(result.players)
 		result.newlogs = tonumber(result.newlogs)
 
 		if botman.lastLogLine == nil then
@@ -3245,6 +3280,12 @@ function readAPI_webUIUpdates()
 			end
 
 			getAPILog()
+		end
+
+		if tonumber(result.players) >= 0 then
+			botman.playersOnline = tonumber(result.players)
+		else
+			botman.playersOnline = 0
 		end
 	end
 
@@ -3324,6 +3365,7 @@ function readAPI_Version()
 
 	saveBotMaintenance()
 
+	if botman.dbConnected then conn:execute("DELETE FROM webInterfaceJSON WHERE ident = 'modVersions'") end
 	if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('modVersions','panel','" .. escape(yajl.to_string(modVersions)) .. "')") end
 
 	os.remove(homedir .. "/temp/installedMods.txt")

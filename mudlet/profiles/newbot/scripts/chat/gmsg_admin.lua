@@ -181,7 +181,7 @@ function gmsg_admin()
 				sendCommand("admin remove " .. id)
 			end
 
-			setChatColour(id)
+			setChatColour(id, players[id].accessLevel)
 
 			-- save the player record to the database
 			if not isArchived then
@@ -663,7 +663,7 @@ function gmsg_admin()
 				end
 			end
 
-			setChatColour(tmp.id)
+			setChatColour(tmp.id, players[tmp.id].accessLevel)
 
 			botman.faultyChat = false
 			return true
@@ -3311,7 +3311,7 @@ function gmsg_admin()
 
 
 	local function cmd_ListBasesNearby()
-		local playerName, isArchived
+		local playerName, isArchived, protected
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -3368,7 +3368,13 @@ function gmsg_admin()
 						if dist < tonumber(chatvars.number) then
 							if (alone == true) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]player bases within " .. chatvars.number .. " meters of you are:[-]") end
 
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. "   base 1   distance  " .. string.format("%-8.2d", dist) .. "[-]")
+							if v.protect then
+								protected = " protected"
+							else
+								protected = ""
+							end
+
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. "   base 1   distance  " .. string.format("%-8.2d", dist) .. protected .. "[-]")
 							alone = false
 						end
 					end
@@ -3379,7 +3385,13 @@ function gmsg_admin()
 						if dist < tonumber(chatvars.number) then
 							if (alone == true) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]player bases within " .. chatvars.number .. " meters of you are:[-]") end
 
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. "   base 2   distance  " .. string.format("%-8.2d", dist) .. "[-]")
+							if v.protect2 then
+								protected = " protected"
+							else
+								protected = ""
+							end
+
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. "   base 2   distance  " .. string.format("%-8.2d", dist) .. protected .. "[-]")
 							alone = false
 						end
 					end
@@ -3436,7 +3448,13 @@ function gmsg_admin()
 							if dist < tonumber(chatvars.number) then
 								if (alone == true) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]player bases within " .. chatvars.number .. " meters of " .. playerName .. " are:[-]") end
 
-								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. "   base 1   distance  " .. string.format("%-8.2d", dist) .. "[-]")
+								if v.protect then
+									protected = " protected"
+								else
+									protected = ""
+								end
+
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. "   base 1   distance  " .. string.format("%-8.2d", dist) .. protected .. "[-]")
 								alone = false
 							end
 						end
@@ -3451,7 +3469,13 @@ function gmsg_admin()
 							if dist < tonumber(chatvars.number) then
 								if (alone == true) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]player bases within " .. chatvars.number .. " meters of " .. playerName .. " are:[-]") end
 
-								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. "   base 2   distance  " .. string.format("%-8.2d", dist) .. "[-]")
+								if v.protect2 then
+									protected = " protected"
+								else
+									protected = ""
+								end
+
+								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. "   base 2   distance  " .. string.format("%-8.2d", dist) .. protected .. "[-]")
 								alone = false
 							end
 						end
@@ -4459,7 +4483,7 @@ function gmsg_admin()
 					if botman.dbConnected then conn:execute("UPDATE playersArchived SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. id) end
 				end
 
-				message("say [" .. server.chatColour .. "]" .. playerName .. " is no longer new here. Welcome back " .. playerName .. "! =D[-]")
+				--message("say [" .. server.chatColour .. "]" .. playerName .. " is no longer new here. Welcome back " .. playerName .. "! =D[-]")
 			end
 
 			botman.faultyChat = false
@@ -4729,7 +4753,7 @@ function gmsg_admin()
 					players[prisonerid].freeze = false
 					players[prisonerid].silentBob = false
 					gmsg(server.commandPrefix .. "return " .. prisonerid)
-					setChatColour(prisonerid)
+					setChatColour(prisonerid, players[prisonerid].accessLevel)
 
 					if botman.dbConnected then conn:execute("UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0, prisoner = 0 WHERE steam = " .. prisonerid) end
 				else
@@ -4802,7 +4826,7 @@ function gmsg_admin()
 				players[prisonerid].prisonReason = ""
 				players[prisonerid].silentBob = false
 				players[prisonerid].prisonReleaseTime = os.time()
-				setChatColour(prisonerid)
+				setChatColour(prisonerid, players[prisonerid].accessLevel)
 			else
 				playersArchived[prisonerid].xPosOld = 0
 				playersArchived[prisonerid].yPosOld = 0
@@ -4898,7 +4922,7 @@ function gmsg_admin()
 				if players[prisonerid].chatColour ~= "" then
 					setPlayerColour(prisonerid, players[prisonerid].chatColour)
 				else
-					setChatColour(prisonerid)
+					setChatColour(prisonerid, players[prisonerid].accessLevel)
 				end
 
 				if botman.dbConnected then conn:execute("UPDATE players SET prisoner=0,timeout=0,botTimeout=0,silentBob=0 WHERE steam = " .. prisonerid) end
@@ -6739,6 +6763,8 @@ function gmsg_admin()
 			end
 		end
 
+		-- Rest in peace KenJustKen.  Thanks for your input over the years, you will be missed buddy.
+
 		if chatvars.words[1] == "set" and chatvars.words[2] == "watch" and (chatvars.words[3] == "player" or chatvars.words[3] == "timer") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 1) then
@@ -7026,7 +7052,7 @@ function gmsg_admin()
 			admins[pid] = nil
 			mods[pid] = nil
 			players[pid].accessLevel = 90
-			setChatColour(pid)
+			setChatColour(pid, 90)
 
 			botman.faultyChat = false
 			return true
@@ -9220,7 +9246,7 @@ if debug then dbug("debug admin") end
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "==== Registering help - admin commands ====")
-		dbug("Registering help - admin commands")
+		if debug then dbug("Registering help - admin commands") end
 
 		tmp = {}
 		tmp.topicDescription = "Admin commands are mainly about doing things to or for players but is also a catchall for commands that don't really fit elsewhere but are for admins."
@@ -10070,7 +10096,7 @@ if debug then dbug("debug admin") end
 
 	if botman.registerHelp then
 		irc_chat(chatvars.ircAlias, "**** Admin commands help registered ****")
-		dbug("Admin commands help registered")
+		if debug then dbug("Admin commands help registered") end
 		topicID = topicID + 1
 	end
 

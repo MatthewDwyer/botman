@@ -39,8 +39,7 @@ function lpTrigger(line)
 	if tonumber(botman.serverHour) == tonumber(server.botRestartHour) and server.allowBotRestarts then
 		uptime = math.floor((os.difftime(os.time(), botman.botStarted) / 3600))
 
-		if botman.customMudlet and (uptime > 1) then
-			-- Mudlet will only automatically restart if you compiled TheFae's latest Mudlet and launched it from run-mudlet.sh with -r
+		if uptime > 1 then
 			-- if the bot has been running less than 1 hour it won't restart itself.
 			restartBot()
 			return

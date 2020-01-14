@@ -69,7 +69,9 @@ function getSWNECoordsXZ(x1, z1, x2, z2)
 end
 
 
-function sendCommand(command, api, outputFile)
+function sendCommand(command) -- , api, outputFile
+	local api, outputFile
+
 	-- send the command to the server via Allocs web API if enabled otherwise use telnet
 
 	-- any commands that must be sent via telnet, trap and send them first.
@@ -78,132 +80,154 @@ function sendCommand(command, api, outputFile)
 		-- return
 	-- end
 
-	--display("sent " .. command)
+	--display("sent " .. command .. "\n")
+
+	if botman.worldGenerating then
+		-- send no commands to the server while the world is generating.
+		return
+	end
 
 	botman.lastBotCommand = command
 
 	if server.useAllocsWebAPI and not botman.APIOffline and not string.find(command, "webtokens ") and not string.find(command, "#") then
 		-- fix missing api and outputFile for some commands
-		if api == nil or api == "" then
-			if command == "admin list" then
-				api = "executeconsolecommand?command=admin list&"
-				outputFile = "adminList.txt"
-			end
+		if command == "admin list" then
+			api = "executeconsolecommand?command=admin list&"
+			outputFile = "adminList.txt"
+		end
 
-			if command == "ban list" then
-				api = "executeconsolecommand?command=ban list&"
-				outputFile = "banList.txt"
-			end
+		if command == "APICheck" then
+			botman.APICheckTimestamp = os.time()
+			botman.APICheckPassed = false
+			api = "executeconsolecommand?command=apicheck&"
+			outputFile = "apicheck.txt"
+		end
 
-			if command == "bc-go prefabs" then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "bc-go.txt"
-			end
+		if command == "ban list" then
+			api = "executeconsolecommand?command=ban list&"
+			outputFile = "banList.txt"
+		end
 
-			if command == "bc-go Items /filter=Name" then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "bc-go.txt"
-			end
+		if command == "bc-go prefabs" then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "bc-go.txt"
+		end
 
-			if command == "bc-time" then -- this is used to read server ticks and grab the players online.
-				api = "executeconsolecommand?command=bc-time&"
-				outputFile = "bc-time.txt"
-			end
+		if command == "bc-go Items /filter=Name" then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "bc-go.txt"
+		end
 
-			if string.find(command, "bc-lp", nil, true) then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "bc-lp.txt"
-			end
+		if command == "bc-time" then -- this is used to read server ticks and grab the players online.
+			api = "executeconsolecommand?command=bc-time&"
+			outputFile = "bc-time.txt"
+		end
 
-			if string.find(command, "bm-listplayerbed", nil, true) then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "bm-listplayerbed.txt"
-			end
+		if string.find(command, "bc-lp", nil, true) then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "bc-lp.txt"
+		end
 
-			-- don't send gg to the API for now as it messes up in the BC mod's JSON encoding if the Server Login Confirmation Text contains any /r/n's which is probably fairly common.
-			if command == "gg" then
-				-- instead send it to telnet as that parses it just fine.
-				send(command)
-			end
+		if string.find(command, "bm-listplayerbed", nil, true) then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "bm-listplayerbed.txt"
+		end
 
-			if command == "gt" then
-				api = "executeconsolecommand?command=gt&"
-				outputFile = "gametime.txt"
-			end
+		if command == "bm-uptime" then
+			api = "executeconsolecommand?command=bm-uptime&"
+			outputFile = "bm-uptime.txt"
+		end
 
-			if string.sub(command, 1, 4) == "help" then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "help.txt"
-			end
+		if command == "gethostilelocation" then
+			api = "gethostilelocation?&"
+			outputFile = "hostiles.txt"
+		end
 
-			if command == "le" then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "le.txt"
-			end
+		if command == "getplayerinventories" then
+			api = "getplayerinventories?&"
+			outputFile = "inventories.txt"
+		end
 
-			if string.sub(command, 1, 3) == "li " then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "li.txt"
-			end
+		-- don't send gg to the API for now as it messes up in the BC mod's JSON encoding if the Server Login Confirmation Text contains any /r/n's which is probably fairly common.
+		if command == "gg" then
+			-- instead send it to telnet as that parses it just fine.
+			send(command)
+		end
 
-			if string.find(command, "lkp") then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "lkp.txt"
-			end
+		if command == "gt" then
+			api = "executeconsolecommand?command=gt&"
+			outputFile = "gametime.txt"
+		end
 
-			if string.find(command, "llp") then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "llp.txt"
-			end
+		if string.sub(command, 1, 4) == "help" then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "help.txt"
+		end
 
-			if command == "lp" then
-				api = "getplayersonline?"
-				outputFile = "playersOnline.txt"
-			end
+		if command == "le" then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "le.txt"
+		end
 
-			if string.find(command, "lpb") then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "lpb.txt"
-			end
+		if string.sub(command, 1, 3) == "li " then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "li.txt"
+		end
 
-			if string.find(command, "lpf") then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "lpf.txt"
-			end
+		if string.find(command, "lkp") then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "lkp.txt"
+		end
 
-			if command == "mem" then -- this is used to read server time, grab the players online and some performance metrics.
-				api = "executeconsolecommand?command=mem&"
-				outputFile = "mem.txt"
-			end
+		if string.find(command, "llp") then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "llp.txt"
+		end
 
-			if string.find(command, "pgd") then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "pgd.txt"
-			end
+		if command == "lp" then
+			api = "getplayersonline?"
+			outputFile = "playersOnline.txt"
+		end
 
-			if string.find(command, "pug") then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "pug.txt"
-			end
+		if string.find(command, "lpf") then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "lpf.txt"
+		end
 
-			if string.sub(command, 1,3) == "se " or command == "se" then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "se.txt"
-			end
+		if command == "mem" then -- this is used to read server time, grab the players online and some performance metrics.
+			api = "executeconsolecommand?command=mem&"
+			outputFile = "mem.txt"
+		end
 
-			if command == "version" then
-				api = "executeconsolecommand?command=version&"
-				outputFile = "installedMods.txt"
-			end
+		if string.find(command, "bm-playergrounddistance", nil, true) then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "pgd.txt"
+		end
 
-			-- this must be last.  It is a catch-all for anything not matched above.
-			if api == nil then
-				api = "executeconsolecommand?command=" .. command .. "&"
-				outputFile = "command.txt"
-			end
+		if string.find(command, "bm-playerunderground", nil, true) then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "pug.txt"
+		end
+
+		if string.sub(command, 1,3) == "se " or command == "se" then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "se.txt"
+		end
+
+		if command == "version" then
+			api = "executeconsolecommand?command=version&"
+			outputFile = "installedMods.txt"
+		end
+
+		-- this must be last.  It is a catch-all for anything not matched above.
+		if api == nil then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "command.txt"
 		end
 
 		url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/" .. api .. "adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+
+--display(url .. "\n")
 
 		if outputFile == nil then
 			outputFile = "dummy.txt"
@@ -230,6 +254,10 @@ function sendCommand(command, api, outputFile)
 
 		metrics.commands = metrics.commands + 1
 	else
+		if command == "getplayerinventories" or command == "gethostilelocation" then
+			return
+		end
+
 		if server.logBotCommands then
 			logBotCommand(botman.serverTime, command)
 		end
@@ -494,6 +522,10 @@ function message(msg, steam)
 	msg = msg:gsub("{money}", server.moneyName)
 	msg = msg:gsub("{monies}", server.moneyPlural)
 
+	if string.find(msg, "[", nil, true) and not string.find(msg, "[-]", nil, true) then
+		msg = msg .. "[-]"
+	end
+
 	-- break the chat line into words
 	words = {}
 	for word in msg:gmatch("%S+") do
@@ -728,6 +760,10 @@ function LookupPlayer(search, match)
 		return 0, 0
 	end
 
+	if not match then
+		match = ""
+	end
+
 	test = tonumber(search)
 
 	-- if the search is a steam ID, don't bother walking through the list of in game players, just check that it is a member of the lua table igplayers
@@ -757,9 +793,11 @@ function LookupPlayer(search, match)
 			end
 		else
 			if test ~= nil then
-				if test == v.id then
-					-- matched the player id
-					return k, v.steamOwner
+				if test == tonumber(v.id) then
+					if tonumber(v.id) > 0 then
+						-- matched the player id
+						return k, v.steamOwner
+					end
 				end
 
 				if k == test or v.steamOwner == test then
@@ -809,6 +847,10 @@ function LookupOfflinePlayer(search, match)
 		return 0, 0
 	end
 
+	if not match then
+		match = ""
+	end
+
 	test = tonumber(search)
 
 	-- if the search is a steam ID, don't bother walking through the list of players, just check that it is a member of the lua table players
@@ -856,8 +898,10 @@ function LookupOfflinePlayer(search, match)
 			end
 
 			if test ~= nil then
-				if test == v.id then
-					return k, v.steamOwner
+				if test == tonumber(v.id) then
+					if tonumber(v.id) > 0 then
+						return k, v.steamOwner
+					end
 				end
 
 				if k == test or v.steamOwner == test then
@@ -926,8 +970,10 @@ function LookupArchivedPlayer(search, match)
 			end
 
 			if test ~= nil then
-				if test == v.id then
-					return k, v.steamOwner
+				if test == tonumber(v.id) then
+					if tonumber(v.id) > 0 then
+						return k, v.steamOwner
+					end
 				end
 
 				if k == test or v.steamOwner == test then
@@ -1628,6 +1674,10 @@ function fixMissingPlayer(steam)
 
 	if players[steam].overstackScore == nil then
 		players[steam].overstackScore = 0
+	end
+
+	if players[steam].p2pCooldown == nil then
+		players[steam].p2pCooldown = 0
 	end
 
 	if players[steam].packCooldown == nil then

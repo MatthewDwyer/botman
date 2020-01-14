@@ -41,7 +41,7 @@ function joinIRCServer()
 
 		setIrcServer(server.ircServer, server.ircPort)
 		setIrcChannels(channels)
-		restartIrc()
+		tempTimer(5, [[restartIrc()]])
 	else
 		ircSetHost(server.ircServer, server.ircPort)
 
@@ -55,6 +55,18 @@ function joinIRCServer()
 
 		ircSetChannel(server.ircMain)
 		ircSaveSessionConfigs()
+	end
+
+	if server.ircBotName ~= "Bot" then
+		if ircSetNick ~= nil then
+			-- TheFae's modded mudlet
+			ircSetNick(server.ircBotName)
+		end
+
+		if setIrcNick ~= nil then
+			-- Mudlet 3.x
+			setIrcNick(server.ircBotName)
+		end
 	end
 end
 
@@ -80,11 +92,24 @@ function irc_chat(name, msg)
 	multilineText = string.split(msg, "\n")
 
 	for k,v in pairs(multilineText) do
-		conn:execute("INSERT INTO ircQueue (name, command) VALUES ('" .. name .. "','" .. escape(v) .. "')")
-	end
+		if botman.registerHelp then
+			file = io.open(homedir .. "/temp/help.txt", "a")
 
-	if name == server.ircAlerts then
-		logAlerts(botman.serverTime, msg)
+			if v == "." then
+				v = ""
+			else
+				v = string.trim(v)
+			end
+
+			file:write(v .. "\n")
+			file:close()
+		else
+			conn:execute("INSERT INTO ircQueue (name, command) VALUES ('" .. name .. "','" .. escape(v) .. "')")
+		end
+
+		if name == server.ircAlerts then
+			logAlerts(botman.serverTime, v)
+		end
 	end
 
 	botman.ircQueueEmpty = false
@@ -191,8 +216,8 @@ function irc_ListBases(steam)
 		prot1 = "OFF"
 		prot2 = "OFF"
 
-		if row.protect == true then prot1 = "ON" end
-		if row.protect2 == true then prot2 = "ON" end
+		if row.protect == "1" then prot1 = "ON" end
+		if row.protect2 == "1" then prot2 = "ON" end
 		msg = row.steam .. " " .. row.name .. " "
 
 		if tonumber(row.homeX) == 0 and tonumber(row.homeY) == 0 and tonumber(row.homeZ) == 0 and tonumber(row.home2X) == 0 and tonumber(row.home2Y) == 0 and tonumber(row.home2Z) == 0 then
@@ -215,7 +240,7 @@ function irc_ListBases(steam)
 			end
 		end
 
-		if irc_params.filter == "protected" and (row.protect == true or row.protect2 == true) then
+		if irc_params.filter == "protected" and (row.protect == "1" or row.protect2 == "1") then
 			if msg ~= nil then
 				irc_chat(irc_params.name, msg)
 			end
@@ -230,7 +255,7 @@ function irc_ListBases(steam)
 		row = cursor:fetch(row, "a")
 	end
 
-	irc_chat(irc_params.name, "----")
+	irc_chat(irc_params.name, ".")
 end
 
 
@@ -1105,7 +1130,7 @@ function irc_uptime(name)
 
 	irc_chat(name, server.botName .. " has been online " .. days .. " days " .. hours .. " hours " .. minutes .." minutes")
 
-	if server.uptime < 0 then
+	if tonumber(server.uptime) < 0 then
 		irc_chat(name, "Server uptime is uncertain")
 	else
 		diff = server.uptime

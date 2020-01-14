@@ -9,7 +9,7 @@
 
 
 function WebPanelQueue()
-	local row, cursor, errorString, steam, action, actionTable, actionQuery, actionArgs, sessionID, temp
+	local row, cursor, errorString, steam, action, actionTable, actionQuery, actionArgs, sessionID, temp, command
 
 	-- delete any expired records in webInterfaceJSON
 	conn:execute("DELETE FROM webInterfaceJSON WHERE expire < NOW() and expire <> '0000-00-00 00:00:00'")
@@ -21,67 +21,103 @@ function WebPanelQueue()
 		row = cursor:fetch({}, "a")
 
 		while row do
-			steam = row.steam
-			action = row.action
-			actionTable = row.actionTable
-			actionQuery = row.actionQuery
-			actionArgs = row.actionArgs
+			steam = tostring(row.steam)
+			action = string.trim(string.lower(row.action))
+			actionTable = string.trim(string.lower(row.actionTable))
+			actionQuery = string.trim(row.actionQuery)
+			actionArgs = string.trim(row.actionArgs)
+
+			command = {}
+			command.action = action
+			command.actionTable = actionTable
+			command.actionQuery = actionQuery
+			command.actionArgs = actionArgs
+
+			logPanelCommand(botman.serverTime, command)
+
 			sessionID = row.sessionID
 			temp = string.split(actionArgs, "||")
 			conn:execute("DELETE FROM webInterfaceQueue WHERE id = " .. row.id)
 
 			if action == "encode" and actionTable == "botman" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
+				irc_chat(server.ircAlerts, "actionTable = " .. actionTable)
 				if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, expires, json, sessionID) VALUES ('botman','panel','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + 60) .. "','" .. escape(yajl.to_string(botman)) .. "','" .. escape(sessionID) .. "')") end
 			end
 
 			if action == "fix bot" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				fixBot()
 			end
 
 			if action == "fix shop" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				fixShop()
 			end
 
 			if action == "forget players" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				forgetPlayers()
 			end
 
 			if action == "kick" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				kick(temp[1], temp[2])
 			end
 
 			if action == "new profile" then
-				newBotProfile()
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
+				tempTimer(4, [[newBotProfile()]])
 			end
 
 			if action == "pause bot" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				irc_chat(server.ircMain, "The bot is paused.")
 				message("say [" .. server.warnColour .. "]The bot is paused.  Most commands are disabled. D:[-]")
 				botman.botDisabled = true
 			end
 
 			if action == "quick reset bot" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				quickBotReset()
 			end
 
+			if action == "reindex shop" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
+
+				loadShopCategories()
+
+				if actionArgs == "" then
+					reindexShop()
+				else
+					reindexShop(actionArgs)
+				end
+			end
+
 			if action == "reload bot" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				reloadBot()
 			end
 
 			if action == "reload scripts" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				reloadCode()
 			end
 
+			if action == "reload staff" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
+				sendCommand("admin list")
+			end
+
 			if action == "reload table" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
+				irc_chat(server.ircAlerts, "actionTable = " .. actionTable)
+
 				if actionTable == "" then
 					loadTables(true)
 				end
 
-				if actionTable == "locations" then
-					loadLocations()
-				end
-
-				if actionTable == "badItems" then
+				if actionTable == "baditems" then
 					loadBadItems()
 				end
 
@@ -93,15 +129,19 @@ function WebPanelQueue()
 					loadBases()
 				end
 
-				if actionTable == "customMessages" then
+				if actionTable == "custommessages" then
 					loadCustomMessages()
+				end
+
+				if actionTable == "donors" then
+					loadDonors()
 				end
 
 				if actionTable == "friends" then
 					loadFriends()
 				end
 
-				if actionTable == "gimmeZombies" then
+				if actionTable == "gimmezombies" then
 					loadGimmeZombies()
 				end
 
@@ -109,27 +149,35 @@ function WebPanelQueue()
 					loadHotspots()
 				end
 
-				if actionTable == "locationCategories" then
+				if actionTable == "locations" then
+					loadLocations()
+				end
+
+				if actionTable == "locationcategories" then
 					loadLocationCategories()
 				end
 
-				if actionTable == "otherEntities" then
+				if actionTable == "modbotman" then
+					loadModBotman()
+				end
+
+				if actionTable == "otherentities" then
 					loadOtherEntities()
 				end
 
 				if actionTable == "players" then
-					if steam ~= 0 then
+					if steam ~= "0" then
 						loadPlayers(steam)
 					else
 						loadPlayers()
 					end
 				end
 
-				if actionTable == "resetZones" then
+				if actionTable == "resetzones" then
 					loadResetZones()
 				end
 
-				if actionTable == "restrictedItems" then
+				if actionTable == "restricteditems" then
 					loadRestrictedItems()
 				end
 
@@ -137,7 +185,7 @@ function WebPanelQueue()
 					loadServer()
 				end
 
-				if actionTable == "shopCategories" then
+				if actionTable == "shopcategories" then
 					loadShopCategories()
 				end
 
@@ -150,7 +198,7 @@ function WebPanelQueue()
 				end
 
 				if actionTable == "waypoints" then
-					if steam ~= 0 then
+					if steam ~= "0" then
 						loadWaypoints(steam)
 					else
 						loadWaypoints()
@@ -163,51 +211,63 @@ function WebPanelQueue()
 			end
 
 			if action == "reset bot" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				ResetBot()
 			end
 
 			if action == "reset bot keep cash" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				ResetBot(true)
 			end
 
 			if action == "reset server" or action == "fresh bot" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				ResetServer()
 			end
 
 			if action == "restart bot" then
-				if server.allowBotRestarts then
-					restartBot()
-				end
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
+				tempTimer(6, [[restartBot()]])
 			end
 
 			if action == "restart server" then
-				if server.allowReboot then
-					botman.scheduledRestart = false
-					botman.scheduledRestartTimestamp = os.time()
-					botman.scheduledRestartPaused = false
-					botman.scheduledRestartForced = true
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 
-					if (botman.rebootTimerID ~= nil) then killTimer(botman.rebootTimerID) end
-					if (rebootTimerDelayID ~= nil) then killTimer(rebootTimerDelayID) end
+				server.allowReboot = true
+				botman.scheduledRestart = false
+				botman.scheduledRestartTimestamp = os.time()
+				botman.scheduledRestartPaused = false
+				botman.scheduledRestartForced = true
 
-					botman.rebootTimerID = nil
-					rebootTimerDelayID = nil
-					botman.scheduledRestartPaused = false
-					botman.scheduledRestart = true
-					botman.scheduledRestartTimestamp = os.time() + 60
-					message("say [" .. server.chatColour .. "]The server is restarting in 1 minute.[-]")
-				end
+				if (botman.rebootTimerID ~= nil) then killTimer(botman.rebootTimerID) end
+				if (rebootTimerDelayID ~= nil) then killTimer(rebootTimerDelayID) end
+
+				botman.rebootTimerID = nil
+				rebootTimerDelayID = nil
+				botman.scheduledRestartPaused = false
+				botman.scheduledRestart = true
+				botman.scheduledRestartTimestamp = os.time() + 60
+				message("say [" .. server.chatColour .. "]The server is restarting in 1 minute.[-]")
 			end
 
 			if action == "say" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
+				irc_chat(server.ircAlerts, "action args = " .. actionArgs)
 				message(temp[1], temp[2])
 			end
 
+			if action == "send command" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
+				sendCommand(actionArgs)
+			end
+
 			if action == "update bot" or action == "update code" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				updateBot(true)
 			end
 
 			if action == "unpause bot" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				irc_chat(server.ircMain, "The bot is no longer paused.")
 				message("say [" .. server.warnColour .. "]The bot is now accepting commands again! :D[-]")
 				botman.botDisabled = false

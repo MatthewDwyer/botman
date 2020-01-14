@@ -26,11 +26,19 @@ function memTrigger(line)
 		ent = string.sub(line, string.find(line, "Ent:") + 5, string.find(line, "Items:") - 2)
 		items = string.sub(line, string.find(line, "Items:") + 7, string.find(line, "CO:") - 2)
 		server.fps = tonumber(fps)
-		botman.playersOnline = tonumber(ply)
+
+		botman.playersOnline = 0
+		ply = string.trim(ply)
+
 		server.uptime = math.floor(time * 60)
+		botman.lastUptimeRead = os.time()
 
 		if botman.dbConnected then
 			conn:execute("INSERT INTO performance (serverdate, gametime, fps, heap, heapMax, chunks, cgo, players, zombies, entities, items) VALUES ('" .. botman.serverTime .. "'," .. time .. "," .. fps .. "," .. heap .. "," .. heapMax .. "," .. chunks .. "," .. cgo .. "," .. ply .. "," .. zom .. ",'" .. ent .. "'," .. items .. ")")
+		end
+
+		if tonumber(ply) >= 0 then
+			botman.playersOnline = tonumber(ply)
 		end
 
 		if botman.getMetrics then

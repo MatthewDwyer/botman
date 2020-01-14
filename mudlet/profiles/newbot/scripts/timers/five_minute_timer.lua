@@ -9,6 +9,10 @@
 
 
 function FiveMinuteTimer()
+	if botman.botOffline then
+		return
+	end
+
 	if tonumber(botman.playersOnline) > 0 then
 		-- save the penguins! er I mean world!
 		if not botman.serverRebooting then
@@ -26,5 +30,7 @@ function FiveMinuteTimer()
 		end
 
 		sendCommand("llp parseable")
+	else
+		sendCommand("gt") -- Are you there?   Is this thing on? *TAP* *TAP*
 	end
 end
