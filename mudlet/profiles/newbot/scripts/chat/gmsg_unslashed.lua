@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -146,7 +146,6 @@ function gmsg_unslashed()
 			return true
 		end
 	end
-
 
 	if (chatvars.playername ~= "Server") then
 		if players[chatvars.playerid].botQuestion == "reset bot keep money" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then

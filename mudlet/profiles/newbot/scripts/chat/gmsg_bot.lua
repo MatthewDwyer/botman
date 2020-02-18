@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -736,7 +736,7 @@ function gmsg_bot()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}reload bot"
-			help[2] = "Make the bot read several things from the server including admin list, ban list, gg, lkp and others.  If you have Coppi's Mod installed it will also detect that."
+			help[2] = "Make the bot read several things from the server including admin list, ban list, gg, lkp and others."
 
 			if botman.registerHelp then
 				tmp.command = help[1]

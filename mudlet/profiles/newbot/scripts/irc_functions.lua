@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -11,6 +11,7 @@
 -- /mode #channel +f [5000t#b]:1
 
 local debug = false -- should be false unless testing
+local debugAdmin = false -- does not give unrestricted access to critical functions, mostly info.
 
 function getNick()
 	server.ircBotName = ircGetNick()
@@ -20,7 +21,7 @@ end
 function joinIRCServer()
 	local channels = {}
 
-	if server.ircPort == "" then
+	if not server.ircPort or not server.ircServer then
 		return
 	end
 
@@ -30,8 +31,10 @@ function joinIRCServer()
 	os.remove(homedir .. "/irc_server_port")
 
 	-- Do not allow the bot to automatically connect to Freenode.
-	if string.find(string.lower(server.ircServer), "freenode") then
-		server.ircServer = "127.0.0.1"
+	if server.ircServer then
+		if string.find(string.lower(server.ircServer), "freenode") then
+			server.ircServer = "127.0.0.1"
+		end
 	end
 
 	if setIrcServer ~= nil then
@@ -57,15 +60,17 @@ function joinIRCServer()
 		ircSaveSessionConfigs()
 	end
 
-	if server.ircBotName ~= "Bot" then
-		if ircSetNick ~= nil then
-			-- TheFae's modded mudlet
-			ircSetNick(server.ircBotName)
-		end
+	if server.ircBotName then
+		if server.ircBotName ~= "Bot" then
+			if ircSetNick ~= nil then
+				-- TheFae's modded mudlet
+				ircSetNick(server.ircBotName)
+			end
 
-		if setIrcNick ~= nil then
-			-- Mudlet 3.x
-			setIrcNick(server.ircBotName)
+			if setIrcNick ~= nil then
+				-- Mudlet 3.x
+				setIrcNick(server.ircBotName)
+			end
 		end
 	end
 end
@@ -904,7 +909,7 @@ function irc_new_players(name)
 	for k, v in pairs(players) do
 		if v.firstSeen ~= nil then
 			if ((os.time() - tonumber(v.firstSeen)) < 86401) then
-				if accessLevel(id) > 3 then
+				if accessLevel(id) > 3 and not debugAdmin then
 					irc_chat(name, v.name)
 				else
 					irc_chat(name, "steam: " .. k .. " id: " .. string.format("%8d", v.id) .. " name: " .. v.name .. " at " .. v.xPos .. " " .. v.yPos .. " " .. v.zPos)
@@ -1027,7 +1032,7 @@ function irc_players(name)
 			if sort == 999 then sort = 0 end
 		end
 
-		if (accessLevel(id) > 3) then
+		if (accessLevel(id) > 3) and not debugAdmin then
 			line = v.name .. " score: " .. string.format("%d", v.score) .. "| PVP: " .. string.format("%d", v.playerKills) .. "| zeds: " .. string.format("%d", v.zombies) .. "| level: " .. v.level .. " " .. flags .. "| " .. players[k].country .. "| ping: " .. v.ping .. "| Hacker score: " .. players[k].hackerScore
 		else
 			if players[id].ircAuthenticated == true then
@@ -1072,7 +1077,7 @@ function irc_who_played(name)
 
 	row = cursor:fetch({}, "a")
 	while row do
-		if (accessLevel(id) > 3) then
+		if (accessLevel(id) > 3) and not debugAdmin then
 			irc_chat(name, row.serverTime .. " " .. players[row.steam].name)
 		else
 			irc_chat(name, row.serverTime .. " " .. row.steam .. " " .. players[row.steam].name)

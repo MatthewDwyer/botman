@@ -256,12 +256,14 @@ function importFriends()
 	for k,v in pairs(friends) do
 		if debug then dbug("Importing friends of " .. k) end
 
-		friendlist = string.split(v.friends, ",")
+		if v.friends then
+			friendlist = string.split(v.friends, ",")
 
-		max = table.maxn(friendlist)
-		for i=1,max,1 do
-			if friendlist[i] ~= "" then
-				conn:execute("INSERT INTO friends (steam, friend) VALUES (" .. k .. "," .. friendlist[i] .. ")")
+			max = table.maxn(friendlist)
+			for i=1,max,1 do
+				if friendlist[i] ~= "" then
+					conn:execute("INSERT INTO friends (steam, friend) VALUES (" .. k .. "," .. friendlist[i] .. ")")
+				end
 			end
 		end
 	end
@@ -397,30 +399,37 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 
 	importedAPlayer = false
 
-	if pathPrefix then
-		if onlyImportThis ~= "" then
-			irc_chat(server.ircMain, "Restoring requested bot data from backup " .. pathPrefix)
-			alertAdmins("Restoring requested bot data from backup " .. pathPrefix)
+	if not botman.silentDataImport then
+		if pathPrefix then
+			if onlyImportThis ~= "" then
+				irc_chat(server.ircMain, "Restoring requested bot data from backup " .. pathPrefix)
+				alertAdmins("Restoring requested bot data from backup " .. pathPrefix)
+
+			else
+				irc_chat(server.ircMain, "Restoring backup " .. pathPrefix)
+				alertAdmins("Restoring backup " .. pathPrefix)
+			end
 		else
-			irc_chat(server.ircMain, "Restoring backup " .. pathPrefix)
-			alertAdmins("Restoring backup " .. pathPrefix)
-		end
-	else
-		if onlyImportThis ~= "" then
-			irc_chat(server.ircMain, "Restoring requested bot data from last backup.")
-			alertAdmins("Restoring requested bot data from last backup.")
-		else
-			irc_chat(server.ircMain, "Restoring last backup.")
-			alertAdmins("Restoring last backup.")
+			if onlyImportThis ~= "" then
+				irc_chat(server.ircMain, "Restoring requested bot data from last backup.")
+				alertAdmins("Restoring requested bot data from last backup.")
+			else
+				irc_chat(server.ircMain, "Restoring last backup.")
+				alertAdmins("Restoring last backup.")
+			end
 		end
 	end
 
-	if path == nil then
+	if not path then
 		path = homedir .. "/data_backup/"
 	end
 
 	if not pathPrefix then
 		pathPrefix = ""
+	end
+
+	if not onlyImportThis then
+		onlyImportThis = ""
 	end
 
 	if onlyImportThis == "" then
@@ -449,7 +458,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		table.load(path .. pathPrefix .. "players.lua", players)
 
 		if debug then dbug("Loading reset zones") end
-		resetZones = {}
+		resetRegions = {}
 		table.load(path .. pathPrefix .. "resetRegions.lua", resetRegions)
 
 		if debug then dbug("Loading server") end
@@ -609,7 +618,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 
 	if string.find(onlyImportThis, "resets") then
 		if debug then dbug("Loading reset zones") end
-		resetZones = {}
+		resetRegions = {}
 		table.load(path .. pathPrefix .. "resetRegions.lua", resetRegions)
 
 		conn:execute("TRUNCATE resetZones")
@@ -645,16 +654,18 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 
 	if debug then dbug("Import of Lua tables Complete") end
 
-	if importedAPlayer then
-		irc_chat(server.ircMain, "Player " .. id .. " " .. players[id].name .. " has been restored from backup.")
-		alertAdmins("Player " .. id .. " " .. players[id].name .. " has been restored from backup.")
-	else
-		if string.find(onlyImportThis, " player ", nil, true) then
-			irc_chat(server.ircMain, "Nothing restored.  That player wasn't found.  Either the name is wrong or the player is archived.")
-			alertAdmins("Nothing restored.  That player wasn't found.  Either the name is wrong or the player is archived.")
+	if not botman.silentDataImport then
+		if importedAPlayer then
+			irc_chat(server.ircMain, "Player " .. id .. " " .. players[id].name .. " has been restored from backup.")
+			alertAdmins("Player " .. id .. " " .. players[id].name .. " has been restored from backup.")
 		else
-			irc_chat(server.ircMain, "Bot restore complete. It is now safe to turn off your modem. xD")
-			alertAdmins("Bot restore complete. It is now safe to turn off your modem. xD")
+			if string.find(onlyImportThis, " player ", nil, true) then
+				irc_chat(server.ircMain, "Nothing restored.  That player wasn't found.  Either the name is wrong or the player is archived.")
+				alertAdmins("Nothing restored.  That player wasn't found.  Either the name is wrong or the player is archived.")
+			else
+				irc_chat(server.ircMain, "Bot restore complete. It is now safe to turn off your modem. xD")
+				alertAdmins("Bot restore complete. It is now safe to turn off your modem. xD")
+			end
 		end
 	end
 end

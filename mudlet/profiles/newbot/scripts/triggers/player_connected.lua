@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -234,6 +234,18 @@ function playerConnected(line)
 	local temp_table, temp, debug, commas, freeSlots, test, tmp, cmd, pid
 	local timestamp = os.time()
 	local cursor, errorString, rows, row
+	local foundSteam, foundIP, foundSteamOwner, foundEntity, foundName
+
+	if not badPlayerJoined then
+		badPlayerJoined = false
+		badJoinLine = ""
+	end
+
+	foundSteam = false
+	foundIP = false
+	foundSteamOwner = false
+	foundEntity = false
+	foundName = false
 
 	if botman.debugAll then
 		debug = true -- this should be true
@@ -269,12 +281,16 @@ function playerConnected(line)
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
-	if commas > 5 then
-		-- player has one or more commas in their name.  That screws with parsing lines so kick them with a message to change their name.
-		temp = string.find(line, "steamOwner=") + 11
-		tmp.steam = string.sub(line, temp, temp + 16)
+	if not badPlayerJoined then
+		if commas > 5 then
+			-- player has one or more commas in their name.  That screws with parsing lines so kick them with a message to change their name.
+			temp = string.find(line, "steamOwner=") + 11
+			tmp.steamOwner = string.sub(line, temp, temp + 16)
 
-		kick(tmp.steam, "You have one or more commas in your name. Please remove them.")
+			kick(tmp.steamOwner, "You have one or more commas in your name. Please remove them.")
+			irc_chat(server.ircAlerts, server.gameDate .. " player kicked for too many commas (not allowed in player name) " .. line)
+			return
+		end
 	end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
@@ -289,44 +305,59 @@ function playerConnected(line)
 	if string.find(line, "entityid=") then
 		temp = string.split(temp_table[2], "=")
 		tmp.entityid = temp[2]
+		foundEntity = true
 	end
 
 	if string.find(line, "name=") then
 		temp = string.split(temp_table[3], "name=")
 		tmp.player = temp[2]
+		foundName = true
 	end
 
 	if string.find(line, "steamid=") then
 		temp = string.split(temp_table[4], "=")
 		tmp.steam = temp[2]
+		foundSteam = true
 	end
 
 	if string.find(line, "steamOwner=") then
 		temp = string.split(temp_table[5], "=")
 		tmp.steamOwner = temp[2]
+		foundSteamOwner = true
 	end
 
 	if string.find(line, "ip=") then
 		temp = string.split(temp_table[6], "=")
 		tmp.ip = temp[2]
 		tmp.ip = tmp.ip:gsub("::ffff:","")
+		foundIP = true
 	end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
-	if tmp.steam then
-		pid = LookupOfflinePlayer(tmp.steam)
-	else
-		pid = LookupOfflinePlayer(tmp.entityid)
+	if not foundEntity or not foundSteam or not foundSteamOwner or not foundName or not foundIP then
+		badPlayerJoined = true
+		badJoinLine = line
+		return
 	end
 
-	if not tmp.steam and pid ~= 0 then
-		-- fix a Pimps bug where the INF Player connected line has a rogue line break causing the line to be missing everything after entityid
-		-- fill in the missing info from our records
-		tmp.steam = pid
-		tmp.steamOwner = players[pid].steamOwner
-		tmp.player = players[pid].name
-		tmp.ip = players[pid].ip
+	if tmp.steam ~= tmp.steamOwner and not server.allowFamilySteamKeys then
+		kick(tmp.steamOwner, "This server does not allow family steam keys.")
+		irc_chat(server.ircAlerts, server.gameDate .. " player kicked because steam key " .. tmp.steam .. " does not match steamOwner " .. tmp.steamOwner)
+		return
+	end
+
+	if tmp.steam then
+		-- check playersArchived and move the player record back to the players table if found
+		if playersArchived[tmp.steam] then
+			if debug then dbug("Restoring player " .. tmp.steam .. " " .. tmp.player .. " from archive") end
+			conn:execute("INSERT INTO players SELECT * from playersArchived WHERE steam = " .. tmp.steam)
+			conn:execute("DELETE FROM playersArchived WHERE steam = " .. tmp.steam)
+			playersArchived[tmp.steam] = nil
+			loadPlayers(tmp.steam)
+		end
+
+		pid = LookupOfflinePlayer(tmp.steam)
 	end
 
 	if tmp.ip == nil then tmp.ip = "" end
@@ -377,21 +408,11 @@ function playerConnected(line)
 				return
 			end
 		end
-
-		-- check playersArchived and move the player record back to the players table if found
-		if playersArchived[tmp.steam] then
-			if debug then dbug("Restoring player " .. tmp.steam .. " " .. tmp.player .. " from archive") end
-			conn:execute("INSERT INTO players SELECT * from playersArchived WHERE steam = " .. tmp.steam)
-			conn:execute("DELETE FROM playersArchived WHERE steam = " .. tmp.steam)
-			playersArchived[tmp.steam] = nil
-			loadPlayers(tmp.steam)
-		end
-
 	end
 
 	-- add to players table
 	if pid == 0 and tmp.steam then
-		initNewPlayer(tmp.steam, tmp.player, tmp.entityid, tmp.steamOwner)
+		initNewPlayer(tmp.steam, tmp.player, tmp.entityid, tmp.steamOwner, line)
 		fixMissingPlayer(tmp.steam, tmp.steamOwner)
 
 		if not string.find(line, "INF Steam authentication successful") then
@@ -466,21 +487,6 @@ function playerConnected(line)
 						alertAdmins("ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.", "alert")
 					end
 				end
-			end
-		end
-
-		-- check for player in donors table and restore donor status if missing in players table
-		cursor,errorString = conn:execute("SELECT * FROM donors WHERE steam = " .. tmp.steam)
-		rows = cursor:numrows()
-
-		if tonumber(rows) > 0 then
-			row = cursor:fetch({}, "a")
-
-			if not players[tmp.steam].donor then
-				players[tmp.steam].donor = true
-				players[tmp.steam].donorLevel = row.level
-				players[tmp.steam].donorExpiry = row.expiry
-				players[tmp.steam].maxWaypoints = server.maxWaypointsDonors
 			end
 		end
 
@@ -599,6 +605,8 @@ function playerConnected(line)
 			players[tmp.steam].protect2 = false
 			players[tmp.steam].maxWaypoints = server.maxWaypoints
 			if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0, donor = 0, donorLevel = 0, maxWaypoints = " .. server.maxWaypoints .. " WHERE steam = " .. tmp.steam) end
+			conn:execute("DELETE FROM donors WHERE steam = " .. tmp.steam)
+			connBots:execute("DELETE FROM donors WHERE steam = " .. tmp.steam .. " and botID = " .. server.botID)
 
 			message("pm " .. tmp.steam .. " [" .. server.chatColour .. "]Your donor status has expired :(  Contact an admin if you need help accessing your second base. Your 2nd base's protection will be disabled one week from when your donor status expired.[-]")
 			message("pm " .. tmp.steam .. " [" .. server.alertColour .. "]ALERT! Your second base is no longer bot protected![-]")
@@ -609,6 +617,21 @@ function playerConnected(line)
 
 			-- reload the player's waypoints
 			loadWaypoints(tmp.steam)
+		end
+
+		-- check for player in donors table and restore donor status if missing in players table
+		cursor,errorString = conn:execute("SELECT * FROM donors WHERE steam = " .. tmp.steam)
+		rows = cursor:numrows()
+
+		if tonumber(rows) > 0 then
+			row = cursor:fetch({}, "a")
+
+			if not players[tmp.steam].donor then
+				players[tmp.steam].donor = true
+				players[tmp.steam].donorLevel = row.level
+				players[tmp.steam].donorExpiry = row.expiry
+				players[tmp.steam].maxWaypoints = server.maxWaypointsDonors
+			end
 		end
 
 		if players[tmp.steam].watchPlayer and tonumber(players[tmp.steam].watchPlayerTimer) < os.time() then

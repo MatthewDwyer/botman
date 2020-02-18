@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	          This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -64,7 +64,7 @@ function checkData()
 		sendCommand("gg")
 	end
 
-	if (botman.playersOnline > 0) then
+	if tonumber(botman.playersOnline) > 0 then
 		if tablelength(igplayers) == 0 then
 			igplayers = {}
 			sendCommand("lp")
@@ -192,6 +192,9 @@ function login()
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		openDB() -- this lives in edit_me.lua
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+
+		--checkForData()
+
 		openBotsDB() -- this lives in edit_me.lua
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		initDB() -- this lives in mysql.lua
@@ -203,7 +206,7 @@ function login()
 		botman.serverTime = ""
 		botman.feralWarning = false
 		botman.playersOnline = 0
-		loadServer()
+		loadServer(true)
 		botman.ignoreAdmins	= true
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 

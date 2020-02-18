@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -47,7 +47,7 @@ function everyMinute()
 	end
 
 	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
-	debug = false
+	debug = false -- should be false unless testing
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
@@ -56,7 +56,6 @@ function everyMinute()
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	if not server.delayReboot then
-		--if (scheduledReboot == true or botman.scheduledRestart == true) and botman.scheduledRestartPaused == false and tonumber(botman.playersOnline) > 0 and server.allowReboot == true then
 		if (botman.scheduledRestart == true) and botman.scheduledRestartPaused == false and tonumber(botman.playersOnline) > 0 and server.allowReboot == true then
 			restartTime = botman.scheduledRestartTimestamp - os.time()
 
@@ -74,8 +73,8 @@ function everyMinute()
 		end
 
 		if server.ServerMaxPlayerCount then
-			if tonumber(v.afk - os.time()) < 300 and tonumber(v.afk - os.time()) > 60 and (botman.playersOnline >= server.ServerMaxPlayerCount or server.idleKickAnytime) and (accessLevel(steam) > 2) and server.idleKick then
-				message("pm " .. v.steam .. " [" .. server.warnColour .. "]You appear to be away from your keyboard.  You will be kicked in " .. os.date("%M minutes %S seconds",v.afk - os.time()) .. " for being afk.  If you move, talk or do things you will not be kicked.[-]")
+			if tonumber(v.afk - os.time()) < 200 and (botman.playersOnline >= server.ServerMaxPlayerCount or server.idleKickAnytime) and (accessLevel(k) > 2) and server.idleKick then
+				message("pm " .. v.steam .. " [" .. server.warnColour .. "]You appear to be away from your keyboard.  You will be kicked after " .. os.date("%M minutes %S seconds",v.afk - os.time()) .. " for being afk.  If you move, talk, add or remove inventory you will not be kicked.[-]")
 			end
 		end
 
@@ -213,7 +212,7 @@ function everyMinute()
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	if server.uptime then
-		if (botman.playersOnline == 0 and server.uptime < 0) and (scheduledReboot ~= true) and server.allowReboot and not botman.serverRebooting then
+		if (tonumber(botman.playersOnline) == 0 and tonumber(server.uptime) < 0) and (scheduledReboot ~= true) and server.allowReboot and not botman.serverRebooting then
 			botman.rebootTimerID = tempTimer( 60, [[startReboot()]] )
 			scheduledReboot = true
 		end
@@ -391,8 +390,6 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 				end
 			end
 		end
-	else
---		sendCommand("mem")
 	end
 
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end

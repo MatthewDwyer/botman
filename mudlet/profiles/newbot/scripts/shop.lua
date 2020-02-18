@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -79,6 +79,7 @@ function LookupShop(search,all)
 	shopIndex = 0
 	shopUnits = 0
 	shopQuality = 0
+	search = string.lower(search)
 
 	conn:execute("TRUNCATE memShop")
 
@@ -91,15 +92,15 @@ function LookupShop(search,all)
 	row = cursor:fetch({}, "a")
 
 	while row do
-		shopCode = shopCategories[row.category].code .. string.format("%02d", row.idx)
+		shopCode = string.lower(shopCategories[string.lower(row.category)].code) .. string.format("%02d", row.idx)
 		shopItem = row.item
 		shopIndex = row.idx
-		shopCategory = row.category
+		shopCategory = string.lower(row.category)
 		shopStock = row.stock
 		shopUnits = row.units
 		shopQuality = row.quality
 		shopPrice = (row.price + row.variation) * ((100 - row.special) / 100)
-		conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(row.category) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "'," .. row.units .. ")")
+		conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(shopCategory) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "'," .. row.units .. ")")
 
 		row = cursor:fetch(row, "a")
 	end
@@ -110,19 +111,19 @@ function LookupShop(search,all)
 		row = cursor:fetch({}, "a")
 
 		while row do
-			temp = shopCategories[row.category].code .. string.format("%02d", row.idx)
+			temp = string.lower(shopCategories[string.lower(row.category)].code) .. string.format("%02d", row.idx)
 
 			if temp == search then
 				shopRows = 1
 				shopCode = temp
 				shopItem = row.item
 				shopIndex = row.idx
-				shopCategory = row.category
+				shopCategory = string.lower(row.category)
 				shopStock = row.stock
 				shopUnits = row.units
 				shopQuality = row.quality
 				shopPrice = (row.price + row.variation) * ((100 - row.special) / 100)
-				conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units, quality) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(row.category) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "'," .. row.units .. "," .. row.quality .. ")")
+				conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units, quality) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(shopCategory) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "'," .. row.units .. "," .. row.quality .. ")")
 				return
 			end
 

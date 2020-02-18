@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -11,6 +11,7 @@ local ircID, pid, login, name1, name2, words, wordsOld, words2, wordCount, word2
 local displayIRCHelp, number, numberCount, numbers = {}
 
 debug = false -- should be false unless testing
+debugAdmin = false -- does not give unrestricted access to critical functions, mostly info.
 
 if botman.debugAll then
 	debug = true -- this should be true
@@ -685,7 +686,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "There are no location categories.")
 		else
 			if ircID then
-				if players[ircID].accessLevel < 3 then
+				if players[ircID].accessLevel < 3 or debugAdmin then
 					irc_chat(name, "Category | Minimum Access Level | Maximum Access Level")
 
 					for k, v in pairs(locationCategories) do
@@ -872,7 +873,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 
 			if ircID then
-				if players[ircID].accessLevel < 3 then
+				if players[ircID].accessLevel < 3 or debugAdmin then
 					if v.locationCategory ~= "" then
 						irc_chat(name, v.name .. " " .. public .. " " .. active .. " xyz " .. v.x .. " " .. v.y .. " " .. v.z .. " category " .. v.locationCategory)
 					else
@@ -1183,7 +1184,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if words[1] == "bow" and (words[2] == "before" or words[2] == "to") and words[3] == "me" then
 		--ircID = LookupOfflinePlayer(name, "all")
 
-		if players[ircID].accessLevel < 3 then
+		if players[ircID].accessLevel < 3 or debugAdmin then
 			players[ircID].ircSessionExpiry = os.time() + 86400 -- 1 day
 			players[ircID].ircAuthenticated = true
 			players[ircID].ircAlias = name
@@ -1218,7 +1219,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		--ircID = LookupOfflinePlayer(name, "all")
 
-		if players[ircID].accessLevel < 3 then
+		if players[ircID].accessLevel < 3 or debugAdmin then
 			players[ircID].ircSessionExpiry = os.time() + 86400 -- 1 day
 			players[ircID].ircAuthenticated = true
 			players[ircID].ircAlias = name
@@ -1471,7 +1472,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "command" and words[2] == "help") and (players[ircID].accessLevel < 3) then
+	if (words[1] == "command" and words[2] == "help") and ((players[ircID].accessLevel < 3) or debugAdmin) then
 		if words[3] == nil then
 			gmsg(server.commandPrefix .. "command help", ircID)
 		else
@@ -1490,7 +1491,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "list" and words[2] == "help") and (players[ircID].accessLevel < 3) then
+	if (words[1] == "list" and words[2] == "help") and ((players[ircID].accessLevel < 3) or debugAdmin) then
 		if words[3] == nil then
 			gmsg(server.commandPrefix .. "list help", ircID)
 		else
@@ -1509,7 +1510,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "help" and words[2] == "server") and (players[ircID].accessLevel < 3) then
+	if (words[1] == "help" and words[2] == "server") and ((players[ircID].accessLevel < 3) or debugAdmin) then
 		irc_HelpServer()
 		irc_params = {}
 		return
@@ -1523,7 +1524,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "help" and words[2] == "donors") and (players[ircID].accessLevel < 3) then
+	if (words[1] == "help" and words[2] == "donors") and ((players[ircID].accessLevel < 3) or debugAdmin) then
 		irc_HelpDonors()
 		irc_params = {}
 		return
@@ -1537,7 +1538,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "help" and words[2] == "csi") and (players[ircID].accessLevel < 3) then
+	if (words[1] == "help" and words[2] == "csi") and ((players[ircID].accessLevel < 3) or debugAdmin) then
 		irc_HelpCSI()
 		irc_params = {}
 		return
@@ -1551,7 +1552,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "help" and words[2] == "watchlist") and (players[ircID].accessLevel < 3) then
+	if (words[1] == "help" and words[2] == "watchlist") and ((players[ircID].accessLevel < 3) or debugAdmin) then
 		irc_HelpWatchlist()
 		irc_params = {}
 		return
@@ -1565,7 +1566,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "help" and words[2] == "bad" and words[3] == "items") and (players[ircID].accessLevel < 3) then
+	if (words[1] == "help" and words[2] == "bad" and words[3] == "items") and ((players[ircID].accessLevel < 3) or debugAdmin) then
 		irc_HelpBadItems()
 		irc_params = {}
 		return
@@ -1579,7 +1580,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "help" and words[2] == "announcements") and (players[ircID].accessLevel < 3) then
+	if (words[1] == "help" and words[2] == "announcements") and ((players[ircID].accessLevel < 3) or debugAdmin) then
 		irc_HelpAnnouncements()
 		irc_params = {}
 		return
@@ -1593,7 +1594,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "help" and words[2] == "commands") and (players[ircID].accessLevel < 3) then
+	if (words[1] == "help" and words[2] == "commands") and ((players[ircID].accessLevel < 3) or debugAdmin) then
 		irc_HelpCommands()
 		irc_params = {}
 		return
@@ -1607,7 +1608,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "help" and words[2] == "motd") and (players[ircID].accessLevel < 3) then
+	if (words[1] == "help" and words[2] == "motd") and ((players[ircID].accessLevel < 3) or debugAdmin) then
 		irc_HelpMOTD()
 		irc_params = {}
 		return
@@ -1635,7 +1636,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "reset" and words[2] == "zones" and words[3] == nil) and (players[ircID].accessLevel < 3) then
+	if (words[1] == "reset" and words[2] == "zones" and words[3] == nil) and ((players[ircID].accessLevel < 3) or debugAdmin) then
 		irc_listResetZones(name)
 		irc_params = {}
 		return
@@ -1698,7 +1699,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_params = {}
 			return
 		else
-			if (players[ircID].accessLevel < 3) then
+			if (players[ircID].accessLevel < 3) or debugAdmin then
 				irc_chat(name, "To change the rules type set rules {new rules}")
 				irc_chat(name, ".")
 			end
@@ -1750,7 +1751,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		return
 	end
 
-	if (players[ircID].accessLevel > 2) then
+	if (players[ircID].accessLevel > 2) or debugAdmin then
 		irc_params = {}
 		return -- and take your dog.
 	end
@@ -1775,7 +1776,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "fix" and words[2] == "bot") and words[3] == nil then
-		if (players[ircID].accessLevel > 1) then
+		if (players[ircID].accessLevel > 1) or debugAdmin then
 			irc_chat(name, "Restricted command.")
 			irc_params = {}
 			return
@@ -1799,6 +1800,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "add" and words[2] == "location" and words[3] == "category" then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		tmp = {}
 		tmp.category = wordsOld[4]
 		tmp.minAccessLevel = 99
@@ -1856,6 +1863,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "remove" and words[2] == "location" and words[3] == "category" then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		tmp = {}
 		tmp.category = wordsOld[4]
 
@@ -1931,6 +1944,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "unmute" and words[2] == "irc" and words[3] ~= nil) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		name1 = words[3]
 		name1 = string.trim(name1)
 		pid = LookupPlayer(name1)
@@ -1953,6 +1972,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "mute" and words[2] == "irc" and words[3] ~= nil) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		name1 = words[3]
 		name1 = string.trim(name1)
 		pid = LookupPlayer(name1)
@@ -2124,16 +2149,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			return
 		end
 
-		if botman.customMudlet then
-			if server.masterPassword ~= "" then
-				irc_chat(name, "This command requires a password to complete.")
-				irc_chat(name, "Type " .. server.commandPrefix .. "password {the password} (Do not type the {}).")
-				players[ircID].botQuestion = "restart bot"
-			else
-				restartBot()
-			end
+		if server.masterPassword ~= "" then
+			irc_chat(name, "This command requires a password to complete.")
+			irc_chat(name, "Type " .. server.commandPrefix .. "password {the password} (Do not type the {}).")
+			players[ircID].botQuestion = "restart bot"
 		else
-			irc_chat(name, "This command is not supported in your Mudlet.  You need the latest custom Mudlet by TheFae or Mudlet 3.4")
+			restartBot()
 		end
 
 		irc_params = {}
@@ -2164,6 +2185,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "command" and words[2] == "prefix") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		tmp = {}
 		tmp.prefix = string.sub(msg, string.find(msg, "prefix") + 7)
 		tmp.prefix = string.sub(tmp.prefix, 1, 1)
@@ -2809,7 +2836,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		row = cursor:fetch({}, "a")
 
 		while row do
-			if accessLevel(pid) > 3 then
+			if accessLevel(pid) > 3 and not debugAdmin then
 				irc_chat(name, v.name)
 			else
 				msg = "steam: " .. row.steam .. " id: " .. string.format("%8d", players[row.steam].id) .. " name: " .. players[row.steam].name .. " at [ " .. players[row.steam].xPos .. " " .. players[row.steam].yPos .. " " .. players[row.steam].zPos .. " ] " .. players[row.steam].country
@@ -2864,6 +2891,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "check" and words[2] == "dns" then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if debug then dbug("debug ircmessage " .. msg) end
 		pid = 0
 		number = ""
@@ -2897,6 +2930,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "view" and words[2] == "alerts" then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if debug then dbug("debug ircmessage " .. msg) end
 		if number == nil then number = 20 end
 
@@ -2926,7 +2965,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "view" and words[2] == "slots") and accessLevel(ircID) < 3 then
+	if (words[1] == "view" and words[2] == "slots") and accessLevel(ircID) < 3 or debugAdmin then
 		irc_chat(name, "Reserved slots status:")
 		irc_chat(name, "server.reservedSlots = " .. server.reservedSlots)
 		irc_chat(name, "botman.playersOnline = " .. botman.playersOnline)
@@ -2966,6 +3005,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "show" and words[2] == "inventory" then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if words[3] == nil then
 			irc_chat(name, "Full example.. show inventory player Joe xpos 100 zpos 200 days 2 range 50 item tnt qty 20")
 			irc_chat(name, "You can grab the coords from any player by adding, near joe")
@@ -3131,6 +3176,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "add" and words[2] == "announcement" and words[3] ~= nil then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if debug then dbug("debug ircmessage " .. msg) end
 		msg = string.sub(msg, 17, string.len(msg))
 		msg = string.trim(msg)
@@ -3153,6 +3204,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "delete" or words[1] == "remove") and words[2] == "announcement" and words[3] ~= nil then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		counter = 1
 		cursor,errorString = conn:execute("SELECT * FROM announcements")
 		row = cursor:fetch({}, "a")
@@ -3186,6 +3243,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "who" and words[2] == "visited") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if words[3] == nil then
 			irc_chat(name, "See who visited a player location or base.")
 			irc_chat(name, "Example with defaults:  who visited player smeg days 1 range 10 height 4")
@@ -3443,6 +3506,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "claims") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if debug then dbug("debug ircmessage " .. msg) end
 		if players[ircID].ircAuthenticated == false then
 			if requireLogin(name) then
@@ -3518,6 +3587,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "pm") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		pid = LookupPlayer(words[2])
 
 		if pid ~= 0 then
@@ -3551,11 +3626,6 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 	if (words[1] == "con") and players[ircID].accessLevel == 0 then
 		msg = string.trim(string.sub(msg, string.find(msgLower, "con") + 4))
-
-		-- if string.sub(msg, 1, 4) == "help" then
-			-- echoConsoleTo = name
-			-- echoConsole = false
-		-- end
 
 		if msg == "se" or msg == "webpermission list" or msg == "ban list" or msg == "lp" or msg == "le" or string.sub(msg, 1, 3) == "lpf" or string.sub(msg, 1, 3) == "lpb" or string.sub(msg, 1, 3) == "lps" or msg == "SystemInfo" or msg == "traderlist" or msg == "gg" or msg == "version" or string.sub(msg, 1, 3) == "li " or string.sub(msg, 1, 3) == "si " or string.sub(msg, 1, 4) == "help" then
 			echoConsole = false
@@ -3647,6 +3717,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "base") and (words[2] == "cooldown" or words[2] == "timer") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if words[3] == nil then
 			irc_chat(name, server.commandPrefix .. "base can only be used once every " .. (server.baseCooldown / 60) .. " minutes for players and " .. math.floor((server.baseCooldown / 60) / 2) .. " minutes for donors.")
 			irc_chat(name, ".")
@@ -3674,6 +3750,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "set" and words[2] == "rules") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if words[3] ~= nil then
 			server.rules = string.sub(msg, string.find(msgLower, "set rules") + 9)
 			irc_chat(name, "New server rules recorded: " .. server.rules)
@@ -3702,6 +3784,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		end
 
 		if words[2] == "delete" or words[2] == "clear" then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 			server.MOTD = nil
 			irc_chat(name, "Message of the day has been deleted.")
 			irc_chat(name, ".")
@@ -3726,6 +3814,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "set" and words[2] == "motd") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if words[3] ~= nil then
 			server.MOTD = string.sub(msg, string.find(msgLower, "set motd") + 9)
 			irc_chat(name, "New message of the day recorded. " .. server.MOTD)
@@ -3808,7 +3902,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "show") and (words[2] == "table") and (words[3] ~= nil) and (players[ircID].accessLevel == 0) then
+	if (words[1] == "show") and (words[2] == "table") and (words[3] ~= nil) and (players[ircID].accessLevel == 0 or debugAdmin) then
 		irc_chat(name, "The " .. words[3] .." table: ")
 
 		if words[4] ~= nil then
@@ -4090,6 +4184,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "open" and words[2] == "shop") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		server.allowShop = true
 
 		irc_chat(name, "Players can use the shop and play in the lottery.")
@@ -4109,6 +4209,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "close" and words[2] == "shop") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		server.allowShop = false
 
 		irc_chat(name, "Only staff can use the shop.")
@@ -4122,6 +4228,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "shop" and words[2] == "variation" and words[3] ~= nil) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		LookupShop(words[3])
 
 		irc_chat(name, "You have changed the price variation for " .. shopItem .. " to " .. words2[4])
@@ -4141,6 +4253,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "shop" and words[2] == "units" and words[3] ~= nil) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		LookupShop(words[3])
 
 		irc_chat(name, "You have changed the units for " .. shopItem .. " to " .. words2[4])
@@ -4154,6 +4272,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "shop" and words[2] == "special" and words[3] ~= nil) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		LookupShop(words[3], true)
 
 		if shopItem == "" then
@@ -4179,6 +4303,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "shop" and words[2] == "price" and words[3] ~= nil) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		LookupShop(words[3], true)
 
 		if shopItem == "" then
@@ -4204,6 +4334,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "shop" and words[2] == "units" and words[3] ~= nil) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		LookupShop(words[3], true)
 
 		if shopItem == "" then
@@ -4229,6 +4365,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "shop" and words[2] == "quality" and words[3] ~= nil) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		LookupShop(words[3], true)
 
 		if shopItem == "" then
@@ -4254,6 +4396,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "shop" and words[2] == "max" and words[3] ~= nil) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		LookupShop(words[3], true)
 
 		if shopItem == "" then
@@ -4279,6 +4427,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "shop" and words[2] == "restock" and words[3] ~= nil) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		LookupShop(wordsOld[3], true)
 		shopStock = tonumber(words2[4])
 
@@ -4309,6 +4463,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "shop" and words[2] == "add" and words[3] == "category") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		shopCategories[words[4]] = {}
 
 		for i=2,wordCount,1 do
@@ -4340,6 +4500,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "shop" and words[2] == "remove" and words[3] == "category") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if not shopCategories[words[4]] then
 			irc_chat(name, "The category " .. words[4] .. " does not exist.")
 			irc_params = {}
@@ -4364,6 +4530,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "shop" and words[2] == "change" and words[3] == "category") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if words[5] == "to" then
 			oldCategory = words[4]
 			newCategory = words[6]
@@ -4404,6 +4576,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "inv") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		tmp = {}
 		tmp.name = name
 
@@ -4458,6 +4636,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "list" and (words[2] == "bases" or words[3] == "bases") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		pid = 0
 		for i=2,wordCount,1 do
 			if words[i] == "bases" then
@@ -4594,6 +4778,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "near") and (words[2] ~= "entity") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if words[2] == nil then
 			irc_chat(name, "Lists players, bases and locations near a player or coordinate.")
 			irc_chat(name, "Usage: near player {name}")
@@ -4667,6 +4857,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "info") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if words[2] == nil then
 			pid = players[ircID].selectedSteam
 		else
@@ -4857,6 +5053,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "permaban") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		name1 = string.trim(string.sub(msg, string.find(msgLower, "permaban") + 9))
 		pid = LookupPlayer(name1)
 
@@ -4886,6 +5088,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "remove" and words[2] == "permaban") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		name1 = string.trim(string.sub(msg, string.find(msgLower, "permaban") + 9))
 		pid = LookupPlayer(name1)
 
@@ -4913,6 +5121,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "add" and words[2] == "player") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		tmp = {}
 		tmp.name = string.trim(string.sub(msg, string.find(msgLower, "player ") + 7, string.find(msgLower, " login") - 1))
 
@@ -4950,6 +5164,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "player" and string.find(msgLower, "unfriend")) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		name1 = string.trim(string.sub(msg, string.find(msgLower, "player") + 7, string.find(msgLower, "unfriend") - 1))
 		name2 = string.trim(string.sub(msg, string.find(msgLower, "unfriend") + 9))
 
@@ -4982,6 +5202,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "player" and string.find(msgLower, "friend")) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		name1 = string.trim(string.sub(msg, string.find(msgLower, "player") + 7, string.find(msgLower, "friend") - 1))
 		name2 = string.trim(string.sub(msg, string.find(msgLower, "friend") + 7))
 
@@ -5038,7 +5264,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if (words[1] == "players") and players[ircID].accessLevel < 3 then
+	if (words[1] == "players") and (players[ircID].accessLevel < 3 or debugAdmin) then
 		if words[2] ~= nil then
 			irc_params.pname = string.sub(msg, 9)
 		end
@@ -5056,7 +5282,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if words[1] == "archived" and words[2] == "players" and players[ircID].accessLevel < 3 then
+	if words[1] == "archived" and words[2] == "players" and (players[ircID].accessLevel < 3 or debugAdmin) then
 		if words[3] ~= nil then
 			irc_params.pname = string.sub(msg, 18)
 		end
@@ -5243,6 +5469,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "watch") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		name1 = string.trim(string.sub(msg, string.find(msgLower, "watch") + 6))
 		pid = LookupPlayer(name1)
 
@@ -5268,6 +5500,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "stop" and words[2] == "watching") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		name1 = string.trim(string.sub(msg, string.find(msgLower, "watching") + 9))
 		pid = LookupPlayer(name1)
 
@@ -5296,6 +5534,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "donors") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		tmp = {}
 		tmp.count = 0
 		tmp.name = ""
@@ -5508,7 +5752,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			ircListItemsFilter = string.lower(words[3])
 		end
 
-		sendCommand("bc-go prefabs")
+		if server.stompy then
+			sendCommand("bc-go prefabs")
+		end
+
 		irc_params = {}
 		return
 	end
@@ -5522,6 +5769,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "status") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		name1 = string.trim(string.sub(msg, string.find(msgLower, "status") + 7))
 		pid = LookupPlayer(name1)
 
@@ -5548,6 +5801,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "shop" and words[2] == "add" and words[3] == "item" and words[4] ~= nil) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		LookupShop(wordsOld[4], "all")
 
 		if shopCode ~= "" then
@@ -5601,6 +5860,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "empty" and words[2] == "shop") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		conn:execute("TRUNCATE shop")
 		conn:execute("DELETE FROM shopCategories WHERE category <> 'misc'")
 		loadShopCategories()
@@ -5618,6 +5883,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "shop" and words[2] == "remove" and words[3] == "item") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		LookupShop(wordsOld[4], "all")
 
 		if shopCode ~= "" then
@@ -5745,6 +6016,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "list" and string.find(words[2], "event") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if words[3] == nil then
 			-- display command help
 			irc_chat(name, "Several events are logged and can be searched with list event. Search for an event and/or add a player name or steam ID.")
@@ -5834,6 +6111,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "add" and words[2] == "proxy") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if words[3] == nil then
 			irc_chat(name, "I do a dns lookup on every player that joins. You can ban or exile players found using a known proxy.")
 			irc_chat(name, "Staff and whitelisted players are ignored.")
@@ -5907,6 +6190,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "remove" and words[2] == "proxy") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		proxy = string.sub(msg, string.find(msg, "proxy") + 6)
 		proxy = string.trim(string.upper(proxy))
 
@@ -6039,6 +6328,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "list" and words[2] == "entities") then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		if botman.lastListEntities == nil then
 			irc_chat(name, "Entities have not yet been scanned.  A scan has been actioned now. Repeat your command for the list.")
 			sendCommand("le")
@@ -6101,6 +6396,12 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "near" and words[2] == "entity" and words[3] ~= nil) then
+		if (players[ircID].accessLevel > 2) then
+			irc_chat(name, "Restricted command.")
+			irc_params = {}
+			return
+		end
+
 		pid = words[3]
 
 		cursor,errorString = conn:execute("SELECT * FROM memEntities WHERE entityID = " .. pid)

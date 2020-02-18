@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -454,7 +454,7 @@ end
 
 function isNewPlayer(steam)
 	if igplayers[steam] then
-		if (igplayers[steam].sessionPlaytime + players[steam].timeOnServer < (server.newPlayerTimer * 60)) then
+		if (igplayers[steam].sessionPlaytime + players[steam].timeOnServer < (tonumber(server.newPlayerTimer) * 60)) then
 			return true
 		else
 			return false
@@ -1415,12 +1415,6 @@ function accessLevel(pid)
 
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
-	if tonumber(server.accessLevelOverride) < 99 and players[pid] then
-		return tonumber(server.accessLevelOverride)
-	end
-
-	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
-
 	-- anyone stripped of certain rights
 	if players[pid] then
 		if players[pid].denyRights == true then
@@ -1437,15 +1431,21 @@ function accessLevel(pid)
 
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
+	if tonumber(server.accessLevelOverride) < 99 and players[pid] then
+		return tonumber(server.accessLevelOverride)
+	end
+
+	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
+
 	-- regulars
 	if igplayers[pid] then
-		if tonumber(players[pid].timeOnServer) + tonumber(igplayers[pid].sessionPlaytime) > (server.newPlayerTimer * 60) then
+		if tonumber(players[pid].timeOnServer) + tonumber(igplayers[pid].sessionPlaytime) > (tonumber(server.newPlayerTimer) * 60) then
 			players[pid].accessLevel = 90
 			return 90
 		end
 	else
 		if players[pid] then
-			if tonumber(players[pid].timeOnServer) > (server.newPlayerTimer * 60) then
+			if tonumber(players[pid].timeOnServer) > (tonumber(server.newPlayerTimer) * 60) then
 				players[pid].accessLevel = 90
 				return 90
 			end
@@ -1992,7 +1992,7 @@ function fixMissingIGPlayer(steam)
 	-- if any fields are missing from the players in-game player record, add them with default values
 
 	if (igplayers[steam].afk == nil) then
-		igplayers[steam].afk = os.time() + 900
+		igplayers[steam].afk = os.time() + tonumber(server.idleKickTimer)
 	end
 
 	if igplayers[steam].alertLocation == nil then

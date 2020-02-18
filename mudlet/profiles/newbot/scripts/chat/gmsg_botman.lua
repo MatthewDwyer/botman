@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -1400,6 +1400,58 @@ function gmsg_botman()
 	end
 
 
+	local function cmd_ResetRegionsNow()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}reset regions now"
+			help[2] = "Reboot the server and reset all reset regions immediately. (result varies subject to other settings)"
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "reset,now"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "now") or string.find(chatvars.command, "reset") or string.find(chatvars.command, "region")) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "reset" and chatvars.words[2] == "regions" and chatvars.words[3] == "now" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			sendCommand("bm-resetregions enable")
+			sendCommand("bm-resetregions now")
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_SavePrefab()
 		local x1, y1, z1, x2, y2, z2
 
@@ -2305,6 +2357,79 @@ function gmsg_botman()
 		end
 	end
 
+
+	local function cmd_ToggleResetRegionsPrefabs()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable/disable reset prefabs"
+			help[2] = "The Botman mod can reset entire regions (the default) or just the prefabs they contain."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "reset,region,prefab"
+				tmp.accessLevel = 0
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "prefab") or string.find(chatvars.command, "reset") or string.find(chatvars.command, "region")) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (string.find(chatvars.words[1], "enable") or string.find(chatvars.words[1], "disable")) and chatvars.words[2] == "reset" and string.find(chatvars.words[3], "prefab") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "enable" then
+				modBotman.resetsPrefabsOnly = true
+				conn:execute("UPDATE modBotman set resetsPrefabsOnly = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reset regions will only reset prefabs.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Reset regions will only reset prefabs.")
+				end
+
+				sendCommand("bm-resetregions prefabsonly true")
+			else
+				modBotman.resetsPrefabsOnly = false
+				conn:execute("UPDATE modBotman set resetsPrefabsOnly = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reset regions will reset whole regions.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Reset regions will reset whole regions.")
+				end
+
+				sendCommand("bm-resetregions prefabsonly false")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
 -- ###################  zombie announcer commands ################
 
 
@@ -2796,6 +2921,15 @@ function gmsg_botman()
 
 	if (debug) then dbug("debug botman line " .. debugger.getinfo(1).currentline) end
 
+	result = cmd_ToggleResetRegionsPrefabs()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleResetRegionsPrefabs triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug botman line " .. debugger.getinfo(1).currentline) end
+
 	result = cmd_ToggleMutePlayer()
 
 	if result then
@@ -2897,6 +3031,15 @@ function gmsg_botman()
 
 	if result then
 		if debug then dbug("debug cmd_MakeMaze triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug botman line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ResetRegionsNow()
+
+	if result then
+		if debug then dbug("debug cmd_ResetRegionsNow triggered") end
 		return result
 	end
 

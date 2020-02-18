@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -18,7 +18,7 @@ function ThirtyMinuteTimer()
 			saveBotMaintenance()
 			sendCommand("sa")
 		else
-			if (os.time() - botMaintenance.lastSA) > 30 then
+			if (os.time() - botMaintenance.lastSA) > 30 and tonumber(botman.playersOnline) > 0  then
 				botMaintenance.lastSA = os.time()
 				saveBotMaintenance()
 				sendCommand("sa")

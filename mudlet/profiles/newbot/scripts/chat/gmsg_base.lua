@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -68,7 +68,7 @@ function gmsg_base()
 				return true
 			end
 
-			if (chatvars.accessLevel > 10) and (chatvars.words[1] == "base2" or chatvars.words[1] == "home2") then
+			if chatvars.accessLevel > 10 and (chatvars.words[1] == "base2" or chatvars.words[1] == "home2") then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Only donors can have 2 base teleports and base protections.  Consider donating =D[-]")
 				botman.faultyChat = false
 				return true

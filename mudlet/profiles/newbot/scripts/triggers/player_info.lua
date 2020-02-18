@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -662,10 +662,18 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	-- convert zombie kills to cash
 	if (tonumber(igplayers[steam].zombies) > tonumber(players[steam].zombies)) and (math.abs(igplayers[steam].zombies - players[steam].zombies) < 20) then
 		if server.allowBank then
-			players[steam].cash = tonumber(players[steam].cash) + math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillReward
+			if players[steam].donor then
+				players[steam].cash = tonumber(players[steam].cash) + math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillRewardDonors
 
-			if (players[steam].watchCash == true) then
-				message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", steam, server.chatColour, math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillReward, server.moneyPlural, string.format("%d", players[steam].cash)))
+				if (players[steam].watchCash) then
+					message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", steam, server.chatColour, math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillRewardDonors, server.moneyPlural, string.format("%d", players[steam].cash)))
+				end
+			else
+				players[steam].cash = tonumber(players[steam].cash) + math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillReward
+
+				if (players[steam].watchCash) then
+					message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", steam, server.chatColour, math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillReward, server.moneyPlural, string.format("%d", players[steam].cash)))
+				end
 			end
 		end
 
@@ -859,7 +867,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	if players[steam].newPlayer == true then
-		if (igplayers[steam].sessionPlaytime + players[steam].timeOnServer > (server.newPlayerTimer * 60) or tonumber(level) > server.newPlayerMaxLevel) then
+		if (igplayers[steam].sessionPlaytime + players[steam].timeOnServer > (server.newPlayerTimer * 60) or tonumber(level) > tonumber(server.newPlayerMaxLevel)) then
 			players[steam].newPlayer = false
 			players[steam].watchPlayer = false
 			players[steam].watchPlayerTimer = 0
@@ -1024,7 +1032,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				igplayers[steam].alertBaseExit = nil
 				igplayers[steam].alertBaseID = nil
 				igplayers[steam].alertBase = nil
-				if botman.dbConnected then conn:execute("UPDATE players SET protect = 1 WHERE steam = " .. data.steamid) end
+				if botman.dbConnected then conn:execute("UPDATE players SET protect = 1 WHERE steam = " .. steam) end
 
 				faultyPlayerinfo = false
 				deleteLine()
@@ -1080,7 +1088,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				igplayers[steam].alertBaseExit = nil
 				igplayers[steam].alertBaseID = nil
 				igplayers[steam].alertBase = nil
-				if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 1 WHERE steam = " .. data.steamid) end
+				if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 1 WHERE steam = " .. steam) end
 
 				faultyPlayerinfo = false
 				deleteLine()

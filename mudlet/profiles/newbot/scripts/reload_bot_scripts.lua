@@ -396,11 +396,6 @@ function refreshScripts()
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	server.nextCodeReload = "/scripts/thirty_minutes.lua"
-	checkScript(homedir .. "/scripts/thirty_minutes.lua")
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
 	server.nextCodeReload = "/scripts/mysql.lua"
 	checkScript(homedir .. "/scripts/mysql.lua")
 
@@ -630,6 +625,11 @@ function refreshScripts()
 
 	server.nextCodeReload = "/scripts/timers/five_minute_timer.lua"
 	checkScript(homedir .. "/scripts/timers/five_minute_timer.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/timers/thirty_minutes.lua"
+	checkScript(homedir .. "/scripts/timers/thirty_minutes.lua")
 
 	server.nextCodeReload = ""
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end

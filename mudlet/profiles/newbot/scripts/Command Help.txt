@@ -43,6 +43,25 @@ Clear horde doesn't remove the horde. It only clears the saved coordinate.
 /spawn horde {optional player or location name} {number of zombies}
 Spawn a horde around a player or location or at a marked coordinate.  See /set horde.
 
+/set max clans {number of clans}
+Set the maximum number of clans.
+
+/set max clan players {number of players}
+Set the maximum number of players clans can have.
+
+/set min clan level {player level}
+Set the minimum player level required to join a clan.
+
+/enable/disable clans
+Enable or disable the clan feature in the Botman mod.  Default is disabled.
+
+/enable/disable reset regions
+Enable or disable the Botman mod's reset regions feature.  Default is disabled.
+This is very similar to the bot's reset zones except that they are limited to whole regions and can actually reset the region or just prefabs or just remove claims.
+
+/reset regions remove/leave claims (default is leave claims)
+Reset regions can remove or leave claim blocks.
+
 /mute/unmute {player name}
 Muting a player blocks their ingame chat from being seen by other players.  You will still see it from the web client.
 It does not block voice chat sadly.
@@ -72,6 +91,7 @@ Examples:
 /dig bedrock wide 1
 /dig up (makes a 5x5 room)
 /dig up (or room) wide 5 tall 10 (makes a 10x10 room)
+/dig up wide 50 tall 30 replace air block terrStone
 /fill east base 70 wide 2 tall 10 long 50 block steelBlock
 /fill bedrock wide 2 block stone
 /fill {saved prefab} block stone
@@ -175,10 +195,6 @@ Base Commands:
 Delete a player's base and base protection (in the bot only).  It does not physically delete the base in the game world.
 Players can only delete their own bases.
 
-/sethome (or sethome2)
-/setbase (or setbase2)
-Tell the bot where your first or second base is for base protection, raid alerting and the ability to teleport home.
-
 /set base cooldown {number in seconds} (default is 2400 or 40 minutes)
 The /base or /home command can have a time delay between uses.  Donors wait half as long.  If you set it to 0 there is no wait time.
 
@@ -200,10 +216,6 @@ Set within 50 metres of your base.  The closest base will become your new spawn 
 /set default base size {number in metres or blocks}
 The default base protection size is 32 blocks (64 diameter).  This default only applies to new players joining the server for the first time.
 Existing base sizes are not changed with this command.
-
-/protect (or protect2)
-Set up the bot's base protection.  The bot will tell the player to move towards or away from their base and will
-automatically set protection outside of their base protected area.  Players should not set traps in this area.
 
 /enable/disable base protection
 Base protection can be turned off server wide.  Players can still use claim blocks for protection.
@@ -232,8 +244,16 @@ This allows players who you haven't friended access to your base with you presen
 /setbase/sethome {player name}
 Set a player's first base for them where you are standing.
 
+/sethome (or sethome2)
+/setbase (or setbase2)
+Tell the bot where your first or second base is for base protection, raid alerting and the ability to teleport home.
+
 /test base
 Turn your own base protection against you for 30 seconds to test that it works.
+
+/protect (or protect2)
+Set up the bot's base protection.  The bot will tell the player to move towards or away from their base and will
+automatically set protection outside of their base protected area.  Players should not set traps in this area.
 
 /resume/unpause
 Re-activate your base protection.
@@ -456,6 +476,7 @@ Set a cooldown after players teleport to friends before they can teleport to fri
 /tp {player name}
 /tp {name of teleport}
 /tp {X coord} {Y coord} {Z coord}
+/tp region {region X} {region Z} (tp's you to the centre of the region)
 /tp #1 (tele to the coords of a line in a numbered list eg. from /list saves)
 /north/south/east/west {distance}
 Teleport yourself to a player, a coordinate, a named teleport, or a distance in a compass direction (north, south, east or west).
@@ -491,6 +512,8 @@ Teleport you to the highest ground level at your location.
 /view teleport {named teleport}
 View all the settings of a teleport.
 
+/visit {player name} /goto {player name}
+Teleport to another player.  If the server rules allow, you can teleport to a friend.  Various rules and cooldowns may block you.
 
 Waypoint Commands:
 
@@ -642,7 +665,7 @@ If you don't have enough Zennies you can reduce the bail by making payment towar
 /get region {x coordinate} {z coordinate}
 Get the region name for the supplied coordinates.
 
-/invite {player}
+/irc invite {player}
 Invite a player to join the IRC server.  Choose carefully who you invite.
 
 /custom commands
@@ -779,7 +802,7 @@ Make the bot re-download and install from the current code branch for script upd
 Sometimes the bot can fall off IRC and fail to reconnect.  This command forces it to reconnect.
 
 /reload bot
-Make the bot read several things from the server including admin list, ban list, gg, lkp and others.  If you have Coppi's Mod installed it will also detect that.
+Make the bot read several things from the server including admin list, ban list, gg, lkp and others.
 
 /reset bases
 Just reset the player bases, nothing else.
@@ -932,8 +955,8 @@ Make gimme messages appear in public chat with /gimme gimme or as private messag
 /fix gimme
 Force the bot to rescan the list of zombies and animals.
 
-/reset gimmearena
-Cancel a gimmearena game in progress.
+/reset arena
+Cancel an arena game in progress.
 
 /gimme raincheck {seconds}
 Set a time delay between gimmes.  The default is 0 seconds.
@@ -1426,6 +1449,9 @@ Set how many Zennies it costs to bail out of prison.  To disable bail set it to 
 Display the current message of the day.  If an admin types anything after /motd the typed text becomes the new MOTD.
 To remove it type /motd clear
 
+/set idle kick {seconds} (default 900. 15 minutes)
+How many seconds a player can be idle for before being kicked from the server. Does not include joining players that have not spawned yet.
+
 /set irc main (or alerts or watch) {channel name without a # sign}
 Change the bot's IRC channels.
 
@@ -1571,14 +1597,14 @@ Set to anything else and the bot will use / commands whether CBSM is present or 
 
 /remove zombies before bloodmoon
 /leave zombies before bloodmoon
-If you have Stompy's BC mod, the bot can despawn all zombies server wide a few minutes before bloodmoon starts.  It may trigger more than once.
+If you have Stompy's BC mod or the Botman mod, the bot can despawn all zombies server wide a few minutes before bloodmoon starts. It may trigger more than once.
 
 /enable/disable entity scan (disabled by default)
 Scan for entities server wide every 30 seconds.
 The resulting list is copied to the entities Lua table where it can be further processed for other bot features.
 
 /enable/disable error scan (disabled by default)
-The server can automatically scan for and fix some errors using console commands if you have the BC mod or Botman mod installed.
+The server can automatically scan for and fix some errors using console commands if you have the BC mod installed.
 You can disable the scan if you suspect it is creating lag.
 
 /enable/disable hardcore mode
@@ -1587,6 +1613,9 @@ Players can still talk to the bot and use info commands such as /rules.
 
 /enable/disable idle kick (disabled is default)
 When the server is full, if idle kick is on players will get kick warnings for 15 minutes of no movement then they get kicked.
+
+/allow/disallow idling (allowed is default)
+If idle kick is enabled the default is to only kick idle players when the server is full. By setting disallow idling, players can be kicked for idling any time.
 
 /allow/disallow flying
 Toggle the bot's player flying detection.  You would want to do this if players can use debug mode on your server.
@@ -1630,6 +1659,14 @@ Enable or disable ingame private messages about watched player inventory and bas
 /resume/unpause reboot
 Resume a paused reboot.
 
+/visit map
+/visit map x1 z1 x2 z2
+/visit map range {distance}
+/visit map stop
+Make the server explore the map while you hit up some zombie chicks.
+If you add the optional word 'check' at the end of the command it will also check chunk density.
+To visit the entire map do not include coordinates or a range.
+
 BC Mod Commands:
 
 /dig (or fill) {optional number} (default 5)
@@ -1643,6 +1680,7 @@ Examples:
 /dig bedrock wide 1
 /dig up (makes a 5x5 room)
 /dig up (or room) wide 5 tall 10 (makes a 10x10 room)
+/dig up wide 50 tall 30 replace air block terrStone
 /fill east base 70 wide 2 tall 10 long 50 block steelBlock
 /fill bedrock wide 2 block stone
 /fill {saved prefab} block stone
@@ -1813,6 +1851,9 @@ Make the bot check for code updates and apply them.
 
 Command: server
 View basic info about the server and installed mods.
+
+Command: version
+View the installed mods.
 
 Command: bot info
 Display basic info about the bot.
@@ -2031,7 +2072,7 @@ Make the bot do a DNS lookup on any player.  Mainly useful if a player of intere
 Command: view alerts
 
 Command: view slots
-View information about the bot's reserved slots and who is occupying them.
+View information about the bot's player slots and reserved slots.
 
 Command: show inventory
 View historic inventory movement of a player.  They do not need to be playing right now.
@@ -2060,8 +2101,8 @@ Another example:  who visited bed smeg
 Setting hours will reset days to zero
 Defaults: days = 1 or hours = 0, range = 10
 
-Command: pay {player} {amount of {monies}}
-eg. pay joe 1000.  Joe will receive 1000 {monies} and will be alerted with a private message.  You will also see a confirmation message that you have paid them.
+Command: pay {player} {amount of Zennies}
+eg. pay joe 1000.  Joe will receive 1000 Zennies and will be alerted with a private message.  You will also see a confirmation message that you have paid them.
 Only owners and level 1 admins can do this on IRC.
 
 Command: set player {name} cash {value}
@@ -2135,13 +2176,22 @@ Command: stealth translate {player}
 Only translate a player's in-game chat to IRC.
 
 Command: open shop
-Enable the shop so player's can buy stuff and spend their hard earned {monies}.
+Enable the shop so player's can buy stuff and spend their hard earned Zennies.
 
 Command: close shop
-Disable the shop.  You'll soon see who can't live without it xD
+Disable the shop. You'll soon see who can't live without it xD
+
+Command: shop units {item} {new unit quantity}
+Change the number of units sold per sale of the specified item.
 
 Command: shop price {item} {new price}
 Change the price of an item in the shop.
+
+Command: shop units {item} {new units}
+Change the number of units given when buying a specific item in the shop.
+
+Command: shop quality {item} {new quality 0-6 or custom number}
+Change the quality of an item given when buying a specific item in the shop.
 
 Command: shop max {item} {max stock level}
 Set the maximum quantity of an item for sale in the shop.
@@ -2224,13 +2274,19 @@ View all of the friends of a player known to the bot or the game.
 Command: players {optional player name}
 Get a list of all of the players or a specific player (except archived players).
 
-Command: archived players
-Get a list of all the players that have been archived.
+Command: archived players {optional player name}
+Get a list of all the players that have been archived or a specific player.
 
 Command: player {name}
-View the permanent record for a player.
+Command: player {name} find {search string}
+View the permanent record for a player or you can just list specific info using find.  eg player smegz find home.
+
+Command: archived player {name}
+Command: archived player {name} find {search string}
+View the permanent record for an archived player or you can just list specific info using find.  eg archived player smegz find home.
 
 Command: igplayer {name}
+Command: igplayer {name} find {search string}
 View the bot's record for a player that is currently on the server.
 
 Command: igplayers
@@ -2261,8 +2317,9 @@ Lists of all the prefabs known to the server or a filtered list if you specify p
 Command: status {player}
 View some info about a player's bases and donor status.
 
-Command: shop add item {item name} category {category} price {price} stock {max stock}
-Add an item to the shop.
+Command: shop add item {item name} category {category} price {price} stock {max stock} units {units spawned} quality {0-6}
+Add an item to the shop.  If a unit is given and a player buys 1 item, the bot will give 1 * the unit eg. 10 of the item.
+If quality is set to 0 the spawned item will have a random quality.  You can set any number that is supported by your server (usually 1-6).
 
 Command: empty shop
 Completely empty the shop so you can start fresh.
@@ -2331,8 +2388,6 @@ admin
 resets
 tracker
 server
-coppi
-scripting
-stompy
+botman
 Command: help {command}
 View help for an in-game command.  You will see help for any commands that match your search based on keywords.

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -45,7 +45,7 @@ if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).cur
 		pid = LookupPlayer(steam)
 
 		if pid == 0 then
-			initNewPlayer(steam, name, entityID, steam)
+			initNewPlayer(steam, name, entityID, steam, line)
 		end
 
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end

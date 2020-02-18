@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -13,6 +13,22 @@
 mysql = require "luasql.mysql"
 local debug = false
 local statements = {}
+
+
+function checkForData()
+	local cursor, errorString, rows
+
+	-- TODO:  Needs work and testing.  If uncommented atm it will prevent the bot starting up.
+
+	-- cursor,errorString = conn:execute("SELECT 1 FROM server")
+	-- rows = cursor:numrows()
+
+	-- if rows == 0 then
+		-- display("Server table empty! Attempting to import from last backup.")
+		-- botman.silentDataImport = true
+		-- importLuaData()
+	-- end
+end
 
 
 function resetMySQLMemoryTables()
@@ -888,6 +904,8 @@ function alterTables()
 
 	doSQL("ALTER TABLE `server` CHANGE `rules` `rules` VARCHAR(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT 'A zombie ate the server rules! Tell an admin.', CHANGE `shopLocation` `shopLocation` VARCHAR(30) NULL DEFAULT '', CHANGE `blockCountries` `blacklistCountries` VARCHAR(100) NULL DEFAULT 'CN,HK', CHANGE `IP` `IP` VARCHAR(100) NULL DEFAULT '0.0.0.0', CHANGE `date` `date` VARCHAR(10) NULL DEFAULT '', CHANGE `welcome` `welcome` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '', CHANGE `MOTD` `MOTD` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '', CHANGE `website` `website` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '', CHANGE `ircServer` `ircServer` VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '127.0.0.1', CHANGE `serverGroup` `serverGroup` VARCHAR(20) NULL DEFAULT ''")
 	doSQL("ALTER TABLE `server` ADD `idleKickTimer` INT NULL DEFAULT '900', ADD `idleKickAnytime` TINYINT(1) NOT NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `newPlayerTimer` INT(11) NULL DEFAULT 120")
+	doSQL("ALTER TABLE `server` ADD `newPlayerMaxLevel` INT(11) NULL DEFAULT 9")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -935,7 +935,10 @@ function gmsg(line, ircid)
 			end
 
 			irc_chat(server.ircMain, ircMsg)
-			windowMessage(server.windowGMSG, playerName .. ": " .. chatvars.command .. "\n", true)
+
+			if displayChatInMudlet then
+				windowMessage(server.windowGMSG, playerName .. ": " .. chatvars.command .. "\n", true)
+			end
 
 			-- botman.webdavFolderWriteable is set to true every hour. We skip it if false the rest of the time as it causes some code to stop early if it doesn't have write permissions.
 			if botman.webdavFolderWriteable then
@@ -1253,7 +1256,6 @@ function gmsg(line, ircid)
 
 			if (players[chatvars.playerid].lastCommand) then
 				-- don't allow identical commands being spammed too quickly
-	--			if ((os.time() - players[chatvars.playerid].lastCommandTimestamp) < 4) and players[chatvars.playerid].lastCommand == chatvars.command then
 				if (os.time() - players[chatvars.playerid].lastCommandTimestamp) < 2 then
 					botman.faultyChat = false
 					result = true
@@ -1267,7 +1269,7 @@ function gmsg(line, ircid)
 
 	if (chatvars.playername ~= "Server") then
 		if igplayers[chatvars.playerid] then
-			igplayers[chatvars.playerid].afk = os.time() + 900
+			igplayers[chatvars.playerid].afk = os.time() + tonumber(server.idleKickTimer)
 			chatvars.intX = igplayers[chatvars.playerid].xPos
 			chatvars.intY = igplayers[chatvars.playerid].yPos
 			chatvars.intZ = igplayers[chatvars.playerid].zPos

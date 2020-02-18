@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -3043,9 +3043,7 @@ function gmsg_server()
 			end
 
 			if server.useAllocsWebAPI then
-				-- verify that the web API is working for us
-				tempTimer( 2, [[message("pm APItest")]] )
-				tempTimer( 5, [[checkAPIWorking()]] )
+				send("webtokens list")
 			end
 
 			botman.faultyChat = false
@@ -3467,7 +3465,7 @@ function gmsg_server()
 			help = {}
 			help[1] = " {#}remove zombies before bloodmoon\n"
 			help[1] = help[1] .. " {#}leave zombies before bloodmoon\n"
-			help[2] = "If you have Stompy's BC mod, the bot can despawn all zombies server wide a few minutes before bloodmoon starts.  It may trigger more than once.\n"
+			help[2] = "If you have Stompy's BC mod or the Botman mod, the bot can despawn all zombies server wide a few minutes before bloodmoon starts.  It may trigger more than once.\n"
 
 			if botman.registerHelp then
 				tmp.command = help[1]
@@ -3672,6 +3670,75 @@ function gmsg_server()
 	end
 
 
+	local function cmd_ToggleFamilySteamKeys()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}allow/disallow family (allowed by default)"
+			help[2] = "Set to disallow if you require all players use the owner steam key and want to block players with a steamid that does not match the steamOwner."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "allow,steam,owner,family"
+				tmp.accessLevel = 1
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "allow") or string.find(chatvars.command, "steam") or string.find(chatvars.command, "family") or string.find(chatvars.command, "owner"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "allow" or chatvars.words[1] == "disallow") and chatvars.words[2] == "family" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "allow" then
+				server.allowFamilySteamKeys = true
+				conn:execute("UPDATE server SET allowFamilySteamKeys = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Players can join using a family key.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Players can join using a family key.")
+				end
+			else
+				server.allowFamilySteamKeys = false
+				conn:execute("UPDATE server SET allowFamilySteamKeys = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Players that join with a family key will be kicked.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Players that join with a family key will be kicked.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_ToggleHardcoreMode()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -3758,7 +3825,7 @@ function gmsg_server()
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "kick"))) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "idle") or string.find(chatvars.command, "kick"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -3827,7 +3894,7 @@ function gmsg_server()
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "kick"))) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "idle") or string.find(chatvars.command, "kick"))) or chatvars.words[1] ~= "help" then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -5461,6 +5528,15 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleErrorScan triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleFamilySteamKeys()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleFamilySteamKeys triggered") end
 		return result
 	end
 

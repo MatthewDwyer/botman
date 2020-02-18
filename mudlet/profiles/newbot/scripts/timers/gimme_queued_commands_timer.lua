@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -40,6 +40,7 @@ function miscCommandsTimer()
 			conn:execute("DELETE FROM miscQueue WHERE id = " .. row.id)
 
 			if command == "archive player" then
+				irc_chat(server.ircAlerts, "Archiving player " .. steam .. " " .. players[steam].name)
 				conn:execute("INSERT INTO playersArchived SELECT * from players WHERE steam = " .. steam)
 				conn:execute("DELETE FROM players WHERE steam = " .. steam)
 				players[steam] = nil

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -18,12 +18,16 @@ end
 
 
 function connectToAPI()
-	server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
-	send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
-	botman.lastBotCommand = "webtokens add bot"
-	conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
-	botman.APIOffline = false
-	toggleTriggers("api online")
+	send("webtokens list")
+	botman.webTokensListSent = os.time()
+
+	-- server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+	-- send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
+	-- botman.lastBotCommand = "webtokens add bot"
+	-- botman.webTokenLastAdded = os.timer()
+	-- conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
+	-- botman.APIOffline = false
+	-- toggleTriggers("api online")
 end
 
 
@@ -2065,15 +2069,6 @@ function downloadHandler(event, ...)
 			return
 		end
 
-		if string.find(..., "apitest.txt", nil, true) then
-			botman.lastAPIResponseTimestamp = os.time()
-			botman.APIOfflineCount = 0
-
-			-- see if the file apitest.txt exists and is not empty
-			checkAPIWorking()
-			return
-		end
-
 		if string.find(..., "apicheck.txt", nil, true) then
 			botman.APICheckPassed = true
 			return
@@ -3206,7 +3201,7 @@ function startReboot()
 	botman.serverRebooting = true
 
 	-- add a random delay to mess with dupers
-	local rnd = rand(5)
+	local rnd = rand(10)
 
 	sendCommand("sa")
 	botman.rebootTimerID = tempTimer( 10 + rnd, [[finishReboot()]] )
@@ -3267,7 +3262,9 @@ function finishReboot()
 	conn:execute("TRUNCATE TABLE memTracker")
 	conn:execute("TRUNCATE TABLE commandQueue")
 	conn:execute("TRUNCATE TABLE gimmeQueue")
-	sendCommand("shutdown")
+
+	tempTimer( 3, [[sendCommand("mem")]] )
+	tempTimer( 10, [[sendCommand("shutdown")]] )
 
 	-- check for bot updates
 	updateBot()
@@ -3876,15 +3873,25 @@ function resetPlayer(steam)
 end
 
 
-function initNewPlayer(steam, player, entityid, steamOwner)
-	local pid
+function initNewPlayer(steam, player, entityid, steamOwner, line)
+	local cursor, errorString, rows
 
-	pid = LookupPlayer(steam)
+	cursor,errorString = conn:execute("SELECT steam FROM players WHERE steam = " .. steam)
+	rows = cursor:numrows()
 
-	if pid ~= 0 then
+	if rows > 0 then
+		irc_chat(server.ircAlerts, "Init new player record aborted because record already exists!")
 		-- abort! abort! The player record exists!
 		return
 	end
+
+	if players[steam] then -- this extra test should be redundant but the guys at the Department of Redundancy Department insisted we add it.
+		irc_chat(server.ircAlerts, "Init new player record aborted because record already exists!")
+		-- abort! abort! The player record exists!
+		return
+	end
+
+	irc_chat(server.ircAlerts, "Initialising new player record for " .. steam .. " from " .. line)
 
 	if botman.dbConnected then conn:execute("INSERT INTO players (steam, id, name, steamOwner) VALUES (" .. steam .. "," .. entityid .. ",'" .. escape(player) .. "'," .. steamOwner .. ")") end
 
@@ -4012,12 +4019,17 @@ function sendPlayerToLobby(steam)
 	end
 
 	if locations["Spawn"] and locations["Spawn"].lobby then
-		players[steam].location = "spawn"
+		players[steam].location = "Spawn"
 	end
 
 	-- a location called lobby always overrides a location called spawn. Don't have both if you want lobby to be spawn.
-	if locations["lobby"] or locations["Lobby"] then
+	if locations["lobby"] then
 		players[steam].location = "lobby"
+		return
+	end
+
+	if locations["Lobby"] then
+		players[steam].location = "Lobby"
 		return
 	end
 
@@ -4033,7 +4045,7 @@ end
 
 function initNewIGPlayer(steam, player, entityid, steamOwner)
 	igplayers[steam] = {}
-	igplayers[steam].afk = os.time() + 900
+	igplayers[steam].afk = os.time() + tonumber(server.idleKickTimer)
 	igplayers[steam].alertLocation = ""
 	igplayers[steam].alertRemovedClaims = false
 	igplayers[steam].belt = ""

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -257,6 +257,88 @@ function gmsg_resets()
 		end
 	end
 
+
+	local function cmd_RedoResetZones()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}redo reset zones"
+			help[2] = "Put back all of the reset zones via the Botman mod if you've accidentally deleted the mod's config.xml file from the server.\n"
+			help[2] = help[2] .. "Note:  This requires the Botman mod or all it really does is list the reset zones."
+
+			if botman.registerHelp then
+				tmp.command = help[1]
+				tmp.keywords = "add,restore,reset,zone"
+				tmp.accessLevel = 2
+				tmp.description = help[2]
+				tmp.notes = ""
+				tmp.ingameOnly = 0
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "redo") or string.find(chatvars.command, "zone") or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "redo" and chatvars.words[2] == "reset" and chatvars.words[3] == "zones") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			cursor,errorString = conn:execute("select * from resetZones")
+			rows = cursor:numrows()
+
+			if rows == 0 then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No regions have been flagged as reset zones.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "No regions have been flagged as reset zones.")
+				end
+			else
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Re-adding reset zones from the bot to the server:[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Re-adding reset zones from the bot to the server:")
+				end
+
+				row = cursor:fetch({}, "a")
+				while row do
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] adding reset zone " .. row.region .. "[-]")
+					else
+						irc_chat(chatvars.ircAlias, "adding reset zone " .. row.region)
+					end
+
+					if server.botman then
+						sendCommand("bm-resetregions add " .. row.x .. "." .. row.z)
+					end
+
+					row = cursor:fetch(row, "a")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
 -- ################## End of command functions ##################
 
 	if botman.registerHelp then
@@ -329,6 +411,15 @@ function gmsg_resets()
 
 	if result then
 		if debug then dbug("debug cmd_ListResetZones triggered") end
+		return result
+	end
+
+	if debug then dbug("debug resets end of remote commands") end
+
+	result = cmd_RedoResetZones()
+
+	if result then
+		if debug then dbug("debug cmd_RedoResetZones triggered") end
 		return result
 	end
 

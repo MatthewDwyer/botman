@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -22,43 +22,6 @@ function getAPILog()
 	url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/getlog?firstline=" .. botman.lastLogLine .. "&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
 	os.remove(homedir .. "/temp/log.txt")
 	downloadFile(homedir .. "/temp/log.txt", url)
-end
-
-
-function checkAPIWorking()
-	local fileSize, ln, foundAPI
-
-	fileSize = lfs.attributes (homedir .. "/temp/apitest.txt", "size")
-	foundAPI = false
-
-	-- if the API is working a file called dummy.txt will not be empty.
-	if fileSize == nil or tonumber(fileSize) == 0 then
-		foundAPI = false
-	else
-		foundAPI = true
-	end
-
-	if foundAPI then
-		botman.APIOffline = false
-		toggleTriggers("api online")
-
-		-- report our success
-		if not botman.APITestSilent then
-			irc_chat(server.ircMain, "The bot is now using Alloc's web API.")
-		end
-	else
-		botman.APIOffline = true
-		toggleTriggers("api offline")
-		send("webtokens list")
-
-		-- report our failure :O
-		if not botman.APITestSilent then
-			irc_chat(server.ircMain, "The API test failed. The bot is using telnet.")
-		end
-	end
-
-	botman.APITestSilent = nil
-	os.remove(homedir .. "/temp/apitest.txt")
 end
 
 
@@ -608,10 +571,18 @@ function API_PlayerInfo(data)
 	-- convert zombie kills to cash
 	if (tonumber(igplayers[data.steamid].zombies) > tonumber(players[data.steamid].zombies)) and (math.abs(igplayers[data.steamid].zombies - players[data.steamid].zombies) < 20) then
 		if server.allowBank then
-			players[data.steamid].cash = tonumber(players[data.steamid].cash) + math.abs(igplayers[data.steamid].zombies - players[data.steamid].zombies) * server.zombieKillReward
+			if players[data.steamid].donor then
+				players[data.steamid].cash = tonumber(players[data.steamid].cash) + math.abs(igplayers[data.steamid].zombies - players[data.steamid].zombies) * server.zombieKillRewardDonors
 
-			if (players[data.steamid].watchCash == true) then
-				message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", data.steamid, server.chatColour, math.abs(igplayers[data.steamid].zombies - players[data.steamid].zombies) * server.zombieKillReward, server.moneyPlural, string.format("%d", players[data.steamid].cash)))
+				if (players[data.steamid].watchCash) then
+					message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", data.steamid, server.chatColour, math.abs(igplayers[data.steamid].zombies - players[data.steamid].zombies) * server.zombieKillRewardDonors, server.moneyPlural, string.format("%d", players[data.steamid].cash)))
+				end
+			else
+				players[data.steamid].cash = tonumber(players[data.steamid].cash) + math.abs(igplayers[data.steamid].zombies - players[data.steamid].zombies) * server.zombieKillReward
+
+				if (players[data.steamid].watchCash) then
+					message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", data.steamid, server.chatColour, math.abs(igplayers[data.steamid].zombies - players[data.steamid].zombies) * server.zombieKillReward, server.moneyPlural, string.format("%d", players[data.steamid].cash)))
+				end
 			end
 		end
 
@@ -754,7 +725,7 @@ function API_PlayerInfo(data)
 	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline) end
 
 	if players[data.steamid].newPlayer == true then
-		if (igplayers[data.steamid].sessionPlaytime + players[data.steamid].timeOnServer > (server.newPlayerTimer * 60) or tonumber(data.level) > server.newPlayerMaxLevel) then
+		if (igplayers[data.steamid].sessionPlaytime + players[data.steamid].timeOnServer > (server.newPlayerTimer * 60) or tonumber(data.level) > tonumber(server.newPlayerMaxLevel)) then
 			players[data.steamid].newPlayer = false
 			players[data.steamid].watchPlayer = false
 			players[data.steamid].watchPlayerTimer = 0
@@ -1354,7 +1325,7 @@ function API_PlayerInfo(data)
 
 	if (tonumber(botman.playersOnline) >= tonumber(server.maxPlayers) or server.idleKickAnytime) and (playerAccessLevel > 3) and server.idleKick then
 		if (igplayers[data.steamid].afk - os.time() < 0) then
-			kick(steam, "You were kicked because you idled too long, but you can rejoin at any time.")
+			kick(data.steamid, "You were kicked because you idled too long, but you can rejoin at any time.")
 		end
 	end
 
@@ -1925,7 +1896,7 @@ function readAPI_BMResetRegionsList()
 	end
 
 	file:close()
-	--os.remove(homedir .. "/temp/bm-resetregions-list.txt")
+	os.remove(homedir .. "/temp/bm-resetregions-list.txt")
 end
 
 

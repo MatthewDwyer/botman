@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -8,9 +8,19 @@
 --]]
 
 function TenMinuteTimer()
-	-- if tonumber(botman.playersOnline) <= 0 then
-		-- sendCommand("mem")
-	-- end
+	if tonumber(botman.playersOnline) <= 0 then
+		if server.botman then
+			sendCommand("bm-uptime")
+		end
+
+		if not server.botman and server.stompy then
+			sendCommand("bc-time")
+		end
+
+		if not server.botman and not server.stompy then
+			sendCommand("mem")
+		end
+	end
 
 	if customTenMinuteTimer ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua

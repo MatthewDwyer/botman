@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -189,7 +189,7 @@ end
 
 
 function loadGimmeZombies()
-	local cursor, errorString, row, rows, idx, k, v, n, m, strIdx
+	local cursor, errorString, row, rows, k, v, n, m, strIdx
 
 	--debug = false
 	calledFunction = "gimmeZombies"
@@ -210,11 +210,8 @@ function loadGimmeZombies()
 		cols = cursor:getcolnames()
 	end
 
-	idx = 0
-
 	while row do
-		idx = idx + 1
-		strIdx = tostring(idx)
+		strIdx = tostring(row.entityID)
 		gimmeZombies[strIdx] = {}
 		gimmeZombies[strIdx].entityID = row.entityID
 		gimmeZombies[strIdx].zombie = row.zombie
@@ -418,27 +415,38 @@ end
 
 
 function loadModBotman()
-	local cursor, errorString, row
+	local cursor, errorString, row, modBotmanOld
 	-- load modBotman
 
 	getTableFields("modBotman")
+
+	if type(modBotman) == "table" then
+		-- copy the current contents of the modBotman table into modBotmanOld so we can see what's changed later
+		modBotmanOld = {}
+		for k,v in pairs(modBotman) do
+			modBotmanOld[k] = v
+		end
+	end
 
     modBotman = {}
 	cursor,errorString = conn:execute("select * from modBotman")
 	row = cursor:fetch({}, "a")
 
 	if row then
-		modBotman.clanEnabled = row.clanEnabled
+		modBotman.clanEnabled = dbTrue(row.clanEnabled)
 		modBotman.clanMaxClans = row.clanMaxClans
 		modBotman.clanMaxPlayers = row.clanMaxPlayers
 		modBotman.clanMinLevel = row.clanMinLevel
+		modBotman.resetsEnabled = dbTrue(row.resetsEnabled)
+		modBotman.resetsDelay = row.resetsDelay
+		modBotman.resetsPrefabsOnly = dbTrue(row.resetsPrefabsOnly)
+		modBotman.resetsRemoveLCB = dbTrue(row.resetsRemoveLCB)
 	end
 end
 
 
 function loadOtherEntities()
-	local idx
-	local cursor, errorString, row
+	local idx, cursor, errorString, row
 
 	-- load otherEntities
 	getTableFields("otherEntities")
@@ -631,6 +639,11 @@ function loadResetZones()
 	row = cursor:fetch({}, "a")
 	while row do
 		resetRegions[row.region] = {}
+
+		if server.botman then
+			sendCommand("bm-resetregions add " .. row.x .. "." .. row.z)
+		end
+
 		row = cursor:fetch(row, "a")
 	end
 end
@@ -680,8 +693,8 @@ function loadRestrictedItems()
 end
 
 
-function loadServer()
-	local temp, cursor, errorString, row, rows, k, v
+function loadServer(setupStuff)
+	local temp, cursor, errorString, row, rows, k, v, serverOld
 
 --	debug = false
 	calledFunction = "loadServer"
@@ -702,6 +715,11 @@ function loadServer()
 		initServer()
 	end
 
+	-- copy the current contents of the server table into serverOld so we can see what's changed later
+	serverOld = {}
+	for k,v in pairs(server) do
+		serverOld[k] = v
+	end
 
 	cursor,errorString = conn:execute("select * from server")
 	row = cursor:fetch({}, "a")
@@ -813,19 +831,25 @@ function loadServer()
 	-- end
 
 	whitelistedCountries = {}
-	temp = string.split(row.whitelistCountries, ",")
+	if row.whitelistCountries then
+		temp = string.split(row.whitelistCountries, ",")
 
-	max = table.maxn(temp)
-	for i=1,max,1 do
-		whitelistedCountries[temp[i]] = {}
+		max = table.maxn(temp)
+		for i=1,max,1 do
+			whitelistedCountries[temp[i]] = {}
+		end
 	end
 
-	blacklistedCountries = {}
-	temp = string.split(row.blacklistCountries, ",")
+	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	max = table.maxn(temp)
-	for i=1,max,1 do
-		blacklistedCountries[temp[i]] = {}
+	blacklistedCountries = {}
+	if row.blacklistCountries then
+		temp = string.split(row.blacklistCountries, ",")
+
+		max = table.maxn(temp)
+		for i=1,max,1 do
+			blacklistedCountries[temp[i]] = {}
+		end
 	end
 
 	if not server.uptime then
@@ -843,41 +867,49 @@ function loadServer()
 	-- stuff to do after loading the server table when applicable
 
 	-- set everyone's chat colour
-	for k,v in pairs(igplayers) do
-		setChatColour(k, players[k].accessLevel)
+	if setupStuff or (server.chatColourPrisoner ~= serverOld.chatColourPrisoner) or (server.chatColourMod ~= serverOld.chatColourMod) or (server.chatColourAdmin ~= serverOld.chatColourAdmin) or (server.chatColourOwner ~= serverOld.chatColourOwner) or (server.chatColourDonor ~= serverOld.chatColourDonor) or (server.chatColourPlayer ~= serverOld.chatColourPlayer) or (server.chatColourNewPlayer ~= serverOld.chatColourNewPlayer) then
+		for k,v in pairs(igplayers) do
+			setChatColour(k, players[k].accessLevel)
+		end
 	end
 
-	-- if using botman mod
-	if server.botman then
-		-- set the colour of the bot's name
-		sendCommand("bm-change botname [" .. server.botNameColour .. "]" .. server.botName)
+	if setupStuff or (server.botNameColour ~= serverOld.botNameColour) or (server.botName ~= serverOld.botName) or (server.commandPrefix ~= serverOld.commandPrefix) then
+		-- if using botman mod
+		if server.botman then
+			-- set the colour of the bot's name
+			sendCommand("bm-change botname [" .. server.botNameColour .. "]" .. server.botName)
 
-		-- update the command prefix
-		sendCommand("bm-chatcommands prefix " .. server.commandPrefix)
+			-- update the command prefix
+			sendCommand("bm-chatcommands prefix " .. server.commandPrefix)
 
-		if server.commandPrefix == "" then
-			sendCommand("bm-chatcommands hide false")
+			if server.commandPrefix == "" then
+				sendCommand("bm-chatcommands hide false")
+			end
+
+			return
 		end
 
-		return
+		-- if using BC mod
+		if server.stompy and not server.botman then
+			-- update the command prefix
+			sendCommand("bc-chatprefix " .. prefix)
+
+			if server.commandPrefix == "" then
+				sendCommand("bc-chatprefix \"\"")
+			end
+
+			return
+		end
 	end
 
-	-- if using BC mod
-	if server.stompy then
-		-- update the command prefix
-		sendCommand("bc-chatprefix " .. prefix)
-
-		if server.commandPrefix == "" then
-			sendCommand("bc-chatprefix \"\"")
-		end
-
-		return
+	if (server.ircPort ~= serverOld.ircPort) or (server.ircServer ~= serverOld.ircServer) or (server.ircBotName ~= serverOld.ircBotName) or (server.ircMain ~= serverOld.ircMain) or (server.ircWatch ~= serverOld.ircWatch) or (server.ircAlerts ~= serverOld.ircAlerts) then
+		joinIRCServer()
 	end
 end
 
 
 function loadShopCategories()
-	local cursor, errorString, row
+	local cursor, errorString, row, cat
 	-- load shop categories
 
 	getTableFields("shopCategories")
@@ -894,9 +926,11 @@ function loadShopCategories()
 
 	row = cursor:fetch({}, "a")
 	while row do
-		shopCategories[row.category] = {}
-		shopCategories[row.category].idx = row.idx
-		shopCategories[row.category].code = row.code
+		cat = string.lower(row.category) -- only cool cats allowed
+
+		shopCategories[cat] = {}
+		shopCategories[cat].idx = row.idx
+		shopCategories[cat].code = string.lower(row.code)
 		row = cursor:fetch(row, "a")
 	end
 end

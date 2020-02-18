@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -163,14 +163,21 @@ function matchAll(line, logDate, logTime)
 
 
 	if string.find(line, "WRN Invalid Admintoken used from") and string.find(line, server.botsIP) then
-		if server.useAllocsWebAPI and not botman.APITestSilent then
-			server.useAllocsWebAPI = true
+		if server.useAllocsWebAPI then
 			botman.APIOffline = false
-			botman.APITestSilent = true
 			toggleTriggers("api offline")
 		end
 
-		send("webtokens list")
+		if not botman.webTokensListSent then
+			send("webtokens list")
+			botman.webTokensListSent = os.time()
+		else
+			if os.time() - botman.webTokensListSent > 60 then
+				send("webtokens list")
+				botman.webTokensListSent = os.time()
+			end
+		end
+
 		return
 	end
 
@@ -184,6 +191,24 @@ function matchAll(line, logDate, logTime)
 	end
 
 	if string.find(line, "NaN") then -- ignore lines containing this.
+		if botman.getMetrics then
+			metrics.errors = metrics.errors + 1
+		end
+
+		deleteLine()
+		return
+	end
+
+	if string.find(line, "INF Delta out") then -- ignore lines containing this.
+		if botman.getMetrics then
+			metrics.errors = metrics.errors + 1
+		end
+
+		deleteLine()
+		return
+	end
+
+	if string.find(line, "IndexOutOfRangeException") then -- ignore lines containing this.
 		if botman.getMetrics then
 			metrics.errors = metrics.errors + 1
 		end
@@ -309,9 +334,7 @@ function matchAll(line, logDate, logTime)
 				if server.useAllocsWebAPI then
 					server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
 					conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "'")
-					os.remove(homedir .. "/temp/apitest.txt")
 					botman.APIOffline = false
-					botman.APITestSilent = true
 					toggleTriggers("api offline")
 					send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 					botman.lastBotCommand = "webtokens add bot"
@@ -1608,10 +1631,8 @@ function matchAll(line, logDate, logTime)
 
 --if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
-	if string.find(line, "INF Loading permissions file done") then
-		if not string.find(botman.lastBotCommand, "webtokens") then
-			sendCommand("admin list")
-		end
+	if string.find(line, "INF Reloading serveradmin.xml") then
+		sendCommand("admin list")
 
 		return
 	end
@@ -1724,13 +1745,12 @@ function matchAll(line, logDate, logTime)
 				server.useAllocsWebAPI = true
 
 				botman.APIOffline = false
-				botman.APITestSilent = true
 				toggleTriggers("api offline")
 				send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 				botman.lastBotCommand = "webtokens add bot"
+				botman.webTokenLastAdded = os.timer()
 			else
 				botman.APIOffline = false
-				botman.APITestSilent = true
 				startUsingAllocsWebAPI()
 			end
 		end
@@ -1781,12 +1801,28 @@ function matchAll(line, logDate, logTime)
 
 --if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
-	if string.find(line, "webtokens add bot")  then
+	if string.find(line, "Web user with name=bot and password") and string.find(line, "added with permission level of 0.")  then
+		temp = string.sub(line, string.find(line, "password=") + 9, string.find(line, "added with permission") - 1)
+		temp = string.trim(temp)
 		server.useAllocsWebAPI = true
 		server.allocsWebAPIUser = "bot"
+		server.allocsWebAPIPassword = temp
 		conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
 		botman.APIOffline = false
 		toggleTriggers("api online")
 	end
+
+	if badPlayerJoined then
+		if string.find(line, "INF Player set to online") or string.find(line, "INF PlayerSpawnedInWorld") then
+			-- abort!  abort!
+			badPlayerJoined = false
+			badJoinLine = ""
+		end
+
+		if badPlayerJoined and not string.find(line, "INF Player connected") then
+			playerConnected(badJoinLine .. line)
+		end
+	end
+
 end
 

@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2017  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     mdwyer@snap.net.nz
     URL       http://botman.nz
@@ -2231,6 +2231,7 @@ function gmsg_locations()
 
 			locationName = string.sub(chatvars.command, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, "size") - 2)
 			locationName = string.trim(locationName)
+
 			loc = LookupLocation(locationName)
 
 			if chatvars.number ~= nil and loc ~= nil then

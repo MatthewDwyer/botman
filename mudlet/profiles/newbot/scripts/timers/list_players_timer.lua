@@ -1,6 +1,6 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2019  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -53,37 +53,18 @@ function listPlayers()
 		end
 
 		if not server.delayReboot then
-			if (botman.scheduledRestartTimestamp - os.time() < -120) and botman.serverRebooting and not botman.scheduledRestartPaused then
-				-- this is a special case reboot when the bot for whatever reason has failed to reboot the server as scheduled
-				tempTimer( 30, [[clearRebootFlags()]] )
+			-- if (botman.scheduledRestartTimestamp - os.time() < -120) and botman.serverRebooting and not botman.scheduledRestartPaused then
+				-- -- this is a special case reboot when the bot for whatever reason has failed to reboot the server as scheduled
+				-- irc_chat(server.ircMain, "Finishing overdue server reboot.  Smeg needs to fix this so it doesn't happen.")
 
-				if (botman.rebootTimerID) then
-					killTimer(botman.rebootTimerID)
-					botman.rebootTimerID = nil
-				end
+				-- -- todo remove these 2 lines when finished testing :P
+				-- display("doing special case reboot\n")
+				-- display("botman.scheduledRestartTimestamp - os.time() = " .. botman.scheduledRestartTimestamp - os.time())
 
-				if (rebootTimerDelayID) then
-					killTimer(rebootTimerDelayID)
-					rebootTimerDelayID = nil
-				end
-
-				botman.ignoreAdmins = true
-				server.uptime = 0
-
-				-- flag all players as offline
-				connBots:execute("UPDATE players SET online = 0 WHERE botID = " .. server.botID)
-
-				-- do some housekeeping
-				for k, v in pairs(players) do
-					v.botQuestion = ""
-				end
-
-				conn:execute("TRUNCATE TABLE memTracker")
-				conn:execute("TRUNCATE TABLE commandQueue")
-				conn:execute("TRUNCATE TABLE gimmeQueue")
-				sendCommand("shutdown")
-			end
-
+				-- sendCommand("sa")
+				-- tempTimer( 3, [[finishReboot()]] )
+				-- return
+			-- end
 
 			if (botman.scheduledRestartTimestamp - os.time() < 0) and not botman.serverRebooting then
 				startReboot()
@@ -112,11 +93,11 @@ function listPlayers()
 		end
 	end
 
-	if server.idleKick and (tonumber(botman.playersOnline) == tonumber(server.maxPlayers)) then
-		for k,v in pairs(igplayers) do
-			if (igplayers[k].afk - os.time() < 61) and accessLevel(k) > 2 then
-				message("pm " .. k .. " [" .. server.alertColour .. "]Kicking you for idling in " .. igplayers[k].afk - os.time() .. "[-]")
-			end
-		end
-	end
+	-- if server.idleKick and (tonumber(botman.playersOnline) == tonumber(server.maxPlayers)) then
+		-- for k,v in pairs(igplayers) do
+			-- if (igplayers[k].afk - os.time() < 61) and accessLevel(k) > 2 then
+				-- message("pm " .. k .. " [" .. server.alertColour .. "]Kicking you for idling in " .. igplayers[k].afk - os.time() .. "[-]")
+			-- end
+		-- end
+	-- end
 end
