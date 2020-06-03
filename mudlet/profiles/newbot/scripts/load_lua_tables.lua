@@ -22,7 +22,7 @@ function loadBadItems()
 	getTableFields("badItems")
 
 	badItems = {}
-	cursor,errorString = conn:execute("select * from badItems")
+	cursor,errorString = conn:execute("SELECT * FROM badItems")
 	row = cursor:fetch({}, "a")
 
 	while row do
@@ -62,7 +62,7 @@ function loadBadWords()
 	getTableFields("badWords")
 
 	badWords = {}
-	cursor,errorString = conn:execute("select * from badWords")
+	cursor,errorString = conn:execute("SELECT * FROM badWords")
 	row = cursor:fetch({}, "a")
 	while row do
 		badWords[row.badWord] = {}
@@ -80,7 +80,7 @@ function loadBans()
 	getTableFields("bans")
 
     bans = {}
-	cursor,errorString = conn:execute("select * from bans")
+	cursor,errorString = conn:execute("SELECT * FROM bans")
 	row = cursor:fetch({}, "a")
 	while row do
 		bans[row.Steam] = {}
@@ -101,7 +101,7 @@ function loadBases()
 	getTableFields("bases")
 
     bases = {}
-	cursor,errorString = conn:execute("select * from bases")
+	cursor,errorString = conn:execute("SELECT * FROM bases")
 	row = cursor:fetch({}, "a")
 	while row do
 		bases[row.steam .. "_" .. row.baseNumber] = {}
@@ -132,7 +132,7 @@ function loadCustomMessages()
 	getTableFields("customMessages")
 
 	customMessages = {}
-	cursor,errorString = conn:execute("select * from customMessages")
+	cursor,errorString = conn:execute("SELECT * FROM customMessages")
 	row = cursor:fetch({}, "a")
 	while row do
 		customMessages[row.command] = {}
@@ -143,33 +143,46 @@ function loadCustomMessages()
 end
 
 
-function loadDonors()
+function loadDonors(steam)
 	local cursor, errorString, row
 	-- load donors
 
 	getTableFields("donors")
 
-    donors = {}
-	cursor,errorString = conn:execute("select * from donors")
+	if not steam then
+		donors = {}
+		cursor,errorString = conn:execute("SELECT * FROM donors")
+	else
+		cursor,errorString = conn:execute("SELECT * FROM donors WHERE steam = " .. steam)
+	end
+
 	row = cursor:fetch({}, "a")
 	while row do
 		donors[row.steam] = {}
 		donors[row.steam].steam = row.steam
 		donors[row.steam].level = row.level
 		donors[row.steam].expiry = row.expiry
+		donors[row.steam].name = row.name
+		donors[row.steam].expired = dbTrue(row.expired)
 		row = cursor:fetch(row, "a")
 	end
 end
 
 
-function loadFriends()
+function loadFriends(steam)
 	local cursor, errorString, row
 
 	-- load friends
 	getTableFields("friends")
 
-	friends = {}
-	cursor,errorString = conn:execute("select * from friends")
+	if steam == nil then
+		friends = {}
+		cursor,errorString = conn:execute("SELECT * FROM friends")
+	else
+		cursor,errorString = conn:execute("SELECT * FROM friends WHERE steam = " .. steam)
+		friends[steam] = {}
+	end
+
 	row = cursor:fetch({}, "a")
 	while row do
 		if friends[row.steam] == nil then
@@ -181,6 +194,42 @@ function loadFriends()
 			friends[row.steam].friends = row.friend
 		else
 			friends[row.steam].friends = friends[row.steam].friends .. "," .. row.friend
+		end
+
+		row = cursor:fetch(row, "a")
+	end
+end
+
+
+function loadGimmePrizes()
+	local cursor, errorString, row, cat, k, v
+	-- load shop
+
+	getTableFields("gimmePrizes")
+
+	gimmePrizes = {}
+	cursor,errorString = conn:execute("SELECT * FROM gimmePrizes")
+
+	row = cursor:fetch({}, "a")
+	while row do
+		shop[row.name] = {}
+
+		for k,v in pairs(gimmePrizesFields) do
+			if v.type == "var" or v.type == "big" then
+				shop[row.name][k] = row[k]
+			end
+
+			if v.type == "int" then
+				shop[row.name][k] = tonumber(row[k])
+			end
+
+			if v.type == "flo" then
+				shop[row.name][k] = tonumber(row[k])
+			end
+
+			if v.type == "tin" then
+				shop[row.name][k] = dbTrue(row[k])
+			end
 		end
 
 		row = cursor:fetch(row, "a")
@@ -200,7 +249,7 @@ function loadGimmeZombies()
 
 	gimmeZombies = {}
 
-	cursor,errorString = conn:execute("select * from gimmeZombies")
+	cursor,errorString = conn:execute("SELECT * FROM gimmeZombies")
 	rows = tonumber(cursor:numrows())
 	row = cursor:fetch({}, "a")
 
@@ -249,7 +298,7 @@ function loadHotspots()
 	getTableFields("hotspots")
 
 	hotspots = {}
-	cursor,errorString = conn:execute("select * from hotspots")
+	cursor,errorString = conn:execute("SELECT * FROM hotspots")
 	row = cursor:fetch({}, "a")
 
 	if row then
@@ -268,7 +317,7 @@ function loadHotspots()
 				nextidx = nextidx + 1
 			end
 
-			conn:execute("update hotspots set idx = " .. idx .. " where id = " .. row.id)
+			conn:execute("UPDATE hotspots SET idx = " .. idx .. " WHERE id = " .. row.id)
 		end
 
 		hotspots[idx] = {}
@@ -310,7 +359,7 @@ function loadKeystones()
 	end
 
 	keystones = {}
-	cursor,errorString = conn:execute("select * from keystones")
+	cursor,errorString = conn:execute("SELECT * FROM keystones")
 	row = cursor:fetch({}, "a")
 
 	while row do
@@ -350,7 +399,7 @@ function loadLocationCategories()
 	getTableFields("locationCategories")
 
 	locationCategories = {}
-	cursor,errorString = conn:execute("select * from locationCategories")
+	cursor,errorString = conn:execute("SELECT * FROM locationCategories")
 	row = cursor:fetch({}, "a")
 	while row do
 		locationCategories[row.categoryName] = {}
@@ -376,9 +425,9 @@ function loadLocations(loc)
 
 	if loc == nil then
 		locations = {}
-		cursor,errorString = conn:execute("select * from locations")
+		cursor,errorString = conn:execute("SELECT * FROM locations")
 	else
-		cursor,errorString = conn:execute("select * from locations where name = '" .. escape(loc) .. "'")
+		cursor,errorString = conn:execute("SELECT * FROM locations WHERE name = '" .. escape(loc) .. "'")
 	end
 
 	row = cursor:fetch({}, "a")
@@ -429,18 +478,212 @@ function loadModBotman()
 	end
 
     modBotman = {}
-	cursor,errorString = conn:execute("select * from modBotman")
+	cursor,errorString = conn:execute("SELECT * FROM modBotman")
 	row = cursor:fetch({}, "a")
 
 	if row then
+		modBotman.anticheat = dbTrue(row.anticheat)
+		modBotman.blockTreeRemoval = dbTrue(row.blockTreeRemoval)
+		modBotman.botName = row.botName
+		modBotman.botNameColourPublic = row.botNameColourPublic
+		modBotman.botNameColourPrivate = row.botNameColourPrivate
+		modBotman.chatCommandPrefix = row.chatCommandPrefix
+		modBotman.chatCommandsHidden = dbTrue(row.chatCommandsHidden)
 		modBotman.clanEnabled = dbTrue(row.clanEnabled)
 		modBotman.clanMaxClans = row.clanMaxClans
 		modBotman.clanMaxPlayers = row.clanMaxPlayers
 		modBotman.clanMinLevel = row.clanMinLevel
+		modBotman.customMessagesEnabled = dbTrue(row.customMessagesEnabled)
+		modBotman.dropminerEnabled = dbTrue(row.dropminerEnabled)
+		modBotman.dropminerTriggerEntityCount = row.dropminerTriggerEntityCount
+		modBotman.dropminerTriggerFallingCount = row.dropminerTriggerFallingCount
+		modBotman.disableChatColours = dbTrue(row.disableChatColours)
+		modBotman.killZonesEnabled = dbTrue(row.killZonesEnabled)
 		modBotman.resetsEnabled = dbTrue(row.resetsEnabled)
 		modBotman.resetsDelay = row.resetsDelay
 		modBotman.resetsPrefabsOnly = dbTrue(row.resetsPrefabsOnly)
 		modBotman.resetsRemoveLCB = dbTrue(row.resetsRemoveLCB)
+		modBotman.version = row.version
+		modBotman.webmapEnabled = dbTrue(row.webmapEnabled)
+		modBotman.webmapColour = row.webmapColour
+		modBotman.webmapPath = row.webmapPath
+		modBotman.zombieAnnouncerEnabled = dbTrue(row.zombieAnnouncerEnabled)
+		modBotman.zombieFreeTimeEnabled = dbTrue(row.zombieFreeTimeEnabled)
+		modBotman.zombieFreeTimeStart = row.zombieFreeTimeStart
+		modBotman.zombieFreeTimeEnd = row.zombieFreeTimeEnd
+	else
+		conn:execute("INSERT INTO modBotman SET version = '0'")
+	end
+
+
+	if server.botman and modBotmanOld.clanMaxClans then
+		if (modBotmanOld.anticheat ~= modBotman.anticheat) and modBotmanOld.anticheat then
+			if modBotman.anticheat then
+				sendCommand("bm-anticheat enable")
+			else
+				sendCommand("bm-anticheat disable")
+			end
+		end
+
+		-- if modBotmanOld.blockTreeRemoval ~= modBotman.blockTreeRemoval then
+			-- if modBotman.blockTreeRemoval then
+
+			-- else
+
+			-- end
+		-- end
+
+		-- blockTreeRemoval
+
+		if (modBotmanOld.botName ~= modBotman.botName) and modBotmanOld.botName then
+			sendCommand("bm-change botname " .. modBotman.botName)
+			server.botName = modBotman.botName
+			conn:execute("UPDATE server SET botName = '" .. escape(modBotman.botName) .. "'")
+		end
+
+		if (modBotmanOld.botNameColourPublic ~= modBotman.botNameColourPublic) and modBotmanOld.botNameColourPublic then
+			sendCommand("bm-change public-color " .. modBotman.botNameColourPublic)
+			server.botNameColour = modBotman.botNameColourPublic
+			conn:execute("UPDATE server SET botNameColour = '" .. escape(modBotman.botNameColourPublic) .. "'")
+		end
+
+		if (modBotmanOld.botNameColourPrivate ~= modBotman.botNameColourPrivate) and modBotmanOld.botNameColourPrivate then
+			sendCommand("bm-change public-color " .. modBotman.botNameColourPrivate)
+		end
+
+		if (modBotmanOld.chatCommandPrefix ~= modBotman.chatCommandPrefix) and modBotmanOld.chatCommandPrefix then
+			sendCommand("bm-chatcommands prefix " .. modBotman.chatCommandPrefix)
+			server.commandPrefix = modBotman.chatCommandPrefix
+			conn:execute("UPDATE server SET commandPrefix = '" .. escape(modBotman.chatCommandPrefix) .. "'")
+		end
+
+		if (modBotmanOld.chatCommandsHidden ~= modBotman.chatCommandsHidden) and modBotmanOld.chatCommandsHidden then
+			if modBotman.chatCommandsHidden then
+				sendCommand("bm-chatcommands hide true")
+				server.hideCommands = true
+				conn:execute("UPDATE server SET hideCommands = 1")
+			else
+				sendCommand("bm-chatcommands hide false")
+				server.hideCommands = false
+				conn:execute("UPDATE server SET hideCommands = 0")
+			end
+		end
+
+		if (modBotmanOld.clanEnabled ~= modBotman.clanEnabled) and modBotmanOld.clanEnabled then
+			if modBotman.clanEnabled then
+				sendCommand("bm-clan enable")
+			else
+				sendCommand("bm-clan disable")
+			end
+		end
+
+		if (modBotmanOld.clanMaxClans ~= modBotman.clanMaxClans) and modBotmanOld.clanMaxClans then
+			sendCommand("bm-clan max clans " .. modBotman.clanMaxClans)
+		end
+
+		if (modBotmanOld.clanMaxPlayers ~= modBotman.clanMaxPlayers) and modBotmanOld.clanMaxPlayers then
+			sendCommand("bm-clan max players " .. modBotman.clanMaxPlayers)
+		end
+
+		if (modBotmanOld.clanMinLevel ~= modBotman.clanMinLevel) and modBotmanOld.clanMinLevel then
+			sendCommand("bm-clan min_level " .. modBotman.clanMinLevel)
+		end
+
+		if (modBotmanOld.customMessagesEnabled ~= modBotman.customMessagesEnabled) and modBotmanOld.customMessagesEnabled then
+			if modBotman.customMessagesEnabled then
+				sendCommand("bm-custommessages enable")
+			else
+				sendCommand("bm-custommessages disable")
+			end
+		end
+
+		if (modBotmanOld.dropminerEnabled ~= modBotman.dropminerEnabled) and modBotmanOld.dropminerEnabled then
+			if modBotman.dropminerEnabled then
+				sendCommand("bm-dropmine enable")
+			else
+				sendCommand("bm-dropmine disable")
+			end
+		end
+
+		if (modBotmanOld.dropminerTriggerEntityCount ~= modBotman.dropminerTriggerEntityCount) and modBotmanOld.dropminerTriggerEntityCount then
+			sendCommand("bm-dropmine triggercount entities  " .. modBotman.dropminerTriggerEntityCount)
+		end
+
+		if (modBotmanOld.dropminerTriggerFallingCount ~= modBotman.dropminerTriggerFallingCount) and modBotmanOld.dropminerTriggerFallingCount then
+			sendCommand("bm-dropmine triggercount falling  " .. modBotman.dropminerTriggerFallingCount)
+		end
+
+		if (modBotmanOld.killZonesEnabled ~= modBotman.killZonesEnabled) and modBotmanOld.killZonesEnabled then
+			if modBotman.killZonesEnabled then
+				sendCommand("bm-zone enable")
+			else
+				sendCommand("bm-zone disable")
+			end
+		end
+
+		if (modBotmanOld.resetsEnabled ~= modBotman.resetsEnabled) and modBotmanOld.resetsEnabled then
+			if modBotman.resetsEnabled then
+				sendCommand("bm-resetregions enable")
+			else
+				sendCommand("bm-resetregions disable")
+			end
+		end
+
+		if (modBotmanOld.resetsDelay ~= modBotman.resetsDelay) and modBotmanOld.resetsDelay then
+			sendCommand("bm-resetregions delay " .. modBotman.resetsDelay)
+		end
+
+		if (modBotmanOld.resetsPrefabsOnly ~= modBotman.resetsPrefabsOnly) and modBotmanOld.resetsPrefabsOnly then
+			if modBotman.resetsPrefabsOnly then
+				sendCommand("bm-resetregions prefabsonly true")
+			else
+				sendCommand("bm-resetregions prefabsonly false")
+			end
+		end
+
+		if (modBotmanOld.resetsRemoveLCB ~= modBotman.resetsRemoveLCB) and modBotmanOld.resetsRemoveLCB then
+			if modBotman.resetsRemoveLCB then
+				sendCommand("bm-resetregions removelcbs  true")
+			else
+				sendCommand("bm-resetregions removelcbs  false")
+			end
+		end
+
+		if (modBotmanOld.webmapColour ~= modBotman.webmapColour) and modBotmanOld.webmapColour then
+			sendCommand("bm-webmapzones color " .. modBotman.webmapColour)
+		end
+
+		if (modBotmanOld.webmapEnabled ~= modBotman.webmapEnabled) and modBotmanOld.webmapEnabled then
+			if modBotman.webmapEnabled then
+				sendCommand("bm-webmapzones enable")
+			else
+				sendCommand("bm-webmapzones disable")
+			end
+		end
+
+		if (modBotmanOld.webmapPath ~= modBotman.webmapPath) and modBotmanOld.webmapPath then
+			sendCommand("bm-webmapzones path " .. modBotman.webmapPath)
+		end
+
+		if (modBotmanOld.zombieAnnouncerEnabled ~= modBotman.zombieAnnouncerEnabled) and modBotmanOld.zombieAnnouncerEnabled then
+			if modBotman.zombieAnnouncerEnabled then
+				sendCommand("bm-zombieannouncer enable")
+			else
+				sendCommand("bm-zombieannouncer disable")
+			end
+		end
+
+		if (modBotmanOld.zombieFreeTimeEnabled ~= modBotman.zombieFreeTimeEnabled) and modBotmanOld.zombieFreeTimeEnabled then
+			if modBotman.zombieFreeTimeEnabled then
+				sendCommand("bm-zombiefreetime enable")
+			else
+				sendCommand("bm-zombiefreetime disable")
+			end
+		end
+
+		if ((modBotmanOld.zombieFreeTimeStart ~= modBotman.zombieFreeTimeStart) or (modBotmanOld.zombieFreeTimeEnd ~= modBotman.zombieFreeTimeEnd)) and modBotmanOld.zombieFreeTimeStart then
+			sendCommand("bm-zombiefreetime set " .. modBotman.zombieFreeTimeStart .. " " .. zombieFreeTimeEnd)
+		end
 	end
 end
 
@@ -452,7 +695,7 @@ function loadOtherEntities()
 	getTableFields("otherEntities")
 
     otherEntities = {}
-	cursor,errorString = conn:execute("select * from otherEntities")
+	cursor,errorString = conn:execute("SELECT * FROM otherEntities")
 	row = cursor:fetch({}, "a")
 	while row do
 		idx = tostring(row.entityID)
@@ -474,17 +717,34 @@ end
 
 
 function loadPlayers(steam)
-	local cursor, errorString, row
+	local cursor, errorString, row, testAdmins, temp
 	local word, words, rdate, ryear, rmonth, rday, rhour, rmin, rsec, k, v
+
+	testAdmins = {}
+
+	cursor,errorString = conn:execute("SELECT * FROM persistentQueue")
+	row = cursor:fetch({}, "a")
+
+	while row do
+		if string.find(row.command, "admin add") then
+			temp = string.split(row.command, " ")
+			testAdmins[temp[3]] = {}
+		end
+
+		row = cursor:fetch(row, "a")
+	end
 
 	-- load players table)
 	getPlayerFields()
 
 	if not steam then
-		players = {}
-		cursor,errorString = conn:execute("select * from players")
+		if isFile(homedir .. "/data_backup/players.lua") then
+			table.load(homedir .. "/data_backup/players.lua", players)
+		end
+
+		cursor,errorString = conn:execute("SELECT * FROM players")
 	else
-		cursor,errorString = conn:execute("select * from players where steam = " .. steam)
+		cursor,errorString = conn:execute("SELECT * FROM players WHERE steam = " .. steam)
 	end
 
 	row = cursor:fetch({}, "a")
@@ -514,6 +774,10 @@ function loadPlayers(steam)
 			end
 		end
 
+		if testAdmins[row.steam] then
+			players[row.steam].testAsPlayer = true
+		end
+
 		row = cursor:fetch(row, "a")
 	end
 end
@@ -527,10 +791,13 @@ function loadPlayersArchived(steam)
 	getTableFields("playersArchived")
 
 	if steam == nil then
-		playersArchived = {}
-		cursor,errorString = conn:execute("select * from playersArchived")
+		if isFile(homedir .. "/data_backup/playersArchived.lua") then
+			table.load(homedir .. "/data_backup/playersArchived.lua", playersArchived)
+		end
+
+		cursor,errorString = conn:execute("SELECT * FROM playersArchived")
 	else
-		cursor,errorString = conn:execute("select * from playersArchived where steam = " .. steam)
+		cursor,errorString = conn:execute("SELECT * FROM playersArchived WHERE steam = " .. steam)
 	end
 
 	row = cursor:fetch({}, "a")
@@ -570,7 +837,7 @@ function loadPrefabCopies()
 	getTableFields("prefabCopies")
 
     prefabCopies = {}
-	cursor,errorString = conn:execute("select * from prefabCopies")
+	cursor,errorString = conn:execute("SELECT * FROM prefabCopies")
 	row = cursor:fetch({}, "a")
 	while row do
 		prefabCopies[row.owner .. row.name] = {}
@@ -595,7 +862,7 @@ function loadProxies()
 	getTableFields("proxies")
 
 	proxies = {}
-	cursor,errorString = conn:execute("select * from proxies")
+	cursor,errorString = conn:execute("SELECT * FROM proxies")
 	row = cursor:fetch({}, "a")
 	while row do
 		proxy = string.trim(row.scanString)
@@ -606,9 +873,9 @@ function loadProxies()
 		row = cursor:fetch(row, "a")
 	end
 
-	if botman.db2Connected then
+	if botman.botsConnected then
 		-- check for new proxies in the bots db
-		cursor,errorString = connBots:execute("select * from proxies")
+		cursor,errorString = connBots:execute("SELECT * FROM proxies")
 		row = cursor:fetch({}, "a")
 		while row do
 			proxy = string.trim(row.scanString)
@@ -633,16 +900,18 @@ function loadResetZones()
 	-- load reset zones
 
 	getTableFields("resetZones")
-
 	resetRegions = {}
-	cursor,errorString = conn:execute("select * from resetZones")
+
+	cursor,errorString = conn:execute("SELECT * FROM resetZones")
 	row = cursor:fetch({}, "a")
 	while row do
 		resetRegions[row.region] = {}
+		resetRegions[row.region].x = row.x
+		resetRegions[row.region].z = row.z
 
-		if server.botman then
-			sendCommand("bm-resetregions add " .. row.x .. "." .. row.z)
-		end
+		-- if modBotman.version then
+			-- sendCommand("bm-resetregions add " .. row.x .. "." .. row.z)
+		-- end
 
 		row = cursor:fetch(row, "a")
 	end
@@ -660,7 +929,7 @@ function loadRestrictedItems()
 	getTableFields("restrictedItems")
 
 	restrictedItems = {}
-	cursor,errorString = conn:execute("select * from restrictedItems")
+	cursor,errorString = conn:execute("SELECT * FROM restrictedItems")
 	row = cursor:fetch({}, "a")
 
 	while row do
@@ -708,7 +977,7 @@ function loadServer(setupStuff)
 		server = {}
 	end
 
-	cursor,errorString = conn:execute("select * from server")
+	cursor,errorString = conn:execute("SELECT * FROM server")
 	rows = tonumber(cursor:numrows())
 
 	if rows == 0 then
@@ -721,7 +990,7 @@ function loadServer(setupStuff)
 		serverOld[k] = v
 	end
 
-	cursor,errorString = conn:execute("select * from server")
+	cursor,errorString = conn:execute("SELECT * FROM server")
 	row = cursor:fetch({}, "a")
 
 	for k,v in pairs(serverFields) do
@@ -743,6 +1012,10 @@ function loadServer(setupStuff)
 	end
 
 	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	if not server.reservedSlotsUsed then
+		server.reservedSlotsUsed = 0
+	end
 
 	if row.chatlogPath == "" or row.chatlogPath == nil then
 		botman.chatlogPath = homedir .. "/chatlogs"
@@ -821,15 +1094,6 @@ function loadServer(setupStuff)
 		end
 	end
 
--- somehow these irc reconnects are crashing the bot if the code is reloaded.  the bot connects to irc without them anyway it seems.
-	-- if restartIrc ~= nil then
-		-- restartIrc()
-	-- end
-
-	-- if ircReconnect ~= nil then
-		-- ircReconnect()
-	-- end
-
 	whitelistedCountries = {}
 	if row.whitelistCountries then
 		temp = string.split(row.whitelistCountries, ",")
@@ -868,8 +1132,11 @@ function loadServer(setupStuff)
 
 	-- set everyone's chat colour
 	if setupStuff or (server.chatColourPrisoner ~= serverOld.chatColourPrisoner) or (server.chatColourMod ~= serverOld.chatColourMod) or (server.chatColourAdmin ~= serverOld.chatColourAdmin) or (server.chatColourOwner ~= serverOld.chatColourOwner) or (server.chatColourDonor ~= serverOld.chatColourDonor) or (server.chatColourPlayer ~= serverOld.chatColourPlayer) or (server.chatColourNewPlayer ~= serverOld.chatColourNewPlayer) then
-		for k,v in pairs(igplayers) do
-			setChatColour(k, players[k].accessLevel)
+		-- only set chat colours for players if not disabled
+		if not modBotman.disableChatColours then
+			for k,v in pairs(igplayers) do
+				setChatColour(k, players[k].accessLevel)
+			end
 		end
 	end
 
@@ -908,6 +1175,42 @@ function loadServer(setupStuff)
 end
 
 
+function loadShop()
+	local cursor, errorString, row, cat, k, v
+	-- load shop
+
+	getTableFields("shop")
+
+	shopCategories = {}
+	cursor,errorString = conn:execute("SELECT * FROM shop")
+
+	row = cursor:fetch({}, "a")
+	while row do
+		shop[row.item] = {}
+
+		for k,v in pairs(shopFields) do
+			if v.type == "var" or v.type == "big" then
+				shop[row.item][k] = row[k]
+			end
+
+			if v.type == "int" then
+				shop[row.item][k] = tonumber(row[k])
+			end
+
+			if v.type == "flo" then
+				shop[row.item][k] = tonumber(row[k])
+			end
+
+			if v.type == "tin" then
+				shop[row.item][k] = dbTrue(row[k])
+			end
+		end
+
+		row = cursor:fetch(row, "a")
+	end
+end
+
+
 function loadShopCategories()
 	local cursor, errorString, row, cat
 	-- load shop categories
@@ -915,7 +1218,7 @@ function loadShopCategories()
 	getTableFields("shopCategories")
 
 	shopCategories = {}
-	cursor,errorString = conn:execute("select * from shopCategories")
+	cursor,errorString = conn:execute("SELECT * FROM shopCategories")
 
 	-- add the misc category so it always exists
 	if cursor:numrows() > 0 then
@@ -943,7 +1246,7 @@ function loadStaff()
 	getTableFields("staff")
 
     staffList = {}
-	cursor,errorString = conn:execute("select * from staff")
+	cursor,errorString = conn:execute("SELECT * FROM staff")
 	row = cursor:fetch({}, "a")
 
 	while row do
@@ -974,6 +1277,9 @@ function loadTables(skipPlayers)
 
 	loadServer()
 	if (debug) then display("debug loaded server\n") end
+
+	loadModBotman()
+	if (debug) then display("debug loaded modBotman\n") end
 
 	if not skipPlayers then
 		loadPlayersArchived()
@@ -1014,6 +1320,9 @@ function loadTables(skipPlayers)
 	loadVillagers()
 	if (debug) then display("debug loaded villagers\n") end
 
+	loadShop()
+	if (debug) then display("debug loaded shop\n") end
+
 	loadShopCategories()
 	if (debug) then display("debug loaded shopCategories\n") end
 
@@ -1035,6 +1344,9 @@ function loadTables(skipPlayers)
 	loadWhitelist()
 	if (debug) then display("debug loaded whitelist\n") end
 
+	loadGimmePrizes()
+	if (debug) then display("debug loaded gimmePrizes\n") end
+
 	loadGimmeZombies()
 	if (debug) then display("debug loaded gimmeZombies\n") end
 
@@ -1052,9 +1364,6 @@ function loadTables(skipPlayers)
 
 	loadDonors()
 	if (debug) then display("debug loaded donors\n") end
-
-	loadModBotman()
-	if (debug) then display("debug loaded modBotman\n") end
 
 	loadBotMaintenance()
 
@@ -1084,9 +1393,9 @@ function loadTeleports(tp)
 
 	if tp == nil then
 		teleports = {}
-		cursor,errorString = conn:execute("select * from teleports")
+		cursor,errorString = conn:execute("SELECT * FROM teleports")
 	else
-		cursor,errorString = conn:execute("select * from teleports where name = '" .. escape(tp) .. "'")
+		cursor,errorString = conn:execute("SELECT * FROM teleports where name = '" .. escape(tp) .. "'")
 	end
 
 	row = cursor:fetch({}, "a")
@@ -1128,7 +1437,7 @@ function loadVillagers()
 	getTableFields("villagers")
 
 	villagers = {}
-	cursor,errorString = conn:execute("select * from villagers")
+	cursor,errorString = conn:execute("SELECT * FROM villagers")
 	row = cursor:fetch({}, "a")
 	while row do
 		villagers[row.steam .. row.village] = {}
@@ -1160,9 +1469,9 @@ function loadWaypoints(steam)
 	getTableFields("waypoints")
 
 	if steam == nil then
-		cursor,errorString = conn:execute("select * from waypoints")
+		cursor,errorString = conn:execute("SELECT * FROM waypoints")
 	else
-		cursor,errorString = conn:execute("select * from waypoints where steam = " .. steam)
+		cursor,errorString = conn:execute("SELECT * FROM waypoints where steam = " .. steam)
 	end
 
 	row = cursor:fetch({}, "a")
@@ -1189,7 +1498,7 @@ function loadWhitelist()
 	getTableFields("whitelist")
 
     whitelist = {}
-	cursor,errorString = conn:execute("select * from whitelist")
+	cursor,errorString = conn:execute("SELECT * FROM whitelist")
 	row = cursor:fetch({}, "a")
 	while row do
 		whitelist[row.steam] = {}

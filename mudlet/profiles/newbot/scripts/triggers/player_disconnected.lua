@@ -13,7 +13,7 @@ local debug
 debug = false
 
 function playerDisconnected(line)
-	local steam, playerID, entityID, name, pos, temp, pid
+	local pos, temp, pid, tmp
 
 if (debug) then dbug("debug playerDisconnected line " .. line) end
 
@@ -26,82 +26,74 @@ if (debug) then dbug("debug playerDisconnected line " .. line) end
 		return
 	end
 
+	tmp = {}
+
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
 
 	if string.find(line, "Player disconnected:") then
 		temp = string.split(line, ",")
-		entityID = string.sub(temp[1], string.find(temp[1], "EntityID=") + 9)
-		steam = string.match(temp[2], "(%d+)")
-		name = stripQuotes(string.sub(temp[4], 13, string.len(temp[4])))
+		tmp.temp = string.split(temp[1], "=")
+		tmp.entityID = tmp.temp[2]
+		tmp.steam = string.match(temp[2], "(%d+)")
+		tmp.name = stripQuotes(string.sub(temp[4], 13, string.len(temp[4])))
 
-		if igplayers[steam] then
-			irc_chat(server.ircMain, botman.serverTime .. " " .. server.gameDate .. " " .. steam .. " " .. name .. " disconnected")
-			irc_chat(server.ircAlerts, server.gameDate .. " " .. steam .. " " .. name .. " disconnected")
-			logChat(botman.serverTime, "Server", botman.serverTime .. " " .. server.gameDate .. " " .. steam .. " " .. name .. " disconnected")
+		if igplayers[tmp.steam] then
+			irc_chat(server.ircMain, botman.serverTime .. " " .. server.gameDate .. " " .. tmp.steam .. " " .. tmp.name .. " disconnected")
+			irc_chat(server.ircAlerts, server.gameDate .. " " .. tmp.steam .. " " .. tmp.name .. " disconnected")
+			logChat(botman.serverTime, "Server", botman.serverTime .. " " .. server.gameDate .. " " .. tmp.steam .. " " .. tmp.name .. " disconnected")
 		end
 
-		conn:execute("delete from reservedSlots where steam = " .. steam)
-
-		pid = LookupPlayer(steam)
+		pid = LookupPlayer(tmp.steam)
 
 		if pid == 0 then
-			initNewPlayer(steam, name, entityID, steam, line)
+			--logAlerts(botman.serverTime, "Call to initNewPlayer from PlayerDisconnected function using " .. line)
+			--initNewPlayer(tmp.steam, tmp.name, tmp.entityID, tmp.steam, line)
+			return
 		end
 
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
 
-		if not igplayers[steam] then
-			initNewIGPlayer(steam, name, entityID, steam)
+		if not igplayers[tmp.steam] then
+			initNewIGPlayer(tmp.steam, tmp.name, tmp.entityID, tmp.steam)
 		end
 
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
 
-		fixMissingPlayer(steam)
-		fixMissingIGPlayer(steam)
-
-if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
-
-		if not server.useAllocsWebAPI then
-			botman.serverTime = string.sub(line, 1, 10) .. " " .. string.sub(line, 12, 16)
-			botman.serverHour = string.sub(line, 12, 13)
-			botman.serverMinute = string.sub(line, 15, 16)
-
-			if server.dateTest == nil then
-				server.dateTest = string.sub(botman.serverTime, 1, 10)
-			end
-		end
+		fixMissingPlayer(tmp.steam)
+		fixMissingIGPlayer(tmp.steam)
 
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
 
 		if customPlayerDisconnected ~= nil then
 			-- read the note on overriding bot code in custom/custom_functions.lua
-			if customPlayerDisconnected(line, entityID, steam, name) then
+			if customPlayerDisconnected(line, tmp.entityID, tmp.steam, tmp.name) then
 				return
 			end
 		end
 
-		if debug then dbug("Saving disconnected player " .. igplayers[steam].name) end
+		if debug then dbug("Saving disconnected player " .. igplayers[tmp.steam].name) end
 
 if (debug) then dbug("debug playerDisconnected line " .. debugger.getinfo(1).currentline) end
 
-		if players[steam].watchPlayer then
-			irc_chat(server.ircWatch, server.gameDate .. " " .. steam .. " " .. players[steam].name .. " disconnected")
+		if players[tmp.steam].watchPlayer then
+			irc_chat(server.ircWatch, server.gameDate .. " " .. tmp.steam .. " " .. players[tmp.steam].name .. " disconnected")
 		end
 
 		-- attempt to insert the player into bots db players table
-		if	botman.db2Connected then
-			insertBotsPlayer(steam)
+		if	botman.botsConnected then
+			insertBotsPlayer(tmp.steam)
 		end
 
-		saveDisconnectedPlayer(steam)
+		saveDisconnectedPlayer(tmp.steam)
+		freeASlot(tmp.steam)
 
 		-- set the player offline in bots db
-		connBots:execute("UPDATE players set online = 0 where steam = " .. steam .. " AND botID = " .. server.botID)
+		connBots:execute("UPDATE players set online = 0 where steam = " .. tmp.steam .. " AND botID = " .. server.botID)
 
 		-- log the player disconnection in events table
-		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player left','Player disconnected " .. escape(players[steam].name) .. " " .. steam .. " Owner " .. players[steam].steamOwner .. " " .. players[steam].id .. "'," .. players[steam].steamOwner .. ")") end
+		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player left','Player disconnected " .. escape(players[tmp.steam].name) .. " " .. tmp.steam .. " Owner " .. players[tmp.steam].tmp.steamOwner .. " " .. players[tmp.steam].id .. "'," .. players[tmp.steam].tmp.steamOwner .. ")") end
 
 		-- check how many claims they have placed
-		sendCommand("llp " .. steam .. " parseable")
+		sendCommand("llp " .. tmp.steam .. " parseable")
 	end
 end

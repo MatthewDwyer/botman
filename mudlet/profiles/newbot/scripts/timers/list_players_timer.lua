@@ -53,19 +53,6 @@ function listPlayers()
 		end
 
 		if not server.delayReboot then
-			-- if (botman.scheduledRestartTimestamp - os.time() < -120) and botman.serverRebooting and not botman.scheduledRestartPaused then
-				-- -- this is a special case reboot when the bot for whatever reason has failed to reboot the server as scheduled
-				-- irc_chat(server.ircMain, "Finishing overdue server reboot.  Smeg needs to fix this so it doesn't happen.")
-
-				-- -- todo remove these 2 lines when finished testing :P
-				-- display("doing special case reboot\n")
-				-- display("botman.scheduledRestartTimestamp - os.time() = " .. botman.scheduledRestartTimestamp - os.time())
-
-				-- sendCommand("sa")
-				-- tempTimer( 3, [[finishReboot()]] )
-				-- return
-			-- end
-
 			if (botman.scheduledRestartTimestamp - os.time() < 0) and not botman.serverRebooting then
 				startReboot()
 			else
@@ -92,12 +79,4 @@ function listPlayers()
 			end
 		end
 	end
-
-	-- if server.idleKick and (tonumber(botman.playersOnline) == tonumber(server.maxPlayers)) then
-		-- for k,v in pairs(igplayers) do
-			-- if (igplayers[k].afk - os.time() < 61) and accessLevel(k) > 2 then
-				-- message("pm " .. k .. " [" .. server.alertColour .. "]Kicking you for idling in " .. igplayers[k].afk - os.time() .. "[-]")
-			-- end
-		-- end
-	-- end
 end

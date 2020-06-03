@@ -10,8 +10,8 @@
 local ircID, pid, login, name1, name2, words, wordsOld, words2, wordCount, word2Count, result, msgLower, counter, xpos, zpos, debug, tmp, k, v, filter, temp, action
 local displayIRCHelp, number, numberCount, numbers = {}
 
-debug = false -- should be false unless testing
-debugAdmin = false -- does not give unrestricted access to critical functions, mostly info.
+local debug = false -- should be false unless testing
+local debugAdmin = false -- does not give unrestricted access to critical functions, mostly info.
 
 if botman.debugAll then
 	debug = true -- this should be true
@@ -56,7 +56,7 @@ ircStatusMessage = function (name, message, code)
 end
 
 
-IRCMessage = function (event, name, channel, msg)
+function IRCMessage(event, name, channel, msg)
 	ircID = nil
 	displayIRCHelp = false
 
@@ -109,11 +109,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
-	-- -- block Mudlet from reacting to its own messages
-	-- if (name == server.botName or name == server.ircBotName or string.find(msg, "<" .. server.ircBotName .. ">", nil, true)) then
-		-- irc_params = {}
-		-- return
-	-- end
+	-- block Mudlet from reacting to its own messages
+	if (name == server.botName or name == server.ircBotName or string.find(msg, "<" .. server.ircBotName .. ">", nil, true)) then
+		irc_params = {}
+		return
+	end
 
 if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
@@ -127,7 +127,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	msgLower = string.lower(msg)
 
 	irc_params.name = name
-	for word in msgLower:gmatch("%w+") do table.insert(words, word) end
+	for word in msgLower:gmatch("-?\%w+") do table.insert(words, word) end
 	wordCount = table.maxn(words)
 
 	for word in string.gmatch (msg, " (-?\%d+)") do
@@ -269,6 +269,20 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (words[1] == "update" and (words[2] == "code" or words[2] == "scripts" or words[2] == "bot") and words[3] == nil) then
 		updateBot(true)
 		irc_params = {}
+		return
+	end
+
+if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
+
+	if displayIRCHelp then
+		irc_chat(name, "Command: map")
+		irc_chat(name, "View the URL where the server map should be located.")
+		irc_chat(name, ".")
+	end
+
+	if (words[1] == "map") then
+		irc_chat(name, "The server map should be here http://" .. server.IP .. ":" .. server.webPanelPort + 2)
+		irc_chat(name, ".")
 		return
 	end
 
@@ -1336,7 +1350,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, ".")
 				conn:execute("UPDATE server SET IP = '" .. escape(server.IP) .. "'")
 
-				if botman.db2Connected then
+				if botman.botsConnected then
 					connBots:execute("UPDATE servers SET IP = '" .. escape(server.IP) .. "' WHERE botID = " .. server.botID)
 				end
 
@@ -1673,7 +1687,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, ".")
 	end
 
-	if words[1] == "nuke" or words[1] == "clear" or words[1] == "stop" and words[2] == "all" then
+	if (words[1] == "nuke" or words[1] == "clear" or words[1] == "stop") and words[2] == "all" then
 		conn:execute("TRUNCATE ircQueue")
 		irc_chat(channel, "IRC spam nuked for everyone.")
 
@@ -2112,7 +2126,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		telnetPassword = sPass
 		conn:execute("UPDATE server SET IP = '" .. escape(server.IP) .. "', telnetPass = '" .. escape(server.telnetPass) .. "', telnetPort = " .. escape(server.telnetPort))
 
-		if botman.db2Connected then
+		if botman.botsConnected then
 			connBots:execute("UPDATE servers SET IP = '" .. escape(server.IP) .. "' WHERE botID = " .. server.botID)
 		end
 
@@ -2978,9 +2992,9 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		row = cursor:fetch({}, "a")
 		while row do
 			if players[row.steam] then
-				irc_chat(name, "Slot " .. row.slot .. " | reserved " .. dbYN(row.reserved) .. " | empty " .. dbYN(row.free) .. " | steam " .. row.steam .. " | name " .. players[row.steam].name .. " | staff " .. dbYN(row.staff))
+				irc_chat(name, "Slot " .. row.slot .. " | reserved " .. dbYN(row.reserved) .. " | steam " .. row.steam .. " | name " .. row.name .. " | staff " .. dbYN(row.staff))
 			else
-				irc_chat(name, "Slot " .. row.slot .. " | reserved " .. dbYN(row.reserved) .. " | empty " .. dbYN(row.free) .. " | steam " .. row.steam .. " | name | staff " .. dbYN(row.staff))
+				irc_chat(name, "Slot " .. row.slot .. " | reserved " .. dbYN(row.reserved) .. " | steam " .. row.steam .. " | name | staff " .. dbYN(row.staff))
 			end
 
 			row = cursor:fetch(row, "a")
@@ -4890,23 +4904,59 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (debug) then dbug("debug irc message line " .. debugger.getinfo(1).currentline) end
 
 	if displayIRCHelp then
-		irc_chat(name, "Command: add donor {player}")
+		irc_chat(name, "Command: add donor {player} expires {number} week or month or year")
 		irc_chat(name, "Give a player donor status.  They get a few special privileges but it is not play to win.  There are no game items included.")
 		irc_chat(name, ".")
 	end
 
 	if (words[1] == "add" and words[2] == "donor" and words[3] ~= nil and owners[ircID]) then
-		name1 = string.sub(msg, string.find(msgLower, "donor") + 6)
+		if string.find(msgLower, "expires") then
+			name1 = string.sub(msg, string.find(msgLower, "donor") + 6, string.find(msgLower, "expires") - 2)
+			expiry = string.sub(msg, string.find(msgLower, "expires") + 7)
+			expiry = calcTimestamp(expiry)
+		else
+			name1 = string.sub(msg, string.find(msgLower, "donor") + 6)
+			expiry = calcTimestamp("10 years")
+		end
+
+		if not expiry then
+			irc_chat(name, "Invalid expiry entered or missing.")
+			return
+		end
+
 		name1 = string.trim(name1)
 		pid = LookupPlayer(name1)
 
 		if pid ~= 0 then
-			-- update the player record
-			players[pid].donor = true
-			irc_chat(name, players[pid].name .. " is now a donor.")
-			irc_chat(name, ".")
+			cursor,errorString = conn:execute("INSERT INTO donors (steam, name, level, expiry, expired) VALUES (" .. pid .. ",'" .. escape(players[pid].name) .. "',1," .. expiry .. ", 0)")
 
-			conn:execute("UPDATE players SET donor = 1 WHERE steam = " .. pid)
+			if string.find(errorString, "Duplicate entry") then
+				cursor,errorString = conn:execute("UPDATE donors SET level = 1, expiry = " .. expiry .. ", expired=0, name = '" .. escape(players[pid].name) .. "' WHERE steam = " .. pid)
+			end
+
+			loadDonors()
+
+			-- also add them to the bot's whitelist
+			whitelist[pid] = {}
+			players[pid].maxWaypoints = server.maxWaypointsDonors
+
+			if botman.dbConnected then
+				conn:execute("INSERT INTO whitelist (steam) VALUES (" .. pid .. ")")
+				conn:execute("UPDATE players SET maxWaypoints = " .. server.maxWaypointsDonors .. " WHERE steam = " .. pid)
+			end
+
+			-- create or update the donor record on the shared database
+			cursor,errorString = connBots:execute("INSERT INTO donors (donor, donorLevel, donorExpiry, steam, botID, serverGroup) VALUES (1, 1, " .. expiry .. ", " .. pid .. "," .. server.botID .. ",'" .. escape(server.serverGroup) .. "')")
+
+			if string.find(errorString, "Duplicate entry") then
+				connBots:execute("UPDATE donors SET donor = 1, donorLevel = 1, donorExpiry = " .. expiry .. ", serverGroup = '" .. escape(server.serverGroup) ..  "' WHERE steam = " .. pid .. " AND botID = " .. server.botID)
+			end
+
+			if igplayers[pid] then
+				message("pm " .. pid .. " [" .. server.chatColour .. "]You have been given donor privileges until " .. os.date("%d-%b-%Y",  expiry) .. ". Thank you for being awesome! =D[-]")
+			end
+
+			irc_chat(server.ircMain, players[pid].name .. " donor status expires on " .. os.date("%d-%b-%Y",  expiry))
 		end
 
 		irc_params = {}
@@ -4927,12 +4977,29 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		pid = LookupPlayer(name1)
 
 		if pid ~= 0 then
-			-- update the player record
-			players[pid].donor = false
-			irc_chat(name, players[pid].name .. " is no longer a donor.")
-			irc_chat(name, ".")
+			players[pid].maxWaypoints = server.maxWaypoints
+			if botman.dbConnected then conn:execute("UPDATE players SET maxWaypoints = " .. server.maxWaypoints .. " WHERE steam = " .. pid) end
 
-			conn:execute("UPDATE players SET donor = 0 WHERE steam = " .. pid)
+			conn:execute("DELETE FROM donors WHERE steam = " .. pid)
+			loadDonors()
+
+			-- to prevent the player having too many waypoints, we delete them.
+			if botman.dbConnected then conn:execute("DELETE FROM waypoints WHERE steam = " .. pid) end
+
+			-- reload the player's waypoints
+			loadWaypoints(pid)
+
+			if server.serverGroup ~= "" then
+				connBots:execute("UPDATE donors SET donor = 0, donorLevel = 0, donorExpiry = " .. os.time() - 1 .. " WHERE steam = " .. pid .. " AND serverGroup = '" .. escape(server.serverGroup) .. "'")
+			end
+
+			irc_chat(chatvars.ircAlias, players[pid].name .. " no longer has donor status.")
+
+			if igplayers[pid] then
+				setChatColour(pid, players[pid].accessLevel)
+			end
+		else
+			irc_chat(name, name1 .. " did not match a player.")
 		end
 
 		irc_params = {}
@@ -6159,7 +6226,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		-- add the proxy to table proxies
 		conn:execute("INSERT INTO proxies (scanString, action, hits) VALUES ('" .. escape(proxy) .. "','" .. escape(action) .. "',0)")
 
-		if ircID == Smegz0r and botman.db2Connected then
+		if ircID == Smegz0r and botman.botsConnected then
 			-- also add it to bots db
 			connBots:execute("INSERT INTO proxies (scanString, action, hits) VALUES ('" .. escape(proxy) .. "','ban',0)")
 		end

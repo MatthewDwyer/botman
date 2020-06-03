@@ -10,6 +10,8 @@
 function thirtySecondTimer()
 	local k, v, cmd, url, data
 
+	fixMissingServer() -- test for missing values
+
 	windowMessage(server.windowDebug, "30 second timer\n")
 
 	if botman.botDisabled then
@@ -39,9 +41,12 @@ function thirtySecondTimer()
 	end
 
 	if (botman.announceBot == true) then
-		fixMissingServer() -- test for missing values
+		-- fixMissingServer() -- test for missing values
 
-		message("say [" .. server.chatColour .. "]" .. server.botName .. " is online. Command me. :3[-]")
+		if not server.beQuietBot then
+			message("say [" .. server.chatColour .. "]" .. server.botName .. " is online. Command me. :3[-]")
+		end
+
 		botman.announceBot = false
 	end
 
@@ -54,8 +59,10 @@ function thirtySecondTimer()
 	end
 
 	if server.allowReboot then
-		if botman.nextRebootTest ~= nil and os.time() < botman.nextRebootTest then
-			return
+		if botman.nextRebootTest then
+			if os.time() < botman.nextRebootTest then
+				return
+			end
 		end
 
 		if tonumber(server.rebootHour) == tonumber(botman.serverHour) and tonumber(server.rebootMinute) == tonumber(botman.serverMinute) and botman.scheduledRestart == false then
@@ -97,29 +104,19 @@ function thirtySecondTimer()
 			end
 		end
 
-		-- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
-		if not botman.botOffline and not botman.botDisabled then
-			if server.enableLagCheck then
-				botman.lagCheckTime = os.time()
-				sendCommand("pm LagCheck " .. os.time())
-			end
-		else
-			if server.enableLagCheck then
-				botman.lagCheckTime = os.time()
-			end
-		end
+		-- -- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
+		-- if not botman.botOffline and not botman.botDisabled then
+			-- if server.enableLagCheck then
+				-- botman.lagCheckTime = os.time()
+				-- sendCommand("pm LagCheck " .. os.time())
+			-- end
+		-- else
+			-- if server.enableLagCheck then
+				-- botman.lagCheckTime = os.time()
+			-- end
+		-- end
 	end
 
 	-- update the shared database (bots) server table (mainly for players online and a timestamp so others can see we're still online
 	updateBotsServerTable()
-
-	if tonumber(server.uptime) == 0 then
-		if server.botman and not server.stompy then
-			sendCommand("bm-uptime")
-		end
-
-		if not server.botman and server.stompy then
-			sendCommand("bc-time")
-		end
-	end
 end

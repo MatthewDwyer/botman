@@ -79,14 +79,15 @@ end
 
 
 function setupArenaPlayers(pid)
-	local dist, pointyStick, r, t, i, cmd, k, v
+	local dist, pointyStick, r, t, i, cmd, k, v, arena
 
 	t = os.time()
 	arenaPlayers = {}
 	botman.arenaCount = 0
+	arena = LookupLocation("arena")
 
 	for k, v in pairs(igplayers) do
-		if (distancexyz(v.xPos, v.yPos, v.zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z) < tonumber(locations["arena"].size)) and math.abs(v.yPos - locations["arena"].y) < 4 then
+		if (distancexyz(v.xPos, v.yPos, v.zPos, locations[arena].x, locations[arena].y, locations[arena].z) < tonumber(locations[arena].size)) and math.abs(v.yPos - locations[arena].y) < 4 then
 			botman.arenaCount = botman.arenaCount + 1
 			arenaPlayers[k] = {}
 			arenaPlayers[k].id = v.id
@@ -139,14 +140,15 @@ end
 
 
 function resetGimmeArena()
-	local k, v
+	local k, v, arena
 
 	botman.gimmeHell = 0
 	arenaPlayers = {}
 	conn:execute("TRUNCATE playerQueue")
+	arena = LookupLocation("arena")
 
 	for k, v in pairs(igplayers) do
-		if (distancexyz(v.xPos, v.yPos, v.zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z) < tonumber(locations["arena"].size) + 20) then
+		if (distancexyz(v.xPos, v.yPos, v.zPos, locations[arena].x, locations[arena].y, locations[arena].z) < tonumber(locations[arena].size) + 20) then
 			message("pm " .. k .. " [" .. server.chatColour .. "]The Gimme Arena is ready to play![-]")
 		end
 	end
@@ -247,7 +249,7 @@ function gimme(pid, testGimme)
 
 	botman.faultyGimme = true
 
-	if players[pid].donor == true then
+	if isDonor(pid) then
 		maxGimmies = 16
 	else
 		maxGimmies = 11

@@ -254,7 +254,7 @@ end
 
 function savePlayer(steam, action)
 	-- DO NOT call this function directly.  Call updatePlayer instead.
-	local k, v, i, sqlString, sqlValues, status, errorString, max
+	local k, v, i, sqlString, sqlValues, status, errorString, max, cursor
 
 	if debugdb then
 		dbug("saving player " .. steam .. " " .. players[steam].name)
@@ -262,6 +262,13 @@ function savePlayer(steam, action)
 
 	if playerFields == nil then
 		getPlayerFields()
+	end
+
+	cursor,errorString = conn:execute("SELECT steam FROM players WHERE steam = " .. steam)
+	rows = cursor:numrows()
+
+	if rows == 0 then
+		action = true
 	end
 
 	if action == nil then

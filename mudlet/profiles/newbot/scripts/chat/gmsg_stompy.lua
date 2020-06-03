@@ -114,13 +114,16 @@ function gmsg_stompy()
 			help[1] = " {#}stop/cancel maze"
 			help[2] = "Aborts any maze(s) that you have told the bot to create."
 
+			tmp.command = help[1]
+			tmp.keywords = "maze,stop,canc,abor"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "maze,stop,canc,abor"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -129,6 +132,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -172,13 +176,16 @@ function gmsg_stompy()
 			help[1] = " {#}trader add/trader del {named area}"
 			help[2] = "After marking out a named area with the {#}mark command, you can add or remove trader protection on it.\n"
 
+			tmp.command = help[1]
+			tmp.keywords = "trade,prot,stompy"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "trade,prot,stompy"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -187,6 +194,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -270,13 +278,16 @@ function gmsg_stompy()
 			help[2] = "After {#}list saves, you can delete a save from the list.\n"
 			help[2] = help[2] .. "Note that the list is temporary, but will last until the next time a list is generated.  If it doesn't work, do another {#}list saves."
 
+			tmp.command = help[1]
+			tmp.keywords = "del,list,save,stompy"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "del,list,save,stompy"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -285,6 +296,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -364,13 +376,16 @@ function gmsg_stompy()
 			help[2] = help[2] .. "You can repeat the last command with /again and change direction with /again west\n"
 			help[2] = help[2] .. "."
 
+			tmp.command = help[1]
+			tmp.keywords = "dig,fill,stompy"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "dig,fill,stompy"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -379,6 +394,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -907,13 +923,16 @@ function gmsg_stompy()
 			help[1] = help[1] .. "eg. {#}erase block stone replace air 20\n"
 			help[2] = "Replace an area around you with air blocks.  Add a number to change the size."
 
+			tmp.command = help[1]
+			tmp.keywords = "erase,block,stompy"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "erase,block,stompy"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -922,6 +941,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1011,14 +1031,16 @@ function gmsg_stompy()
 			help[2] = "You can replace the bedrock layer below you up to {distance} away from your position.\n"
 			help[2] = help[2] .. "You only need to be over the area to be fixed.  No other layers are touched."
 
+			tmp.command = help[1]
+			tmp.keywords = "dig,fill,stompy"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
 
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "dig,fill,stompy"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1027,6 +1049,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1085,14 +1108,16 @@ function gmsg_stompy()
 			help[1] = " {#}list (or {#}li) {partial name of an item or block}"
 			help[2] = "List all items containing the text you are searching for."
 
+			tmp.command = help[1]
+			tmp.keywords = "list,item,stompy"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
 
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "list,item,stompy"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1101,6 +1126,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1146,13 +1172,16 @@ function gmsg_stompy()
 			help[2] = help[2] .. "You can teleport to them with {#}tp #{name of marked area}.\n"
 			help[2] = help[2] .. "You can delete one {#}delete save {list number of marked area}."
 
+			tmp.command = help[1]
+			tmp.keywords = "list,save,stompy"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "list,save,stompy"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1161,6 +1190,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1276,17 +1306,17 @@ function gmsg_stompy()
 			help[2] = help[2] .. "If you provide coords and an optional rotation (default is 0 - north), you will make a new copy of the prefab at those coords.\n"
 			help[2] = help[2] .. "If you instead add here, it will load on your current position with optional rotation.\n"
 			help[2] = help[2] .. "If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy."
-			-- help[2] = help[2] .. "By default the prefab will spawn north east of you. You can alter how it spawns by adding any of the following..\n"
-			-- help[2] = help[2] .. "center ne nw se sw cne cnw cse csw nooffset air noair sleepers nosleepers\n"
-			-- help[2] = help[2] .. "For explainations of these in refer to the console command help bc-import.\n"
+
+			tmp.command = help[1]
+			tmp.keywords = "load,prefab,stompy"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
 
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "load,prefab,stompy"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1295,6 +1325,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1334,64 +1365,6 @@ function gmsg_stompy()
 			tmp.face = 0
 			tmp.coords = chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ
 			tmp.options = ""
-
-			-- for i=3,chatvars.wordCount,1 do
-				-- if chatvars.words[i] == "ne" then
-					-- tmp.options = tmp.options .." /ne"
-				-- end
-
-				-- if chatvars.words[i] == "nw" then
-					-- tmp.options = tmp.options .." /nw"
-				-- end
-
-				-- if chatvars.words[i] == "se" then
-					-- tmp.options = tmp.options .." /se"
-				-- end
-
-				-- if chatvars.words[i] == "sw" then
-					-- tmp.options = tmp.options .." /sw"
-				-- end
-
-				-- if chatvars.words[i] == "cne" then
-					-- tmp.options = tmp.options .." /cne"
-				-- end
-
-				-- if chatvars.words[i] == "cnw" then
-					-- tmp.options = tmp.options .." /cnw"
-				-- end
-
-				-- if chatvars.words[i] == "cse" then
-					-- tmp.options = tmp.options .." /cse"
-				-- end
-
-				-- if chatvars.words[i] == "cnw" then
-					-- tmp.options = tmp.options .." /cnw"
-				-- end
-
-				-- if chatvars.words[i] == "nooffset" then
-					-- tmp.options = tmp.options .." /nooffset"
-				-- end
-
-				-- if chatvars.words[i] == "air" then
-					-- tmp.options = tmp.options .." /air"
-				-- end
-
-				-- if chatvars.words[i] == "noair" then
-					-- tmp.options = tmp.options .." /noair"
-				-- end
-
-				-- if chatvars.words[i] == "sleepers" then
-					-- tmp.options = tmp.options .." /sleepers"
-				-- end
-
-				-- if chatvars.words[i] == "nosleepers" then
-					-- tmp.options = tmp.options .." /nosleepers"
-				-- end
-			-- end
-
-			-- if tmp.options == "" then
-				-- tmp.options = " /ne"
-			-- end
 
 			if (prefabCopies[chatvars.playerid .. chatvars.words[3]]) and not (string.find(chatvars.command, " at ")) then
 				if tonumber(prefabCopies[chatvars.playerid .. chatvars.words[3]].y1) < tonumber(prefabCopies[chatvars.playerid .. chatvars.words[3]].y2) then
@@ -1435,13 +1408,16 @@ function gmsg_stompy()
 			help[2] = "Generate and build a random maze.  Someone must stay there until the maze completes or it will fail to spawn fully.\n"
 			help[2] = help[2] .. "Default values: wall steelBlock fill air width 20 length 20 height 3. It uses your current position for x, y and z if not given."
 
+			tmp.command = help[1]
+			tmp.keywords = "make,maze,rand"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "make,maze,rand"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1450,6 +1426,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1537,13 +1514,16 @@ function gmsg_stompy()
 			help[1] = " {#}save {name}"
 			help[2] = "After marking out the area you want to copy, you can save it."
 
+			tmp.command = help[1]
+			tmp.keywords = "save,prefab,stompy"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "save,prefab,stompy"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1552,6 +1532,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1618,13 +1599,16 @@ function gmsg_stompy()
 			help[2] = help[2] .. "To disable automatic chat colouring, set it to white which is FFFFFF\n"
 			help[2] = help[2] .. "To reset everyone to white type {#}reset chat colour everyone"
 
+			tmp.command = help[1]
+			tmp.keywords = "set,clear,chat,colo"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,clear,chat,colo"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1633,6 +1617,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1853,7 +1838,7 @@ function gmsg_stompy()
 				end
 
 				for k,v in pairs(igplayers) do
-					if (players[k].donor) and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
+					if isDonor(k) and string.sub(v.chatColour, 1, 6) == "FFFFFF" then
 						setPlayerColour(k, tmp.colour)
 					end
 				end
@@ -1940,13 +1925,16 @@ function gmsg_stompy()
 			help[2] = "Marks your current position to spawn a horde there with {#}spawn horde.\n"
 			help[2] = help[2] .. "Clear horde doesn't remove the horde. It only clears the saved coordinate."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,clear,horde"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,clear,horde"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1955,6 +1943,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2003,13 +1992,16 @@ function gmsg_stompy()
 			help[1] = " {#}spawn horde {optional player or location name} {number of zombies}"
 			help[2] = "Spawn a horde around a player or location or at a marked coordinate.  See {#}set horde."
 
+			tmp.command = help[1]
+			tmp.keywords = "spawn,horde"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "spawn,horde"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2018,6 +2010,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2042,6 +2035,12 @@ function gmsg_stompy()
 
 			if chatvars.words[3] ~= nil then
 				tmp.id = LookupPlayer(chatvars.words[3])
+
+				if chatvars.number then
+					tmp.number = math.abs(chatvars.number)
+				else
+					tmp.number = 5
+				end
 
 				if tmp.id == 0 then
 					tmp.id = LookupArchivedPlayer(chatvars.words[3])
@@ -2077,20 +2076,20 @@ function gmsg_stompy()
 
 				if tmp.id ~= 0 then
 					if igplayers[tmp.id] then
-						sendCommand("bc-spawn horde /player=" .. tmp.id .. " /count=" .. chatvars.number)
+						sendCommand("bc-spawn horde /player=" .. tmp.id .. " /count=" .. tmp.number)
 						irc_chat(server.ircMain, "Horde spawned by bot at " .. igplayers[tmp.id].name .. "'s position at " .. igplayers[tmp.id].xPos .. " " .. igplayers[tmp.id].yPos .. " " .. igplayers[tmp.id].zPos)
 					end
 				else
 					tmp.loc = LookupLocation(chatvars.words[3])
 					if tmp.loc ~= nil then
-						sendCommand("bc-spawn horde " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z .. " /count=" .. chatvars.number)
+						sendCommand("bc-spawn horde " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z .. " /count=" .. tmp.number)
 						irc_chat(server.ircMain, "Horde spawned by bot at " .. locations[tmp.loc].x .. " " .. locations[tmp.loc].y .. " " .. locations[tmp.loc].z)
 					end
 				end
 			else
 				-- spawn horde on self
 				if (chatvars.playername ~= "Server") then
-					sendCommand("bc-spawn horde /player=" .. chatvars.playerid .. " " .. chatvars.number)
+					sendCommand("bc-spawn horde /player=" .. chatvars.playerid .. " " .. tmp.number)
 				else
 					irc_chat(chatvars.ircAlias, "You need to be on the server or specify a player that isn't you, or a location.")
 				end
@@ -2109,13 +2108,16 @@ function gmsg_stompy()
 			help[2] = "Muting a player blocks their ingame chat from being seen by other players.  You will still see it from the web client.\n"
 			help[2] = help[2] .. "It does not block voice chat sadly."
 
+			tmp.command = help[1]
+			tmp.keywords = "mute,play"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "mute,play"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2124,6 +2126,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2197,13 +2200,16 @@ function gmsg_stompy()
 			help[1] = " {#}show/hide commands"
 			help[2] = "Hide commands from ingame chat which makes them all PM's or show them which makes them public.  They will still appear in the web client."
 
+			tmp.command = help[1]
+			tmp.keywords = "show,hide,comm"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "show,hide,comm"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2212,6 +2218,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2268,13 +2275,16 @@ function gmsg_stompy()
 			help[1] = " {#}undo {optional name of saved (marked) area}"
 			help[2] = "Undo your last block command."
 
+			tmp.command = help[1]
+			tmp.keywords = "undo,save,stompy"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "undo,save,stompy"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -2283,6 +2293,7 @@ function gmsg_stompy()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2340,7 +2351,6 @@ function gmsg_stompy()
 		irc_chat(chatvars.ircAlias, "==== Registering help - BC commands ====")
 		if debug then dbug("Registering help - BC commands") end
 
-		tmp = {}
 		tmp.topicDescription = "The BC mod adds special features to the bot such as hiding commands from chat, digging big holes and lots more.\n"
 		tmp.topicDescription = tmp.topicDescription .. "The bot will work just fine without it."
 

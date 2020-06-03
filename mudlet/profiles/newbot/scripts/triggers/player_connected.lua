@@ -7,233 +7,15 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local nameTest
-
-function initReservedSlots()
-	local k, v, cursor,errorString, row, isStaff, canReserve
-
-	if server.reservedSlotsUsed == 0 then
-		conn:execute("TRUNCATE reservedSlots")
-		botman.dbReservedSlotsUsed = 0
-		return
-	end
-
-	if botman.dbReservedSlotsUsed == nil then
-		cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
-		row = cursor:fetch({}, "a")
-		botman.dbReservedSlotsUsed = tonumber(row.totalRows)
-	end
-
-	conn:execute("UPDATE reservedSlots set deleteRow = 1")
-
-	-- add playing reserved slotters
-	for k,v in pairs(igplayers) do
-		isStaff = 0
-		canReserve = 0
-
-		if tonumber(botman.dbReservedSlotsUsed) < tonumber(server.reservedSlots) then
-			if tonumber(players[k].accessLevel) < 3 then
-				isStaff = 1
-				canReserve = 1
-			end
-
-			if players[k].donor or players[k].reserveSlot then
-				canReserve = 1
-			end
-
-			if canReserve == 1 then
-				conn:execute("INSERT INTO reservedSlots(steam, reserved, staff) VALUES (" .. k .. "," .. canReserve .. "," .. isStaff .. ")")
-
-				-- update botman.dbReservedSlotsUsed
-				cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
-				row = cursor:fetch({}, "a")
-				botman.dbReservedSlotsUsed = tonumber(row.totalRows)
-			end
-		end
-
-		conn:execute("UPDATE reservedSlots set deleteRow = 0 WHERE steam = " .. k)
-	end
-
-	-- add other players who can be kicked
-	for k,v in pairs(igplayers) do
-		isStaff = 0
-		canReserve = 0
-
-		if tonumber(botman.dbReservedSlotsUsed) < tonumber(server.reservedSlots) then
-			if tonumber(players[k].accessLevel) < 3 then
-				isStaff = 1
-				canReserve = 1
-			end
-
-			if players[k].donor or players[k].reserveSlot then
-				canReserve = 1
-			end
-
-			if canReserve == 0 then
-				conn:execute("INSERT INTO reservedSlots(steam, reserved, staff) VALUES (" .. k .. "," .. canReserve .. "," .. isStaff .. ")")
-
-				-- update botman.dbReservedSlotsUsed
-				cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
-				row = cursor:fetch({}, "a")
-				botman.dbReservedSlotsUsed = tonumber(row.totalRows)
-			end
-		end
-
-		conn:execute("UPDATE reservedSlots set deleteRow = 0 WHERE steam = " .. k)
-	end
-
-	-- remove players from reservedSlots that we have flagged for removal
-	conn:execute("DELETE FROM reservedSlots WHERE deleteRow = 1")
-
-	-- update botman.dbReservedSlotsUsed again
-	cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
-	row = cursor:fetch({}, "a")
-	botman.dbReservedSlotsUsed = tonumber(row.totalRows)
-
-	-- reset flag so we don't call this function again until needed
-	botman.initReservedSlots = false
-end
-
-
-function fillReservedSlot(steam)
-	local cursor, errorString, row, canReserve, isStaff
-
-	isStaff = 0
-	canReserve = 0
-
-	cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
-	row = cursor:fetch({}, "a")
-	botman.dbReservedSlotsUsed = tonumber(row.totalRows)
-
-	if tonumber(botman.dbReservedSlotsUsed) < tonumber(server.reservedSlots) then
-		if players[steam].donor or players[steam].reserveSlot then
-			canReserve = 1
-		end
-
-		if tonumber(players[steam].accessLevel) < 3 then
-			isStaff = 1
-			canReserve = 1
-		end
-
-		conn:execute("INSERT INTO reservedSlots(steam, reserved, staff) VALUES (" .. steam .. "," .. canReserve .. "," .. isStaff .. ")")
-
-		if canReserve == 0 then
-			message("pm " .. steam .. " [" .. server.warnColour .. "]You are using a reserved slot and may be kicked to make room for another player.[-]")
-		end
-
-		if canReserve == 1 and isStaff == 0 then
-			message("pm " .. steam .. " [" .. server.warnColour .. "]If the server is full and an admin joins, you may be kicked to make room for them.[-]")
-		end
-
-		-- update botman.dbReservedSlotsUsed
-		cursor,errorString = conn:execute("SELECT COUNT(steam) AS totalRows FROM reservedSlots")
-		row = cursor:fetch({}, "a")
-		botman.dbReservedSlotsUsed = tonumber(row.totalRows)
-	end
-end
-
-
-function updateReservedSlots(dbSlotsUsed)
-	local cursor, errorString, row, rows, playerRemoved
-
-	-- update botman.dbReservedSlotsUsed
-	while tonumber(dbSlotsUsed) > tonumber(server.reservedSlotsUsed) do
-		playerRemoved = false
-
-		-- try to remove staff from reserved slots first
-		cursor,errorString = conn:execute("SELECT * FROM reservedSlots WHERE staff = 1")
-		rows = cursor:numrows()
-
-		if rows > 0 then
-			row = cursor:fetch({}, "a")
-			conn:execute("DELETE * FROM reservedSlots WHERE steam = " .. row.steam)
-			botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
-			dbSlotsUsed = dbSlotsUsed -1
-			playerRemoved = true
-		end
-
-		-- try to remove other players from reserved slots
-		if tonumber(botman.dbReservedSlotsUsed) > tonumber(server.reservedSlotsUsed) then
-			cursor,errorString = conn:execute("SELECT * FROM reservedSlots WHERE staff = 0 AND reserved = 0 ORDER BY timeAdded DESC")
-			rows = cursor:numrows()
-
-			if rows > 0 then
-				row = cursor:fetch({}, "a")
-				conn:execute("DELETE * FROM reservedSlots WHERE steam = " .. row.steam)
-				botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
-				dbSlotsUsed = dbSlotsUsed -1
-				playerRemoved = true
-			end
-		end
-
-		if not playerRemoved then
-			-- nobody left to remove so break the loop
-			return
-		end
-	end
-
-	-- update botman.dbReservedSlotsUsed
-	cursor,errorString = conn:execute("SELECT COUNT(steam) AS totalRows FROM reservedSlots")
-	row = cursor:fetch({}, "a")
-	botman.dbReservedSlotsUsed = tonumber(row.totalRows)
-end
-
-
-function freeReservedSlot(accessLevel, steam)
-	-- returns true if someone gets kicked
-	local cursor, errorString, row, kickedSomeone
-
-	if tonumber(server.reservedSlots) == 0 then -- disable if reservedSlots is 0
-		return false
-	end
-
-	kickedSomeone = false
-
-	-- the player who has occupied a reserved slot the longest and isn't a reserved slotter will be kicked
-	cursor,errorString = conn:execute("select * from reservedSlots where reserved = 0 order by timeAdded desc")
-	row = cursor:fetch({}, "a")
-
-	if row then
-		if igplayers[row.steam] then
-			kickedSomeone = true
-			kick(row.steam, "Sorry, you have been kicked to make room for a reserved slot :(")
-			irc_chat(server.ircAlerts, server.gameDate .. " player " .. players[row.steam].name ..  " was kicked from a reserved slot to let " .. players[steam].name .. " join.")
-			conn:execute("DELETE FROM reservedSlots WHERE steam = " .. row.steam)
-			botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
-
-			return true
-		end
-	end
-
-	-- the incoming player is an admin and we couldn't find a normal player to kick so kick a non-admin reserved slotter
-	if not kickedSomeone and tonumber(accessLevel) < 3 then
-		-- kick a non-admin from a slot.  If this fails, it's admins all the way down! :O
-		cursor,errorString = conn:execute("select * from reservedSlots where reserved = 1 and staff = 0 order by timeAdded desc")
-		row = cursor:fetch({}, "a")
-
-		if row then
-			if igplayers[row.steam] then
-				kickedSomeone = true
-				kick(row.steam, "Sorry, you have been kicked to make room for an admin :O")
-				irc_chat(server.ircAlerts, server.gameDate .. " player " .. players[row.steam].name ..  " was kicked from a reserved slot to make room for admin " .. players[steam].name .. ".")
-				conn:execute("DELETE FROM reservedSlots WHERE steam = " .. row.steam)
-				botman.dbReservedSlotsUsed = botman.dbReservedSlotsUsed - 1
-
-				return true
-			end
-		end
-	end
-
-	return false
-end
+local debug
 
 -- enable debug to see where the code is stopping. Any error will be somewhere after the last successful debug line.
 debug = false -- should be false unless testing
 
 function playerConnected(line)
-	local temp_table, temp, debug, commas, freeSlots, test, tmp, cmd, pid
+	local temp_table, temp, commas, freeSlots, test, tmp, cmd, pid
 	local timestamp = os.time()
-	local cursor, errorString, rows, row
+	local cursor, errorString, rows, row, k, v
 	local foundSteam, foundIP, foundSteamOwner, foundEntity, foundName
 
 	if not badPlayerJoined then
@@ -262,14 +44,14 @@ function playerConnected(line)
 
 	if (debug) then
 		dbug("line " .. line)
-		dbug("debug playerConnectCounter " .. playerConnectCounter)
-		dbug("botman.playersOnline " .. botman.playersOnline)
-		dbug("server.maxPlayers " .. server.maxPlayers)
-		dbug("server.reservedSlots " .. server.reservedSlots)
+		-- dbug("debug playerConnectCounter " .. playerConnectCounter)
+		-- dbug("botman.playersOnline " .. botman.playersOnline)
+		-- dbug("server.maxPlayers " .. server.maxPlayers)
+		-- dbug("server.reservedSlots " .. server.reservedSlots)
 
-		if server.ServerMaxPlayerCount then
-			dbug("server.ServerMaxPlayerCount " .. server.ServerMaxPlayerCount)
-		end
+		-- if server.ServerMaxPlayerCount then
+			-- dbug("server.ServerMaxPlayerCount " .. server.ServerMaxPlayerCount)
+		-- end
 	end
 
 	local _, commas = string.gsub(line, ",", "")
@@ -294,10 +76,6 @@ function playerConnected(line)
 	end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
-
-	botman.playersOnline = botman.playersOnline + 1
-	freeSlots = server.maxPlayers - botman.playersOnline
-	server.reservedSlotsUsed = server.reservedSlots - freeSlots
 
 	temp_table = string.split(line, ",")
 	timeConnected = string.sub(line, 1, 19)
@@ -368,9 +146,9 @@ function playerConnected(line)
 		-- log the player connection in events table
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")") end
 
-		if	botman.db2Connected then
+		if	botman.botsConnected then
 			-- copy in bots db
-			connBots:execute("INSERT INTO events (server, serverTime, type, event, tmp.steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")")
+			connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")")
 		end
 
 		lastPlayerConnected = tmp.player
@@ -380,14 +158,17 @@ function playerConnected(line)
 			kick(tmp.steam, "That name is reserved.  You cannot play as " .. tmp.player .. " here.")
 			alertAdmins("A player was kicked using an admin's name! " .. tmp.entityid .. " " .. tmp.player, "alert")
 			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','impersonated admin','Player joined posing as an admin " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")") end
-			irc_chat(server.ircMain, "!!  Player joined with admin's name but a different steam key !! " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
-			irc_chat(server.ircAlerts, server.gameDate .. " player joined with admin's name but a different steam key " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
+			irc_chat(server.ircMain, "!!  Player joined with admin's name but a different steam key !! " .. tmp.player .. " steam: " .. tmp.steam .. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
+			irc_chat(server.ircAlerts, server.gameDate .. " player joined with admin's name but a different steam key " .. tmp.player .. " steam: " .. tmp.steam .. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
 			return
 		end
 
-		if string.find(tmp.player, "[\(\)]%d+") then
-			kick(tmp.steam, "Sorry another player with the same name as you is playing here right now.  We do not allow multiple players on at the same time with the same name.")
-			return
+		-- kick if another player is already on the server with the same name.
+		for k,v in pairs(igplayers) do
+			if (v.name == tmp.player) and k ~= tmp.steam then
+				kick(tmp.steam, "We do not allow multiple players on at the same time with the same name.")
+				return
+			end
 		end
 
 		-- kick for bad player name
@@ -400,11 +181,19 @@ function playerConnected(line)
 			end
 		end
 
+		-- kick for 127.
+		if string.find(tmp.player, "127.") then
+			kick(tmp.steam, "You must change your name to join this server.")
+			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','bad player name','Player kicked for bad name " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")") end
+			irc_chat(server.ircAlerts, server.gameDate .. " player kicked becaus their name contains '127.' used to mess with LiteNetLib " .. tmp.player .. " steam: " .. tmp.steam .. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
+			return
+		end
+
 		-- kick if player name looks like a steam ID
 		if string.len(tmp.player) == 17 then
 			test = tonumber(tmp.player)
 			if (test ~= nil) then
-				kick(tmp.steam, "Your name is a number and the same length as a steam key. Nice try though.")
+				kick(tmp.steam, "That name is not permitted.")
 				return
 			end
 		end
@@ -416,10 +205,10 @@ function playerConnected(line)
 		fixMissingPlayer(tmp.steam, tmp.steamOwner)
 
 		if not string.find(line, "INF Steam authentication successful") then
-			irc_chat(server.ircMain, "###  New player joined " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid .. " ###")
+			irc_chat(server.ircMain, "###  New player joined " .. tmp.player .. " steam: " .. tmp.steam .. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid .. " ###")
 			irc_chat(server.ircAlerts, "New player joined " .. server.gameDate .. " " .. line:gsub("%,", ""))
 			irc_chat(server.ircWatch, server.gameDate .. " " .. tmp.steam .. " " .. tmp.player .. " new player connected")
-			logChat(botman.serverTime, "Server", "New player joined " .. botman.serverTime .. " " .. server.gameDate .. " " .. tmp.player .. " steam: " .. tmp.steam.. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
+			logChat(botman.serverTime, "Server", "New player joined " .. botman.serverTime .. " " .. server.gameDate .. " " .. tmp.player .. " steam: " .. tmp.steam .. " owner: " .. tmp.steamOwner .. " id: " .. tmp.entityid)
 
 			alertAdmins("New player joined " .. tmp.player, "warn")
 		end
@@ -468,7 +257,7 @@ function playerConnected(line)
 
 		if not server.optOutGlobalBots then
 			-- check if GBL ban
-			if botman.db2Connected then
+			if botman.botsConnected then
 				cursor,errorString = connBots:execute("SELECT * FROM bans WHERE (Steam = " .. tmp.steam .. " or Steam = " .. tmp.steamOwner .. ") and GBLBan = 1 and GBLBanActive = 1")
 				rows = cursor:numrows()
 
@@ -512,29 +301,60 @@ function playerConnected(line)
 
 		igplayers[tmp.steam].playerConnectCounter = playerConnectCounter
 
-		if server.ServerMaxPlayerCount then
-			if tonumber(botman.playersOnline) == tonumber(server.ServerMaxPlayerCount) and tonumber(server.reservedSlots) > 0 then
-				-- any player that is staff or a donor can take a reserved slot from a regular joe
-				-- admins can take a reserved slot for any non-admins (unless it's admins all the way down).
-				if players[tmp.steam].reserveSlot or tonumber(players[tmp.steam].accessLevel) < 3 or players[tmp.steam].donor then
-					if tonumber(botman.dbReservedSlotsUsed) >= tonumber(server.reservedSlots) then
-						if not freeReservedSlot(players[tmp.steam].accessLevel, tmp.steam) then
-							kick(tmp.steam, "Server is full :(")
-							return
-						end
-					end
+		-- try to assign the player to a slot
+		if tonumber(server.freeSlots) == 0 then
+			-- any player that is staff or a donor can take a reserved slot from a regular joe
+			-- admins can take a reserved slot for any non-admins (unless it's admins all the way down).
+			if (players[tmp.steam].reserveSlot or staffList[tmp.steam] or isDonor(tmp.steam)) then
+				if kickASlot(tmp.steam) then
+					assignASlot(tmp.steam)
 				else
-					kick(tmp.steam, "Server is full :(")
+					kick(tmp.steam, "Sorry the server is full. Please wait a bit and try again.")
 					return
 				end
+			else
+				kick(tmp.steam, "Sorry the server is full. Please wait a bit and try again.")
+				return
 			end
+		else
+			assignASlot(tmp.steam)
 		end
+
+
+		-- if server.ServerMaxPlayerCount then
+			-- if tonumber(botman.playersOnline) == tonumber(server.ServerMaxPlayerCount) and tonumber(server.reservedSlots) > 0 then
+				-- -- any player that is staff or a donor can take a reserved slot from a regular joe
+				-- -- admins can take a reserved slot for any non-admins (unless it's admins all the way down).
+				-- if (players[tmp.steam].reserveSlot or staffList[tmp.steam] or isDonor(tmp.steam)) then
+					-- if tonumber(server.freeSlots) == 0 then
+						-- if kickASlot(tmp.steam) then
+							-- assignSlot(tmp.steam)
+						-- else
+							-- kick(tmp.steam, "Sorry the server is full. Please wait a bit and try again.")
+							-- return
+						-- end
+					-- end
+
+
+
+					-- if tonumber(server.reservedSlotsUsed) >= tonumber(server.reservedSlots) then
+						-- if not freeReservedSlot(players[tmp.steam].accessLevel, tmp.steam) then
+							-- kick(tmp.steam, "Server is full :(")
+							-- return
+						-- end
+					-- end
+				-- else
+					-- kick(tmp.steam, "Server is full :(")
+					-- return
+				-- end
+			-- end
+		-- end
 
 		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
-		if tonumber(server.reservedSlotsUsed) > 0 and tonumber(botman.dbReservedSlotsUsed) < tonumber(server.reservedSlotsUsed) then
-			fillReservedSlot(tmp.steam)
-		end
+		-- if tonumber(server.reservedSlotsUsed) > 0 and tonumber(botman.dbReservedSlotsUsed) < tonumber(server.reservedSlotsUsed) then
+			-- assignSlot(tmp.steam)
+		-- end
 
 		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
@@ -542,12 +362,17 @@ function playerConnected(line)
 		igplayers[tmp.steam].playerConnectCounter = playerConnectCounter
 		igplayers[tmp.steam].doFirstSpawnedTasks = true
 
-		if tonumber(botman.playersOnline) == tonumber(server.ServerMaxPlayerCount) and tonumber(server.reservedSlots) > 0 then
-			kick(tmp.steam, "Server is full :(")
-			return
-		end
+		-- if tonumber(botman.playersOnline) == tonumber(server.ServerMaxPlayerCount) and tonumber(server.reservedSlots) > 0 then
+			-- kick(tmp.steam, "Server is full :(")
+			-- return
+		-- end
 
-		if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
+		-- assignSlot(tmp.steam)
+
+		-- -- get the number of reserved slots in use right now
+		-- cursor,errorString = conn:execute("SELECT COUNT(reserved) AS reservedSlotsInUse FROM slots WHERE reserved=1 AND free=0")
+		-- row = cursor:fetch({}, "a")
+		-- server.reservedSlotsUsed = tonumber(row.reservedSlotsInUse)
 
 		if not server.optOutGlobalBots then
 			if tmp.ip ~= "" then
@@ -572,6 +397,7 @@ function playerConnected(line)
 			friends[tmp.steam].friends = ""
 		end
 
+		players[tmp.steam].inABase = false
 		players[tmp.steam].autoKicked = nil
 		invTemp[tmp.steam] = {}
 
@@ -595,44 +421,6 @@ function playerConnected(line)
 
 		-- delete read mail that isn't flagged as saved (status = 2).
 		if botman.dbConnected then conn:execute("DELETE FROM mail WHERE id = " .. tmp.steam .. " and status = 1") end
-
-		if tonumber(players[tmp.steam].donorExpiry) < os.time() and players[tmp.steam].donor then
-			irc_chat(server.ircAlerts, "Player " .. tmp.player ..  " " .. tmp.steam .. " donor status has expired.")
-			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','donor','" .. escape(tmp.player) .. " " .. tmp.steam .. " donor status expired.'," .. tmp.steam ..")") end
-
-			players[tmp.steam].donor = false
-			players[tmp.steam].donorLevel = 0
-			players[tmp.steam].protect2 = false
-			players[tmp.steam].maxWaypoints = server.maxWaypoints
-			if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0, donor = 0, donorLevel = 0, maxWaypoints = " .. server.maxWaypoints .. " WHERE steam = " .. tmp.steam) end
-			conn:execute("DELETE FROM donors WHERE steam = " .. tmp.steam)
-			connBots:execute("DELETE FROM donors WHERE steam = " .. tmp.steam .. " and botID = " .. server.botID)
-
-			message("pm " .. tmp.steam .. " [" .. server.chatColour .. "]Your donor status has expired :(  Contact an admin if you need help accessing your second base. Your 2nd base's protection will be disabled one week from when your donor status expired.[-]")
-			message("pm " .. tmp.steam .. " [" .. server.alertColour .. "]ALERT! Your second base is no longer bot protected![-]")
-
-			-- remove the player's waypoints
-			conn:execute("delete from waypoints where steam = " .. tmp.steam)
-			message("pm " .. tmp.steam .. " [" .. server.chatColour .. "]Also your waypoints have been cleared.  You will need to create new ones. :([-]")
-
-			-- reload the player's waypoints
-			loadWaypoints(tmp.steam)
-		end
-
-		-- check for player in donors table and restore donor status if missing in players table
-		cursor,errorString = conn:execute("SELECT * FROM donors WHERE steam = " .. tmp.steam)
-		rows = cursor:numrows()
-
-		if tonumber(rows) > 0 then
-			row = cursor:fetch({}, "a")
-
-			if not players[tmp.steam].donor then
-				players[tmp.steam].donor = true
-				players[tmp.steam].donorLevel = row.level
-				players[tmp.steam].donorExpiry = row.expiry
-				players[tmp.steam].maxWaypoints = server.maxWaypointsDonors
-			end
-		end
 
 		if players[tmp.steam].watchPlayer and tonumber(players[tmp.steam].watchPlayerTimer) < os.time() then
 			players[tmp.steam].watchPlayer = false

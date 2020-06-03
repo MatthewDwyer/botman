@@ -43,13 +43,17 @@ function endListPlayers(line)
 				-- we could schedule something to happen when no players are online
 			end
 
-			-- if tonumber(server.botID) > 0 then
-				-- for k,v in pairs(igplayers) do
-					-- insertBotsPlayer(k)
-				-- end
-			-- end
-
 			botman.listPlayers = false
+
+			if botman.initReservedSlots then
+				initSlots()
+
+				-- for k,v in pairs(igplayers) do
+					-- assignASlot(k)
+				-- end
+
+				botman.initReservedSlots = false
+			end
 		end
 
 		if botman.listEntities then
@@ -58,34 +62,5 @@ function endListPlayers(line)
 
 		-- reset relogCount as we have established that the server is talking to us
 		relogCount = 0
-
-		deleteLine()
-	end
-
-
-	if tonumber(server.reservedSlots) > 0 then
-		freeSlots = server.maxPlayers - botman.playersOnline
-		server.reservedSlotsUsed = server.reservedSlots - freeSlots
-
-		if tonumber(server.reservedSlotsUsed) < 0 then
-			server.reservedSlotsUsed = 0
-		end
-
-		if botman.initReservedSlots then
-			initReservedSlots()
-		end
-
-		if botman.dbReservedSlotsUsed == nil then
-			cursor,errorString = conn:execute("select count(steam) as totalRows from reservedSlots")
-			row = cursor:fetch({}, "a")
-			botman.dbReservedSlotsUsed = tonumber(row.totalRows)
-		end
-
-		if tonumber(botman.dbReservedSlotsUsed) > tonumber(server.reservedSlotsUsed) then
-			updateReservedSlots(botman.dbReservedSlotsUsed)
-		end
-	else
-		server.reservedSlotsUsed = 0
-		botman.dbReservedSlotsUsed = 0
 	end
 end

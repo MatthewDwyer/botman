@@ -56,6 +56,7 @@ function initServer()
 	server.commandPrefix = "/"
 	server.disableBaseProtection = false
 	server.disableFetch = true
+	server.disableLinkedWaypoints = false
 	server.enableRegionPM = false
 	server.gameType = "pve"
 	server.gimmePeace = false
@@ -134,7 +135,6 @@ function initServer()
 	server.windowGMSG = "Chat"
 	server.windowLists = "Lists"
 	server.zombieKillReward = 1
-	server.reservedSlotsUsed = 0
 
 	if botman.dbConnected then
 		conn:execute("TRUNCATE server")

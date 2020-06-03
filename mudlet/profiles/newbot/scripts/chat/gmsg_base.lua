@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local id, pname, psize,  words, word, dist, debug, loc, reset, result, help, tmp
+local id, pname, psize, dist, debug, loc, reset, result, help, tmp -- words, word,
 local shortHelp = false
 local skipHelp = false
 
@@ -25,21 +25,22 @@ function gmsg_base()
 -- ################## base command functions ##################
 
 	local function cmd_Base()
-		local dist1, dist2, wait
-
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}home/base\n"
 			help[1] = help[1] .. " {#}home2/base2"
 			help[2] = "Teleport back to your first or second base. A timer and/or a cost may apply."
 
+			tmp.command = help[1]
+			tmp.keywords = "base,tele,home"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "base,tele,home"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -48,6 +49,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -115,24 +117,11 @@ function gmsg_base()
 				end
 			end
 
-			wait = true
-
 			if chatvars.intY > 0 then
 				if (players[chatvars.playerid].walkies == true) then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have not opted in to using teleports. Type " .. server.commandPrefix .. "enabletp to opt-in.[-]")
 					botman.faultyChat = false
 					return true
-				end
-
-				dist1 = distancexz(players[chatvars.playerid].xPos, players[chatvars.playerid].zPos, players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ)
-				dist2 = distancexz(players[chatvars.playerid].xPos, players[chatvars.playerid].zPos, players[chatvars.playerid].home2X, players[chatvars.playerid].home2Z)
-
-				if (chatvars.words[1] == "base" or chatvars.words[1] == "home") and (tonumber(dist1) < 201) then
-					wait = false
-				end
-
-				if (chatvars.words[1] == "base2" or chatvars.words[1] == "home2") and (tonumber(dist2) < 201) then
-					wait = false
 				end
 
 				if (chatvars.accessLevel > 3) then
@@ -151,17 +140,15 @@ function gmsg_base()
 				end
 			end
 
-			if wait then -- if the player is within 200 metres of the base, there is no charge.
-				if tonumber(server.baseCost) > 0 and (chatvars.accessLevel > 3) then
-					if players[chatvars.playerid].cash < tonumber(server.baseCost) then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You do not have enough " .. server.moneyPlural .. ".  You need " .. server.baseCost .. ".[-]")
-						botman.faultyChat = false
-						return true
-					else
-						players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.baseCost
-						if botman.dbConnected then conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid) end
-						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. server.baseCost .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")
-					end
+			if tonumber(server.baseCost) > 0 and (chatvars.accessLevel > 3) then
+				if players[chatvars.playerid].cash < tonumber(server.baseCost) then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You do not have enough " .. server.moneyPlural .. ".  You need " .. server.baseCost .. ".[-]")
+					botman.faultyChat = false
+					return true
+				else
+					players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.baseCost
+					if botman.dbConnected then conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid) end
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. server.baseCost .. " " .. server.moneyPlural .. " has been removed from your cash.[-]")
 				end
 			end
 
@@ -176,12 +163,10 @@ function gmsg_base()
 				players[chatvars.playerid].zPosOld = 0
 			end
 
-			if wait then
-				if players[chatvars.playerid].donor then
-					players[chatvars.playerid].baseCooldown = (os.time() + math.floor(tonumber(server.baseCooldown) / 2))
-				else
-					players[chatvars.playerid].baseCooldown = (os.time() + server.baseCooldown)
-				end
+			if isDonor(chatvars.playerid) then
+				players[chatvars.playerid].baseCooldown = (os.time() + math.floor(tonumber(server.baseCooldown) / 2))
+			else
+				players[chatvars.playerid].baseCooldown = (os.time() + server.baseCooldown)
 			end
 
 			if botman.dbConnected then conn:execute("UPDATE players SET xPosOld = " .. players[chatvars.playerid].xPosOld .. ", yPosOld = " .. players[chatvars.playerid].yPosOld .. ", zPosOld = " .. players[chatvars.playerid].zPosOld .. ", baseCooldown = " .. players[chatvars.playerid].baseCooldown .. " WHERE steam = " .. chatvars.playerid) end
@@ -217,13 +202,16 @@ function gmsg_base()
 			help[2] = "Delete a player's base and base protection (in the bot only).  It does not physically delete the base in the game world.\n"
 			help[2] = help[2] .. "Players can only delete their own bases."
 
+			tmp.command = help[1]
+			tmp.keywords = "base,home,del,remo,clear"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "base,home,del,remo,clear"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -232,6 +220,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -281,7 +270,7 @@ function gmsg_base()
 
 			if botman.dbConnected then conn:execute("UPDATE players SET homeX = 0, homeY = 0, homeZ = 0, exitX = 0, exitY = 0, exitZ = 0, protect = 0  WHERE steam = " .. id) end
 
-			if botman.db2Connected then
+			if botman.botsConnected then
 				-- update player in bots db
 				connBots:execute("UPDATE players SET homeX = 0, homeY = 0, homeZ = 0, exitX = 0, exitY = 0, exitZ = 0, protect = 0 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 			end
@@ -342,7 +331,7 @@ function gmsg_base()
 
 			if botman.dbConnected then conn:execute("UPDATE players SET home2X = 0, home2Y = 0, home2Z = 0, exit2X = 0, exit2Y = 0, exit2Z = 0, protect2 = 0  WHERE steam = " .. id) end
 
-			if botman.db2Connected then
+			if botman.botsConnected then
 				-- update player in bots db
 				connBots:execute("UPDATE players SET home2X = 0, home2Y = 0, home2Z = 0, exit2X = 0, exit2Y = 0, exit2Z = 0, protect2 = 0 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 			end
@@ -371,13 +360,16 @@ function gmsg_base()
 			help[2] = help[2] .. "Only works on your base(s) if you are within 100 metres of them and automatically resumes if you move away or leave the server.\n"
 			help[2] = help[2] .. "This allows players who you haven't friended access to your base with you present."
 
+			tmp.command = help[1]
+			tmp.keywords = "pause,base,home,prot"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "pause,base,home,prot"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -386,6 +378,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -432,13 +425,16 @@ function gmsg_base()
 			help[2] = "Set up the bot's base protection.  The bot will tell the player to move towards or away from their base and will\n"
 			help[2] = help[2] .. "automatically set protection outside of their base protected area.  Players should not set traps in this area."
 
+			tmp.command = help[1]
+			tmp.keywords = "base,home,prot"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "base,home,prot"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -447,6 +443,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -592,14 +589,14 @@ function gmsg_base()
 					players[id].protect = true
 					message("pm " .. id .. " [" .. server.chatColour .. "]Base protection for your base is active.[-]")
 
-					if botman.db2Connected then
+					if botman.botsConnected then
 						-- update player in bots db
 						connBots:execute("UPDATE players SET exitX = " .. chatvars.intX .. ", exitY = " .. chatvars.intY .. ", exitZ = " .. chatvars.intZ .. ", protect = 1 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 					end
 				else
 					message("pm " .. id .. " [" .. server.chatColour .. "]Your base is too close to another player base who is not on your friends list.  Protection cannot be enabled.[-]")
 
-					if botman.db2Connected then
+					if botman.botsConnected then
 						-- update player in bots db
 						connBots:execute("UPDATE players SET exitX = " .. chatvars.intX .. ", exitY = " .. chatvars.intY .. ", exitZ = " .. chatvars.intZ .. ", protect = 0 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 					end
@@ -667,14 +664,14 @@ function gmsg_base()
 					players[id].protect2 = true
 					message("pm " .. id .. " [" .. server.chatColour .. "]Base protection for your second base is active.[-]")
 
-					if botman.db2Connected then
+					if botman.botsConnected then
 						-- update player in bots db
 						connBots:execute("UPDATE players SET exit2X = " .. chatvars.intX .. ", exit2Y = " .. chatvars.intY .. ", exit2Z = " .. chatvars.intZ .. ", protect2 = 1 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 					end
 				else
 					message("pm " .. id .. " [" .. server.chatColour .. "]Your base is too close to another player base who is not on your friends list.  Protection cannot be enabled.[-]")
 
-					if botman.db2Connected then
+					if botman.botsConnected then
 						-- update player in bots db
 						connBots:execute("UPDATE players SET exit2X = " .. chatvars.intX .. ", exit2Y = " .. chatvars.intY .. ", exit2Z = " .. chatvars.intZ .. ", protect2 = 0 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 					end
@@ -694,13 +691,16 @@ function gmsg_base()
 			help[1] = help[1] .. " {#}setbase (or setbase2)"
 			help[2] = "Tell the bot where your first or second base is for base protection, raid alerting and the ability to teleport home."
 
+			tmp.command = help[1]
+			tmp.keywords = "base,home,set"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "base,home,set"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -709,6 +709,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -785,7 +786,7 @@ function gmsg_base()
 				removeInvalidHotspots(chatvars.playerid)
 				irc_chat(server.ircAlerts, players[chatvars.playerid].name .. " has setbase at " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ)
 
-				if botman.db2Connected then
+				if botman.botsConnected then
 					-- update player in bots db
 					connBots:execute("UPDATE players SET homeX = " .. chatvars.intX .. ", homeY = " .. chatvars.intY .. ", homeZ = " .. chatvars.intZ .. ", exitX = " .. chatvars.intX .. ", exitY = " .. chatvars.intY .. ", exitZ = " .. chatvars.intZ .. ", protect = 0 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 				end
@@ -804,7 +805,7 @@ function gmsg_base()
 					removeInvalidHotspots(chatvars.playerid)
 					irc_chat(server.ircAlerts, players[chatvars.playerid].name .. " has setbase 2 at " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ)
 
-					if botman.db2Connected then
+					if botman.botsConnected then
 						-- update player in bots db
 						connBots:execute("UPDATE players SET home2X = " .. chatvars.intX .. ", home2Y = " .. chatvars.intY .. ", home2Z = " .. chatvars.intZ .. ", exit2X = " .. chatvars.intX .. ", exit2Y = " .. chatvars.intY .. ", exit2Z = " .. chatvars.intZ .. ", protect2 = 0 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 					end
@@ -826,13 +827,16 @@ function gmsg_base()
 			help[1] = " {#}set base cooldown {number in seconds} (default is 2400 or 40 minutes)"
 			help[2] = "The {#}base or {#}home command can have a time delay between uses.  Donors wait half as long.  If you set it to 0 there is no wait time."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,base,home,cool,time"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,base,home,cool,time"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -841,6 +845,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -888,13 +893,16 @@ function gmsg_base()
 			help[1] = " {#}set base cost {number}"
 			help[2] = "By default players can type {#}base to return to their base.  You can set a delay and/or a cost before the command is available."
 
+			tmp.command = help[1]
+			tmp.keywords = "base,set,cost"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "base,set,cost"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -903,6 +911,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -959,13 +968,16 @@ function gmsg_base()
 			help[2] = "Block players setting their base too close to the base of another player who has not friended them.\n"
 			help[2] = help[2] .. "The default is 0 which disables this feature.  It does not remove existing bases that are closer than the distance you set here, but they will not be able to redo {#}setbase unless they move further away."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,base,dead,dist"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,base,dead,dist"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -974,6 +986,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1041,13 +1054,16 @@ function gmsg_base()
 			help[1] = " {#}setbase/sethome {player name}"
 			help[2] = "Set a player's first base for them where you are standing."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,base,tele,home"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,base,tele,home"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1056,6 +1072,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1119,7 +1136,7 @@ function gmsg_base()
 
 				irc_chat(server.ircAlerts, players[id].name .. " has setbase at " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ)
 
-				if botman.db2Connected then
+				if botman.botsConnected then
 					-- update player in bots db
 					connBots:execute("UPDATE players SET homeX = " .. chatvars.intX .. ", homeY = " .. chatvars.intY .. ", homeZ = " .. chatvars.intZ .. ", exitX = " .. chatvars.intX .. ", exitY = " .. chatvars.intY .. ", exitZ = " .. chatvars.intZ .. " protect = 0 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 				end
@@ -1193,7 +1210,7 @@ function gmsg_base()
 
 				irc_chat(server.ircAlerts, players[id].name .. " has setbase2 at " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ)
 
-				if botman.db2Connected then
+				if botman.botsConnected then
 					-- update player in bots db
 					connBots:execute("UPDATE players SET home2X = " .. chatvars.intX .. ", home2Y = " .. chatvars.intY .. ", home2Z = " .. chatvars.intZ .. ", exit2X = " .. chatvars.intX .. ", exit2Y = " .. chatvars.intY .. ", exit2Z = " .. chatvars.intZ .. " protect2 = 0 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 				end
@@ -1212,13 +1229,16 @@ function gmsg_base()
 			help[1] = help[1] .. " {#}set base2 size {number} {player name}"
 			help[2] = "Set the base protection size for a player's first or second base."
 
+			tmp.command = help[1]
+			tmp.keywords = "base,set,cost"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "base,set,cost"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1227,6 +1247,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1250,8 +1271,8 @@ function gmsg_base()
 			end
 
 			pname = ""
-			words = {}
-			for word in chatvars.command:gmatch("%w+") do table.insert(words, word) end
+			-- words = {}
+			-- for word in chatvars.command:gmatch("%w+") do table.insert(words, word) end
 
 			id = LookupPlayer(chatvars.words[5])
 
@@ -1299,7 +1320,7 @@ function gmsg_base()
 
 				if botman.dbConnected then conn:execute("UPDATE players SET protectSize = " .. psize .. " WHERE steam = " .. id) end
 
-				if botman.db2Connected then
+				if botman.botsConnected then
 					-- update player in bots db
 					connBots:execute("UPDATE players SET protectSize = " .. psize .. " WHERE steam = " .. id .. " AND botID = " .. server.botID)
 				end
@@ -1315,7 +1336,7 @@ function gmsg_base()
 
 					if botman.dbConnected then conn:execute("UPDATE players SET protect2Size = " .. psize .. " WHERE steam = " .. id) end
 
-					if botman.db2Connected then
+					if botman.botsConnected then
 						-- update player in bots db
 						connBots:execute("UPDATE players SET protect2Size = " .. psize .. " WHERE steam = " .. id .. " AND botID = " .. server.botID)
 					end
@@ -1335,13 +1356,16 @@ function gmsg_base()
 			help[2] = "When you die, the bot can automatically return you to your first or second base after respawn.\n"
 			help[2] = help[2] .. "Set within 50 metres of your base.  The closest base will become your new spawn point after death."
 
+			tmp.command = help[1]
+			tmp.keywords = "base,set,clear,bed"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "base,set,clear,bed"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1350,6 +1374,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1401,13 +1426,16 @@ function gmsg_base()
 			help[2] = "The default base protection size is 32 blocks (64 diameter).  This default only applies to new players joining the server for the first time.\n"
 			help[2] = help[2] .. "Existing base sizes are not changed with this command."
 
+			tmp.command = help[1]
+			tmp.keywords = "base,set,clear,size"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "base,set,clear,size"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1416,6 +1444,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1469,13 +1498,16 @@ function gmsg_base()
 			help[1] = " {#}test base"
 			help[2] = "Turn your own base protection against you for 30 seconds to test that it works."
 
+			tmp.command = help[1]
+			tmp.keywords = "test,base,home"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "test,base,home"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1484,6 +1516,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1522,13 +1555,16 @@ function gmsg_base()
 			help[2] = "Base protection can be turned off server wide.  Players can still use claim blocks for protection.\n"
 			help[2] = help[2] .. "Not the same as {#}enable/disable pvp protect which is specifically for allowing the bot's base protection in PVP rules."
 
+			tmp.command = help[1]
+			tmp.keywords = "able,base,home,prot"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,base,home,prot"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1537,6 +1573,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1591,13 +1628,16 @@ function gmsg_base()
 			help[1] = " {#}enable/disable base (or home) teleport"
 			help[2] = "Enable or disable the home or base teleport command (except for staff)."
 
+			tmp.command = help[1]
+			tmp.keywords = "base,able,home"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "base,able,home"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1606,6 +1646,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1661,13 +1702,16 @@ function gmsg_base()
 			help[1] = " {#}enable/disable pvp protect"
 			help[2] = "By default base protection is disabled where pvp rules apply. You can change that by enabling it."
 
+			tmp.command = help[1]
+			tmp.keywords = "pvp,base,home,prot"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "pvp,base,home,prot"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1676,6 +1720,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1730,13 +1775,16 @@ function gmsg_base()
 			help[1] = " {#}resume/unpause"
 			help[2] = "Re-activate your base protection."
 
+			tmp.command = help[1]
+			tmp.keywords = "pause,base,home,prot"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "pause,base,home,prot"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1745,6 +1793,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1799,13 +1848,16 @@ function gmsg_base()
 			help[2] = "Disable base protection for a player.\n"
 			help[2] = help[2] .. "Only admins can specify a player name.  Everyone else can only use this command on their own bases."
 
+			tmp.command = help[1]
+			tmp.keywords = "base,home,prot"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "base,home,prot"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1814,6 +1866,7 @@ function gmsg_base()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1863,7 +1916,7 @@ function gmsg_base()
 				if (players[id]) then players[id].protect = false end
 				if botman.dbConnected then conn:execute("UPDATE players SET protect = 0 WHERE steam = " .. id) end
 
-				if botman.db2Connected then
+				if botman.botsConnected then
 					-- update player in bots db
 					connBots:execute("UPDATE players SET protect = 0 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 				end
@@ -1882,11 +1935,11 @@ function gmsg_base()
 					end
 				end
 			else
-				if (players[id].donor or accessLevel(id) < 3) then
+				if (isDonor(id) or accessLevel(id) < 3) then
 					if (players[id]) then players[id].protect2 = false end
 					if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. id) end
 
-					if botman.db2Connected then
+					if botman.botsConnected then
 						-- update player in bots db
 						connBots:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. id .. " AND botID = " .. server.botID)
 					end
@@ -1926,7 +1979,6 @@ if debug then dbug("debug base") end
 		irc_chat(chatvars.ircAlias, "==== Registering help - base commands ====")
 		if debug then dbug("Registering help - base commands") end
 
-		tmp = {}
 		tmp.topicDescription = "Base commands includes commands for admins to set various restrictions on players using base commands and commands for players to set and protect their base(s)."
 
 		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'base'")

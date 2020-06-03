@@ -21,21 +21,21 @@ function TenSecondTimer()
 		end
 	end
 
-	if server.lagged then
-		-- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
-		if not botman.botOffline and not botman.botDisabled then
-			if server.enableLagCheck then
-				botman.lagCheckTime = os.time()
-				sendCommand("pm LagCheck " .. os.time())
-			end
-		else
-			if server.enableLagCheck then
-				botman.lagCheckTime = os.time()
-			end
-		end
+	-- if server.lagged then
+		-- -- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
+		-- if not botman.botOffline and not botman.botDisabled then
+			-- if server.enableLagCheck then
+				-- botman.lagCheckTime = os.time()
+				-- sendCommand("pm LagCheck " .. os.time())
+			-- end
+		-- else
+			-- if server.enableLagCheck then
+				-- botman.lagCheckTime = os.time()
+			-- end
+		-- end
 
-		server.lagged = false
-	else
+		-- server.lagged = false
+	-- else
 		if tonumber(botman.playersOnline) > 0 and tonumber(botman.playersOnline) < 25 then
 			if server.coppi and tonumber(botman.playersOnline) > 0 then
 				if server.scanNoclip and tonumber(server.gameVersionNumber) < 17 then
@@ -61,5 +61,5 @@ function TenSecondTimer()
 				end
 			end
 		end
-	end
+	-- end
 end

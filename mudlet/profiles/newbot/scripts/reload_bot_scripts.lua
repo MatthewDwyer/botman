@@ -6,6 +6,12 @@ local debug, steamID
 -- enable debug to see where the code is stopping. Any error will be after the last debug line.
 debug = false -- should be false unless testing
 
+if not telnetLogFileName then
+	lfs.mkdir(homedir .. "/telnet_logs")
+	telnetLogFileName = homedir .. "/telnet_logs/" .. os.date("%Y-%m-%d#%H-%M-%S", os.time()) .. ".txt"
+	telnetLogFile = io.open(telnetLogFileName, "a")
+end
+
 if botman.debugAll then
 	debug = true -- this should be true
 end
@@ -155,6 +161,10 @@ function fixTables() -- Waiter!  Where's my table!?
 		friends = {}
 	end
 
+	if type(gimmePrizes) ~= "table" then
+		gimmePrizes = {}
+	end
+
 	if type(gimmeZombies) ~= "table" then
 		gimmeZombies = {}
 	end
@@ -199,6 +209,14 @@ function fixTables() -- Waiter!  Where's my table!?
 		modBotman = {}
 	end
 
+	if type(players) ~= "table" then
+		players = {}
+	end
+
+	if type(playersArchived) ~= "table" then
+		playersArchived = {}
+	end
+
 	if type(proxies) ~= "table" then
 		proxies = {}
 	end
@@ -213,6 +231,10 @@ function fixTables() -- Waiter!  Where's my table!?
 
 	if type(restrictedItems) ~= "table" then
 		restrictedItems = {}
+	end
+
+	if type(shop) ~= "table" then
+		shop = {}
 	end
 
 	if type(shopCategories) ~= "table" then
@@ -553,6 +575,11 @@ function refreshScripts()
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
+	server.nextCodeReload = "/scripts/timers/five_second_timer.lua"
+	checkScript(homedir .. "/scripts/timers/five_second_timer.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
 	server.nextCodeReload = "/scripts/timers/list_players_timer.lua"
 	checkScript(homedir .. "/scripts/timers/list_players_timer.lua")
 
@@ -757,7 +784,7 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 		toggleTriggers("api offline")
 	end
 
-	enableTrigger("Spam")
+	--enableTrigger("Spam")
 	enableTrigger("Logon Successful")
 	enableTrigger("lp")
 	enableTrigger("Tele")
@@ -765,6 +792,7 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 
 	enableTimer("APITimer")
 	enableTimer("EverySecond")
+	enableTimer("Every5Seconds")
 	enableTimer("Every10Seconds")
 	enableTimer("Every15Seconds")
 	enableTimer("EveryHalfMinute")
@@ -793,10 +821,15 @@ end
 
 function reloadBotScripts(skipTables, skipFetchData, silent)
 	-- disable some stuff we no longer use
+	disableTrigger("Spam")
 	disableTrigger("le")
 	disableTimer("GimmeReset")
 	disableTrigger("GameTickCount")
 	disableTrigger("Reload admins")
+
+	if exists("Every5Seconds", "timer") == 0 then
+	  permTimer("Every5Seconds", "", 5.0, [[FiveSecondTimer()]])
+	end
 
 	if exists("Every10Seconds", "timer") == 0 then
 	  permTimer("Every10Seconds", "", 10.0, [[TenSecondTimer()]])
@@ -816,10 +849,6 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 
 	if exists("EverySecond", "timer") == 0 then
 	  permTimer("EverySecond", "", 1, [[OneSecondTimer()]])
-	end
-
-	if botman.telnetCheckID == nil then
-		botman.telnetCheckID = tempRegexTrigger("^", [[flagTelnetOnline()]])
 	end
 
 	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -904,6 +933,11 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 		end
 	end
 
+	if botman.spamID == nil then
+		botman.blockTelnetSpam = true
+		botman.spamID = tempRegexTrigger("^", [[blockTelnetSpam()]])
+	end
+
 	-- load the server API key if it exists
 	readAPI()
 
@@ -913,20 +947,16 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 			botMaintenance = {}
 		end
 
-		-- run llp once per day but only when there are less than 11 players on. On busy servers this might cause llp to be run less often but we want to avoid server lag.
+		-- run llp once per day
 		if not botMaintenance.lastLLP then
-			if tonumber(botman.playersOnline) < 11 then
+			botMaintenance.lastLLP = server.dateTest
+			saveBotMaintenance()
+			sendCommand("llp parseable")
+		else
+			if botMaintenance.lastLLP ~= server.dateTest then
 				botMaintenance.lastLLP = server.dateTest
 				saveBotMaintenance()
 				sendCommand("llp parseable")
-			end
-		else
-			if botMaintenance.lastLLP ~= server.dateTest then
-				if tonumber(botman.playersOnline) < 11 then
-					botMaintenance.lastLLP = server.dateTest
-					saveBotMaintenance()
-					sendCommand("llp parseable")
-				end
 			end
 		end
 

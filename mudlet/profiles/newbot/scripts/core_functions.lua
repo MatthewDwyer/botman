@@ -8,6 +8,58 @@
 --]]
 
 
+function dateToTimestamp(dateString)
+	local pattern = "(%d+)-(%d+)-(%d+) (%d+):(%d+)"
+	local runyear, runmonth, runday, runhour, runminute = dateString:match(pattern)
+
+	return os.time({year = runyear, month = runmonth, day = runday, hour = runhour, min = runminute})
+end
+
+
+function calcCurrentServerTime(timestamp)
+	local dateString, dayMonth
+
+	if not timestamp then
+		timestamp = botman.serverTimeStamp
+	end
+
+	timestamp = timestamp + (os.time() - timestamp)
+	dateString = os.date('%Y-%m-%d %H:%M', timestamp)
+	dayMonth = os.date('%m-%d', timestamp)
+
+	botman.serverTime = dateString
+	botman.serverTimeStamp = timestamp
+
+	botman.serverHour = os.date('%H', timestamp)
+	botman.serverMinute = os.date('%M', timestamp)
+	specialDay = ""
+
+	if dayMonth == "02-14" then specialDay = "valentine" end
+	if dayMonth == "12-25" then specialDay = "christmas" end
+
+	if server.dateTest == nil then
+		server.dateTest = string.sub(botman.serverTime, 1, 10)
+	end
+
+	if tonumber(server.uptime) > 0 then
+		server.uptime = server.uptime + 1
+	end
+
+
+	-- if tonumber(botman.serverHour) == tonumber(server.botRestartHour) and server.allowBotRestarts then
+		-- uptime = math.floor((os.difftime(os.time(), botman.botStarted) / 3600))
+
+		-- if uptime > 1 then
+			-- -- if the bot has been running less than 1 hour it won't restart itself.
+			-- restartBot()
+			-- return
+		-- end
+	-- end
+
+	return botman.serverTime
+end
+
+
 function getSWNECoords(x1, y1, z1, x2, y2, z2)
 	local coords = {}
 	local num -- comfortably
@@ -75,12 +127,6 @@ function sendCommand(command) -- , api, outputFile
 	-- send the command to the server via Allocs web API if enabled otherwise use telnet
 
 	-- any commands that must be sent via telnet, trap and send them first.
-	-- if command == "pm IPCHECK" then
-		-- send(command)
-		-- return
-	-- end
-
-	--display("sent " .. command .. "\n")
 
 	if botman.worldGenerating then
 		-- send no commands to the server while the world is generating.
@@ -92,7 +138,7 @@ function sendCommand(command) -- , api, outputFile
 	if server.useAllocsWebAPI and not botman.APIOffline and not string.find(command, "webtokens ") and not string.find(command, "#") then
 		-- fix missing api and outputFile for some commands
 		if command == "admin list" then
-			api = "executeconsolecommand?command=admin list&"
+			api = "executeconsolecommand?command=" .. command .. "&"
 			outputFile = "adminList.txt"
 		end
 
@@ -104,7 +150,7 @@ function sendCommand(command) -- , api, outputFile
 		end
 
 		if command == "ban list" then
-			api = "executeconsolecommand?command=ban list&"
+			api = "executeconsolecommand?command=" .. command .. "&"
 			outputFile = "banList.txt"
 		end
 
@@ -119,7 +165,7 @@ function sendCommand(command) -- , api, outputFile
 		end
 
 		if command == "bc-time" then -- this is used to read server ticks and grab the players online.
-			api = "executeconsolecommand?command=bc-time&"
+			api = "executeconsolecommand?command=" .. command .. "&"
 			outputFile = "bc-time.txt"
 		end
 
@@ -128,13 +174,33 @@ function sendCommand(command) -- , api, outputFile
 			outputFile = "bc-lp.txt"
 		end
 
+		if string.find(command, "bm-anticheat report", nil, true) then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "bm-anticheat-report.txt"
+		end
+
 		if string.find(command, "bm-listplayerbed", nil, true) then
 			api = "executeconsolecommand?command=" .. command .. "&"
 			outputFile = "bm-listplayerbed.txt"
 		end
 
+		if string.find(command, "bm-listplayerfriends", nil, true) then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "bm-listplayerfriends.txt"
+		end
+
+		if command == "bm-readconfig" then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "bm-config.txt"
+		end
+
+		if command == "bm-resetregions list" then
+			api = "executeconsolecommand?command=" .. command .. "&"
+			outputFile = "bm-resetregions-list.txt"
+		end
+
 		if command == "bm-uptime" then
-			api = "executeconsolecommand?command=bm-uptime&"
+			api = "executeconsolecommand?command=" .. command .. "&"
 			outputFile = "bm-uptime.txt"
 		end
 
@@ -155,7 +221,7 @@ function sendCommand(command) -- , api, outputFile
 		end
 
 		if command == "gt" then
-			api = "executeconsolecommand?command=gt&"
+			api = "executeconsolecommand?command=" .. command .. "&"
 			outputFile = "gametime.txt"
 		end
 
@@ -215,7 +281,7 @@ function sendCommand(command) -- , api, outputFile
 		end
 
 		if command == "version" then
-			api = "executeconsolecommand?command=version&"
+			api = "executeconsolecommand?command=" .. command .. "&"
 			outputFile = "installedMods.txt"
 		end
 
@@ -227,17 +293,11 @@ function sendCommand(command) -- , api, outputFile
 
 		url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/" .. api .. "adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
 
---display(url .. "\n")
-
 		if outputFile == nil then
 			outputFile = "dummy.txt"
 		end
 
 		os.remove(homedir .. "/temp/" .. outputFile)
-
-		if server.logBotCommands then
-			logBotCommand(botman.serverTime, url)
-		end
 
 		if command ~= "gg" then
 			downloadFile(homedir .. "/temp/" .. outputFile, url)
@@ -253,13 +313,13 @@ function sendCommand(command) -- , api, outputFile
 		end
 
 		metrics.commands = metrics.commands + 1
+
+		if server.logBotCommands then
+			logBotCommand(botman.serverTime, url)
+		end
 	else
 		if command == "getplayerinventories" or command == "gethostilelocation" then
 			return
-		end
-
-		if server.logBotCommands then
-			logBotCommand(botman.serverTime, command)
 		end
 
 		-- should be able to remove list later.  Just put it here to fix an issue with older bots updating and not having the metrics table.
@@ -273,6 +333,10 @@ function sendCommand(command) -- , api, outputFile
 
 		send(command)
 		metrics.commands = metrics.commands + 1
+
+		if server.logBotCommands then
+			logBotCommand(botman.serverTime, command)
+		end
 	end
 
 	if command == "shutdown" and botman.telnetOffline then
@@ -497,6 +561,38 @@ function isFriend(testid, steamid)
 
 	-- steamid is not a friend of testid
 	return false
+end
+
+
+function isHexCode(code)
+	local test
+
+	if string.len(code) == 7 then
+		test = string.match(code, "#%x+$")
+	end
+
+	if string.len(code) == 6 then
+		test = string.match(code, "^%x+$")
+	end
+
+	if test then
+		return true
+	else
+		return false
+	end
+end
+
+
+function isDonor(steam)
+	if donors[steam] then
+		if donors[steam].expired then
+			return false
+		else
+			return true, donors[steam].expiry
+		end
+	else
+		return false
+	end
 end
 
 
@@ -1052,7 +1148,7 @@ end
 
 
 function LookupLocation(command)
-	local k,v
+	local k,v, lobby
 
 	-- is command the name of a location?
 	command = string.lower(command)
@@ -1065,6 +1161,18 @@ function LookupLocation(command)
 		if (command == string.lower(v.name)) then
 			return k
 		end
+
+		if (command == "lobby" or command == "spawn") and v.lobby then
+			return k
+		end
+
+		if string.lower(v.name) == "spawn" and (command == "lobby" or command == "spawn") then
+			lobby = k
+		end
+	end
+
+	if lobby then
+		return lobby
 	end
 end
 
@@ -1369,6 +1477,19 @@ function getCompass(x1, z1, x2, z2)
 end
 
 
+function getNumbers(string)
+	local word, numbers
+
+	numbers = {}
+
+	for word in string.gmatch (string, "(-?\%d+)") do
+		table.insert(numbers, tonumber(word))
+	end
+
+	return numbers
+end
+
+
 function accessLevel(pid)
 	local debug
 
@@ -1422,7 +1543,7 @@ function accessLevel(pid)
 			return 99
 		end
 
-		if players[pid].donor then
+		if isDonor(pid) then
 	--TODO: Add donor levels
 			players[pid].accessLevel = 10
 			return 10

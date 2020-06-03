@@ -72,7 +72,7 @@ function teleport(cmd, steam, justTeleport)
 
 	if not justTeleport then
 		if tonumber(server.returnCooldown) > 0 and accessLevel(steam) > 2 then
-			if players[steam].donor then
+			if isDonor(steam) then
 				delay = os.time() + math.floor(server.returnCooldown / 2)
 			else
 				delay = os.time() + server.returnCooldown
@@ -102,39 +102,39 @@ function randomTP(playerid, location, forced)
 		if rows == 0 then
 			cmd = "tele " .. playerid .. " " .. locations[location].x .. " " .. locations[location].y .. " " .. locations[location].z
 
-			if tonumber(server.playerTeleportDelay) == 0 or forced or tonumber(players[playerid].accessLevel) < 2 then --  or not igplayers[playerid].currentLocationPVP
+			if tonumber(server.playerTeleportDelay) == 0 or forced or tonumber(players[playerid].accessLevel) < 2 then
 				teleport(cmd, playerid)
 			else
 				message("pm " .. playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
-				if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
+				conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')")
 			end
 
 			return
+		else
+			rowCount = 1
+			r = rand(rows)
+
+			cursor,errorString = conn:execute("select * from locationSpawns where location='" .. location .. "' limit " .. r - 1 .. ",1")
+			row = cursor:fetch({}, "a")
+			cmd = "tele " .. playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
+
+			-- handle new player's being moved to lobby or spawn on first arrival.
+			if (string.lower(location) == "lobby" or string.lower(location) == "spawn") and players[playerid].location ~= "" then
+				teleport(cmd, playerid)
+			else
+				if tonumber(server.playerTeleportDelay) == 0 or forced or tonumber(players[playerid].accessLevel) < 2 then
+					teleport(cmd, playerid)
+				else
+					message("pm " .. playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
+					conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')")
+					igplayers[playerid].lastTPTimestamp = os.time()
+				end
+			end
 		end
 	else
 		cmd = "tele " .. playerid .. " " .. locations[location].x .. " " .. locations[location].y .. " " .. locations[location].z
 		teleport(cmd, playerid)
 
 		return
-	end
-
-	rowCount = 1
-	r = rand(rows)
-
-	cursor,errorString = conn:execute("select * from locationSpawns where location='" .. location .. "' limit " .. r - 1 .. ",1")
-	row = cursor:fetch({}, "a")
-	cmd = "tele " .. playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
-
-	-- handle new player's being moved to lobby or spawn on first arrival.
-	if (string.lower(location) == "lobby" or string.lower(location) == "spawn") and players[playerid].location ~= "" then
-		teleport(cmd, playerid)
-	else
-		if tonumber(server.playerTeleportDelay) == 0 or forced or tonumber(players[playerid].accessLevel) < 2 then --  or not igplayers[playerid].currentLocationPVP
-			teleport(cmd, playerid)
-		else
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
-			if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
-			igplayers[playerid].lastTPTimestamp = os.time()
-		end
 	end
 end

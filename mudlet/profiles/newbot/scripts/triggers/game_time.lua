@@ -141,8 +141,4 @@ function gameTimeTrigger(line)
 			v.closingSoon = false
 		end
 	end
-
-	if not server.useAllocsWebAPI then
-		deleteLine()
-	end
 end

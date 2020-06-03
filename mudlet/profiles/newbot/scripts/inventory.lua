@@ -456,7 +456,7 @@ function CheckInventory()
 				irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Player " .. k .. " " .. v.name .. " has has been banned for 1 year for " .. tmp.banReason .. ".")
 				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. v.xPos .. "," .. v.yPos .. "," .. v.zPos .. ",'" .. botman.serverTime .. "','ban','Player " .. k .. " " .. escape(v.name) .. " has has been banned for 1 year for " .. escape(tmp.banReason) .. ".'," .. k .. ")")
 
-				if botman.db2Connected then
+				if botman.botsConnected then
 					-- copy in bots db
 					connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','ban','Player " .. k .. " " .. escape(v.name) .. " has has been banned for 1 year for " .. escape(tmp.banReason) .. ".'," .. k .. ")")
 				end
@@ -510,7 +510,7 @@ function CheckInventory()
 					irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " " .. v.name .. " detected with uncraftable " .. tmp.itemsFound)
 					conn:execute("INSERT INTO events (x, y, z, serverTime, type, event) VALUES (" .. igplayers[k].xPos .. "," .. igplayers[k].yPos .. "," .. igplayers[k].zPos .. ",'" .. botman.serverTime .. "','timeout','Player " .. escape(v.name) .. " detected with uncraftable inventory " .. escape(tmp.itemsFound) .. "')")
 
-					if botman.db2Connected then
+					if botman.botsConnected then
 						-- copy in bots db
 						connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','timeout','Player " .. escape(v.name) .. " detected with uncraftable inventory " .. escape(tmp.itemsFound) .. "')")
 					end
@@ -537,7 +537,7 @@ end
 
 
 function readInventorySlot()
-	local timestamp, slot, item, quantity, quality, pos, words, dupeTest
+	local slot, item, quantity, quality -- timestamp, , words, dupeTest, pos
 
 	if server.useAllocsWebAPI then
 		return
@@ -548,15 +548,15 @@ function readInventorySlot()
 		return
 	end
 
-	timestamp = os.time()
+	--timestamp = os.time()
 	item = ""
 	slot = ""
 	quantity = 0
 	quality = 0
-	words = {}
-	dupeTest = {}
+	--words = {}
+	--dupeTest = {}
 
-	for word in line:gmatch("%w+") do table.insert(words, word) end
+	--for word in line:gmatch("%w+") do table.insert(words, word) end
 
 	slot = string.sub(line, string.find(line, "Slot") + 5, string.find(line, ": ") - 1)
 

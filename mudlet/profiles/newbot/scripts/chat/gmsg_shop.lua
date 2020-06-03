@@ -28,13 +28,16 @@ function gmsg_shop()
 			help[1] = " {#}cash or {#}wallet or {#}bank"
 			help[2] = "Tells you how many " .. server.moneyPlural .. " you have."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,bank,money,cash,wallet"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,bank,money,cash,wallet"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -43,6 +46,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -65,13 +69,16 @@ function gmsg_shop()
 			help[2] = "Attempt to automatically fix the shop.  It reloads the shop categories, checks for any missing categories in shop items and assigns them to misc then reindexes the shop.\n"
 			help[2] = help[2] .. "This fix is experimental and might not actually fix whatever is wrong with your shop."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,fix"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,fix"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -80,6 +87,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -122,13 +130,16 @@ function gmsg_shop()
 			help[1] = " {#}quick fix shop"
 			help[2] = "Like {#}fix shop but doesn't re-read all the item names known to the server so it completes much faster."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,fix"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,fix"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -137,6 +148,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -179,13 +191,16 @@ function gmsg_shop()
 			help[1] = " {#}gamble {optional quantity} or {#}buy ticket {optional quantity}"
 			help[2] = "Buy a ticket in the next daily lottery."
 
+			tmp.command = help[1]
+			tmp.keywords = "buy,lotto,tick,daily,gamb"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "buy,lotto,tick,daily,gamb"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -194,6 +209,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -268,13 +284,16 @@ function gmsg_shop()
 			help[1] = " {#}lotto or {#}lottery or {#}tickets"
 			help[2] = "See how big the lottery is and how many tickets you have in the draw."
 
+			tmp.command = help[1]
+			tmp.keywords = "lotto,tick,daily"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "lotto,tick,daily"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -283,6 +302,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -311,13 +331,16 @@ function gmsg_shop()
 			help[1] = " {#}pay {player name} {amount}"
 			help[2] = "Pay a player some amount of " .. server.moneyPlural .. ". Admins don't need to have the cash in their balance first."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,pay,cash"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,pay,cash"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -326,6 +349,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -379,13 +403,16 @@ function gmsg_shop()
 			help[1] = " {#}reset shop"
 			help[2] = "Restock the shop to the max quantity of each item."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,reset,stock"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,reset,stock"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -394,6 +421,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -433,13 +461,16 @@ function gmsg_shop()
 			help[2] = "Restrict the shop to a specific location.  Buying from the shop will only be possible while in that location (excluding admins).\n"
 			help[2] = help[2] .. "Or clear the location so that the shop can be accessed server wide. (the default)"
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,set,clear,loca"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,set,clear,loca"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -448,6 +479,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -517,13 +549,16 @@ function gmsg_shop()
 			help[1] = " {#}set lottery multiplier {number}"
 			help[2] = "Every zombie killed adds 1 x the lottery multiplier to the lottery total.  The higher the number, the faster the lottery rises.  The default is 2."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,set,lott,daily"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,set,lott,daily"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -532,6 +567,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -579,13 +615,16 @@ function gmsg_shop()
 			help[1] = " {#}set lottery prize {number}"
 			help[2] = "You can set or reset the lottery prize to any number.  Useful if it gets too large."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,set,prize,lott,daily"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,set,prize,lott,daily"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -594,6 +633,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -641,13 +681,16 @@ function gmsg_shop()
 			help[1] = " {#}set lottery ticket price {number}"
 			help[2] = "The default cost of a lottery ticket is 25 " .. server.moneyPlural .. ". You can change it to anything above 0."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,set,tick,price"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,set,tick,price"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -656,6 +699,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -720,13 +764,16 @@ function gmsg_shop()
 			help[2] = "The default money name is the Zenny and the plural is Zennies. Both names must be one word each.\n"
 			help[2] = help[2] .. "eg {#}set money name Chip Chips."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,able,bank,money"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,able,bank,money"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -735,6 +782,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -799,13 +847,16 @@ function gmsg_shop()
 			help[1] = " {#}set playtime reward {" .. server.moneyPlural .. "}"
 			help[2] = "Set how many " .. server.moneyPlural .. " a player earns for each minute played. (excludes new players and does not count total time played)"
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,set,play,rewa"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,set,play,rewa"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -814,6 +865,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -862,13 +914,16 @@ function gmsg_shop()
 			help[2] = "Restock the shop to the max quantity of each item every {number} of real days.\n"
 			help[2] = help[2] .. "A setting of 0 disables the automatic restock.  To manually restock it use {#}reset shop."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,set,reset,day"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,set,reset,day"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -877,6 +932,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -942,13 +998,16 @@ function gmsg_shop()
 			help[1] = " {#}set shop open/close {0 - 23}"
 			help[2] = "Enter a number from 0 to 23 which will be the game hour that the shop opens or closes."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,set,hour,time,trad"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,set,hour,time,trad"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -957,6 +1016,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1015,13 +1075,16 @@ function gmsg_shop()
 			help[1] = " {#}set zombie reward {" .. server.moneyPlural .. "}"
 			help[2] = "Set how many " .. server.moneyPlural .. " a player earns for each zombie killed."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,set,zomb,kill,rewa"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,set,zomb,kill,rewa"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1030,6 +1093,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1077,13 +1141,16 @@ function gmsg_shop()
 			help[1] = " {#}enable/disable bank"
 			help[2] = "Players can earn " .. server.moneyPlural .. " if the bank is enabled."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,able,bank,money"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,able,bank,money"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1092,6 +1159,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1148,13 +1216,16 @@ function gmsg_shop()
 			help[1] = help[1] .. " {#}enable/disable lottery"
 			help[2] = "Turn on or off the daily lottery.  It is on be default."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,able,daily,lott"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,able,daily,lott"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1163,6 +1234,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1218,13 +1290,16 @@ function gmsg_shop()
 			help[1] = " {#}open/close or {#}enable/disable shop"
 			help[2] = "Enable or disable the shop feature."
 
+			tmp.command = help[1]
+			tmp.keywords = "shop,open,close,able"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "shop,open,close,able"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1233,6 +1308,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1280,13 +1356,16 @@ function gmsg_shop()
 			help[1] = " {#}show/hide cash"
 			help[2] = "See an ingame PM every time your cash balance changes."
 
+			tmp.command = help[1]
+			tmp.keywords = "show,hide,cash"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "show,hide,cash"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1295,6 +1374,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1325,13 +1405,16 @@ function gmsg_shop()
 			help[1] = " {#}enable/disable spending alert (default disabled)"
 			help[2] = "PM the player every time an a command costs them money.  Tell them how much they spent and what they have left."
 
+			tmp.command = help[1]
+			tmp.keywords = "able,cash,alert,spend,cost"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,cash,alert,spend,cost"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1340,6 +1423,7 @@ function gmsg_shop()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1395,7 +1479,6 @@ function gmsg_shop()
 		irc_chat(chatvars.ircAlias, "==== Registering help - shop commands ====")
 		if debug then dbug("Registering help - shop commands") end
 
-		tmp = {}
 		tmp.topicDescription = "The bot's shop allows players to buy items for " .. server.moneyPlural .. ".\n"
 		tmp.topicDescription = tmp.topicDescription .. "The shop can be available all the time or within certain hours of the day or from a specific location.\n"
 		tmp.topicDescription = tmp.topicDescription .. "While you can manage the shop ingame, it is much easier to do so from the bot's web client."

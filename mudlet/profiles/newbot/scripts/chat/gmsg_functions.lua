@@ -643,17 +643,15 @@ function gmsg_who(playerid, number)
 						alone = false
 					end
 
-					if (accessLevel(playerid) < 11) then
+					if (accessLevel(playerid) < 3) then
 						x = math.floor(v.xPos / 512)
 						z = math.floor(v.zPos / 512)
 
 						message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. " distance: " .. string.format("%d", dist) .. " region r." .. x .. "." .. z .. ".7rg Hacker score: " .. players[k].hackerScore .. "[-]")
 					else
-						if (players[playerid].watchPlayer == true) and accessLevel(v.steam) > 3 then
-							message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. "[-]")
-						end
-
-						if (players[playerid].watchPlayer == false) then
+						if (accessLevel(playerid) < 11) then
+							message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. " Hacker score: " .. players[k].hackerScore .. "[-]")
+						else
 							message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. "[-]")
 						end
 					end
@@ -661,184 +659,6 @@ function gmsg_who(playerid, number)
 			end
 		end
 	end
-end
-
-
-function logAlerts(alertTime, alertLine)
-	local file
-
-	-- don't log base protection alerts
-	if botman.webdavFolderWriteable == false or string.find(alertLine, "base protection") then
-		return
-	end
-
-	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
-	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
-	botman.webdavFolderWriteable = false
-
-	-- log the chat
-	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_alertlog.txt", "a")
-	file:write(alertTime .. "; " .. string.trim(alertLine) .. "\n")
-	file:close()
-
-	botman.webdavFolderWriteable = true
-end
-
-
-function logBotCommand(commandTime, commandLine)
-	local file
-
-	if botman.webdavFolderWriteable == false or string.find(commandLine, "password") or string.find(commandLine, "invite code") or string.find(commandLine, "webtokens") or string.find(string.lower(commandLine), " api ") then
-		return
-	end
-
-	if string.find(commandLine, "adminuser") then
-		commandLine = string.sub(commandLine, 1, string.find(commandLine, "adminuser") - 2)
-	end
-
-	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
-	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
-	botman.webdavFolderWriteable = false
-
-	-- log the chat
-	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_botcommandlog.txt", "a")
-	file:write(commandTime .. "; " .. string.trim(commandLine) .. "\n")
-	file:close()
-
-	botman.webdavFolderWriteable = true
-end
-
-
-function logCommand(commandTime, commandLine)
-	local commandPosition, file
-	local playerName = chatvars.playername
-
-	commandPosition = "0 0 0"
-
-	if tonumber(chatvars.ircid) > 0 then
-		playerName = players[chatvars.ircid].name
-	else
-		if chatvars.intX then
-			commandPosition = chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ
-		end
-	end
-
-	if botman.webdavFolderWriteable == false or string.find(commandLine, " INF ") or string.find(commandLine, "' from client") or string.find(commandLine, "password") or string.find(string.lower(commandLine), " api ") then
-		return
-	end
-
-	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
-	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
-	botman.webdavFolderWriteable = false
-
-	-- log the chat
-	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_commandlog.txt", "a")
-	file:write(commandTime .. "; " .. playerName .. "; " .. commandPosition .. "; " .. string.trim(commandLine) .. "\n")
-	file:close()
-
-	botman.webdavFolderWriteable = true
-end
-
-
-function logChat(chatTime, chatLine)
-	local chatPosition, file
-	local playerName = chatvars.playername
-
-	if chatvars == nil or string.trim(chatLine) == "Server" then
-		return
-	end
-
-	chatPosition = "0 0 0"
-
-	if tonumber(chatvars.ircid) > 0 then
-		playerName = players[chatvars.ircid].name
-	else
-		if chatvars.intX then
-			chatPosition = chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ
-		end
-	end
-
-	if (not botman.webdavFolderWriteable) or string.find(chatLine, " INF ") or string.find(chatLine, "' from client") or string.find(chatLine, "password") or string.find(string.lower(chatLine), " api ") then
-		return
-	end
-
-	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
-	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
-	botman.webdavFolderWriteable = false
-
-	-- log the chat
-	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_chatlog.txt", "a")
-	file:write(chatTime .. "; " .. playerName .. "; " .. chatPosition .. "; " .. string.trim(chatLine) .. "\n")
-	file:close()
-
-	botman.webdavFolderWriteable = true
-end
-
-
-function logInventoryChanges(steam, item, delta, x, y, z, session, flag)
-	local file, location
-
-	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
-	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
-	botman.webdavFolderWriteable = false
-	location = ""
-
-	if igplayers[steam] then
-		location = igplayers[steam].inLocation
-	end
-
-	-- log the chat
-	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_inventory.txt", "a")
-	if delta > 0 then
-		file:write("server date " .. botman.serverTime .. "; game " .. server.gameDate .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty +" .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; loc " .. location .. " ; sess " .. session .. "; " .. flag .. "\n")
-	else
-		file:write("server date " .. botman.serverTime .. "; game " .. server.gameDate .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty " .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; loc " .. location .. " ; sess " .. session .. "; " .. flag .. "\n")
-	end
-
-	file:close()
-
-	botman.webdavFolderWriteable = true
-end
-
-
-function logPanelCommand(commandTime, command)
-	local action, actionTable, actionQuery, actionArgs
-	local file
-
-	if botman.webdavFolderWriteable == false  then
-		return
-	end
-
-	action = command.action
-
-	if command.actionTable then
-		actionTable = command.actionTable
-	else
-		actionTable = ""
-	end
-
-	if command.actionQuery then
-		actionQuery = command.actionQuery
-	else
-		actionQuery = ""
-	end
-
-	if command.actionArgs then
-		actionArgs = command.actionArgs
-	else
-		actionArgs = ""
-	end
-
-	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
-	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
-	botman.webdavFolderWriteable = false
-
-	-- log the chat
-	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_panel.txt", "a")
-	file:write(commandTime .. "; " .. action .. "; " .. actionTable .. "; " .. actionArgs .. "; " .. actionQuery .. "\n")
-	file:close()
-
-	botman.webdavFolderWriteable = true
 end
 
 
@@ -1599,7 +1419,7 @@ function gmsg(line, ircid)
 			irc_chat(server.ircAlerts, "[BANNED] Player " .. chatvars.playerid .. " " .. igplayers[chatvars.playerid].name .. " has has been banned for 10 years for advertising hacks.")
 			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','ban','Player " .. chatvars.playerid .. " " .. escape(igplayers[chatvars.playerid].name) .. " has has been banned for 10 years for advertising hacks.'," .. chatvars.playerid .. ")")
 
-			if botman.db2Connected then
+			if botman.botsConnected then
 				-- copy in bots db
 				connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','ban','Player " .. chatvars.playerid .. " " .. escape(igplayers[chatvars.playerid].name) .. " has has been banned for 10 years for advertising hacks.'," .. chatvars.playerid .. ")")
 			end
@@ -2022,12 +1842,19 @@ function gmsg(line, ircid)
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
 	-- these commands are defined here just so the bot won't say unknown command when it sees them
+	-- ignore these commands.  don't process them.  these are not the commands you are looking for. move along. move along.
 	if string.find(chatvars.command, "clan") then
 		botman.faultyChat = false
 		return true
 	end
 
 	if (chatvars.words[1] == "bag" and chatvars.words[2] == nil) then
+		botman.faultyChat = false
+		return true
+	end
+
+	if (chatvars.words[1] == "helpme") then -- O-B-1
+		-- you're my only hope
 		botman.faultyChat = false
 		return true
 	end

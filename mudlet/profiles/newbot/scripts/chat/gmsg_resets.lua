@@ -30,13 +30,16 @@ function gmsg_resets()
 			help[1] = " {#}clear reset zones"
 			help[2] = "The bot will forget all the reset zones so you can start over marking new ones."
 
+			tmp.command = help[1]
+			tmp.keywords = "clear,forget,remo,del,reset,zone"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "clear,forget,remo,del,reset,zone"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -45,6 +48,7 @@ function gmsg_resets()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -95,13 +99,16 @@ function gmsg_resets()
 			help[2] = "Flag or unflag an entire region as a reset zone.  If you don't specify an x and z coord, you need to be playing and standing inside the region.\n"
 			help[2] = help[2] .. "Example with coords: /add reset -1 3.  This will make region r.-1.3.7rg a reset zone."
 
+			tmp.command = help[1]
+			tmp.keywords = "add,remo,reset,zone"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "add,remo,reset,zone"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -110,6 +117,7 @@ function gmsg_resets()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -187,13 +195,16 @@ function gmsg_resets()
 			help[1] = " {#}reset zones"
 			help[2] = "List all of the regions that are reset zones."
 
+			tmp.command = help[1]
+			tmp.keywords = "view,list,reset,zone"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "view,list,reset,zone"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -202,6 +213,7 @@ function gmsg_resets()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -265,13 +277,16 @@ function gmsg_resets()
 			help[2] = "Put back all of the reset zones via the Botman mod if you've accidentally deleted the mod's config.xml file from the server.\n"
 			help[2] = help[2] .. "Note:  This requires the Botman mod or all it really does is list the reset zones."
 
+			tmp.command = help[1]
+			tmp.keywords = "add,restore,reset,zone"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "add,restore,reset,zone"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -280,6 +295,7 @@ function gmsg_resets()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -345,7 +361,6 @@ function gmsg_resets()
 		irc_chat(chatvars.ircAlias, "==== Registering help - reset commands ====")
 		if debug then dbug("Registering help - reset commands") end
 
-		tmp = {}
 		tmp.topicDescription = "Reset zones tell a player where when they can't place claims or setbase in a location or region.  The bot is not able to actually delete parts of the map and that must be done manually with the server offline.  The bot does provide a list of regions that are reset zones if any regions have been flagged as such."
 
 		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'reset zones'")

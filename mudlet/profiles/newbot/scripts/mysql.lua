@@ -15,6 +15,449 @@ local debug = false
 local statements = {}
 
 
+local function doSQL(sql, botsDB, forced)
+	local shortSQL = string.sub(sql, 1, 1000) -- truncate the sql to 1000 chars
+	local newSQL
+
+	if not statements[shortSQL] or forced ~= nil then
+		statements[shortSQL] = {}
+
+		conn:execute("INSERT INTO altertables (statement) VALUES ('" .. escape(shortSQL) .. "')")
+
+		-- make sure that all changes to the players table are mirrored to playersArchived.
+		if string.find(sql, "ALTER TABLE `players`", nil, true) and not botsDB then
+			newSQL = sql
+			newSQL = newSQL:gsub("`players`", "`playersArchived`")
+
+			-- apply the altered sql to the playersArchived table
+			conn:execute(newSQL)
+		end
+
+		if botsDB then
+			connBots:execute(sql)
+		else
+			conn:execute(sql)
+		end
+	end
+end
+
+
+local function createMissingTable(lostTable)
+	-- we don't bother with the server table or player table because they are HUGE and also if those are missing, the bot has bigger problems and probably needs other fixes.
+	if lostTable == "APIQueue" then
+		doSQL("CREATE TABLE `APIQueue` (`id` bigint(20) NOT NULL,`URL` varchar(500) DEFAULT '',`OutputFile` varchar(500) DEFAULT '',PRIMARY KEY ('id') ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "IPBlacklist" then
+		doSQL("CREATE TABLE `IPBlacklist` (`StartIP` bigint(15) NOT NULL,`EndIP` bigint(15) DEFAULT '0',`DateAdded` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`botID` int(11) NOT NULL DEFAULT '0',`steam` bigint(17) NOT NULL DEFAULT '0',`playerName` varchar(25) NOT NULL DEFAULT '',`Country` varchar(2) DEFAULT '',PRIMARY KEY (`StartIP`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "LKPQueue" then
+		doSQL("CREATE TABLE `LKPQueue` (`id` int(11) NOT NULL,`line` varchar(255) NOT NULL DEFAULT '',PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "alerts" then
+		doSQL("CREATE TABLE `alerts` (`alertID` bigint(20) NOT NULL,`steam` bigint(17) DEFAULT '0',`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`message` varchar(255) DEFAULT '',`timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,`sent` tinyint(1) NOT NULL DEFAULT '0',`status` varchar(30) NOT NULL DEFAULT '',PRIMARY KEY (`alertID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "announcements" then
+		doSQL("CREATE TABLE `announcements` (`id` int(11) NOT NULL,`message` varchar(400) DEFAULT '',`startDate` date DEFAULT NULL,`endDate` date DEFAULT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "badItems" then
+		doSQL("CREATE TABLE `badItems` (`item` varchar(100) NOT NULL DEFAULT '',`action` varchar(10) DEFAULT 'timeout',`validated` tinyint(1) DEFAULT '1',PRIMARY KEY (`item`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "badWords" then
+		doSQL("CREATE TABLE `badWords` (`badWord` varchar(100) DEFAULT '',`cost` int(11) DEFAULT '10',`counter` int(11) DEFAULT '0',PRIMARY KEY(`badWord`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "bans" then
+		doSQL("CREATE TABLE `bans` (`BannedTo` varchar(22) DEFAULT '',`Steam` bigint(17) NOT NULL DEFAULT '0',`Reason` varchar(255) DEFAULT '',`expiryDate` datetime DEFAULT NULL,PRIMARY KEY (`Steam`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "bases" then
+		doSQL("CREATE TABLE `bases` (`steam` bigint(17) NOT NULL DEFAULT '0',`baseNumber` int(11) NOT NULL DEFAULT '1',`title` varchar(100) DEFAULT '',`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`exitX` int(11) DEFAULT '0',`exitY` int(11) DEFAULT '0',`exitZ` int(11) DEFAULT '0',`size` int(11) DEFAULT '0',`protect` tinyint(1) DEFAULT '0',`keepOut` tinyint(1) DEFAULT '0',`creationTimestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,`creationGameDay` int(11) DEFAULT '0',PRIMARY KEY (`steam`,`baseNumber`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "bookmarks" then
+		doSQL("CREATE TABLE `bookmarks` (`id` int(11) NOT NULL,`steam` bigint(17) DEFAULT '0',`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`note` varchar(50) DEFAULT '',PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "botChat" then
+		doSQL("CREATE TABLE `botChat` (`botChatID` int(11) NOT NULL,`triggerWords` varchar(255) NOT NULL DEFAULT '',`triggerPhrase` varchar(255) NOT NULL DEFAULT '',`accessLevelRestriction` int(11) NOT NULL DEFAULT '99',`mustAddressBot` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`botChatID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "botChatResponses" then
+		doSQL("CREATE TABLE `botChatResponses` (`botChatResponseID` int(11) NOT NULL,`botChatID` int(11) NOT NULL DEFAULT '0',`response` varchar(300) NOT NULL DEFAULT '',PRIMARY KEY (`botChatResponseID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "botCommands" then
+		doSQL("CREATE TABLE `botCommands` (`cmdCode` varchar(5) NOT NULL DEFAULT '',`cmdIndex` int(11) NOT NULL DEFAULT '0',`accessLevel` int(11) DEFAULT '0',`enabled` tinyint(1) DEFAULT '1',`keywords` varchar(150) DEFAULT '',`shortDescription` varchar(255) DEFAULT '',`longDescription` varchar(1000) DEFAULT '',`sortOrder` int(11) DEFAULT '0',PRIMARY KEY (`cmdCode`,`cmdIndex`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "commandAccessRestrictions" then
+		doSQL("CREATE TABLE `commandAccessRestrictions` (`id` int(11) NOT NULL,`functionName` varchar(100) DEFAULT '',`accessLevel` int(11) DEFAULT '3',PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "commandQueue" then
+		doSQL("CREATE TABLE `commandQueue` (`id` bigint(20) NOT NULL,`steam` bigint(17) DEFAULT '0',`command` varchar(100) DEFAULT '',PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "connectQueue" then
+		doSQL("CREATE TABLE `connectQueue` (`id` bigint(20) NOT NULL,`steam` bigint(17) DEFAULT '0',`command` varchar(255) DEFAULT '',`processed` tinyint(1) DEFAULT '0',PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "customCommands" then
+		doSQL("CREATE TABLE `customCommands` (`commandID` int(11) NOT NULL,`command` varchar(50) DEFAULT '',`accessLevel` int(11) DEFAULT '2',`help` varchar(255) DEFAULT '',PRIMARY KEY (`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "customCommands_Detail" then
+		doSQL("CREATE TABLE `customCommands_Detail` (`detailID` int(11) NOT NULL,`commandID` int(11) NOT NULL DEFAULT '0',`action` varchar(5) DEFAULT '' COMMENT 'say,give,tele,spawn,buff,cmd',`thing` varchar(255) DEFAULT '',PRIMARY KEY (`detailID`,`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "customMessages" then
+		doSQL("CREATE TABLE `customMessages` (`command` varchar(30) NOT NULL DEFAULT '',`message` varchar(500) DEFAULT '',`accessLevel` int(11) DEFAULT '99',PRIMARY KEY (`command`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "donors" then
+		doSQL("CREATE TABLE `donors` (`steam` bigint(17) NOT NULL,`level` int(11) DEFAULT '0',`expiry` int(11) DEFAULT NULL,`name` varchar(100) DEFAULT '',`expired` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "events" then
+		doSQL("CREATE TABLE `events` (`id` bigint(20) NOT NULL,`timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`serverTime` varchar(19) DEFAULT '',`type` varchar(15) DEFAULT '',`event` varchar(255) DEFAULT '',`steam` bigint(17) DEFAULT '0',ADD PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "friends" then
+		doSQL("CREATE TABLE `friends` (`steam` bigint(17) NOT NULL,`friend` bigint(17) NOT NULL DEFAULT '0',`autoAdded` tinyint(1) DEFAULT '0',PRIMARY KEY (`steam`,`friend`)) ENGINE=InnoDB DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "gimmeGroup" then
+		doSQL("CREATE TABLE `gimmeGroup` (`groupName` varchar(30) NOT NULL DEFAULT '',PRIMARY KEY (`groupName`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "gimmePrizes" then
+		doSQL("CREATE TABLE `gimmePrizes` (`name` varchar(100) NOT NULL DEFAULT '',`category` varchar(15) DEFAULT '',`prizeLimit` int(11) DEFAULT '1',`quality` int(11) DEFAULT '0',`validated` tinyint(1) DEFAULT '1',PRIMARY KEY (`name`)) ENGINE=InnoDB DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "gimmeQueue" then
+		doSQL("CREATE TABLE `gimmeQueue` (`id` int(11) NOT NULL,`command` varchar(255) DEFAULT '',`steam` bigint(17) DEFAULT '0',PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "gimmeZombies" then
+		doSQL("CREATE TABLE `gimmeZombies` (`zombie` varchar(50) DEFAULT '',`minPlayerLevel` int(11) DEFAULT '1',`minArenaLevel` int(11) DEFAULT '1',`entityID` int(11) NOT NULL DEFAULT '0',`bossZombie` tinyint(1) DEFAULT '0',`doNotSpawn` tinyint(1) DEFAULT '0',`maxHealth` int(11) DEFAULT '0',`remove` tinyint(1) DEFAULT '0',PRIMARY KEY (`entityID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "helpCommands" then
+		doSQL("CREATE TABLE `helpCommands` (`commandID` int(11) NOT NULL,`command` text,`description` text,`notes` text,`keywords` varchar(150) DEFAULT '',`lastUpdate` timestamp NULL DEFAULT CURRENT_TIMESTAMP,`accessLevel` int(11) DEFAULT '99',`ingameOnly` tinyint(1) DEFAULT '0',PRIMARY KEY (`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "helpTopicCommands" then
+		doSQL("CREATE TABLE `helpTopicCommands` (`topicID` int(11) NOT NULL,`commandID` int(11) NOT NULL,PRIMARY KEY (`topicID`,`commandID`)) ENGINE=InnoDB DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "helpTopics" then
+		doSQL("CREATE TABLE `helpTopics` (`topicID` int(11) NOT NULL,`topic` varchar(50) DEFAULT '',`description` text,PRIMARY KEY (`topicID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "hotspots" then
+		doSQL("CREATE TABLE `hotspots` (`id` int(11) NOT NULL,`hotspot` varchar(500) DEFAULT '',`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`size` int(11) DEFAULT '2',`owner` bigint(17) DEFAULT '0',`idx` int(11) DEFAULT '0',`action` varchar(10) DEFAULT '',`destination` varchar(20) DEFAULT '',PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "inventoryChanges" then
+		doSQL("CREATE TABLE `inventoryChanges` (`id` bigint(20) NOT NULL,`steam` bigint(17) DEFAULT '0',`timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,`item` varchar(30) DEFAULT '',`delta` int(11) DEFAULT '0',`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`session` int(11) DEFAULT '0',`flag` varchar(3) DEFAULT '',PRIMARY KEY (`id`),KEY `steam` (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "inventoryTracker" then
+		doSQL("CREATE TABLE `inventoryTracker` (`inventoryTrackerID` bigint(20) NOT NULL,`belt` varchar(500) DEFAULT '',`pack` varchar(1100) DEFAULT '',`steam` bigint(17) DEFAULT '0',`timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`session` int(11) DEFAULT '0',`equipment` varchar(500) DEFAULT NULL,PRIMARY KEY (`inventoryTrackerID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "ircQueue" then
+		doSQL("CREATE TABLE `ircQueue` (`id` int(11) NOT NULL,`name` varchar(20) DEFAULT '',`command` varchar(255) DEFAULT '',PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "keystones" then
+		doSQL("CREATE TABLE `keystones` (`steam` bigint(20) NOT NULL,`x` int(11) NOT NULL,`y` int(11) NOT NULL,`z` int(11) NOT NULL,`remove` tinyint(1) NOT NULL DEFAULT '0',`removed` int(11) DEFAULT '0',`expired` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`steam`,`x`,`y`,`z`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "list" then
+		doSQL("CREATE TABLE `list` (`thing` varchar(255) DEFAULT '',`id` int(11) DEFAULT '0',`class` varchar(20) DEFAULT '',`steam` bigint(17) DEFAULT '0') ENGINE=MEMORY DEFAULT CHARSET=latin1 COMMENT='For sorting a list'", false, true)
+	end
+
+	if lostTable == "list2" then
+		doSQL("CREATE TABLE `list2` (`thing` varchar(255) NOT NULL,`id` int(11) NOT NULL DEFAULT '0',`class` varchar(20) NOT NULL DEFAULT '',`steam` bigint(17) NOT NULL DEFAULT '0') ENGINE=MEMORY DEFAULT CHARSET=latin1 COMMENT='For sorting a list'", false, true)
+	end
+
+	if lostTable == "locationCategories" then
+		doSQL("", false, true)
+	end
+
+	if lostTable == "locationSpawns" then
+		doSQL("CREATE TABLE `locationSpawns` (`location` varchar(20) DEFAULT '',`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`id` int(11) NOT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "locations" then
+		doSQL("CREATE TABLE `locations` (`name` varchar(50) NOT NULL DEFAULT '',`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`public` tinyint(1) DEFAULT '0',`active` tinyint(1) DEFAULT '1',`owner` bigint(17) DEFAULT '0',`village` tinyint(1) DEFAULT '0',`pvp` tinyint(1) DEFAULT '0',`protectSize` int(11) DEFAULT '50', `exitX` int(11) DEFAULT '0',`exitY` int(11) DEFAULT '0',`exitZ` int(11) DEFAULT '0',`cost` int(11) DEFAULT '0',`currency` varchar(20) DEFAULT NULL,`allowBase` tinyint(1) DEFAULT '0',`protected` tinyint(1) DEFAULT '0',`accessLevel` int(11) DEFAULT '99',`size` int(11) DEFAULT '20',`mayor` bigint(17) DEFAULT '0',`miniGame` varchar(10) DEFAULT NULL,`resetZone` tinyint(1) DEFAULT '0',`other` varchar(10) DEFAULT NULL,`killZombies` tinyint(1) DEFAULT '0',`timeOpen` int(11) DEFAULT '0',`timeClosed` int(11) DEFAULT '0',`allowWaypoints` tinyint(1) DEFAULT '1',`allowReturns` tinyint(1) DEFAULT '1',`allowLeave` tinyint(1) DEFAULT '1',`newPlayersOnly` tinyint(1) DEFAULT '0',`minimumLevel` int(11) DEFAULT '0',`maximumLevel` int(11) DEFAULT '0',`dayClosed` int(11) DEFAULT '0',`dailyTaxRate` int(11) DEFAULT '0',`bank` int(11) DEFAULT '0',`prisonX` int(11) DEFAULT '0',`prisonY` int(11) DEFAULT '0',`prisonZ` int(11) DEFAULT '0',`hidden` tinyint(1) DEFAULT '0',`locationCategory` varchar(20) DEFAULT '',`coolDownTimer` int(11) DEFAULT '0',`plot` tinyint(1) DEFAULT '0',`plotWallBock` varchar(20) DEFAULT 'terrBedrock',`plotFillBlock` varchar(20) DEFAULT 'terrDirt',`plotGridSize` int(11) DEFAULT '0',`plotDepth` int(11) DEFAULT '5',`hordeNightClosedHours` varchar(5) DEFAULT '00-00',`watchPlayers` tinyint(1) DEFAULT '0',`isRound` tinyint(1) DEFAULT '1',`lobby` tinyint(1) DEFAULT '0',`height` int(11) DEFAULT '-1',`allowPack` tinyint(1) DEFAULT '1',`allowP2P` tinyint(1) DEFAULT '1',PRIMARY KEY (`name`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "lottery" then
+		doSQL("CREATE TABLE `lottery` (`steam` bigint(17) NOT NULL DEFAULT '0',`ticket` int(11) NOT NULL DEFAULT '0',PRIMARY KEY (`steam`,`ticket`)) ENGINE=InnoDB DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "mail" then
+		doSQL("CREATE TABLE `mail` (`id` bigint(20) NOT NULL,`sender` bigint(17) DEFAULT '0',`recipient` bigint(17) DEFAULT '0',`message` varchar(500) DEFAULT '',`status` int(11) DEFAULT '0',`flag` varchar(5) DEFAULT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "memEntities" then
+		doSQL("CREATE TABLE `memEntities` (`entityID` bigint(20) NOT NULL,`type` varchar(20) NOT NULL DEFAULT '',`name` varchar(30) NOT NULL DEFAULT '',`x` int(11) NOT NULL DEFAULT '0',`y` int(11) NOT NULL DEFAULT '0',`z` int(11) DEFAULT '0',`dead` tinyint(1) NOT NULL DEFAULT '0',`health` int(11) NOT NULL DEFAULT '0',PRIMARY KEY `entityID` (`entityID`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "memIgnoredItems" then
+		doSQL("CREATE TABLE `memIgnoredItems` (`item` varchar(100) NOT NULL DEFAULT '',`qty` int(11) DEFAULT '65',PRIMARY KEY (`item`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "memLottery" then
+		doSQL("CREATE TABLE `memLottery` (`steam` bigint(17) NOT NULL DEFAULT '0',`ticket` int(11) NOT NULL DEFAULT '0',PRIMARY KEY (`steam`,`ticket`)) ENGINE=MEMORY DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "memRestrictedItems" then
+		doSQL("CREATE TABLE `memRestrictedItems` (`item` varchar(50) NOT NULL DEFAULT '',`qty` int(11) DEFAULT '65',`accessLevel` int(11) DEFAULT '90',`action` varchar(30) DEFAULT '',PRIMARY KEY (`item`)) ENGINE=MEMORY DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "memShop" then
+		doSQL("CREATE TABLE `memShop` (`item` varchar(100) NOT NULL DEFAULT '',`category` varchar(20) DEFAULT '',`price` int(11) DEFAULT '50',`stock` int(11) DEFAULT '50',`idx` int(11) DEFAULT '0',`code` varchar(10) DEFAULT '',`units` int(11) DEFAULT '1',`quality` int(11) DEFAULT '0',PRIMARY KEY (`item`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "memTracker" then
+		doSQL("CREATE TABLE `memTracker` (`trackerID` bigint(20) NOT NULL,`admin` bigint(17) DEFAULT '0',`steam` bigint(17) DEFAULT '0',`timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`session` int(11) DEFAULT '0',`flag` varchar(10) DEFAULT NULL,PRIMARY KEY (`trackerID`)) ENGINE=MEMORY DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "messageQueue" then
+		doSQL("CREATE TABLE `messageQueue` (`id` bigint(20) NOT NULL,`sender` bigint(17) DEFAULT '0',`recipient` bigint(17) DEFAULT '0',`message` varchar(1000) DEFAULT '',PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "miscQueue" then
+		doSQL("CREATE TABLE `miscQueue` (`id` bigint(20) NOT NULL AUTO_INCREMENT,`steam` bigint(17) DEFAULT '0',`command` varchar(255) NOT NULL DEFAULT '',`action` varchar(15) DEFAULT '',`value` int(11) DEFAULT '0',`timerDelay` timestamp NULL DEFAULT '0000-00-00 00:00:00') ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "modBotman" then
+		doSQL("CREATE TABLE `modBotman` (`clanEnabled` tinyint(1) DEFAULT '0',`clanMaxClans` int(11) DEFAULT '0',`clanMaxPlayers` int(11) DEFAULT '0',`clanMinLevel` int(11) DEFAULT '0',`resetsEnabled` tinyint(1) DEFAULT '0',`resetsDelay` int(11) DEFAULT '999',`resetsPrefabsOnly` tinyint(1) DEFAULT '1',`resetsRemoveLCB` tinyint(4) DEFAULT '1',`webmapEnabled` tinyint(1) DEFAULT '0',`webmapColour` varchar(6) DEFAULT 'FF0000',`webmapPath` varchar(255) DEFAULT '',`anticheat` tinyint(1) DEFAULT '0',`disableChatColours` tinyint(1) DEFAULT '0',`botName` varchar(30) DEFAULT 'Bot',`botNameColourPublic` varchar(6) DEFAULT 'FFFFFF',`botNameColourPrivate` varchar(6) DEFAULT 'FFFFFF',`chatCommandPrefix` varchar(1) DEFAULT '/',`chatCommandsHidden` tinyint(1) DEFAULT '0',`customMessagesEnabled` tinyint(1) DEFAULT '0',`dropminerEnabled` tinyint(1) DEFAULT '0',`dropminerTriggerEntityCount` int(11) DEFAULT '0',`dropminerTriggerFallingCount` int(11) DEFAULT '0',`blockTreeRemoval` tinyint(1) DEFAULT '0',`zombieAnnouncerEnabled` tinyint(1) DEFAULT '0',`zombieFreeTimeEnabled` tinyint(1) DEFAULT '0',`zombieFreeTimeStart` int(11) DEFAULT '0',`zombieFreeTimeEnd` int(11) DEFAULT '0',`killZonesEnabled` tinyint(1) DEFAULT '0',`version` varchar(20) DEFAULT '',`id` int(11) NOT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "otherEntities" then
+		doSQL("CREATE TABLE `otherEntities` (`entity` varchar(50) NOT NULL DEFAULT '',`entityID` int(11) DEFAULT '0',`doNotSpawn` tinyint(1) DEFAULT '0',`doNotDespawn` tinyint(1) DEFAULT '0',`remove` tinyint(1) DEFAULT '0',PRIMARY KEY (`entity`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "performance" then
+		doSQL("CREATE TABLE `performance` (`serverDate` varchar(19) NOT NULL DEFAULT '',`gameTime` float DEFAULT '0',`fps` float DEFAULT '0',`heap` float DEFAULT '0',`heapMax` float DEFAULT '0',`chunks` int(11) DEFAULT '0',`cgo` int(11) DEFAULT '0',`players` int(11) DEFAULT '0',`zombies` int(11) DEFAULT '0',`entities` varchar(12) DEFAULT '',`items` int(11) DEFAULT '0',`timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY (`serverDate`),KEY `serverDate` (`serverDate`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "persistentQueue" then
+		doSQL("CREATE TABLE `persistentQueue` (`id` bigint(20) NOT NULL,`steam` bigint(17) DEFAULT '0',`command` varchar(255) DEFAULT '',`action` varchar(15) DEFAULT '',`value` int(11) DEFAULT '0',`timerDelay` timestamp NULL DEFAULT '0000-00-00 00:00:00',PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "playerNotes" then
+		doSQL("CREATE TABLE `playerNotes` (`id` int(11) NOT NULL,`steam` bigint(17) DEFAULT '0',`createdBy` bigint(17) DEFAULT '0',`note` varchar(400) DEFAULT '',PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "playerQueue" then
+		doSQL("CREATE TABLE `playerQueue` (`id` int(11) NOT NULL,`command` varchar(255) DEFAULT '',`arena` tinyint(1) DEFAULT '0',`boss` tinyint(1) DEFAULT '0',`steam` bigint(17) DEFAULT '0',`delayTimer` timestamp NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "pollVotes" then
+		-- who said gamers aren't athletic?  We can poll vote too! xD
+		doSQL("CREATE TABLE `pollVotes` (`pollID` int(11) NOT NULL,`steam` bigint(17) NOT NULL DEFAULT '0',`vote` int(11) DEFAULT '0',`weight` float DEFAULT '1',PRIMARY KEY (`pollID`,`steam`)) ENGINE=InnoDB DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "polls" then
+		doSQL("CREATE TABLE `polls` (`id` int(11) NOT NULL,`author` bigint(17) DEFAULT '0',`created` timestamp NULL DEFAULT CURRENT_TIMESTAMP,`expires` timestamp NULL DEFAULT '0000-00-00 00:00:00',`topic` varchar(255) DEFAULT '',`responseYN` tinyint(1) DEFAULT '1',`option1` varchar(255) DEFAULT '',`option2` varchar(255) DEFAULT '',`option3` varchar(255) DEFAULT '',`option4` varchar(255) DEFAULT '',`option5` varchar(255) DEFAULT '',`option6` varchar(255) DEFAULT '',`accessLevel` int(11) DEFAULT '90',PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "prefabCopies" then
+		doSQL("CREATE TABLE `prefabCopies` (`owner` bigint(17) NOT NULL DEFAULT '0',`name` varchar(50) NOT NULL DEFAULT '',`x1` int(11) NOT NULL DEFAULT '0',`x2` int(11) NOT NULL DEFAULT '0',`y1` int(11) NOT NULL DEFAULT '0',`y2` int(11) NOT NULL DEFAULT '0',`z1` int(11) NOT NULL DEFAULT '0',`z2` int(11) NOT NULL DEFAULT '0',`blockName` varchar(50) NOT NULL DEFAULT '',`rotation` int(11) NOT NULL DEFAULT '0',PRIMARY KEY (`owner`,`name`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "proxies" then
+		doSQL("CREATE TABLE `proxies` (`scanString` varchar(100) NOT NULL DEFAULT '',`action` varchar(20) DEFAULT 'nothing',`hits` int(11) DEFAULT '0',PRIMARY KEY (`scanString`)) ENGINE=InnoDB DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "reservedSlots" then
+		doSQL("CREATE TABLE `reservedSlots` (`steam` bigint(17) NOT NULL DEFAULT '0',`timeAdded` timestamp NULL DEFAULT CURRENT_TIMESTAMP,`reserved` tinyint(1) DEFAULT '0',`staff` tinyint(1) DEFAULT '0',`totalPlayTime` int(11) DEFAULT '0',`deleteRow` tinyint(1) DEFAULT '0',PRIMARY KEY (`steam`)) ENGINE=MEMORY DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "resetZones" then
+		doSQL("CREATE TABLE `resetZones` (`region` varchar(20) NOT NULL DEFAULT '',`x` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',PRIMARY KEY (`region`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "restrictedItems" then
+		doSQL("CREATE TABLE `memRestrictedItems` (`item` varchar(50) NOT NULL DEFAULT '',`qty` int(11) DEFAULT '65',`accessLevel` int(11) DEFAULT '90',`action` varchar(30) DEFAULT '',PRIMARY KEY (`item`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "searchResults" then
+		doSQL("CREATE TABLE `searchResults` (`id` bigint(20) NOT NULL,`owner` bigint(17) DEFAULT '0',`steam` bigint(17) DEFAULT '0',`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`session` int(11) DEFAULT '0',`date` varchar(20) DEFAULT '',`counter` int(11) DEFAULT '0',PRIMARY KEY (`id`)) ENGINE=MEMORY DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "shop" then
+		doSQL("CREATE TABLE `shop` (`item` varchar(100) NOT NULL DEFAULT '',`category` varchar(20) DEFAULT 'misc',`price` int(11) DEFAULT '50',`stock` int(11) DEFAULT '50',`idx` int(11) DEFAULT '0',`maxStock` int(11) DEFAULT '50',`variation` int(11) DEFAULT '0',`special` int(11) DEFAULT '0',`validated` tinyint(1) DEFAULT '1',`units` int(11) DEFAULT '1',`quality` int(11) DEFAULT '3',PRIMARY KEY (`item`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "shopCategories" then
+		doSQL("CREATE TABLE `shopCategories` (`category` varchar(20) NOT NULL DEFAULT '',`idx` int(11) DEFAULT '0',`code` varchar(3) DEFAULT '',PRIMARY KEY (`category`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "slots" then
+		doSQL("CREATE TABLE `slots` (`slot` int(11) NOT NULL,`steam` bigint(17) DEFAULT '0',`online` tinyint(1) DEFAULT '0',`joinedTime` int(11) DEFAULT '0',`joinedSession` int(11) DEFAULT '0',`expires` int(11) DEFAULT '0',`reserved` tinyint(1) DEFAULT '0',`staff` tinyint(1) DEFAULT '0',`free` tinyint(1) DEFAULT '1',`canBeKicked` tinyint(1) DEFAULT '1',`disconnectedTimestamp` int(11) DEFAULT '0',`name` varchar(100) DEFAULT '',`gameID` int(11) DEFAULT '0',`IP` varchar(15) DEFAULT '0.0.0.0',`country` varchar(2) DEFAULT '',`ping` int(11) DEFAULT '0',`level` int(11) DEFAULT '0',`score` int(11) DEFAULT '0',`zombieKills` int(11) DEFAULT '0',`playerKills` int(11) DEFAULT '0',`deaths` int(11) DEFAULT '0',PRIMARY KEY (`slot`)) ENGINE=MEMORY DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "spawnableItems" then
+		doSQL("CREATE TABLE `spawnableItems` (`itemName` varchar(100) NOT NULL DEFAULT '',`deleteItem` tinyint(1) DEFAULT '0',`accessLevelRestriction` int(11) DEFAULT '99',`category` varchar(20) DEFAULT 'None',`price` int(11) DEFAULT '10000',`stock` int(11) DEFAULT '5000',`idx` int(11) DEFAULT '0',`maxStock` int(11) DEFAULT '5000',`inventoryResponse` varchar(10) DEFAULT 'none',`StackLimit` int(11) DEFAULT '1000',`newPlayerMaxInventory` int(11) DEFAULT '-1',`units` int(11) DEFAULT '1',`craftable` tinyint(1) DEFAULT '1',`devBlock` tinyint(1) DEFAULT '0',PRIMARY KEY (`itemName`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "staff" then
+		doSQL("CREATE TABLE `staff` (`steam` bigint(17) NOT NULL DEFAULT '0',`adminLevel` int(11) DEFAULT '2',`blockDelete` tinyint(1) DEFAULT '0',PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "teleports" then
+		doSQL("CREATE TABLE `teleports` (`active` tinyint(1) DEFAULT '1',`owner` bigint(17) DEFAULT '0',`oneway` tinyint(1) DEFAULT '0',`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`dx` int(11) DEFAULT '0',`dy` int(11) DEFAULT '0',`dz` int(11) DEFAULT '0',`name` varchar(100) NOT NULL DEFAULT '',`friends` tinyint(1) DEFAULT '0',`public` tinyint(1) DEFAULT '0',`size` float DEFAULT '1.5' COMMENT 'size of start tp',`dsize` float DEFAULT '1.5' COMMENT 'size of dest tp',`minimumAccess` int(11) DEFAULT '0',`maximumAccess` int(11) DEFAULT '0',PRIMARY KEY (`name`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "timedEvents" then
+		doSQL("CREATE TABLE `timedEvents` (`timer` varchar(20) NOT NULL DEFAULT '',`delayMinutes` int(11) NOT NULL DEFAULT '10',`nextTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,`disabled` tinyint(1) NOT NULL DEFAULT '0',PRIMARY KEY (`timer`)) ENGINE=InnoDB DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "tracker" then
+		doSQL("CREATE TABLE `tracker` (`trackerID` bigint(20) NOT NULL,`steam` bigint(17) DEFAULT '0',`timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`session` int(11) DEFAULT '0',`flag` varchar(10) DEFAULT NULL,PRIMARY KEY (`trackerID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "villagers" then
+		doSQL("CREATE TABLE `villagers` (`steam` bigint(17) NOT NULL DEFAULT '0',`village` varchar(20) NOT NULL DEFAULT '',PRIMARY KEY (`steam`,`village`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", false, true)
+	end
+
+	if lostTable == "waypoints" then
+		doSQL("CREATE TABLE `waypoints` (`id` int(11) NOT NULL,`steam` bigint(17) DEFAULT '0',`name` varchar(50) DEFAULT NULL,`x` int(11) DEFAULT '0',`y` int(11) DEFAULT '0',`z` int(11) DEFAULT '0',`linked` int(11) DEFAULT '0',`shared` tinyint(1) DEFAULT '0',`public` tinyint(1) DEFAULT '0',PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "webInterfaceJSON" then
+		doSQL("CREATE TABLE `webInterfaceJSON` (`ident` varchar(50) NOT NULL DEFAULT '',`json` text,`sessionID` varchar(32) DEFAULT '',`recipient` varchar(5) DEFAULT '',`expire` timestamp NULL DEFAULT '0000-00-00 00:00:00',PRIMARY KEY (`ident`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", false, true)
+	end
+
+	if lostTable == "webInterfaceQueue" then
+		doSQL("CREATE TABLE `webInterfaceQueue` (`id` int(11) NOT NULL,`action` varchar(50) DEFAULT '',`actionTable` varchar(50) DEFAULT '',`actionQuery` text,`steam` bigint(17) DEFAULT '0',`actionArgs` varchar(1000) DEFAULT '', `recipient` varchar(5) DEFAULT '',`expire` timestamp NULL DEFAULT '0000-00-00 00:00:00',`sessionID` varchar(32) DEFAULT '',PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=latin1", false, true)
+	end
+
+	if lostTable == "whitelist" then
+		doSQL("CREATE TABLE `whitelist` (`steam` bigint(17) NOT NULL DEFAULT '0',PRIMARY KEY (`steam`)) ENGINE=InnoDB DEFAULT CHARSET=latin1", false, true)
+	end
+end
+
+
+function checkForMissingTables()
+	local cursor, errorString, row, littleBobbyTables, daddyTables, k, v, foundMissingTable
+
+	foundMissingTable = false
+	littleBobbyTables = {}
+	daddyTables = {}
+	daddyTables["APIQueue"] = {}
+	daddyTables["IPBlacklist"] = {}
+	daddyTables["LKPQueue"] = {}
+	daddyTables["alerts"] = {}
+	daddyTables["announcements"] = {}
+	daddyTables["badItems"] = {}
+	daddyTables["badWords"] = {}
+	daddyTables["bans"] = {}
+	daddyTables["bases"] = {}
+	daddyTables["bookmarks"] = {}
+	daddyTables["botChat"] = {}
+	daddyTables["botChatResponses"] = {}
+	daddyTables["botCommands"] = {}
+	daddyTables["commandAccessRestrictions"] = {}
+	daddyTables["commandQueue"] = {}
+	daddyTables["connectQueue"] = {}
+	daddyTables["customCommands"] = {}
+	daddyTables["customCommands_Detail"] = {}
+	daddyTables["customMessages"] = {}
+	daddyTables["donors"] = {}
+	daddyTables["events"] = {}
+	daddyTables["friends"] = {}
+	daddyTables["gimmeGroup"] = {}
+	daddyTables["gimmePrizes"] = {}
+	daddyTables["gimmeQueue"] = {}
+	daddyTables["gimmeZombies"] = {}
+	daddyTables["helpCommands"] = {}
+	daddyTables["helpTopicCommands"] = {}
+	daddyTables["helpTopics"] = {}
+	daddyTables["hotspots"] = {}
+	daddyTables["inventoryChanges"] = {}
+	daddyTables["inventoryTracker"] = {}
+	daddyTables["ircQueue"] = {}
+	daddyTables["keystones"] = {}
+	daddyTables["list"] = {}
+	daddyTables["list2"] = {}
+	daddyTables["locationCategories"] = {}
+	daddyTables["locationSpawns"] = {}
+	daddyTables["locations"] = {}
+	daddyTables["lottery"] = {}
+	daddyTables["mail"] = {}
+	daddyTables["memEntities"] = {}
+	daddyTables["memIgnoredItems"] = {}
+	daddyTables["memLottery"] = {}
+	daddyTables["memRestrictedItems"] = {}
+	daddyTables["memShop"] = {}
+	daddyTables["memTracker"] = {}
+	daddyTables["messageQueue"] = {}
+	daddyTables["miscQueue"] = {}
+	daddyTables["modBotman"] = {}
+	daddyTables["otherEntities"] = {}
+	daddyTables["performance"] = {}
+	daddyTables["persistentQueue"] = {}
+	daddyTables["playerNotes"] = {}
+	daddyTables["playerQueue"] = {}
+	daddyTables["pollVotes"] = {}
+	daddyTables["polls"] = {}
+	daddyTables["prefabCopies"] = {}
+	daddyTables["proxies"] = {}
+	daddyTables["reservedSlots"] = {}
+	daddyTables["resetZones"] = {}
+	daddyTables["restrictedItems"] = {}
+	daddyTables["searchResults"] = {}
+	daddyTables["shop"] = {}
+	daddyTables["shopCategories"] = {}
+	daddyTables["slots"] = {}
+	daddyTables["spawnableItems"] = {}
+	daddyTables["staff"] = {}
+	daddyTables["teleports"] = {}
+	daddyTables["timedEvents"] = {}
+	daddyTables["tracker"] = {}
+	daddyTables["villagers"] = {}
+	daddyTables["waypoints"] = {}
+	daddyTables["webInterfaceJSON"] = {}
+	daddyTables["webInterfaceQueue"] = {}
+	daddyTables["whitelist"] = {}
+
+	cursor,errorString = connBots:execute("SHOW TABLES")
+	row = cursor:fetch({}, "a")
+
+	while row do
+		littleBobbyTables[row] = {}
+		row = cursor:fetch(row, "a")
+	end
+
+	for k,v in pairs(daddyTables) do
+		if not littleBobbyTables[k] then
+			createMissingTable(k)
+			foundMissingTable = true
+		end
+	end
+
+	if foundMissingTable then
+		conn:execute("TRUNCATE altertables")
+		alertAdmins("The bot may become unresponsive for a while doing database maintenance.", "alert")
+		irc_chat(server.ircMain, "The bot may become unresponsive for a while doing database maintenance.")
+		tempTimer( 5, [[alterTables()]] )
+	end
+end
+
+
 function checkForData()
 	local cursor, errorString, rows
 
@@ -125,19 +568,59 @@ end
 function migrateDonors()
 	local cursor, errorString, rows, k, v
 
-	cursor,errorString = conn:execute("SELECT * FROM donors")
-	rows = cursor:numrows()
+	if botman.dbConnected then
+		cursor,errorString = conn:execute("SELECT * FROM donors")
+		rows = cursor:numrows()
 
-	if tonumber(rows) == 0 then
-		conn:execute("INSERT INTO donors (steam, level, expiry) SELECT steam, donorLevel, donorExpiry FROM players WHERE donor = 1")
-	else
-		return
-	end
+		if tonumber(rows) == 0 then
+			conn:execute("INSERT INTO donors (steam, level, expiry, name) SELECT steam, donorLevel, donorExpiry, name FROM players WHERE donor = 1")
+		else
+			-- do a one time update of the donors table from the players table where the player is a donor and not expired
+			for k,v in pairs(players) do
+				if v.donor then
+					if v.donorExpiry < os.time() then
+						conn:execute("UPDATE donors SET expired = 1 WHERE steam = " .. k)
 
-	loadDonors()
+						irc_chat(server.ircAlerts, "Player " .. v.name ..  " " .. k .. " donor status has expired.")
+						conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','donor','" .. escape(v.name) .. " " .. k .. " donor status expired.'," .. k ..")")
 
-	for k,v in pairs(donors) do
-		connBots:execute("INSERT INTO donors (donor, donorLevel, donorExpiry, steam, botID, serverGroup) VALUES (1, " .. v.level .. ", " .. v.expiry .. ", " .. k .. "," .. server.botID .. ",'" .. escape(server.serverGroup) .. "')")
+						v.protect2 = false
+						v.maxWaypoints = server.maxWaypoints
+						conn:execute("UPDATE players SET protect2 = 0, donor = 0, donorLevel = 0, maxWaypoints = " .. server.maxWaypoints .. " WHERE steam = " .. k)
+
+						-- remove the player's waypoints
+						conn:execute("DELETE FROM waypoints WHERE steam = " .. k)
+
+						-- reload the player's waypoints
+						loadWaypoints(k)
+
+						conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. k .. ", '" .. escape("Your donor status has expired.  Any waypoints you had will need to be set again and extra bases have lost bot protection.") .. "')")
+					end
+
+					v.donor = false
+					conn:execute("UPDATE players SET donor = 0 WHERE steam = " .. k)
+				end
+			end
+
+			return
+		end
+
+		loadDonors()
+
+		for k,v in pairs(donors) do
+			connBots:execute("INSERT INTO donors (donor, donorLevel, donorExpiry, steam, botID, serverGroup) VALUES (1, " .. v.level .. ", " .. v.expiry .. ", " .. k .. "," .. server.botID .. ",'" .. escape(server.serverGroup) .. "')")
+		end
+
+		-- make sure we aren't missing any donors in the donors table that are donors in the players table
+		for k,v in pairs(players) do
+			if v.donor and not donors[k] then
+				conn:execute("INSERT INTO donors (steam, level, expiry, name) SELECT steam, donorLevel, donorExpiry, name FROM players WHERE steam = " .. k)
+			end
+		end
+
+		conn:execute("UPDATE donors SET name = (SELECT name FROM players WHERE donors.steam = players.steam)")
+
+		loadDonors() -- again again ^^
 	end
 end
 
@@ -167,7 +650,7 @@ end
 function cleanupBotsData()
 	if debug then display("cleanupBotsData start\n") end
 
-	if botman.db2Connected then
+	if botman.botsConnected then
 		connBots:execute("UPDATE players set online = 0 WHERE server = '" .. escape(server.serverName) .. "'")
 	end
 
@@ -224,7 +707,7 @@ end
 
 
 function insertBotsPlayer(steam)
-	if not botman.db2Connected then
+	if not botman.botsConnected then
 		return
 	end
 
@@ -242,7 +725,7 @@ end
 function updateBotsServerTable()
 	local k, v
 
-	if not botman.db2Connected or tonumber(server.botID) == 0 then
+	if not botman.botsConnected or tonumber(server.botID) == 0 then
 		return
 	end
 
@@ -490,7 +973,7 @@ end
 function importBlacklist()
 	local cursor, cursor2, errorString, row
 
-	if not botman.db2Connected then
+	if not botman.botsConnected then
 		return
 	end
 
@@ -529,7 +1012,7 @@ end
 function importBadItems()
 	local cursor, cursor2, errorString, row
 
-	if not botman.db2Connected then
+	if not botman.botsConnected then
 		return
 	end
 
@@ -607,33 +1090,6 @@ function migrateWaypoints()
 
 		-- load the waypoints db table into the Lua table waypoints
 		loadWaypoints()
-	end
-end
-
-
-local function doSQL(sql, botsDB, forced)
-	local shortSQL = string.sub(sql, 1, 1000) -- truncate the sql to 1000 chars
-	local newSQL
-
-	-- make sure that all changes to the players table are mirrored to playersArchived.
-	if string.find(sql, "ALTER TABLE `players`", nil, true) and not botsDB then
-		newSQL = sql
-		newSQL = newSQL:gsub("`players`", "`playersArchived`")
-
-		-- apply the altered sql to the playersArchived table
-		conn:execute(newSQL)
-	end
-
-	if not statements[shortSQL] or forced ~= nil then
-		statements[shortSQL] = {}
-
-		conn:execute("INSERT INTO altertables (statement) VALUES ('" .. escape(shortSQL) .. "')")
-
-		if botsDB then
-			connBots:execute(sql)
-		else
-			conn:execute(sql)
-		end
 	end
 end
 
@@ -906,6 +1362,9 @@ function alterTables()
 	doSQL("ALTER TABLE `server` ADD `idleKickTimer` INT NULL DEFAULT '900', ADD `idleKickAnytime` TINYINT(1) NOT NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `server` ADD `newPlayerTimer` INT(11) NULL DEFAULT 120")
 	doSQL("ALTER TABLE `server` ADD `newPlayerMaxLevel` INT(11) NULL DEFAULT 9")
+	doSQL("ALTER TABLE `server` ADD `disableLinkedWaypoints` TINYINT(1) NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `server` ADD `p2pMinimumAccess` INT NULL DEFAULT '99'")
+	doSQL("ALTER TABLE `server` ADD `pvpTempBanCooldown` INT NULL DEFAULT '60'")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -1141,12 +1600,24 @@ function alterTables()
 
 	doSQL("ALTER TABLE `locationSpawns` CHANGE `location` `location` VARCHAR(20) NULL DEFAULT '', CHANGE `x` `x` INT(11) NULL DEFAULT '0', CHANGE `y` `y` INT(11) NULL DEFAULT '0', CHANGE `z` `z` INT(11) NULL DEFAULT '0'")
 	doSQL("ALTER TABLE `locationSpawns` ADD `id` INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (`id`)")
+	doSQL("ALTER TABLE `donors` ADD `expired` TINYINT(1) NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `modBotman` ADD `webmapEnabled` TINYINT(1) NULL DEFAULT '0', ADD `webmapColour` VARCHAR(6) NULL DEFAULT 'FF0000', ADD `webmapPath` VARCHAR(255) NULL DEFAULT ''")
+	doSQL("ALTER TABLE `modBotman` ADD `anticheat` TINYINT(1) NULL DEFAULT '0', ADD `disableChatColours` TINYINT(1) NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `slots` CHANGE `joinedTime` `joinedTime` INT(11) NULL DEFAULT '0', CHANGE `expires` `expires` INT(11) NULL DEFAULT '0', CHANGE `disconnectedTimestamp` `disconnectedTimestamp` INT(11) NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `modBotman` ADD `botName` VARCHAR(30) NULL DEFAULT 'Bot', ADD `botNameColourPublic` VARCHAR(6) NULL DEFAULT 'FFFFFF', ADD `botNameColourPrivate` VARCHAR(6) NULL DEFAULT 'FFFFFF', ADD `chatCommandPrefix` VARCHAR(1) NULL DEFAULT '/', ADD `chatCommandsHidden` TINYINT(1) NULL DEFAULT '0', ADD `customMessagesEnabled` TINYINT(1) NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `modBotman` ADD `dropminerEnabled` TINYINT(1) NULL DEFAULT '0', ADD `dropminerTriggerEntityCount` INT NULL DEFAULT '0', ADD `dropminerTriggerFallingCount` INT NULL DEFAULT '0', ADD `blockTreeRemoval` TINYINT(1) NULL DEFAULT '0', ADD `zombieAnnouncerEnabled` TINYINT(1) NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `modBotman` ADD `zombieFreeTimeEnabled` TINYINT(1) NULL DEFAULT '0', ADD `zombieFreeTimeStart` INT NULL DEFAULT '0', ADD `zombieFreeTimeEnd` INT NULL DEFAULT '0', ADD `killZonesEnabled` TINYINT(1) NULL DEFAULT '0', ADD `version` VARCHAR(20) NULL DEFAULT ''")
+	doSQL("ALTER TABLE `slots` ADD `name` VARCHAR(100) NULL DEFAULT '', ADD `gameID` INT(11) NULL DEFAULT '0', ADD `IP` VARCHAR(15) NULL DEFAULT '0.0.0.0', ADD `country` VARCHAR(2) NULL DEFAULT '', ADD `ping` INT(11) NULL DEFAULT '0', ADD `level` INT(11) NULL DEFAULT '0', ADD `score` INT(11) NULL DEFAULT '0', ADD `zombieKills` INT(11) NULL DEFAULT '0', ADD `playerKills` INT(11) NULL DEFAULT '0', ADD `deaths` INT(11) NULL DEFAULT '0'")
+	doSQL("ALTER TABLE `modBotman` ADD `id` INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (`id`)")
+	doSQL("ALTER TABLE `badWords` ADD PRIMARY KEY(`badWord`)")
+	doSQL("ALTER TABLE `modBotman` CHANGE `chatCommandsHidden` `chatCommandsHidden` TINYINT(1) NULL DEFAULT '1'") -- changed default coz having it default disabled was causing issues
+
 
 	-- misc inserts and removals
 	doSQL("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('gimmeReset', '120', CURRENT_TIMESTAMP, '0')")
 	doSQL("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('announcements', '60', CURRENT_TIMESTAMP, '0')")
 	doSQL("DELETE FROM badItems WHERE item = 'snow'") -- remove a test item that shouldn't be live :O
-	doSQL("INSERT INTO badItems (item, action) VALUES ('*Admin', 'timeout')")
+	-- doSQL("INSERT INTO badItems (item, action) VALUES ('*Admin', 'timeout')")
 	doSQL("ALTER TABLE `list` DROP INDEX `thing`")
 	doSQL("ALTER TABLE `list` DROP PRIMARY KEY")
 	doSQL("ALTER TABLE `resetZones` DROP COLUMN x1, DROP COLUMN x2, DROP COLUMN z1, DROP COLUMN z2")
@@ -1161,7 +1632,7 @@ function alterTables()
 	doSQL("ALTER TABLE `bans` ADD `GBLBanVetted` TINYINT(1) NULL DEFAULT '0',  ADD `GBLBanActive` TINYINT(1) NULL DEFAULT '0'", true)
 	doSQL("ALTER TABLE `players` ADD `VACBanned` TINYINT(1) NULL DEFAULT '0'", true)
 	doSQL("ALTER TABLE `bans` ADD `level` INT NULL DEFAULT '0'", true)
-	doSQL("ALTER TABLE `IPBlacklist` ADD `OrgName` VARCHAR(100) NULL DEFAULT '", true)
+	doSQL("ALTER TABLE `IPBlacklist` ADD `OrgName` VARCHAR(100) NULL DEFAULT ''", true)
 	doSQL("CREATE TABLE IF NOT EXISTS `IPTable` (`StartIP` bigint(15) NOT NULL,`EndIP` bigint(15) NOT NULL,`Country` varchar(2) NOT NULL DEFAULT '',`OrgName` varchar(100) NOT NULL DEFAULT '',`IP` varchar(20) NOT NULL DEFAULT '', PRIMARY KEY (`StartIP`)) ENGINE=InnoDB DEFAULT CHARSET=utf8", true)
 	doSQL("CREATE TABLE IF NOT EXISTS `settings` (`DNSLookupCounter` int(11) NOT NULL DEFAULT '0',`DNSResetCounterDate` int(11) NOT NULL DEFAULT '10000101') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", true)
 	doSQL("ALTER TABLE `IPTable` ADD `steam` BIGINT(17) NOT NULL DEFAULT '0', ADD `botID` INT NULL DEFAULT '0'", true)
@@ -1207,7 +1678,7 @@ end
 
 function botHeartbeat()
 	-- update the servers table in database bots with the current timestamp so the web interface can see that this bot is awake.
-	if botman.db2Connected then
+	if botman.botsConnected then
 		connBots:execute("UPDATE servers SET tick = now(), playersOnline = " .. botman.playersOnline .. " WHERE botID = " .. server.botID)
 	end
 end

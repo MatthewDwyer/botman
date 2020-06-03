@@ -26,7 +26,7 @@ end
 
 
 function getBCFriends(steam, data)
-	local pid, fpid, i, temp, max, k, v
+	local k, v
 
 	-- delete auto-added friends from the MySQL table
 	if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. steam .. " AND autoAdded = 1") end
@@ -36,6 +36,27 @@ function getBCFriends(steam, data)
 		-- add friends read from BC-LP
 		if not string.find(friends[steam].friends, v) then
 			addFriend(steam, v, true)
+		end
+	end
+end
+
+
+function getBMFriends(steam, data)
+	local k, v, pid
+
+	-- delete auto-added friends from the MySQL table
+	if botman.dbConnected then conn:execute("DELETE FROM friends WHERE steam = " .. steam .. " AND autoAdded = 1") end
+
+	if data == "" then
+		return
+	end
+
+	for k,v in pairs(data) do
+		pid = string.sub(v, 1, 17)
+
+		-- add friends read from bm-listplayerfriends
+		if not string.find(friends[steam].friends, pid) then
+			addFriend(steam, pid, true)
 		end
 	end
 end
@@ -58,7 +79,7 @@ function API_PlayerInfo(data)
 
 	local tmp = {}
 
-	local debug, posX, posY, posZ, lastX, lastY, lastZ, lastDist, mapCenterDistance, regionX, regionZ, chunkX, chunkZ
+	local debug, posX, posY, posZ, lastX, lastY, lastZ, lastDist, mapCenterDistance, regionX, regionZ, chunkX, chunkZ, exile, prison
 	local steamtest, admin, lastGimme, lastLogin, playerAccessLevel, temp
 	local xPosOld, yPosOld, zPosOld, position, outsideMap, outsideMapDonor, fields, values, flag
 	local timestamp = os.time()
@@ -71,9 +92,10 @@ function API_PlayerInfo(data)
 	-- Set debugPlayerInfo to the steam id or player name that you want to monitor.  If the player is not on the server, the bot will reset debugPlayerInfo to zero.
 	debugPlayerInfo = 0 -- should be 0 unless testing against a steam id
 
+	exile = LookupLocation("exile")
+	prison = LookupLocation("prison")
 	flag = ""
-
-	ping = data.ping
+	ping = tonumber(data.ping)
 	posX = data.position.x
 	posY = data.position.y
 	posZ = data.position.z
@@ -184,8 +206,11 @@ function API_PlayerInfo(data)
 	end
 
 	if tonumber(data.ping) > 0 then
-		igplayers[data.steamid].ping = data.ping
-		players[data.steamid].ping = data.ping
+		igplayers[data.steamid].ping = tonumber(data.ping)
+		players[data.steamid].ping = tonumber(data.ping)
+	else
+		igplayers[data.steamid].ping = 0
+		players[data.steamid].ping = 0
 	end
 
 	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline) end
@@ -216,7 +241,7 @@ function API_PlayerInfo(data)
 	end
 
 	-- ping kick
-	if (not whitelist[data.steamid]) and (not players[data.steamid].donor) and (playerAccessLevel > 2) then
+	if (not whitelist[data.steamid]) and (not isDonor(data.steamid)) and (playerAccessLevel > 2) then
 		if (server.pingKickTarget == "new" and players[data.steamid].newPlayer) or server.pingKickTarget == "all" then
 			if tonumber(data.ping) < tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
 				igplayers[data.steamid].highPingCount = tonumber(igplayers[data.steamid].highPingCount) - 1
@@ -287,7 +312,9 @@ function API_PlayerInfo(data)
 		banPlayer(data.steamid, "1 year", "Automatic ban for suspected hacking. Admins have been alerted.", "")
 
 		-- if the player has any pending global bans, activate them
-		connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. data.steamid)
+		if botman.botsConnected then
+			connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. data.steamid)
+		end
 	else
 		if tonumber(players[data.steamid].hackerScore) >= 49  then
 			-- if the player has pending global bans recorded against them, we ban them early and also activate the global ban
@@ -302,7 +329,9 @@ function API_PlayerInfo(data)
 				banPlayer(data.steamid, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
 
 				-- activate the pending bans
-				connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. data.steamid)
+				if botman.botsConnected then
+					connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. data.steamid)
+				end
 			end
 		end
 
@@ -317,7 +346,9 @@ function API_PlayerInfo(data)
 			banPlayer(data.steamid, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
 
 			-- if the player has any pending global bans, activate them
-			connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. data.steamid)
+			if botman.botsConnected then
+				connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. data.steamid)
+			end
 		end
 	end
 
@@ -358,7 +389,7 @@ function API_PlayerInfo(data)
 								end
 
 								if igplayers[data.steamid].hackerTPScore > 0 and players[data.steamid].newPlayer and tonumber(players[data.steamid].ping) > 180 then
-									if locations["exile"] and not players[data.steamid].prisoner then
+									if locations[exile] and not players[data.steamid].prisoner then
 										players[data.steamid].exiled = true
 									else
 										igplayers[data.steamid].hackerTPScore = tonumber(igplayers[data.steamid].hackerTPScore) + 1
@@ -372,7 +403,9 @@ function API_PlayerInfo(data)
 									banPlayer(data.steamid, "1 week", "We detected unusual teleporting from you and are investigating the circumstances.", "")
 
 									-- if the player has any pending global bans, activate them
-									connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. data.steamid)
+									if botman.botsConnected then
+										connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. data.steamid)
+									end
 								end
 
 								alertAdmins(data.entityid .. " name: " .. data.name .. " detected teleporting! In fly mode, type " .. server.commandPrefix .. "near " .. data.entityid .. " to shadow them.", "warn")
@@ -440,7 +473,7 @@ function API_PlayerInfo(data)
 				if (r == 14) then message("say [" .. server.chatColour .. "]" .. data.name .. " reached a new low with that death. Six feet under.[-]") end
 
 				if tonumber(server.packCooldown) > 0 then
-					if players[data.steamid].donor then
+					if isDonor(data.steamid) then
 						players[data.steamid].packCooldown = os.time() + math.floor(server.packCooldown / 2)
 					else
 						players[data.steamid].packCooldown = os.time() + server.packCooldown
@@ -571,7 +604,7 @@ function API_PlayerInfo(data)
 	-- convert zombie kills to cash
 	if (tonumber(igplayers[data.steamid].zombies) > tonumber(players[data.steamid].zombies)) and (math.abs(igplayers[data.steamid].zombies - players[data.steamid].zombies) < 20) then
 		if server.allowBank then
-			if players[data.steamid].donor then
+			if isDonor(data.steamid) then
 				players[data.steamid].cash = tonumber(players[data.steamid].cash) + math.abs(igplayers[data.steamid].zombies - players[data.steamid].zombies) * server.zombieKillRewardDonors
 
 				if (players[data.steamid].watchCash) then
@@ -648,7 +681,7 @@ function API_PlayerInfo(data)
 			end
 
 			if (tonumber(igplayers[data.steamid].zombies) ~= 0) then
-				if (players[data.steamid].donor == true) then
+				if isDonor(data.steamid) then
 					welcome = "pm " .. data.steamid .. " [" .. server.chatColour .. "]Welcome back " .. data.name .. "! Thanks for supporting us. =D[-]"
 				else
 					welcome = "pm " .. data.steamid .. " [" .. server.chatColour .. "]Welcome back " .. data.name .. "![-]"
@@ -682,7 +715,7 @@ function API_PlayerInfo(data)
 				rows = cursor:numrows()
 
 				if rows > 0 then
-					if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. data.steamid .. ",'" .. escape("[" .. server.chatColour .. "]NEW MAIL HAS ARRIVED!  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')") end
+					conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. data.steamid .. ",'" .. escape("[" .. server.chatColour .. "]NEW MAIL HAS ARRIVED!  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')")
 				end
 			end
 
@@ -993,12 +1026,37 @@ function API_PlayerInfo(data)
 		return
 	end
 
+	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline) end
+
+	-- add to tracker table
+	dist = distancexyz(intX, intY, intZ, igplayers[data.steamid].xPosLast, igplayers[data.steamid].yPosLast, igplayers[data.steamid].zPosLast)
+
+	if (dist > 2) and tonumber(intY) < 10000 then
+		-- record the players position
+		if igplayers[data.steamid].raiding then
+			flag = flag .. "R"
+		end
+
+		if igplayers[data.steamid].illegalInventory then
+			flag = flag .. "B"
+		end
+
+		if igplayers[data.steamid].flying or igplayers[data.steamid].noclip then
+			flag = flag .. "F"
+		end
+
+		if botman.dbConnected then conn:execute("INSERT INTO tracker (steam, x, y, z, session, flag) VALUES (" .. data.steamid .. "," .. intX .. "," .. intY .. "," .. intZ .. "," .. players[data.steamid].sessionCount .. ",'" .. flag .. "')") end
+
+		if igplayers[data.steamid].location ~= nil then
+			if botman.dbConnected then conn:execute("INSERT INTO locationSpawns (location, x, y, z) VALUES ('" .. igplayers[data.steamid].location .. "'," .. intX .. "," .. intY + 1 .. "," .. intZ .. ")") end
+		end
+	end
 
 	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline) end
 
 	-- prevent player exceeding the map limit unless they are an admin except when ignoreadmins is false
 	if not isDestinationAllowed(data.steamid, intX, intZ) then
-		if players[data.steamid].donor then
+		if isDonor(data.steamid) then
 			message("pm " .. data.steamid .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) + 5000 .. " km from the center.[-]")
 		else
 			message("pm " .. data.steamid .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")
@@ -1018,9 +1076,9 @@ function API_PlayerInfo(data)
 		return
 	end
 
-	if players[data.steamid].exiled == true and locations["exile"] and not players[data.steamid].prisoner then
-		if (distancexz( intX, intZ, locations["exile"].x, locations["exile"].z ) > tonumber(locations["exile"].size)) then
-			randomTP(data.steamid, "exile", true)
+	if players[data.steamid].exiled == true and locations[exile] and not players[data.steamid].prisoner then
+		if (distancexz( intX, intZ, locations[exile].x, locations[exile].z ) > tonumber(locations[exile].size)) then
+			randomTP(data.steamid, exile, true)
 			faultyPlayerinfo = false
 			return
 		end
@@ -1029,18 +1087,18 @@ function API_PlayerInfo(data)
 	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline) end
 
 	-- left prison zone warning
-	if (locations["prison"]) then
-		if (distancexz( intX, intZ, locations["prison"].x, locations["prison"].z ) > tonumber(locations["prison"].size)) then
+	if (locations[prison]) then
+		if (distancexz( intX, intZ, locations[prison].x, locations[prison].z ) > tonumber(locations[prison].size)) then
 			if (players[data.steamid].alertPrison == false) then
 				players[data.steamid].alertPrison = true
 			end
 		end
 
 		if (players[data.steamid].prisoner) then
-			if (locations["prison"]) then
-				if (squareDistanceXZXZ(locations["prison"].x, locations["prison"].z, intX, intZ, locations["prison"].size)) then
+			if (locations[prison]) then
+				if (squareDistanceXZXZ(locations[prison].x, locations[prison].z, intX, intZ, locations[prison].size)) then
 					players[data.steamid].alertPrison = false
-					randomTP(data.steamid, "prison", true)
+					randomTP(data.steamid, prison, true)
 				end
 			end
 
@@ -1049,7 +1107,7 @@ function API_PlayerInfo(data)
 		end
 
 		-- entered prison zone warning
-		if (distancexz( intX, intZ, locations["prison"].x, locations["prison"].z ) < tonumber(locations["prison"].size)) then
+		if (distancexz( intX, intZ, locations[prison].x, locations[prison].z ) < tonumber(locations[prison].size)) then
 			if (players[data.steamid].alertPrison == true) then
 				if (not players[data.steamid].prisoner) and server.showLocationMessages then
 					message("pm " .. data.steamid .. " [" .. server.warnColour .. "]You have entered the prison.  Continue at your own risk.[-]")
@@ -1145,7 +1203,7 @@ function API_PlayerInfo(data)
 						-- check access level restrictions on the teleport
 						if (playerAccessLevel >= tonumber(teleports[tp].maximumAccess) and playerAccessLevel <= tonumber(teleports[tp].minimumAccess)) or playerAccessLevel < 3 then
 							if isDestinationAllowed(data.steamid, teleports[tp].dx, teleports[tp].dz) then
-								igplayers[data.steamid].teleCooldown = 2
+								igplayers[data.steamid].teleCooldown = 4
 								cmd = "tele " .. data.steamid .. " " .. teleports[tp].dx .. " " .. teleports[tp].dy .. " " .. teleports[tp].dz
 								teleport(cmd, data.steamid)
 
@@ -1159,7 +1217,7 @@ function API_PlayerInfo(data)
 						-- check access level restrictions on the teleport
 						if (playerAccessLevel >= tonumber(teleports[tp].maximumAccess) and playerAccessLevel <= tonumber(teleports[tp].minimumAccess)) or playerAccessLevel < 3 then
 							if isDestinationAllowed(data.steamid, teleports[tp].x, teleports[tp].z) then
-								igplayers[data.steamid].teleCooldown = 2
+								igplayers[data.steamid].teleCooldown = 4
 								cmd = "tele " .. data.steamid .. " " .. teleports[tp].x .. " " .. teleports[tp].y .. " " .. teleports[tp].z
 								teleport(cmd, data.steamid)
 
@@ -1185,18 +1243,44 @@ function API_PlayerInfo(data)
 
 			if (waypoints[tmp.wpid].shared and isFriend(waypoints[tmp.wpid].steam, data.steamid) or waypoints[tmp.wpid].steam == data.steamid) and tonumber(tmp.linkedID) > 0 then
 				-- reject if not an admin and player teleporting has been disabled
-				if server.allowTeleporting then
+				if server.allowTeleporting and not server.disableLinkedWaypoints then
 					if isDestinationAllowed(data.steamid, waypoints[tmp.linkedID].x, waypoints[tmp.linkedID].z) then
-						igplayers[data.steamid].teleCooldown = 2
-						cmd = "tele " .. data.steamid .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
-						teleport(cmd, data.steamid)
+						if players[data.steamid].waypointCooldown < os.time() then
+							if (playerAccessLevel > 2) then
+								if tonumber(server.waypointCost) > 0 then
+									if tonumber(players[data.steamid].cash) >= tonumber(server.waypointCost) then
+										igplayers[data.steamid].teleCooldown = 3
+										players[data.steamid].waypointCooldown = os.time() + server.waypointCooldown
+										players[data.steamid].cash = tonumber(players[data.steamid].cash) - server.waypointCost
 
-						faultyPlayerinfo = false
-						return
+										cmd = "tele " .. data.steamid .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
+										teleport(cmd, data.steamid)
+
+										faultyPlayerinfo = false
+										return
+									end
+								else
+									igplayers[data.steamid].teleCooldown = 3
+									players[data.steamid].waypointCooldown = os.time() + server.waypointCooldown
+									cmd = "tele " .. data.steamid .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
+									teleport(cmd, data.steamid)
+
+									faultyPlayerinfo = false
+									return
+								end
+							else
+								igplayers[data.steamid].teleCooldown = 3
+								cmd = "tele " .. data.steamid .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
+								teleport(cmd, data.steamid)
+
+								faultyPlayerinfo = false
+								return
+							end
+						end
 					end
 				else
 					if playerAccessLevel < 3 then
-						igplayers[data.steamid].teleCooldown = 2
+						igplayers[data.steamid].teleCooldown = 3
 						cmd = "tele " .. data.steamid .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
 						teleport(cmd, data.steamid)
 
@@ -1237,30 +1321,6 @@ function API_PlayerInfo(data)
 	if	baseProtection(data.steamid, posX, posY, posZ) and not resetZone then
 		faultyPlayerinfo = false
 		return
-	end
-
-	-- add to tracker table
-	dist = distancexyz(intX, intY, intZ, igplayers[data.steamid].xPosLast, igplayers[data.steamid].yPosLast, igplayers[data.steamid].zPosLast)
-
-	if (dist > 2) and tonumber(intY) < 10000 then
-		-- record the players position
-		if igplayers[data.steamid].raiding then
-			flag = flag .. "R"
-		end
-
-		if igplayers[data.steamid].illegalInventory then
-			flag = flag .. "B"
-		end
-
-		if igplayers[data.steamid].flying or igplayers[data.steamid].noclip then
-			flag = flag .. "F"
-		end
-
-		if botman.dbConnected then conn:execute("INSERT INTO tracker (steam, x, y, z, session, flag) VALUES (" .. data.steamid .. "," .. intX .. "," .. intY .. "," .. intZ .. "," .. players[data.steamid].sessionCount .. ",'" .. flag .. "')") end
-
-		if igplayers[data.steamid].location ~= nil then
-			if botman.dbConnected then conn:execute("INSERT INTO locationSpawns (location, x, y, z) VALUES ('" .. igplayers[data.steamid].location .. "'," .. intX .. "," .. intY + 1 .. "," .. intZ .. ")") end
-		end
 	end
 
 	if (data.steamid == debugPlayerInfo) and debug then dbug("debug API_PlayerInfo line " .. debugger.getinfo(1).currentline) end
@@ -1407,7 +1467,6 @@ function readAPI_AdminList()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
-		botman.resendAdminList = true
 		return
 	else
 		if botman.APIOffline then
@@ -1421,7 +1480,6 @@ function readAPI_AdminList()
 	end
 
 	flagAdminsForRemoval()
-	staffList = {}
 	file = io.open(homedir .. "/temp/adminList.txt", "r")
 
 	for ln in file:lines() do
@@ -1436,55 +1494,61 @@ function readAPI_AdminList()
 			end
 		end
 
-		for index=3, count-1, 1 do
-			temp = string.split(data[index], ":")
-			temp[1] = string.trim(temp[1])
-			temp[2] = string.trim(temp[2])
-			level = tonumber(temp[1])
-			steam = string.trim(string.sub(temp[2], 1, 18))
+		if data[3] == "" then
+			botman.noAdminsDefined = true
+		else
+			botman.noAdminsDefined = false
 
-			if level == 0 then
-				owners[steam] = {}
-				owners[steam].remove = false
-				staffList[steam] = {}
-			end
+			for index=3, count-1, 1 do
+				temp = string.split(data[index], ":")
+				temp[1] = string.trim(temp[1])
+				temp[2] = string.trim(temp[2])
+				level = tonumber(temp[1])
+				steam = string.trim(string.sub(temp[2], 1, 18))
 
-			if level == 1 then
-				admins[steam] = {}
-				admins[steam].remove = false
-				staffList[steam] = {}
-			end
-
-			if level == 2 then
-				mods[steam] = {}
-				mods[steam].remove = false
-				staffList[steam] = {}
-			end
-
-			if players[steam] then
-				players[steam].accessLevel = tonumber(level)
-				players[steam].newPlayer = false
-				players[steam].silentBob = false
-				players[steam].walkies = false
-				players[steam].timeout = false
-				players[steam].prisoner = false
-				players[steam].exiled = false
-				players[steam].canTeleport = true
-				players[steam].enableTP = true
-				players[steam].botHelp = true
-				players[steam].hackerScore = 0
-				players[steam].testAsPlayer = nil
-
-				if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 0, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. level .. " WHERE steam = " .. steam) end
-
-				if players[steam].botTimeout and igplayers[steam] then
-					gmsg(server.commandPrefix .. "return " .. v.name)
+				if level == 0 then
+					owners[steam] = {}
+					owners[steam].remove = false
+					staffList[steam] = {}
 				end
-			end
 
-			for con, q in pairs(conQueue) do
-				if q.command == "admin list" then
-					irc_chat(q.ircUser, data[index])
+				if level == 1 then
+					admins[steam] = {}
+					admins[steam].remove = false
+					staffList[steam] = {}
+				end
+
+				if level == 2 then
+					mods[steam] = {}
+					mods[steam].remove = false
+					staffList[steam] = {}
+				end
+
+				if players[steam] then
+					players[steam].accessLevel = tonumber(level)
+					players[steam].newPlayer = false
+					players[steam].silentBob = false
+					players[steam].walkies = false
+					players[steam].timeout = false
+					players[steam].prisoner = false
+					players[steam].exiled = false
+					players[steam].canTeleport = true
+					players[steam].enableTP = true
+					players[steam].botHelp = true
+					players[steam].hackerScore = 0
+					players[steam].testAsPlayer = nil
+
+					if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, silentBob = 0, walkies = 0, exiled = 0, canTeleport = 1, enableTP = 1, botHelp = 1, accessLevel = " .. level .. " WHERE steam = " .. steam) end
+
+					if players[steam].botTimeout and igplayers[steam] then
+						gmsg(server.commandPrefix .. "return " .. v.name)
+					end
+				end
+
+				for con, q in pairs(conQueue) do
+					if q.command == "admin list" then
+						irc_chat(q.ircUser, data[index])
+					end
 				end
 			end
 		end
@@ -1500,6 +1564,10 @@ function readAPI_AdminList()
 	end
 
 	os.remove(homedir .. "/temp/adminList.txt")
+
+	if botman.noAdminsDefined then
+		irc_chat(server.ircMain, "ALERT!  There are no admins defined in the admin list!")
+	end
 end
 
 
@@ -1512,7 +1580,7 @@ function readAPI_BanList()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
-		botman.resendBanList = true
+		--botman.resendBanList = true
 		return
 	else
 		if botman.APIOffline then
@@ -1638,10 +1706,6 @@ function readAPI_BCGo()
 	ircListItems = nil
 	ircListItemsFilter = nil
 
-	-- if task == "read items" then
-		-- removeInvalidItems()
-	-- end
-
 	os.remove(homedir .. "/temp/bc-go.txt")
 end
 
@@ -1696,14 +1760,6 @@ function readAPI_BCLP()
 						players[steam].bedZ = math.floor(v.Bedroll.z)
 					end
 				end
-
-				-- if v.DroppedPack then
-					-- if type(v.DroppedPack) == "table" then
-						-- players[steam].deathX = math.floor(v.DroppedPack.x)
-						-- players[steam].deathY = math.floor(v.DroppedPack.y)
-						-- players[steam].deathZ = math.floor(v.DroppedPack.z)
-					-- end
-				-- end
 			end
 		end
 
@@ -1764,6 +1820,94 @@ function readAPI_BCTime()
 end
 
 
+function readAPI_BMAnticheatReport()
+	local file, ln, result, data, tmp, temp, k, v
+	local fileSize
+
+	fileSize = lfs.attributes (homedir .. "/temp/bm-anticheat-report.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
+	end
+
+	file = io.open(homedir .. "/temp/bm-anticheat-report.txt", "r")
+
+	for ln in file:lines() do
+		result = yajl.to_value(ln)
+		data = splitCRLF(result.result)
+
+		for k,v in pairs(data) do
+			if v ~= "" and v ~= "End Report" then
+				if string.find(v, "--NAME") then
+					tmp = {}
+					tmp.name = string.sub(v, string.find(v, "-NAME:") + 6, string.find(v, "--ID:") - 2)
+					tmp.id = string.sub(v, string.find(v, "-ID:") + 4, string.find(v, "--LVL:") - 2)
+					tmp.reason = "hacking"
+					tmp.hack = ""
+					tmp.level = string.sub(v, string.find(v, "-LVL:") + 5)
+					tmp.level = string.match(tmp.level, "(-?%d+)")
+					tmp.alert = string.sub(v, string.find(v, "-LVL:") + 5)
+					tmp.alert = string.sub(tmp.alert, string.find(tmp.alert, " ") + 1)
+
+					if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and igplayers[tmp.id] then
+						if string.find(v, " spawned ") then
+							temp = string.split(tmp.alert, " ")
+							tmp.entity = stripQuotes(temp[3])
+							tmp.x = string.match(temp[4], "(-?\%d+)")
+							tmp.y = string.match(temp[5], "(-?\%d+)")
+							tmp.z = string.match(temp[6], "(-?\%d+)")
+							tmp.hack = "spawned " .. tmp.entity .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z
+
+							if tonumber(tmp.level) > 2 then
+								irc_chat(server.ircMain, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
+								irc_chat(server.ircAlerts, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
+							end
+						else
+							tmp.x = igplayers[tmp.id].xPos
+							tmp.y = igplayers[tmp.id].yPos
+							tmp.z = igplayers[tmp.id].zPos
+							tmp.hack = "using dm at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z
+
+							if tonumber(tmp.level) > 2 then
+								irc_chat(server.ircMain, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
+								irc_chat(server.ircAlerts, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
+							end
+						end
+
+						if tonumber(tmp.level) > 2 then
+							banPlayer(tmp.id, "10 years", tmp.reason, "")
+							logHacker(botman.serverTime, "Botman anticheat detected " .. tmp.id .. " " .. tmp.name .. " " .. tmp.hack .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z)
+							message("say [" .. server.chatColour .. "]Banning player " .. tmp.name .. " 10 years for using hacks.[-]")
+							irc_chat(server.ircMain, "[BANNED] Player " .. tm.id .. " " .. tmp.name .. " has has been banned for " .. tmp.reason .. ".")
+							irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Player " .. tmp.id .. " " .. tmp.name .. " has has been banned for 10 years for " .. tmp.reason .. ".")
+							conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. tmp.x .. "," .. tmp.y .. "," .. tmp.z .. ",'" .. botman.serverTime .. "','ban','Player " .. tmp.id .. " " .. escape(tmp.name) .. " has has been banned for 10 years for " .. escape(tmp.reason) .. ".'," .. tmp.id .. ")")
+							connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player banned','Player banned by anticheat " .. escape(tmp.name) .. "'," .. tmp.id .. ")")
+						end
+					else
+						if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and tonumber(tmp.level) > 2 then
+							irc_chat(server.ircAlerts, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	file:close()
+	os.remove(homedir .. "/temp/bm-anticheat-report.txt")
+end
+
+
 function readAPI_BMUptime()
 	local file, ln, result, data, temp, tmp
 	local fileSize
@@ -1789,13 +1933,17 @@ function readAPI_BMUptime()
 	for ln in file:lines() do
 		temp = string.split(ln, ":")
 
+		-- hours
 		tmp  = tonumber(string.match(temp[4], "(%d+)"))
 		server.uptime = tmp * 60 * 60
 
+		-- minutes
 		tmp  = tonumber(string.match(temp[5], "(%d+)"))
-		server.uptime = tonumber(server.uptime) + (tmp * 60)
+		server.uptime = server.uptime + (tmp * 60)
 
-		botman.lastUptimeRead = os.time()
+		-- seconds
+		tmp  = tonumber(string.match(temp[6], "(%d+)"))
+		server.uptime = server.uptime + tmp
 	end
 
 	file:close()
@@ -1867,11 +2015,11 @@ function readAPI_BMListPlayerBed()
 end
 
 
-function readAPI_BMResetRegionsList()
-	local file, ln, result, data, temp, pname, pid, x, y, z, i
+function readAPI_BMListPlayerFriends()
+	local file, ln, result, data, temp, pname, pid, k, v
 	local fileSize
 
-	fileSize = lfs.attributes (homedir .. "/temp/bm-resetregions-list.txt", "size")
+	fileSize = lfs.attributes (homedir .. "/temp/bm-listplayerfriends.txt", "size")
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
@@ -1887,16 +2035,482 @@ function readAPI_BMResetRegionsList()
 		botman.lastServerResponseTimestamp = os.time()
 	end
 
+	file = io.open(homedir .. "/temp/bm-listplayerfriends.txt", "r")
+
+	for ln in file:lines() do
+		result = yajl.to_value(ln)
+		data = splitCRLF(result.result)
+
+		for k,v in pairs(data) do
+			pid = string.sub(v, 15,31)
+			temp=string.sub(v, string.find(v, "Friends=") + 8)
+
+			if temp ~= "" then
+				temp = string.split(temp, ",")
+			end
+
+			getBMFriends(pid, temp)
+		end
+	end
+
+	file:close()
+	os.remove(homedir .. "/temp/bm-listplayerfriends.txt")
+end
+
+
+function readAPI_BMReadConfig()
+	local file, ln, result, data, fileSize, k, v, bmconfig, tmp, numbers
+	local Configs, CustomMessages, ResetRegions, ZombieAnnouncer, Zones, ExemptPrefabs
+	local readConfigs, readCustomMessages, readResetRegions, readZombieAnnouncer, readZones, readExemptPrefabs
+	local cursor, errorString
+
+	fileSize = lfs.attributes (homedir .. "/temp/bm-config.txt", "size")
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
+	end
+
+	readConfigs = false
+	readCustomMessages = false
+	readResetRegions = false
+	readZombieAnnouncer = false
+	readZones = false
+	readExemptPrefabs = false
+
+	bmconfig = {}
+	Configs = {}
+	CustomMessages = {}
+	ResetRegions = {}
+	ZombieAnnouncer = {}
+	Zones = {}
+	ExemptPrefabs = {}
+
+	file = io.open(homedir .. "/temp/bm-config.txt", "r")
+
+	for ln in file:lines() do
+		result = yajl.to_value(ln)
+		data = splitCRLF(result.result)
+
+		for k,v in pairs(data) do
+			for con, q in pairs(conQueue) do
+				if q.command == "bm-readconfig" then
+					irc_chat(q.ircUser, v)
+				end
+			end
+
+			if readConfigs then
+				if string.find(v, "config name=\"anticheat") then
+					-- <config name="anticheat" enabled="True" />
+					if string.find(v, "True") then
+						Configs.anticheat = true
+					else
+						Configs.anticheat = false
+					end
+				end
+
+				if string.find(v, "config name=\"botname") then
+					-- <config name="botname" text="[7FFF00]Devbot" color-public="ffffff" color-private="EA3257" />
+					tmp = {}
+					tmp.name = string.sub(v, string.find(v, "text") + 6, string.find(v, "color-public", nil, true) - 3)
+					tmp.colorpublic = string.sub(v, string.find(v, "color-public", nil, true) + 14, string.find(v, "color-private", nil, true) - 3)
+					tmp.colorprivate = string.sub(v, string.find(v, "color-private", nil, true) + 16, string.find(v, "/>") - 3)
+
+					Configs.botname = {}
+					Configs.botname.name = tmp.name
+					Configs.botname.colorpublic = tmp.colorpublic
+					Configs.botname.colorprivate = tmp.colorprivate
+				end
+
+				if string.find(v, "config name=\"chatcommands") then
+					-- <config name="chatcommands" prefix="/" hide="False" />
+					tmp = {}
+					tmp.pos = string.find(v, "prefix") + 8
+					tmp.prefix = string.sub(v, tmp.pos, tmp.pos)
+
+					if string.find(v, "True") then
+						tmp.hide = true
+					else
+						tmp.hide =  false
+					end
+
+					Configs.chatcommands = {}
+					Configs.chatcommands.prefix = tmp.prefix
+					Configs.chatcommands.hide = tmp.hide
+				end
+
+
+				if string.find(v, "config name=\"clans") then
+					-- <config name="clans" enabled="False" max_clans="10" max_players="5" required_level_to_create="25" />
+					Configs.clans = {}
+
+					if string.find(v, "True") then
+						Configs.clans.enabled = true
+					else
+						Configs.clans.enabled = false
+					end
+
+					tmp = {}
+					tmp.numbers = getNumbers(v)
+					Configs.clans.max_clans = tmp.numbers[1]
+					Configs.clans.triggercount_falling = tmp.numbers[2]
+				end
+
+
+
+				if string.find(v, "config name=\"custommessages") then
+					-- <config name="custommessages" enabled="False" />
+					if string.find(v, "True") then
+						Configs.custommessages = true
+					else
+						Configs.custommessages = false
+					end
+				end
+
+
+				if string.find(v, "config name=\"dropminer") then
+					-- <config name="dropminer" enabled="False" triggercount-entities="0" triggercount-falling="0" />
+					Configs.dropminer = {}
+
+					if string.find(v, "True") then
+						Configs.dropminer.enabled = true
+					else
+						Configs.dropminer.enabled = false
+					end
+
+					tmp = {}
+					tmp.numbers = getNumbers(v)
+					Configs.dropminer.triggercount_entities = tmp.numbers[1]
+					Configs.dropminer.triggercount_falling = tmp.numbers[2]
+				end
+
+
+				if string.find(v, "config name=\"prevent_tree_removal_command") then
+					-- <config name="prevent_tree_removal_command" enabled="False"/> <!-- Prevents client side command that allows players to remove trees..exploit-->
+					if string.find(v, "True") then
+						Configs.prevent_tree_removal_command = true
+					else
+						Configs.prevent_tree_removal_command = false
+					end
+				end
+
+
+				if string.find(v, "config name=\"resetregions") then
+					-- <config name="resetregions" enabled="True" prefabsonly="False" days_between_resets="0" remove_lcbs="True" />
+					Configs.resetregions = {}
+
+					if string.find(v, "enabled=\"True") then
+						Configs.resetregions.enabled = true
+					else
+						Configs.resetregions.enabled = false
+					end
+
+					if string.find(v, "prefabsonly=\"True") then
+						Configs.resetregions.prefabsonly = true
+					else
+						Configs.resetregions.prefabsonly = false
+					end
+
+					if string.find(v, "lcbs=\"True") then
+						Configs.resetregions.remove_lcbs = true
+					else
+						Configs.resetregions.remove_lcbs = false
+					end
+
+					Configs.resetregions.days_between_resets = tonumber(string.match(v, "(-?%d+)"))
+				end
+
+
+				if string.find(v, "config name=\"webmapzones") then
+					-- <config name="webmapzones" enabled="True" zonecolors="red" path="D:\###########\Users\##########\196910\Mods\Allocs_WebAndMapRendering\webserver\js\map.js" />
+					Configs.webmapzones = {}
+
+					if string.find(v, "True") then
+						Configs.webmapzones.enabled = true
+					else
+						Configs.webmapzones.enabled = false
+					end
+
+					Configs.webmapzones.zonecolors = string.sub(v, string.find(v, "zonecolors") + 12, string.find(v, "path") - 3)
+				end
+
+
+				if string.find(v, "config name=\"zombieannouncer") then
+					-- <config name="zombieannouncer" enabled="False" />
+					if string.find(v, "True") then
+						Configs.zombieannouncer = true
+					else
+						Configs.zombieannouncer = false
+					end
+				end
+
+
+				if string.find(v, "config name=\"zombiefreetime") then
+					-- <config name="zombiefreetime" enabled="False" start="17" end="18" />
+					Configs.zombiefreetime = {}
+
+					if string.find(v, "True") then
+						Configs.zombiefreetime.enabled = true
+					else
+						Configs.zombiefreetime.enabled = false
+					end
+
+					tmp = {}
+					tmp.numbers = getNumbers(v)
+					Configs.zombiefreetime.startTime = tmp.numbers[1]
+					Configs.zombiefreetime.endTime = tmp.numbers[2]
+				end
+
+
+				if string.find(v, "config name=\"zones") then
+					-- <config name="zones" enabled="False" />
+					if string.find(v, "True") then
+						Configs.zones = true
+					else
+						Configs.zones = false
+					end
+				end
+			end
+
+			if readCustomMessages then
+				-- <message name="login" name_color="[00FF00]" message_color="[FFFFFF]" message="[name] has joined the game." />
+				if string.find(v, "message name=\"login") then
+					tmp = {}
+					tmp.name_color = string.sub(v, string.find(v, "name_color", nil, true) + 12, string.find(v, "message_color", nil, true) - 3)
+					tmp.message_color = string.sub(v, string.find(v, "message_color", nil, true) + 15, string.find(v, "message=\"", nil, true) - 3)
+					tmp.message = string.sub(v, string.find(v, "message=\"", nil, true) + 9, string.len(v) - 4)
+
+					CustomMessages.login = {}
+					CustomMessages.login.name_color = tmp.name_color
+					CustomMessages.login.message_color = tmp.message_color
+					CustomMessages.login.message = tmp.message
+				end
+
+
+				-- <message name="logout" name_color="[00FF00]" message_color="[FFFFFF]" message="[name] has logged out." />
+				if string.find(v, "message name=\"logout") then
+					tmp = {}
+					tmp.name_color = string.sub(v, string.find(v, "name_color", nil, true) + 12, string.find(v, "message_color", nil, true) - 3)
+					tmp.message_color = string.sub(v, string.find(v, "message_color", nil, true) + 15, string.find(v, "message=\"", nil, true) - 3)
+					tmp.message = string.sub(v, string.find(v, "message=\"", nil, true) + 9, string.len(v) - 4)
+
+					CustomMessages.logout = {}
+					CustomMessages.logout.name_color = tmp.name_color
+					CustomMessages.logout.message_color = tmp.message_color
+					CustomMessages.logout.message = tmp.message
+				end
+
+
+
+				-- <message name="died" name_color="[00FF00]" message_color="[FFFFFF]" message="[name] has died." />
+				if string.find(v, "message name=\"died") then
+					tmp = {}
+					tmp.name_color = string.sub(v, string.find(v, "name_color", nil, true) + 12, string.find(v, "message_color", nil, true) - 3)
+					tmp.message_color = string.sub(v, string.find(v, "message_color", nil, true) + 15, string.find(v, "message=\"", nil, true) - 3)
+					tmp.message = string.sub(v, string.find(v, "message=\"", nil, true) + 9, string.len(v) - 4)
+
+					CustomMessages.died = {}
+					CustomMessages.died.name_color = tmp.name_color
+					CustomMessages.died.message_color = tmp.message_color
+					CustomMessages.died.message = tmp.message
+				end
+
+
+				-- <message name="killed" killer_name_color="[FF0000]" victim_name_color="[0000FF]" message_color="[FFFFFF]" message="[killer] has killed [victim]." />
+				if string.find(v, "message name=\"killed") then
+					tmp = {}
+					tmp.name_color = string.sub(v, string.find(v, "name_color", nil, true) + 12, string.find(v, "message_color", nil, true) - 3)
+					tmp.message_color = string.sub(v, string.find(v, "message_color", nil, true) + 15, string.find(v, "message=\"", nil, true) - 3)
+					tmp.message = string.sub(v, string.find(v, "message=\"", nil, true) + 9, string.len(v) - 4)
+
+					CustomMessages.killed = {}
+					CustomMessages.killed.name_color = tmp.name_color
+					CustomMessages.killed.message_color = tmp.message_color
+					CustomMessages.killed.message = tmp.message
+				end
+			end
+
+			if readResetRegions then
+				-- <Region type="manual" region="r.-4.-1" />
+				if string.find(v, "Region type=\"", nil, true) then
+					tmp = {}
+					tmp.region_type = string.sub(v, string.find(v, "Region type=", nil, true) + 13, string.find(v, "region=", nil, true) - 3)
+					tmp.region = string.sub(v, string.find(v, "region=", nil, true) + 8, string.len(v) - 4)
+
+					table.insert(ResetRegions, tmp)
+				end
+			end
+
+			if readZombieAnnouncer then
+				-- <entity name="zombiename" message="A Boss zombie has spawned at COORDS"/>
+				if string.find(v, "entity name=", nil, true) then
+					tmp = {}
+					tmp.entity = string.sub(v, string.find(v, "name=", nil, true) + 6, string.find(v, "message=", nil, true) - 3)
+					tmp.message = string.sub(v, string.find(v, "message=", nil, true) + 9, string.len(v) - 3)
+
+					table.insert(ZombieAnnouncer, tmp)
+				end
+			end
+
+			if readZones then
+				-- <zone name="killzone" corner1="0,0,0" corner2="0,0,0" />
+				if string.find(v, "zone name=\"", nil, true) then
+					tmp = {}
+					tmp.name = string.sub(v, string.find(v, "zone name=", nil, true) + 11, string.find(v, "corner1=", nil, true) - 3)
+					tmp.corner1 = string.sub(v, string.find(v, "corner1=", nil, true) + 9, string.find(v, "corner2=", nil, true) - 3)
+					tmp.corner2 = string.sub(v, string.find(v, "corner2=", nil, true) + 9, string.len(v) - 4)
+
+					table.insert(Zones, tmp)
+				end
+			end
+
+			if readExemptPrefabs then
+				-- <prefab name="Prefab_Name_Here_01"/>
+				if string.find(v, "prefab name=\"", nil, true) then
+					tmp = {}
+					tmp.prefab = string.sub(v, string.find(v, "prefab name=", nil, true) + 13, string.len(v) - 3)
+
+					table.insert(ExemptPrefabs, tmp)
+				end
+			end
+
+			-- set read flags when we detect a new XML child
+			if string.find(v, "<Configs>") then
+				readConfigs = true
+			end
+
+			if string.find(v, "<CustomMessages>") then
+				readCustomMessages = true
+				readConfigs = false
+			end
+
+			if string.find(v, "<ResetRegions>") then
+				readResetRegions = true
+				readCustomMessages = false
+			end
+
+			if string.find(v, "<ZombieAnnouncer>") then
+				readZombieAnnouncer = true
+				readResetRegions = false
+			end
+
+			if string.find(v, "<Zones>") then
+				readZones = true
+				readZombieAnnouncer = false
+			end
+
+			if string.find(v, "<ExemptPrefabs>") then
+				readExemptPrefabs = true
+				readZones = false
+			end
+		end
+	end
+
+	bmconfig = {}
+	bmconfig.Configs = Configs
+	bmconfig.CustomMessages = CustomMessages
+	bmconfig.ResetRegions = ResetRegions
+	bmconfig.ZombieAnnouncer = ZombieAnnouncer
+	bmconfig.Zones = Zones
+	bmconfig.ExemptPrefabs = ExemptPrefabs
+
+	file:close()
+	os.remove(homedir .. "/temp/bm-config.txt")
+
+	for con, q in pairs(conQueue) do
+		if q.command == "bm-readconfig" then
+			conQueue[con] = nil
+		end
+	end
+
+	if botman.dbConnected then
+		cursor, errorString = conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('config','panel','" .. escape(yajl.to_string(bmconfig)) .. "')")
+
+		if string.find(errorString, "Duplicate entry") then
+			conn:execute("UPDATE webInterfaceJSON SET json = '" .. escape(yajl.to_string(bmconfig)) .. "' WHERE ident = 'config'")
+		end
+	end
+end
+
+
+function readAPI_BMResetRegionsList()
+	local file, ln, result, data, temp, x, z, fileSize, regionCount, k, v
+
+	fileSize = lfs.attributes (homedir .. "/temp/bm-resetregions-list.txt", "size")
+	regionCount = 0
+
+	-- abort if the file is empty
+	if fileSize == nil or tonumber(fileSize) == 0 then
+		return
+	else
+		if botman.APIOffline then
+			botman.APIOffline = false
+			toggleTriggers("api online")
+		end
+
+		botman.botOffline = false
+		botman.botOfflineCount = 0
+		botman.lastServerResponseTimestamp = os.time()
+	end
+
+	for k,v in pairs(resetRegions) do
+		v.inConfig = false
+	end
+
 	file = io.open(homedir .. "/temp/bm-resetregions-list.txt", "r")
 
 	for ln in file:lines() do
 		result = yajl.to_value(ln)
 		data = splitCRLF(result.result)
 
+		for k,v in pairs(data) do
+			for con, q in pairs(conQueue) do
+				if q.command == "bm-resetregions list" then
+					irc_chat(q.ircUser, v)
+				end
+			end
+
+			if string.find(v, "r.", nil, true) then
+				regionCount = regionCount + 1
+				temp = string.split(v, "%.")
+				x = temp[2]
+				z = temp[3]
+
+				if not resetRegions[v .. ".7rg"] then
+					resetRegions[v .. ".7rg"] = {}
+				end
+
+				resetRegions[v .. ".7rg"].x = x
+				resetRegions[v .. ".7rg"].z = z
+				resetRegions[v .. ".7rg"].inConfig = true
+				conn:execute("INSERT INTO resetZones (region, x, z) VALUES ('" .. escape(v .. ".7rg") .. "'," .. x .. "," .. z .. ")")
+			end
+		end
 	end
 
 	file:close()
 	os.remove(homedir .. "/temp/bm-resetregions-list.txt")
+
+	for con, q in pairs(conQueue) do
+		if q.command == "bm-resetregions list" then
+			conQueue[con] = nil
+		end
+	end
+
+	for k,v in pairs(resetRegions) do
+		if not v.inConfig then
+			sendCommand("bm-resetregions add " .. v.x .. "." .. v.z)
+		end
+	end
 end
 
 
@@ -1992,7 +2606,7 @@ function readAPI_GG()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
-		botman.resendGG = true
+		--botman.resendGG = true
 		return
 	else
 		if botman.APIOffline then
@@ -2039,6 +2653,8 @@ function readAPI_GG()
 	if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('GamePrefs','panel','" .. escape(yajl.to_string(GamePrefs)) .. "')") end
 
 	os.remove(homedir .. "/temp/gg.txt")
+	dbug("called initSlots by readapi_gg")
+	initSlots()
 end
 
 
@@ -2325,7 +2941,10 @@ function readAPI_LE()
 		botman.lastServerResponseTimestamp = os.time()
 	end
 
-	conn:execute("TRUNCATE memEntities")
+	if botman.dbConnected then
+		conn:execute("TRUNCATE memEntities")
+	end
+
 	file = io.open(homedir .. "/temp/le.txt", "r")
 
 	for ln in file:lines() do
@@ -2399,7 +3018,9 @@ function readAPI_LKP()
 		for k,v in pairs(data) do
 			if v ~= "" then
 				if string.sub(v, 1, 5) ~= "Total" then
-					conn:execute("INSERT INTO LKPQueue (line) VALUES ('" .. escape(v) .. "')")
+					if botman.dbConnected then
+						conn:execute("INSERT INTO LKPQueue (line) VALUES ('" .. escape(v) .. "')")
+					end
 
 					-- gather the data for the current player
 					temp = string.split(v, ", ")
@@ -2826,6 +3447,11 @@ function readAPI_PlayersOnline()
 		end
 	end
 
+	if botman.initReservedSlots then
+		initSlots()
+		botman.initReservedSlots = false
+	end
+
 	os.remove(homedir .. "/temp/playersOnline.txt")
 end
 
@@ -2934,17 +3560,21 @@ function readAPI_ReadLog()
 			uptime = v.uptime
 			date = v.date
 			time = v.time
-			botman.serverTime = date .. " " .. time
-			handled = false
 
-			writeAPILog(msg)
+			if botman.serverTime == "" or not botman.serverTimeStamp then
+				botman.serverTime = date .. " " .. time
+				botman.serverTimeStamp = dateToTimestamp(botman.serverTime)
+				handled = false
 
-			botman.serverHour = string.sub(time, 1, 2)
-			botman.serverMinute = string.sub(time, 4, 5)
-			specialDay = ""
+				writeAPILog(msg)
 
-			if (string.find(botman.serverTime, "02-14", 5, 10)) then specialDay = "valentine" end
-			if (string.find(botman.serverTime, "12-25", 5, 10)) then specialDay = "christmas" end
+				botman.serverHour = string.sub(time, 1, 2)
+				botman.serverMinute = string.sub(time, 4, 5)
+				specialDay = ""
+
+				if (string.find(botman.serverTime, "02-14", 5, 10)) then specialDay = "valentine" end
+				if (string.find(botman.serverTime, "12-25", 5, 10)) then specialDay = "christmas" end
+			end
 
 			if server.dateTest == nil then
 				server.dateTest = date
@@ -3273,7 +3903,6 @@ function readAPI_Version()
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
-		botman.resendVersion = true
 		return
 	else
 		if botman.APIOffline then
@@ -3336,8 +3965,10 @@ function readAPI_Version()
 
 	saveBotMaintenance()
 
-	if botman.dbConnected then conn:execute("DELETE FROM webInterfaceJSON WHERE ident = 'modVersions'") end
-	if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('modVersions','panel','" .. escape(yajl.to_string(modVersions)) .. "')") end
+	if botman.dbConnected then
+		conn:execute("DELETE FROM webInterfaceJSON WHERE ident = 'modVersions'")
+		conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('modVersions','panel','" .. escape(yajl.to_string(modVersions)) .. "')")
+	end
 
 	os.remove(homedir .. "/temp/installedMods.txt")
 	table.save(homedir .. "/data_backup/modVersions.lua", modVersions)

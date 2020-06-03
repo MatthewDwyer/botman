@@ -10,6 +10,11 @@
 -- magic characters in Lua  ( ) . % + - * ? [ ^ $
 -- these must be escaped with a %  eg string.split(line, "%.")
 
+-- stuff for the future
+-- http://terralang.org
+-- https://labix.org/lunatic-python
+-- https://github.com/bastibe/lunatic-python
+
 local debug
 
 if botman.debugAll then
@@ -17,17 +22,326 @@ if botman.debugAll then
 end
 
 
+function flagAdminsForRemoval()
+	local k,v
+
+	for k,v in pairs(owners) do
+		v.remove = true
+	end
+
+	for k,v in pairs(admins) do
+		v.remove = true
+	end
+
+	for k,v in pairs(mods) do
+		v.remove = true
+	end
+
+	for k,v in pairs(staffList) do
+		v.remove = true
+	end
+end
+
+
+function removeOldStaff()
+	local k,v
+
+	if getAdminList then
+		-- abort if getAdminList is true as that means there's been a fault in the telnet data
+		return
+	end
+
+	for k,v in pairs(owners) do
+		if v.remove then
+			owners[k] = nil
+		else
+			v.remove = nil
+		end
+	end
+
+	for k,v in pairs(admins) do
+		if v.remove then
+			admins[k] = nil
+		else
+			v.remove = nil
+		end
+	end
+
+	for k,v in pairs(mods) do
+		if v.remove then
+			mods[k] = nil
+		else
+			v.remove = nil
+		end
+	end
+
+	for k,v in pairs(staffList) do
+		if v.remove then
+			staffList[k] = nil
+		else
+			v.remove = nil
+		end
+	end
+
+	-- nuke the staff table and rebuild it
+	if botman.dbConnected then conn:execute("TRUNCATE staff") end
+
+	for k,v in pairs(owners) do
+		if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. k .. ", 0)") end
+	end
+
+	for k,v in pairs(admins) do
+		if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. k .. ", 1)") end
+	end
+
+	for k,v in pairs(mods) do
+		if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. k .. ", 2)") end
+	end
+end
+
+
+function logHacker(incidentTime, hack)
+	local file
+
+	-- don't log if folder not writeable
+	if not botman.webdavFolderWriteable then
+		return
+	end
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_hackers.txt", "a")
+	file:write(incidentTime .. "; " .. string.trim(hack) .. "\n")
+	file:close()
+end
+
+
+function logAlerts(alertTime, alertLine)
+	local file
+
+	-- don't log base protection alerts
+	if not botman.webdavFolderWriteable or string.find(alertLine, "base protection") then
+		return
+	end
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_alertlog.txt", "a")
+	file:write(alertTime .. "; " .. string.trim(alertLine) .. "\n")
+	file:close()
+end
+
+
+function logBotCommand(commandTime, commandLine)
+	local file
+
+	if (not botman.webdavFolderWriteable) or string.find(commandLine, "password") or string.find(commandLine, "invite code") or string.find(commandLine, "webtokens") or string.find(string.lower(commandLine), " api ") then
+		return
+	end
+
+	if string.find(commandLine, "adminuser") then
+		commandLine = string.sub(commandLine, 1, string.find(commandLine, "adminuser") - 2)
+	end
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_botcommandlog.txt", "a")
+	file:write(commandTime .. "; " .. string.trim(commandLine) .. "\n")
+	file:close()
+end
+
+
+function logCommand(commandTime, commandLine)
+	local commandPosition, file
+	local playerName = chatvars.playername
+
+	commandPosition = "0 0 0"
+
+	if tonumber(chatvars.ircid) > 0 then
+		playerName = players[chatvars.ircid].name
+	else
+		if chatvars.intX then
+			commandPosition = chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ
+		end
+	end
+
+	if (not botman.webdavFolderWriteable) or string.find(commandLine, " INF ") or string.find(commandLine, "' from client") or string.find(commandLine, "password") or string.find(string.lower(commandLine), " api ") then
+		return
+	end
+
+	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
+	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
+	botman.webdavFolderWriteable = false
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_commandlog.txt", "a")
+	file:write(commandTime .. "; " .. playerName .. "; " .. commandPosition .. "; " .. string.trim(commandLine) .. "\n")
+	file:close()
+
+	botman.webdavFolderWriteable = true
+end
+
+
+function logChat(chatTime, chatLine)
+	local chatPosition, file
+	local playerName = chatvars.playername
+
+	if (not botman.webdavFolderWriteable) or string.find(chatLine, " INF ") or string.find(chatLine, "' from client") or string.find(chatLine, "password") or string.find(string.lower(chatLine), " api ") or chatvars == nil or string.trim(chatLine) == "Server" then
+		return
+	end
+
+	chatPosition = "0 0 0"
+
+	if tonumber(chatvars.ircid) > 0 then
+		playerName = players[chatvars.ircid].name
+	else
+		if chatvars.intX then
+			chatPosition = chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ
+		end
+	end
+
+	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
+	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
+	botman.webdavFolderWriteable = false
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_chatlog.txt", "a")
+	file:write(chatTime .. "; " .. chatvars.playerid .. "; " .. playerName .. "; " .. chatPosition .. "; " .. string.trim(chatLine) .. "\n")
+	file:close()
+
+	botman.webdavFolderWriteable = true
+end
+
+
+function logInventoryChanges(steam, item, delta, x, y, z, session, flag)
+	local file, location
+
+	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
+	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
+	botman.webdavFolderWriteable = false
+	location = ""
+
+	if igplayers[steam] then
+		location = igplayers[steam].inLocation
+	end
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_inventory.txt", "a")
+	if delta > 0 then
+		file:write("server date " .. botman.serverTime .. "; game " .. server.gameDate .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty +" .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; loc " .. location .. " ; sess " .. session .. "; " .. flag .. "\n")
+	else
+		file:write("server date " .. botman.serverTime .. "; game " .. server.gameDate .. "; " .. steam .. "; " .. players[steam].name .. "; " .. item .. "; qty " .. delta .. "; xyz " .. x .. " " .. y .. " " .. z .. " ; loc " .. location .. " ; sess " .. session .. "; " .. flag .. "\n")
+	end
+
+	file:close()
+
+	botman.webdavFolderWriteable = true
+end
+
+
+function logPanelCommand(commandTime, command)
+	local action, actionTable, actionQuery, actionArgs
+	local file
+
+	action = command.action
+
+	if command.actionTable then
+		actionTable = command.actionTable
+	else
+		actionTable = ""
+	end
+
+	if command.actionQuery then
+		actionQuery = command.actionQuery
+	else
+		actionQuery = ""
+	end
+
+	if command.actionArgs then
+		actionArgs = command.actionArgs
+	else
+		actionArgs = ""
+	end
+
+	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
+	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
+	botman.webdavFolderWriteable = false
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_panel.txt", "a")
+	file:write(commandTime .. "; " .. action .. "; " .. actionTable .. "; " .. actionArgs .. "; " .. actionQuery .. "\n")
+	file:close()
+
+	botman.webdavFolderWriteable = true
+end
+
+
+function logTelnet(line)
+	-- log telnet traffic to disk.  Mudlet can do this too but we need to roll our own since Mudlet no longer logs any lines we hide from the main Mudlet window.
+	if not line then
+		return
+	end
+
+	if string.find(line, "PUG:", nil, true) or string.find(line, "PGD:", nil, true) then
+		return
+	end
+
+	if string.find(line, "WebCommandResult") or string.find(line, "Reloading Chunks") then
+		return
+	end
+
+	if telnetLogFileName then
+		telnetLogFile:write(line .. "\n")
+	end
+end
+
+
+function blockTelnetSpam()
+	if botman.blockTelnetSpam then
+		deleteLine()
+	end
+end
+
+
+function helpCommandRestrictions(tmp)
+	local temp = ""
+
+	temp = "Restricted to "
+
+	if tmp.accessLevel == 0 then
+		temp = temp .. "server owners"
+	end
+
+	if tmp.accessLevel == 1 then
+		temp = temp .. "owners and admins"
+	end
+
+	if tmp.accessLevel == 2 then
+		temp = temp .. "owners, admins and mods"
+	end
+
+	if tmp.accessLevel == 10 then
+		temp = temp .. "donors and admins"
+	end
+
+	if tmp.accessLevel == 90 then
+		temp = temp .. "players and admins"
+	end
+
+	if tmp.accessLevel == 99 then
+		temp = "Unrestricted command"
+	end
+
+	if tmp.ingameOnly == 0 then
+		temp = temp .. " in-game and IRC"
+	else
+		temp = temp .. " in-game only"
+	end
+
+	return temp
+end
+
+
 function connectToAPI()
 	send("webtokens list")
 	botman.webTokensListSent = os.time()
-
-	-- server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
-	-- send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
-	-- botman.lastBotCommand = "webtokens add bot"
-	-- botman.webTokenLastAdded = os.timer()
-	-- conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
-	-- botman.APIOffline = false
-	-- toggleTriggers("api online")
 end
 
 
@@ -57,7 +371,7 @@ function panelWho() --who? who?
 			if sort == 999 then sort = 3 end
 		end
 
-		if players[k].donor then
+		if isDonor(k) then
 			if flags == "" then
 				flags = "donor"
 			else
@@ -143,7 +457,7 @@ function newBotProfile()
 
 	loadServer()
 
-	if botman.db2Connected then
+	if botman.botsConnected then
 		connBots:execute("UPDATE servers SET IP = '" .. escape(server.IP) .. "' WHERE botID = " .. server.botID)
 	end
 
@@ -153,58 +467,27 @@ function newBotProfile()
 	os.remove(homedir .. "/password")
 	os.remove(homedir .. "/url")
 
-	os.execute("rm " .. homedir .. "/current/*")
-	connectToServer(server.IP, server.telnetPort, true)
-
-	file = io.open(homedir .. "/scripts/edit_me.lua", "r")
-	file_copy = io.open(homedir .. "/scripts/edit_me_new.lua", "a")
-
-	for ln in file:lines() do
-		if string.find(ln, "function initBot") then
-			foundInitBot = true
-		end
-
-		if string.find(ln, "telnetPort") then
-			foundTelnet = true
-			file_copy:write("telnetPort = " .. server.telnetPort .. "\n")
-		end
-
-		if string.find(ln, "serverIP") then
-			foundIP = true
-			file_copy:write("serverIP = \"" .. server.IP .. "\"\n")
-		end
-
-		if ln == "end" and foundInitBot then
-			foundInitBot = false
-
-			if not foundIP then
-				file_copy:write("serverIP = \"" .. server.IP .. "\"\n")
-			end
-
-			if not foundTelnet then
-				file_copy:write("telnetPort = " .. server.telnetPort .. "\n")
-			end
-		end
-
-		if not string.find(ln, "telnetPort") and not string.find(ln, "serverIP") then
-			file_copy:write(ln .. "\n")
-		end
+	if getMudletVersion then
+		os.execute("rm " .. homedir .. "/current/*")
+		saveProfile() -- make a new profile using the old info incase the next save fails to happen.
+		connectToServer(server.IP, server.telnetPort, true)
+		saveProfile() -- make a new profile using the new info.  Mudlet uses the most recent file.
+	else
+		connectToServer(server.IP, server.telnetPort)
 	end
 
-	file_copy:close()
+	os.remove(homedir .. "/server_address.lua")
+	file = io.open(homedir .. "/server_address.lua", "a")
+	file:write("serverIP = \"" .. server.IP .. "\"\n")
+	file:write("telnetPort = " .. server.telnetPort .. "\n")
 	file:close()
-
-	os.remove(homedir .. "/scripts/edit_me.lua")
-	os.rename(homedir .. "/scripts/edit_me_new.lua", homedir .. "/scripts/edit_me.lua")
-
-	saveProfile()
 
 	irc_chat(server.ircMain, "Connecting to new 7 Days to Die server " .. server.IP .. " port " .. server.telnetPort)
 end
 
 
 function forgetPlayers()
-	local k, v, cursor,errorString,row
+	local k, v
 
 	conn:execute("TRUNCATE TABLE list")
 
@@ -223,6 +506,9 @@ function forgetPlayers()
 	conn:execute("DELETE FROM villagers WHERE steam NOT IN (SELECT steam FROM list)")
 	conn:execute("DELETE FROM waypoints WHERE steam NOT IN (SELECT steam FROM list)")
 	conn:execute("TRUNCATE TABLE playersArchived")
+
+	os.remove(homedir .. "/data_backup/players.lua")
+	players = {}
 
 	-- refresh the bot's Lua tables from the database tables
 	loadTables()
@@ -370,6 +656,390 @@ function toggleTriggers(event)
 		disableTrigger("lp")
 	end
 end
+
+-- The slots system - management of players that are online, staff and donors + other players that are allowed to reserve a slot
+-- ############################################
+
+function getFreeSlots()
+	local cursor, errorString, row
+
+	-- are any slots free?
+	cursor,errorString = conn:execute("SELECT COUNT(free) AS freeSlotCount FROM slots WHERE free=1")
+	row = cursor:fetch({}, "a")
+	server.freeSlots = tonumber(row.freeSlotCount)
+
+	return tonumber(row.freeSlotCount)
+end
+
+
+function getReservedSlotsUsed()
+	local cursor, errorString, row
+
+	-- get the number of reserved slots in use right now
+	cursor,errorString = conn:execute("SELECT COUNT(reserved) AS reservedSlotsInUse FROM slots WHERE reserved=1 AND free=0")
+	row = cursor:fetch({}, "a")
+	server.reservedSlotsUsed = tonumber(row.reservedSlotsInUse)
+
+	return tonumber(row.reservedSlotsInUse)
+end
+
+
+function initSlots()
+	local cursor, errorString, row, counter, k, v
+
+	cursor,errorString = conn:execute("SELECT count(slot) as numberOfSlots FROM slots ORDER BY slot")
+	row = cursor:fetch({}, "a")
+
+	if tonumber(row.numberOfSlots) == 0 then
+		-- initialise slots table
+		for counter=1,server.maxPlayers,1 do
+			conn:execute("INSERT INTO slots (slot) VALUES (" .. counter .. ")")
+		end
+
+		cursor,errorString = conn:execute("SELECT * FROM slots ORDER BY slot")
+		row = cursor:fetch({}, "a")
+	else
+		if tonumber(row.numberOfSlots) > tonumber(server.maxPlayers) then
+			conn:execute("DELETE FROM slots WHERE slot > " .. server.maxPlayers)
+		end
+
+		if tonumber(row.numberOfSlots) < tonumber(server.maxPlayers) then
+			for counter=row.numberOfSlots+1,server.maxPlayers,1 do
+				conn:execute("INSERT INTO slots (slot) VALUES (" .. counter .. ")")
+			end
+		end
+	end
+
+	if tonumber(server.reservedSlots) > 0 then
+		conn:execute("UPDATE slots SET reserved = 0 WHERE reserved = 1 and slot <= " .. server.maxPlayers - server.reservedSlots)
+		conn:execute("UPDATE slots SET reserved = 1 WHERE slot > " .. server.maxPlayers - server.reservedSlots)
+	else
+		conn:execute("UPDATE slots SET reserved = 0")
+	end
+
+	-- flag all slots as offline
+	conn:execute("UPDATE slots SET online = 0")
+
+	-- assign each player that is online to a slot
+	if tonumber(botman.playersOnline) > 0 then
+		for k,v in pairs(igplayers) do
+			assignSlot(k)
+		end
+	end
+
+	-- free unused slots
+	conn:execute("UPDATE slots SET steam = 0, reserved = 0, joinedTime = 0, joinedSession = 0, expires = 0, staff = 0, free = 1, canBeKicked = 1, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE online = 0 AND disconnectedTimestamp < " .. os.time() - 300)
+
+	-- get the number of reserved slots in use right now
+	getReservedSlotsUsed()
+
+	-- get the number of free slots available
+	getFreeSlots()
+
+	botman.slotsInitialised = true
+end
+
+
+function addOrRemoveSlots()
+	-- called after reading gg which can change maxPlayers
+	local cursor, errorString, row, counter, k, v
+
+	cursor,errorString = conn:execute("SELECT count(slot) as numberOfSlots FROM slots ORDER BY slot")
+	row = cursor:fetch({}, "a")
+
+	if tonumber(row.numberOfSlots) == 0 then
+		-- initialise slots table
+		for counter=1,server.maxPlayers,1 do
+			conn:execute("INSERT INTO slots (slot) VALUES (" .. counter .. ")")
+		end
+	else
+		conn:execute("DELETE FROM slots WHERE slot > " .. server.maxPlayers)
+
+--		if tonumber(row.numberOfSlots) < tonumber(server.maxPlayers) then
+			for counter=row.numberOfSlots+1,server.maxPlayers,1 do
+				conn:execute("INSERT INTO slots (slot) VALUES (" .. counter .. ")")
+			end
+		--end
+	end
+
+	if tonumber(server.reservedSlots) > 0 then
+		conn:execute("UPDATE slots SET reserved = 0") --  WHERE reserved = 1 and slot <= " .. server.maxPlayers - server.reservedSlots
+		conn:execute("UPDATE slots SET reserved = 1 WHERE slot > " .. tonumber(server.maxPlayers) - tonumber(server.reservedSlots))
+	else
+		conn:execute("UPDATE slots SET reserved = 0")
+	end
+
+	-- free unused slots
+	conn:execute("UPDATE slots SET steam = 0, joinedTime = 0, joinedSession = 0, expires = 0, staff = 0, free = 1, canBeKicked = 1, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE online = 0 AND disconnectedTimestamp < " .. os.time() - 300)
+
+	-- get the number of reserved slots in use right now
+	getReservedSlotsUsed()
+
+	-- get the number of free slots available
+	getFreeSlots()
+end
+
+
+function kickASlot(steam)
+	local cursor, errorString, row
+--debug = true
+
+	-- if (debug) then dbug("debug freeASlot line " .. debugger.getinfo(1).currentline) end
+
+	-- the player who has occupied a reserved slot the longest and isn't a reserved slotter will be kicked
+	cursor,errorString = conn:execute("SELECT slot, steam FROM slots WHERE canBeKicked = 1 AND reserved = 1 AND free = 0 ORDER BY joinedTime DESC")
+	row = cursor:fetch({}, "a")
+
+	if row then
+		if igplayers[row.steam] then
+			kick(row.steam, "Sorry, you have been kicked from a reserved slot to allow another player to join :(")
+			irc_chat(server.ircAlerts, server.gameDate .. " player " .. players[row.steam].name ..  " was kicked to let " .. players[steam].name .. " join.")
+		end
+
+		conn:execute("UPDATE slots SET steam = 0, online = 0, staff = 0, canBeKicked = 1, free = 1, joinedSession = 0, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
+		server.freeSlots = server.freeSlots + 1
+		server.reservedSlotsUsed = server.reservedSlotsUsed - 1
+		return true
+	end
+
+	if (debug) then dbug("debug freeASlot line " .. debugger.getinfo(1).currentline) end
+
+	-- if nobody got kicked from a reserved slot and the joining player is an admin, kick the player who has played the longest, isn't using a reserved slot and isn't also an admin
+	if staffList[steam] then
+		-- make way for the admin people!  Make Room!  Make Room!
+		cursor,errorString = conn:execute("SELECT slot, steam FROM slots WHERE canBeKicked = 1 AND reserved = 0 AND staff = 0 ORDER BY joinedTime DESC")
+		row = cursor:fetch({}, "a")
+
+		if row then
+			if igplayers[row.steam] then
+				kick(row.steam, "Sorry, you have been kicked to allow an admin to join :(")
+				irc_chat(server.ircAlerts, server.gameDate .. " player " .. players[row.steam].name ..  " was kicked to let " .. players[steam].name .. " join.")
+			end
+
+			conn:execute("UPDATE slots SET steam = 0, online = 0, joinedTime = 0, joinedSession = 0, expires = 0, staff = 0, free = 1, canBeKicked = 1, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
+			server.freeSlots = server.freeSlots + 1
+			return true
+		end
+	end
+
+	-- if (debug) then dbug("debug freeASlot end") end
+--debug = false
+
+	return false
+end
+
+
+function freeASlot(steam)
+	local cursor, errorString, row
+--debug = true
+	-- if (debug) then dbug("debug freeASlot line " .. debugger.getinfo(1).currentline) end
+
+	-- free the slot that was occupied by the player.  If they are a donor and their expires timer hasn't expired, retain some info in case they rejoin within 5 minutes
+	cursor,errorString = conn:execute("SELECT slot, expires FROM slots WHERE steam = " .. steam)
+	row = cursor:fetch({}, "a")
+
+	if row then
+		if isDonor(steam) and (not staffList[steam]) and (row.expires - os.time() > 0) then -- back to the future!
+			conn:execute("UPDATE slots SET online = 0, staff = 0, canBeKicked = 1, free = 1, joinedSession = 0, disconnectedTimestamp = " .. os.time() .. " WHERE slot = " .. row.slot)
+		else
+			conn:execute("UPDATE slots SET steam = 0, online = 0, staff = 0, canBeKicked = 1, free = 1, joinedTime = 0, joinedSession = 0, expires = 0, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
+		end
+
+		server.freeSlots = server.freeSlots + 1
+
+		-- get the number of reserved slots in use right now
+		getReservedSlotsUsed()
+	end
+
+	-- if (debug) then dbug("debug freeASlot end") end
+--debug = false
+end
+
+
+function assignASlot(steam)
+	local tmp, cursor, errorString, row
+
+	tmp = {}
+
+-- debug = true
+
+-- 	if (debug) then dbug("debug assignSlot line " .. debugger.getinfo(1).currentline) end
+
+	-- I think I can slot you in here.  *shuffles papers*
+	if botman.dbConnected then
+		tmp.steam = steam
+		tmp.canReserve = false
+		tmp.isStaff = false
+		tmp.canBeKicked = true
+		tmp.assigned = false
+
+		-- flag if this player allowed to reserve a slot
+		if isDonor(steam) or players[steam].reserveSlot then
+			tmp.canReserve = true
+			tmp.canBeKicked = false
+		end
+
+		-- is this player an admin?
+		if staffList[steam] then
+			tmp.canReserve = true
+			tmp.isStaff = true
+			tmp.canBeKicked = false
+		end
+
+		if not tmp.isStaff then
+			-- if the player has used a timed reserved slot that expired less than 30 minutes ago, don't let them reserve another slot this time.
+			if players[steam].slotCooldown then
+				if os.time() - players[steam].slotCooldown > 0 then
+					tmp.canReserve = false
+				end
+			end
+		end
+
+		-- see if this steam ID is already assigned a slot from earlier
+		cursor,errorString = conn:execute("SELECT slot, expires FROM slots WHERE steam = " .. steam)
+		row = cursor:fetch({}, "a")
+
+		if row then
+			-- Welcome back Sir! :D   Er.. Where is young Master Sean?
+			if tonumber(server.reservedSlotTimelimit) > 0 then
+				-- check that the slot is still reserved for them
+				if (row.expires - os.time()) < 0 then -- time's up Mr Freeman
+					if not tmp.isStaff then
+						tmp.canBeKicked = true
+						players[steam].slotCooldown = os.time() + 1800 -- make them wait 30 minutes before they can reserve a slot again.
+						conn:execute("UPDATE slots SET canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", expires = 0, joinedSession = " .. players[steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0 WHERE slot = " .. row.slot)
+					end
+				else
+					conn:execute("UPDATE slots SET canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", joinedSession = " .. players[steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0 WHERE slot = " .. row.slot)
+				end
+			end
+
+			tmp.assigned = true
+		else
+			if tmp.isStaff or tmp.canReserve then
+				-- try to assign to a free reserved slot
+				cursor,errorString = conn:execute("SELECT * FROM slots WHERE reserved = 1 AND free = 1")
+				row = cursor:fetch({}, "a")
+
+				if row then
+					tmp.assigned = true
+					conn:execute("UPDATE slots SET steam = " .. steam .. ", canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", expires = " .. os.time() + (server.reservedSlotTimelimit * 60) .. ", joinedSession = " .. players[steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0, name = '" .. escape(players[steam].name) .. "', gameID = " .. players[steam].id .. ", IP = '" .. players[steam].ip .. "', country = '" .. players[steam].country .. "', ping = " .. players[steam].ping .. ", level = " .. players[steam].level .. ", score = " .. players[steam].score .. ", zombieKills = " .. players[steam].zombies .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. " WHERE slot = " .. row.slot)
+					server.freeSlots = server.freeSlots - 1
+					server.reservedSlotsUsed = server.reservedSlotsUsed + 1
+				end
+			end
+
+			-- all non-staff joining regular slots can be kicked however it is the player that has been online the longest who is first in line for a kickin
+			if not staffList[steam] then
+				tmp.canBeKicked = true
+			end
+
+			-- try to assign to a free non-reserved slot
+			if tonumber(server.freeSlots) > 0 and not tmp.assigned then
+				-- assign the player to the first free slot
+				cursor,errorString = conn:execute("SELECT * FROM slots WHERE free = 1 ORDER BY slot")
+				row = cursor:fetch({}, "a")
+
+				if row then
+					tmp.assigned = true
+					conn:execute("UPDATE slots SET steam = " .. steam .. ", canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", expires = 0, joinedSession = " .. players[steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0, name = '" .. escape(players[steam].name) .. "', gameID = " .. players[steam].id .. ", IP = '" .. players[steam].ip .. "', country = '" .. players[steam].country .. "', ping = " .. players[steam].ping .. ", level = " .. players[steam].level .. ", score = " .. players[steam].score .. ", zombieKills = " .. players[steam].zombies .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. "  WHERE slot = " .. row.slot)
+					server.freeSlots = server.freeSlots - 1
+				end
+			end
+		end
+	end
+
+	-- if (debug) then dbug("debug assignSlot end") end
+
+-- debug = false
+end
+
+
+function updateSlots(steam)
+	-- update the status of slots and free any reserved slots who's player is not online and it has been more than 5 minutes since they left
+
+-- debug = true
+
+	local cursor, errorString, row
+	local cursor2, errorString2, row2, rows2
+
+	-- if (debug) then dbug("debug updateSlots line " .. debugger.getinfo(1).currentline) end
+
+	if steam then
+		cursor,errorString = conn:execute("SELECT * FROM slots WHERE steam = " .. steam)
+	else
+		cursor,errorString = conn:execute("SELECT * FROM slots WHERE steam > 0 ORDER BY slot")
+	end
+
+	row = cursor:fetch({}, "a")
+
+	while row do
+		if igplayers[row.steam] then
+			if tonumber(server.reservedSlotTimelimit) > 0 and not staffList[row.steam] then
+				-- flag the slot as kickable if its reserved time has expired
+				if (os.time() - row.expires) < 0 and row.canBeKicked == 0 then
+					-- mark the player can be kicked
+					conn:execute("UPDATE slots SET canBeKicked = 1 WHERE slot = " .. row.slot)
+				end
+			end
+
+			if tonumber(row.reserved) == 1 then
+				-- look for a free non-reserved slot and move the player to it
+				cursor2,errorString2 = conn:execute("SELECT slot FROM slots WHERE steam = 0 AND free = 1 AND reserved = 0 ORDER BY slot LIMIT 0,1")
+				row2 = cursor2:fetch({}, "a")
+
+				if row2 then
+					-- copy the reserved slot into the free non-reserved slot
+					if row.staff then
+						conn:execute("UPDATE slots SET steam = " .. row.steam .. ", online = 1, staff = 1, canBeKicked = 0, free = 0, joinedTime = " .. row.joinedTime .. ", joinedSession = " .. row.joinedSession .. ", expires = 0, disconnectedTimestamp = 0, name = '" .. escape(players[steam].name) .. "', gameID = " .. players[steam].id .. ", IP = '" .. players[steam].ip .. "', country = '" .. players[steam].country .. "', ping = " .. players[steam].ping .. ", level = " .. players[steam].level .. ", score = " .. players[steam].score .. ", zombieKills = " .. players[steam].zombies .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. " WHERE slot = " .. row2.slot)
+					else
+						conn:execute("UPDATE slots SET steam = " .. row.steam .. ", online = 1, staff = 0, canBeKicked = 1, free = 0, joinedTime = " .. row.joinedTime .. ", joinedSession = " .. row.joinedSession .. ", expires = 0, disconnectedTimestamp = 0, name = '" .. escape(players[steam].name) .. "', gameID = " .. players[steam].id .. ", IP = '" .. players[steam].ip .. "', country = '" .. players[steam].country .. "', ping = " .. players[steam].ping .. ", level = " .. players[steam].level .. ", score = " .. players[steam].score .. ", zombieKills = " .. players[steam].zombies .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. " WHERE slot = " .. row2.slot)
+					end
+
+					-- free the reserved slot
+					conn:execute("UPDATE slots SET steam = 0, online = 0, staff = 0, canBeKicked = 1, free = 1, joinedTime = 0, joinedSession = 0, expires = 0, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
+				end
+			end
+		else
+			if tonumber(row.reserved) == 1 then
+				if tonumber(server.reservedSlotTimelimit) > 0 then
+					-- check that the slot is being held for a player
+					if (row.expires - os.time()) < 0 then
+						-- free the slot
+						conn:execute("UPDATE slots SET steam = 0, online = 0, staff = 0, canBeKicked = 1, free = 1, joinedTime = 0, joinedSession = 0, expires = 0, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
+					end
+
+					if tonumber(row.disconnectedTimestamp) > 0 then
+						if (os.time() - row.disconnectedTimestamp) > 300 then -- reserved slot player disconnected more than 5 minutes ago.
+							-- if you snooze you lose.. your reserved slot
+							conn:execute("UPDATE slots SET steam = 0, online = 0, staff = 0, canBeKicked = 1, free = 1, joinedTime = 0, joinedSession = 0, expires = 0, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
+						end
+					else
+						conn:execute("UPDATE slots SET steam = 0, online = 0, staff = 0, canBeKicked = 1, free = 1, joinedTime = 0, joinedSession = 0, expires = 0, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
+					end
+				else
+					-- mark the slot as free
+					conn:execute("UPDATE slots SET steam = 0, online = 0, staff = 0, canBeKicked = 1, free = 1, joinedTime = 0, joinedSession = 0, expires = 0, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
+				end
+
+				-- get the number of reserved slots in use right now
+				server.reservedSlotsUsed = getReservedSlotsUsed()
+			else
+				-- mark the slot as free
+				conn:execute("UPDATE slots SET steam = 0, online = 0, staff = 0, canBeKicked = 1, free = 1, joinedTime = 0, joinedSession = 0, expires = 0, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
+			end
+		end
+
+		row = cursor:fetch(row, "a")
+	end
+
+	-- if (debug) then dbug("debug updateSlots end") end
+-- debug = false
+end
+
+-- End of slots functions
+-- ############################################
+
 function dogeWOW()
 	-- So words. Many doge. WOW!
 	local r, doge
@@ -520,6 +1190,12 @@ end
 
 
 function setPlayerColour(steam, colour)
+
+	if modBotman.disableChatColours then
+		-- abort if the bot is not allowed to change chat colours
+		return
+	end
+
 	colour = string.upper(colour)
 
 	if server.botman then
@@ -627,6 +1303,7 @@ function processLKPLine(line)
 	tmp.id = string.sub(tmp.data[2], string.find(tmp.data[2], "id=") + 3)
 	tmp.steam = string.sub(tmp.data[3], string.find(tmp.data[3], "steamid=") + 8)
 	tmp.playtime = string.sub(tmp.data[6], string.find(tmp.data[6], "playtime=") + 9, string.len(tmp.data[6]) - 2)
+	tmp.playtime = tonumber(tmp.playtime)
 	tmp.seen = string.sub(tmp.data[7], string.find(tmp.data[7], "seen=") + 5)
 
 	if tmp.steam == "" then
@@ -668,14 +1345,18 @@ function processLKPLine(line)
 end
 
 
+onCloseMudlet = function()
+	-- stuff to do before Mudlet stops running
+	telnetLogFile:close()
+end
+
+
 onSysDisconnection = function ()
-	botman.botOfflineCount = 0
 	botman.telnetOffline = true
-
-	if botman.APIOffline then
-		botman.botOffline = true
-	end
-
+	botman.botOffline = true
+	botman.APIOffline = true
+	botman.botOfflineCount = 0
+	botman.telnetOfflineCount = 0
 	botman.lastServerResponseTimestamp = os.time()
 	botman.lastTelnetResponseTimestamp = os.time()
 	botman.botOfflineTimestamp = os.time()
@@ -828,8 +1509,6 @@ function reloadBot(getAllPlayers)
 	-- got the time?  Hey that's a nice watch.  Can I have it?
 	if server.botman then
 		tempTimer( 3, [[sendCommand("bm-uptime")]] )
-	else
-		tempTimer( 3, [[sendCommand("gt")]] )
 	end
 
 	tempTimer( 5, [[sendCommand("version")]] )
@@ -1304,7 +1983,7 @@ function canSetWaypointHere(steam, x, z)
 end
 
 
-function updateGimmeForA17()
+function updateGimme()
 	local rowGimme, rowSpawnable, cursorGimme, cursorSpawnable, errorString, rows
 
 	if botman.dbConnected then
@@ -1328,7 +2007,7 @@ function updateGimmeForA17()
 					end
 				end
 			else
-				-- item doesn't exist in A17.  Delete delete delete.
+				-- item doesn't exist delete delete delete.
 				conn:execute("DELETE FROM gimmePrizes WHERE name = '" .. escape(rowGimme.name) .. "'")
 			end
 
@@ -1338,7 +2017,7 @@ function updateGimmeForA17()
 end
 
 
-function updateShopItemsForA17()
+function updateShopItems()
 	-- walk the shop table and check that each item exists in the table spawnableItems
 	-- If they don't match, update the shop item so it matches spawnableItems
 	-- If the item doesn't exist in A17 delete it from the shop
@@ -1387,16 +2066,14 @@ function removeInvalidItems()
 	-- update restrictedItems item name to match case of itemName in spawnableItems
 	conn:execute("UPDATE restrictedItems INNER JOIN spawnableItems ON spawnableItems.itemName = restrictedItems.item SET restrictedItems.item = spawnableItems.itemName")
 
-	-- try to convert shop items to A17
-	if math.floor(server.gameVersionNumber) >= 17 then
-		updateShopItemsForA17()
-		updateGimmeForA17()
+	-- do some manual fixes
+	conn:execute("UPDATE shop SET item = 'resourceOil' WHERE item = 'oil'")
+	conn:execute("UPDATE shop SET item = 'drugAntibiotics' WHERE item = 'antibiotics'")
+	conn:execute("UPDATE shop SET item = 'drinkJarBeer' WHERE item = 'beer'")
+	conn:execute("UPDATE shop SET item = 'drinkJarCoffee' WHERE item = 'coffee'")
 
-		-- do some manual fixes
-		conn:execute("UPDATE shop SET item = 'resourceOil' WHERE item = 'oil'")
-		conn:execute("UPDATE shop SET item = 'drugAntibiotics' WHERE item = 'antibiotics'")
-		conn:execute("UPDATE shop SET item = 'drinkJarBeer' WHERE item = 'beer'")
-	end
+	updateShopItems()
+	updateGimme()
 
 	-- don't remove anything from the tables, badItems or restrictedItems as those can contain wildcards
 
@@ -1405,8 +2082,6 @@ function removeInvalidItems()
 
 	-- refresh the badItems table
 	loadBadItems()
-
-	irc_chat(server.ircMain, "Finished validating items.")
 end
 
 
@@ -1414,10 +2089,12 @@ function collectSpawnableItemsList()
 	-- flag items in various tables so we can remove invalid items later
 	if botman.dbConnected then
 		conn:execute("TRUNCATE TABLE spawnableItems")
-		conn:execute("UPDATE badItems SET validated = 1")
-		conn:execute("UPDATE gimmePrizes SET validated = 1")
-		conn:execute("UPDATE restrictedItems SET validated = 1")
-		conn:execute("UPDATE shop SET validated = 1")
+		conn:execute("UPDATE badItems SET validated = 0")
+		conn:execute("UPDATE gimmePrizes SET validated = 0")
+		conn:execute("UPDATE restrictedItems SET validated = 0")
+		conn:execute("UPDATE shop SET validated = 0")
+
+		loadShop()
 	end
 
 	sendCommand("li *")
@@ -1446,7 +2123,7 @@ function isDestinationAllowed(steam, x, z)
 	loc = inLocation(x, z)
 
 	-- prevent player exceeding the map limit unless an admin and ignoreadmins is false
-	if outsideMap and not players[steam].donor and (accessLevel(steam) > 3) then
+	if outsideMap and not isDonor(steam) and (accessLevel(steam) > 3) then
 		if not loc then
 			return false
 		else
@@ -1507,6 +2184,11 @@ end
 function setChatColour(steam, level)
 	local access
 
+	if modBotman.disableChatColours then
+		-- abort if the bot is not allowed to change chat colours
+		return
+	end
+
 	if players[steam].prisoner then
 		if string.upper(server.chatColourPrisoner) ~= "FFFFFF" then
 
@@ -1544,7 +2226,7 @@ function setChatColour(steam, level)
 		return
 	end
 
-	if (players[steam].donor == true) then
+	if isDonor(steam) then
 		setPlayerColour(steam, server.chatColourDonor)
 		return
 	end
@@ -1639,7 +2321,7 @@ function scanForPossibleHackersNearby(steam, world)
 			end
 
 			if dist < 301 then
-				if locations["exile"] then
+				if LookupLocation("exile") then
 					players[k].exiled = true
 					players[k].silentBob = true
 					players[k].canTeleport = false
@@ -2070,6 +2752,7 @@ function downloadHandler(event, ...)
 		end
 
 		if string.find(..., "apicheck.txt", nil, true) then
+			-- [massive feedback]  yep this thing's on
 			botman.APICheckPassed = true
 			return
 		end
@@ -2110,11 +2793,39 @@ function downloadHandler(event, ...)
 			return
 		end
 
+		if string.find(..., "bm-anticheat-report.txt", nil, true) then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
+			-- who's on the naughty list?
+			readAPI_BMAnticheatReport()
+			return
+		end
+
 		if string.find(..., "bm-listplayerbed.txt", nil, true) then
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
+			-- you sleep where?
 			readAPI_BMListPlayerBed()
+			return
+		end
+
+		if string.find(..., "bm-listplayerfriends.txt", nil, true) then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
+			-- who's your friend?
+			readAPI_BMListPlayerFriends()
+			return
+		end
+
+		if string.find(..., "bm-config.txt", nil, true) then
+			botman.lastAPIResponseTimestamp = os.time()
+			botman.APIOfflineCount = 0
+
+			-- read the Botman mod's config file
+			readAPI_BMReadConfig()
 			return
 		end
 
@@ -2122,6 +2833,7 @@ function downloadHandler(event, ...)
 			botman.lastAPIResponseTimestamp = os.time()
 			botman.APIOfflineCount = 0
 
+			-- read the reset regions from the Botman mod
 			readAPI_BMResetRegionsList()
 			return
 		end
@@ -2357,7 +3069,7 @@ function isReservedName(player, steam)
 	end
 
 	for k,v in pairs(players) do
-		if (v.name == player) and (k ~= steam) then
+		if (v.name == player) and (k ~= steam) and (tonumber(k) ~= 0) then
 			if tonumber(v.accessLevel) < 3 then
 				return true
 			end
@@ -2473,9 +3185,7 @@ function calcTimestamp(str)
 		period = 60 * 60 * 24 * 365
 	end
 
-	if number == nil or period == nil then
-		return os.time()
-	else
+	if number and period then
 		return os.time() + period * number
 	end
 end
@@ -2720,9 +3430,8 @@ end
 
 
 function seen(steam)
-	-- when was a player last seen ingame?
-	local words, word, diff, ryear, rmonth, rday, rhour, rmin, rsec
-	local dateNow, Now, dateSeen, Seen, days, hours, minutes
+	-- when was a player last in-game?
+	local words, word, diff, tmp
 
 	if players[steam].seen == "" then
 		return "A new player on for the first time now."
@@ -2732,48 +3441,54 @@ function seen(steam)
 		return players[steam].name .. " is on the server now."
 	end
 
+	tmp = {}
 	words = {}
 	for word in botman.serverTime:gmatch("%w+") do table.insert(words, word) end
 
-	ryear = words[1]
-	rmonth = words[2]
-	rday = string.sub(words[3], 1, 2)
-	rhour = string.sub(words[3], 4, 5)
-	rmin = words[4]
-	rsec = words[5]
+	tmp.ryear = words[1]
+	tmp.rmonth = words[2]
+	tmp.rday = string.sub(words[3], 1, 2)
+	tmp.rhour = string.sub(words[3], 4, 5)
+	tmp.rmin = words[4]
+	tmp.rsec = words[5]
 
-	dateNow = {year=ryear, month=rmonth, day=rday, hour=rhour, min=rmin, sec=rsec}
-	Now = os.time(dateNow)
+	tmp.dateNow = {year=tmp.ryear, month=tmp.rmonth, day=tmp.rday, hour=tmp.rhour, min=tmp.rmin, sec=tmp.rsec}
+	tmp.now = os.time(tmp.dateNow)
 
 	words = {}
-	for word in players[steam].seen:gmatch("%w+") do table.insert(words, word) end
-
-	ryear = words[1]
-	rmonth = words[2]
-	rday = string.sub(words[3], 1, 2)
-	rhour = string.sub(words[3], 4, 5)
-	rmin = words[4]
-	rsec = words[5]
-
-	dateSeen = {year=ryear, month=rmonth, day=rday, hour=rhour, min=rmin, sec=rsec}
-	Seen = os.time(dateSeen)
-
-	diff = os.difftime(Now, Seen)
-	days = math.floor(diff / 86400)
-
-	if (days > 0) then
-		diff = diff - (days * 86400)
+	if players[steam] then
+		tmp.name = players[steam].name
+		for word in players[steam].seen:gmatch("%w+") do table.insert(words, word) end
+	else
+		tmp.name = playersArchived[steam].name
+		for word in playersArchived[steam].seen:gmatch("%w+") do table.insert(words, word) end
 	end
 
-	hours = math.floor(diff / 3600)
+	tmp.ryear = words[1]
+	tmp.rmonth = words[2]
+	tmp.rday = string.sub(words[3], 1, 2)
+	tmp.rhour = string.sub(words[3], 4, 5)
+	tmp.rmin = words[4]
+	tmp.rsec = words[5]
+	tmp.dateSeen = {year=tmp.ryear, month=tmp.rmonth, day=tmp.rday, hour=tmp.rhour, min=tmp.rmin, sec=tmp.rsec}
+	tmp.seen = os.time(tmp.dateSeen)
 
-	if (hours > 0) then
-		diff = diff - (hours * 3600)
+	diff = os.difftime(tmp.now, tmp.seen)
+	tmp.days = math.floor(diff / 86400)
+
+	if (tmp.days > 0) then
+		diff = diff - (tmp.days * 86400)
 	end
 
-	minutes = math.floor(diff / 60)
+	tmp.hours = math.floor(diff / 3600)
 
-	return players[steam].name .. " was last seen " .. days .. " days " .. hours .. " hours " .. minutes .." minutes ago"
+	if (tmp.hours > 0) then
+		diff = diff - (tmp.hours * 3600)
+	end
+
+	tmp.minutes = math.floor(diff / 60)
+
+	return tmp.name .. " was last seen " .. tmp.days .. " days " .. tmp.hours .. " hours " .. tmp.minutes .." minutes ago"
 end
 
 
@@ -2808,7 +3523,7 @@ function kick(steam, reason)
 		if steam == 0 then steam = tmp end
 	end
 
-	if igplayers[steam] then
+	if igplayers[steam] and reason ~= "Server restarting." then
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. players[steam].xPos .. "," .. players[steam].yPos .. "," .. players[steam].zPos .. ",'" .. botman.serverTime .. "','kick','Player " .. steam .. " " .. escape(players[steam].name) .. " kicked for " .. escape(reason) .. "'," .. steam .. ")") end
 	end
 
@@ -2902,7 +3617,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 		alertAdmins("Player " .. playerName .. " has been banned for " .. duration .. " " .. reason)
 
 		-- add to bots db
-		if botman.db2Connected and not localOnly then
+		if botman.botsConnected and not localOnly then
 			if players[steam] then
 				if tonumber(players[steam].pendingBans) > 0 then
 					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin, GBLBan, GBLBanActive, level) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "'," .. tonumber(players[steam].timeOnServer) + tonumber(players[steam].playtime) .. "," .. players[steam].score .. "," .. players[steam].playerKills .. "," .. players[steam].zombies .. ",'" .. players[steam].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "',1,1," .. players[steam].level .. ")")
@@ -2946,7 +3661,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 				alertAdmins("Player " .. players[k].name .. " has been banned for " .. duration .. " same IP as banned player")
 
 				-- add to bots db
-				if botman.db2Connected then
+				if botman.botsConnected then
 					connBots:execute("INSERT INTO bans (bannedTo, steam, reason, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin, level) VALUES ('" .. escape("MISSING") .. "'," .. k .. ",'" .. escape("same IP as banned player") .. "'," .. tonumber(players[k].timeOnServer) + tonumber(players[k].playtime) .. "," .. players[k].score .. "," .. players[k].playerKills .. "," .. players[k].zombies .. ",'" .. players[k].country .. "','" .. escape(belt) .. "','" .. escape(pack) .. "','" .. escape(equipment) .. "','" .. server.botID .. "','" .. admin .. "'," .. players[k].level .. ")")
 				end
 			end
@@ -2958,7 +3673,7 @@ function banPlayer(steam, duration, reason, issuer, localOnly)
 		irc_chat(server.ircAlerts, server.gameDate .. " [BANNED] Unknown player " .. steam .. " has been banned for " .. duration .. " " .. reason)
 
 		-- add to bots db
-		if botman.db2Connected then
+		if botman.botsConnected then
 			connBots:execute("INSERT INTO bans (bannedTo, steam, reason, permanent, playTime, score, playerKills, zombies, country, belt, pack, equipment, botID, admin) VALUES ('" .. escape("MISSING") .. "'," .. steam .. ",'" .. escape(reason) .. "',1,0,0,0,0,'','','','','" .. server.botID .. "','" .. admin .. "')")
 		end
 	end
@@ -2967,9 +3682,11 @@ end
 
 function arrest(steam, reason, bail, releaseTime)
 	local banTime = 60
-	local cmd
+	local cmd, prison
 
-	if not locations["prison"] then
+	prison = LookupLocation("prison")
+
+	if not prison then
 		if tonumber(server.maxPrisonTime) > 0 then
 			banTime = server.maxPrisonTime
 		end
@@ -3023,11 +3740,11 @@ function arrest(steam, reason, bail, releaseTime)
 		if rows > 0 then
 			randomTP(steam, "prison")
 		else
-			cmd = "tele " .. steam .. " " .. locations["prison"].x .. " " .. locations["prison"].y .. " " .. locations["prison"].z
+			cmd = "tele " .. steam .. " " .. locations[prison].x .. " " .. locations[prison].y .. " " .. locations[prison].z
 			teleport(cmd, steam)
 		end
 	else
-		cmd = "tele " .. steam .. " " .. locations["prison"].x .. " " .. locations["prison"].y .. " " .. locations["prison"].z
+		cmd = "tele " .. steam .. " " .. locations[prison].x .. " " .. locations[prison].y .. " " .. locations[prison].z
 		teleport(cmd, steam)
 	end
 
@@ -3176,6 +3893,8 @@ end
 
 
 function dailyMaintenance()
+	local cursor, errorString, row
+
 	-- put something here to be run when the server date hits midnight
 	updateBot()
 
@@ -3192,7 +3911,47 @@ function dailyMaintenance()
 
 	-- delete other old logs
 	os.execute("find " .. botman.chatlogPath .. "/*inventory.txt -mtime +" .. server.telnetLogKeepDays .. " -exec rm {} \\;")
-	os.execute("find " .. botman.chatlogPath .. "/*commandlog.txt -mtime +" .. server.telnetLogKeepDays .. " -exec rm {} \\;")
+
+	-- expire donors who's expiry is in the past
+	if botman.dbConnected then
+		cursor,errorString = conn:execute("SELECT * FROM donors WHERE expired = 0")
+		row = cursor:fetch({}, "a")
+
+		if row then
+			while row do
+				if row.expiry < os.time() then
+					conn:execute("UPDATE donors SET expired = 1 WHERE steam = " .. row.steam)
+
+					irc_chat(server.ircAlerts, "Player " .. players[row.steam].name ..  " " .. row.steam .. " donor status has expired.")
+					conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','donor','" .. escape(players[row.steam].name) .. " " .. row.steam .. " donor status expired.'," .. row.steam ..")")
+
+					players[row.steam].protect2 = false
+					players[row.steam].maxWaypoints = server.maxWaypoints
+					conn:execute("UPDATE players SET protect2 = 0, donor = 0, donorLevel = 0, maxWaypoints = " .. server.maxWaypoints .. " WHERE steam = " .. row.steam)
+
+					-- remove the player's waypoints
+					conn:execute("DELETE FROM waypoints WHERE steam = " .. row.steam)
+
+					-- reload the player's waypoints
+					loadWaypoints(row.steam)
+
+					conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. row.steam .. ", '" .. escape("Your donor status has expired.  Any waypoints you had will need to be set again and extra bases have lost bot protection.") .. "')")
+				end
+
+				row = cursor:fetch(row, "a")
+			end
+
+			-- reload donors from the database
+			loadDonors()
+		end
+
+		-- delete expired donor records older than 60 days
+		conn:execute("DELETE FROM donors WHERE expired = 1 AND expiry < " .. os.time() - 5184000)
+
+		-- make sure we have the current player names in the donors table
+		conn:execute("UPDATE donors SET name = (SELECT name FROM players WHERE donors.steam = players.steam)")
+	end
+
 	return true
 end
 
@@ -3209,7 +3968,7 @@ end
 
 
 function clearRebootFlags()
-	botman.nextRebootTest = os.time() + 60
+	botman.nextRebootTest = os.time() + 1800
 	botman.scheduledRestart = false
 	botman.scheduledRestartTimestamp = os.time()
 	botman.scheduledRestartPaused = false
@@ -3262,8 +4021,6 @@ function finishReboot()
 	conn:execute("TRUNCATE TABLE memTracker")
 	conn:execute("TRUNCATE TABLE commandQueue")
 	conn:execute("TRUNCATE TABLE gimmeQueue")
-
-	tempTimer( 3, [[sendCommand("mem")]] )
 	tempTimer( 10, [[sendCommand("shutdown")]] )
 
 	-- check for bot updates
@@ -3283,10 +4040,11 @@ function newDay()
 	if (string.sub(botman.serverTime, 1, 10) ~= server.dateTest) then
 		server.dateTest = string.sub(botman.serverTime, 1, 10)
 
-		-- force logging to start a new file
-		if botman.APIOffline then
-			startLogging(false)
-			startLogging(true)
+		if telnetLogFileName then
+			-- force logging to start a new file
+			telnetLogFile:close()
+			telnetLogFileName = homedir .. "/telnet_logs/" .. os.date("%Y-%m-%d#%H-%M") .. ".txt"
+			telnetLogFile = io.open(telnetLogFileName, "a")
 		end
 
 		dailyMaintenance()
@@ -3327,10 +4085,6 @@ function newDay()
 		if botman.botOffline == false then
 			irc_chat("#status", "Bot " .. server.botName .. " on server " .. server.serverName .. " " .. server.IP .. ":" .. server.ServerPort .. " Game version: " .. server.gameVersion)
 			irc_chat("#status", "Status: " .. status .. ", bot version: " .. server.botVersion .. " on branch " .. server.updateBranch)
-		end
-
-		if tonumber(server.gameVersionNumber) < 17 then
-			sendCommand("llp")
 		end
 	end
 end
@@ -3450,7 +4204,7 @@ function CheckBlacklist(steam, ip)
 	local ipint = 2^24*o1 + 2^16*o2 + 2^8*o3 + o4
 	local k, v, cursor, errorString
 
-	if not botman.db2Connected then
+	if not botman.botsConnected then
 		return
 	end
 
@@ -3460,7 +4214,7 @@ function CheckBlacklist(steam, ip)
 	cursor,errorString = connBots:execute("SELECT * FROM IPBlacklist WHERE StartIP <=  " .. ipint .. " AND EndIP >= " .. ipint)
 	if cursor:numrows() > 0 then
 
-		if (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
+		if (not (whitelist[steam] or isDonor(steam))) and accessLevel(steam) > 2 then
 			irc_chat(server.ircMain, "Blacklisted IP detected. " .. players[steam].name)
 			irc_chat(server.ircAlerts, server.gameDate .. " blacklisted IP detected. " .. players[steam].name)
 		end
@@ -3469,14 +4223,14 @@ function CheckBlacklist(steam, ip)
 		players[steam].country = "CN"
 		players[steam].ircTranslate = true
 
-		if server.blacklistResponse == 'exile' and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
+		if server.blacklistResponse == 'exile' and (not (whitelist[steam] or isDonor(steam))) and accessLevel(steam) > 2 then
 			if not players[steam].exiled then
 				players[steam].exiled = true
 				if botman.dbConnected then conn:execute("UPDATE players SET country = 'CN', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam) end
 			end
 		end
 
-		if server.blacklistResponse == 'ban' and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
+		if server.blacklistResponse == 'ban' and (not (whitelist[steam] or isDonor(steam))) and accessLevel(steam) > 2 then
 			irc_chat(server.ircMain, "Blacklisted player " .. players[steam].name .. " banned.")
 			irc_chat(server.ircAlerts, server.gameDate .. " blacklisted player " .. players[steam].name .. " banned.")
 			banPlayer(steam, "10 years", "blacklisted", "")
@@ -3494,7 +4248,7 @@ end
 
 
 function getDNSLookupCounter()
-	local cursor, errorString, row
+	local cursor, errorString, row, rows
 
 	-- make sure the settings table isn't empty :O
 	cursor,errorString = connBots:execute("SELECT * FROM settings")
@@ -3507,16 +4261,20 @@ function getDNSLookupCounter()
 
 	-- now select the DNS lookup server
 	cursor,errorString = connBots:execute("SELECT * FROM settings WHERE DNSResetCounterDate = CURDATE() + 0")
-	row = cursor:fetch({}, "a")
+	rows = cursor:numrows()
 
-	if row.DNSLookupCounter then
-		if tonumber(row.DNSLookupCounter) < 500 then
-			-- pick this DNS lookup server and add to the lookupCounter
-			connBots:execute("UPDATE settings SET DNSLookupCounter = DNSLookupCounter + 1")
-			return tonumber(row.DNSLookupCounter)
-		else
-			-- reset the counter and set the resetDate to tomorrow
-			connBots:execute("UPDATE settings SET DNSLookupCounter = 0, DNSResetCounterDate = CURDATE() + 1")
+	if rows > 0 then
+		row = cursor:fetch({}, "a")
+
+		if row.DNSLookupCounter then
+			if tonumber(row.DNSLookupCounter) < 500 then
+				-- pick this DNS lookup server and add to the lookupCounter
+				connBots:execute("UPDATE settings SET DNSLookupCounter = DNSLookupCounter + 1")
+				return tonumber(row.DNSLookupCounter)
+			else
+				-- reset the counter and set the resetDate to tomorrow
+				connBots:execute("UPDATE settings SET DNSLookupCounter = 0, DNSResetCounterDate = CURDATE() + 1")
+			end
 		end
 	end
 
@@ -3610,13 +4368,13 @@ function readDNS(steam)
 			IP = IPToInt(players[steam].ip)
 		end
 
-		if (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
+		if (not (whitelist[steam] or isDonor(steam))) and accessLevel(steam) > 2 then
 			for k,v in pairs(proxies) do
 				if string.find(ln, string.upper(v.scanString), nil, true) then
 					v.hits = tonumber(v.hits) + 1
 					proxy = true
 
-					if botman.db2Connected then
+					if botman.botsConnected then
 						connBots:execute("UPDATE proxies SET hits = hits + 1 WHERE scanString = '" .. escape(k) .. "'")
 					end
 
@@ -3655,7 +4413,7 @@ function readDNS(steam)
 			-- only report country change if CN or HK are involved. For once, don't blame Canada.
 			a,b = string.find(ln, "%s(%w+)")
 			country = string.sub(ln, a + 1)
-			if players[steam].country ~= "" and players[steam].country ~= country and (players[steam].country == "CN" or players[steam].country == "HK" or country == "CN" or country == "HK") and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
+			if players[steam].country ~= "" and players[steam].country ~= country and (players[steam].country == "CN" or players[steam].country == "HK" or country == "CN" or country == "HK") and (not (whitelist[steam] or isDonor(steam))) and accessLevel(steam) > 2 then
 				irc_chat(server.ircAlerts, server.gameDate .. " possible proxy detected! Country changed! " .. steam .. " " .. players[steam].name .. " " .. players[steam].ip .. " old country " .. players[steam].country .. " new " .. country)
 				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (0,0,0'" .. botman.serverTime .. "','proxy','Suspected proxy used by " .. escape(players[steam].name) .. " " .. players[steam].ip .. " old country " .. players[steam].country .. " new " .. country .. "," .. steam .. ")") end
 				proxy = true
@@ -3669,7 +4427,7 @@ function readDNS(steam)
 		end
 
 		-- We consider HongKong to be China since Chinese players connect from there too.
-		if (country == "CN" or country == "HK") and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
+		if (country == "CN" or country == "HK") and (not (whitelist[steam] or isDonor(steam))) and accessLevel(steam) > 2 then
 			-- China detected. Add ip range to IPBlacklist table
 			irc_chat(server.ircMain, "Chinese IP detected. " .. players[steam].name .. " " .. players[steam].ip)
 			irc_chat(server.ircAlerts, server.gameDate .. " Chinese IP detected. " .. players[steam].name .. " " .. players[steam].ip)
@@ -3692,7 +4450,7 @@ function readDNS(steam)
 				banned = true
 			end
 
-			if botman.db2Connected then
+			if botman.botsConnected then
 				if iprange ~= "" then
 					-- check that player's IP is actually within the discovered IP range
 					if IP >= ip1 and IP <= ip2 then
@@ -3718,7 +4476,7 @@ function readDNS(steam)
 	end
 
 	-- alert players
-	if blacklistedCountries[country] and server.blacklistResponse ~= 'ban' and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
+	if blacklistedCountries[country] and server.blacklistResponse ~= 'ban' and (not (whitelist[steam] or isDonor(steam))) and accessLevel(steam) > 2 then
 		for k, v in pairs(igplayers) do
 			if players[k].exiled~=1 and not players[k].prisoner then
 				message("pm " .. k .. " Player " .. players[steam].name .. " from blacklisted country " .. country .. " has joined.[-]")
@@ -3726,7 +4484,7 @@ function readDNS(steam)
 		end
 	end
 
-	if blacklistedCountries[country] and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
+	if blacklistedCountries[country] and (not (whitelist[steam] or isDonor(steam))) and accessLevel(steam) > 2 then
 		if server.blacklistResponse == 'ban' and not banned then
 			irc_chat(server.ircMain, "Player " .. players[steam].name .. " banned. Blacklisted country " .. country)
 			irc_chat(server.ircAlerts, server.gameDate .. " player " .. players[steam].name .. " banned. Blacklisted country " .. country)
@@ -3744,7 +4502,7 @@ function readDNS(steam)
 		end
 	end
 
-	if server.whitelistCountries ~= '' and not whitelistedCountries[country] and (not (whitelist[steam] or players[steam].donor)) and not banned and accessLevel(steam) > 2 then
+	if server.whitelistCountries ~= '' and not whitelistedCountries[country] and (not (whitelist[steam] or isDonor(steam))) and not banned and accessLevel(steam) > 2 then
 		irc_chat(server.ircMain, "Player " .. players[steam].name .. " temp banned 1 month. Country not on whitelist " .. country)
 		irc_chat(server.ircAlerts, server.gameDate .. " player " .. players[steam].name .. " temp banned 1 month. Country not on whitelist " .. country)
 		banPlayer(steam, "1 month", "Sorry, this server uses a whitelist.", "")
@@ -3752,7 +4510,7 @@ function readDNS(steam)
 	end
 
 	if botman.dbConnected then
-		if server.blacklistResponse ~= 'nothing' and exiled and (not (whitelist[steam] or players[steam].donor)) and accessLevel(steam) > 2 then
+		if server.blacklistResponse ~= 'nothing' and exiled and (not (whitelist[steam] or isDonor(steam))) and accessLevel(steam) > 2 then
 			conn:execute("UPDATE players SET country = '" .. escape(country) .. "', exiled = 1, ircTranslate = 1 WHERE steam = " .. steam)
 			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. players[steam].xPos .. "," .. players[steam].yPos .. "," .. players[steam].zPos .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. players[steam].ip  .. "'," .. steam .. ")")
 		end
@@ -4013,32 +4771,14 @@ end
 
 
 function sendPlayerToLobby(steam)
-	-- flag the player to be sent to the lobby if a lobby or spawn location exists.
-	if locations["spawn"] and locations["spawn"].lobby then
-		players[steam].location = "spawn"
-	end
+	local loc
 
-	if locations["Spawn"] and locations["Spawn"].lobby then
-		players[steam].location = "Spawn"
-	end
+	loc = LookupLocation("lobby")
 
-	-- a location called lobby always overrides a location called spawn. Don't have both if you want lobby to be spawn.
-	if locations["lobby"] then
-		players[steam].location = "lobby"
+	if loc then
+		-- we just set a flag.  The actual teleport is handled later when we inspect location.
+		players[steam].location = loc
 		return
-	end
-
-	if locations["Lobby"] then
-		players[steam].location = "Lobby"
-		return
-	end
-
-	-- check for any locations that have been flagged as lobby.  We'll only use the first one we find so there's no point having multiples of them.
-	for k, v in pairs(locations) do
-		if v.lobby then
-			players[steam].location = k
-			return
-		end
 	end
 end
 
@@ -4115,6 +4855,7 @@ end
 
 
 function fixMissingStuff()
+	lfs.mkdir(homedir .. "/telnet_logs")
 	lfs.mkdir(homedir .. "/custom")
 	lfs.mkdir(homedir .. "/daily")
 	lfs.mkdir(homedir .. "/dns")
@@ -4122,6 +4863,7 @@ function fixMissingStuff()
 	lfs.mkdir(homedir .. "/temp")
 	lfs.mkdir(homedir .. "/scripts")
 	lfs.mkdir(homedir .. "/data_backup")
+	lfs.mkdir(homedir .. "/data_backup/players")
 	lfs.mkdir(homedir .. "/chatlogs")
 
 	if botman.chatlogPath then
@@ -4208,12 +4950,10 @@ function saveDisconnectedPlayer(steam)
 	-- update the player record in the database
 	updatePlayer(steam)
 
-	if	botman.db2Connected then
+	if	botman.botsConnected then
 		-- insert or update player in bots db
 		connBots:execute("INSERT INTO players (server, steam, ip, name, online, botid) VALUES ('" .. escape(server.serverName) .. "'," .. steam .. ",'" .. players[steam].ip .. "','" .. escape(players[steam].name) .. "',0," .. server.botID .. ") ON DUPLICATE KEY UPDATE ip = '" .. players[steam].ip .. "', name = '" .. escape(players[steam].name) .. "', online = 0")
 	end
-
-	initReservedSlots()
 end
 
 

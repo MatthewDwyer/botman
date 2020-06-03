@@ -10,9 +10,11 @@
 function pvpPolice(line)
 	local killerScore = 0
 	local victimScore = 0
-	local killerID, victimID, arenaID, score, eventID, debug
+	local killerID, victimID, arenaID, score, eventID, debug, loc
 
 	debug = false
+
+	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
 
 	if botman.botDisabled then
 		return
@@ -26,7 +28,7 @@ function pvpPolice(line)
 		return
 	 end
 
-	r = rand(22)
+	r = rand(23)
 	score = string.format("%.1f", math.random() * 10)
 
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
@@ -109,6 +111,7 @@ function pvpPolice(line)
 		if (r == 20) then message("say [" .. server.chatColour .. "]" .. killerName .. " is formerly living proof of the importance of gun safety.[-]") end
 		if (r == 21) then message("say [" .. server.chatColour .. "]News of " .. killerName .. "'s death spread quickly, at least for a few feet.[-]") end
 		if (r == 22) then message("say [" .. server.chatColour .. "]" .. killerName .. " totally meant to do that.[-]") end
+		if (r == 23) then message("say [" .. server.chatColour .. "]" .. killerName .. " forgot to self-isolate and is now dead.[-]") end
 
 		return
 	else
@@ -133,7 +136,7 @@ function pvpPolice(line)
 
 				players[killerID].pvpBounty = 200
 			else
-				r = rand(25)
+				r = rand(30)
 				if r == 1 then message("say [" .. server.chatColour .. "]" .. killerName .. " once again asserts their dominance in the world.[-]") end
 				if r == 2 then message("say [" .. server.chatColour .. "]" .. killerName .. " strikes a mighty blow against " .. victimName .. "![-]") end
 				if r == 3 then message("say [" .. server.chatColour .. "]" .. killerName .. " fluked that one! " .. victimName .. " will be pissed.[-]") end
@@ -159,6 +162,16 @@ function pvpPolice(line)
 				if r == 23 then message("say [" .. server.chatColour .. "]" .. victimName .. " proves once again that you shouldn't borrow sugar from " .. killerName .. ".[-]") end
 				if r == 24 then message("say [" .. server.chatColour .. "]" .. victimName .. " needs a new hobby. " .. killerName .. " needs a dry clean.[-]") end
 				if r == 25 then message("say [" .. server.chatColour .. "]Oops " .. killerName .. " did it again.[-]") end
+				if r == 26 then message("say [" .. server.chatColour .. "]" .. killerName .. " coughed on " .. victimName .. " killing them proving once again the importance of good oral hygiene.[-]") end
+				if r == 27 then message("say [" .. server.chatColour .. "]" .. victimName .. " should have stayed in bed today, its safer.[-]") end
+				if r == 28 then message("say [" .. server.chatColour .. "]" .. victimName .. " is today's mystery organ donor! Thank you for your support " .. victimName .. ":D[-]") end
+
+				if r == 29 then
+					r = rand(10)
+					message("say [" .. server.chatColour .. "]" .. killerName .. " 'accidentally' ran over " .. victimName .. " " .. r .. " times! " .. killerName .. " is such a careful driver.[-]")
+				end
+
+				if r == 30 then message("say [" .. server.chatColour .. "]" .. victimName .. " met a sticky end at the hands of " .. killerName .. ".  I hope they remembered to bring hand sanitizer.[-]") end
 
 				if server.allowBank and tonumber(players[victimID].pvpBounty) > 0 then
 					message("pm " .. killerID .. " [" .. server.chatColour .. "]You won the bounty on " .. victimName .. "![-]")
@@ -185,7 +198,7 @@ function pvpPolice(line)
 			-- record the pvp in the events table
 			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. igplayers[killerID].xPos .. "," .. igplayers[killerID].yPos .. "," .. igplayers[killerID].zPos .. ",'" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " killed " .. escape(victimName) .. " in a pvp zone'," .. killerID .. ")") end
 
-			if botman.db2Connected then
+			if botman.botsConnected then
 				-- copy in bots db
 				connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " killed " .. escape(victimName) .. " in a pvp zone'," .. killerID .. ")")
 			end
@@ -200,8 +213,10 @@ function pvpPolice(line)
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
 
 		-- arena pvp zone
-		if locations["arena"] ~= nil then
-			if distancexz(igplayers[killerID].xPos, igplayers[killerID].zPos, locations["arena"].x, locations["arena"].z ) < 31 then
+		loc = LookupLocation("arena")
+
+		if loc ~= nil then
+			if distancexz(igplayers[killerID].xPos, igplayers[killerID].zPos, locations[loc].x, locations[loc].z ) < 31 then
 				return
 			end
 		end
@@ -209,9 +224,16 @@ function pvpPolice(line)
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
 
 		-- don't react if player is inside the prison
-		if locations["prison"] ~= nil then
-			if ((math.abs(math.abs(igplayers[killerID].xPos) - math.abs(locations["prison"].x)) < locations["prison"].size) or (math.abs(math.abs(igplayers[killerID].zPos) - math.abs(locations["prison"].z)) < locations["prison"].size)) then
-				return
+		loc = LookupLocation("prison")
+		if loc ~= nil then
+			if not locations[loc].isRound then
+				if (math.abs(locations[loc].x-igplayers[killerID].xPos) <= tonumber(locations[loc].size) and math.abs(locations[loc].z-igplayers[killerID].zPos) <= tonumber(locations[loc].size)) then
+					return
+				end
+			else
+				if insideCircle(igplayers[killerID].xPos, igplayers[killerID].zPos, locations[loc].x, locations[loc].z, locations[loc].size) then
+					return
+				end
 			end
 		end
 
@@ -238,7 +260,7 @@ function pvpPolice(line)
 			message("say [" .. server.chatColour .. "]PvP is not allowed outside of PVP zones! However " .. killerName .. " is authorised to PVP[-]")
 			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. igplayers[victimID].xPos .. "," .. igplayers[victimID].yPos .. "," .. igplayers[victimID].zPos .. ",'" .. botman.serverTime .. "','pvp','Admin " .. escape(killerName) .. " killed " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")") end
 
-			if botman.db2Connected then
+			if botman.botsConnected then
 				-- copy in bots db
 				connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','pvp','Admin " .. escape(killerName) .. " killed " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")")
 			end
@@ -254,7 +276,7 @@ function pvpPolice(line)
 			irc_chat(server.ircAlerts, killerID .. " " .. killerName .. " killed new player " .. victimID .. " " .. victimName .. ".  No arrest made. Killer's location was " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos)
 			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. igplayers[victimID].xPos .. "," .. igplayers[victimID].yPos .. "," .. igplayers[victimID].zPos .. ",'" .. botman.serverTime .. "','pvp','" .. escape(killerName) .. " killed new player " .. escape(victimName) .. ".  No arrest made. Killer's location was " .. igplayers[victimID].xPos .. " " .. igplayers[victimID].yPos .. " " .. igplayers[victimID].zPos .. "'," .. killerID .. ")") end
 
-			if botman.db2Connected then
+			if botman.botsConnected then
 				-- copy in bots db
 				connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','pvp','" .. escape(killerName) .. " killed new player " .. escape(victimName) .. ".  No arrest made. Killer's location was " .. igplayers[victimID].xPos .. " " .. igplayers[victimID].yPos .. " " .. igplayers[victimID].zPos .. "'," .. killerID .. ")")
 			end
@@ -264,7 +286,8 @@ function pvpPolice(line)
 
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
 
-		if locations["prison"] ~= nil then
+		loc = LookupLocation("prison")
+		if loc ~= nil then
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
 			players[killerID].xPosOld = igplayers[killerID].xPos
 			players[killerID].yPosOld = igplayers[killerID].yPos
@@ -295,7 +318,7 @@ function pvpPolice(line)
 
 			if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. igplayers[killerID].xPos .. "," .. igplayers[killerID].yPos .. "," .. igplayers[killerID].zPos .. ",'" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " sent to prison for killing " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")") end
 
-			if botman.db2Connected then
+			if botman.botsConnected then
 				-- copy in bots db
 				connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " sent to prison for killing " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")")
 			end
@@ -314,16 +337,16 @@ function pvpPolice(line)
 					return
 				end
 
-				message("say [" .. server.chatColour .. "]" .. killerName .. " has been banned for 1 hour, charged with PVP.  Contact an admin to get them unbanned any sooner.[-]")
-				irc_chat(server.ircAlerts, killerID .. " " .. killerName .. " has been banned for 1 hour, charged with PVP at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos)
+				message("say [" .. server.chatColour .. "]" .. killerName .. " has been banned for " .. server.pvpTempBanCooldown .. " minutes, charged with PVP.  Contact an admin to get them unbanned any sooner.[-]")
+				irc_chat(server.ircAlerts, killerID .. " " .. killerName .. " has been banned for " .. server.pvpTempBanCooldown .. " minutes, charged with PVP at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos)
 				kick(killerID, "This is a PVE server.  PVP somewhere else.  An admin may unban you pending the circumstances of the pvp.")
-				banPlayer(killerID, "1 hour", "PVP", "")
+				banPlayer(killerID, server.pvpTempBanCooldown .. " minutes", "PVP", "")
 
-				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. igplayers[killerID].xPos .. "," .. igplayers[killerID].yPos .. "," .. igplayers[killerID].zPos .. ",'" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " banned 1 hour for killing " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")") end
+				if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. igplayers[killerID].xPos .. "," .. igplayers[killerID].yPos .. "," .. igplayers[killerID].zPos .. ",'" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " banned " .. server.pvpTempBanCooldown .. " minutes for killing " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")") end
 
-				if botman.db2Connected then
+				if botman.botsConnected then
 					-- copy in bots db
-					connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " banned 1 hour for killing " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")")
+					connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','pvp','Player " .. escape(killerName) .. " banned " .. server.pvpTempBanCooldown .. " minutes for killing " .. escape(victimName) .. " at " .. igplayers[killerID].xPos .. " " .. igplayers[killerID].yPos .. " " .. igplayers[killerID].zPos .. "'," .. killerID .. ")")
 				end
 			end
 		end

@@ -30,13 +30,16 @@ function gmsg_locations()
 			help[1] = " {#}location add {name}"
 			help[2] = "Create a location where you are standing.  Unless you add random spawns, any player teleporting to the location will arrive at your current position.  If you are not on the ground, make sure the players can survive the landing."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,add,crea,make"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,add,crea,make"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -45,6 +48,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -84,6 +88,17 @@ function gmsg_locations()
 				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','location added','Location " .. escape(locationName) .. " added'," .. chatvars.playerid .. ")")
 				message("say [" .. server.chatColour .. "]" .. chatvars.playername .. " has created a location called " .. locationName .. "[-]")
 
+				-- if location is spawn or lobby, update all in-game players so they don't automatically get moved to lobby or spawn.  We only want that to happen to new players that haven't already joined.
+				loc = string.lower(locationName)
+
+				if (loc == "lobby" or loc == "spawn") then
+					for k,v in pairs(igplayers) do
+						if players[k].location == loc then
+							players[k].location = ""
+						end
+					end
+				end
+
 				loadLocations(locationName)
 				locations[locationName].pvp = pvp
 			end
@@ -100,13 +115,16 @@ function gmsg_locations()
 			help[1] = " {#}location categories"
 			help[2] = "List the location categories. Only admins see the access level restrictions"
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,,cat,list"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,,cat,list"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -115,6 +133,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -155,13 +174,16 @@ function gmsg_locations()
 			help[1] = " {#}locations"
 			help[2] = "List the locations and basic info about them."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,list"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,list"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -170,6 +192,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -281,7 +304,7 @@ function gmsg_locations()
 
 
 	local function cmd_Lobby()
-		local playerName, isArchived, lobby, k, v
+		local playerName, isArchived, lobby, k, v, loc
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -290,13 +313,16 @@ function gmsg_locations()
 			help[2] = help[2] .. "If location spawn exists and lobby does not, spawn is the lobby location.\n"
 			help[2] = help[2] .. "If a location has been assigned as the lobby and there isn't a location called lobby or spawn, it will be used instead."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,lobby,spawn,tele,tp,start,play,new"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,lobby,spawn,tele,tp,start,play,new"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -305,6 +331,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -328,21 +355,12 @@ function gmsg_locations()
 			end
 
 			-- use spawn as a substitute for lobby
-			if locations["spawn"] or locations["Spawn"] then
-				lobby = LookupLocation("spawn")
-			end
+			lobby = LookupLocation("spawn")
 
 			-- if lobby exists, use it
-			if locations["lobby"] or locations["Lobby"] then
-				lobby = LookupLocation("lobby")
-			end
-
-			if not lobby then
-				for k,v in pairs(locations) do
-					if v.lobby then
-						lobby = k
-					end
-				end
+			loc = LookupLocation("lobby")
+			if loc ~= nil then
+				lobby = loc
 			end
 
 			if not lobby then
@@ -425,13 +443,16 @@ function gmsg_locations()
 			help[1] = " {#}location clear reset {location name}"
 			help[2] = "Remove the reset zone flag.  Unless otherwise restricted, players will be allowed to place claims and setbase."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,clear,set"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,clear,set"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -440,6 +461,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -505,13 +527,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name} clear"
 			help[2] = "Delete all random spawns for the location."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,clear,spawn"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,clear,spawn"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -520,6 +545,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -579,13 +605,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name} ends here"
 			help[2] = "Set the size of the location as the difference between your position and the centre of the location. Handy for setting it visually."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,set,end,size"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,set,end,size"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -594,6 +623,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -646,13 +676,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name}"
 			help[2] = "See detailed information about a location including a list of players currently in it."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,view,info"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,view,info"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -661,6 +694,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -760,13 +794,16 @@ function gmsg_locations()
 			help[2] = help[2] .. "You can record random spawns anywhere and more than once but remember to type stop after each recording or the bot will continue recording your movement and making spawn points from them.\n"
 			help[2] = help[2] .. "The spawns do not have to be inside the location and you can make groups of spawns anywhere in the world for the location."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,set,spawn,rand"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,set,spawn,rand"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -775,6 +812,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -823,13 +861,16 @@ function gmsg_locations()
 			help[1] = " {#}location set reset {name}"
 			help[2] = "Flag the location as a reset zone.  The bot will warn players not to build in it and will block {#}setbase and will remove placed claims of non-staff."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,reset,zone,set"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,reset,zone,set"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -838,6 +879,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -905,13 +947,16 @@ function gmsg_locations()
 			help[2] = help[2] .. "If you are not on the ground, make sure the players can survive the landing.  If there are existing random spawns for the location, moving it will not move them.\n"
 			help[2] = help[2] .. "You should clear them and redo them using {#}location {name} clear and {#}location {name} random."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,add,crea,make"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,add,crea,make"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -920,6 +965,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -971,13 +1017,16 @@ function gmsg_locations()
 			help[1] = " {#}protect location"
 			help[2] = "Tell the bot to protect the location that you are in. It will instruct you what to do and will tell you when the location is protected."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,prot"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,prot"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -986,6 +1035,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1025,13 +1075,16 @@ function gmsg_locations()
 			help[1] = " {#}location remove {name}"
 			help[2] = "Delete the location and all of its spawnpoints."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,dele,remov"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,dele,remov"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1040,6 +1093,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1118,13 +1172,16 @@ function gmsg_locations()
 			help[1] = " {#}location {old name} rename {new name}"
 			help[2] = "Change an existing location's name to something else."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,name"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,name"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1133,6 +1190,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1223,13 +1281,16 @@ function gmsg_locations()
 			help[1] = help[1] .. " {#}location {name} clear category"
 			help[2] = "Set or clear a category for a location.  If the category doesn't exist it is created."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,set,clear,cat"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,set,clear,cat"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1238,6 +1299,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1372,13 +1434,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name} access {minimum access level}"
 			help[2] = "Set the minimum access level required to teleport to the location."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,set,acc,limit,restr,block,deny,max,leve"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,set,acc,limit,restr,block,deny,max,leve"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1387,6 +1452,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1450,13 +1516,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name} close {0-23}"
 			help[2] = "Block and remove players from the location from a set hour."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,close,set,open"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,close,set,open"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1465,6 +1534,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1550,13 +1620,16 @@ function gmsg_locations()
 			help[1] = " {#}set location {name} cooldown {number in seconds}"
 			help[2] = "After teleporting to the location, players won't be able to teleport back to it until the cooldown timer expires."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,set,cool,time"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,set,cool,time"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1565,6 +1638,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1622,13 +1696,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name} cost {number}"
 			help[2] = "Require the player to have {number} " .. server.moneyPlural .. " to teleport there.  The " .. server.moneyPlural .. " are removed from the player afterwards."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,set,game"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,set,game"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1637,6 +1714,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1666,9 +1744,9 @@ function gmsg_locations()
 			if chatvars.number ~= nil and loc ~= nil then
 				locations[loc].cost = math.floor(tonumber(chatvars.number))
 	-- TODO:  Look for the word currency and grab what follows it as the item to require an amount (cost) of.
-				if locations[loc].currency == nil then
+				--if locations[loc].currency == nil then
 					locations[loc].currency = server.moneyPlural
-				end
+				--end
 
 				conn:execute("UPDATE locations set cost = " .. math.floor(tonumber(chatvars.number)) .. ", currency = '" .. escape(locations[loc].currency) .. "' WHERE name = '" .. escape(locationName) .. "'")
 
@@ -1699,13 +1777,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name} day closed {0-7}"
 			help[2] = "Block and remove players from the location on a set day. Disable this feature by setting it to 0."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,close,set,open"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,close,set,open"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1714,6 +1795,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1785,13 +1867,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name} minigame {game type}"
 			help[2] = "Flag the location as part of a minigame such as capture the flag.  The minigame is an unfinished idea so this command doesn't do much yet."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,set,game"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,set,game"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1800,6 +1885,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1867,13 +1953,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name} open {0-23}"
 			help[2] = "Allow players inside the location from a set hour."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,close,set,open"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,close,set,open"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1882,6 +1971,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1964,13 +2054,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name} owner {player name}"
 			help[2] = "Assign ownership of a location to a player.  They will be able to set protect on it and players not friended to them won't be able to teleport there."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,set,own,assign"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,set,own,assign"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1979,6 +2072,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2054,13 +2148,16 @@ function gmsg_locations()
 			help[1] = help[1] .. " {#}location {name} min level {minimum player level} max level {maximum player level}"
 			help[2] = "Set a player level requirement to teleport to a location."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,leve,acce"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,leve,acce"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2069,6 +2166,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2192,13 +2290,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name} size {number}"
 			help[2] = "Set the size of the location measured from its centre.  To make a 200 metre location set it to 100."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,set,size"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,set,size"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2207,6 +2308,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2271,13 +2373,16 @@ function gmsg_locations()
 			help[2] = "Create a single random teleport for the location you are in or if you are recording random teleports, it will set for that location.\n"
 			help[2] = help[2] .. "If you provide a location name you will create 1 random TP for that location where you are standing."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,set,spawn,tp,point"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,set,spawn,tp,point"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -2286,6 +2391,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2344,13 +2450,16 @@ function gmsg_locations()
 			help[1] = help[1] .. " {#}location disallow/deny/block base {location name}"
 			help[2] = "Allow players to {#}setbase in the location or block that."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,base,home,allow,enable,block,deny"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,base,home,allow,enable,block,deny"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2359,6 +2468,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2435,13 +2545,16 @@ function gmsg_locations()
 			help[1] = " {#}location enable/disable {name}"
 			help[2] = "Flag the location as enabled or disabled. Currently this flag isn't used and you can ignore this command."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,able,on,off"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,able,on,off"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2450,6 +2563,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2526,13 +2640,16 @@ function gmsg_locations()
 			help[1] = " {#}location hide/unhide {name}"
 			help[2] = "Flag the location as hidden or unhidden. Hidden locations are only shown to admins when using the {#}locations command."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,hide"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,hide"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2541,6 +2658,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2618,13 +2736,16 @@ function gmsg_locations()
 			help[2] = "Flag the location as the lobby or not the lobby. New players will be sent to this location when they spawn if it is flagged as lobby.  Only one location will be used so flagging more will not make them all the lobby.\n"
 			help[2] = help[2] .. "To do that use {#}set tp {location}.  This will add a random teleport destination for the location.  You can set as many as you want."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,lobby"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,lobby"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2633,6 +2754,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2710,13 +2832,16 @@ function gmsg_locations()
 			help[2] = "Locations are circles by default with a central coord and a radius.  You can make the location a square (with equal sides).\n"
 			help[2] = help[2] .. "The location's size is always its radius."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,togg,set,square,round,circ,rect"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,togg,set,square,round,circ,rect"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2725,6 +2850,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2801,13 +2927,16 @@ function gmsg_locations()
 			help[1] = " {#}location p2p enable/disable {name} (default is enabled)"
 			help[2] = "When disabled, players will not be able to teleport to friends or fetch friends in the location."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,p2p,able,set"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,p2p,able,set"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2816,6 +2945,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2892,13 +3022,16 @@ function gmsg_locations()
 			help[1] = " {#}location pack enable/disable {name} (default is enabled)"
 			help[2] = "When disabled, the {#}pack command will not work if the player died inside the location."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,pack,able,set"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,pack,able,set"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2907,6 +3040,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2983,13 +3117,16 @@ function gmsg_locations()
 			help[1] = " {#}location private/public {name} (default is private)"
 			help[2] = "Flag the location as private or public.  Players can only use public locations."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,priv,pub,set"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,priv,pub,set"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2998,6 +3135,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3076,13 +3214,16 @@ function gmsg_locations()
 			help[1] = help[1] .. " {#}location {name} pve"
 			help[2] = "Change the rules at a location to pvp or pve."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,pve,pvp,set"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,pve,pvp,set"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3091,6 +3232,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3160,13 +3302,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name} enable (or disable) returns"
 			help[2] = "Enable or disable the return command for a location."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,retu,able"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,retu,able"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3175,6 +3320,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3241,13 +3387,16 @@ function gmsg_locations()
 			help[2] = help[2] .. "To prevent this feature spamming the server it is triggered every 30 seconds. When there are more than 10 players it changes to every minute.\n"
 			help[2] = help[2] .. "If you have StompyNZ's Bad Company mod, the bot will instantly despawn zombies that spawn inside the zone. Walk-in zombies are detected as above."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,safe,zone"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,safe,zone"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3256,6 +3405,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3337,13 +3487,16 @@ function gmsg_locations()
 			help[2] = "Set a location to report player activity regardless of other player watch settings, or not.  The default is to not watch players.\n"
 			help[2] = help[2] .. "Use this setting to be alerted whenever a player enters/exits a watched location or their inventory changes while in it."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,watch,play"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,watch,play"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3352,6 +3505,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3418,13 +3572,16 @@ function gmsg_locations()
 			help[1] = " {#}location {name} enable (or disable) waypoints"
 			help[2] = "Block or allow players to set waypoints in the location."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,wayp,able"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,wayp,able"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3433,6 +3590,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3497,13 +3655,16 @@ function gmsg_locations()
 			help[1] = " {#}show/hide locations"
 			help[2] = "Normally when you enter and leave a location you will see a private message informing you of this.  You can disable the message."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,show,hide"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,show,hide"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3512,6 +3673,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3566,13 +3728,16 @@ function gmsg_locations()
 			help[1] = " {#}unprotect location {optional name}"
 			help[2] = "Remove bot protection from the location. You can leave out the location name if you are in the location."
 
+			tmp.command = help[1]
+			tmp.keywords = "locat,prot"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "locat,prot"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3581,6 +3746,7 @@ function gmsg_locations()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3641,7 +3807,6 @@ function gmsg_locations()
 		irc_chat(chatvars.ircAlias, "===== Registering help - location commands ====")
 		if debug then dbug("Registering help - location commands") end
 
-		tmp = {}
 		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'locations'")
 		rows = cursor:numrows()
 		if rows == 0 then
@@ -4068,37 +4233,7 @@ function gmsg_locations()
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
 
 	-- look for command in locations table
-
-	-- if a location called spawn exists and lobby does not, substitute lobby with spawn
-	if chatvars.words[1] == "spawn" and chatvars.words[2] == nil then
-		if locations["lobby"] and not locations["spawn"] then
-			chatvars.command = "lobby"
-		end
-	end
-
-	-- if a location called lobby exists and spawn does not, substitute spawn with lobby
-	-- alternatively if a location has been assigned as lobby, use it.
-	if chatvars.words[1] == "lobby" then
-		if locations["spawn"] and not locations["lobby"] then
-			chatvars.command = "spawn"
-		else
-			for k,v in pairs(locations) do
-				if v.lobby then
-					chatvars.command = k
-				end
-			end
-		end
-	end
-
 	loc = LookupLocation(chatvars.command)
-
-	if loc == nil and (string.find(chatvars.command, "lobby") or string.find(chatvars.command, "spawn")) and chatvars.wordCount == 1 then
-		for k,v in pairs(locations) do
-			if v.lobby then
-				loc = k
-			end
-		end
-	end
 
 	if (loc ~= nil) then
 		-- reject if not an admin and server is in hardcore mode
@@ -4144,7 +4279,7 @@ function gmsg_locations()
 					botman.faultyChat = false
 					return true
 				else
-					if players[chatvars.playerid].donor then
+					if isDonor(chatvars.playerid) then
 						players[chatvars.playerid].baseCooldown = (os.time() + math.floor(tonumber(server.baseCooldown) / 2))
 					else
 						players[chatvars.playerid].baseCooldown = (os.time() + server.baseCooldown)

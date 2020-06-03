@@ -32,13 +32,16 @@ function gmsg_friends()
 			help[1] = " {#}friend {player}"
 			help[2] = "Tell the bot that a player is your friend.  The bot can also read your friend list directly from the game.  If you only friend them using this command, they will not be friended on the server itself only in the bot."
 
+			tmp.command = help[1]
+			tmp.keywords = "add,friend"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "add,friend"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -47,6 +50,7 @@ function gmsg_friends()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -108,13 +112,16 @@ function gmsg_friends()
 			help[1] = " {#}clear friends {player} (only admins can specify a player)"
 			help[2] = "Clear your friends list.  Note that this does not unfriend players that you friended via your game.  You will need to unfriend those players there yourself."
 
+			tmp.command = help[1]
+			tmp.keywords = "del,remo,forget,friend"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "del,remo,forget,friend"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -123,6 +130,7 @@ function gmsg_friends()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -183,13 +191,16 @@ function gmsg_friends()
 			help[1] = " {#}friendme {player}"
 			help[2] = "Admins can force a player to be their friend with this command.  It only applies to the bot, not the game itself."
 
+			tmp.command = help[1]
+			tmp.keywords = "add,friend"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "add,friend"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -198,6 +209,7 @@ function gmsg_friends()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -261,13 +273,16 @@ function gmsg_friends()
 			help[1] = help[1] .. "eg. {#}player joe friend mary"
 			help[2] = "Admins can force a player to friend another player with this command.  It only applies to the bot, not the game itself."
 
+			tmp.command = help[1]
+			tmp.keywords = "add,friend"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "add,friend"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -276,6 +291,7 @@ function gmsg_friends()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -368,13 +384,16 @@ function gmsg_friends()
 			help[1] = " {#}friends {player} (only admins can specify a player)"
 			help[2] = "List your friends."
 
+			tmp.command = help[1]
+			tmp.keywords = "list,friend"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "list,friend"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -383,6 +402,7 @@ function gmsg_friends()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -470,13 +490,16 @@ function gmsg_friends()
 			help[1] = " {#}unfriend {player}"
 			help[2] = "Unfriend a player."
 
+			tmp.command = help[1]
+			tmp.keywords = "remo,del,friend"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "remo,del,friend"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -485,6 +508,7 @@ function gmsg_friends()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -572,13 +596,16 @@ function gmsg_friends()
 			help[1] = help[1] .. " {#}unfriendme everyone"
 			help[2] = "Unfriend a player or everyone.  This command is for admins only."
 
+			tmp.command = help[1]
+			tmp.keywords = "remo,del,friend"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "remo,del,friend"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -587,6 +614,7 @@ function gmsg_friends()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -665,7 +693,6 @@ function gmsg_friends()
 		irc_chat(chatvars.ircAlias, "==== Registering help - friend commands ====")
 		if debug then dbug("Registering help - friend commands") end
 
-		tmp = {}
 		tmp.topicDescription = "These commands are adding/removing or viewing a player's friends."
 
 		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'friends'")

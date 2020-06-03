@@ -8,17 +8,7 @@
 --]]
 
 function OneSecondTimer()
-	if not server.readLogUsingTelnet then
-		if server.useAllocsWebAPI and not botman.APIOffline then
-			if not botman.lastLogRead then
-				botman.lastLogRead = os.time()
-				getAPILogUpdates()
-			else
-				if os.time() - botman.lastLogRead > server.logPollingInterval then
-					botman.lastLogRead = os.time()
-					getAPILogUpdates()
-				end
-			end
-		end
+	if botman.serverTimeStamp then
+		calcCurrentServerTime()
 	end
 end

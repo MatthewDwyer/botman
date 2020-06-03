@@ -8,17 +8,13 @@
 --]]
 
 function TenMinuteTimer()
-	if tonumber(botman.playersOnline) <= 0 then
+	if tonumber(server.uptime) == 0 then
 		if server.botman then
 			sendCommand("bm-uptime")
 		end
 
 		if not server.botman and server.stompy then
 			sendCommand("bc-time")
-		end
-
-		if not server.botman and not server.stompy then
-			sendCommand("mem")
 		end
 	end
 

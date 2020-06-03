@@ -8,7 +8,7 @@
 --]]
 
 function playerQueuedCommands()
-	local cursor, errorString, row, k, v, a, b, steam, command, dist
+	local cursor, errorString, row, k, v, a, b, steam, command, dist, arena
 
 	if botman.botDisabled or botman.botOffline or server.lagged or not botman.dbConnected or not botman.arenaCount then
 		return
@@ -27,6 +27,8 @@ function playerQueuedCommands()
 	row = cursor:fetch({}, "a")
 
 	if row then
+		arena = LookupLocation("arena")
+
 		while row do
 			steam = row.steam
 			command = row.command
@@ -42,9 +44,9 @@ function playerQueuedCommands()
 					resetGimmeArena()
 				else
 					for a, b in pairs(arenaPlayers) do
-						dist = distancexz(igplayers[a].xPos, igplayers[a].zPos, locations["arena"].x, locations["arena"].z)
+						dist = distancexz(igplayers[a].xPos, igplayers[a].zPos, locations[arena].x, locations[arena].z)
 
-						if (tonumber(dist) <= tonumber(locations["arena"].size)) then
+						if (tonumber(dist) <= tonumber(locations[arena].size)) then
 							message("pm " .. b.steam .. " [" .. server.chatColour .. "]" .. command .. "[-]")
 						end
 					end
@@ -61,7 +63,7 @@ function playerQueuedCommands()
 				end
 			end
 
-			if (distancexz(igplayers[steam].xPos, igplayers[steam].zPos, locations["arena"].x, locations["arena"].z ) > locations["arena"].size + 1 or igplayers[steam].deadX ~= nil) then
+			if (distancexz(igplayers[steam].xPos, igplayers[steam].zPos, locations[arena].x, locations[arena].z ) > locations[arena].size + 1 or igplayers[steam].deadX ~= nil) then
 				-- destroy the command without sending it
 				conn:execute("delete from playerQueue where id = " .. row.id)
 				return

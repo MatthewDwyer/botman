@@ -191,13 +191,13 @@ function baseProtection(steam, posX, posY, posZ)
 
 							-- do the base protection magic
 
-							-- if base owner's donor status expired a week or more ago, disable protection
-							if (v.protect2 and v.protect2 == true) and v.home2X ~= 0 and v.home2Y ~= 0 and v.home2Z ~= 0 then
-								if os.time() - tonumber(players[k].donorExpiry) > (60 * 60 * 24 * 7) then
-									players[k].protect2 = false
-									if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. k) end
-								end
-							end
+							-- -- if base owner's donor status expired a week or more ago, disable protection
+							-- if (v.protect2 and v.protect2 == true) and v.home2X ~= 0 and v.home2Y ~= 0 and v.home2Z ~= 0 then
+								-- if os.time() - tonumber(players[k].donorExpiry) > (60 * 60 * 24 * 7) then
+									-- players[k].protect2 = false
+									-- if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. k) end
+								-- end
+							-- end
 
 							if (v.protect2 and v.protect2Size and v.protect2 == true and not v.protect2Paused) and v.home2X ~= 0 and v.home2Y ~= 0 and v.home2Z ~= 0 then
 								irc_chat(server.ircAlerts, "base protection triggered for base2 of " .. players[k].name .. " " .. k .. " against " .. players[steam].name .. " " .. steam)

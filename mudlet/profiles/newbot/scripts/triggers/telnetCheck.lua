@@ -7,9 +7,10 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
+-- no longer need this function
 function flagTelnetOnline()
-	botman.lastServerResponseTimestamp = os.time()
-	botman.lastTelnetResponseTimestamp = os.time()
-	botman.telnetOffline = false
-	botman.telnetOfflineCount = 0
+	-- botman.lastServerResponseTimestamp = os.time()
+	-- botman.lastTelnetResponseTimestamp = os.time()
+	-- botman.telnetOffline = false
+	-- botman.telnetOfflineCount = 0
 end

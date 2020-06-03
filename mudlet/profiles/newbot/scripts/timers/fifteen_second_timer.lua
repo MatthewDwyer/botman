@@ -21,16 +21,14 @@ function FifteenSecondTimer()
 	end
 
 	-- force a re-test of the connection to the bot's database
-	botman.dbConnected = false
 	botman.dbConnected = isDBConnected()
 
-	if not botman.db2Connected then
+	if not botman.botsConnected then
 		openBotsDB()
 	end
 
 	-- force a re-test of the connection to the shared database called bots
-	botman.db2Connected = false
-	botman.db2Connected = isDBBotsConnected()
+	botman.botsConnected = isDBBotsConnected()
 
 	if not server.lagged then
 		if tonumber(botman.playersOnline) > 24 then

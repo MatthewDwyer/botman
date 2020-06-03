@@ -42,7 +42,7 @@ function collectBan(line)
 		if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",STR_TO_DATE('" .. expiryDate .. "', '%Y%m%d %H:%i:%s')") end
 	end
 
-	if botman.db2Connected then
+	if botman.botsConnected then
 		-- update the ban on bots db to fill in the missing bannedTo field since we didn't calculate it earlier
 		connBots:execute("UPDATE bans set bannedTo = '" .. bannedTo .. "' WHERE bannedTo = 'MISSING' AND botID = '" .. server.botID .. "'")
 	end

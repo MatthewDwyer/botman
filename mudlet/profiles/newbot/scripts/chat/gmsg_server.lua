@@ -31,13 +31,16 @@ function gmsg_server()
 			help[1] = " {#}cancel reboot"
 			help[2] = "Cancel a scheduled reboot.  You may not be able to stop a forced or automatically scheduled reboot but you can pause it instead."
 
+			tmp.command = help[1]
+			tmp.keywords = "reboo,shut,canc,stop"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "reboo,shut,canc,stop"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -46,6 +49,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -113,13 +117,16 @@ function gmsg_server()
 			help[1] = " {#}join server {ip} port {telnet port} pass {telnet password}"
 			help[2] = "Tell the bot to join a different game server."
 
+			tmp.command = help[1]
+			tmp.keywords = "server,join,new,change,ip,port,pass"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "server,join,new,change,ip,port,pass"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -128,6 +135,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -186,13 +194,16 @@ function gmsg_server()
 			help[1] = " {#}pause reboot"
 			help[2] = "Pause a scheduled reboot.  It will stay paused until you unpause it or restart the bot."
 
+			tmp.command = help[1]
+			tmp.keywords = "server,rebo,pause,resu"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "server,rebo,pause,resu"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -201,6 +212,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -247,13 +259,16 @@ function gmsg_server()
 			help[2] = "Sometimes you need to make the bot run a specific console command.\n"
 			help[2] = help[2] .. "This can be used to force the bot re-parse a list.  Only server owners can do this."
 
+			tmp.command = help[1]
+			tmp.keywords = "bot,run,comm,cons"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "bot,run,comm,cons"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -262,6 +277,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -300,13 +316,16 @@ function gmsg_server()
 			help[2] = help[2] .. "eg. {#}sayfr Hello.  The bot will say Smegz0r: Bonjour\n"
 			help[2] = help[2] .. "Note: This uses Google and due to the number of bots I host, it is not installed on my servers as I don't want to risk an invoice from them.\n"
 
+			tmp.command = help[1]
+			tmp.keywords = "bot,run,comm,cons"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "bot,run,comm,cons"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -315,6 +334,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -346,13 +366,16 @@ function gmsg_server()
 			help[2] = help[2] .. "Just before the reboot happens, the bot issues a save command. If you add forced, only a level 0 admin can stop the reboot.\n"
 			help[2] = help[2] .. "Shutting down the bot will also cancel a reboot but any automatic (timed) reboots will reschedule if the server wasn't also restarted."
 
+			tmp.command = help[1]
+			tmp.keywords = "server,rebo,now,time,sched"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "server,rebo,now,time,sched"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -361,6 +384,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -458,6 +482,8 @@ function gmsg_server()
 			botman.scheduledRestartPaused = false
 			botman.scheduledRestart = true
 			botman.scheduledRestartTimestamp = os.time() + restartDelay
+			botman.nextRebootTest = nil
+
 			botman.faultyChat = false
 			return true
 		end
@@ -471,13 +497,16 @@ function gmsg_server()
 			help[2] = "All players have an access level which governs what they can do.  You can override it for everyone to temporarily raise their access.\n"
 			help[2] = help[2] .. "eg. {#}overide access 10 would make all players donors until you restore it.  To do that type {#}override access 99.  This is faster than giving individual players donor access if you just want to do a free donor weekend."
 
+			tmp.command = help[1]
+			tmp.keywords = "bot,acce,over,set"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "bot,acce,over,set"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -486,6 +515,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -545,13 +575,16 @@ function gmsg_server()
 			help[2] = "The bot will archive players who haven't played in 60 days except for admins.  You can disable this feature by setting it to 0.\n"
 			help[2] = help[2] .. "The bot will archive players at startup or if you use the command {#}archive players."
 
+			tmp.command = help[1]
+			tmp.keywords = "bot,set,arch,day,play,seen"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "bot,set,arch,day,play,seen"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -560,6 +593,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -616,13 +650,16 @@ function gmsg_server()
 			help[1] = " {#}set bail {number}"
 			help[2] = "Set how many " .. server.moneyPlural .. " it costs to bail out of prison.  To disable bail set it to zero (the default)"
 
+			tmp.command = help[1]
+			tmp.keywords = "set,bail,prison,cost,amount,price"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,bail,prison,cost,amount,price"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -631,6 +668,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -693,13 +731,16 @@ function gmsg_server()
 			help[2] = "Display the current message of the day.  If an admin types anything after {#}motd the typed text becomes the new MOTD.\n"
 			help[2] = help[2] .. "To remove it type {#}motd clear"
 
+			tmp.command = help[1]
+			tmp.keywords = "set,motd,mess,day"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,motd,mess,day"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -708,6 +749,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -780,13 +822,16 @@ function gmsg_server()
 			help[1] = " {#}set idle kick {seconds} (default 900. 15 minutes)"
 			help[2] = "How many seconds a player can be idle for before being kicked from the server. Does not include joining players that have not spawned yet."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,idle,kick,time,delay"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,idle,kick,time,delay"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -795,6 +840,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -863,13 +909,16 @@ function gmsg_server()
 			help[1] = " {#}set irc main (or alerts or watch) {channel name without a # sign}"
 			help[2] = "Change the bot's IRC channels."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,irc,web,chan,main,alert,watc"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,irc,web,chan,main,alert,watc"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -878,6 +927,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -953,13 +1003,16 @@ function gmsg_server()
 			help[1] = " {#}set irc nick {bot name}"
 			help[2] = "Change the bot's IRC nickname. Sometimes it can have a nick collision with itself and it gets an underscore appended to it."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,irc,nick,name"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,irc,nick,name"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -968,6 +1021,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1023,13 +1077,16 @@ function gmsg_server()
 			help[1] = " {#}set irc server {IP or URL and optional port}"
 			help[2] = "Use this command if you want players to know your IRC server's address."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,irc,server,port"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,irc,server,port"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1038,6 +1095,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1104,13 +1162,16 @@ function gmsg_server()
 			help[2] = help[2] .. "Size is in metres (blocks) and be careful not to set it too small.  The default map size is 10000 but the bot's default is 20000.\n"
 			help[2] = help[2] .. "Whatever size you set, donors will be able to travel 5km futher out so the true boundary is +5000."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,map,size,limit,bound"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,map,size,limit,bound"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1119,6 +1180,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1160,13 +1222,16 @@ function gmsg_server()
 			help[1] = " {#}set max animals {number}"
 			help[2] = "Change the server's max spawned animals."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,max,anim,enti"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,max,anim,enti"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1175,6 +1240,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1233,13 +1299,16 @@ function gmsg_server()
 			help[2] = "To kick high ping players set a max ping.  It will only be applied to new players. You can also whitelist a new player to make them exempt.\n"
 			help[2] = help[2] .. "The bot doesn't immediately kick for high ping, it samples ping over 30 seconds and will only kick for a sustained high ping."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,max,ping,kick"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,max,ping,kick"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1248,6 +1317,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1315,13 +1385,16 @@ function gmsg_server()
 			help[1] = " {#}set max players {number}"
 			help[2] = "Change the server's max players. Admins can always join using the automated reserved slots feature."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,max,play"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,max,play"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1330,6 +1403,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1384,13 +1458,16 @@ function gmsg_server()
 			help[1] = help[1] .. " {#}max uptime (to see it)"
 			help[2] = "Set how long (in hours) that the server can be running before the bot schedules a reboot.  The bot will always add 15 minutes as the reboot is only scheduled at that time."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,max,upt"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,max,upt"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1399,6 +1476,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1470,13 +1548,16 @@ function gmsg_server()
 			help[1] = " {#}set max zombies {number}"
 			help[2] = "Change the server's max spawned zombies."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,max,zed,zom"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,max,zed,zom"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1485,6 +1566,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1543,13 +1625,16 @@ function gmsg_server()
 			help[2] = "By default a new player is automatically upgraded to a regular player once they pass level 9.\n"
 			help[2] = help[2] .. "Use this command to change it to a different player level."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,new,play,max,level"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,new,play,max,level"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1558,6 +1643,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1618,13 +1704,16 @@ function gmsg_server()
 			help[2] = "By default a new player is treated differently from regulars and has some restrictions placed on them mainly concerning inventory.\n"
 			help[2] = help[2] .. "Set it to 0 to disable this feature."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,new,play,time"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,new,play,time"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1633,6 +1722,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1693,13 +1783,16 @@ function gmsg_server()
 			help[1] = " {#}set overstack {number} (default 1000)"
 			help[2] = "Sets the maximum stack size before the bot will warn a player about overstacking.  Usually the bot learns this directly from the server as stack sizes are exceeded."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,over,stack,time"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,over,stack,time"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1708,6 +1801,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1752,13 +1846,16 @@ function gmsg_server()
 			help[2] = "By default if a ping kick is set it only applies to new players. Set to all to have it applied to everyone.\n"
 			help[2] = help[2] .. "Note: Does not apply to exempt players which includes admins, donors and individuals that have been bot whitelisted."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,ping,kick,targ"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,ping,kick,targ"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1767,6 +1864,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1829,13 +1927,16 @@ function gmsg_server()
 			help[1] = " {#}set prison timer {number} (in minutes)"
 			help[2] = "Set how long someone stays in prison when jailed by the bot.  To not have a time limit, set this to 0 which is the default."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,prison,time"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,prison,time"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1844,6 +1945,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1903,13 +2005,16 @@ function gmsg_server()
 			help[1] = " {#}set pvp cooldown {seconds}"
 			help[2] = "Set how long after a pvp kill before the player can use teleport commands again."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,pvp,time,cool,delay"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,pvp,time,cool,delay"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1918,6 +2023,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1965,6 +2071,79 @@ function gmsg_server()
 	end
 
 
+	local function cmd_SetPVPTempBanCooldown()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set pvp temp ban {minutes}"
+			help[2] = "Set how long to temporarily ban a player after a pvp kill.\n"
+			help[2] = help[2] .. "This is only used in PVE when there is no prison location."
+
+			tmp.command = help[1]
+			tmp.keywords = "set,pvp,ban,cool"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
+			if botman.registerHelp then
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pvp") or string.find(chatvars.command, "cool") or string.find(chatvars.command, "ban"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "pvp" and chatvars.words[3] == "temp" and chatvars.words[4] == "ban" and chatvars.words[5] ~= nil then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 1) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 1) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number ~= nil then
+				chatvars.number = math.abs(chatvars.number) -- eliminate the negative
+
+				if (chatvars.playername ~= "Server") then
+					message(string.format("pm %s [%s]PVP kills will be banned for %s minutes in PVE rules with no prison location set up.[-]", chatvars.playerid, server.chatColour, chatvars.number))
+				else
+					irc_chat(chatvars.ircAlias, string.format("PVP kills will be banned for %s minutes in PVE rules with no prison location set up.", chatvars.number))
+				end
+
+				server.pvpTempBanCooldown = chatvars.number
+				conn:execute("UPDATE server SET pvpTempBanCooldown = " .. chatvars.number)
+			else
+				if (chatvars.playername ~= "Server") then
+					message(string.format("pm %s [%s]A number (in minutes) is required.[-]", chatvars.playerid, server.chatColour))
+				else
+					irc_chat(chatvars.ircAlias, "A number (in minutes) is required.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_SetReservedSlots()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1973,13 +2152,16 @@ function gmsg_server()
 			help[2] = help[2] .. "Anyone can join but if the server becomes full, players who aren't staff or allowed to reserve a slot will be randomly selected and kicked if an admin or authorised player joins.\n"
 			help[2] = help[2] .. "To disable, set reserved slots to 0."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,reser,slot"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,reser,slot"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1988,6 +2170,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2035,6 +2218,8 @@ function gmsg_server()
 					end
 				end
 
+				addOrRemoveSlots()
+
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. chatvars.number .. " slots are now reserved slots.[-]")
 				else
@@ -2062,13 +2247,16 @@ function gmsg_server()
 			help[1] = " {#}set rolling delay {minutes}"
 			help[2] = "Set the delay in minutes between rolling announcements."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,roll,anno,time,delay"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,roll,anno,time,delay"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2077,6 +2265,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2124,13 +2313,16 @@ function gmsg_server()
 			help[2] = "Set the server rules.  You can use supported bbcode tags, but only when setting the rules from IRC.  Each tag must be closed with this tag [-] or colours will bleed into the next line.\n"
 			help[2] = help[2] .. "To display the rules type {#}rules"
 
+			tmp.command = help[1]
+			tmp.keywords = "set,rule"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,rule"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2139,6 +2331,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2185,13 +2378,16 @@ function gmsg_server()
 			help[2] = "Your API key is not recorded in logs or the databases and no bot command reports it.  It is used to determine if a player has voted for your server today.\n"
 			help[2] = help[2] .. "While the bot takes precautions to keep your API key a secret, you should be careful not to type it anywhere in public.  The safest place to give it to the bot is in private chat on IRC or on the bot's web interface when that is available."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,api,key"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,api,key"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2200,6 +2396,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2263,13 +2460,16 @@ function gmsg_server()
 			help[2] = help[2] .. "If you set the reward as item, the player will be given the item that you specify.\n"
 			help[2] = help[2] .. "If you have a custom entity (eg sc_General2) type {#}set server vote reward entity sc_General2."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,vote,reward"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,vote,reward"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2278,6 +2478,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2424,13 +2625,16 @@ function gmsg_server()
 			help[1] = " {#}set server group {group name} (one word)"
 			help[2] = "This is used by the bots database which could be a cloud database.  It is used to identify this bot as belonging to a group if you have more than one server.  You do not need to set this."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,server,group"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,server,group"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2439,6 +2643,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2477,7 +2682,7 @@ function gmsg_server()
 				server.serverGroup = tmp.group
 				conn:execute("UPDATE server SET serverGroup = '" .. escape(tmp.group) .. "'")
 
-				if botman.db2Connected then
+				if botman.botsConnected then
 					-- update server in bots db
 					connBots:execute("UPDATE servers SET serverGroup = '" .. escape(tmp.group) .. "' WHERE serverName = '" .. escape(server.serverName) .. "'")
 				end
@@ -2501,13 +2706,16 @@ function gmsg_server()
 			help[1] = " {#}set server ip {IP of your 7 Days to Die server}"
 			help[2] = "The bot is unable to read the IP from its own profile for the server so enter it here.  It will display in the {#}info command and be used if a few other places."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,server,ip"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,server,ip"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2516,6 +2724,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2550,7 +2759,7 @@ function gmsg_server()
 				server.IP = tmp
 				conn:execute("UPDATE server SET IP = '" .. escape(server.IP) .. "'")
 
-				if botman.db2Connected then
+				if botman.botsConnected then
 					connBots:execute("UPDATE servers SET IP = '" .. escape(server.IP) .. "' WHERE botID = " .. server.botID)
 				end
 
@@ -2573,13 +2782,16 @@ function gmsg_server()
 			help[1] = " {#}set reboot hour {0 to 23}"
 			help[2] = "Reboot the server when the server time matches the hour (24 hour time).  To disable clock based reboots set this to -1 or don't enter a number."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,server,reboo,hour,time"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,server,reboo,hour,time"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2588,6 +2800,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2666,13 +2879,16 @@ function gmsg_server()
 			help[1] = " {#}set reboot minute {0 to 59}"
 			help[2] = "Reboot the server when the server time matches the hour and minute (24 hour time).  To disable clock based reboots use {#}set reboot hour (without a number)"
 
+			tmp.command = help[1]
+			tmp.keywords = "set,server,reboo,mini,time"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,server,reboo,mini,time"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2681,6 +2897,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2758,13 +2975,16 @@ function gmsg_server()
 			help[2] = "Set the entire server to be PVE, PVP, Creative or Contest.\n"
 			help[2] = help[2] .. "Contest mode is not implemented yet and all setting it creative does is stop the bot pestering players about their inventory."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,server,pvp,pve,crea"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,server,pvp,pve,crea"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2773,6 +2993,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2867,13 +3088,16 @@ function gmsg_server()
 			help[2] = help[2] .. "webapi.viewallclaims 2000\n"
 			help[2] = help[2] .. "webapi.getplayerinventory 2000"
 
+			tmp.command = help[1]
+			tmp.keywords = "set,map,perm"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,map,perm"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2882,6 +3106,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2962,13 +3187,16 @@ function gmsg_server()
 			help[1] = help[1] .. "or {#}set api port {number}"
 			help[2] = "The bot needs to be told the port for Alloc's web map. If you give it the wrong port and API support is enabled or you enable that later, the bot will try that port and the ports +/- 2 above and below it."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,web,port"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,web,port"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2977,6 +3205,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3058,13 +3287,16 @@ function gmsg_server()
 			help[1] = " {#}set website {your website or steam group}"
 			help[2] = "Tell the bot the URL of your website or steam group so your players can ask for it."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,web,url"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,web,url"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3073,6 +3305,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3122,13 +3355,16 @@ function gmsg_server()
 			help[1] = help[1] .. " {#}clear welcome message"
 			help[2] = "You can set a custom welcome message that will override the default greeting message when a player joins."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,welc,mess"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,welc,mess"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3137,6 +3373,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3197,13 +3434,16 @@ function gmsg_server()
 			help[1] = " {#}test vote reward"
 			help[2] = "Admin and in-game only. The bot will try to spawn the server vote reward beside you."
 
+			tmp.command = help[1]
+			tmp.keywords = "test,vote,reward"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "test,vote,reward"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -3212,6 +3452,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3251,13 +3492,16 @@ function gmsg_server()
 			help[2] = "Auto-kick players with numeric names or names that contain no letters such as ascii art crap.\n"
 			help[2] = help[2] .. "They will see a kick message asking them to change their name."
 
+			tmp.command = help[1]
+			tmp.keywords = "allow,bad,name,kick"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "allow,bad,name,kick"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3266,6 +3510,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3323,13 +3568,16 @@ function gmsg_server()
 			help[2] = "If a player has any VAC bans you can auto-ban them or allow them in.\n"
 			help[2] = help[2] .. "Each time they join, admins will be alerted to their VAC ban. To stop that, add the them to the bot's whitelist."
 
+			tmp.command = help[1]
+			tmp.keywords = "able,vac,ban,alert"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,vac,ban,alert"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3338,6 +3586,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3394,13 +3643,16 @@ function gmsg_server()
 			help[2] = "If set to friendly, the bot will automatically switch from / commands to using the ! since CBSM uses the /\n"
 			help[2] = help[2] .. "Set to anything else and the bot will use / commands whether CBSM is present or not."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,cbsm"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,cbsm"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3409,6 +3661,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3467,13 +3720,16 @@ function gmsg_server()
 			help[1] = help[1] .. " {#}leave zombies before bloodmoon\n"
 			help[2] = "If you have Stompy's BC mod or the Botman mod, the bot can despawn all zombies server wide a few minutes before bloodmoon starts.  It may trigger more than once.\n"
 
+			tmp.command = help[1]
+			tmp.keywords = "blood,horde,remo,desp"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "blood,horde,remo,desp"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3482,6 +3738,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3537,13 +3794,16 @@ function gmsg_server()
 			help[2] = "Scan for entities server wide every 30 seconds.\n"
 			help[2] = help[2] .. "The resulting list is copied to the entities Lua table where it can be further processed for other bot features."
 
+			tmp.command = help[1]
+			tmp.keywords = "able,scan,enti"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,scan,enti"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3552,6 +3812,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3607,13 +3868,16 @@ function gmsg_server()
 			help[2] = "The server can automatically scan for and fix some errors using console commands if you have the BC mod or Botman mod installed.\n"
 			help[2] = help[2] .. "You can disable the scan if you suspect it is creating lag."
 
+			tmp.command = help[1]
+			tmp.keywords = "able,scan,err"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,scan,err"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3622,6 +3886,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3676,13 +3941,16 @@ function gmsg_server()
 			help[1] = " {#}allow/disallow family (allowed by default)"
 			help[2] = "Set to disallow if you require all players use the owner steam key and want to block players with a steamid that does not match the steamOwner."
 
+			tmp.command = help[1]
+			tmp.keywords = "allow,steam,owner,family"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "allow,steam,owner,family"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3691,6 +3959,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3746,13 +4015,16 @@ function gmsg_server()
 			help[2] = "Allow players to use bot commands.  This is the default.\n"
 			help[2] = help[2] .. "Players can still talk to the bot and use info commands such as {#}rules."
 
+			tmp.command = help[1]
+			tmp.keywords = "able,hard,mode,comm"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,hard,mode,comm"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3761,6 +4033,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3815,13 +4088,16 @@ function gmsg_server()
 			help[1] = " {#}enable/disable idle kick (disabled is default)"
 			help[2] = "When the server is full, if idle kick is on players will get kick warnings for 15 minutes of no movement then they get kicked."
 
+			tmp.command = help[1]
+			tmp.keywords = "able,idle,kick"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,idle,kick"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3830,6 +4106,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3884,13 +4161,16 @@ function gmsg_server()
 			help[1] = " {#}allow/disallow idling (allowed is default)"
 			help[2] = "If idle kick is enabled the default is to only kick idle players when the server is full. By setting disallow idling, players can be kicked for idling any time."
 
+			tmp.command = help[1]
+			tmp.keywords = "allow,idle,kick"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "allow,idle,kick"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3899,6 +4179,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -3953,13 +4234,16 @@ function gmsg_server()
 			help[1] = " {#}allow/disallow flying"
 			help[2] = "Toggle the bot's player flying detection.  You would want to do this if players can use debug mode on your server."
 
+			tmp.command = help[1]
+			tmp.keywords = "allow,fly"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "allow,fly"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -3968,6 +4252,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4024,13 +4309,16 @@ function gmsg_server()
 			help[2] = "If IRC is private, the bot won't share the url or info with players and players can't invite anyone to irc using the invite command.\n"
 			help[2] = help[2] .. "When public, players can find the IRC info with {#}help irc and they can create irc invites for themselves and others."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,irc,pub,priv"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,irc,pub,priv"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -4039,6 +4327,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4094,13 +4383,16 @@ function gmsg_server()
 			help[2] = "Using the BC mod or Botman mod you can detect players that are noclipping under the map.\n"
 			help[2] = help[2] .. "It can false flag but it is still a useful early warning of a possible hacker.  The bot will ban a player found clipping a lot for one week."
 
+			tmp.command = help[1]
+			tmp.keywords = "able,clip,scan"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,clip,scan"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -4109,6 +4401,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4163,13 +4456,16 @@ function gmsg_server()
 			help[1] = " {#}allow/disallow overstack or {#}enable/disable overstack"
 			help[2] = "By default the bot reads overstack warnings coming from the server to learn what the stack limits are and it will pester players with excessive stack sizes and can send them to timeout for non-compliance."
 
+			tmp.command = help[1]
+			tmp.keywords = "able,allow,over,stack"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,allow,over,stack"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -4178,6 +4474,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4241,13 +4538,16 @@ function gmsg_server()
 			help[1] = help[1] .. " {#}west pve/pvp"
 			help[2] = "Make northeast/northwest/southeast/southwest/north/south/east/west of 0,0 PVE or PVP."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,pvp,pve,north,south,east,west"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,pvp,pve,north,south,east,west"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -4256,6 +4556,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4394,13 +4695,16 @@ function gmsg_server()
 			help[2] = "New players who want to cheat often relog rapidly in order to spawn lots of items into the server using cheats or bugs.\n"
 			help[2] = help[2] .. "If enabled, the bot will temp ban (10 minutes) players caught relogging several times in short order."
 
+			tmp.command = help[1]
+			tmp.keywords = "allow,rapid,relog,log,join"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "allow,rapid,relog,log,join"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -4409,6 +4713,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4463,13 +4768,16 @@ function gmsg_server()
 			help[1] = " {#}enable/disable region pm"
 			help[2] = "A PM for admins that tells them the region name when they move to a new region."
 
+			tmp.command = help[1]
+			tmp.keywords = "able,region,pm"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,region,pm"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -4478,6 +4786,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4534,13 +4843,16 @@ function gmsg_server()
 			help[2] = "By default the bot does not manage server reboots.\n"
 			help[2] = help[2] .. "See also {#}set max uptime (default 12 hours)"
 
+			tmp.command = help[1]
+			tmp.keywords = "able,rebo,rest,shut,start,stop"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,rebo,rest,shut,start,stop"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -4549,6 +4861,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4616,13 +4929,16 @@ function gmsg_server()
 			help[2] = "This doesn't change telnet in the server.  Instead use this to tell the bot if the server's telnet is enabled or disabled.\n"
 			help[2] = help[2] .. "This is used by the bot as part of monitoring the status of telnet.  If telnet is disabled, the bot won't keep trying to connect to it."
 
+			tmp.command = help[1]
+			tmp.keywords = "set,able,telnet"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "set,able,telnet"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -4631,6 +4947,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4687,13 +5004,16 @@ function gmsg_server()
 			help[1] = " {#}translate on/off {player name}"
 			help[2] = "If the Google translate API is installed, the bot can automatically translate the players chat to english."
 
+			tmp.command = help[1]
+			tmp.keywords = "on,off,trans,lang"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "on,off,trans,lang"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -4702,6 +5022,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4774,13 +5095,16 @@ function gmsg_server()
 			help[1] = " {#}disable/enable watch alerts"
 			help[2] = "Enable or disable ingame private messages about watched player inventory and base raiding. Alerts will still go to IRC."
 
+			tmp.command = help[1]
+			tmp.keywords = "able,watch,alert,pm,irc"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "able,watch,alert,pm,irc"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -4789,6 +5113,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4843,13 +5168,16 @@ function gmsg_server()
 			help[1] = " {#}resume/unpause reboot"
 			help[2] = "Resume a paused reboot."
 
+			tmp.command = help[1]
+			tmp.keywords = "pause,resume,rebo"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "pause,resume,rebo"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -4858,6 +5186,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4909,13 +5238,16 @@ function gmsg_server()
 			help[2] = help[2] .. "If you add the optional word 'check' at the end of the command it will also check chunk density.\n"
 			help[2] = help[2] .. "To visit the entire map do not include coordinates or a range."
 
+			tmp.command = help[1]
+			tmp.keywords = "visit,map,stop"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "visit,map,stop"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -4924,6 +5256,7 @@ function gmsg_server()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -4997,7 +5330,7 @@ function gmsg_server()
 					tmp.z2 = chatvars.intZ - tmp.range
 				else
 					-- doing the whole world.
-					tmp.mapSize = math.floor(GamePrefs.WorldGenSize)
+					tmp.mapSize = math.floor(GamePrefs.WorldGenSize / 2)
 					tmp.x1 = -tmp.mapSize
 					tmp.z1 = tmp.mapSize
 					tmp.x2 = tmp.mapSize
@@ -5339,6 +5672,15 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetPVPCooldown triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetPVPTempBanCooldown()
+
+	if result then
+		if debug then dbug("debug cmd_SetPVPTempBanCooldown triggered") end
 		return result
 	end
 

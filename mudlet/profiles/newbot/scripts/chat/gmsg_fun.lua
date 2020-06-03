@@ -35,13 +35,16 @@ function gmsg_fun()
 			help[1] = " {#}beer"
 			help[2] = "While in any location with beer in its name, players can grab a beer (or a lot)."
 
+			tmp.command = help[1]
+			tmp.keywords = "gimm,beer"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "gimm,beer"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -50,6 +53,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -86,13 +90,16 @@ function gmsg_fun()
 			help[1] = " {#}fix gimme"
 			help[2] = "Force the bot to rescan the list of zombies and animals."
 
+			tmp.command = help[1]
+			tmp.keywords = "fix,gimm,init"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "fix,gimm,init"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -101,6 +108,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -129,8 +137,8 @@ function gmsg_fun()
 				irc_chat(chatvars.ircAlias, "The zombies have been reloaded.")
 			end
 
-			gimmeZombies = {}
-			if botman.dbConnected then conn:execute("TRUNCATE gimmeZombies") end
+			--gimmeZombies = {}
+			--if botman.dbConnected then conn:execute("TRUNCATE gimmeZombies") end
 			sendCommand("se")
 
 			irc_chat(server.ircMain, "Validating shop and gimme prize items.")
@@ -148,13 +156,16 @@ function gmsg_fun()
 			help[1] = " {#}place bounty {player name} {cash}"
 			help[2] = "Place a bounty on a player's head. The money is removed from your cash."
 
+			tmp.command = help[1]
+			tmp.keywords = "gimm,pvp,bounty"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "gimm,pvp,bounty"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -163,6 +174,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -233,13 +245,16 @@ function gmsg_fun()
 			help[2] = help[2] .. "Gimme cannot be played inside a player base.\n"
 			help[2] = help[2] .. "Prize may contain nuts. If a rash develops, see your doctor. Keep away from small children.  The bag is not a hat."
 
+			tmp.command = help[1]
+			tmp.keywords = "gimm"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "gimm"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -248,6 +263,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -322,7 +338,7 @@ function gmsg_fun()
 
 
 	local function cmd_PlayGimmeHell()
-		local k, v, r, level
+		local k, v, r, level, loc
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -334,13 +350,16 @@ function gmsg_fun()
 			help[2] = help[2] .. "Zombies are randomly distributed between arena players.  Any players more than 5 blocks above the arena floor (or under it) are specators and don't get zombies.\n"
 			help[2] = help[2] .. "Some useless crap is supplied at the start."
 
+			tmp.command = help[1]
+			tmp.keywords = "gimm"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "gimm"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -349,6 +368,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -394,10 +414,18 @@ function gmsg_fun()
 			end
 
 			-- abort if not in arena
-			dist = distancexyz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].yPos, igplayers[chatvars.playerid].zPos, locations["arena"].x, locations["arena"].y, locations["arena"].z)
+			loc = LookupLocation("arena")
 
-			if (tonumber(dist) > tonumber(locations["arena"].size)) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command can only be issued in the arena[-]")
+			if loc ~= nil then
+				dist = distancexyz(igplayers[chatvars.playerid].xPos, igplayers[chatvars.playerid].yPos, igplayers[chatvars.playerid].zPos, locations[loc].x, locations[loc].y, locations[loc].z)
+
+				if (tonumber(dist) > tonumber(locations[loc].size)) then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command can only be used in the arena[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command can only be used in the arena[-]")
 				botman.faultyChat = false
 				return true
 			end
@@ -497,7 +525,6 @@ function gmsg_fun()
 			if r == 9 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Pest[-]") end
 			if r == 11 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]:O[-]") end
 			if r == 13 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]D:[-]") end
-			if r == 15 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Merde[-]") end
 			if r == 17 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Really?[-]") end
 			if r == 19 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]GROAN![-]") end
 			if r == 21 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Ow![-]") end
@@ -511,7 +538,6 @@ function gmsg_fun()
 			if r == 37 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Abuse![-]") end
 			if r == 39 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]EEK![-]") end
 			if r == 41 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Oi![-]") end
-			if r == 43 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Dammit![-]") end
 			if r == 45 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]:P[-]") end
 
 			botman.faultyChat = false
@@ -526,13 +552,16 @@ function gmsg_fun()
 			help[1] = " {#}quit {message}"
 			help[2] = "Get kicked out of the server and have the bot say your message in game chat."
 
+			tmp.command = help[1]
+			tmp.keywords = "quit"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "quit"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -570,13 +599,16 @@ function gmsg_fun()
 			help[1] = help[1] .. " {#}ragequit"
 			help[2] = "Get kicked out of the server with a random message."
 
+			tmp.command = help[1]
+			tmp.keywords = "quit"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "quit"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -585,6 +617,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -657,13 +690,16 @@ function gmsg_fun()
 			help[1] = " {#}gimme reset"
 			help[2] = "Reset gimme counters for everyone so they can play gimme again.  The bot does this every " .. server.gimmeResetTimer .. " minutes automatically."
 
+			tmp.command = help[1]
+			tmp.keywords = "gimm,reset"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "gimm,reset"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -672,6 +708,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -708,13 +745,16 @@ function gmsg_fun()
 			help[1] = " {#}reset arena"
 			help[2] = "Cancel an arena game in progress."
 
+			tmp.command = help[1]
+			tmp.keywords = "fix,gimm,init"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "fix,gimm,init"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -723,6 +763,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1206,13 +1247,16 @@ function gmsg_fun()
 			help[1] = " {#}gimme raincheck {seconds}"
 			help[2] = "Set a time delay between gimmes.  The default is 0 seconds."
 
+			tmp.command = help[1]
+			tmp.keywords = "gimm,cool,time,delay"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "gimm,cool,time,delay"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1221,6 +1265,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1279,13 +1324,16 @@ function gmsg_fun()
 			help[1] = " {#}gimme reset time {number} (In minutes. Default is 120)"
 			help[2] = "Reset everyone's gimme counter after (n) minutes."
 
+			tmp.command = help[1]
+			tmp.keywords = "gimm,able,on,off"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "gimm,able,on,off"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1294,6 +1342,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1366,13 +1415,16 @@ function gmsg_fun()
 			help[1] = " {#}suicide"
 			help[2] = "Don't do it! :O"
 
+			tmp.command = help[1]
+			tmp.keywords = "gimm,sui,death,kill,die"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "gimm,sui,death,kill,die"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1381,6 +1433,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1417,13 +1470,16 @@ function gmsg_fun()
 			help[1] = " {#}doge mode or {#}doge on/off"
 			help[2] = "But what does it do!? Play and find out xD"
 
+			tmp.command = help[1]
+			tmp.keywords = "doge,mode"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "doge,mode"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1432,6 +1488,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1461,13 +1518,16 @@ function gmsg_fun()
 			help[1] = " {#}gimme on/off"
 			help[2] = "Enable/disable the gimme game."
 
+			tmp.command = help[1]
+			tmp.keywords = "gimm,able,on,off"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "gimm,able,on,off"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1476,6 +1536,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1523,13 +1584,16 @@ function gmsg_fun()
 			help[1] = help[1] .. " {#}gimme no zombies"
 			help[2] = "Enable or disable zombies as gimme prizes."
 
+			tmp.command = help[1]
+			tmp.keywords = "gimm,able,on,off"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "gimm,able,on,off"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1538,6 +1602,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1585,13 +1650,16 @@ function gmsg_fun()
 			help[1] = help[1] .. " {#}gimme peace"
 			help[2] = "Make gimme messages appear in public chat with {#}gimme gimme or as private messages with {#}gimme peace (with some exceptions)."
 
+			tmp.command = help[1]
+			tmp.keywords = "gimm,reset"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "gimm,reset"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1600,6 +1668,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1648,13 +1717,16 @@ function gmsg_fun()
 			help[1] = help[1] .. " {#}view bounties"
 			help[2] = "See the player kills and current bounty on a players head or on all players currently on the server."
 
+			tmp.command = help[1]
+			tmp.keywords = "pvp,bounty,play,view"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "pvp,bounty,play,view"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1663,6 +1735,7 @@ function gmsg_fun()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1772,7 +1845,6 @@ function gmsg_fun()
 		irc_chat(chatvars.ircAlias, "==== Registering help - fun commands ====")
 		if debug then dbug("Registering help - fun commands") end
 
-		tmp = {}
 		tmp.topicDescription = "Fun commands are miscellaneous commands that include gimme, bounties and a few silly commands."
 
 		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'fun'")

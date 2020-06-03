@@ -19,7 +19,7 @@ function playerInfo(faultyInfo)
 	faultyPlayerinfoID = 0
 	faultyPlayerinfoLine = line
 
-	local debug, id, name, posX, posY, posZ, lastX, lastY, lastZ, lastDist, mapCenterDistance, regionX, regionZ, chunkX, chunkZ
+	local debug, id, name, posX, posY, posZ, lastX, lastY, lastZ, lastDist, mapCenterDistance, regionX, regionZ, chunkX, chunkZ, exile, prison
 	local deaths, zombies, kills, score, level, steam, steamtest, admin, lastGimme, lastLogin, playerAccessLevel, temp
 	local xPosOld, yPosOld, zPosOld, rawPosition, rawRotation, outsideMap, outsideMapDonor, fields, values, flag, cmd
 	local timestamp = os.time()
@@ -51,6 +51,9 @@ if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, 
 			dbug(line, true)
 		end
 	end
+
+	exile = LookupLocation("exile")
+	prison = LookupLocation("prison")
 
 	flag = ""
 	name_table = string.split(line, ", ")
@@ -127,7 +130,7 @@ if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, 
 	IP = IP:gsub("::ffff:","")
 
 	temp = string.split(name_table[18], "=")
-	ping = temp[2]
+	ping = tonumber(temp[2])
 
 	if badData then
 		if debug then
@@ -260,6 +263,9 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if tonumber(ping) > 0 then
 		igplayers[steam].ping = ping
 		players[steam].ping = ping
+	else
+		igplayers[steam].ping = 0
+		players[steam].ping = 0
 	end
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
@@ -292,7 +298,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- ping kick
-	if not whitelist[steam] and not players[steam].donor and tonumber(playerAccessLevel) > 2 then
+	if not whitelist[steam] and not isDonor(steam) and tonumber(playerAccessLevel) > 2 then
 		if (server.pingKickTarget == "new" and players[steam].newPlayer) or server.pingKickTarget == "all" then
 			if tonumber(ping) < tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
 				igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) - 1
@@ -305,7 +311,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				if tonumber(igplayers[steam].highPingCount) > 15 then
 					irc_chat(server.ircMain, "Kicked " .. name .. " steam: " .. steam.. " for high ping " .. ping)
 					kick(steam, "High ping kicked.")
-					deleteLine()
 					return
 				end
 			end
@@ -435,7 +440,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 								end
 
 								if igplayers[steam].hackerTPScore > 0 and players[steam].newPlayer and tonumber(players[steam].ping) > 180 then
-									if locations["exile"] and not players[steam].prisoner then
+									if locations[exile] and not players[steam].prisoner then
 										players[steam].exiled = true
 									else
 										igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
@@ -517,7 +522,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				if (r == 14) then message("say [" .. server.chatColour .. "]" .. name .. " reached a new low with that death. Six feet under.[-]") end
 
 				if tonumber(server.packCooldown) > 0 then
-					if players[steam].donor then
+					if isDonor(steam) then
 						players[steam].packCooldown = os.time() + math.floor(server.packCooldown / 2)
 					else
 						players[steam].packCooldown = os.time() + server.packCooldown
@@ -662,7 +667,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	-- convert zombie kills to cash
 	if (tonumber(igplayers[steam].zombies) > tonumber(players[steam].zombies)) and (math.abs(igplayers[steam].zombies - players[steam].zombies) < 20) then
 		if server.allowBank then
-			if players[steam].donor then
+			if isDonor(steam) then
 				players[steam].cash = tonumber(players[steam].cash) + math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillRewardDonors
 
 				if (players[steam].watchCash) then
@@ -678,67 +683,16 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 
 		if igplayers[steam].doge then
-			r = rand(60)
-			if r == 1 then message(string.format("pm %s [%s]MUCH KILL[-]", steam, server.chatColour)) end
-			if r == 2 then message(string.format("pm %s [%s]GREAT PAIN[-]", steam, server.chatColour)) end
-			if r == 3 then message(string.format("pm %s [%s]WOW[-]", steam, server.chatColour)) end
-			if r == 4 then message(string.format("pm %s [%s]VERY DEATH[-]", steam, server.chatColour)) end
-			if r == 5 then message(string.format("pm %s [%s]AMAZING[-]", steam, server.chatColour)) end
-			if r == 6 then message(string.format("pm %s [%s]CALL 911[-]", steam, server.chatColour)) end
-			if r == 7 then message(string.format("pm %s [%s]BIG HIT[-]", steam, server.chatColour)) end
-			if r == 8 then message(string.format("pm %s [%s]EXTREME GORE[-]", steam, server.chatColour)) end
-			if r == 9 then message(string.format("pm %s [%s]EXTREME POWER SHOT[-]", steam, server.chatColour)) end
-			if r == 10 then message(string.format("pm %s [%s]EPIC BLOOD LOSS[-]", steam, server.chatColour)) end
-			if r == 11 then message(string.format("pm %s [%s]OMG[-]", steam, server.chatColour)) end
-			if r == 12 then message(string.format("pm %s [%s]OVERKILL[-]", steam, server.chatColour)) end
-			if r == 13 then message(string.format("pm %s [%s]EXTREME OVERKILL[-]", steam, server.chatColour)) end
-			if r == 14 then message(string.format("pm %s [%s]VERY OP[-]", steam, server.chatColour)) end
-			if r == 15 then message(string.format("pm %s [%s]DISMEMBERMENT[-]", steam, server.chatColour)) end
-			if r == 16 then message(string.format("pm %s [%s]HEADSHOT[-]", steam, server.chatColour)) end
-			if r == 17 then message(string.format("pm %s [%s]PSYCHO[-]", steam, server.chatColour)) end
-			if r == 18 then message(string.format("pm %s [%s]HAX[-]", steam, server.chatColour)) end
-			if r == 19 then message(string.format("pm %s [%s]GAME OVER MAN!  GAME OVER![-]", steam, server.chatColour)) end
-			if r == 20 then message(string.format("pm %s [%s]OWNED[-]", steam, server.chatColour)) end
-			if r == 21 then message(string.format("pm %s [%s]DUDE[-]", steam, server.chatColour)) end
-			if r == 22 then message(string.format("pm %s [%s]SICK[-]", steam, server.chatColour)) end
-			if r == 23 then message(string.format("pm %s [%s]INCREDIBLE[-]", steam, server.chatColour)) end
-			if r == 24 then message(string.format("pm %s [%s]BODY PARTS FLYING[-]", steam, server.chatColour)) end
-			if r == 25 then message(string.format("pm %s [%s]WTF[-]", steam, server.chatColour)) end
-			if r == 26 then message(string.format("pm %s [%s]EPIC[-]", steam, server.chatColour)) end
-			if r == 27 then message(string.format("pm %s [%s]AIMBOT HAX[-]", steam, server.chatColour)) end
-			if r == 28 then message(string.format("pm %s [%s]EXPLOSIVE[-]", steam, server.chatColour)) end
-			if r == 29 then message(string.format("pm %s [%s]IMPOSSIBRU[-]", steam, server.chatColour)) end
-			if r == 30 then message(string.format("pm %s [%s]MASSIVE HURT[-]", steam, server.chatColour)) end
-			if r == 31 then message(string.format("pm %s [%s]C-C-C-COMBO BREAKER[-]", steam, server.chatColour)) end
-			if r == 32 then message(string.format("pm %s [%s]ULTRA KILL[-]", steam, server.chatColour)) end
-			if r == 33 then message(string.format("pm %s [%s]SUPPRESSED[-]", steam, server.chatColour)) end
-			if r == 34 then message(string.format("pm %s [%s]IMPRESSIVE[-]", steam, server.chatColour)) end
-			if r == 35 then message(string.format("pm %s [%s]ONE UP[-]", steam, server.chatColour)) end
-			if r == 36 then message(string.format("pm %s [%s]MEGA KILL[-]", steam, server.chatColour)) end
-			if r == 37 then message(string.format("pm %s [%s]SUPER KILL[-]", steam, server.chatColour)) end
-			if r == 38 then message(string.format("pm %s [%s]SKILL SHOT[-]", steam, server.chatColour)) end
-			if r == 39 then message(string.format("pm %s [%s]VERY AMAZING[-]", steam, server.chatColour)) end
-			if r == 40 then message(string.format("pm %s [%s]EPIC OWNAGE[-]", steam, server.chatColour)) end
-			if r == 41 then message(string.format("pm %s [%s]OMG WTF HAX[-]", steam, server.chatColour)) end
-			if r == 42 then message(string.format("pm %s [%s]HOW?[-]", steam, server.chatColour)) end
-			if r == 43 then message(string.format("pm %s [%s]UNPOSSIBLE![-]", steam, server.chatColour)) end
-			if r == 44 then message(string.format("pm %s [%s]CRAZY KILL[-]", steam, server.chatColour)) end
-			if r == 45 then message(string.format("pm %s [%s]LEGENDARY KILL[-]", steam, server.chatColour)) end
-			if r == 46 then message(string.format("pm %s [%s]GUTSY[-]", steam, server.chatColour)) end
-			if r == 47 then message(string.format("pm %s [%s]SMOOTH[-]", steam, server.chatColour)) end
-			if r == 48 then message(string.format("pm %s [%s]PRO[-]", steam, server.chatColour)) end
-			if r == 49 then message(string.format("pm %s [%s]NUKED[-]", steam, server.chatColour)) end
-			if r == 50 then message(string.format("pm %s [%s]STOLEN KILL[-]", steam, server.chatColour)) end
-			if r == 51 then message(string.format("pm %s [%s]LEEEEEEEEEEEEEROY JENKINS!!!!!![-]", steam, server.chatColour)) end
-			if r == 52 then message(string.format("pm %s [%s]TRUMPED[-]", steam, server.chatColour)) end
-			if r == 53 then message(string.format("pm %s [%s]CRAP[-]", steam, server.chatColour)) end
-			if r == 54 then message(string.format("pm %s [%s]WTF BBQ[-]", steam, server.chatColour)) end
-			if r == 55 then message(string.format("pm %s [%s]KILLJOY[-]", steam, server.chatColour)) end
-			if r == 56 then message(string.format("pm %s [%s]TIS BUT A SCRATCH[-]", steam, server.chatColour)) end
-			if r == 57 then message(string.format("pm %s [%s]LEGLESS[-]", steam, server.chatColour)) end
-			if r == 58 then message(string.format("pm %s [%s]OOPS[-]", steam, server.chatColour)) end
-			if r == 59 then message(string.format("pm %s [%s]DAMN[-]", steam, server.chatColour)) end
-			if r == 60 then message(string.format("pm %s [%s]RIM SHOT[-]", steam, server.chatColour)) end
+			dogePhrase = dogeWOW() .. " " .. dogeWOW() .. " "
+
+			r = rand(10)
+			if r == 1 then dogePhrase = dogePhrase .. "WOW" end
+			if r == 3 then dogePhrase = dogePhrase .. "Excite" end
+			if r == 5 then dogePhrase = dogePhrase .. "Amaze" end
+			if r == 7 then dogePhrase = dogePhrase .. "OMG" end
+			if r == 9 then dogePhrase = dogePhrase .. "Respect" end
+
+			message(string.format("pm %s [%s]" .. dogePhrase .. "[-]", data.steamid, server.chatColour))
 		end
 
 		if server.allowBank then
@@ -790,7 +744,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			end
 
 			if (tonumber(igplayers[steam].zombies) ~= 0) then
-				if (players[steam].donor == true) then
+				if isDonor(steam) then
 					welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Welcome back " .. name .. "! Thanks for supporting us. =D[-]"
 				else
 					welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Welcome back " .. name .. "![-]"
@@ -908,7 +862,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 			message("pm " .. steam .. " [" .. server.chatColour .. "]You have moved too far away from the location. If you still wish to do " .. server.commandPrefix .. "protect location, please start again.[-]")
 			faultyPlayerinfo = false
-			deleteLine()
 			return
 		end
 
@@ -924,7 +877,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			igplayers[steam].alertLocationExit = nil
 
 			faultyPlayerinfo = false
-			deleteLine()
 			return
 		end
 	end
@@ -939,7 +891,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 			message("pm " .. steam .. " [" .. server.chatColour .. "]You have moved too far away from " .. igplayers[steam].alertVillageExit .. ". Return to " .. igplayers[steam].alertVillageExit .. " and type " .. server.commandPrefix .. "protect village " .. igplayers[steam].alertVillageExit .. " again.[-]")
 			faultyPlayerinfo = false
-			deleteLine()
 			return
 		end
 
@@ -955,7 +906,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			igplayers[steam].alertVillageExit = nil
 
 			faultyPlayerinfo = false
-			deleteLine()
 			return
 		end
 	end
@@ -978,7 +928,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 			message("pm " .. steam .. " [" .. server.chatColour .. "]You have moved too far away from the base. If you still wish to do " .. server.commandPrefix .. "protect, please start again.[-]")
 			faultyPlayerinfo = false
-			deleteLine()
 			return
 		end
 
@@ -1035,7 +984,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				if botman.dbConnected then conn:execute("UPDATE players SET protect = 1 WHERE steam = " .. steam) end
 
 				faultyPlayerinfo = false
-				deleteLine()
 				return
 			end
 		else
@@ -1091,7 +1039,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 1 WHERE steam = " .. steam) end
 
 				faultyPlayerinfo = false
-				deleteLine()
 				return
 			end
 		end
@@ -1121,7 +1068,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 
 		faultyPlayerinfo = false
-		deleteLine()
 		return
 	end
 
@@ -1141,16 +1087,40 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		players[steam].zPosTimeout = 0
 
 		faultyPlayerinfo = false
-		deleteLine()
 		return
 	end
 
+	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
+	-- add to tracker table
+	dist = distancexyz(intX, intY, intZ, igplayers[steam].xPosLast, igplayers[steam].yPosLast, igplayers[steam].zPosLast)
+
+	if (dist > 2) and tonumber(intY) < 10000 then
+		-- record the players position
+		if igplayers[steam].raiding then
+			flag = flag .. "R"
+		end
+
+		if igplayers[steam].illegalInventory then
+			flag = flag .. "B"
+		end
+
+		if igplayers[steam].flying or igplayers[steam].noclip then
+			flag = flag .. "F"
+		end
+
+		if botman.dbConnected then conn:execute("INSERT INTO tracker (steam, x, y, z, session, flag) VALUES (" .. steam .. "," .. intX .. "," .. intY .. "," .. intZ .. "," .. players[steam].sessionCount .. ",'" .. flag .. "')") end
+
+		if igplayers[steam].location ~= nil then
+			if botman.dbConnected then conn:execute("INSERT INTO locationSpawns (location, x, y, z) VALUES ('" .. igplayers[steam].location .. "'," .. intX .. "," .. intY .. "," .. intZ .. ")") end
+		end
+	end
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- prevent player exceeding the map limit unless they are an admin except when ignoreadmins is false
 	if not isDestinationAllowed(steam, intX, intZ) then
-		if players[steam].donor then
+		if isDonor(steam) then
 			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) + 5000 .. " km from the center.[-]")
 		else
 			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")
@@ -1167,15 +1137,13 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 
 		faultyPlayerinfo = false
-		deleteLine()
 		return
 	end
 
-	if players[steam].exiled == true and locations["exile"] and not players[steam].prisoner then
-		if (distancexz( intX, intZ, locations["exile"].x, locations["exile"].z ) > tonumber(locations["exile"].size)) then
-			randomTP(steam, "exile", true)
+	if players[steam].exiled == true and locations[exile] and not players[steam].prisoner then
+		if (distancexz( intX, intZ, locations[exile].x, locations[exile].z ) > tonumber(locations[exile].size)) then
+			randomTP(steam, exile, true)
 			faultyPlayerinfo = false
-			deleteLine()
 			return
 		end
 	end
@@ -1183,28 +1151,27 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- left prison zone warning
-	if (locations["prison"]) then
-		if (distancexz( intX, intZ, locations["prison"].x, locations["prison"].z ) > tonumber(locations["prison"].size)) then
+	if (locations[prison]) then
+		if (distancexz( intX, intZ, locations[prison].x, locations[prison].z ) > tonumber(locations[prison].size)) then
 			if (players[steam].alertPrison == false) then
 				players[steam].alertPrison = true
 			end
 		end
 
 		if (players[steam].prisoner) then
-			if (locations["prison"]) then
-				if (squareDistanceXZXZ(locations["prison"].x, locations["prison"].z, intX, intZ, locations["prison"].size)) then
+			if (locations[prison]) then
+				if (squareDistanceXZXZ(locations[prison].x, locations[prison].z, intX, intZ, locations[prison].size)) then
 					players[steam].alertPrison = false
-					randomTP(steam, "prison", true)
+					randomTP(steam, prison, true)
 				end
 			end
 
 			faultyPlayerinfo = false
-			deleteLine()
 			return
 		end
 
 		-- entered prison zone warning
-		if (distancexz( intX, intZ, locations["prison"].x, locations["prison"].z ) < tonumber(locations["prison"].size)) then
+		if (distancexz( intX, intZ, locations[prison].x, locations[prison].z ) < tonumber(locations[prison].size)) then
 			if (players[steam].alertPrison == true) then
 				if (not players[steam].prisoner) and server.showLocationMessages then
 					message("pm " .. steam .. " [" .. server.warnColour .. "]You have entered the prison.  Continue at your own risk.[-]")
@@ -1227,7 +1194,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 
 		faultyPlayerinfo = false
-		deleteLine()
 		return
 	end
 
@@ -1301,12 +1267,11 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 						-- check access level restrictions on the teleport
 						if (playerAccessLevel >= tonumber(teleports[tp].maximumAccess) and playerAccessLevel <= tonumber(teleports[tp].minimumAccess)) or playerAccessLevel < 3 then
 							if isDestinationAllowed(steam, teleports[tp].dx, teleports[tp].dz) then
-								igplayers[steam].teleCooldown = 2
+								igplayers[steam].teleCooldown = 4
 								cmd = "tele " .. steam .. " " .. teleports[tp].dx .. " " .. teleports[tp].dy .. " " .. teleports[tp].dz
 								teleport(cmd, steam)
 
 								faultyPlayerinfo = false
-								deleteLine()
 								return
 							end
 						end
@@ -1316,12 +1281,11 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 						-- check access level restrictions on the teleport
 						if (playerAccessLevel >= tonumber(teleports[tp].maximumAccess) and playerAccessLevel <= tonumber(teleports[tp].minimumAccess)) or playerAccessLevel < 3 then
 							if isDestinationAllowed(steam, teleports[tp].x, teleports[tp].z) then
-								igplayers[steam].teleCooldown = 2
+								igplayers[steam].teleCooldown = 4
 								cmd = "tele " .. steam .. " " .. teleports[tp].x .. " " .. teleports[tp].y .. " " .. teleports[tp].z
 								teleport(cmd, steam)
 
 								faultyPlayerinfo = false
-								deleteLine()
 								return
 							end
 						end
@@ -1343,24 +1307,48 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 			if (waypoints[tmp.wpid].shared and isFriend(waypoints[tmp.wpid].steam, steam) or waypoints[tmp.wpid].steam == steam) and tonumber(tmp.linkedID) > 0 then
 				-- reject if not an admin and player teleporting has been disabled
-				if server.allowTeleporting then
+				if server.allowTeleporting and not server.disableLinkedWaypoints then
 					if isDestinationAllowed(steam, waypoints[tmp.linkedID].x, waypoints[tmp.linkedID].z) then
-						igplayers[steam].teleCooldown = 2
-						cmd = "tele " .. steam .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
-						teleport(cmd, steam)
+						if players[steam].waypointCooldown < os.time() then
+							if (playerAccessLevel > 2) then
+								if tonumber(server.waypointCost) > 0 then
+									if tonumber(players[steam].cash) >= tonumber(server.waypointCost) then
+										igplayers[steam].teleCooldown = 3
+										players[steam].waypointCooldown = os.time() + server.waypointCooldown
+										players[steam].cash = tonumber(players[steam].cash) - server.waypointCost
 
-						faultyPlayerinfo = false
-						deleteLine()
-						return
+										cmd = "tele " .. steam .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
+										teleport(cmd, steam)
+
+										faultyPlayerinfo = false
+										return
+									end
+								else
+									igplayers[steam].teleCooldown = 3
+									players[steam].waypointCooldown = os.time() + server.waypointCooldown
+									cmd = "tele " .. steam .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
+									teleport(cmd, steam)
+
+									faultyPlayerinfo = false
+									return
+								end
+							else
+								igplayers[steam].teleCooldown = 3
+								cmd = "tele " .. steam .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
+								teleport(cmd, steam)
+
+								faultyPlayerinfo = false
+								return
+							end
+						end
 					end
 				else
 					if playerAccessLevel < 3 then
-						igplayers[steam].teleCooldown = 2
+						igplayers[steam].teleCooldown = 3
 						cmd = "tele " .. steam .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
 						teleport(cmd, steam)
 
 						faultyPlayerinfo = false
-						deleteLine()
 						return
 					end
 				end
@@ -1396,32 +1384,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 	if	baseProtection(steam, posX, posY, posZ) and not resetZone then
 		faultyPlayerinfo = false
-		deleteLine()
 		return
-	end
-
-	-- add to tracker table
-	dist = distancexyz(intX, intY, intZ, igplayers[steam].xPosLast, igplayers[steam].yPosLast, igplayers[steam].zPosLast)
-
-	if (dist > 2) and tonumber(intY) < 10000 then
-		-- record the players position
-		if igplayers[steam].raiding then
-			flag = flag .. "R"
-		end
-
-		if igplayers[steam].illegalInventory then
-			flag = flag .. "B"
-		end
-
-		if igplayers[steam].flying or igplayers[steam].noclip then
-			flag = flag .. "F"
-		end
-
-		if botman.dbConnected then conn:execute("INSERT INTO tracker (steam, x, y, z, session, flag) VALUES (" .. steam .. "," .. intX .. "," .. intY .. "," .. intZ .. "," .. players[steam].sessionCount .. ",'" .. flag .. "')") end
-
-		if igplayers[steam].location ~= nil then
-			if botman.dbConnected then conn:execute("INSERT INTO locationSpawns (location, x, y, z) VALUES ('" .. igplayers[steam].location .. "'," .. intX .. "," .. intY .. "," .. intZ .. ")") end
-		end
 	end
 
 	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
@@ -1562,8 +1525,6 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 	if (steam == debugPlayerInfo) then
 		if debug then dbug("end playerinfo", true) end
 	end
-
-	deleteLine()
 end
 
 

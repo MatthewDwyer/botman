@@ -75,13 +75,16 @@ function gmsg_hotspots()
 			help[2] = "Change a hotspot's radius to a max of 10 (no max size for admins).\n"
 			help[2] = help[2] .. "eg. {#}resize hotspot 3 size 5.  See {#}hotspots to get the list of hotspots."
 
+			tmp.command = help[1]
+			tmp.keywords = "hot,spot,size,set"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "hot,spot,size,set"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -90,6 +93,7 @@ function gmsg_hotspots()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -157,13 +161,16 @@ function gmsg_hotspots()
 			help[1] = " {#}move hotspot {hotspot number from list}"
 			help[2] = "Move a hotspot to your current position."
 
+			tmp.command = help[1]
+			tmp.keywords = "hot,spot,move"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "hot,spot,move"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -172,6 +179,7 @@ function gmsg_hotspots()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -255,13 +263,16 @@ function gmsg_hotspots()
 			help[1] = " {#}delete hotspots {player name}"
 			help[2] = "Players can only delete their own hotspots but admins can add a player name or id to delete the player's hotspots."
 
+			tmp.command = help[1]
+			tmp.keywords = "hot,spot,del,remo"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "hot,spot,del,remo"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -270,6 +281,7 @@ function gmsg_hotspots()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -333,13 +345,16 @@ function gmsg_hotspots()
 			help[1] = " {#}delete hotspot {hotspot number from list}"
 			help[2] = "Delete a hotspot by its number in a list."
 
+			tmp.command = help[1]
+			tmp.keywords = "hot,spot,del,remo"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "hot,spot,del,remo"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -348,6 +363,7 @@ function gmsg_hotspots()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -414,13 +430,16 @@ function gmsg_hotspots()
 			help[1] = " {#}hotspot {message}"
 			help[2] = "Create a hotspot at your current position with a message."
 
+			tmp.command = help[1]
+			tmp.keywords = "hot,spot,crea,add,set,make"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "hot,spot,crea,add,set,make"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -429,6 +448,7 @@ function gmsg_hotspots()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -520,13 +540,16 @@ function gmsg_hotspots()
 			help[1] = " {#}hotspots {player name}"
 			help[2] = "List your own hotspots.  Admins can list another player's hotspots."
 
+			tmp.command = help[1]
+			tmp.keywords = "hot,spot,view,list"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "hot,spot,view,list"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -535,6 +558,7 @@ function gmsg_hotspots()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -626,13 +650,16 @@ function gmsg_hotspots()
 			help[2] = help[2] .. "eg. {#}hotspot {number of hotspot} action {pm/tele/drop/spawn} {location name/spawn list}\n"
 			help[2] = help[2] .. "If spawning items or entities use the format item name,quantity|item name,quantity|etc or entity id, entity id, entity id, etc"
 
+			tmp.command = help[1]
+			tmp.keywords = "hot,spot,view,list"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "hot,spot,view,list"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -641,6 +668,7 @@ function gmsg_hotspots()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -670,7 +698,6 @@ function gmsg_hotspots()
 		irc_chat(chatvars.ircAlias, "==== Registering help - hotspot commands ====")
 		if debug then dbug("Registering help - hotspot commands") end
 
-		tmp = {}
 		tmp.topicDescription = "Hotspots are proximity triggered PM's that say something to an individual player.  Additional functions are being added and admins will be able to queue multiple actions when a specific hotspot is triggered."
 
 		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'hotspots'")

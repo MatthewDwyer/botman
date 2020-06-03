@@ -173,7 +173,6 @@ function ResetServer()
 	lastHotspots = {}
 	locations = {}
 	resetRegions = {}
-	shop = {}
 	shopCategories = {}
 	stackLimits = {}
 	teleports = {}

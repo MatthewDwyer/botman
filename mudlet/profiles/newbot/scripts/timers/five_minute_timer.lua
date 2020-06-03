@@ -28,9 +28,5 @@ function FiveMinuteTimer()
 				end
 			end
 		end
-
-		sendCommand("llp parseable")
-	else
-		sendCommand("gt") -- Are you there?   Is this thing on? *TAP* *TAP*
 	end
 end

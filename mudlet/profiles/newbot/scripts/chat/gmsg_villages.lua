@@ -30,13 +30,16 @@ function gmsg_villages()
 			help[1] = " {#}add village {village name}"
 			help[2] = "Create a new village."
 
+			tmp.command = help[1]
+			tmp.keywords = "vill,add,crea"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "vill,add,crea"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -45,6 +48,7 @@ function gmsg_villages()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -95,14 +99,16 @@ function gmsg_villages()
 			help[1] = " {#}add member {player name} village {village}"
 			help[2] = "Add a player as a member of a village."
 
-			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "vill,add,play,memb"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
+			tmp.command = help[1]
+			tmp.keywords = "vill,add,play,memb"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
 
+			help[3] = helpCommandRestrictions(tmp)
+
+			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
@@ -111,6 +117,7 @@ function gmsg_villages()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -212,13 +219,16 @@ function gmsg_villages()
 			help[1] = " {#}elect {player name} village {village}"
 			help[2] = "Elect a player as mayor of a village.  Democratically of course :)"
 
+			tmp.command = help[1]
+			tmp.keywords = "vill,add,play,elect,mayor"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "vill,add,play,elect,mayor"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -227,6 +237,7 @@ function gmsg_villages()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -327,13 +338,16 @@ function gmsg_villages()
 			help[1] = help[1] .. " {#}villagers"
 			help[2] = "List villages or villagers."
 
+			tmp.command = help[1]
+			tmp.keywords = "vill,add,play,elect,mayor"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "vill,add,play,elect,mayor"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -342,6 +356,7 @@ function gmsg_villages()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -422,13 +437,16 @@ function gmsg_villages()
 			help[1] = " {#}protect village {village name}"
 			help[2] = "Set village protection and follow the prompt from the bot, just like setting base protection."
 
+			tmp.command = help[1]
+			tmp.keywords = "vill,prot,set"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "vill,prot,set"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -437,6 +455,7 @@ function gmsg_villages()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -479,13 +498,16 @@ function gmsg_villages()
 			help[1] = " {#}remove village {village}"
 			help[2] = "Delete a village and everything associated with it."
 
+			tmp.command = help[1]
+			tmp.keywords = "vill,remo,dele"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "vill,remo,dele"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -494,6 +516,7 @@ function gmsg_villages()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -559,13 +582,16 @@ function gmsg_villages()
 			help[1] = " {#}remove member {player name} village {village}"
 			help[2] = "Remove a player from a village."
 
+			tmp.command = help[1]
+			tmp.keywords = "vill,remo,dele"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "vill,remo,dele"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -574,6 +600,7 @@ function gmsg_villages()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -660,13 +687,16 @@ function gmsg_villages()
 			help[1] = " {#}unprotect village {village name}"
 			help[2] = "Remove protection on a village."
 
+			tmp.command = help[1]
+			tmp.keywords = "vill,remo,prot"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "vill,remo,prot"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -675,6 +705,7 @@ function gmsg_villages()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -716,13 +747,16 @@ function gmsg_villages()
 			help[1] = " {#}village {village} size {metres}"
 			help[2] = "Resize a village. Note that this removes village protection to prevent teleport loops."
 
+			tmp.command = help[1]
+			tmp.keywords = "vill,remo,prot"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "vill,remo,prot"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -731,6 +765,7 @@ function gmsg_villages()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -799,7 +834,6 @@ function gmsg_villages()
 		irc_chat(chatvars.ircAlias, "==== Registering help - village commands ====")
 		if debug then dbug("Registering help - village commands") end
 
-		tmp = {}
 		tmp.topicDescription = "Villages work like protected bases except that they can have many players (villagers) and a mayor.\n"
 		tmp.topicDescription = tmp.topicDescription .. "Just like a base, a village can have protection enabled.  Villages work best when they are much larger than the area of the village so that an effective barrier against invading players exists."
 

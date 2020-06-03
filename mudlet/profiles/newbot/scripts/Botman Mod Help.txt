@@ -1,7 +1,8 @@
 Botman Mod Command Help
 
-The botman mod is a port of Coppi's mod version 3.6 with new commands and features being added.  The latest version is in the download page on this site.  The bot supports a growing list of these commands as bot commands as well as being used directly by the bot to perform various tasks.
 Note:  These are console commands not in-game chat commands.
+
+The botman mod is a port of Coppi's mod version 3.6 with new commands and features being added.  The latest version is in the download page on this site.  The bot supports a growing list of these commands as bot commands as well as being used directly by the bot to perform various tasks.
 If you find any bugs in the Botman mod, please let me know.
 
 bm-additemloot
@@ -72,9 +73,13 @@ Usage:
 6. bm-clan replace [leadername] [newleadername]
 7. bm-clan max clans [number]
 8. bm-clan max player [number]
-9. bm-clan enable
-10. bm-clan disable
-11. bm-clan toggle [clanname]
+9. bm-clan min_level [number]
+10. bm-clan enable
+11. bm-clan disable
+12. bm-clan toggle [clanname]
+13. bm-clan promote [clanname]
+14. bm-clan demote [clanname]
+15. bm-clan color [clanname] [colorcode]
    1. returns list of clans and members
    2. adds a new clan and places an admin
    3. adds a member to an existing clan
@@ -83,31 +88,13 @@ Usage:
    6. replaces leadership (must be in same clan)
    7. sets maximum amount of allowable clans
    8. sets maxmimum amount of allowable players in a clan
-   9. enables the clan system
-   10. disables the clan system
-   11. toggles the clan to invite only or public for all to join.
-
-bm-pdup
-
-Usage:
-1. bm-pdup <x1> <x2> <y1> <y2> <z1> <z2> <x> <y> <z> <rot>
-2. bm-pdup p1
-3. bm-pdup p2
-4. bm-pdup <x> <y> <z> <rot>
-5. bm-pdup <rot>
-1. duplicate the defined area on x,y,z
-2. Store on position 1 your current location
-3. Store on position 2 your current location
-4. use stored position 1 and 2 to duplicate on x,y,z
-5. use stored position 1 and 2 to duplicate on your current location
-<rot> prefab rotation -> need to be equal 0,1,2 or 3
-
-bm-fixdeathloop
-
-Fixes a player stuck with a black screen (Death Loop)
-Usage:
-1. bm-fixdeathloop <steamId/playername>
-1. Use quotes around playername if name has spaces
+   9. sets minimum level a player must be to create a clan
+   10. enables the clan system
+   11. disables the clan system
+   12. toggles the clan to invite only or public for all to join.
+   13. promotes a member to officer in their clan.
+   14. demotes an officer to member.
+   15. change clan tag color of clan.
 
 bm-getowner
 
@@ -151,11 +138,25 @@ Gives XP to a player
 Usage:
 1. bm-givexp <name/entity id> <amount xp>
 
+bm-givequest
+
+Usage:
+ 1. bm-givequest <playername/entityid>  QuestName
+ 2. bm-givequest list
+   1. Gives a target player a quest
+   2. List QuestName
+
 bm-help
 
 Usage:
 1. bm-help
 1. Returns All Console Commands for Botman
+
+
+bm-listentities
+
+Usage:
+1. bm-listentities <Filter Tag>
 
 bm-listplayerbed
 
@@ -165,7 +166,8 @@ Usage:
 bm-listplayerfriends
 
 Usage:
-1. bm-listplayerfriends <steam id / player name / entity id>  2. bm-listplayerfriends * List all online players friends
+1. bm-listplayerfriends <steam id / player name / entity id>
+2. bm-listplayerfriends * List all online players friends
 
 bm-mutePlayer
 
@@ -194,6 +196,20 @@ Usage:
 4. Search for block names. Fill with * to list all.
 5. Store your position to be used on method 6. p1 store player position,  L1 store the position where player is looking for
 6. Place blocks with block_name from position stored on method 5 until your current location.
+
+bm-pdup
+Usage:
+  1. bm-pdup <x1> <x2> <y1> <y2> <z1> <z2> <x> <y> <z> <rot>
+  2. bm-pdup p1
+  3. bm-pdup p2
+  4. bm-pdup <x> <y> <z> <rot>
+  5. bm-pdup <rot>
+1. duplicate the defined area on x,y,z
+2. Store on position 1 your current location
+3. Store on position 2 your current location
+4. use stored position 1 and 2 to duplicate on x,y,z
+5. use stored position 1 and 2 to duplicate on your current location
+<rot> prefab rotation -> need to be equal 0,1,2 or 3
 
 bm-playerchatmaxlength
 
@@ -236,12 +252,23 @@ Usage:
 1. Undoes prefab commands. It works with bm-prender, bm-pblock and bm-pdup
 * By default, the size of undo history is set to 1. You can change the undo history size using "bm-setpundosize"
 
+bm-remove
+Removes a specified entity
+Usage:
+1. bm-remove <entityid>
+   1. despawns specified entity id.
+
 bm-removeitem
 
 Removes all items from Secure Loot Container below the given player
 Usage:
 1. bm-remitem <name / entity id>
    1. Removes all items from Secure Loot Container under player
+
+bm-removequest
+Usage:
+ 1. bm-removequest playername/entityid  QuestName
+   1. Removes a target players quest
 
 bm-repblock
 
@@ -259,6 +286,11 @@ Usage:
 5. Store your position to be used on method 6.
 6. replace blocks block_to_be_replaced with block_name from position stored on method 5 until your current location.
 
+bm-resetallprefabs
+Usage:
+ 1. bm-resetallprefabs <true/false>
+If true, all prefabs will be reset after next shutdown.
+
 bm-resetplayer
 
 Resets a players profile. Warning, can not be undone
@@ -267,37 +299,40 @@ Usage:
 1. Resets a players profile. If the player is offline, they will log in to new profile.
 *If true is used in optional parameter, the players location will be marked and they will return on login.
 
+bm-resetprefab
+Usage:
+ 1. bm-resetprefab <playername/id>
+ 2. bm-resetprefab <playername/id> check
+
 bm-resetregions
 
 Usage:
 1. bm-resetregions enable/disable
-2. bm-resetregions enable/disable auto
-3. bm-resetregions delay <num>
-4. bm-resetregions minprefabs <num>
-5. bm-resetregions list
-6. bm-resetregions add
-7. bm-resetregions add <x.z>
+2. bm-resetregions delay <num>
+3. bm-resetregions list
+4. bm-resetregions list detailed
+5. bm-resetregions add
+6. bm-resetregions add <x.z>
+7. bm-resetregions add <playername/steamid>
 8. bm-resetregions remove
 9. bm-resetregions remove <x.z>
-10. bm-resetregions exemptlist add
-11. bm-resetregions exemptlist add <x.z>
-12. bm-resetregions exemptlist remove
-13. bm-resetregions exemptlist remove <x.z.>
-14. bm-resetregions now
-1. Enables/Disables Reset Regions
-2. Enables/Disables Automatic Reset Regions based on minprefabs in a region
-3. Sets the delay of days between resets. 0 for every reboot.
-4. Sets the minimum # of prefabs in a region for Auto Regions to detect it.
-5. Lists all Exempt, Auto and Manual zones
-6. Manually adds a region based off where the player is standing
-7. Manually adds a region based off the region file x.z
-8. Manually removes a region based off where the player is standing
-9. Manually removes a region based off the region file x.z
-10. Sets regions that WILL not get reset, even if auto detects them. Based off where player is standing.
-11. Sets regions that WILL not get reset, even if auto detects them. Based off region file x.z
-12. Removes from exempt list, based off where player is standing.
-13. Removes from exempt list, based off region file x.z   \
-14. Restarts server and resets regions immediately.
+10. bm-resetregions remove <playername/steamid>
+11. bm-resetregions clearall
+12. bm-resetregions now
+13. bm-resetregions removelcbs <true/false>
+14. bm-resetregions prefabsonly <true/false>
+   1. Enables/Disables Reset Regions.
+   2. Sets the delay of days between resets. 0 for every reboot.
+   3. Lists all reset regions. Filename only.
+   4. Lists all reset regions and prefab names + count in region.
+   5. Manually adds a region where the player is standing
+   6. Manually adds a region based on the region number added. *Check webmap* i.e. r.0.0 = "0.0"
+   7. Manually adds a regions based on where the specified player is standing.
+   8. Removes region from list where player is standing.
+   9. Removes region from list based on the region number added. *Check webmap* i.e. r.0.0 = "0.0"
+   10. Removes region from list based on where specified player is standing.
+   11. Removes all regions from the list.
+   12. Forces a region reset immediately.   13. If True Removes LCBs as they are placed and returns to player.   14. If True Only prefabs reset. If False, entire region resets.
 
 bm-safe
 
@@ -323,6 +358,12 @@ bm-sayprivate
 Usage:
 1.  bm-sayprivate (playername,steamid,entityid) Hello World
 * If the players name has spaces, use quotation marks around name.
+
+bm-setchatprefix
+Set Chat Prefix
+Usage:
+1. bm-setchatprefix [prefix]
+eg: bm-setchatprefix /
 
 bm-setowner
 
@@ -363,6 +404,11 @@ bm-unlockall
 
 Unlock all secure loots, chests and doors for the current player.
 
+bm-uptime
+Display the running duration for the server
+Usage:
+1. bm-uptime
+
 bm-zombieannouncer
 
 Usage:
@@ -375,16 +421,16 @@ Usage:
 3. Removes specified zombie and message attached
 4. Enables/Disables zombie announcer
 
-bm-zone
+bm-zones
 
 Control Zones to handle zombies
 Usage:
-1. bm-zone p1
-2. bm-zone p2 <name>
-3. bm-zone add <name> <x1> <y1> <z1> <x2> <y2> <z2>
-4. bm-zone list
-5. bm-zone remove <name>
-6. bm-zone enable/disable
+1. bm-zones p1
+2. bm-zones p2 <name>
+3. bm-zones add <name> <x1> <y1> <z1> <x2> <y2> <z2>
+4. bm-zones list
+5. bm-zones remove <name>
+6. bm-zones enable/disable
   1. store the first corner of zone being created
   2. creates a zone with specified name
   3. creates a zone with specified name w/out having to move around

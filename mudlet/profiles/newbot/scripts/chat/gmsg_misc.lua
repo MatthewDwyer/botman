@@ -40,13 +40,16 @@ function gmsg_misc()
 			help[1] = " {#}accept"
 			help[2] = "Use this command if you have received an invite to join the IRC server and want further instructions from the bot."
 
+			tmp.command = help[1]
+			tmp.keywords = "accept,irc"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "accept,irc"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -55,6 +58,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -101,13 +105,16 @@ function gmsg_misc()
 			help[1] = " {#}add command {command} message {custom message}"
 			help[2] = "Add a custom command.  Currently all it can do is send a private message.  Later more actions will be added including the ability to add multiple actions."
 
+			tmp.command = help[1]
+			tmp.keywords = "add,comm,cust"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "add,comm,cust"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -116,6 +123,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -201,13 +209,16 @@ function gmsg_misc()
 			help[2] = "Anyone can bail a prisoner out of prison if they have enough " .. server.moneyPlural .. ".\n"
 			help[2] = help[2] .. "If you don't have enough " .. server.moneyPlural .. " you can reduce the bail by making payment towards it."
 
+			tmp.command = help[1]
+			tmp.keywords = "bail,prisoner"
+			tmp.accessLevel = 90
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "bail,prisoner"
-				tmp.accessLevel = 90
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -216,6 +227,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -316,7 +328,7 @@ function gmsg_misc()
 						botman.faultyChat = false
 						return true
 					else
-						if tonumber(players[chatvars.playerid].cash) <= tonumber(players[tmp.pid].bail) then
+						if tonumber(players[chatvars.playerid].cash) >= tonumber(players[tmp.pid].bail) then
 							if tonumber(players[chatvars.playerid].cash) >= tmp.payment then
 								players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - tmp.payment
 								conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid)
@@ -352,13 +364,16 @@ function gmsg_misc()
 			help[1] = " {#}bk {bookmark number}"
 			help[2] = "Teleport to the numbered bookmark (Admins only)"
 
+			tmp.command = help[1]
+			tmp.keywords = "bookmark"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "bookmark"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -367,6 +382,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -425,13 +441,16 @@ function gmsg_misc()
 			help[2] = "Record the coordinates where you are standing with a message.  This was created to help admins quickly teleport to places that players wanted screenshot or videoed by admins before a server wipe.\n"
 			help[2] = help[2] .. "Only admins can teleport to them.  Players can only view a list of the bookmarks created by themselves."
 
+			tmp.command = help[1]
+			tmp.keywords = "bookmark"
+			tmp.accessLevel = 90
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "bookmark"
-				tmp.accessLevel = 90
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -440,6 +459,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -480,13 +500,16 @@ function gmsg_misc()
 			help[2] = "Claim your reward for voting for the server at 7daystodie-servers.com\n"
 			help[2] = help[2] .. "Can only be claimed once per day."
 
+			tmp.command = help[1]
+			tmp.keywords = "claim,vote,reward,server"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "claim,vote,reward,server"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -495,6 +518,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -549,13 +573,16 @@ function gmsg_misc()
 			help[1] = " {#}custom commands"
 			help[2] = "List the custom commands."
 
+			tmp.command = help[1]
+			tmp.keywords = "list,comm,cust"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "list,comm,cust"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -564,6 +591,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -611,13 +639,16 @@ function gmsg_misc()
 			help[1] = " {#}get region {x coordinate} {z coordinate}"
 			help[2] = "Get the region name for the supplied coordinates."
 
+			tmp.command = help[1]
+			tmp.keywords = "region"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "region"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -626,6 +657,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -662,13 +694,16 @@ function gmsg_misc()
 			help[1] = " {#}irc invite {player}"
 			help[2] = "Invite a player to join the IRC server.  Choose carefully who you invite."
 
+			tmp.command = help[1]
+			tmp.keywords = "invite,irc"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "invite,irc"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -677,6 +712,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -746,13 +782,16 @@ function gmsg_misc()
 			help[2] = "If players have bookmarked coordinates on your server, this command will give you a numbered list of a player's bookmarks\n"
 			help[2] = help[2] .. "Players can only list their own bookmarks and can't teleport to them."
 
+			tmp.command = help[1]
+			tmp.keywords = "bk,book,mark"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "bk,book,mark"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -761,6 +800,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -860,13 +900,16 @@ function gmsg_misc()
 			help[2] = help[2] .. "Or if using djkrose's scripting Mod with {#}export {name} and {#}import {name}\n"
 			help[2] = help[2] .. "Mark two opposite corners of the area you wish to copy.  Move up or down between corners to add volume or stay at the same height to mark out a flat area."
 
+			tmp.command = help[1]
+			tmp.keywords = "mark,start,end,coppi"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "mark,start,end,coppi"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -875,6 +918,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -960,13 +1004,16 @@ function gmsg_misc()
 			help[1] = " {#}remove command {command}"
 			help[2] = "Remove a custom command."
 
+			tmp.command = help[1]
+			tmp.keywords = "remo,dele,comm,cust"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "remo,dele,comm,cust"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -975,6 +1022,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1022,19 +1070,24 @@ function gmsg_misc()
 	end
 
 
-	local function cmd_Yes() -- tested
+	local function cmd_Yes() -- I SAID YES!
+		local id, value
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}yes"
 			help[2] = "If the bot asks you a yes/no question you can simply say yes or use this command to hide your response if commands are hidden."
 
+			tmp.command = help[1]
+			tmp.keywords = "yes"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "yes"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1043,6 +1096,7 @@ function gmsg_misc()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1051,6 +1105,14 @@ function gmsg_misc()
 		end
 
 		if chatvars.words[1] == "yes" and chatvars.words[2] == nil and chatvars.playername ~= "Server" then
+			if players[chatvars.playerid].botQuestionID then
+				id = players[chatvars.playerid].botQuestionID
+			end
+
+			if players[chatvars.playerid].botQuestionValue then
+				value = players[chatvars.playerid].botQuestionValue
+			end
+
 			if players[chatvars.playerid].botQuestion == "reset server" and chatvars.accessLevel == 0 then
 				message("say [" .. server.chatColour .. "]Deleting bot data and starting minty fresh..[-]")
 				tempTimer(5, [[ResetServer()]])
@@ -1106,13 +1168,35 @@ function gmsg_misc()
 				return true
 			end
 
-			if players[chatvars.playerid].botQuestion == "forget players" and chatvars.words[1] == "yes" and chatvars.accessLevel == 0 then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players? Who needs em? Out with the trash I say. All players forgotten and their stuff except for admins.[-]")
+			if players[chatvars.playerid].botQuestion == "forget players" and chatvars.accessLevel == 0 then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players? Who needs em? Out with the trash I say. All players forgotten and their stuff except for admins.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Players? Who needs em? Out with the trash I say. All players forgotten and their stuff except for admins.")
+				end
+
 				forgetPlayers()
 
 				players[chatvars.playerid].botQuestion = ""
 				players[chatvars.playerid].botQuestionID = nil
 				players[chatvars.playerid].botQuestionValue = nil
+				botman.faultyChat = false
+				return true
+			end
+
+			if players[chatvars.playerid].botQuestion == "reset profile" and chatvars.accessLevel == 0 then
+				sendCommand("bm-resetplayer " .. id .. " true")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Resetting " .. players[id].name .. "'s profile.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Resetting " .. players[id].name .. "'s profile.")
+				end
+
+				players[chatvars.playerid].botQuestion = ""
+				players[chatvars.playerid].botQuestionID = nil
+				players[chatvars.playerid].botQuestionValue = nil
+
 				botman.faultyChat = false
 				return true
 			end
@@ -1128,7 +1212,6 @@ function gmsg_misc()
 		irc_chat(chatvars.ircAlias, "==== Registering help - misc commands ====")
 		if debug then dbug("Registering help - misc commands") end
 
-		tmp = {}
 		tmp.topicDescription = "Miscellaneous commands are commands that don't really belong in other sections or haven't been put in one yet :("
 
 		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'misc'")

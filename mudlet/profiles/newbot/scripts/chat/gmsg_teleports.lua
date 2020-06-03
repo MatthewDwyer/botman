@@ -30,13 +30,16 @@ function gmsg_teleports()
 			help[1] = " {#}tele {name} delete"
 			help[2] = "Delete a teleport."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,dele,remo"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,dele,remo"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -45,6 +48,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -108,13 +112,16 @@ function gmsg_teleports()
 			help[1] = help[1] .. " {#}tele {teleport name} public"
 			help[2] = "Make the teleport private or public.  New teleports are private by default."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,set,pub,priv"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,set,pub,priv"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -123,6 +130,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -217,13 +225,16 @@ function gmsg_teleports()
 			help[1] = help[1] .. " {#}tele {name} disable"
 			help[2] = "Enable or disable a teleport."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,able"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,able"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -232,6 +243,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -326,13 +338,16 @@ function gmsg_teleports()
 			help[2] = "Teleports are a pair of coordinates and the second coordinate placed is the destination.\n"
 			help[2] = help[2] .. "You can make it work in one direction only or both ways (loop). They are two way teleports by default."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,one,two,dir"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,one,two,dir"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -341,6 +356,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -422,13 +438,16 @@ function gmsg_teleports()
 			help[1] = " {#}tele {name} owner {player name}"
 			help[2] = "Assign ownership of a teleport to a player.  Only they and their friends can use it (and staff)"
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,assign,own"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,assign,own"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -437,6 +456,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -526,13 +546,16 @@ function gmsg_teleports()
 			help[1] = " {#}enable/disable fetch"
 			help[2] = "Allow or block players using the fetch command to teleport friends to them."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,able,fetch"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,able,fetch"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -541,6 +564,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -597,13 +621,16 @@ function gmsg_teleports()
 			help[2] = "Allows a player to use teleport commands.  Only staff can specify a player, otherwise it defaults to whoever issued the command.\n"
 			help[2] = help[2] .. "Note: Players can set/unset this on themselves too."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,able"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,able"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -612,6 +639,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -689,13 +717,16 @@ function gmsg_teleports()
 			help[1] = " {#}set teleport cost {number}"
 			help[2] = "Set a price for all private teleporting (excludes public locations).  Players must have sufficient " .. server.moneyPlural .. " to teleport."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,set,cost"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,set,cost"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -704,6 +735,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -749,13 +781,16 @@ function gmsg_teleports()
 			help[1] = " {#}set teleport delay {number}"
 			help[2] = "Set a time delay for player initiated teleport commands.  The player will see a PM informing them that their teleport will happen in x seconds.  The default is 0 and no PM will be sent."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,set,cool,delay,time"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,set,cool,delay,time"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -764,6 +799,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -817,13 +853,16 @@ function gmsg_teleports()
 			help[1] = " {#}fetch {player name}"
 			help[2] = "Move a player to your current location (staff cannot be fetched)."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,fetch,move,tp,play"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,fetch,move,tp,play"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -832,6 +871,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -960,13 +1000,16 @@ function gmsg_teleports()
 			help[1] = help[1] .. " {#}revive"
 			help[2] = "Teleport close to where you last died."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,pack,revive,spawn"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,pack,revive,spawn"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -975,6 +1018,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1045,13 +1089,16 @@ function gmsg_teleports()
 			help[1] = " {#}stuck"
 			help[2] = "Teleport you to the highest ground level at your location."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,stuck"
+			tmp.accessLevel = 90
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,stuck"
-				tmp.accessLevel = 90
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1060,6 +1107,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1095,13 +1143,16 @@ function gmsg_teleports()
 			help[1] = " {#}return"
 			help[2] = "Teleport back to where you came from before your last teleport command.  Locations support a 2nd return if you teleport within the location more than once without leaving it."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,tp,ret"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,tp,ret"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1110,6 +1161,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1225,13 +1277,16 @@ function gmsg_teleports()
 			help[1] = " {#}teleports"
 			help[2] = "List the teleports."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,list"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,list"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1240,6 +1295,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1312,13 +1368,16 @@ function gmsg_teleports()
 			help[1] = " {#}tele {name} start size {radius in blocks}"
 			help[2] = "Set the size of the starting point of a pair of teleports.  The default is 3 wide (1.5 radius)"
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,size,set,tp,portal"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,size,set,tp,portal"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1327,6 +1386,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1366,9 +1426,8 @@ function gmsg_teleports()
 			if (tp ~= nil) then
 				conn:execute("UPDATE teleports SET size = " .. teleSize .. " WHERE name = '" .. escape(tp) .. "'")
 				teleports[tp].size = teleSize
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport " .. teleName .. "'s start width is " .. teleSize * 2 .. "[-]")
 			end
-
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Teleport " .. teleName .. "'s start width is " .. teleSize * 2 .. "[-]")
 
 			botman.faultyChat = false
 			return true
@@ -1382,13 +1441,16 @@ function gmsg_teleports()
 			help[1] = " {#}tele {name} end size {radius in blocks}"
 			help[2] = "Set the size of the exit point of a pair of teleports.  The default is 3 wide (1.5 radius)"
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,size,set,tp,portal"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,size,set,tp,portal"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1397,6 +1459,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1458,13 +1521,16 @@ function gmsg_teleports()
 			help[2] = help[2] .. "eg. To limit to donors {#}tele test access min 10.  No need to set max as only admins are higher.\n"
 			help[2] = help[2] .. "eg. To limit to new players {#}tele newbies access min 99 max 99."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,size,set,tp,portal"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,size,set,tp,portal"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1473,6 +1539,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1626,13 +1693,16 @@ function gmsg_teleports()
 			help[1] = " {#}tele {name} start"
 			help[2] = "Create a teleport starting at your location or move an existing teleport's start to you."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,start,crea,tp,portal"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,start,crea,tp,portal"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1641,6 +1711,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1648,7 +1719,7 @@ function gmsg_teleports()
 			end
 		end
 
-		if (string.find(chatvars.words[1], "tele") and (string.find(chatvars.command, "start") or string.find(chatvars.command, "open")) or string.find(chatvars.command, "opentp")) then
+		if (string.find(chatvars.words[1], "tele") and (string.find(chatvars.command, "start") or string.find(chatvars.command, "open")) or string.find(chatvars.command, "opentp")) and not string.find(chatvars.command, "size") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -1725,13 +1796,16 @@ function gmsg_teleports()
 			help[1] = " {#}tele {name} end"
 			help[2] = "Complete a teleport ending at your location or move an existing teleport's end to you."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,end,crea,tp,portal"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,end,crea,tp,portal"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1740,6 +1814,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1747,7 +1822,7 @@ function gmsg_teleports()
 			end
 		end
 
-		if (string.find(chatvars.words[1], "tele") and (string.find(chatvars.command, "end") or string.find(chatvars.command, "close")) or string.find(chatvars.command, "closetp")) then
+		if (string.find(chatvars.words[1], "tele") and (string.find(chatvars.command, "end") or string.find(chatvars.command, "close")) or string.find(chatvars.command, "closetp")) and not string.find(chatvars.command, "size") then
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -1831,13 +1906,16 @@ function gmsg_teleports()
 			help[1] = help[1] .. " {#}north/south/east/west {distance}"
 			help[2] = "Teleport yourself to a player, a coordinate, a named teleport, or a distance in a compass direction (north, south, east or west)."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,tp,coord,player,dir"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,tp,coord,player,dir"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1846,6 +1924,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1853,7 +1932,7 @@ function gmsg_teleports()
 			end
 		end
 
-		if (chatvars.words[1] == "tp" or chatvars.words[1] == "tele") then
+		if chatvars.words[1] == "tp" then
 			if (chatvars.accessLevel > 2) then
 				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
 				botman.faultyChat = false
@@ -2024,13 +2103,16 @@ function gmsg_teleports()
 			help[1] = " {#}show/hide teleports"
 			help[2] = "If bot commands are hidden from chat, you can have the bot announce whenever a player teleports to a location (except {#}home)."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,show,hide"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,show,hide"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2039,6 +2121,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2094,13 +2177,16 @@ function gmsg_teleports()
 			help[1] = " {#}set pack cost {number}"
 			help[2] = "By default players can type {#}pack or {#}revive when they respawn after a death to return to close to their pack.  You can set a delay and/or a cost before the command is available after a death."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,set,cost,pack,revive"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,set,cost,pack,revive"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2109,6 +2195,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2164,13 +2251,16 @@ function gmsg_teleports()
 			help[1] = " {#}set pack cooldown {number in seconds}"
 			help[2] = "By default players can type {#}pack when they respawn after a death to return to close to their pack.  You can set a delay and/or a cost before the command is available after a death."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,set,cool,delay,time,pack,revive"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,set,cool,delay,time,pack,revive"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2179,6 +2269,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2220,19 +2311,117 @@ function gmsg_teleports()
 	end
 
 
+	local function cmd_SetP2PMinimumAccess()
+		local temp
+
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set p2p access {access level}"
+			help[2] = "Restrict the {#}visit command to players at and above a bot access level.\n"
+			help[2] = help[2] .. "Levels are 99 (everyone), 90 (everyone except new players), 10 (donors), 2 (mods), 1 (admins), 0 (owners)."
+
+			tmp.command = help[1]
+			tmp.keywords = "tele,set,p2p,access,level,min"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
+			if botman.registerHelp then
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "p2p") or string.find(chatvars.command, "visit") or string.find(chatvars.command, "level"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if chatvars.words[1] == "set" and chatvars.words[2] == "p2p" and chatvars.words[3] == "access" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 0) then
+					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 0) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.number ~= nil then
+				chatvars.number = math.abs(math.floor(chatvars.number))
+
+				server.p2pMinimumAccess = chatvars.number
+				conn:execute("UPDATE server SET p2pMinimumAccess = " .. chatvars.number)
+
+				temp = ""
+
+				if chatvars.number == 99 then
+					temp = "Anyone can use the {#}visit command."
+				end
+
+				if chatvars.number == 90 then
+					temp = "Only new players cannot use the {#}visit command."
+				end
+
+				if chatvars.number == 10 then
+					temp = "The {#}visit command is restricted to donors and admins."
+				end
+
+				if chatvars.number == 2 then
+					temp = "The {#}visit command is restricted to admins."
+				end
+
+				if chatvars.number == 1 then
+					temp = "Only admins and owners can use the {#}visit command."
+				end
+
+				if chatvars.number == 0 then
+					temp = "Only owners can use the {#}visit command."
+				end
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. temp .. "[-]")
+				else
+					irc_chat(chatvars.ircAlias, temp)
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_SetP2PCooldownTimer()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set p2p cooldown {number in seconds}"
 			help[2] = "Set a cooldown after players teleport to friends before they can teleport to friends again.  Default is 0."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,set,cool,delay,time,p2p"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,set,cool,delay,time,p2p"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2241,6 +2430,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2288,13 +2478,16 @@ function gmsg_teleports()
 			help[1] = " {#}enable/disable p2p"
 			help[2] = "Allow or block players teleporting to other players via shared waypoints or teleporting to friends."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,able,p2p,player,tp"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,able,p2p,player,tp"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2303,6 +2496,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2357,13 +2551,16 @@ function gmsg_teleports()
 			help[1] = " {#}enable/disable teleporting"
 			help[2] = "Toggle ability of players using teleport commands. Admins can still teleport."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,able,player,tp"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,able,player,tp"
-				tmp.accessLevel = 0
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2372,6 +2569,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2427,13 +2625,16 @@ function gmsg_teleports()
 			help[2] = "After being teleported somewhere, players can type {#}return to be sent back to where they came from.\n"
 			help[2] = help[2] .. "This is enabled by default but you can disable them.  Admins are not affected by this setting."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,able,retu"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,able,retu"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2442,6 +2643,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2496,13 +2698,16 @@ function gmsg_teleports()
 			help[1] = " {#}enable/disable stuck"
 			help[2] = "Enable or disable the {#}stuck command. Default is enabled."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,able,stuck,tp"
+			tmp.accessLevel = 1
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,able,stuck,tp"
-				tmp.accessLevel = 1
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2511,6 +2716,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2567,13 +2773,16 @@ function gmsg_teleports()
 			help[1] = " {#}view teleport {named teleport}"
 			help[2] = "View all the settings of a teleport."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,view,info"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,view,info"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -2582,6 +2791,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2680,13 +2890,16 @@ function gmsg_teleports()
 			help[1] = help[1] .. " {#}goto {player name}"
 			help[2] = "Teleport to another player.  If the server rules allow, you can teleport to a friend.  Various rules and cooldowns may block you."
 
+			tmp.command = help[1]
+			tmp.keywords = "tele,visit,goto"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "tele,visit,goto"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -2695,6 +2908,7 @@ function gmsg_teleports()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -2736,6 +2950,13 @@ function gmsg_teleports()
 					return true
 				end
 
+				-- reject if server.p2pMinimumAccess is less than the player's access level
+				if tonumber(chatvars.accessLevel) > tonumber(server.p2pMinimumAccess) then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is not available to you.[-]")
+					botman.faultyChat = false
+					return true
+				end
+
 				-- reject if not an admin and the p2p target player is in a location that does not allow p2p teleports
 				if tonumber(chatvars.accessLevel) > 2 then
 					loc = players[id].inLocation
@@ -2763,12 +2984,12 @@ function gmsg_teleports()
 					return true
 				end
 
-				-- if pvpZone(players[id].xPos, players[id].zPos) and chatvars.accessLevel > 2 then
-					-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not allowed to teleport to players in PVP zones.[-]")
-					-- botman.faultyChat = false
-					-- result = true
-					-- return true
-				-- end
+				if pvpZone(players[id].xPos, players[id].zPos) and chatvars.accessLevel > 2 then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not allowed to teleport to players in PVP zones.[-]")
+					botman.faultyChat = false
+					result = true
+					return true
+				end
 
 				if not igplayers[id] and chatvars.accessLevel > 2 then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is offline at the moment.  You will have to wait till they return or start walking.[-]")
@@ -2811,7 +3032,9 @@ function gmsg_teleports()
 					conn:execute("UPDATE players SET p2pCooldown = " .. players[chatvars.playerid].p2pCooldown .. " WHERE steam = " .. chatvars.playerid)
 				end
 
-				players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.teleportCost
+				if tonumber(server.teleportCost) > 0 and (chatvars.accessLevel > 2) then
+					players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) - server.teleportCost
+				end
 
 				if tonumber(server.playerTeleportDelay) == 0 or not igplayers[chatvars.playerid].currentLocationPVP or tonumber(players[chatvars.playerid].accessLevel) < 2 then
 					if teleport(cmd, chatvars.playerid) then
@@ -2840,7 +3063,6 @@ function gmsg_teleports()
 		irc_chat(chatvars.ircAlias, "==== Registering help - teleport commands ====")
 		if debug then dbug("Registering help - teleport commands") end
 
-		tmp = {}
 		tmp.topicDescription = "Teleports are coordinates in the game world that can trigger when a player's position is within a preset range to teleport the player somewhere else.\n"
 		tmp.topicDescription = tmp.topicDescription .. "A teleport's behaviour can be altered by changing its properties.\n"
 		tmp.topicDescription = tmp.topicDescription .. "Also included here are commands to configure other teleporting settings and some other teleport commands."
@@ -3041,6 +3263,15 @@ function gmsg_teleports()
 
 	if result then
 		if debug then dbug("debug cmd_SetPackCost triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetP2PMinimumAccess()
+
+	if result then
+		if debug then dbug("debug cmd_SetP2PMinimumAccess triggered") end
 		return result
 	end
 

@@ -39,6 +39,11 @@ function everyMinute()
 	local words, word, rday, rhour, rmin, k, v
 	local diff, days, hours, restartTime, zombiePlayers, tempDate, playerList
 
+	if not server.windowGMSG then
+		-- fix a weird issue where the server table is not all there.  In testing, after restoring the table the bot restarted itself which is what we're after here.
+		loadServer()
+	end
+
 	windowMessage(server.windowDebug, "60 second timer\n")
 
 	if not server.ServerMaxPlayerCount then
@@ -149,7 +154,7 @@ function everyMinute()
 			-- flag this ingame player record for deletion
 			zombiePlayers[k] = {}
 
-			if botman.db2Connected then
+			if botman.botsConnected then
 				-- update player in bots db
 				connBots:execute("UPDATE players SET ip = '" .. players[k].ip .. "', name = '" .. escape(stripCommas(players[k].name)) .. "', online = 0 WHERE steam = " .. k .. " AND botID = " .. server.botID)
 			end
@@ -160,14 +165,12 @@ function everyMinute()
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
-	initReservedSlots()
-
-	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
-
 	for k, v in pairs(zombiePlayers) do
 		if debug then dbug("Removing zombie player " .. players[k].name .. "\n") end
 		igplayers[k] = nil
 	end
+
+	updateSlots()
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
@@ -265,8 +268,11 @@ function everyMinute()
 	if botman.dbConnected then conn:execute("UPDATE server SET lottery = " .. server.lottery .. ", date = '" .. server.dateTest .. "', ircBotName = '" .. server.ircBotName .. "'") end
 
 	if server.useAllocsWebAPI then
-		if botman.resendAdminList or tablelength(staffList) == 0 then
-			sendCommand("admin list")
+		if (botman.resendAdminList or tablelength(staffList) == 0) then
+			if not botman.noAdminsDefined then
+				sendCommand("admin list")
+			end
+
 			botman.resendAdminList = false
 		end
 
@@ -284,7 +290,7 @@ function everyMinute()
 			modVersions = {}
 		end
 
-		if botman.resendVersion or tablelength(modVersions) == 0 or not server.allocs then
+		if botman.resendVersion or tablelength(modVersions) == 0 then
 			sendCommand("version")
 			botman.resendVersion = false
 		end
@@ -309,6 +315,16 @@ function oneMinuteTimer()
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
 	fixMissingStuff()
+
+	if tonumber(server.uptime) == 0 then
+		if server.botman and not server.stompy then
+			sendCommand("bm-uptime")
+		end
+
+		if not server.botman and server.stompy then
+			sendCommand("bc-time")
+		end
+	end
 
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
@@ -336,7 +352,7 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 		return
 	end
 
-	if server.useAllocsWebAPI and not botman.APIOffline then
+	if server.useAllocsWebAPI and botman.APIOffline then
 		sendCommand("APICheck")
 	end
 
@@ -365,6 +381,7 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 	if tonumber(botman.playersOnline) > 0 then
 		if server.botman then
 			sendCommand("bm-listplayerbed")
+			sendCommand("bm-listplayerfriends")
 		end
 
 		if tonumber(botman.playersOnline) < 25 then

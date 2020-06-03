@@ -13,75 +13,20 @@ local debug
 debug = false -- should be false unless testing
 
 
-function flagAdminsForRemoval()
-	local k,v
-
-	for k,v in pairs(owners) do
-		v.remove = true
-	end
-
-	for k,v in pairs(admins) do
-		v.remove = true
-	end
-
-	for k,v in pairs(mods) do
-		v.remove = true
-	end
-end
-
-
-function removeOldStaff()
-	if getAdminList then
-		-- abort if getAdminList is true as that means there's been a fault in the telnet data
-		return
-	end
-
-	local k,v
-
-	for k,v in pairs(owners) do
-		if v.remove then
-			owners[k] = nil
-		end
-	end
-
-	for k,v in pairs(admins) do
-		if v.remove then
-			admins[k] = nil
-		end
-	end
-
-	for k,v in pairs(mods) do
-		if v.remove then
-			mods[k] = nil
-		end
-	end
-
-	-- nuke the staff table and rebuild it
-	if botman.dbConnected then conn:execute("DELETE FROM staff") end
-
-	for k,v in pairs(owners) do
-		if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. k .. ", 0)") end
-	end
-
-	for k,v in pairs(admins) do
-		if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. k .. ", 1)") end
-	end
-
-	for k,v in pairs(mods) do
-		if botman.dbConnected then conn:execute("INSERT INTO staff (steam, adminLevel) VALUES (" .. k .. ", 2)") end
-	end
-end
-
-
 function matchAll(line, logDate, logTime)
 	local pname, pid, number, died, coords, words, temp, msg, claimRemoved
 	local dy, mth, yr, hr, min, sec, pm, reason, timestamp, banDate
 	local fields, values, x, y, z, id, loc, reset, steam, k, v, rows, tmp
 	local pref, value, isChat, cmd
+	local cursor, errorString
 
 	if botman.debugAll then
 		debug = true
 	end
+
+-- if string.find(line, "INF StartGame done") then
+	-- debug = true
+-- end
 
 --if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
@@ -103,30 +48,30 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "StackTrace:") then -- ignore lines containing this.
 		if botman.getMetrics then
 			metrics.errors = metrics.errors + 1
-		end
 
-		if not debug then
-			deleteLine()
+			if not metrics.errorStackTrace then
+				metrics.errorStackTrace = true
+				metrics.errorLines[metrics.errorLinesCount] = line
+				metrics.errorLinesCount = metrics.errorLinesCount + 1
+			end
 		end
 
 		return
 	end
 
 	if string.find(line, "SleeperVolume") then -- ignore lines containing this.
-		if not debug then
-			deleteLine()
-		end
-
 		return
 	end
 
 	if string.find(line, "ERR ") then -- ignore lines containing this.
 		if botman.getMetrics then
 			metrics.errors = metrics.errors + 1
-		end
 
-		if not debug then
-			deleteLine()
+			if not metrics.errorERR then
+				metrics.errorERR = true
+				metrics.errorLines[metrics.errorLinesCount] = line
+				metrics.errorLinesCount = metrics.errorLinesCount + 1
+			end
 		end
 
 		return
@@ -156,9 +101,7 @@ function matchAll(line, logDate, logTime)
 			fallingBlocks[temp].z = z
 		end
 
-		if not debug then
-			deleteLine()
-		end
+		return
 	end
 
 
@@ -184,8 +127,6 @@ function matchAll(line, logDate, logTime)
 
 	if string.find(line, "WRN ") then -- ignore lines containing this.
 		if not string.find(line, "DENSITYMISMATCH") then
-
-			deleteLine()
 			return
 		end
 	end
@@ -193,52 +134,100 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "NaN") then -- ignore lines containing this.
 		if botman.getMetrics then
 			metrics.errors = metrics.errors + 1
+
+			if not metrics.errorNAN then
+				metrics.errorNA = true
+				metrics.errorLines[metrics.errorLinesCount] = line
+				metrics.errorLinesCount = metrics.errorLinesCount + 1
+			end
 		end
 
-		deleteLine()
 		return
 	end
 
 	if string.find(line, "INF Delta out") then -- ignore lines containing this.
 		if botman.getMetrics then
 			metrics.errors = metrics.errors + 1
+
+			if not metrics.errorDelta then
+				metrics.errorDelta = true
+				metrics.errorLines[metrics.errorLinesCount] = line
+				metrics.errorLinesCount = metrics.errorLinesCount + 1
+			end
 		end
 
-		deleteLine()
+		return
+	end
+
+	if string.find(line, "INF Missing ") then -- ignore lines containing this.
+		if botman.getMetrics then
+			metrics.errors = metrics.errors + 1
+		end
+
+		return
+	end
+
+	if string.find(line, "INF Error ") then -- ignore lines containing this.
+		if botman.getMetrics then
+			metrics.errors = metrics.errors + 1
+
+			if not metrics.errorINFError then
+				metrics.errorINFError = true
+				metrics.errorLines[metrics.errorLinesCount] = line
+				metrics.errorLinesCount = metrics.errorLinesCount + 1
+			end
+		end
+
 		return
 	end
 
 	if string.find(line, "IndexOutOfRangeException") then -- ignore lines containing this.
 		if botman.getMetrics then
 			metrics.errors = metrics.errors + 1
+
+			if not metrics.errorIndex then
+				metrics.errorIndex = true
+				metrics.errorLines[metrics.errorLinesCount] = line
+				metrics.errorLinesCount = metrics.errorLinesCount + 1
+			end
 		end
 
-		deleteLine()
 		return
 	end
 
 	if string.find(line, "Unbalanced") then -- ignore lines containing this.
 		if botman.getMetrics then
 			metrics.errors = metrics.errors + 1
+
+			if not metrics.errorUnbalanced then
+				metrics.errorUnbalanced = true
+				metrics.errorLines[metrics.errorLinesCount] = line
+				metrics.errorLinesCount = metrics.errorLinesCount + 1
+			end
 		end
 
-		deleteLine()
 		return
 	end
 
 	if string.find(line, "->") then -- ignore lines containing this.
-		deleteLine()
 		return
 	end
 
 	if string.find(line, "NullReferenceException:") then -- ignore lines containing this.
 		if botman.getMetrics then
 			metrics.errors = metrics.errors + 1
+
+			if not metrics.errorNULREF then
+				metrics.errorNULREF = true
+				metrics.errorLines[metrics.errorLinesCount] = line
+				metrics.errorLinesCount = metrics.errorLinesCount + 1
+			end
 		end
 
-		deleteLine()
 		return
 	end
+
+	logTelnet(line)
 
 --if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
@@ -253,14 +242,6 @@ function matchAll(line, logDate, logTime)
 		end
 	end
 
---if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
-
-	-- if string.find(line, "Web user with name=bot", nil, true) then
-		-- startUsingAllocsWebAPI()
-		-- return
-	-- end
-
-
 	if string.find(line, "*** ERROR: unknown command 'webtokens'") then -- revert to using telnet
 		if server.useAllocsWebAPI then
 			server.useAllocsWebAPI = false
@@ -268,7 +249,6 @@ function matchAll(line, logDate, logTime)
 			irc_chat(server.ircMain, "Alloc's mod missing or not fully installed.  The bot is using telnet.")
 		end
 
-		deleteLine()
 		return
 	end
 
@@ -277,41 +257,34 @@ function matchAll(line, logDate, logTime)
 		-- abort reading admin list
 		getAdminList = nil
 
-		deleteLine()
 		return
 	end
 
-	if fixChunkDensity then
-		if string.find(line, "WRN DENSITYMISMATCH") then
-			fixChunkDensity = nil
-			temp = string.split(line, "\;")
-			sendCommand("rcd " .. temp[2] .. " " .. temp[4] .. " fix")
-
-			deleteLine()
-			return
-		end
-	end
-
 	if string.find(line, "WRN ") then
-		deleteLine()
 		return
 	end
 
 --if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	-- grab the server time
-	if string.find(line, "INF ") and (not server.useAllocsWebAPI or server.readLogUsingTelnet) then
-		if string.find(string.sub(line, 1, 19), os.date("%Y")) then
-			botman.serverTime = string.sub(line, 1, 10) .. " " .. string.sub(line, 12, 16)
-			botman.serverHour = string.sub(line, 12, 13)
-			botman.serverMinute = string.sub(line, 15, 16)
-			specialDay = ""
+	if botman.serverTime == "" or not botman.serverTimeStamp then
+		if string.find(line, "INF ") then
+			if string.find(string.sub(line, 1, 19), os.date("%Y")) then
 
-			if (string.find(botman.serverTime, "02-14", 5, 10)) then specialDay = "valentine" end
-			if (string.find(botman.serverTime, "12-25", 5, 10)) then specialDay = "christmas" end
+				if not botman.serverTimeStamp then
+					botman.serverTime = string.sub(line, 1, 10) .. " " .. string.sub(line, 12, 16)
+					botman.serverTimeStamp = dateToTimestamp(botman.serverTime)
+					botman.serverHour = string.sub(line, 12, 13)
+					botman.serverMinute = string.sub(line, 15, 16)
+					specialDay = ""
 
-			if server.dateTest == nil then
-				server.dateTest = string.sub(botman.serverTime, 1, 10)
+					if (string.find(botman.serverTime, "02-14", 5, 10)) then specialDay = "valentine" end
+					if (string.find(botman.serverTime, "12-25", 5, 10)) then specialDay = "christmas" end
+
+					if server.dateTest == nil then
+						server.dateTest = string.sub(botman.serverTime, 1, 10)
+					end
+				end
 			end
 		end
 	end
@@ -319,10 +292,21 @@ function matchAll(line, logDate, logTime)
 --if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	if (string.sub(line, 1, 4) == os.date("%Y")) then
+		badPlayerJoined = false
+		badJoinLine = ""
+
 		if botman.readGG then
 			botman.readGG = false
 
 			if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('GamePrefs','panel','" .. escape(yajl.to_string(GamePrefs)) .. "')") end
+
+			if botman.initReservedSlots then
+				initSlots()
+				botman.initReservedSlots = false
+			else
+				-- setup or adjust the number of slots in the slots table
+				addOrRemoveSlots()
+			end
 		end
 
 		if readWebTokens then
@@ -339,7 +323,6 @@ function matchAll(line, logDate, logTime)
 					send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 					botman.lastBotCommand = "webtokens add bot"
 				end
-				return
 			end
 		end
 	end
@@ -396,18 +379,11 @@ function matchAll(line, logDate, logTime)
 
 	-- grab steam ID of player joining server if the server is using reserved slots
 	if tonumber(server.reservedSlots) > 0 then
-		if string.find(line, "INF Steam authentication successful") then
+		if string.find(line, "INF Steam authentication successful, allowing user") then
 			temp = string.split(line, ",")
 			pid = string.sub(temp[3], 12, string.len(temp[3]) -1)
 
 			playerConnected(line)
-
-			-- check the slots and how full the server is try to kick a player from a reserved slot
-			if players[pid].reserveSlot == true or players[pid].accessLevel < 11 then
-				if (botman.dbReservedSlotsUsed >= server.reservedSlots) then
-					freeReservedSlot()
-				end
-			end
 
 			return
 		end
@@ -505,10 +481,6 @@ function matchAll(line, logDate, logTime)
 			botman.stompyReportsSpawns = true
 			listEntities(line, "BCM")
 
-			if not debug then
-				deleteLine()
-			end
-
 			return
 		end
 	end
@@ -568,7 +540,7 @@ function matchAll(line, logDate, logTime)
 			irc_chat(server.ircAlerts, "Player " .. pid .. " name: " .. pname .. "'s death recorded at " .. igplayers[pid].deadX .. " " .. igplayers[pid].deadY .. " " .. igplayers[pid].deadZ)
 
 			if tonumber(server.packCooldown) > 0 then
-				if players[pid].donor then
+				if isDonor(pid) then
 					players[pid].packCooldown = os.time() + math.floor(server.packCooldown / 2)
 				else
 					players[pid].packCooldown = os.time() + server.packCooldown
@@ -608,16 +580,24 @@ function matchAll(line, logDate, logTime)
 		if server.maxPlayers == 0 then
 			server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
 
-			if tonumber(server.reservedSlots) > 0 then
-				sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+			if botman.dbConnected then
+				conn:execute("UPDATE server SET maxPlayers = " .. server.maxPlayers)
 			end
+
+			-- if tonumber(server.reservedSlots) > 0 then
+				-- sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+			-- end
 		else
 			if tonumber(server.maxPlayers) ~= tonumber(server.ServerMaxPlayerCount) - 1 then
 				server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
 
-				if tonumber(server.reservedSlots) > 0 then
-					sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+				if botman.dbConnected then
+					conn:execute("UPDATE server SET maxPlayers = " .. server.maxPlayers)
 				end
+
+				-- if tonumber(server.reservedSlots) > 0 then
+					-- sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+				-- end
 			end
 		end
 
@@ -933,10 +913,6 @@ function matchAll(line, logDate, logTime)
 				igplayers[pid].noclipZ = z
 			end
 
-			if not debug then
-				deleteLine()
-			end
-
 			return
 		end
 
@@ -1017,10 +993,6 @@ function matchAll(line, logDate, logTime)
 				end
 			end
 
-			if not debug then
-				deleteLine()
-			end
-
 			return
 		end
 	end
@@ -1075,7 +1047,6 @@ function matchAll(line, logDate, logTime)
 		if string.find(line, "Level: SteamID (Player name if online)", nil, true) then
 			flagAdminsForRemoval()
 			getAdminList = true
-			staffList = {}
 
 			return
 		end
@@ -1190,7 +1161,7 @@ function matchAll(line, logDate, logTime)
 				conn:execute("UPDATE server SET ServerPort = " .. server.ServerPort)
 			end
 
-			if botman.db2Connected then
+			if botman.botsConnected then
 				connBots:execute("UPDATE servers SET ServerPort = " .. server.ServerPort .. " WHERE botID = " .. server.botID)
 			end
 
@@ -1248,7 +1219,7 @@ function matchAll(line, logDate, logTime)
 				conn:execute("UPDATE server SET serverName = '" .. escape(server.serverName) .. "'")
 			end
 
-			if botman.db2Connected then
+			if botman.botsConnected then
 				connBots:execute("UPDATE servers SET serverName = '" .. escape(server.serverName) .. "' WHERE botID = " .. server.botID)
 			end
 
@@ -1308,15 +1279,45 @@ function matchAll(line, logDate, logTime)
 			if server.maxPlayers == 0 then
 				server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
 
-				if server.reservedSlots > 0 then
-					sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+				if botman.dbConnected then
+					conn:execute("UPDATE server SET maxPlayers = " .. server.maxPlayers)
 				end
+
+				-- if server.reservedSlots > 0 then
+					-- sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+				-- end
 			else
 				if tonumber(server.maxPlayers) ~= tonumber(server.ServerMaxPlayerCount) - 1 then
-					server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
-
 					if tonumber(server.reservedSlots) > 0 then
-						sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+						if tonumber(server.maxPlayers) > tonumber(server.ServerMaxPlayerCount) then
+							server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
+
+							if botman.dbConnected then
+								conn:execute("UPDATE server SET maxPlayers = " .. server.maxPlayers)
+							end
+
+	--display("bump max players by 1")
+							--sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+
+							return
+						end
+
+						if tonumber(server.maxPlayers) < tonumber(server.ServerMaxPlayerCount) -1 then
+							server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
+
+							if botman.dbConnected then
+								conn:execute("UPDATE server SET maxPlayers = " .. server.maxPlayers)
+							end
+
+	--display("bump max players by 1")
+							--sendCommand("sg ServerMaxPlayerCount " .. server.maxPlayers + 1) -- add a slot so reserved slot players can join even when the server is full
+						end
+					else
+						server.maxPlayers = tonumber(server.ServerMaxPlayerCount)
+
+						if botman.dbConnected then
+							conn:execute("UPDATE server SET maxPlayers = " .. server.maxPlayers)
+						end
 					end
 				end
 			end
@@ -1411,16 +1412,6 @@ function matchAll(line, logDate, logTime)
 	end
 
 
-	if string.find(line, "command 'rcd") then
-		if string.find(line, server.botsIP) then
-			fixChunkDensity = true
-		end
-
-		deleteLine()
-		return
-	end
-
-
 	if string.find(line, "INF World.Unload") then
 		saveLuaTables()
 
@@ -1430,16 +1421,15 @@ function matchAll(line, logDate, logTime)
 	if string.find(line, "ERROR: unknown command 'bm-playerunderground'") then
 		server.scanNoclip = false
 
-		if not debug then
-			deleteLine()
-		end
-
 		return
 	end
 
 
 	-- detect server version
 	if string.find(line, "Game version:") then
+		temp = string.sub(line, string.find(line, "Game version:") + 13)
+		modVersions["Server " .. string.trim(temp)] = {}
+
 		server.gameVersion = string.trim(string.sub(line, string.find(line, "Game version:") + 14, string.find(line, "Compatibility") - 2))
 		if botman.dbConnected then conn:execute("UPDATE server SET gameVersion = '" .. escape(server.gameVersion) .. "'") end
 
@@ -1467,6 +1457,8 @@ function matchAll(line, logDate, logTime)
 		server.botman = true
 		temp = string.split(line, ":")
 		server.botmanVersion = temp[2]
+		modBotman.version = temp[2]
+		if botman.dbConnected then conn:execute("UPDATE modBotman SET version = '" .. temp[2] .. "'") end
 
 		return
 	end
@@ -1528,10 +1520,6 @@ function matchAll(line, logDate, logTime)
 				if botman.dbConnected then conn:execute("UPDATE players SET bedX = " .. x .. ", bedY = " .. y .. ", bedZ = " .. z .. " WHERE steam = " .. steam) end
 			end
 
-			if not debug then
-				deleteLine()
-			end
-
 			return
 		end
 	end
@@ -1539,36 +1527,30 @@ function matchAll(line, logDate, logTime)
 
 	if (string.find(line, "Process chat error")) then
 		irc_chat(server.ircAlerts, "Server error detected. Re-validate to fix: " .. line)
-
-		if not debug then
-			deleteLine()
-		end
 	end
 
 
-	-- check for lag
-	if string.find(line, "pm LagCheck ") then
-		temp = string.split(line, "'")
-		timestamp = tonumber(string.match(temp[2], " (%d+)"))
+	-- -- check for lag
+	-- if string.find(line, "pm LagCheck ") then
+		-- temp = string.split(line, "'")
+		-- timestamp = tonumber(string.match(temp[2], " (%d+)"))
 
-		server.lagged = false
-		local lag = os.time() - timestamp
+		-- server.lagged = false
+		-- local lag = os.time() - timestamp
 
-		if botman.getMetrics then
-			metrics.telnetCommandLag = lag
-		end
+		-- if botman.getMetrics then
+			-- metrics.telnetCommandLag = lag
+		-- end
 
-		if tonumber(lag) > server.commandLagThreshold then
-			server.lagged = true
-		end
+		-- if tonumber(lag) > server.commandLagThreshold then
+			-- server.lagged = true
+		-- end
 
-		deleteLine()
-		return
-	end
+		-- return
+	-- end
 
 
 	if string.find(line, "Playername or entity ID not found.") then
-		deleteLine()
 
 		return
 	end
@@ -1576,10 +1558,6 @@ function matchAll(line, logDate, logTime)
 
 	if string.find(line, "bot_RemoveInvalidItems") then
 		removeInvalidItems()
-
-		if not debug then
-			deleteLine()
-		end
 
 		return
 	end
@@ -1598,15 +1576,11 @@ function matchAll(line, logDate, logTime)
 		irc_chat(server.ircAlerts, "Server error detected.")
 		irc_chat(server.ircAlerts, line)
 
-		if not debug then
-			deleteLine()
-		end
-
 		return
 	end
 
 
-	if string.find(line, "Server stopped") and not string.find(line, "Chat") then
+	if string.find(line, "INF World.Unload") and not string.find(line, "Chat") then
 		irc_chat(server.ircMain, "The server has shut down.")
 		botman.telnetOffline = true
 		botman.APIOffline = true
@@ -1625,6 +1599,15 @@ function matchAll(line, logDate, logTime)
 		toggleTriggers("api offline")
 		botman.playersOnline = 0
 		server.uptime = 0
+
+		send("gt")
+		tempTimer( 2, [[sendCommand("admin list")]] )
+		tempTimer( 5, [[sendCommand("version")]] )
+		tempTimer( 7, [[sendCommand("gg")]] )
+
+		if server.botman then
+			tempTimer( 10, [[sendCommand("bm-resetregions list")]] )
+		end
 
 		return
 	end
@@ -1679,18 +1662,23 @@ function matchAll(line, logDate, logTime)
 		getuptime = nil
 		temp = string.split(line, ":")
 
+		-- hours
 		tmp  = tonumber(string.match(temp[1], "(%d+)"))
 		server.uptime = tmp * 60 * 60
 
+		-- minutes
 		tmp  = tonumber(string.match(temp[2], "(%d+)"))
+		server.uptime = server.uptime + (tmp * 60)
+
+		-- seconds
+		tmp  = tonumber(string.match(temp[3], "(%d+)"))
 		server.uptime = server.uptime + tmp
 
-		botman.lastUptimeRead = os.time()
 		return
 	end
 
 
-	if string.find(line, "INF Executing command 'bm-uptime'")  then
+	if string.find(line, "INF Executing command 'bm-uptime'", nil, true) and not server.useAllocsWebAPI then
 		getuptime = true
 		return
 	end
@@ -1704,19 +1692,6 @@ function matchAll(line, logDate, logTime)
 
 			conn:execute("UPDATE server SET botsIP = '" .. server.botsIP .. "'")
 			return
-		end
-	end
-
-
-	if string.find(line, "INF StartGame done") then
-		send("gt")
-		tempTimer( 2, [[sendCommand("admin list")]] )
-		tempTimer( 5, [[sendCommand("version")]] )
-		tempTimer( 10, [[sendCommand("gg")]] )
-
-		if server.botman then
-			cmd = "bm-change botname [" .. server.botNameColour .. "]" .. server.botName
-			tempTimer( 10, [[sendCommand("]] .. cmd .. [[")]] )
 		end
 	end
 
@@ -1757,13 +1732,6 @@ function matchAll(line, logDate, logTime)
 	end
 
 
-	if string.find(line, "INF VisitMap") then
-		temp = string.sub(line, string.find(line, "INF") + 4)
-		irc_chat(server.ircMain, temp)
-		return
-	end
-
-
 	if string.find(line, "INF WorldGenerator:Generating", nil, true) then
 		if not botman.worldGenerating then
 			botman.worldGenerating = true
@@ -1777,7 +1745,60 @@ function matchAll(line, logDate, logTime)
 		irc_chat(server.ircMain, temp)
 	end
 
---if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
+	if server.botman then
+		if string.find(line, "INF ~Botman AntiCheat~") then
+			tmp = {}
+			tmp.name = string.sub(line, string.find(line, "-NAME:") + 6, string.find(line, "--ID:") - 2)
+			tmp.id = string.sub(line, string.find(line, "-ID:") + 4, string.find(line, "--LVL:") - 2)
+			tmp.hack = ""
+			tmp.level = string.sub(line, string.find(line, "-LVL:") + 5)
+			tmp.level = string.match(tmp.level, "(-?%d+)")
+			tmp.alert = string.sub(line, string.find(line, "-LVL:") + 5)
+			tmp.alert = string.sub(tmp.alert, string.find(tmp.alert, " ") + 1)
+
+			if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and igplayers[tmp.id] then
+				if string.find(line, " spawned ") then
+					temp = string.split(tmp.alert, " ")
+					tmp.entity = stripQuotes(temp[3])
+					tmp.x = string.match(temp[4], "(-?\%d+)")
+					tmp.y = string.match(temp[5], "(-?\%d+)")
+					tmp.z = string.match(temp[6], "(-?\%d+)")
+					tmp.hack = "spawned " .. tmp.entity .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z
+
+					if tonumber(tmp.level) > 2 then
+						irc_chat(server.ircMain, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
+						irc_chat(server.ircAlerts, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
+					end
+				else
+					tmp.x = igplayers[tmp.id].xPos
+					tmp.y = igplayers[tmp.id].yPos
+					tmp.z = igplayers[tmp.id].zPos
+					tmp.hack = "using dm at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z
+
+					if tonumber(tmp.level) > 2 then
+						irc_chat(server.ircMain, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
+						irc_chat(server.ircAlerts, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
+					end
+				end
+
+				if tonumber(tmp.level) > 2 then
+					banPlayer(tmp.id, "10 years", "hacking", "")
+					logHacker(botman.serverTime, "Botman anticheat detected " .. tmp.id .. " " .. tmp.name .. " " .. tmp.hack .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z)
+					message("say [" .. server.chatColour .. "]Banning player " .. tmp.name .. " 10 years for using hacks.[-]")
+					irc_chat(server.ircMain, "[BANNED] Player " .. tm.id .. " " .. tmp.name .. " has has been banned for hacking.")
+					irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Player " .. tmp.id .. " " .. tmp.name .. " has has been banned for 10 years for hacking.")
+					conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. tmp.x .. "," .. tmp.y .. "," .. tmp.z .. ",'" .. botman.serverTime .. "','ban','Player " .. tmp.id .. " " .. escape(tmp.name) .. " has has been banned for 10 years for hacking.'," .. tmp.id .. ")")
+					connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player banned','Player banned by anticheat " .. escape(tmp.name) .. "'," .. tmp.id .. ")")
+				end
+			else
+				if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and tonumber(tmp.level) > 2 then
+					irc_chat(server.ircAlerts, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert .. " at " .. players[tmp.id].xPos .. " " .. players[tmp.id].yPos .. " " .. players[tmp.id].zPos)
+				end
+			end
+		end
+	end
+
 
 	if readWebTokens and not string.find(line, "Defined") then
 		if string.find(line, " bot ") then

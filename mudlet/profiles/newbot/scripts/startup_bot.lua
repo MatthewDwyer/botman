@@ -11,6 +11,11 @@ debugger = require "debug"
 mysql = require "luasql.mysql"
 local debug
 
+if not telnetLogFileName then
+	telnetLogFileName = homedir .. "/telnet_logs/" .. os.date("%Y-%m-%d#%H-%M") .. ".txt"
+	telnetLogFile = io.open(telnetLogFileName, "a")
+end
+
 
 function dbugi(text)
 	-- send text to the special debug irc channel
@@ -52,8 +57,13 @@ function checkData()
 	sendCommand("gt")
 
 	if server.botman then
-		sendCommand("bm-uptime")
+		if server.uptime == 0 then
+			sendCommand("bm-uptime")
+		end
+
 		sendCommand("bm-resetregions list")
+		--sendCommand("bm-change botname [" .. server.botNameColour .. "]" .. server.botName)
+		sendCommand("bm-anticheat report")
 	end
 
 	if tablelength(shopCategories) == 0 then
@@ -62,13 +72,8 @@ function checkData()
 
 	if tonumber(server.ServerPort) == 0 then
 		sendCommand("gg")
-	end
-
-	if tonumber(botman.playersOnline) > 0 then
-		if tablelength(igplayers) == 0 then
-			igplayers = {}
-			sendCommand("lp")
-		end
+	else
+		addOrRemoveSlots()
 	end
 
 	if tablelength(owners) == 0 then
@@ -96,6 +101,8 @@ function login()
 
 	debug = false
 	debugdb = false
+
+	startLogging(false)
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -140,7 +147,6 @@ function login()
 		server.ircAlerts = randomChannel .. "_alerts"
 		server.ircWatch = randomChannel .. "_watch"
 		server.ircPort = 6667
-		server.lagged = false
 	end
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -172,10 +178,18 @@ function login()
 		botman.sysDownloadErrorID = 0
 	end
 
+	if botman.sysExitEventID == nil then
+		botman.sysExitEventID = registerAnonymousEventHandler("sysExitEvent", "onCloseMudlet")
+		botman.sysExitEventID = 0
+	end
+
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	if (botman.botStarted == nil) then
 		botman.botStarted = os.time()
+
+		telnetLogFileName = homedir .. "/telnet_logs/" .. os.date("%Y-%m-%d#%H-%M-%S", os.time()) .. ".txt"
+		telnetLogFile = io.open(telnetLogFileName, "a")
 
 		if reloadBotScripts == nil then
 			dofile(homedir .. "/scripts/reload_bot_scripts.lua")
@@ -193,15 +207,13 @@ function login()
 		openDB() -- this lives in edit_me.lua
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
-		--checkForData()
-
 		openBotsDB() -- this lives in edit_me.lua
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		initDB() -- this lives in mysql.lua
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 		botman.dbConnected = isDBConnected()
-		botman.db2Connected = isDBBotsConnected()
+		botman.botsConnected = isDBBotsConnected()
 		botman.initError = true
 		botman.serverTime = ""
 		botman.feralWarning = false
@@ -260,8 +272,11 @@ function login()
 		botman.scheduledRestart = false
 		botman.ExceptionRebooted = false
 		server.scanZombies = false
+		server.lagged = false
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+
+		checkForMissingTables()
 
 		fixMissingStuff()
 
@@ -280,24 +295,18 @@ function login()
 		botman.nextRebootTest = nil
 		botman.initError = false
 
-		if botman.APIOffline then
-			startLogging(true)
-		else
-			startLogging(false)
-		end
-
 		getServerData(getAllPlayers)
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 		-- Flag all players as offline
 		if tonumber(server.botID) > 0 then
-			connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID)
+			if botman.botsConnected then connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID) end
 		end
 
 		if not server.telnetDisabled then
 			if not server.readLogUsingTelnet then
-				conn:execute("UPDATE server set readLogUsingTelnet = 1")
+				if botman.dbConnected then conn:execute("UPDATE server set readLogUsingTelnet = 1") end
 			end
 
 			server.readLogUsingTelnet = true
@@ -322,23 +331,19 @@ function login()
 		joinIRCServer()
 	end
 
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+
 	if server.botman then
-		sendCommand("bm-change botname [" .. server.botNameColour .. "]" .. server.botName)
+		sendCommand("bm-readconfig")
 	end
+
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	if custom_startup ~= nil then
 		custom_startup()
 	end
 
-	if botman.APIOffline then
-		toggleTriggers("api offline")
-
-		if server.useAllocsWebAPI then
-			tempTimer( 5, [[connectToAPI()]] )
-		end
-	else
-		toggleTriggers("api online")
-	end
+	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	-- special case where the bot will use telnet to monitor the server regardless of other API settings
 	if server.readLogUsingTelnet then

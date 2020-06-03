@@ -28,6 +28,7 @@ Botman commands:
 
 /save {name}
 After marking out the area you want to copy, you can save it.
+Restricted to owners, admins and mods in-game only
 
 /set new player/player/donor/prisoner/mod/admin/owner chat colour FFFFFF
 /reset chat colour
@@ -35,50 +36,71 @@ Set the default chat colour for a class of player.  You can also set chat colour
 eg. /set player joe chat colour B0E0E6
 To disable automatic chat colouring, set it to white which is FFFFFF
 To reset everyone to white type /reset chat colour everyone
+Restricted to owners and admins in-game and IRC
 
 /set/clear horde
 Marks your current position to spawn a horde there with /spawn horde.
 Clear horde doesn't remove the horde. It only clears the saved coordinate.
+Restricted to owners, admins and mods in-game only
 
 /spawn horde {optional player or location name} {number of zombies}
 Spawn a horde around a player or location or at a marked coordinate.  See /set horde.
+Restricted to owners, admins and mods in-game and IRC
 
 /set max clans {number of clans}
 Set the maximum number of clans.
+Restricted to server owners in-game and IRC
 
 /set max clan players {number of players}
 Set the maximum number of players clans can have.
+Restricted to server owners in-game and IRC
 
 /set min clan level {player level}
 Set the minimum player level required to join a clan.
+Restricted to server owners in-game and IRC
+
+/set reset delay {days}
+Sets the delay of days between resets. 0 for every reboot.
+Restricted to server owners in-game and IRC
 
 /enable/disable clans
 Enable or disable the clan feature in the Botman mod.  Default is disabled.
+Restricted to server owners in-game and IRC
 
 /enable/disable reset regions
 Enable or disable the Botman mod's reset regions feature.  Default is disabled.
 This is very similar to the bot's reset zones except that they are limited to whole regions and can actually reset the region or just prefabs or just remove claims.
+Restricted to server owners in-game and IRC
 
 /reset regions remove/leave claims (default is leave claims)
 Reset regions can remove or leave claim blocks.
+Restricted to server owners in-game and IRC
+
+/enable/disable reset prefabs
+The Botman mod can reset entire regions (the default) or just the prefabs they contain.
+Restricted to server owners in-game and IRC
 
 /mute/unmute {player name}
 Muting a player blocks their ingame chat from being seen by other players.  You will still see it from the web client.
 It does not block voice chat sadly.
+Restricted to owners, admins and mods in-game and IRC
 
 /show/hide commands
 Hide commands from ingame chat which makes them all PM's or show them which makes them public.  They will still appear in the web client.
+Restricted to owners, admins and mods in-game and IRC
 
 /trader add/trader del {named area}
 After marking out a named area with the /mark command, you can add or remove trader protection on it.
-
+Restricted to owners, admins and mods in-game only
 
 /stop/cancel maze
 Aborts any maze(s) that you have told the bot to create.
+Restricted to owners, admins and mods in-game and IRC
 
 /delete save {number taken from /list saves}
 After /list saves, you can delete a save from the list.
 Note that the list is temporary, but will last until the next time a list is generated.  If it doesn't work, do another /list saves.
+Restricted to owners, admins and mods in-game and IRC
 
 /dig (or fill) {optional number} (default 5)
 Dig a hole or fill a hole.
@@ -97,22 +119,26 @@ Examples:
 /fill {saved prefab} block stone
 
 You can repeat the last command with /again and change direction with /again west
-
+Restricted to owners, admins and mods in-game only
 
 /erase {optional number} (default 5)
 /erase block {block name} replace {with other block name} {optional number}
 eg. /erase block stone replace air 20
+Restricted to owners, admins and mods in-game only
 
 Replace an area around you with air blocks.  Add a number to change the size.
+Restricted to owners, admins and mods in-game only
 
 /list (or /li) {partial name of an item or block}
 List all items containing the text you are searching for.
+Restricted to owners, admins and mods in-game only
 
 /list saves {optional player name}
 List all your saved marked areas or those of someone else.  This list is coordinate pairs of places in the world that you have marked for some block command.
 You can use a named save with the block commands.
 You can teleport to them with /tp #{name of marked area}.
 You can delete one /delete save {list number of marked area}.
+Restricted to owners, admins and mods in-game and IRC
 
 /load prefab {name}
 /load prefab {name} at {x} {y} {z} face {0-3}
@@ -122,63 +148,92 @@ Restore a saved prefab in place or place it somewhere else.
 If you provide coords and an optional rotation (default is 0 - north), you will make a new copy of the prefab at those coords.
 If you instead add here, it will load on your current position with optional rotation.
 If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy.
+Restricted to owners, admins and mods in-game only
 
 /make maze (default maze 20 x 20)
 /make maze wall {block name} fill {air block} width {number} length {number} height {number} x {x coord} y {y coord} z {z coord}
 The bot also accepts wide, long, and tall instead of width, length, and height.
 Generate and build a random maze.  Someone must stay there until the maze completes or it will fail to spawn fully.
 Default values: wall steelBlock fill air width 20 length 20 height 3. It uses your current position for x, y and z if not given.
+Restricted to owners, admins and mods in-game only
+
+/reset player profile {player name}
+Make the server delete a player's profile.
+Restricted to owners, admins and mods in-game and IRC
+
+/reset prefab {player name}
+Reset a prefab where the player is standing.  If doing on yourself in-game you only need /reset prefab.
+Restricted to owners and admins in-game and IRC
+
+/reset regions now
+Reboot the server and reset all reset regions immediately. (result varies subject to other settings)
+Restricted to owners in-game only and IRC
 
 /undo
 The block commands bm-prender, bm-pdup and bm-repblock allow for the last command to be undone, however since more than one person can command the bot to do block commands
 it is possible that other block commands have been done by the bot since your last block command.  If the last block command came from you, the bot will undo it.
+Restricted to owners, admins and mods in-game only
 
 
 Info Commands:
 
 /bot info
 Displays info about the bot.
+Unrestricted command in-game only
 
 /uptime
 Reports the bot and server's running times.
+Unrestricted command in-game and IRC
 
 /server or /info
 Displays info mostly from the server config.
+Unrestricted command in-game only
 
 /next reboot
 Reports the time remaining before the next scheduled reboot.
+Unrestricted command in-game and IRC
 
 /day7 or /when feral or /bloodmoon
 Reports the number of days remaining until the next horde night.
+Unrestricted command in-game and IRC
 
 /server date
 Displays the system clock of the game server.
+Unrestricted command in-game and IRC
 
 /server stats
 Displays various server totals for the last 24 hours or more days if you add a number.
 eg. /server stats 5 (gives you the last 5 days cummulative stats)
+Unrestricted command in-game and IRC
 
 /new players {optional number (days)
 List the new players and basic info about them in the last day or more.
+Restricted to owners, admins and mods in-game and IRC
 
 /seen {player name}
 Reports when the player was last on the server.
+Unrestricted command in-game and IRC
 
 /rules
 Reports the server rules.
+Unrestricted command in-game and IRC
 
 /where
 Gives info about where you are in the world and the rules that apply there.
+Unrestricted command in-game only
 
 /who {optional number distance}
 Donors can see 300 metres and other players can see 200.  New and watched players can't see staff near them.
+Unrestricted command in-game only
 
 /alert {message}
 Whatever is typed after /alert is recorded to the database and displayed on irc.
 You can recall the alerts with the irc command view alerts {optional days}
+Unrestricted command in-game only
 
 /info {player}
 Displays info about a player.  Only staff can specify a player.  Players just see their own info.
+Unrestricted command in-game only
 
 /who visited player {player name} days {days} hours {hrs} range {dist} height {ht}
 See who visited a player location or base.
@@ -186,6 +241,7 @@ Example with defaults: /who visited player smeg days 1 hours 0 range 10 height 5
 /who visited bed smeg
 Add base to just see base visitors. Setting hours will reset days to zero.
 Use this command to discover who's been at the player's location.
+Unrestricted command in-game only
 
 
 Base Commands:
@@ -194,250 +250,318 @@ Base Commands:
 /delbase/delbase2 {player name} (for admins only)
 Delete a player's base and base protection (in the bot only).  It does not physically delete the base in the game world.
 Players can only delete their own bases.
+Unrestricted command in-game and IRC
 
 /set base cooldown {number in seconds} (default is 2400 or 40 minutes)
 The /base or /home command can have a time delay between uses.  Donors wait half as long.  If you set it to 0 there is no wait time.
+Restricted to owners and admins in-game and IRC
 
 /set base cost {number}
 By default players can type /base to return to their base.  You can set a delay and/or a cost before the command is available.
+Restricted to server owners in-game and IRC
 
 /set base deadzone {distance}
 Block players setting their base too close to the base of another player who has not friended them.
 The default is 0 which disables this feature.  It does not remove existing bases that are closer than the distance you set here, but they will not be able to redo /setbase unless they move further away.
+Restricted to server owners in-game and IRC
 
 /set base size {number} {player name}
 /set base2 size {number} {player name}
 Set the base protection size for a player's first or second base.
+Restricted to owners, admins and mods in-game and IRC
 
 /setbed/clearbed
 When you die, the bot can automatically return you to your first or second base after respawn.
 Set within 50 metres of your base.  The closest base will become your new spawn point after death.
+Unrestricted command in-game only
 
 /set default base size {number in metres or blocks}
 The default base protection size is 32 blocks (64 diameter).  This default only applies to new players joining the server for the first time.
 Existing base sizes are not changed with this command.
+Restricted to server owners in-game and IRC
 
 /enable/disable base protection
 Base protection can be turned off server wide.  Players can still use claim blocks for protection.
 Not the same as /enable/disable pvp protect which is specifically for allowing the bot's base protection in PVP rules.
+Restricted to server owners in-game and IRC
 
 /enable/disable pvp protect
 By default base protection is disabled where pvp rules apply. You can change that by enabling it.
+Restricted to server owners in-game and IRC
 
 /enable/disable base (or home) teleport
 Enable or disable the home or base teleport command (except for staff).
+Restricted to owners and admins in-game and IRC
 
 /unprotectbase {player name}
 /unprotectbase2 {player name}
 Disable base protection for a player.
 Only admins can specify a player name.  Everyone else can only use this command on their own bases.
+Unrestricted command in-game and IRC
 
 /home/base
 /home2/base2
 Teleport back to your first or second base. A timer and/or a cost may apply.
+Unrestricted command in-game only
 
 /pause
 Pause your base protection.
 Only works on your base(s) if you are within 100 metres of them and automatically resumes if you move away or leave the server.
 This allows players who you haven't friended access to your base with you present.
+Unrestricted command in-game only
 
 /setbase/sethome {player name}
 Set a player's first base for them where you are standing.
+Restricted to owners, admins and mods in-game only
 
 /sethome (or sethome2)
 /setbase (or setbase2)
 Tell the bot where your first or second base is for base protection, raid alerting and the ability to teleport home.
+Unrestricted command in-game only
 
 /test base
 Turn your own base protection against you for 30 seconds to test that it works.
+Unrestricted command in-game only
 
 /protect (or protect2)
 Set up the bot's base protection.  The bot will tell the player to move towards or away from their base and will
 automatically set protection outside of their base protected area.  Players should not set traps in this area.
+Unrestricted command in-game only
 
 /resume/unpause
 Re-activate your base protection.
+Unrestricted command in-game only
 
 
 Location Commands:
 
 /location add {name}
 Create a location where you are standing.  Unless you add random spawns, any player teleporting to the location will arrive at your current position.  If you are not on the ground, make sure the players can survive the landing.
+Restricted to owners, admins and mods in-game only
 
 /location categories
 List the location categories. Only admins see the access level restrictions
+Unrestricted command in-game only
 
 /locations
 List the locations and basic info about them.
+Unrestricted command in-game only
 
 /lobby {player name}
 If the lobby location exists, send the player to it. You can also do this to offline players, they will be moved to the lobby when they rejoin.
 If location spawn exists and lobby does not, spawn is the lobby location.
 If a location has been assigned as the lobby and there isn't a location called lobby or spawn, it will be used instead.
+Restricted to owners, admins and mods in-game and IRC
 
 /location clear reset {location name}
 Remove the reset zone flag.  Unless otherwise restricted, players will be allowed to place claims and setbase.
+Restricted to owners, admins and mods in-game and IRC
 
 /location {name} clear
 Delete all random spawns for the location.
+Restricted to owners, admins and mods in-game and IRC
 
 /location {name} ends here
 Set the size of the location as the difference between your position and the centre of the location. Handy for setting it visually.
+Restricted to owners, admins and mods in-game only
 
 /location {name} random
 Start setting random spawn points for the location.  The bot uses your position which it samples every 3 seconds or so.  It only records a new coordinate when you have moved more than 2 metres from the last recorded spot.
 Unless you intend players to fall, do not fly or clip through objects while recording.  To stop recording just type stop.
 You can record random spawns anywhere and more than once but remember to type stop after each recording or the bot will continue recording your movement and making spawn points from them.
 The spawns do not have to be inside the location and you can make groups of spawns anywhere in the world for the location.
+Restricted to owners, admins and mods in-game only
 
 /location set reset {name}
 Flag the location as a reset zone.  The bot will warn players not to build in it and will block /setbase and will remove placed claims of non-staff.
+Restricted to owners, admins and mods in-game and IRC
 
 /location move {name}
 Move an existing location to where you are standing.  Unless you add random spawns, any player teleporting to the location will arrive at your current position.
 If you are not on the ground, make sure the players can survive the landing.  If there are existing random spawns for the location, moving it will not move them.
 You should clear them and redo them using /location {name} clear and /location {name} random.
+Restricted to owners, admins and mods in-game only
 
 /protect location
 Tell the bot to protect the location that you are in. It will instruct you what to do and will tell you when the location is protected.
+Restricted to owners and admins in-game only
 
 /location remove {name}
 Delete the location and all of its spawnpoints.
+Restricted to owners, admins and mods in-game and IRC
 
 /location {old name} rename {new name}
 Change an existing location's name to something else.
+Restricted to owners, admins and mods in-game and IRC
 
 /location {name} category {category name}
 /location {name} clear category
 Set or clear a category for a location.  If the category doesn't exist it is created.
+Restricted to owners, admins and mods in-game and IRC
 
 /location {name} access {minimum access level}
 Set the minimum access level required to teleport to the location.
+Restricted to owners, admins and mods in-game and IRC
 
 /location {name} close {0-23}
 Block and remove players from the location from a set hour.
+Restricted to owners, admins and mods in-game and IRC
 
 /set location {name} cooldown {number in seconds}
 After teleporting to the location, players won't be able to teleport back to it until the cooldown timer expires.
+Restricted to owners, admins and mods in-game and IRC
 
 /location {name} cost {number}
 Require the player to have {number} Zennies to teleport there.  The Zennies are removed from the player afterwards.
+Restricted to owners, admins and mods in-game and IRC
 
 /location {name} day closed {0-7}
 Block and remove players from the location on a set day. Disable this feature by setting it to 0.
+Restricted to owners, admins and mods in-game and IRC
 
 /location {name} minigame {game type}
 Flag the location as part of a minigame such as capture the flag.  The minigame is an unfinished idea so this command doesn't do much yet.
+Restricted to owners, admins and mods in-game and IRC
 
 /location {name} open {0-23}
 Allow players inside the location from a set hour.
+Restricted to owners, admins and mods in-game and IRC
 
-/location owner {player name}
+/location {name} owner {player name}
 Assign ownership of a location to a player.  They will be able to set protect on it and players not friended to them won't be able to teleport there.
+Restricted to owners, admins and mods in-game and IRC
 
 /location {name} min level {minimum player level}
 /location {name} max level {maximum player level}
 /location {name} min level {minimum player level} max level {maximum player level}
 Set a player level requirement to teleport to a location.
+Restricted to owners, admins and mods in-game and IRC
 
 /location {name} size {number}
 Set the size of the location measured from its centre.  To make a 200 metre location set it to 100.
+Restricted to owners, admins and mods in-game and IRC
 
 /set tp {optional location}
 Create a single random teleport for the location you are in or if you are recording random teleports, it will set for that location.
 If you provide a location name you will create 1 random TP for that location where you are standing.
+Restricted to owners, admins and mods in-game only
 
 /location allow base {location name}
 /location disallow/deny/block base {location name}
 Allow players to /setbase in the location or block that.
+Restricted to owners, admins and mods in-game and IRC
 
 /location enable/disable {name}
 Flag the location as enabled or disabled. Currently this flag isn't used and you can ignore this command.
+Restricted to owners and admins in-game and IRC
 
 /location hide/unhide {name}
 Flag the location as hidden or unhidden. Hidden locations are only shown to admins when using the /locations command.
+Restricted to owners and admins in-game and IRC
 
 /location lobby/not lobby {name}
 Flag the location as the lobby or not the lobby. New players will be sent to this location when they spawn if it is flagged as lobby.  Only one location will be used so flagging more will not make them all the lobby.
 To do that use /set tp {location}.  This will add a random teleport destination for the location.  You can set as many as you want.
+Restricted to owners and admins in-game and IRC
 
 /location round/circle/square/rectangle {name}
 Locations are circles by default with a central coord and a radius.  You can make the location a square (with equal sides).
 The location's size is always its radius.
+Restricted to owners and admins in-game and IRC
 
 /location p2p enable/disable {name} (default is enabled)
 When disabled, players will not be able to teleport to friends or fetch friends in the location.
+Restricted to owners and admins in-game and IRC
 
 /location pack enable/disable {name} (default is enabled)
 When disabled, the /pack command will not work if the player died inside the location.
+Restricted to owners and admins in-game and IRC
 
 /location private/public {name} (default is private)
 Flag the location as private or public.  Players can only use public locations.
+Restricted to owners and admins in-game and IRC
 
 /location {name} pvp
 /location {name} pve
 Change the rules at a location to pvp or pve.
+Restricted to owners and admins in-game and IRC
 
 /location {name} enable (or disable) returns
 Enable or disable the return command for a location.
+Restricted to owners and admins in-game and IRC
 
 /location safe/unsafe {location name}
 Flag/unflag the location as a safe zone.  The bot will automatically kill zombies in the location if players are in it.
 To prevent this feature spamming the server it is triggered every 30 seconds. When there are more than 10 players it changes to every minute.
 If you have StompyNZ's Bad Company mod, the bot will instantly despawn zombies that spawn inside the zone. Walk-in zombies are detected as above.
+Restricted to owners and admins in-game and IRC
 
 /location {name} watch
 /location {name} stop watching
 Set a location to report player activity regardless of other player watch settings, or not.  The default is to not watch players.
 Use this setting to be alerted whenever a player enters/exits a watched location or their inventory changes while in it.
+Restricted to owners and admins in-game and IRC
 
 /location {name} enable (or disable) waypoints
 Block or allow players to set waypoints in the location.
+Restricted to owners and admins in-game and IRC
 
 /show/hide locations
 Normally when you enter and leave a location you will see a private message informing you of this.  You can disable the message.
+Restricted to server owners in-game and IRC
 
 /unprotect location {optional name}
 Remove bot protection from the location. You can leave out the location name if you are in the location.
+Restricted to owners and admins in-game and IRC
 
 /location {name}
 See detailed information about a location including a list of players currently in it.
+Restricted to owners, admins and mods in-game only
 
 
 Teleport Commands:
 
 /tele {name} delete
 Delete a teleport.
+Restricted to owners, admins and mods in-game and IRC
 
 /enable/disable fetch
 Allow or block players using the fetch command to teleport friends to them.
+Restricted to owners and admins in-game and IRC
 
 /enabletp {player name}
 /disabletp {player name}
 Allows a player to use teleport commands.  Only staff can specify a player, otherwise it defaults to whoever issued the command.
 Note: Players can set/unset this on themselves too.
+Unrestricted command in-game and IRC
 
 /tele {name} enable
 /tele {name} disable
 Enable or disable a teleport.
+Restricted to owners, admins and mods in-game and IRC
 
 /tele {name} one way
 /tele {name} two way
 Teleports are a pair of coordinates and the second coordinate placed is the destination.
 You can make it work in one direction only or both ways (loop). They are two way teleports by default.
+Restricted to owners, admins and mods in-game and IRC
 
 /tele {teleport name} private
 /tele {teleport name} public
 Make the teleport private or public.  New teleports are private by default.
+Restricted to owners, admins and mods in-game and IRC
 
 /tele {name} owner {player name}
 Assign ownership of a teleport to a player.  Only they and their friends can use it (and staff)
+Restricted to owners, admins and mods in-game and IRC
 
 /set teleport cost {number}
 Set a price for all private teleporting (excludes public locations).  Players must have sufficient Zennies to teleport.
+Restricted to owners and admins in-game and IRC
 
 /set teleport delay {number}
 Set a time delay for player initiated teleport commands.  The player will see a PM informing them that their teleport will happen in x seconds.  The default is 0 and no PM will be sent.
+Restricted to owners and admins in-game and IRC
 
 /tele {name} access min {minimum access level} max {maximum access level}
 /tele {name} access min {minimum access level}
@@ -447,31 +571,40 @@ Teleports are not access level restricted by default and the min and max are bot
 Note: Access levels are not player levels. See /help access
 eg. To limit to donors /tele test access min 10.  No need to set max as only admins are higher.
 eg. To limit to new players /tele newbies access min 99 max 99.
+Restricted to owners, admins and mods in-game and IRC
 
 /enable/disable p2p
 Allow or block players teleporting to other players via shared waypoints or teleporting to friends.
+Restricted to server owners in-game and IRC
 
 /show/hide teleports
 If bot commands are hidden from chat, you can have the bot announce whenever a player teleports to a location (except /home).
+Restricted to owners and admins in-game and IRC
 
 /enable/disable teleporting
 Toggle ability of players using teleport commands. Admins can still teleport.
+Restricted to server owners in-game and IRC
 
 /enable/disable return (enabled is default)
 After being teleported somewhere, players can type /return to be sent back to where they came from.
 This is enabled by default but you can disable them.  Admins are not affected by this setting.
+Restricted to owners and admins in-game and IRC
 
 /enable/disable stuck
 Enable or disable the /stuck command. Default is enabled.
+Restricted to owners and admins in-game and IRC
 
 /set pack cooldown {number in seconds}
 By default players can type /pack when they respawn after a death to return to close to their pack.  You can set a delay and/or a cost before the command is available after a death.
+Restricted to server owners in-game and IRC
 
 /set pack cost {number}
 By default players can type /pack or /revive when they respawn after a death to return to close to their pack.  You can set a delay and/or a cost before the command is available after a death.
+Restricted to server owners in-game and IRC
 
 /set p2p cooldown {number in seconds}
 Set a cooldown after players teleport to friends before they can teleport to friends again.  Default is 0.
+Restricted to server owners in-game and IRC
 
 /tp {player name}
 /tp {name of teleport}
@@ -480,88 +613,114 @@ Set a cooldown after players teleport to friends before they can teleport to fri
 /tp #1 (tele to the coords of a line in a numbered list eg. from /list saves)
 /north/south/east/west {distance}
 Teleport yourself to a player, a coordinate, a named teleport, or a distance in a compass direction (north, south, east or west).
+Restricted to owners, admins and mods in-game only
 
 /tele {name} end
 Complete a teleport ending at your location or move an existing teleport's end to you.
+Restricted to owners, admins and mods in-game only
 
 /tele {name} start
 Create a teleport starting at your location or move an existing teleport's start to you.
+Restricted to owners, admins and mods in-game only
 
 /fetch {player name}
 Move a player to your current location (staff cannot be fetched).
+Restricted to owners, admins and mods in-game only
 
 /teleports
 List the teleports.
+Restricted to owners, admins and mods in-game only
 
 /pack
 /revive
 Teleport close to where you last died.
+Unrestricted command in-game only
 
 /return
 Teleport back to where you came from before your last teleport command.  Locations support a 2nd return if you teleport within the location more than once without leaving it.
+Unrestricted command in-game only
 
 /tele {name} end size {radius in blocks}
 Set the size of the exit point of a pair of teleports.  The default is 3 wide (1.5 radius)
+Restricted to owners, admins and mods in-game only
 
 /tele {name} start size {radius in blocks}
 Set the size of the starting point of a pair of teleports.  The default is 3 wide (1.5 radius)
+Restricted to owners, admins and mods in-game only
 
 /stuck
 Teleport you to the highest ground level at your location.
+Restricted to players and admins in-game only
 
 /view teleport {named teleport}
 View all the settings of a teleport.
+Restricted to owners, admins and mods in-game and IRC
 
 /visit {player name} /goto {player name}
 Teleport to another player.  If the server rules allow, you can teleport to a friend.  Various rules and cooldowns may block you.
+Unrestricted command in-game only
 
 Waypoint Commands:
 
 /clear all waypoints {optional player name}
 Delete all your waypoints (anyone can do this) or those of a named player (only admins)
+Restricted to owners, admins and mods in-game and IRC
 
 /waypoints {player name} (list a player's waypoints)
 /waypoints range {distance} (list all waypoints within range of your position)
 /waypoints near {player or location} range {distance} (list all waypoints within range of a player or location)
 List the waypoints of a player or within {distance} of your current position or the location of another player or location.
+Restricted to donors and admins in-game and IRC
 
 /set max waypoints {number} (server wide)
 /set max waypoints {player name} number {number} (for a specific player)
 /set max waypoints donors {number} (for donors)
 Set the max number of waypoints players can have or a specific player can have.
+Restricted to owners and admins in-game and IRC
 
 /set waypoint cooldown {number} (seconds)
 Set how long in seconds players must wait between uses of waypoints
+Restricted to owners and admins in-game and IRC
 
 /set waypoint cost {number}
 Set a price to use waypoints.  Players must have sufficient Zennies to teleport.
+Restricted to owners and admins in-game only
 
 /set waypoint create cost {number}
 Set a price to create waypoints.  Players must have sufficient Zennies
+Restricted to owners and admins in-game only
 
 /set waypoints public/private
 Make waypoints accessible to all (except new players) or restricted to donors only.
+Restricted to owners and admins in-game only
 
 /clear wp {name}
 Delete a named waypoint.  If they are linked, this also unlinks them.
+Restricted to donors and admins in-game and IRC
 
 /close wp {waypoint name}
 Make a waypoint private again. This is its default state.
+Restricted to donors and admins in-game and IRC
 
 /open wp {waypoint name}
 Share a waypoint with your friends.
+Restricted to donors and admins in-game only
 
 /set wp {waypoint name}
 Create or move your first waypoint where you are standing.  It retains its current status if it already exists.
+Restricted to owners and admins in-game and IRC
 
 /link wp {name of wp1} to {name of wp2}
 Link your waypoints to create a portal instead.  In this mode you cannot teleport to them, instead you activate them by stepping into them.
+Restricted to donors and admins in-game only
 
 /unlink wp {name of waypoint}
 Close your portal and convert each end back into two waypoints which you can then teleport to as normal.
+Restricted to donors and admins in-game only
 
 /wp or /wp1 or /{your name}
 Teleport to your first waypoint.
+Restricted to donors and admins in-game only
 
 
 Shop Commands:
@@ -569,119 +728,153 @@ Shop Commands:
 /fix shop
 Attempt to automatically fix the shop.  It reloads the shop categories, checks for any missing categories in shop items and assigns them to misc then reindexes the shop.
 This fix is experimental and might not actually fix whatever is wrong with your shop.
+Restricted to owners, admins and mods in-game and IRC
 
 /quick fix shop
 Like /fix shop but doesn't re-read all the item names known to the server so it completes much faster.
+Restricted to owners, admins and mods in-game and IRC
 
 /reset shop
 Restock the shop to the max quantity of each item.
+Restricted to owners and admins in-game and IRC
 
 /set/clear shop location {location name (for set only)}
 Restrict the shop to a specific location.  Buying from the shop will only be possible while in that location (excluding admins).
 Or clear the location so that the shop can be accessed server wide. (the default)
+Restricted to owners and admins in-game and IRC
 
 /set lottery multiplier {number}
 Every zombie killed adds 1 x the lottery multiplier to the lottery total.  The higher the number, the faster the lottery rises.  The default is 2.
+Restricted to owners, admins and mods in-game and IRC
 
 /set lottery prize {number}
 You can set or reset the lottery prize to any number.  Useful if it gets too large.
+Restricted to owners, admins and mods in-game and IRC
 
 /set lottery ticket price {number}
 The default cost of a lottery ticket is 25 Zennies. You can change it to anything above 0.
+Restricted to owners and admins in-game and IRC
 
 /set shop reset days {number}
 Restock the shop to the max quantity of each item every {number} of real days.
 A setting of 0 disables the automatic restock.  To manually restock it use /reset shop.
+Restricted to owners and admins in-game and IRC
 
 /set shop open/close {0 - 23}
 Enter a number from 0 to 23 which will be the game hour that the shop opens or closes.
+Restricted to owners and admins in-game and IRC
 
 /open/close lottery
 /enable/disable lottery
 Turn on or off the daily lottery.  It is on be default.
+Restricted to owners, admins and mods in-game and IRC
 
 /set playtime reward {Zennies}
 Set how many Zennies a player earns for each minute played. (excludes new players and does not count total time played)
+Restricted to server owners in-game and IRC
 
 /set zombie reward {Zennies}
 Set how many Zennies a player earns for each zombie killed.
+Restricted to server owners in-game and IRC
 
 /enable/disable bank
 Players can earn Zennies if the bank is enabled.
+Restricted to server owners in-game and IRC
 
 /open/close or /enable/disable shop
 Enable or disable the shop feature.
+Restricted to owners and admins in-game and IRC
 
 /set money name {singular} {plural}
 The default money name is the Zenny and the plural is Zennies. Both names must be one word each.
 eg /set money name Chip Chips.
+Restricted to server owners in-game and IRC
 
 /enable/disable spending alert (default disabled)
 PM the player every time an a command costs them money.  Tell them how much they spent and what they have left.
+Restricted to owners and admins in-game and IRC
 
 /cash or /wallet or /bank
 Tells you how many Zennies you have.
+Unrestricted command in-game only
 
 /pay {player name} {amount}
 Pay a player some amount of Zennies. Admins don't need to have the cash in their balance first.
+Unrestricted command in-game only
 
 /lotto or /lottery or /tickets
 See how big the lottery is and how many tickets you have in the draw.
+Unrestricted command in-game only
 
 /gamble {optional quantity} or /buy ticket {optional quantity}
 Buy a ticket in the next daily lottery.
+Unrestricted command in-game only
 
 /show/hide cash
 See an ingame PM every time your cash balance changes.
+Unrestricted command in-game only
 
 
 Misc Commands:
 
 /accept
 Use this command if you have received an invite to join the IRC server and want further instructions from the bot.
+Unrestricted command in-game only
 
 /add command {command} message {custom message}
 Add a custom command.  Currently all it can do is send a private message.  Later more actions will be added including the ability to add multiple actions.
+Restricted to owners and admins in-game and IRC
 
 /bk {bookmark number}
 Teleport to the numbered bookmark (Admins only)
+Restricted to owners, admins and mods in-game only
 
 /bookmark {message}
 Record the coordinates where you are standing with a message.  This was created to help admins quickly teleport to places that players wanted screenshot or videoed by admins before a server wipe.
 Only admins can teleport to them.  Players can only view a list of the bookmarks created by themselves.
+Restricted to players and admins in-game only
 
 /claim vote
 Claim your reward for voting for the server at 7daystodie-servers.com
 Can only be claimed once per day.
+Unrestricted command in-game only
 
 /list bookmarks {player}
 If players have bookmarked coordinates on your server, this command will give you a numbered list of a player's bookmarks
 Players can only list their own bookmarks and can't teleport to them.
+Unrestricted command in-game and IRC
 
 /bail {player} /bail {player} pay {amount}
 Anyone can bail a prisoner out of prison if they have enough Zennies.
 If you don't have enough Zennies you can reduce the bail by making payment towards it.
+Restricted to players and admins in-game only
 
 /get region {x coordinate} {z coordinate}
 Get the region name for the supplied coordinates.
+Unrestricted command in-game and IRC
 
 /irc invite {player}
 Invite a player to join the IRC server.  Choose carefully who you invite.
+Restricted to server owners in-game and IRC
 
 /custom commands
 List the custom commands.
+Unrestricted command in-game and IRC
 
 /mark {name} start/end or p1/p2
 Mark out a named area to be used later with commands that accept coordinate pairs
 You can save and reload it using Coppi's Mod with /save {name} and /load prefab {name}
 Or if using djkrose's scripting Mod with /export {name} and /import {name}
 Mark two opposite corners of the area you wish to copy.  Move up or down between corners to add volume or stay at the same height to mark out a flat area.
+Restricted to owners, admins and mods in-game only
 
 /remove command {command}
 Remove a custom command.
+Restricted to owners and admins in-game and IRC
 
 /yes
 If the bot asks you a yes/no question you can simply say yes or use this command to hide your response if commands are hidden.
+Unrestricted command in-game only
 
 
 Hotspot commands:
@@ -689,28 +882,35 @@ Hotspot commands:
 
 /hotspot {message}
 Create a hotspot at your current position with a message.
+Unrestricted command in-game only
 
 /delete hotspot {hotspot number from list}
 Delete a hotspot by its number in a list.
+Unrestricted command in-game only
 
 /delete hotspots {player name}
 Players can only delete their own hotspots but admins can add a player name or id to delete the player's hotspots.
+Unrestricted command in-game only
 
 /hotspots {player name}
 List your own hotspots.  Admins can list another player's hotspots.
+Unrestricted command in-game only
 
 /move hotspot {hotspot number from list}
 Move a hotspot to your current position.
+Unrestricted command in-game only
 
 /resize hotspot {hotspot number from list} size {size}
 Change a hotspot's radius to a max of 10 (no max size for admins).
 eg. /resize hotspot 3 size 5.  See /hotspots to get the list of hotspots.
+Unrestricted command in-game only
 
 /hotspot {hotspot number from list} action {action from list: pm, tele, drop, spawn}
 NOTE:  This command is not finished.  Setting it won't do anything yet.
 Change a hotspot's action.  The deafault is to just pm the player but it can also teleport them somewhere, spawn something or buff/debuff the player.
 eg. /hotspot {number of hotspot} action {pm/tele/drop/spawn} {location name/spawn list}
 If spawning items or entities use the format item name,quantity|item name,quantity|etc or entity id, entity id, entity id, etc
+Restricted to owners and admins in-game only
 
 
 Friend Commands:
@@ -718,103 +918,132 @@ Friend Commands:
 /player {player} friend {other player}
 eg. /player joe friend mary
 Admins can force a player to friend another player with this command.  It only applies to the bot, not the game itself.
+Restricted to owners, admins and mods in-game only
 
 /friend {player}
 Tell the bot that a player is your friend.  The bot can also read your friend list directly from the game.  If you only friend them using this command, they will not be friended on the server itself only in the bot.
+Unrestricted command in-game only
 
 /clear friends {player} (only admins can specify a player)
 Clear your friends list.  Note that this does not unfriend players that you friended via your game.  You will need to unfriend those players there yourself.
+Unrestricted command in-game only
 
 /unfriend {player}
 Unfriend a player.
+Unrestricted command in-game only
 
 /friendme {player}
 Admins can force a player to be their friend with this command.  It only applies to the bot, not the game itself.
+Restricted to owners, admins and mods in-game only
 
 /friends {player} (only admins can specify a player)
 List your friends.
+Unrestricted command in-game only
 
 /unfriendme {player}
 /unfriendme everyone
 Unfriend a player or everyone.  This command is for admins only.
+Restricted to owners, admins and mods in-game only
 
 
 Village Commands:
 
 /add member {player name} village {village}
 Add a player as a member of a village.
+Unrestricted command in-game and IRC
 
 /elect {player name} village {village}
 Elect a player as mayor of a village.  Democratically of course :)
+Restricted to owners, admins and mods in-game and IRC
 
 /villages
 /villagers
 List villages or villagers.
+Restricted to owners, admins and mods in-game and IRC
 
 /remove village {village}
 Delete a village and everything associated with it.
+Restricted to owners, admins and mods in-game and IRC
 
 /remove member {player name} village {village}
 Remove a player from a village.
+Restricted to owners, admins and mods in-game and IRC
 
 /village {village} size {metres}
 Resize a village. Note that this removes village protection to prevent teleport loops.
+Restricted to owners, admins and mods in-game and IRC
 
 /add village {village name}
 Create a new village.
+Restricted to owners, admins and mods in-game only
 
 /protect village {village name}
 Set village protection and follow the prompt from the bot, just like setting base protection.
+Restricted to owners, admins and mods in-game only
 
 /unprotect village {village name}
 Remove protection on a village.
+Restricted to owners, admins and mods in-game and IRC
 
 
 Bot Commands:
 
 /backup bot {optional name}
 Make a backup of the bot's data before doing something to the bot. :O
+Restricted to server owners in-game and IRC
 
 /clear whitelist
 Remove everyone from the bot's whitelist.
+Restricted to owners and admins in-game and IRC
 
 /forget players
 Makes the bot forget everything about players as if they were new again. It does not touch admins (nasty filthy adminses).
+Restricted to server owners in-game and IRC
 
 /password {some password or phrase}
 If you have set a master password, some bot commands will issue a password challenge.  Use this command to send the password to the bot.
+Restricted to owners, admins and mods in-game and IRC
 
 /list backups
 View a numbered list of available backups.
 Use /restore backup, to restore a backup. See the help for /restore backup for additional options.
+Restricted to server owners in-game and IRC
 
 /list chat colors
 See the bot's chat colours and player chat colours.
+Restricted to server owners in-game and IRC
 
 /quick reset bot
 Tell the bot to forget only some things, some player info, locations, bases etc.  You will be asked to confirm this, answer with yes.  Say anything else to abort.
 Use this command after wiping the server.  The bot will detect the day change and will ask if you want to reset the bot too.
+Restricted to server owners in-game only
 
 /refresh code
 Make the bot re-download and install from the current code branch for script updates.  Only necessary if someone has edited the code and needs to restore it.
+Restricted to owners, admins and mods in-game and IRC
 
 /rejoin irc
 Sometimes the bot can fall off IRC and fail to reconnect.  This command forces it to reconnect.
+Unrestricted command in-game and IRC
 
 /reload bot
 Make the bot read several things from the server including admin list, ban list, gg, lkp and others.
+Unrestricted command in-game and IRC
 
 /reset bases
 Just reset the player bases, nothing else.
 This commmand is mainly for rare cases where you only need the bot to forget the player bases.
+Restricted to server owners in-game only
 
 /reset bot
 /reset bot keep money
 Tell the bot to forget only some things, some player info, locations, bases etc.  You will be asked to confirm this, answer with yes.  Say anything else to abort.
 Use this command after wiping the server.  The bot will detect the day change and will ask if you want to reset the bot too.
+Restricted to server owners in-game only
 
 /restart bot
 If your Mudlet (the bot's engine) is set up to automatically restart itself you can command the bot to restart.  Also this feature must be enabled.
+Restricted to owners, admins and mods in-game and IRC
 
 /restore backup {optional backup number} {optional words: bases, cash, donors, colors, locations, waypoints, friends, villagers, teleports, hotspots, resets, players}
 /restore backup {optional backup number} {optional words as above} player {name or steam or player id} (note: player {name} must be specified last)
@@ -823,122 +1052,152 @@ If the bot gets messed up, you can try to fix it with this command. Other timest
 To only restore player bases, add the word bases, for cash add cash and for donors add donors. If these words are included, nothing else is restored.
 You can also just restore 1 named player.
 To see a list of backups use /list backups.
+Restricted to server owners in-game and IRC
 
 /set api log read {interval in seconds} (default 3 seconds)
 In API mode the bot will read the server log at regular intervals with the default being every 3 seconds.
 You can set a longer delay but the bot won't respond to in-game commands faster than the delay that you set.
 If you think the polling interval is causing server lag you can try slowing it down.
+Restricted to server owners in-game and IRC
 
 /blacklist action ban (or exile or 'nothing')
 Set what happens to blacklisted players.  The default is to ban them 10 years but if you create a location called exile, the bot can bannish them to there instead.  It acts like a prison.
 To disable the blacklist, set action to the word nothing.
 NOTE: If blacklist action is nothing, proxies won't trigger a ban or exile response either.
+Restricted to server owners in-game and IRC
 
 /set alert colour {hex code}
 Set the colour of server alert messages.
+Restricted to owners and admins in-game and IRC
 
 /set chat colour {hex code}
 Set the colour of server messages.  Player chat will be the default colour.
+Restricted to owners and admins in-game and IRC
 
 /name bot {some cool name}
 The default name is Bot.  Help give your bot a personality by giving it a name.
+Restricted to server owners in-game and IRC
 
 /set bot name colour {hex colour code}
 Set the colour of the bot's name.  Requires the botman mod.
+Restricted to owners and admins in-game and IRC
 
 /set bot restart {0+} (total bot days running)
 The bot can automatically restart itself after running for days. The restart helps fix issues and keeps the bot fresh.
 The default is 7 days between bot restarts. You can disable it by setting it to 0. Also it will only activate if bot restarts are enabled.
+Unrestricted command in-game and IRC
 
 /set warn colour {hex code}
 Set the colour of server warning messages.
+Restricted to owners and admins in-game and IRC
 
 /set command prefix / (or no symbol or any symbol except \ )
 Change bot commands from using / to using nothing or another symbol.
+Restricted to owners and admins in-game and IRC
 
 /set lag check {seconds}
 If lag checking is enabled, the bot will send lag check messages to the server which are timed.  If the time delay from sending the message to reading it back exceeds this threshold, the bot will temporarily suspend some bot commands sent to the server regularly.
 The default is 15 seconds.  If bot commands are not working for a long time, it could be repeatedly flagging the server as lagged.  You can disable the lag check, but if the lag is real it could get longer over time.
 Setting a very low number will probably make the bot think the server is constantly lagged.  The bot will unflag the server lag every 10 seconds to prevent the bot getting stuck thinking the server is lagged.
+Restricted to owners, admins and mods in-game and IRC
 
 /set master password {secret password up to 50 characters}
 Protect important commands such as /reset bot with a password.
 This will prevent you or another server owner from accidentally doing something stupid (hopefully).
 To remove it use /clear master password.
+Restricted to server owners in-game and IRC
 
 /set max log days {number}
 The default is 14 days. Setting this too long will result in lots of log files on disk.
 To prevent this causing issues on my hosted bots, the max you can set this is 60 days.
 To set it higher you need to edit telnetlogkeepdays in the server table in the database.
+Restricted to server owners in-game and IRC
 
 /set update branch
 Bot updates are released in code branches such as stable and testing.  The stable branch will not update as often and should have less issues than testing.
 New and trial features will release to testing before stable. Important fixes will be ported to stable from testing whenever possible.
 You can switch between branches as often as you want.  Any changes in testing that are not in stable will never break stable should you switch back to it.
+Restricted to owners, admins and mods in-game and IRC
 
 /shutdown bot
 While not essential as it seems to work just fine, you can tell the bot to save all pending player data, before you quit Mudlet.Note: This doesn't actually stop the bot. It only ensures that everything has been saved so you can manually shutdown Mudlet.
+Restricted to server owners in-game and IRC
 
 /set bot chatty/quiet
 If you want to stop the bot responding to 'hi bot' and be more utilitarian, you can set the bot to be quiet.
+Restricted to server owners in-game and IRC
 
 /enable/disable bot restart
 Using a launcher script or some other monitoring process you can have the bot automatically restart itself every time it terminates.
 Periodically restarting the bot helps to keep it running at its best.
 This feature is disabled by default.  A restart script can be downloaded from http://botman.nz/shellscripts.zip
 You will need to inspect and modify some paths in the scripts to match your setup.
+Restricted to server owners in-game and IRC
 
 /enable/disable updates (disabled by default)
 Allow the bot to automatically update itself by downloading scripts. It will check daily, but you can also command it to check immediately with /update bot
+Restricted to owners, admins and mods in-game and IRC
 
 /enable/disable level hack check
 Hackers can give themselves XP but normal play and/or game bugs can also cause large level changes.
 The level check could falsely report legit level changes as hacking so this is disabled by default.
 If you enable it and innocent players get banned, either unban them or turn it off again.
+Restricted to server owners in-game and IRC
 
 /enable/disable hacker tp detection
 Some mods or managers don't report legit teleports to telnet which breaks the bot's hacker teleport detection.
 If the bot doesn't automatically disable/enable hacker tp detection, you can manually change it.
+Restricted to server owners in-game and IRC
 
 /show/hide unknown command
 If the bot doesn't recognise a command it will respond with 'Unknown command'.  You can hide that message if you want.
+Restricted to server owners in-game and IRC
 
 /enable/disable lag check (enabled by default)
 Every 10 seconds while connected to the server, the bot sends a special lag check command to the server and times the response.
 If the bot detects more than 10 seconds delay, it will automatically suspend several bot functions to reduce the number of commands that it sends to the server.
 You can disable this check, but your bot won't pause for lag and the server could get significantly behind during busy times.
+Restricted to owners, admins and mods in-game and IRC
 
 /enable/disable bot command log (disabled by default)
 For debugging purposes, commands sent to the server by the bot can be logged just like player commands but to its own log file.
 This will include sensitive information such as passwords so don't enable this if anyone has access to it that you don't want reading it.
 Only server owners can enable this log.
+Restricted to server owners in-game and IRC
 
 /enable/disable inventory log. (disabled by default)
 The bot logs inventory and inventory changes to the database all the time.  You can also have inventory changes recorded to a daily text file along with the other daily logs.
+Restricted to server owners in-game and IRC
 
 /read log using telnet (default)
 /read log using api
 Due to ongoing issues with the API log reader skipping lines the default is that in API mode, the bot will monitor the server via telnet.
 If telnet is disabled or you tell the bot to read the log using the API, then it will monitor the server via the API.
+Restricted to server owners in-game and IRC
 
 /enable/disable telnet fallback (default is disabled)
 When the bot is using Alloc's web API, if the API becomes unreachable the bot will stop using the API and switch to telnet only if telnet fallback is enabled.
 The default behaviour is to keep using the API. Previously the default was to fallback to telnet.
 Note that the bot should not confuse the server being offline with the API not working as it checks API and telnet activity before making the switch.
+Restricted to server owners in-game and IRC
 
 /use telnet (this is the default now but the API is planned to become the new default soon)
 /use api
 The bot communicates with the server using telnet. It can use Allocs web API instead.
+Restricted to server owners in-game and IRC
 
 /update code
 Make the bot check for script updates.  They will be installed if you have set /enable updates
+Restricted to owners, admins and mods in-game and IRC
 
 /no reset
 If the bot detects that the server days have rolled back, it will ask you if you want to reset the bot.  Type /no reset if you don't want the bot to reset itself.
+Restricted to server owners in-game only
 
 /reset server
 Tell the bot to forget everything it knows about the server.  You will be asked to confirm this, answer with yes.  Say anything else to abort.
 Usually you only need to use /reset bot.  This reset goes further.
+Restricted to server owners in-game only
 
 
 Fun Commands:
@@ -947,51 +1206,65 @@ Fun Commands:
 /view bounty {optional player name}
 /view bounties
 See the player kills and current bounty on a players head or on all players currently on the server.
+Unrestricted command in-game and IRC
 
 /gimme gimme
 /gimme peace
 Make gimme messages appear in public chat with /gimme gimme or as private messages with /gimme peace (with some exceptions).
+Restricted to owners, admins and mods in-game and IRC
 
 /fix gimme
 Force the bot to rescan the list of zombies and animals.
+Restricted to owners, admins and mods in-game and IRC
 
 /reset arena
 Cancel an arena game in progress.
+Unrestricted command in-game and IRC
 
 /gimme raincheck {seconds}
 Set a time delay between gimmes.  The default is 0 seconds.
+Restricted to owners, admins and mods in-game and IRC
 
 /gimme reset
 Reset gimme counters for everyone so they can play gimme again.  The bot does this every 120 minutes automatically.
+Restricted to owners, admins and mods in-game and IRC
 
 /gimme on/off
 Enable/disable the gimme game.
+Restricted to owners, admins and mods in-game and IRC
 
 /gimme zombies
 /gimme no zombies
 Enable or disable zombies as gimme prizes.
+Restricted to owners, admins and mods in-game and IRC
 
 /gimme reset time {number} (In minutes. Default is 120)
 Reset everyone's gimme counter after (n) minutes.
+Restricted to owners, admins and mods in-game and IRC
 
 /beer
 While in any location with beer in its name, players can grab a beer (or a lot).
+Unrestricted command in-game only
 
 /suicide
 Don't do it! :O
+Unrestricted command in-game only
 
 /place bounty {player name} {cash}
 Place a bounty on a player's head. The money is removed from your cash.
+Unrestricted command in-game only
 
 /gimme
 Play one gimme - win a prize!
 Gimme cannot be played within a location unless it is pvp enabled.
 Gimme cannot be played inside a player base.
 Prize may contain nuts. If a rash develops, see your doctor. Keep away from small children.  The bag is not a hat.
+Unrestricted command in-game only
 
 /quit
 /ragequit
 Get kicked out of the server with a random message.
+Unrestricted command in-game only
 
 /quit {message}
 Get kicked out of the server and have the bot say your message in game chat.
@@ -1002,9 +1275,11 @@ Select one of 4 games of increasing difficulty (more zombies, faster spawns, har
 Admins or arena players can cancel the game with /reset gimmearena
 Zombies are randomly distributed between arena players.  Any players more than 5 blocks above the arena floor (or under it) are specators and don't get zombies.
 Some useless crap is supplied at the start.
+Unrestricted command in-game only
 
 /doge mode or /doge on/off
 But what does it do!? Play and find out xD
+Unrestricted command in-game only
 
 
 Admin commands:
@@ -1015,19 +1290,23 @@ Give a player admin status and a level, or take it away.
 Server owners are level 0, admins are level 1 and moderators level 2.  The bot does not currently recognise other admin levels.
 Or remove an admin so they become a regular player.
 This does not stop them using god mode etc if they are ingame and already have dm enabled.  They must leave the server or disable dm themselves.
+Restricted to server owners in-game and IRC
 
 /add/remove bad item {item} action {timeout or ban} (default action is timeout)
 Add or remove an item to/from the list of bad items.  The default action is to timeout the player.
 See also /ignore player {name} and /include player {name}
+Restricted to owners and admins in-game and IRC
 
 /add/remove blacklist country {US}
 Add or remove a country to/from the blacklist. Note: Use 2 letter country codes only.
+Restricted to server owners in-game and IRC
 
 /add donor {player name} level {0 to 7} expires {number} week or month or year
 /remove donor {player name}
 Give a player donor status.  This doesn't have to involve money.  Donors get a few perks above other players but no items or Zennies.
 Level and expiry are optional.  The default is level 1 and expiry 10 years.
 You can also temporarily raise everyone to donor level with /override access.
+Restricted to server owners in-game and IRC
 
 /add restricted item {item name} qty {count} action {action} access {level}
 /remove restricted item {item name}
@@ -1035,19 +1314,23 @@ Add an item to the list of restricted items.
 Valid actions are timeout, ban, exile and watch
 eg. /add restricted item tnt qty 5 action timeout access 90
 Players with access > 90 will be sent to timeout for more than 5 tnt.
+Restricted to owners and admins in-game and IRC
 
 /add whitelist country {US}
 /remove whitelist country {US}
 Add or remove a country to/from the whitelist. Note: Use 2 letter country codes.
+Restricted to server owners in-game and IRC
 
 /archive players
 Archive players that haven't played in 60 days, aren't staff, banned, or a donor.
 This should speed the bot up on servers that have seen thousands of players over time as the bot won't need to search so many player records.
 Archived players are still accessible and searchable but are removed from the main players table.  If a player comes back they are automatically restored from the archive.
+Restricted to owners and admins in-game and IRC
 
 /arrest {player name}
 /arrest {player name} reason {why arrested}
 Send a player to prison.  If the location prison does not exist they are temp-banned instead.
+Restricted to owners, admins and mods in-game and IRC
 
 /ban {player name} (ban for 10 years with the reason 'banned')
 /ban {player name} reason {reason for ban} (ban for 10 years with the reason you provided)
@@ -1056,192 +1339,246 @@ Send a player to prison.  If the location prison does not exist they are temp-ba
 /gblban {player name} reason {reason for ban}
 Ban a player from the server.  You can optionally give a reason and a duration. The default is a 10 year ban with the reason 'banned'.
 Global bans are vetted before they become active.  If the player is later caught hacking by a bot and they have pending global bans, a new active global ban is added automatically.
+Restricted to owners, admins and mods in-game and IRC
 
 /block/unblock {name}
 Block/Unblock a player from using any bot commands or command the bot from IRC.
+Restricted to owners and admins in-game and IRC
 
 /burn {player name}
 Set a player on fire.  It usually kills them.
+Restricted to server owners in-game and IRC
 
 /clear country blacklist
 Remove all countries from the blacklist. (yay?)
+Restricted to server owners in-game and IRC
 
 /clear country whitelist
 Remove all countries from the whitelist.
+Restricted to server owners in-game and IRC
 
 /cool {player name}
 Cool a player or yourself if no name given.
+Restricted to owners, admins and mods in-game and IRC
 
 /cure {player name}
 Cure a player or yourself if no name given.
+Restricted to owners, admins and mods in-game and IRC
 
 /equip admin
 Spawn various items on you.  The bot checks your inventory and will top you up instead of doubling up if you repeat this command later.
 
 /exile {player name}
 Bannish a player to a special location called /exile which must exist first.  While exiled, the player will not be able to command the bot.
+Restricted to owners, admins and mods in-game and IRC
 
 /free {player name}
 Release the player from exile, however it does not return them.  They can type /return or you can return them.
+Restricted to owners, admins and mods in-game and IRC
 
 /give claim/key/lcb
 The bot can despawn player placed claims in reset zones.  This command is for them to request them back from the bot.
 It will only return the number that it took away.  If it isn't holding any, it won't give any back.
+Unrestricted command in-game only
 
 /give everyone {item} {amount} {quality}
 Give everyone that is playing on the server right now an amount of an item. The default is to give 1 item.
 If quality is not given, it will have a random quality for each player.
 Anyone not currently playing will not receive the item.
+Restricted to server owners in-game and IRC
 
 /give player {joe} item {item} {amount} {quality}
 /give player {joe} item {item} {amount} {quality} message {say something here}
 Give a specific player amount of an item. The default is to give 1 item.
 The player does not need to be on the server.  They will receive the item and optional message when they next join.
 You can give more items but only 1 item type per command.  Items are given in the same order so you could include a message with the first item and they will read that first.
+Restricted to server owners in-game and IRC
 
 /supplies
 Spawn various items on you like equip admin does but no armour or guns.  The bot checks your inventory and will top you up instead of doubling up if you repeat this command later.
+Restricted to owners and admins in-game only
 
 /goto {player or steam or game ID}
 Teleport to the current position of a player.  This works with offline players too.
+Restricted to owners, admins and mods in-game only
 
 /hordeme
 Spawn a horde of 50 random zombies on yourself.  Only admins can do this (but not mods)
+Restricted to owners and admins in-game only
 
 /kick {Player name|Steam ID|Game ID} reason {optional reason}
 Is Joe annoying you?  Kick his ass right out of the server! >:D
+Restricted to owners, admins and mods in-game and IRC
 
 /leave claims {player name}
 Stop the bot automatically removing a player's claims.  They will still be removed if they are in a location that doesn't allow player claims.
+Restricted to owners, admins and mods in-game and IRC
 
 /bad items
 List the items that are not allowed in player inventories and what action is taken.
+Restricted to owners, admins and mods in-game and IRC
 
 /bases/homes
 /bases/homes range {number}
 /bases/homes near {player name} range {number}
 See what player bases are nearby.  You can use it on yourself or on a player.  Range and player are optional.  The default range is 200 metres.
+Restricted to owners, admins and mods in-game and IRC
 
 /list blacklist
 List the countries that are not allowed to play on the server.
+Restricted to owners, admins and mods in-game and IRC
 
 /claims {range} (range is optional and defaults to 50)
 List all of the claims within range with who owns them
+Restricted to owners, admins and mods in-game only
 
 /offline players nearby
 /offline players nearby range {number}
 List all offline players near your position. The default range is 200 metres.
+Restricted to owners, admins and mods in-game only
 
 /prisoners
 List all the players who are prisoners.
+Restricted to owners, admins and mods in-game and IRC
 
 /list staff/admins
 Lists the server staff and shows who if any are playing.
+Restricted to owners, admins and mods in-game and IRC
 
 /restricted items
 List the items that new players are not allowed to have in inventory and what action is taken.
+Restricted to owners, admins and mods in-game and IRC
 
 /list whitelist
 List the countries that are allowed to play on the server.
+Restricted to owners, admins and mods in-game and IRC
 
 /load botman ini
 Make the bot reload the botman.ini file.  It only reloads when told to.
+Restricted to owners and admins in-game and IRC
 
 /mend {player name}
 Remove the brokenLeg buff from a player or yourself if no name given.
+Restricted to owners, admins and mods in-game and IRC
 
 /move {player name} to {location}
 Teleport a player to a location. To teleport them to another player use the send command.  If the player is offline, they will be moved to the location when they next join.
+Restricted to owners, admins and mods in-game and IRC
 
 /near {player name} {optional number (distance away from player)}
 Teleport below and a short distance away from a player.  You must be flying for this or you will just fall all the time.
 You arrive 20 metres below the player and 30 metres to the south.  If you give a number after the player name you will be that number metres south of them.
 The bot will keep you near the player, teleporting you close to them if they get away from you.
 To stop following them type /stop or use any teleport command or relog.
+Restricted to owners, admins and mods in-game only
 
 /player {player name} is not new
 Upgrade a new player to a regular without making them wait for the bot to upgrade them. They will no longer be as restricted as a new player.
+Restricted to owners, admins and mods in-game and IRC
 
 /poop {player name}
 Make a player shit potatoes everywhere coz potatoes.
+Restricted to owners and admins in-game and IRC
 
 /read claims
 Make the bot run llp so it knows where all the claims are and who owns them.
+Restricted to owners, admins and mods in-game and IRC
 
 /release {player name}
 /just release {player name}
 Release a player from prison.  They are teleported back to where they were arrested.
 Alternatively just release them so they do not teleport and have to walk back or use bot commands.
 See also /release here (admin only)
+Unrestricted command in-game and IRC
 
 /release here {prisoner}
 Release a player from prison and move them to your location.
+Restricted to owners, admins and mods in-game only
 
 /reload admins
 Make the bot run admin list to reload the admins from the server's list.
+Unrestricted command in-game and IRC
 
 /remove entity/trader/npc {optional id}
 The bot will despawn any trader within 2 blocks of you in-game or by entity id if given.
+Restricted to owners and admins in-game and IRC
 
 /remove claims {player name}
 The bot will automatically remove the player's claims whenever possible. The chunk has to be loaded and the bot takes several minutes to remove them but it will remove them.
+Restricted to owners and admins in-game and IRC
 
-/reset player {player name}
+/reset player record {player name}
 Make the bot forget a player's cash, waypoints, bases etc but leave their donor status alone.
+Restricted to owners, admins and mods in-game and IRC
 
 /resettimers {player name}
 Normally a player needs to wait a set time after /base before they can use it again. This zeroes that timer and also resets their gimmies.
+Restricted to owners, admins and mods in-game and IRC
 
 /reset stack
 If you have changed stack sizes and the bot is mistakenly abusing players for overstacking, you can make the bot forget the stack sizes.
 It will re-learn them from the server as players overstack beyond the new stack limits.
+Restricted to owners, admins and mods in-game and IRC
 
 /restore admin
 Use this command if you have used /test as player, and you want to get your admin status back now.
+Unrestricted command in-game and IRC
 
 /return {player name}
 /return {player name} to {location or other player}
 Return a player from timeout.  You can use their steam or game id and part or all of their name.
 You can return them to any player even offline ones or to any location. If you just return them, they will return to wherever they were when they were sent to timeout.
 Your regular players can also return new players from timeout but only if a player sent them there.
+Restricted to players and admins in-game and IRC
 
 /sendhome {player name}
 /sendhome2 {player name}
 Teleport a player to their first or second base.
+Restricted to owners, admins and mods in-game and IRC
 
 /send {player} to {other player}
 Teleport a player to another player even if the other player is offline.
+Restricted to owners, admins and mods in-game and IRC
 
 /set death cost {cash} (default is 0)
 Set a cost penalty for dying.  The player's cash balance won't drop below zero.
+Restricted to owners and admins in-game and IRC
 
 /set drop mining warning {number of blocks} (default is 99)
 Set how many blocks can fall off the world every minute before the bot alerts admins to it.
 Disable by setting it to 0
+Restricted to owners and admins in-game only
 
 /set command cooldown {seconds} (default 0)
 You can add a delay between player commands to the bot.  Does not apply to staff.  This helps to slow down command abuse.
+Restricted to owners and admins in-game and IRC
 
 /set feral horde night {day number} (default is 7)
 Set which day is horde night.  This is needed if your horde nights are not every 7 days.
+Restricted to server owners in-game and IRC
 
 /feral reboot delay {minutes}
 Set how many minutes after day 7 that the bot will wait before rebooting if a reboot is scheduled for day 7.
 To disable this feature, set it to 0.  The bot will wait a full game day instead.
+Restricted to server owners in-game and IRC
 
 /max tracking days {days}
 Set how many days to keep tracking data before deleting it.  The default it 28.
+Restricted to server owners in-game and IRC
 
 /set reserved slot timelimit {minutes} (default 0)
 If this is 0, reserved slots are released when the player leaves the server.
 Otherwise minutes after the player reserves a slot, they will become eligible to be kicked to make room for another reserved slotter.
+Restricted to server owners in-game and IRC
 
 /set return cooldown {seconds} (default 0)
 You can add a delay to the return command.  Does not affect staff.
+Restricted to owners and admins in-game and IRC
 
 /prisoner {player name} arrested {reason for arrest}
 /prisoner {player name} (read the reason if one is recorded)
 You can record or view the reason for a player being arrested.  If they are released, this record is destroyed.
+Restricted to owners, admins and mods in-game and IRC
 
 /set watch timer {number in seconds}
 /set watch player {name} timer {number in seconds}
@@ -1249,108 +1586,141 @@ When a new player joins, in-game admins will be messaged when the player adds or
 You can also set a different watch duration for an individual player.
 1 hour = 3,600  1 day = 86,400  1 week = 604,800  4 weeks = 2,419,200
 This timer is in real time not game time or time played.
+Restricted to owners and admins in-game and IRC
 
 /shit {player name}
 Give a player the shits for shits and giggles.
+Restricted to owners and admins in-game and IRC
 
 /test as player {optional number in seconds}
 Remove your admin status for 5 minutes.  After 5 minutes your admin status will be restored and any bans against you removed.
 If you provide a number, your admin will instead be restored after that many seconds incase you need longer or shorter than the default 5 minutes.
+Restricted to owners, admins and mods in-game and IRC
 
 /timeout {player name}
 Send a player to timeout.  You can use their steam or game id and part or all of their name.  If you send the wrong player to timeout /return {player name} to fix that.
 While in timeout, the player will not be able to use any bot commands but they can chat.
+Restricted to players and admins in-game and IRC
 
 /enable/disable level hack alert
 By default the bot will inform admins when a player's level increases massively in a very short time.  You can disable the message.
+Restricted to owners and admins in-game and IRC
 
 /enable/disable airdrop alert
 By default the bot will inform players when an airdrop occurs near them.  You can disable the message.
+Restricted to owners and admins in-game and IRC
 
 /enable/disable bounty
 Normally a small bounty is awarded for a player's first pvp kill in pvp rules.  You can disable the automatic bounty.
 Players will still be able to manually place bounties, but those come out of their Zennies.
+Restricted to owners and admins in-game and IRC
 
 /ignore/punish friendly pvp
 By default if a player PVPs where the rules don't permit it, they can get jailed.
 You can tell the bot to ignore friendly kills.  Players must have friended the victim before the PVP occurs.
+Restricted to owners and admins in-game and IRC
 
 /block/unblock player {player name}
 Prevent a player from using IRC.  Other stuff may be blocked in the future.
+Restricted to server owners in-game and IRC
 
 /freeze/unfreeze {player name}
 Bind a player to their current position.  They get teleported back if they move.
+Restricted to owners, admins and mods in-game and IRC
 
 /include/exclude admins
 Normally the bot ignores admins when checking inventory and other stuff.  If admins are included, all of the rules that apply to players will also apply to admins.
 This is useful for testing the bot.  You can also use /test as player (for 5 minutes)
 This setting is not stored and will revert to excluding admins the next time the bot runs.
+Restricted to owners and admins in-game and IRC
 
 /ignore/include player {player name}
 An ignored player can have uncraftable inventory and do hacker like activity such as teleporting.
 An included player is checked for these things and can be punished or temp banned for them.
+Restricted to owners, admins and mods in-game and IRC
 
 /set say uses name (the default)
 /set say uses nick
 The IRC command 'say' uses your player name by default.
 You can set it to use the IRC nickname instead.  Note:  It will do that for all IRC users.
+Restricted to owners and admins in-game and IRC
 
 /enable/disable pack/revive
 Players can teleport close to where they last died to retrieve their pack.
 You can disable the pack and revive commands.  They are enabled by default.
+Restricted to owners and admins in-game and IRC
 
 /remove/leave expired claims
 By default the bot will not remove expired claims.  It will always ignore admin claims.
+Restricted to owners and admins in-game and IRC
 
 /reserve/unreserve slot {player name}
 Give a player the right to take a reserved slot when the server is full.
 Reserved slots are auto assigned for donors and staff.
+Restricted to owners and admins in-game and IRC
 
 /enable/disable screamer alert
 By default the bot will warn players when screamers are approaching.  You can disable that warning.
+Restricted to owners and admins in-game and IRC
 
 /allow/disallow teleport {player name}
 Allow or prevent a player from using any teleports.  When disabled, they won't be able to teleport themselves, but they can still be teleported.  Also physical teleports won't work for them.
+Restricted to owners and admins in-game and IRC
 
 /watch {player name}
 /watch new players
 /stop watching {player name}
 /stop watching everyone
 Flag a player or all current new players for extra attention and logging.  New players are watched by default.
+Restricted to owners, admins and mods in-game and IRC
 
 /enable/disable waypoints
 Donors will be able to create, use and share waypoints.  To enable them for other players, set waypoints public.
+Restricted to server owners in-game and IRC
 
 /unlockall
 Unlocks all locked containers etc in your immediate area (the current chunk)
+Restricted to owners and admins in-game only
 
 /crimescene {prisoner}
 Teleport to the coords where a player was when they got arrested.
+Restricted to owners, admins and mods in-game only
 
 /playerbase/playerhome {player name}
 /playerbase2/playerhome2 {player name}
 Teleport yourself to the first or second base of a player.
+Restricted to owners, admins and mods in-game only
 
 /whitelist add/remove {player name}
 Add (or remove) a player to the bot's whitelist. This is not the server's whitelist and it works differently.
 It exempts the player from bot restrictions such as ping kicks and the country blacklist.
+Restricted to owners, admins and mods in-game and IRC
 
 /whitelist everyone/all
 You can add everyone except blacklisted players to the bot's whitelist.
+Restricted to owners and admins in-game and IRC
 
 
 Reset Commands:
 
 /clear reset zones
 The bot will forget all the reset zones so you can start over marking new ones.
+Restricted to owners, admins and mods in-game and IRC
 
 /reset zones
 List all of the regions that are reset zones.
+Restricted to owners, admins and mods in-game and IRC
+
+/redo reset zones
+Put back all of the reset zones via the Botman mod if you've accidentally deleted the mod's config.xml file from the server.
+Note:  This requires the Botman mod or all it really does is list the reset zones.
+Restricted to owners, admins and mods in-game and IRC
 
 /add/remove reset
 /add/remove reset x-coord z-coord
 Flag or unflag an entire region as a reset zone.  If you don't specify an x and z coord, you need to be playing and standing inside the region.
 Example with coords: /add reset -1 3.  This will make region r.-1.3.7rg a reset zone.
+Restricted to owners, admins and mods in-game and IRC
 
 
 Tracker Commands:
@@ -1360,45 +1730,59 @@ Tracker Commands:
 /last (track the previous session)
 Track the movements of a player.  If a session is given, you will track their movements from that session.
 If you add the word hax, hacking or cheat the bot will only send you to coordinates that were flagged as flying or clipping.
+Restricted to owners, admins and mods in-game only
 
 /skip {number of steps}
 Skip {number} of steps.  Instead of tracking each recorded step, you will skip {number} steps for faster but less precise tracking.
+Restricted to owners, admins and mods in-game only
 
 /speed {number}
 The default pause between each tracked step is 3 seconds. Change it to any number of seconds from 1 to whatever.
+Restricted to owners, admins and mods in-game only
 
 /jump {number of steps}
 Jump forward {number} steps or backwards if given a negative number.
+Restricted to owners, admins and mods in-game only
 
 /goto start
 Move to the start of the current track.
+Restricted to owners, admins and mods in-game only
 
 /goto end
 Move to the end of the current track.
+Restricted to owners, admins and mods in-game only
 
 /go back
 Remove the current base and protection that the tracker has teleported you to.  Used with /check base.
+Restricted to owners, admins and mods in-game only
 
 /stop
 Stop tracking.  Resume it with /go
+Restricted to owners, admins and mods in-game only
 
 /go
 Resume tracking.
+Restricted to owners, admins and mods in-game only
 
 /stop tracking
 Stops tracking and clears the tracking data from memory.  This happens when you exit the server anyway so you don't have to do this.
+Restricted to owners, admins and mods in-game only
 
 /check bases
 Load base coordinates into the tracker so you can tp directly to each base in sequence.  Used for visiting every single base ingame.
+Restricted to owners, admins and mods in-game only
 
 /nb
 Visit the next base in the tracker.
+Restricted to owners, admins and mods in-game only
 
 /pb
 Visit the previous base in the tracker.
+Restricted to owners, admins and mods in-game only
 
 /killbase
 Remove the current base and protection that the tracker has teleported you to.  Used with /check base.
+Restricted to owners, admins and mods in-game only
 
 
 Server Commands:
@@ -1406,24 +1790,30 @@ Server Commands:
 /set telnet enabled/disabled (enabled is the default)
 This doesn't change telnet in the server.  Instead use this to tell the bot if the server's telnet is enabled or disabled.
 This is used by the bot as part of monitoring the status of telnet.  If telnet is disabled, the bot won't keep trying to connect to it.
+Restricted to server owners in-game and IRC
 
 /say{2 letter language code} {something you want translated}
 If the translator utility is installed, the bot can translate from english what you say into the language you specify.
 eg. /sayfr Hello.  The bot will say Smegz0r: Bonjour
 Note: This uses Google and due to the number of bots I host, it is not installed on my servers as I don't want to risk an invoice from them.
+Unrestricted command in-game only
 
 /cancel reboot
 Cancel a scheduled reboot.  You may not be able to stop a forced or automatically scheduled reboot but you can pause it instead.
+Restricted to owners and admins in-game and IRC
 
 /join server {ip} port {telnet port} pass {telnet password}
 Tell the bot to join a different game server.
+Restricted to server owners in-game and IRC
 
 /pause reboot
 Pause a scheduled reboot.  It will stay paused until you unpause it or restart the bot.
+Restricted to owners, admins and mods in-game and IRC
 
 /run command {a console command}
 Sometimes you need to make the bot run a specific console command.
 This can be used to force the bot re-parse a list.  Only server owners can do this.
+Restricted to server owners in-game and IRC
 
 /reboot
 /reboot {n} minute (or hour) (optional: forced)
@@ -1431,95 +1821,120 @@ This can be used to force the bot re-parse a list.  Only server owners can do th
 Schedule a timed or immediate server reboot.  The actual restart must be handled externally by something else.
 Just before the reboot happens, the bot issues a save command. If you add forced, only a level 0 admin can stop the reboot.
 Shutting down the bot will also cancel a reboot but any automatic (timed) reboots will reschedule if the server wasn't also restarted.
+Restricted to owners and admins in-game and IRC
 
 /override access {number from 99 to 4}
 All players have an access level which governs what they can do.  You can override it for everyone to temporarily raise their access.
 eg. /overide access 10 would make all players donors until you restore it.  To do that type /override access 99.  This is faster than giving individual players donor access if you just want to do a free donor weekend.
+Restricted to server owners in-game and IRC
 
 /set archive players day {number (days) default is 60}
 The bot will archive players who haven't played in 60 days except for admins.  You can disable this feature by setting it to 0.
 The bot will archive players at startup or if you use the command /archive players.
+Restricted to server owners in-game and IRC
 
 /set bail {number}
 Set how many Zennies it costs to bail out of prison.  To disable bail set it to zero (the default)
+Restricted to owners, admins and mods in-game and IRC
 
 /motd (to view it)
 /motd (or /set motd) {your message here} (to set it)
 /motd clear (to disable it)
 Display the current message of the day.  If an admin types anything after /motd the typed text becomes the new MOTD.
 To remove it type /motd clear
+Restricted to server owners in-game and IRC
 
 /set idle kick {seconds} (default 900. 15 minutes)
 How many seconds a player can be idle for before being kicked from the server. Does not include joining players that have not spawned yet.
+Restricted to owners and admins in-game and IRC
 
 /set irc main (or alerts or watch) {channel name without a # sign}
 Change the bot's IRC channels.
+Restricted to owners and admins in-game and IRC
 
 /set irc nick {bot name}
 Change the bot's IRC nickname. Sometimes it can have a nick collision with itself and it gets an underscore appended to it.
+Restricted to owners and admins in-game and IRC
 
 /set irc server {IP or URL and optional port}
 Use this command if you want players to know your IRC server's address.
+Restricted to owners and admins in-game and IRC
 
 /set map size {number}
 Set the maximum distance from 0,0 that players are allowed to travel. Any players already outside this limit will be teleported to 0,0 and may get stuck under the map.  They can relog.
 Size is in metres (blocks) and be careful not to set it too small.  The default map size is 10000 but the bot's default is 20000.
 Whatever size you set, donors will be able to travel 5km futher out so the true boundary is +5000.
+Restricted to server owners in-game and IRC
 
 /set max animals {number}
 Change the server's max spawned animals.
+Restricted to server owners in-game and IRC
 
 /set (or clear) max ping {number}
 To kick high ping players set a max ping.  It will only be applied to new players. You can also whitelist a new player to make them exempt.
 The bot doesn't immediately kick for high ping, it samples ping over 30 seconds and will only kick for a sustained high ping.
+Restricted to owners and admins in-game and IRC
 
 /set max players {number}
 Change the server's max players. Admins can always join using the automated reserved slots feature.
+Restricted to server owners in-game and IRC
 
 /set max uptime {number}
 /max uptime (to see it)
 Set how long (in hours) that the server can be running before the bot schedules a reboot.  The bot will always add 15 minutes as the reboot is only scheduled at that time.
+Restricted to server owners in-game and IRC
 
 /set max zombies {number}
 Change the server's max spawned zombies.
+Restricted to server owners in-game and IRC
 
 /set new player max level {number} (game level)
 By default a new player is automatically upgraded to a regular player once they pass level 9.
 Use this command to change it to a different player level.
+Restricted to server owners in-game and IRC
 
 /set new player timer {number} (in minutes)
 /new player timer (to see it)
 By default a new player is treated differently from regulars and has some restrictions placed on them mainly concerning inventory.
 Set it to 0 to disable this feature.
+Restricted to server owners in-game and IRC
 
 /set overstack {number} (default 1000)
 Sets the maximum stack size before the bot will warn a player about overstacking.  Usually the bot learns this directly from the server as stack sizes are exceeded.
+Restricted to server owners in-game and IRC
 
 /set ping kick target {new or all}
 By default if a ping kick is set it only applies to new players. Set to all to have it applied to everyone.
 Note: Does not apply to exempt players which includes admins, donors and individuals that have been bot whitelisted.
+Restricted to owners and admins in-game and IRC
 
 /set prison timer {number} (in minutes)
 Set how long someone stays in prison when jailed by the bot.  To not have a time limit, set this to 0 which is the default.
+Restricted to owners and admins in-game and IRC
 
 /set pvp cooldown {seconds}
 Set how long after a pvp kill before the player can use teleport commands again.
+Restricted to owners and admins in-game and IRC
 
 /set reserved slots {number of slots}
 You can have a number of server slots reserved for admins and selected players.
 Anyone can join but if the server becomes full, players who aren't staff or allowed to reserve a slot will be randomly selected and kicked if an admin or authorised player joins.
 To disable, set reserved slots to 0.
+Restricted to server owners in-game and IRC
 
 /set rolling delay {minutes}
 Set the delay in minutes between rolling announcements.
+Restricted to owners and admins in-game and IRC
 
 /set rules {new rules}
 Set the server rules.  You can use supported bbcode tags, but only when setting the rules from IRC.  Each tag must be closed with this tag [-] or colours will bleed into the next line.
 To display the rules type /rules
+Restricted to server owners in-game and IRC
 
 /set server api {api key from 7daystodie-servers.com}
 Your API key is not recorded in logs or the databases and no bot command reports it.  It is used to determine if a player has voted for your server today.
 While the bot takes precautions to keep your API key a secret, you should be careful not to type it anywhere in public.  The safest place to give it to the bot is in private chat on IRC or on the bot's web interface when that is available.
+Restricted to server owners in-game and IRC
 
 /set server vote reward random quantity {number} quality {number}
 The default reward is the sc_General supply crate.
@@ -1529,22 +1944,28 @@ Quantity is the number of random items, not a quantity of the same item (except 
 If you set the reward as list you will need additional commands to manage the reward items. For commands type /help reward list.
 If you set the reward as item, the player will be given the item that you specify.
 If you have a custom entity (eg sc_General2) type /set server vote reward entity sc_General2.
+Restricted to server owners in-game and IRC
 
 /set server group {group name} (one word)
 This is used by the bots database which could be a cloud database.  It is used to identify this bot as belonging to a group if you have more than one server.  You do not need to set this.
+Restricted to server owners in-game and IRC
 
 /set server ip {IP of your 7 Days to Die server}
 The bot is unable to read the IP from its own profile for the server so enter it here.  It will display in the /info command and be used if a few other places.
+Restricted to owners and admins in-game and IRC
 
 /set reboot hour {0 to 23}
 Reboot the server when the server time matches the hour (24 hour time).  To disable clock based reboots set this to -1 or don't enter a number.
+Restricted to owners and admins in-game and IRC
 
 /set reboot minute {0 to 59}
 Reboot the server when the server time matches the hour and minute (24 hour time).  To disable clock based reboots use /set reboot hour (without a number)
+Restricted to owners and admins in-game and IRC
 
 /set server pve (or pvp, creative or contest)
 Set the entire server to be PVE, PVP, Creative or Contest.
 Contest mode is not implemented yet and all setting it creative does is stop the bot pestering players about their inventory.
+Restricted to server owners in-game and IRC
 
 /setup map
 Optional extras after setup map: no hostiles, no animals, show players, show claims, show inventory
@@ -1567,69 +1988,91 @@ If setting show players, show claims, show inventory:
 webapi.viewallplayers 2000
 webapi.viewallclaims 2000
 webapi.getplayerinventory 2000
+Restricted to server owners in-game and IRC
 
 /set web panel port {port of server's control panel/web panel}
 or /set api port {number}
 The bot needs to be told the port for Alloc's web map. If you give it the wrong port and API support is enabled or you enable that later, the bot will try that port and the ports +/- 2 above and below it.
+Restricted to server owners in-game and IRC
 
 /set website {your website or steam group}
 Tell the bot the URL of your website or steam group so your players can ask for it.
+Restricted to owners and admins in-game and IRC
 
 /set welcome message {your message here}
 /clear welcome message
 You can set a custom welcome message that will override the default greeting message when a player joins.
+Restricted to owners and admins in-game and IRC
 
 /test vote reward
 Admin and in-game only. The bot will try to spawn the server vote reward beside you.
+Restricted to server owners in-game only
 
 /allow/disallow/kick bad names
 Auto-kick players with numeric names or names that contain no letters such as ascii art crap.
 They will see a kick message asking them to change their name.
+Restricted to owners and admins in-game and IRC
 
 /enable/disable vac (disable is the default)
 If a player has any VAC bans you can auto-ban them or allow them in.
 Each time they join, admins will be alerted to their VAC ban. To stop that, add the them to the bot's whitelist.
+Restricted to owners and admins in-game and IRC
 
 /set cbsm friendly (the default)
 /set cbsm unfriendly (or anything other than the word friendly such as die die die)
 If set to friendly, the bot will automatically switch from / commands to using the ! since CBSM uses the /
 Set to anything else and the bot will use / commands whether CBSM is present or not.
+Restricted to owners and admins in-game and IRC
 
 /remove zombies before bloodmoon
 /leave zombies before bloodmoon
-If you have Stompy's BC mod or the Botman mod, the bot can despawn all zombies server wide a few minutes before bloodmoon starts. It may trigger more than once.
+If you have Stompy's BC mod or the Botman mod, the bot can despawn all zombies server wide a few minutes before bloodmoon starts.  It may trigger more than once.
+Restricted to server owners in-game and IRC
 
 /enable/disable entity scan (disabled by default)
 Scan for entities server wide every 30 seconds.
 The resulting list is copied to the entities Lua table where it can be further processed for other bot features.
+Restricted to owners, admins and mods in-game and IRC
 
 /enable/disable error scan (disabled by default)
-The server can automatically scan for and fix some errors using console commands if you have the BC mod installed.
+The server can automatically scan for and fix some errors using console commands if you have the BC mod or Botman mod installed.
 You can disable the scan if you suspect it is creating lag.
+Restricted to owners, admins and mods in-game and IRC
+
+/allow/disallow family (allowed by default)
+Set to disallow if you require all players use the owner steam key and want to block players with a steamid that does not match the steamOwner.
+Restricted to owners and admins in-game and IRC
 
 /enable/disable hardcore mode
 Allow players to use bot commands.  This is the default.
 Players can still talk to the bot and use info commands such as /rules.
+Restricted to server owners in-game and IRC
 
 /enable/disable idle kick (disabled is default)
 When the server is full, if idle kick is on players will get kick warnings for 15 minutes of no movement then they get kicked.
+Restricted to server owners in-game and IRC
 
 /allow/disallow idling (allowed is default)
 If idle kick is enabled the default is to only kick idle players when the server is full. By setting disallow idling, players can be kicked for idling any time.
+Restricted to server owners in-game and IRC
 
 /allow/disallow flying
 Toggle the bot's player flying detection.  You would want to do this if players can use debug mode on your server.
+Restricted to server owners in-game and IRC
 
 /set irc private/public
 If IRC is private, the bot won't share the url or info with players and players can't invite anyone to irc using the invite command.
 When public, players can find the IRC info with /help irc and they can create irc invites for themselves and others.
+Restricted to server owners in-game and IRC
 
 /enable/disable noclip scan (the default)
 Using the BC mod or Botman mod you can detect players that are noclipping under the map.
 It can false flag but it is still a useful early warning of a possible hacker.  The bot will ban a player found clipping a lot for one week.
+Restricted to server owners in-game and IRC
 
 /allow/disallow overstack or /enable/disable overstack
 By default the bot reads overstack warnings coming from the server to learn what the stack limits are and it will pester players with excessive stack sizes and can send them to timeout for non-compliance.
+Restricted to server owners in-game and IRC
 
 /northeast pve/pvp
 /northeast pve/pvp
@@ -1641,23 +2084,29 @@ By default the bot reads overstack warnings coming from the server to learn what
 /east pve/pvp
 /west pve/pvp
 Make northeast/northwest/southeast/southwest/north/south/east/west of 0,0 PVE or PVP.
+Restricted to server owners in-game and IRC
 
 /allow/disallow rapid relog
 New players who want to cheat often relog rapidly in order to spawn lots of items into the server using cheats or bugs.
 If enabled, the bot will temp ban (10 minutes) players caught relogging several times in short order.
+Restricted to owners and admins in-game and IRC
 
 /enable/disable region pm
 A PM for admins that tells them the region name when they move to a new region.
+Restricted to server owners in-game and IRC
 
 /enable (or disable) reboot
 By default the bot does not manage server reboots.
 See also /set max uptime (default 12 hours)
+Restricted to owners and admins in-game and IRC
 
 /disable/enable watch alerts
 Enable or disable ingame private messages about watched player inventory and base raiding. Alerts will still go to IRC.
+Restricted to owners, admins and mods in-game and IRC
 
 /resume/unpause reboot
 Resume a paused reboot.
+Restricted to owners, admins and mods in-game and IRC
 
 /visit map
 /visit map x1 z1 x2 z2
@@ -1666,6 +2115,7 @@ Resume a paused reboot.
 Make the server explore the map while you hit up some zombie chicks.
 If you add the optional word 'check' at the end of the command it will also check chunk density.
 To visit the entire map do not include coordinates or a range.
+Restricted to server owners in-game and IRC
 
 BC Mod Commands:
 
@@ -1686,14 +2136,16 @@ Examples:
 /fill {saved prefab} block stone
 
 You can repeat the last command with /again and change direction with /again west
-
+Restricted to owners, admins and mods in-game only
 
 /show/hide commands
 Hide commands from ingame chat which makes them all PM's or show them which makes them public.  They will still appear in the web client.
+Restricted to owners, admins and mods in-game and IRC
 
 /mute/unmute {player name}
 Muting a player blocks their ingame chat from being seen by other players.  You will still see it from the web client.
 It does not block voice chat sadly.
+Restricted to owners, admins and mods in-game and IRC
 
 /set new player/player/donor/prisoner/mod/admin/owner chat colour FFFFFF
 /reset chat colour
@@ -1701,50 +2153,62 @@ Set the default chat colour for a class of player.  You can also set chat colour
 eg. /set player joe chat colour B0E0E6
 To disable automatic chat colouring, set it to white which is FFFFFF
 To reset everyone to white type /reset chat colour everyone
+Restricted to owners and admins in-game and IRC
 
 /spawn horde {optional player or location name} {number of zombies}
 Spawn a horde around a player or location or at a marked coordinate.  See /set horde.
+Restricted to owners, admins and mods in-game and IRC
 
 /trader add/trader del {named area}
 After marking out a named area with the /mark command, you can add or remove trader protection on it.
+Restricted to owners, admins and mods in-game only
 
 /delete save {number taken from /list saves}
 After /list saves, you can delete a save from the list.
 Note that the list is temporary, but will last until the next time a list is generated.  If it doesn't work, do another /list saves.
+Restricted to owners, admins and mods in-game and IRC
 
 /erase {optional number} (default 5)
 /erase block {block name} replace {with other block name} {optional number}
 eg. /erase block stone replace air 20
 Replace an area around you with air blocks.  Add a number to change the size.
+Restricted to owners, admins and mods in-game only
 
 /make maze (default maze 20 x 20)
 /make maze wall {block name} fill {air block} width {number} length {number} height {number} x {x coord} y {y coord} z {z coord}
 The bot also accepts wide, long, and tall instead of width, length, and height.
 Generate and build a random maze.  Someone must stay there until the maze completes or it will fail to spawn fully.
 Default values: wall steelBlock fill air width 20 length 20 height 3. It uses your current position for x, y and z if not given.
+Restricted to owners, admins and mods in-game only
 
 /stop/cancel maze
 Aborts any maze(s) that you have told the bot to create.
+Restricted to owners, admins and mods in-game and IRC
 
 /fix bedrock {distance}
 You can replace the bedrock layer below you up to {distance} away from your position.
 You only need to be over the area to be fixed.  No other layers are touched.
+Restricted to owners, admins and mods in-game only
 
 /undo {optional name of saved (marked) area}
 Undo your last block command.
+Restricted to owners, admins and mods in-game only
 
 /list saves {optional player name}
 List all your saved marked areas or those of someone else.  This list is coordinate pairs of places in the world that you have marked for some block command.
 You can use a named save with the block commands.
 You can teleport to them with /tp #{name of marked area}.
 You can delete one /delete save {list number of marked area}.
+Restricted to owners, admins and mods in-game and IRC
 
 /save {name}
 After marking out the area you want to copy, you can save it.
+Restricted to owners, admins and mods in-game only
 
 /set/clear horde
 Marks your current position to spawn a horde there with /spawn horde.
 Clear horde doesn't remove the horde. It only clears the saved coordinate.
+Restricted to owners, admins and mods in-game only
 
 /load prefab {name}
 /load prefab {name} at {x} {y} {z} face {0-3}
@@ -1754,9 +2218,11 @@ Restore a saved prefab in place or place it somewhere else.
 If you provide coords and an optional rotation (default is 0 - north), you will make a new copy of the prefab at those coords.
 If you instead add here, it will load on your current position with optional rotation.
 If you only provide the name of the saved prefab, it will restore the prefab in place which replaces the original with the copy.
+Restricted to owners, admins and mods in-game only
 
 /list (or /li) {partial name of an item or block}
 List all items containing the text you are searching for.
+Restricted to owners, admins and mods in-game only
 
 
 

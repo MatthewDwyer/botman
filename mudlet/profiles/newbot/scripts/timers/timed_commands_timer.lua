@@ -9,7 +9,7 @@
 
 
 function WebPanelQueue()
-	local row, cursor, errorString, steam, action, actionTable, actionQuery, actionArgs, sessionID, temp, command
+	local row, cursor, errorString, steam, action, actionTable, actionQuery, actionArgs, sessionID, temp, command, tmp
 
 	-- delete any expired records in webInterfaceJSON
 	conn:execute("DELETE FROM webInterfaceJSON WHERE expire < NOW() and expire <> '0000-00-00 00:00:00'")
@@ -48,6 +48,49 @@ function WebPanelQueue()
 			if action == "fix bot" then
 				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				fixBot()
+			end
+
+			if action == "fix map permissions" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
+
+				sendCommand("webpermission add web.map 2000")
+				sendCommand("webpermission add webapi.getplayersOnline 2000")
+				sendCommand("webpermission add webapi.getstats 2000")
+				sendCommand("webpermission add webapi.getlandclaims 1000")
+
+				if string.find(actionArgs, "no hostiles") then
+					sendCommand("webpermission add webapi.gethostilelocation 2")
+				else
+					sendCommand("webpermission add webapi.gethostilelocation 2000")
+				end
+
+				if string.find(actionArgs, "no animals") then
+					sendCommand("webpermission add webapi.getanimalslocation 2")
+				else
+					sendCommand("webpermission add webapi.getanimalslocation 2000")
+				end
+
+				if string.find(actionArgs, "show players") then
+					sendCommand("webpermission add webapi.viewallplayers 2000")
+					sendCommand("webpermission add webapi.GetPlayersLocation 2000")
+				else
+					sendCommand("webpermission add webapi.viewallplayers 2")
+					sendCommand("webpermission add webapi.GetPlayersLocation 0")
+				end
+
+				if string.find(actionArgs, "show claims") then
+					sendCommand("webpermission add webapi.viewallclaims 2000")
+					sendCommand("webpermission add webapi.getlandclaims 2000")
+				else
+					sendCommand("webpermission add webapi.viewallclaims 2")
+					sendCommand("webpermission add webapi.getlandclaims 1000")
+				end
+
+				if string.find(actionArgs, "show inventory") then
+					sendCommand("webpermission add webapi.getplayerinventory 2000")
+				else
+					sendCommand("webpermission add webapi.getplayerinventory 2")
+				end
 			end
 
 			if action == "fix shop" then
@@ -134,11 +177,23 @@ function WebPanelQueue()
 				end
 
 				if actionTable == "donors" then
-					loadDonors()
+					if steam ~= "0" then
+						loadDonors(steam)
+					else
+						loadDonors()
+					end
 				end
 
 				if actionTable == "friends" then
-					loadFriends()
+					if steam ~= "0" then
+						loadFriends(steam)
+					else
+						loadFriends()
+					end
+				end
+
+				if actionTable == "gimmeprizes" then
+					loadGimmePrizes()
 				end
 
 				if actionTable == "gimmezombies" then
@@ -150,11 +205,19 @@ function WebPanelQueue()
 				end
 
 				if actionTable == "locations" then
-					loadLocations()
+					if actionArgs == "" then
+						loadLocations()
+					else
+						loadLocations(actionArgs)
+					end
 				end
 
 				if actionTable == "locationcategories" then
-					loadLocationCategories()
+					if actionArgs == "" then
+						loadLocationCategories()
+					else
+						loadLocationCategories(actionArgs)
+					end
 				end
 
 				if actionTable == "modbotman" then
@@ -185,12 +248,20 @@ function WebPanelQueue()
 					loadServer()
 				end
 
+				if actionTable == "shop" then
+					loadShop()
+				end
+
 				if actionTable == "shopcategories" then
 					loadShopCategories()
 				end
 
 				if actionTable == "teleports" then
-					loadTeleports()
+					if actionArgs == "" then
+						loadTeleports()
+					else
+						loadTeleports(actionArgs)
+					end
 				end
 
 				if actionTable == "villagers" then
@@ -271,6 +342,22 @@ function WebPanelQueue()
 				irc_chat(server.ircMain, "The bot is no longer paused.")
 				message("say [" .. server.warnColour .. "]The bot is now accepting commands again! :D[-]")
 				botman.botDisabled = false
+			end
+
+			if action == "visit map" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
+
+				tmp = {}
+
+				-- Lockdown you say?  Screw that!  I'm visiting the whole world!  *cough* :P
+				tmp.mapSize = math.floor(GamePrefs.WorldGenSize / 2)
+				tmp.x1 = -tmp.mapSize
+				tmp.z1 = tmp.mapSize
+				tmp.x2 = tmp.mapSize
+				tmp.z2 = -tmp.mapSize
+
+				sendCommand(string.trim("visitmap " .. tmp.x1 .. " " .. tmp.z1 .. " " .. tmp.x2  .. " " .. tmp.z2))
+				irc_chat(server.ircMain, "The entire map is being visited. This will take a while and is perfectly safe.  The bot used hand sanitizer, is wearing a mask, and swallowed some bleach.")
 			end
 
 			row = cursor:fetch(row, "a")

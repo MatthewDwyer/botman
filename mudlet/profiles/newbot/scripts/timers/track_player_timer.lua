@@ -109,9 +109,9 @@ function persistentQueueTimer()
 							setChatColour(steam, temp[4])
 						end
 
-						if string.find(command, "rlp ") then
-							message("pm " .. steam .. " [" .. server.warnColour .. "]Your claim is in a reset zone and will be removed.[-]")
-						end
+						-- if string.find(command, "rlp ") then
+							-- message("pm " .. steam .. " [" .. server.warnColour .. "]Your claim is in a reset zone and will be removed.[-]")
+						-- end
 					end
 				end
 			end

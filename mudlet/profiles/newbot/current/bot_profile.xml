@@ -2,18 +2,20 @@
 <!DOCTYPE MudletPackage>
 <MudletPackage version="1.001">
 	<HostPackage>
-		<Host autoClearCommandLineAfterSend="no" printCommand="no" USE_IRE_DRIVER_BUGFIX="yes" mUSE_FORCE_LF_AFTER_PROMPT="no" mUSE_UNIX_EOL="no" mNoAntiAlias="no" mEchoLuaErrors="no" runAllKeyMatches="no" AmbigousWidthGlyphsToBeWide="auto" mRawStreamDump="no" mIsLoggingTimestamps="no" logDirectory="" logFileName="" logFileNameFormat="yyyy-MM-dd#HH-mm-ss" mAlertOnNewData="yes" mFORCE_NO_COMPRESSION="no" mFORCE_GA_OFF="no" mFORCE_SAVE_ON_EXIT="no" mEnableGMCP="no" mEnableMSSP="yes" mEnableMSP="yes" mEnableMSDP="no" mMapStrongHighlight="no" mLogStatus="yes" mEnableSpellCheck="no" mEnableUserDictionary="yes" mUseSharedDictionary="no" mShowInfo="no" mAcceptServerGUI="yes" mAcceptServerMedia="yes" mMapperUseAntiAlias="no" mFORCE_MXP_NEGOTIATION_OFF="no" enableTextAnalyzer="no" mRoomSize="0.5" mLineSize="5.0" mBubbleMode="no" mShowRoomIDs="no" mShowPanel="no" mHaveMapperScript="no" mEditorAutoComplete="yes" mEditorTheme="Mudlet" mEditorThemeFile="Mudlet.tmTheme" mThemePreviewItemID="2" mThemePreviewType="trigger" mSearchEngineName="Google" mTimerSupressionInterval="00:00:00.000" mUseProxy="no" mProxyAddress="" mProxyPort="0" mProxyUsername="" mProxyPassword="" mAutoReconnect="no" mSslTsl="no" mSslIgnoreExpired="no" mSslIgnoreSelfSigned="no" mSslIgnoreAll="no" mDiscordAccessFlags="2495" mRequiredDiscordUserName="" mRequiredDiscordUserDiscriminator="" mSGRCodeHasColSpaceId="no" mServerMayRedefineColors="no" playerRoomPrimaryColor="#ffff0000" playerRoomSecondaryColor="#ffffffff" playerRoomStyle="0" playerRoomOuterDiameter="120" playerRoomInnerDiameter="70" mDoubleClickIgnore="'&quot;">
+		<Host autoClearCommandLineAfterSend="no" printCommand="no" USE_IRE_DRIVER_BUGFIX="no" mUSE_FORCE_LF_AFTER_PROMPT="no" mUSE_UNIX_EOL="yes" mNoAntiAlias="no" mEchoLuaErrors="no" runAllKeyMatches="no" AmbigousWidthGlyphsToBeWide="auto" mRawStreamDump="no" mIsLoggingTimestamps="no" logDirectory="" logFileName="" logFileNameFormat="yyyy-MM-dd#HH-mm-ss" mAlertOnNewData="no" mFORCE_NO_COMPRESSION="yes" mFORCE_GA_OFF="yes" mFORCE_SAVE_ON_EXIT="no" mEnableGMCP="no" mEnableMSSP="yes" mEnableMSP="yes" mEnableMSDP="no" mMapStrongHighlight="no" mLogStatus="no" mEnableSpellCheck="no" mEnableUserDictionary="yes" mUseSharedDictionary="no" mShowInfo="no" mAcceptServerGUI="yes" mAcceptServerMedia="yes" mMapperUseAntiAlias="no" mFORCE_MXP_NEGOTIATION_OFF="yes" enableTextAnalyzer="no" mRoomSize="0.5" mLineSize="5.0" mBubbleMode="no" mShowRoomIDs="no" mShowPanel="no" mHaveMapperScript="no" mEditorAutoComplete="yes" mEditorTheme="Mudlet" mEditorThemeFile="Mudlet.tmTheme" mThemePreviewItemID="-1" mThemePreviewType="" mSearchEngineName="Google" mTimerSupressionInterval="" mUseProxy="no" mProxyAddress="" mProxyPort="0" mProxyUsername="" mProxyPassword="" mAutoReconnect="no" mSslTsl="no" mSslIgnoreExpired="no" mSslIgnoreSelfSigned="no" mSslIgnoreAll="no" mDiscordAccessFlags="3071" mRequiredDiscordUserName="" mRequiredDiscordUserDiscriminator="" mSGRCodeHasColSpaceId="no" mServerMayRedefineColors="no" playerRoomPrimaryColor="#ffff0000" playerRoomSecondaryColor="#ffffffff" playerRoomStyle="0" playerRoomOuterDiameter="120" playerRoomInnerDiameter="70" mDoubleClickIgnore="'&quot;" EditorSearchOptions="0">
 			<name>bot</name>
-			<mInstalledPackages />
-			<url></url>
+			<mInstalledPackages>
+				<string>run-lua-code-v4</string>
+			</mInstalledPackages>
+			<url>127.0.0.1</url>
 			<serverPackageName>nothing</serverPackageName>
 			<serverPackageVersion>-1</serverPackageVersion>
-			<port></port>
+			<port>8081</port>
 			<borderTopHeight>0</borderTopHeight>
 			<borderBottomHeight>0</borderBottomHeight>
 			<borderLeftWidth>0</borderLeftWidth>
 			<borderRightWidth>0</borderRightWidth>
-			<wrapAt>100</wrapAt>
+			<wrapAt>2000</wrapAt>
 			<wrapIndentCount>0</wrapIndentCount>
 			<mFgColor>#c0c0c0</mFgColor>
 			<mBgColor>#000000</mBgColor>
@@ -182,7 +184,7 @@ matchAll(line)</script>
 			<name>InventorySlot</name>
 			<script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -305,7 +307,7 @@ playerDisconnected(line)</script>
 			<name>Inventory</name>
 			<script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -436,11 +438,11 @@ airDropAlert(line)</script>
 				<integer>0</integer>
 			</regexCodePropertyList>
 		</Trigger>
-		<Trigger isActive="yes" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
+		<Trigger isActive="no" isFolder="no" isTempTrigger="no" isMultiline="no" isPerlSlashGOption="no" isColorizerTrigger="no" isFilterTrigger="no" isSoundTrigger="no" isColorTrigger="no" isColorTriggerFg="no" isColorTriggerBg="no">
 			<name>Spam</name>
 			<script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -710,7 +712,7 @@ teleTrigger(line)
 			<name>Chat</name>
 			<script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz
@@ -931,7 +933,7 @@ gimmeQueuedCommands()</script>
 			<packageName></packageName>
 			<time>00:00:00.500</time>
 		</Timer>
-		<Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+		<Timer isActive="no" isFolder="no" isTempTimer="no" isOffsetTimer="no">
 			<name>ircQueue</name>
 			<script>-- This script now lives in scripts/timers/irc_queue_timer.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
@@ -1033,6 +1035,13 @@ disableTimer("ReloadScripts")</script>
 			<packageName></packageName>
 			<time>00:00:01.000</time>
 		</Timer>
+		<Timer isActive="yes" isFolder="no" isTempTimer="no" isOffsetTimer="no">
+			<name>Every5Seconds</name>
+			<script>FiveSecondTimer()</script>
+			<command></command>
+			<packageName></packageName>
+			<time>00:00:05.000</time>
+		</Timer>
 	</TimerPackage>
 	<AliasPackage />
 	<ActionPackage>
@@ -1066,7 +1075,7 @@ disableTimer("ReloadScripts")</script>
 				<location>0</location>
 				<posX>0</posX>
 				<posY>0</posY>
-				<mButtonState>1</mButtonState>
+				<mButtonState>2</mButtonState>
 				<sizeX>3145776</sizeX>
 				<sizeY>3145776</sizeY>
 				<buttonColumn>1</buttonColumn>
@@ -1201,6 +1210,11 @@ disableTimer("ReloadScripts")</script>
 --display(gimmeZombies)
 
 --display(resetRegions)
+
+--display(staffList)
+
+--display(modVersions)
+
 </script>
 				<css></css>
 				<commandButtonUp></commandButtonUp>
@@ -1245,7 +1259,8 @@ trialCode()</script>
 
 --loadPlayers(Smegz0r)
 
-connectToAPI()
+--sendCommand("bm-readconfig")
+display(_G)
 dbug("temp test end")</script>
 				<css></css>
 				<commandButtonUp></commandButtonUp>
@@ -1312,7 +1327,7 @@ dbug("temp test end")</script>
 				<location>0</location>
 				<posX>0</posX>
 				<posY>0</posY>
-				<mButtonState>1</mButtonState>
+				<mButtonState>2</mButtonState>
 				<sizeX>0</sizeX>
 				<sizeY>0</sizeY>
 				<buttonColumn>1</buttonColumn>
@@ -1450,7 +1465,56 @@ joinIRCServer()
 			<Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="no" useCustomLayout="no">
 				<name>Just refresh scripts</name>
 				<packageName></packageName>
-				<script>refreshScripts()</script>
+				<script>refreshScripts()
+reloadCustomScripts()</script>
+				<css></css>
+				<commandButtonUp></commandButtonUp>
+				<commandButtonDown></commandButtonDown>
+				<icon></icon>
+				<orientation>1</orientation>
+				<location>0</location>
+				<posX>0</posX>
+				<posY>0</posY>
+				<mButtonState>1</mButtonState>
+				<sizeX>0</sizeX>
+				<sizeY>0</sizeY>
+				<buttonColumn>1</buttonColumn>
+				<buttonRotation>0</buttonRotation>
+				<buttonColor>#ffffff</buttonColor>
+			</Action>
+			<Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="no" useCustomLayout="no">
+				<name>Display Chat</name>
+				<packageName></packageName>
+				<script>displayChatInMudlet = true</script>
+				<css></css>
+				<commandButtonUp></commandButtonUp>
+				<commandButtonDown></commandButtonDown>
+				<icon></icon>
+				<orientation>1</orientation>
+				<location>0</location>
+				<posX>0</posX>
+				<posY>0</posY>
+				<mButtonState>1</mButtonState>
+				<sizeX>0</sizeX>
+				<sizeY>0</sizeY>
+				<buttonColumn>1</buttonColumn>
+				<buttonRotation>0</buttonRotation>
+				<buttonColor>#ffffff</buttonColor>
+			</Action>
+			<Action isActive="yes" isFolder="no" isPushButton="no" isFlatButton="no" useCustomLayout="no">
+				<name>Toggle Telnet Spam</name>
+				<packageName></packageName>
+				<script>if botman.blockTelnetSpam == nil then
+  botman.blockTelnetSpam = false
+end
+
+botman.blockTelnetSpam = not botman.blockTelnetSpam
+
+if botman.blockTelnetSpam then
+  display("Telnet traffic will not display here")
+else
+  display("Telnet traffic will display here")
+end</script>
 				<css></css>
 				<commandButtonUp></commandButtonUp>
 				<commandButtonDown></commandButtonDown>
@@ -1469,7 +1533,7 @@ joinIRCServer()
 		</ActionGroup>
 	</ActionPackage>
 	<ScriptPackage>
-		<Script isActive="yes" isFolder="no">
+		<Script isActive="no" isFolder="no">
 			<name>IRCMessage</name>
 			<packageName></packageName>
 			<script>-- This script now lives in scripts/irc_message.lua
@@ -1485,7 +1549,7 @@ joinIRCServer()
 			<packageName></packageName>
 			<script>--[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2015  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	          This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       http://botman.nz

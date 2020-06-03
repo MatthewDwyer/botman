@@ -31,13 +31,16 @@ function gmsg_info()
 			help[1] = " {#}bot info"
 			help[2] = "Displays info about the bot."
 
+			tmp.command = help[1]
+			tmp.keywords = "info,bot"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "info,bot"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -46,6 +49,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -107,13 +111,16 @@ function gmsg_info()
 			help[1] = " {#}new players {optional number (days)"
 			help[2] = "List the new players and basic info about them in the last day or more."
 
+			tmp.command = help[1]
+			tmp.keywords = "list,new,play"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "list,new,play"
-				tmp.accessLevel = 2
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -122,6 +129,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -208,20 +216,23 @@ function gmsg_info()
 
 
 	local function cmd_SeenPlayer()
-		local playerName, isArchived
+		local playerName, isArchived, lastSeenMessage, r
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}seen {player name}"
 			help[2] = "Reports when the player was last on the server."
 
+			tmp.command = help[1]
+			tmp.keywords = "seen,play,when,last"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "seen,play,when,last"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -230,6 +241,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -265,64 +277,35 @@ function gmsg_info()
 
 			if (igplayers[id]) then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]player " .. players[id].name .. " is playing right now.[-]")
+					if chatvars.playerid == id then
+						r = rand(10)
+						if r == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]YOU are playing right now.[-]") end
+						if r == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I dunno, why don't you ask yourself that?[-]") end
+						if r == 3 then message("say ATTENTION! Attention everyone.  Have you seen " .. chatvars.playername .. "? " .. chatvars.playername .. " seems a little lost.[-]") end
+						if r == 4 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No. No I have not.[-]") end
+						if r == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Dear diary. Today I was asked by " .. chatvars.playername .. " if I have seen " .. chatvars.playername .. ". I suspect one of us is losing it, I pray it is not me.[-]") end
+						if r == 6 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Have I seen " .. chatvars.playername .. "? Why yes! Yes I have. If you go home right now, you will find " .. chatvars.playername .. " waiting for you. :D[-]") end
+						if r == 7 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Oh God I am so depressed.[-]") end
+						if r == 8 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. chatvars.playername .. "? Meh! Who cares?[-]") end
+						if r == 9 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]What is seen cannot be unseen.. but I'm willing to give it a go. Got any bleach?[-]") end
+						if r == 10 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I'm beginning to wish I hadn't :([-]") end
+					else
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is playing right now.[-]")
+					end
 				else
-					irc_chat(chatvars.ircAlias, "player " .. players[id].name .. " is playing right now.")
+					irc_chat(chatvars.ircAlias, players[id].name .. " is playing right now.")
 				end
 
 				botman.faultyChat = false
 				return true
 			end
 
-			werds = {}
-			for word in botman.serverTime:gmatch("%w+") do table.insert(werds, word) end
-
-			ryear = werds[1]
-			rmonth = werds[2]
-			rday = string.sub(werds[3], 1, 2)
-			rhour = string.sub(werds[3], 4, 5)
-			rmin = werds[4]
-			rsec = werds[5]
-
-			dateNow = {year=ryear, month=rmonth, day=rday, hour=rhour, min=rmin, sec=rsec}
-			Now = os.time(dateNow)
-
-			werds = {}
-			if isArchived then
-				for word in playersArchived[id].seen:gmatch("%w+") do table.insert(werds, word) end
-			else
-				for word in players[id].seen:gmatch("%w+") do table.insert(werds, word) end
-			end
-
-			ryear = werds[1]
-			rmonth = werds[2]
-			rday = werds[3]
-			rhour = werds[4]
-			rmin = werds[5]
-			rsec = 0
-
-			dateSeen = {year=ryear, month=rmonth, day=rday, hour=rhour, min=rmin, sec=rsec}
-			Seen = os.time(dateSeen)
-
-			diff = os.difftime(Now, Seen)
-			days = math.floor(diff / 86400)
-
-			if (days > 0) then
-				diff = diff - (days * 86400)
-			end
-
-			hours = math.floor(diff / 3600)
-
-			if (hours > 0) then
-				diff = diff - (hours * 3600)
-			end
-
-			minutes = math.floor(diff / 60)
+			lastSeenMessage = seen(id)
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" ..playerName .. " was last seen " .. days .. " days " .. hours .. " hours " .. minutes .." minutes ago.[-]")
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. lastSeenMessage .. "[-]")
 			else
-				irc_chat(chatvars.ircAlias, playerName .. " was last seen " .. days .. " days " .. hours .. " hours " .. minutes .." minutes ago.")
+				irc_chat(chatvars.ircAlias, lastSeenMessage)
 			end
 
 			botman.faultyChat = false
@@ -338,13 +321,16 @@ function gmsg_info()
 			help[2] = "Whatever is typed after {#}alert is recorded to the database and displayed on irc.\n"
 			help[2] = help[2] .. "You can recall the alerts with the irc command view alerts {optional days}"
 
+			tmp.command = help[1]
+			tmp.keywords = "alert,mess,msg,admin"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "alert,mess,msg,admin"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -353,6 +339,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -385,13 +372,16 @@ function gmsg_info()
 			help[1] = " {#}server or {#}info"
 			help[2] = "Displays info mostly from the server config."
 
+			tmp.command = help[1]
+			tmp.keywords = "info,serv"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "info,serv"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -400,6 +390,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -581,13 +572,16 @@ function gmsg_info()
 			help[1] = " {#}rules"
 			help[2] = "Reports the server rules."
 
+			tmp.command = help[1]
+			tmp.keywords = "view,rules"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "view,rules"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -596,6 +590,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -657,13 +652,16 @@ function gmsg_info()
 			help[2] = "Displays various server totals for the last 24 hours or more days if you add a number.\n"
 			help[2] = help[2] .. "eg. {#}server stats 5 (gives you the last 5 days cummulative stats)"
 
+			tmp.command = help[1]
+			tmp.keywords = "view,server,stat"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "view,server,stat"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -672,6 +670,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -768,13 +767,16 @@ function gmsg_info()
 			help[1] = " {#}server date"
 			help[2] = "Displays the system clock of the game server."
 
+			tmp.command = help[1]
+			tmp.keywords = "view,server,date,time"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "view,server,date,time"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -783,6 +785,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -811,13 +814,16 @@ function gmsg_info()
 			help[1] = " {#}where"
 			help[2] = "Gives info about where you are in the world and the rules that apply there."
 
+			tmp.command = help[1]
+			tmp.keywords = "where,play,loca,coord"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "where,play,loca,coord"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -826,6 +832,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -891,13 +898,16 @@ function gmsg_info()
 			help[1] = " {#}uptime"
 			help[2] = "Reports the bot and server's running times."
 
+			tmp.command = help[1]
+			tmp.keywords = "up,time,server,bot"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "up,time,server,bot"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -906,6 +916,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -971,18 +982,23 @@ function gmsg_info()
 
 
 	local function cmd_ViewPlayerInfo()
+		local donor, expiry
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}info {player}"
 			help[2] = "Displays info about a player.  Only staff can specify a player.  Players just see their own info."
 
+			tmp.command = help[1]
+			tmp.keywords = "view,play,info"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "view,play,info"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -991,6 +1007,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1017,6 +1034,8 @@ function gmsg_info()
 					id = LookupArchivedPlayer(pname)
 
 					if not (id == 0) then
+						donor, expiry = isDonor(id)
+
 						if (igplayers[id]) then
 							time = tonumber(playersArchived[id].timeOnServer) + tonumber(igplayers[id].sessionPlaytime)
 						else
@@ -1115,9 +1134,9 @@ function gmsg_info()
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Current Session " .. playersArchived[id].sessionCount .. "[-]")
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]IP " .. playersArchived[id].ip .. "[-]")
 
-						if playersArchived[id].donor then
+						if donor then
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is a donor[-]")
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor status expires on " .. os.date("%Y-%m-%d %H:%M:%S",  playersArchived[id].donorExpiry))
+							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor status expires on " .. os.date("%Y-%m-%d %H:%M:%S",  expiry))
 						else
 							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is not a donor[-]")
 						end
@@ -1138,6 +1157,8 @@ function gmsg_info()
 
 			-- show info for player who isn't archived.
 			if (id ~= 0) then
+				donor, expiry = isDonor(id)
+
 				if (igplayers[id]) then
 					time = tonumber(players[id].timeOnServer) + tonumber(igplayers[id].sessionPlaytime)
 				else
@@ -1236,9 +1257,9 @@ function gmsg_info()
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Current Session " .. players[id].sessionCount .. "[-]")
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]IP " .. players[id].ip .. "[-]")
 
-				if players[id].donor then
+				if donor then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is a donor[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor status expires on " .. os.date("%Y-%m-%d %H:%M:%S",  players[id].donorExpiry))
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor status expires on " .. os.date("%Y-%m-%d %H:%M:%S",  expiry))
 				else
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is not a donor[-]")
 				end
@@ -1264,13 +1285,16 @@ function gmsg_info()
 			help[1] = " {#}day7 or {#}when feral or {#}bloodmoon"
 			help[2] = "Reports the number of days remaining until the next horde night."
 
+			tmp.command = help[1]
+			tmp.keywords = "day,horde,night"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "day,horde,night"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1279,6 +1303,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1301,13 +1326,16 @@ function gmsg_info()
 			help[1] = " {#}next reboot"
 			help[2] = "Reports the time remaining before the next scheduled reboot."
 
+			tmp.command = help[1]
+			tmp.keywords = "rebo,rest"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "rebo,rest"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 0
 				registerHelp(tmp)
 			end
 
@@ -1316,6 +1344,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1358,13 +1387,16 @@ function gmsg_info()
 			help[1] = " {#}who {optional number distance}"
 			help[2] = "Donors can see 300 metres and other players can see 200.  New and watched players can't see staff near them."
 
+			tmp.command = help[1]
+			tmp.keywords = "who,near,me,play"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "who,near,me,play"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1373,6 +1405,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1452,13 +1485,16 @@ function gmsg_info()
 			help[2] = help[2] .. "Add base to just see base visitors. Setting hours will reset days to zero.\n"
 			help[2] = help[2] .. "Use this command to discover who's been at the player's location."
 
+			tmp.command = help[1]
+			tmp.keywords = "who,bed,visit,play"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+
+			help[3] = helpCommandRestrictions(tmp)
+
 			if botman.registerHelp then
-				tmp.command = help[1]
-				tmp.keywords = "who,bed,visit,play"
-				tmp.accessLevel = 99
-				tmp.description = help[2]
-				tmp.notes = ""
-				tmp.ingameOnly = 1
 				registerHelp(tmp)
 			end
 
@@ -1467,6 +1503,7 @@ function gmsg_info()
 
 				if not shortHelp then
 					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
 					irc_chat(chatvars.ircAlias, ".")
 				end
 
@@ -1729,7 +1766,6 @@ function gmsg_info()
 		irc_chat(chatvars.ircAlias, "==== Registering help - info commands ====")
 		if debug then dbug("Registering help - info commands") end
 
-		tmp = {}
 		tmp.topicDescription = "Info commands show players information about specific things such as rules, when the next horde night is, etc."
 
 		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'info'")

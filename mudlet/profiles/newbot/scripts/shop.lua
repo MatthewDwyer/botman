@@ -173,6 +173,8 @@ function reindexShop(category)
 			rowCat = cursorCat:fetch(rowCat, "a")
 		end
 	end
+
+	removeInvalidItems()
 end
 
 
@@ -264,7 +266,7 @@ function drawLottery(draw)
 				if (r == 2) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Dead! Congratulations.. oh.. nevermind.[-]") .. "')") end
 				if (r == 3) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]TAX! Oh no! They've found my little illegal gambling scam er.. establishment. D:[-]") .. "')") end
 				if (r == 4) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Being eaten by zombies! Poor guy :([-]") .. "')") end
-				if (r == 5) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]No one! HA! Suck it Nobody.[-]") .. "')") end
+				if (r == 5) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]No one! HA HA HAAAA![-]") .. "')") end
 				if (r == 6) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Sorry folks. Tonight's draw is cancelled.[-]") .. "')") end
 				r = 0
 			end
@@ -279,11 +281,11 @@ function drawLottery(draw)
 				else
 					r = rand(6)
 					if (r == 1) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Stop buying all of the tickets you dirty cheat![-]") .. "')") end
-					if (r == 2) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Oh hell no, not on my watch. *burns Nobody's ticket*[-]") .. "')") end
-					if (r == 3) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]God dammit! Nobody again.[-]") .. "')") end
+					if (r == 2) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Not on my watch. *burns Nobody's ticket*[-]") .. "')") end
+					if (r == 3) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody again.[-]") .. "')") end
 					if (r == 4) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody. Right! That's it you've had it. *BANG* Nobody died.[-]") .. "')") end
 					if (r == 5) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Stop gambling you lunatic![-]") .. "')") end
-					if (r == 6) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Not Nobody, please don't draw Nobody.. Ah crap![-]") .. "')") end
+					if (r == 6) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Not Nobody, please don't draw Nobody.. and its Nobody again.[-]") .. "')") end
 					r = 0
 				end
 			end

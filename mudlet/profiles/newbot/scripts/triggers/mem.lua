@@ -31,7 +31,6 @@ function memTrigger(line)
 		ply = string.trim(ply)
 
 		server.uptime = math.floor(time * 60)
-		botman.lastUptimeRead = os.time()
 
 		if botman.dbConnected then
 			conn:execute("INSERT INTO performance (serverdate, gametime, fps, heap, heapMax, chunks, cgo, players, zombies, entities, items) VALUES ('" .. botman.serverTime .. "'," .. time .. "," .. fps .. "," .. heap .. "," .. heapMax .. "," .. chunks .. "," .. cgo .. "," .. ply .. "," .. zom .. ",'" .. ent .. "'," .. items .. ")")
@@ -57,6 +56,8 @@ function memTrigger(line)
 				metrics.telnetLines = 0
 				metrics.playersOnlineStart = botman.playersOnline
 				metrics.playersOnlineEnd = botman.playersOnline
+				metrics.errorLines = {}
+				metrics.errorLinesCount = 1
 
 				if botman.getFullMetrics then
 					metrics.playersStart = {}
@@ -108,6 +109,11 @@ function memTrigger(line)
 				irc_chat(metrics.reportTo, "Commands run: " .. metrics.commands)
 				irc_chat(metrics.reportTo, "Telnet lines processed: " .. metrics.telnetLines)
 				irc_chat(metrics.reportTo, "Telnet error lines seen: " .. metrics.errors)
+
+				for k,v in pairs (metrics.errorLines) do
+					irc_chat(metrics.reportTo, "error sample: " .. v)
+				end
+
 				irc_chat(metrics.reportTo, "Telnet command lag: " .. metrics.commandLag)
 				irc_chat(metrics.reportTo, "Performance: FPS  |  HEAP  |  HEAPMAX  |  CHUNKS  |  CGO  |  PLAYERS  |  ZOMBIES  |  ENTITIES  |  ITEMS")
 				irc_chat(metrics.reportTo, "Performance At Start: " .. metrics.performanceAtStart)
