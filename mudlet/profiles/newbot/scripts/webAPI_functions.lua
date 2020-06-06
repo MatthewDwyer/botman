@@ -1848,7 +1848,7 @@ function readAPI_BMAnticheatReport()
 
 		for k,v in pairs(data) do
 			if v ~= "" and v ~= "End Report" then
-				if string.find(v, "--NAME") then
+				if string.find(v, "--NAME") and (not string.find(line, "unauthorized locked container")) then
 					tmp = {}
 					tmp.name = string.sub(v, string.find(v, "-NAME:") + 6, string.find(v, "--ID:") - 2)
 					tmp.id = string.sub(v, string.find(v, "-ID:") + 4, string.find(v, "--LVL:") - 2)
@@ -1888,6 +1888,8 @@ function readAPI_BMAnticheatReport()
 							banPlayer(tmp.id, "10 years", tmp.reason, "")
 							logHacker(botman.serverTime, "Botman anticheat detected " .. tmp.id .. " " .. tmp.name .. " " .. tmp.hack .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z)
 							message("say [" .. server.chatColour .. "]Banning player " .. tmp.name .. " 10 years for using hacks.[-]")
+							irc_chat("#hackers", "[BANNED] Player " .. tm.id .. " " .. tmp.name .. " has has been banned for hacking by anticheat.")
+							irc_chat("#hackers", v)
 							irc_chat(server.ircMain, "[BANNED] Player " .. tm.id .. " " .. tmp.name .. " has has been banned for " .. tmp.reason .. ".")
 							irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Player " .. tmp.id .. " " .. tmp.name .. " has has been banned for 10 years for " .. tmp.reason .. ".")
 							conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. tmp.x .. "," .. tmp.y .. "," .. tmp.z .. ",'" .. botman.serverTime .. "','ban','Player " .. tmp.id .. " " .. escape(tmp.name) .. " has has been banned for 10 years for " .. escape(tmp.reason) .. ".'," .. tmp.id .. ")")
@@ -1895,7 +1897,8 @@ function readAPI_BMAnticheatReport()
 						end
 					else
 						if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and tonumber(tmp.level) > 2 then
-							irc_chat(server.ircAlerts, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
+							irc_chat(server.ircAlerts, "ALERT! Unauthorised admin in anticheat report. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
+							irc_chat("#hackers", v)
 						end
 					end
 				end

@@ -1533,7 +1533,7 @@ end</script>
 		</ActionGroup>
 	</ActionPackage>
 	<ScriptPackage>
-		<Script isActive="no" isFolder="no">
+		<Script isActive="yes" isFolder="no">
 			<name>IRCMessage</name>
 			<packageName></packageName>
 			<script>-- This script now lives in scripts/irc_message.lua

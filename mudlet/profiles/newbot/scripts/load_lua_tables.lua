@@ -909,9 +909,9 @@ function loadResetZones()
 		resetRegions[row.region].x = row.x
 		resetRegions[row.region].z = row.z
 
-		-- if modBotman.version then
-			-- sendCommand("bm-resetregions add " .. row.x .. "." .. row.z)
-		-- end
+		if modBotman.version and (os.time() - botman.botStarted > 30) then
+			sendCommand("bm-resetregions add " .. row.x .. "." .. row.z)
+		end
 
 		row = cursor:fetch(row, "a")
 	end

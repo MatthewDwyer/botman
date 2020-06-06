@@ -1747,7 +1747,7 @@ function matchAll(line, logDate, logTime)
 
 
 	if server.botman then
-		if string.find(line, "INF ~Botman AntiCheat~") then
+		if string.find(line, "INF ~Botman AntiCheat~") and (not string.find(line, "unauthorized locked container")) then
 			tmp = {}
 			tmp.name = string.sub(line, string.find(line, "-NAME:") + 6, string.find(line, "--ID:") - 2)
 			tmp.id = string.sub(line, string.find(line, "-ID:") + 4, string.find(line, "--LVL:") - 2)
@@ -1786,6 +1786,8 @@ function matchAll(line, logDate, logTime)
 					banPlayer(tmp.id, "10 years", "hacking", "")
 					logHacker(botman.serverTime, "Botman anticheat detected " .. tmp.id .. " " .. tmp.name .. " " .. tmp.hack .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z)
 					message("say [" .. server.chatColour .. "]Banning player " .. tmp.name .. " 10 years for using hacks.[-]")
+					irc_chat("#hackers", "[BANNED] Player " .. tm.id .. " " .. tmp.name .. " has has been banned for hacking by anticheat.")
+					irc_chat("#hackers", line)
 					irc_chat(server.ircMain, "[BANNED] Player " .. tm.id .. " " .. tmp.name .. " has has been banned for hacking.")
 					irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Player " .. tmp.id .. " " .. tmp.name .. " has has been banned for 10 years for hacking.")
 					conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. tmp.x .. "," .. tmp.y .. "," .. tmp.z .. ",'" .. botman.serverTime .. "','ban','Player " .. tmp.id .. " " .. escape(tmp.name) .. " has has been banned for 10 years for hacking.'," .. tmp.id .. ")")
