@@ -138,7 +138,24 @@ function importServer()
 end
 
 
+function importShop()
+	local k, v
+
+	if debug then dbug("Importing Shop") end
+
+	for k,v in pairs(shop) do
+		if v.prizeLimit == nil then -- fixes an oops that caused bad shop data to be saved
+			conn:execute("INSERT INTO shop (item, category, price, stock, idx, maxStock, variation, special, validated, units, quality) VALUES ('" .. escape(k) .. "','" .. escape(v.category) .. "'," .. v.price .. "," .. v.stock .. "," .. v.idx .. "," .. v.maxStock .. "," .. v.variation .. "," .. v.special .. ",1," .. v.units .. "," .. v.quality .. ")")
+		end
+	end
+
+	if debug then dbug("Shop Shop Imported") end
+end
+
+
 function importShopCategories()
+	local k, v
+
 	if debug then dbug("Importing Shop Categories") end
 
 	for k,v in pairs(shopCategories) do
@@ -150,6 +167,8 @@ end
 
 
 function importPlayers()
+	local k, v
+
 	if debug then dbug("Importing Players") end
 
 	for k,v in pairs(players) do
@@ -475,6 +494,10 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		shopCategories = {}
 		table.load(path .. pathPrefix .. "shopCategories.lua", shopCategories)
 
+		if debug then dbug("Loading shop") end
+		shop = {}
+		table.load(path .. pathPrefix .. "shop.lua", shop)
+
 		if debug then dbug("Loading teleports") end
 		teleports = {}
 		table.load(path .. pathPrefix .. "teleports.lua", teleports)
@@ -497,6 +520,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		conn:execute("TRUNCATE resetZones")
 		conn:execute("TRUNCATE restrictedItems")
 		conn:execute("TRUNCATE shopCategories")
+		conn:execute("TRUNCATE shop")
 		conn:execute("TRUNCATE teleports")
 		conn:execute("TRUNCATE villagers")
 		conn:execute("TRUNCATE waypoints")
@@ -512,6 +536,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		importVillagers()
 		importFriends()
 		importShopCategories()
+		importShop()
 		importWaypoints()
 		importPlayers()
 	else

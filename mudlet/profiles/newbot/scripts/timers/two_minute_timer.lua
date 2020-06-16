@@ -56,4 +56,8 @@ function twoMinuteTimer()
 	if tonumber(botman.playersOnline) > 24 then
 		removeClaims()
 	end
+
+	if not botman.webdavFolderWriteable then
+		testLogFolderWriteable()
+	end
 end

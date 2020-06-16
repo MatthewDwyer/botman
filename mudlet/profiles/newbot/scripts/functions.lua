@@ -100,6 +100,20 @@ function removeOldStaff()
 end
 
 
+function testLogFolderWriteable()
+	local file
+
+	botman.webdavFolderWriteable = false
+
+	-- log the chat
+	file = io.open(botman.chatlogPath .. "/test.txt", "a")
+	file:write("logging test\n")
+	file:close()
+	botman.webdavFolderWriteable = true
+	os.remove(botman.chatlogPath .. "/test.txt")
+end
+
+
 function logHacker(incidentTime, hack)
 	local file
 
@@ -108,10 +122,14 @@ function logHacker(incidentTime, hack)
 		return
 	end
 
+	botman.webdavFolderWriteable = false
+
 	-- log the chat
 	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_hackers.txt", "a")
 	file:write(incidentTime .. "; " .. string.trim(hack) .. "\n")
 	file:close()
+
+	botman.webdavFolderWriteable = true
 end
 
 
@@ -123,10 +141,14 @@ function logAlerts(alertTime, alertLine)
 		return
 	end
 
+	botman.webdavFolderWriteable = false
+
 	-- log the chat
 	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_alertlog.txt", "a")
 	file:write(alertTime .. "; " .. string.trim(alertLine) .. "\n")
 	file:close()
+
+	botman.webdavFolderWriteable = true
 end
 
 
@@ -141,10 +163,14 @@ function logBotCommand(commandTime, commandLine)
 		commandLine = string.sub(commandLine, 1, string.find(commandLine, "adminuser") - 2)
 	end
 
+	botman.webdavFolderWriteable = false
+
 	-- log the chat
 	file = io.open(botman.chatlogPath .. "/" .. os.date("%Y%m%d") .. "_botcommandlog.txt", "a")
 	file:write(commandTime .. "; " .. string.trim(commandLine) .. "\n")
 	file:close()
+
+	botman.webdavFolderWriteable = true
 end
 
 
@@ -213,6 +239,11 @@ end
 function logInventoryChanges(steam, item, delta, x, y, z, session, flag)
 	local file, location
 
+	-- don't log if folder not writeable
+	if not botman.webdavFolderWriteable then
+		return
+	end
+
 	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
 	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
 	botman.webdavFolderWriteable = false
@@ -240,6 +271,11 @@ function logPanelCommand(commandTime, command)
 	local action, actionTable, actionQuery, actionArgs
 	local file
 
+	-- don't log if folder not writeable
+	if not botman.webdavFolderWriteable then
+		return
+	end
+
 	action = command.action
 
 	if command.actionTable then
@@ -260,8 +296,6 @@ function logPanelCommand(commandTime, command)
 		actionArgs = ""
 	end
 
-	-- flag the webdav folder as not writeable.  If the code below succeeds, we'll flag it as writeable so we can skip writing the chat log next time around.
-	-- If we can't write the log and we keep trying to, the bot won't be able to respond to any commands since we're writing to the log before processing the chat much.
 	botman.webdavFolderWriteable = false
 
 	-- log the chat

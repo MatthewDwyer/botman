@@ -517,8 +517,9 @@ function deleteTrackingData(keepDays)
 	local DateMonth = os.date('%m', os.time())
 	local DateDay = os.date('%d', os.time())
 	local deletionDate = os.time({day = DateDay - keepDays, month = DateMonth, year = DateYear})
+	local deletionDate90Days = os.time({day = DateDay - 90, month = DateMonth, year = DateYear})
 
-	cmd = "mysql -u " .. botDBUser .. " -p" .. botDBPass .. " -e 'DELETE FROM inventoryChanges WHERE timestamp < \"" .. os.date("%Y-%m-%d", deletionDate) .. "\";  DELETE FROM inventoryTracker WHERE timestamp < \"" .. os.date("%Y-%m-%d", deletionDate) .. "\";  DELETE FROM tracker WHERE timestamp < \"" .. os.date("%Y-%m-%d", deletionDate) .. "\"; UPDATE server set databaseMaintenanceFinished = 1;' " .. botDB
+	cmd = "mysql -u " .. botDBUser .. " -p" .. botDBPass .. " -e 'DELETE FROM inventoryChanges WHERE timestamp < \"" .. os.date("%Y-%m-%d", deletionDate) .. "\";  DELETE FROM inventoryTracker WHERE timestamp < \"" .. os.date("%Y-%m-%d", deletionDate) .. "\";  DELETE FROM tracker WHERE timestamp < \"" .. os.date("%Y-%m-%d", deletionDate) .. "\"; DELETE FROM performance WHERE timestamp < \"" .. os.date("%Y-%m-%d", deletionDate90Days) .. "\"; DELETE FROM events WHERE timestamp < \"" .. os.date("%Y-%m-%d", deletionDate90Days) .. "\"; UPDATE server set databaseMaintenanceFinished = 1;' " .. botDB
 	os.execute(cmd)
 end
 

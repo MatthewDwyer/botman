@@ -25,6 +25,8 @@ function gmsg_base()
 -- ################## base command functions ##################
 
 	local function cmd_Base()
+		local delay
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}home/base\n"
@@ -126,7 +128,13 @@ function gmsg_base()
 
 				if (chatvars.accessLevel > 3) then
 					if (players[chatvars.playerid].baseCooldown - os.time() > 0) then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have to wait " .. os.date("%M minutes %S seconds",players[chatvars.playerid].baseCooldown - os.time()) .. " before you can use " .. server.commandPrefix .. "base again.[-]")
+						if players[chatvars.playerid].baseCooldown - os.time() < 3600 then
+							delay = os.date("%M minutes %S seconds",players[chatvars.playerid].baseCooldown - os.time())
+						else
+							delay = os.date("%H hours %M minutes %S seconds",players[chatvars.playerid].baseCooldown - os.time())
+						end
+
+						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have to wait " .. delay .. " before you can use " .. server.commandPrefix .. "base again.[-]")
 						botman.faultyChat = false
 						return true
 					end
@@ -134,7 +142,13 @@ function gmsg_base()
 
 				-- reject if not an admin and pvpTeleportCooldown is > zero
 				if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
-					message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
+					if players[chatvars.playerid].pvpTeleportCooldown - os.time() < 3600 then
+						delay = os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())
+					else
+						delay = os.date("%H hours %M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())
+					end
+
+					message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, delay))
 					botman.faultyChat = false
 					return true
 				end

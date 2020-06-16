@@ -4256,11 +4256,13 @@ function gmsg_locations()
 		end
 
 		-- reject if not an admin and pvpTeleportCooldown is > zero
-		if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
-			message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
-			botman.faultyChat = false
-			result = true
-			return true
+		if tonumber(chatvars.accessLevel) > 2 and tonumber(players[chatvars.playerid].pvpTeleportCooldown) > 0 then
+			if (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
+				message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%H hours %M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
+				botman.faultyChat = false
+				result = true
+				return true
+			end
 		end
 
 		if (os.time() - igplayers[chatvars.playerid].lastTPTimestamp < 5) and (chatvars.accessLevel > 2) then
@@ -4343,8 +4345,8 @@ function gmsg_locations()
 
 		-- reject if not an admin and the location has a cooldown timer and the player's cooldown timer > 0
 		if players[chatvars.playerid]["loc_" .. loc] then
-			if tonumber(chatvars.accessLevel) > 2 and (players[chatvars.playerid]["loc_" .. loc] - os.time() > 0) then
-				message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport to %s again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid]["loc_" .. loc] - os.time()), loc))
+			if tonumber(chatvars.accessLevel) > 2 and (tonumber(players[chatvars.playerid]["loc_" .. loc]) - os.time() > 0) then
+				message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport to %s again.", chatvars.playerid, server.chatColour, os.date("%H hours %M minutes %S seconds",players[chatvars.playerid]["loc_" .. loc] - os.time()), loc))
 				botman.faultyChat = false
 				result = true
 				return true

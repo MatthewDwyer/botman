@@ -432,6 +432,79 @@ function gmsg_teleports()
 	end
 
 
+	local function cmd_ToggleVisitInPVP()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}enable (or {#}disable) pvp visit (default disabled)"
+			help[2] = "Normally players cannot visit friends in pvp. They can if you enable this."
+
+			tmp.command = help[1]
+			tmp.keywords = "pvp,visit,able,allow"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
+			if botman.registerHelp then
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "visit") or string.find(chatvars.command, "pvp"))) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "pvp" and chatvars.words[3] == "visit" then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			if chatvars.words[1] == "enable" then
+				server.allowVisitInPVP = true
+				conn:execute("UPDATE server SET allowVisitInPVP = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players can visit friends in PVP areas.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Players can visit friends in PVP areas.")
+				end
+			else
+				server.allowVisitInPVP = false
+				conn:execute("UPDATE server SET allowVisitInPVP = 0")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players cannot visit friends in PVP areas.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Players cannot visit friends in PVP areas.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_SetTeleportOwner()
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -992,7 +1065,7 @@ function gmsg_teleports()
 
 
 	local function cmd_PackTeleport()
-		local loc
+		local loc, delay
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
@@ -1046,7 +1119,13 @@ function gmsg_teleports()
 				end
 
 				if players[chatvars.playerid].packCooldown > os.time() then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can " .. server.commandPrefix .. "pack in " .. os.date("%M minutes %S seconds", players[chatvars.playerid].packCooldown - os.time()) .. " seconds.[-]")
+					if players[chatvars.playerid].packCooldown - os.time() < 3600 then
+						delay = os.date("%M minutes %S seconds",players[chatvars.playerid].packCooldown - os.time())
+					else
+						delay = os.date("%H hours %M minutes %S seconds",players[chatvars.playerid].packCooldown - os.time())
+					end
+
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can " .. server.commandPrefix .. "pack in " .. delay .. ".[-]")
 					botman.faultyChat = false
 					return true
 				end
@@ -1122,14 +1201,8 @@ function gmsg_teleports()
 				return true
 			end
 
-			cmd = "tele " .. chatvars.playerid .. " " .. chatvars.intX .. " -1 " .. chatvars.intZ
-
-			if tonumber(server.playerTeleportDelay) == 0 then
-				teleport(cmd, chatvars.playerid)
-			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You will teleport in " .. server.playerTeleportDelay .. " seconds.[-]")
-				if botman.dbConnected then conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. chatvars.playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')") end
-			end
+			cmd = "tele " .. chatvars.playerid .. " " .. chatvars.intX .. " " .. chatvars.intY + 3 .. " " .. chatvars.intZ
+			teleport(cmd, chatvars.playerid)
 
 			botman.faultyChat = false
 			return true
@@ -1138,6 +1211,8 @@ function gmsg_teleports()
 
 
 	local function cmd_ReturnTeleport()
+		local delay
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}return"
@@ -1193,13 +1268,25 @@ function gmsg_teleports()
 				end
 
 				if (players[chatvars.playerid].returnCooldown - os.time() > 0) then
-					message(string.format("pm %s [%s]You must wait %s before you are allowed to use return.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].returnCooldown - os.time())))
+					if players[chatvars.playerid].returnCooldown - os.time() < 3600 then
+						delay = os.date("%M minutes %S seconds",players[chatvars.playerid].returnCooldown - os.time())
+					else
+						delay = os.date("%H hours %M minutes %S seconds",players[chatvars.playerid].returnCooldown - os.time())
+					end
+
+					message(string.format("pm %s [%s]You must wait %s before you are allowed to use return.", chatvars.playerid, server.chatColour, delay))
 					botman.faultyChat = false
 					return true
 				end
 
 				if (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
-					message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
+					if players[chatvars.playerid].pvpTeleportCooldown - os.time() < 3600 then
+						delay = os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())
+					else
+						delay = os.date("%H hours %M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())
+					end
+
+					message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, delay))
 					botman.faultyChat = false
 					return true
 				end
@@ -2984,7 +3071,7 @@ function gmsg_teleports()
 					return true
 				end
 
-				if pvpZone(players[id].xPos, players[id].zPos) and chatvars.accessLevel > 2 then
+				if pvpZone(players[id].xPos, players[id].zPos) and tonumber(chatvars.accessLevel) > 2 and not server.allowVisitInPVP then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not allowed to teleport to players in PVP zones.[-]")
 					botman.faultyChat = false
 					result = true
@@ -3209,6 +3296,15 @@ function gmsg_teleports()
 
 	if result then
 		if debug then dbug("debug cmd_ToggleP2PTeleporting triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug teleports line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleVisitInPVP()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleVisitInPVP triggered") end
 		return result
 	end
 

@@ -203,7 +203,7 @@ end
 
 function loadGimmePrizes()
 	local cursor, errorString, row, cat, k, v
-	-- load shop
+	-- load gimmePrizes
 
 	getTableFields("gimmePrizes")
 
@@ -212,23 +212,23 @@ function loadGimmePrizes()
 
 	row = cursor:fetch({}, "a")
 	while row do
-		shop[row.name] = {}
+		gimmePrizes[row.name] = {}
 
 		for k,v in pairs(gimmePrizesFields) do
 			if v.type == "var" or v.type == "big" then
-				shop[row.name][k] = row[k]
+				gimmePrizes[row.name][k] = row[k]
 			end
 
 			if v.type == "int" then
-				shop[row.name][k] = tonumber(row[k])
+				gimmePrizes[row.name][k] = tonumber(row[k])
 			end
 
 			if v.type == "flo" then
-				shop[row.name][k] = tonumber(row[k])
+				gimmePrizes[row.name][k] = tonumber(row[k])
 			end
 
 			if v.type == "tin" then
-				shop[row.name][k] = dbTrue(row[k])
+				gimmePrizes[row.name][k] = dbTrue(row[k])
 			end
 		end
 
@@ -516,8 +516,16 @@ function loadModBotman()
 	end
 
 
-	if server.botman and modBotmanOld.clanMaxClans then
-		if (modBotmanOld.anticheat ~= modBotman.anticheat) and modBotmanOld.anticheat then
+	if server.botman then
+		if modBotmanOld.anticheat ~= nil then
+			if (modBotmanOld.anticheat ~= modBotman.anticheat) then
+				if modBotman.anticheat then
+					sendCommand("bm-anticheat enable")
+				else
+					sendCommand("bm-anticheat disable")
+				end
+			end
+		else
 			if modBotman.anticheat then
 				sendCommand("bm-anticheat enable")
 			else
@@ -535,29 +543,68 @@ function loadModBotman()
 
 		-- blockTreeRemoval
 
-		if (modBotmanOld.botName ~= modBotman.botName) and modBotmanOld.botName then
+
+		if modBotmanOld.botName ~= nil then
+			if (modBotmanOld.botName ~= modBotman.botName) then
+				sendCommand("bm-change botname " .. modBotman.botName)
+				server.botName = modBotman.botName
+				conn:execute("UPDATE server SET botName = '" .. escape(modBotman.botName) .. "'")
+			end
+		else
 			sendCommand("bm-change botname " .. modBotman.botName)
 			server.botName = modBotman.botName
 			conn:execute("UPDATE server SET botName = '" .. escape(modBotman.botName) .. "'")
 		end
 
-		if (modBotmanOld.botNameColourPublic ~= modBotman.botNameColourPublic) and modBotmanOld.botNameColourPublic then
+
+		if modBotmanOld.botNameColourPublic ~= nil then
+			if (modBotmanOld.botNameColourPublic ~= modBotman.botNameColourPublic) then
+				sendCommand("bm-change public-color " .. modBotman.botNameColourPublic)
+				server.botNameColour = modBotman.botNameColourPublic
+				conn:execute("UPDATE server SET botNameColour = '" .. escape(modBotman.botNameColourPublic) .. "'")
+			end
+		else
 			sendCommand("bm-change public-color " .. modBotman.botNameColourPublic)
 			server.botNameColour = modBotman.botNameColourPublic
 			conn:execute("UPDATE server SET botNameColour = '" .. escape(modBotman.botNameColourPublic) .. "'")
 		end
 
-		if (modBotmanOld.botNameColourPrivate ~= modBotman.botNameColourPrivate) and modBotmanOld.botNameColourPrivate then
+
+		if modBotmanOld.botNameColourPrivate ~= nil then
+			if (modBotmanOld.botNameColourPrivate ~= modBotman.botNameColourPrivate) then
+				sendCommand("bm-change public-color " .. modBotman.botNameColourPrivate)
+			end
+		else
 			sendCommand("bm-change public-color " .. modBotman.botNameColourPrivate)
 		end
 
-		if (modBotmanOld.chatCommandPrefix ~= modBotman.chatCommandPrefix) and modBotmanOld.chatCommandPrefix then
+
+		if modBotmanOld.chatCommandPrefix ~= nil then
+			if (modBotmanOld.chatCommandPrefix ~= modBotman.chatCommandPrefix) then
+				sendCommand("bm-chatcommands prefix " .. modBotman.chatCommandPrefix)
+				server.commandPrefix = modBotman.chatCommandPrefix
+				conn:execute("UPDATE server SET commandPrefix = '" .. escape(modBotman.chatCommandPrefix) .. "'")
+			end
+		else
 			sendCommand("bm-chatcommands prefix " .. modBotman.chatCommandPrefix)
 			server.commandPrefix = modBotman.chatCommandPrefix
 			conn:execute("UPDATE server SET commandPrefix = '" .. escape(modBotman.chatCommandPrefix) .. "'")
 		end
 
-		if (modBotmanOld.chatCommandsHidden ~= modBotman.chatCommandsHidden) and modBotmanOld.chatCommandsHidden then
+
+		if modBotmanOld.chatCommandsHidden ~= nil then
+			if (modBotmanOld.chatCommandsHidden ~= modBotman.chatCommandsHidden) then
+				if modBotman.chatCommandsHidden then
+					sendCommand("bm-chatcommands hide true")
+					server.hideCommands = true
+					conn:execute("UPDATE server SET hideCommands = 1")
+				else
+					sendCommand("bm-chatcommands hide false")
+					server.hideCommands = false
+					conn:execute("UPDATE server SET hideCommands = 0")
+				end
+			end
+		else
 			if modBotman.chatCommandsHidden then
 				sendCommand("bm-chatcommands hide true")
 				server.hideCommands = true
@@ -569,7 +616,16 @@ function loadModBotman()
 			end
 		end
 
-		if (modBotmanOld.clanEnabled ~= modBotman.clanEnabled) and modBotmanOld.clanEnabled then
+
+		if modBotmanOld.clanEnabled ~= nil then
+			if (modBotmanOld.clanEnabled ~= modBotman.clanEnabled) then
+				if modBotman.clanEnabled then
+					sendCommand("bm-clan enable")
+				else
+					sendCommand("bm-clan disable")
+				end
+			end
+		else
 			if modBotman.clanEnabled then
 				sendCommand("bm-clan enable")
 			else
@@ -577,19 +633,43 @@ function loadModBotman()
 			end
 		end
 
-		if (modBotmanOld.clanMaxClans ~= modBotman.clanMaxClans) and modBotmanOld.clanMaxClans then
+
+		if modBotmanOld.clanMaxClans ~= nil then
+			if (modBotmanOld.clanMaxClans ~= modBotman.clanMaxClans) then
+				sendCommand("bm-clan max clans " .. modBotman.clanMaxClans)
+			end
+		else
 			sendCommand("bm-clan max clans " .. modBotman.clanMaxClans)
 		end
 
-		if (modBotmanOld.clanMaxPlayers ~= modBotman.clanMaxPlayers) and modBotmanOld.clanMaxPlayers then
+
+		if modBotmanOld.clanMaxPlayers ~= nil then
+			if (modBotmanOld.clanMaxPlayers ~= modBotman.clanMaxPlayers) then
+				sendCommand("bm-clan max players " .. modBotman.clanMaxPlayers)
+			end
+		else
 			sendCommand("bm-clan max players " .. modBotman.clanMaxPlayers)
 		end
 
-		if (modBotmanOld.clanMinLevel ~= modBotman.clanMinLevel) and modBotmanOld.clanMinLevel then
+
+		if modBotmanOld.clanMinLevel ~= nil then
+			if (modBotmanOld.clanMinLevel ~= modBotman.clanMinLevel) then
+				sendCommand("bm-clan min_level " .. modBotman.clanMinLevel)
+			end
+		else
 			sendCommand("bm-clan min_level " .. modBotman.clanMinLevel)
 		end
 
-		if (modBotmanOld.customMessagesEnabled ~= modBotman.customMessagesEnabled) and modBotmanOld.customMessagesEnabled then
+
+		if modBotmanOld.customMessagesEnabled ~= nil then
+			if (modBotmanOld.customMessagesEnabled ~= modBotman.customMessagesEnabled) then
+				if modBotman.customMessagesEnabled then
+					sendCommand("bm-custommessages enable")
+				else
+					sendCommand("bm-custommessages disable")
+				end
+			end
+		else
 			if modBotman.customMessagesEnabled then
 				sendCommand("bm-custommessages enable")
 			else
@@ -597,7 +677,16 @@ function loadModBotman()
 			end
 		end
 
-		if (modBotmanOld.dropminerEnabled ~= modBotman.dropminerEnabled) and modBotmanOld.dropminerEnabled then
+
+		if modBotmanOld.dropminerEnabled ~= nil then
+			if (modBotmanOld.dropminerEnabled ~= modBotman.dropminerEnabled) then
+				if modBotman.dropminerEnabled then
+					sendCommand("bm-dropmine enable")
+				else
+					sendCommand("bm-dropmine disable")
+				end
+			end
+		else
 			if modBotman.dropminerEnabled then
 				sendCommand("bm-dropmine enable")
 			else
@@ -605,15 +694,34 @@ function loadModBotman()
 			end
 		end
 
-		if (modBotmanOld.dropminerTriggerEntityCount ~= modBotman.dropminerTriggerEntityCount) and modBotmanOld.dropminerTriggerEntityCount then
+
+		if modBotmanOld.dropminerTriggerEntityCount ~= nil then
+			if (modBotmanOld.dropminerTriggerEntityCount ~= modBotman.dropminerTriggerEntityCount) then
+				sendCommand("bm-dropmine triggercount entities  " .. modBotman.dropminerTriggerEntityCount)
+			end
+		else
 			sendCommand("bm-dropmine triggercount entities  " .. modBotman.dropminerTriggerEntityCount)
 		end
 
-		if (modBotmanOld.dropminerTriggerFallingCount ~= modBotman.dropminerTriggerFallingCount) and modBotmanOld.dropminerTriggerFallingCount then
+
+		if modBotmanOld.dropminerTriggerFallingCount ~= nil then
+			if (modBotmanOld.dropminerTriggerFallingCount ~= modBotman.dropminerTriggerFallingCount) then
+				sendCommand("bm-dropmine triggercount falling  " .. modBotman.dropminerTriggerFallingCount)
+			end
+		else
 			sendCommand("bm-dropmine triggercount falling  " .. modBotman.dropminerTriggerFallingCount)
 		end
 
-		if (modBotmanOld.killZonesEnabled ~= modBotman.killZonesEnabled) and modBotmanOld.killZonesEnabled then
+
+		if modBotmanOld.killZonesEnabled ~= nil then
+			if (modBotmanOld.killZonesEnabled ~= modBotman.killZonesEnabled) then
+				if modBotman.killZonesEnabled then
+					sendCommand("bm-zone enable")
+				else
+					sendCommand("bm-zone disable")
+				end
+			end
+		else
 			if modBotman.killZonesEnabled then
 				sendCommand("bm-zone enable")
 			else
@@ -621,7 +729,16 @@ function loadModBotman()
 			end
 		end
 
-		if (modBotmanOld.resetsEnabled ~= modBotman.resetsEnabled) and modBotmanOld.resetsEnabled then
+
+		if modBotmanOld.resetsEnabled ~= nil then
+			if (modBotmanOld.resetsEnabled ~= modBotman.resetsEnabled) then
+				if modBotman.resetsEnabled then
+					sendCommand("bm-resetregions enable")
+				else
+					sendCommand("bm-resetregions disable")
+				end
+			end
+		else
 			if modBotman.resetsEnabled then
 				sendCommand("bm-resetregions enable")
 			else
@@ -629,11 +746,24 @@ function loadModBotman()
 			end
 		end
 
-		if (modBotmanOld.resetsDelay ~= modBotman.resetsDelay) and modBotmanOld.resetsDelay then
+		if modBotmanOld.resetsDelay ~= nil then
+			if (modBotmanOld.resetsDelay ~= modBotman.resetsDelay) then
+				sendCommand("bm-resetregions delay " .. modBotman.resetsDelay)
+			end
+		else
 			sendCommand("bm-resetregions delay " .. modBotman.resetsDelay)
 		end
 
-		if (modBotmanOld.resetsPrefabsOnly ~= modBotman.resetsPrefabsOnly) and modBotmanOld.resetsPrefabsOnly then
+
+		if modBotmanOld.resetsPrefabsOnly ~= nil then
+			if (modBotmanOld.resetsPrefabsOnly ~= modBotman.resetsPrefabsOnly) then
+				if modBotman.resetsPrefabsOnly then
+					sendCommand("bm-resetregions prefabsonly true")
+				else
+					sendCommand("bm-resetregions prefabsonly false")
+				end
+			end
+		else
 			if modBotman.resetsPrefabsOnly then
 				sendCommand("bm-resetregions prefabsonly true")
 			else
@@ -641,7 +771,16 @@ function loadModBotman()
 			end
 		end
 
-		if (modBotmanOld.resetsRemoveLCB ~= modBotman.resetsRemoveLCB) and modBotmanOld.resetsRemoveLCB then
+
+		if modBotmanOld.resetsRemoveLCB ~= nil then
+			if (modBotmanOld.resetsRemoveLCB ~= modBotman.resetsRemoveLCB) then
+				if modBotman.resetsRemoveLCB then
+					sendCommand("bm-resetregions removelcbs  true")
+				else
+					sendCommand("bm-resetregions removelcbs  false")
+				end
+			end
+		else
 			if modBotman.resetsRemoveLCB then
 				sendCommand("bm-resetregions removelcbs  true")
 			else
@@ -649,11 +788,25 @@ function loadModBotman()
 			end
 		end
 
-		if (modBotmanOld.webmapColour ~= modBotman.webmapColour) and modBotmanOld.webmapColour then
+
+		if modBotmanOld.webmapColour ~= nil then
+			if (modBotmanOld.webmapColour ~= modBotman.webmapColour) then
+				sendCommand("bm-webmapzones color " .. modBotman.webmapColour)
+			end
+		else
 			sendCommand("bm-webmapzones color " .. modBotman.webmapColour)
 		end
 
-		if (modBotmanOld.webmapEnabled ~= modBotman.webmapEnabled) and modBotmanOld.webmapEnabled then
+
+		if modBotmanOld.webmapEnabled ~= nil then
+			if (modBotmanOld.webmapEnabled ~= modBotman.webmapEnabled) then
+				if modBotman.webmapEnabled then
+					sendCommand("bm-webmapzones enable")
+				else
+					sendCommand("bm-webmapzones disable")
+				end
+			end
+		else
 			if modBotman.webmapEnabled then
 				sendCommand("bm-webmapzones enable")
 			else
@@ -661,11 +814,25 @@ function loadModBotman()
 			end
 		end
 
-		if (modBotmanOld.webmapPath ~= modBotman.webmapPath) and modBotmanOld.webmapPath then
+
+		if modBotmanOld.webmapPath ~= nil then
+			if (modBotmanOld.webmapPath ~= modBotman.webmapPath) then
+				sendCommand("bm-webmapzones path " .. modBotman.webmapPath)
+			end
+		else
 			sendCommand("bm-webmapzones path " .. modBotman.webmapPath)
 		end
 
-		if (modBotmanOld.zombieAnnouncerEnabled ~= modBotman.zombieAnnouncerEnabled) and modBotmanOld.zombieAnnouncerEnabled then
+
+		if modBotmanOld.zombieAnnouncerEnabled ~= nil then
+			if (modBotmanOld.zombieAnnouncerEnabled ~= modBotman.zombieAnnouncerEnabled) then
+				if modBotman.zombieAnnouncerEnabled then
+					sendCommand("bm-zombieannouncer enable")
+				else
+					sendCommand("bm-zombieannouncer disable")
+				end
+			end
+		else
 			if modBotman.zombieAnnouncerEnabled then
 				sendCommand("bm-zombieannouncer enable")
 			else
@@ -673,7 +840,16 @@ function loadModBotman()
 			end
 		end
 
-		if (modBotmanOld.zombieFreeTimeEnabled ~= modBotman.zombieFreeTimeEnabled) and modBotmanOld.zombieFreeTimeEnabled then
+
+		if modBotmanOld.zombieFreeTimeEnabled ~= nil then
+			if (modBotmanOld.zombieFreeTimeEnabled ~= modBotman.zombieFreeTimeEnabled) then
+				if modBotman.zombieFreeTimeEnabled then
+					sendCommand("bm-zombiefreetime enable")
+				else
+					sendCommand("bm-zombiefreetime disable")
+				end
+			end
+		else
 			if modBotman.zombieFreeTimeEnabled then
 				sendCommand("bm-zombiefreetime enable")
 			else
@@ -681,7 +857,12 @@ function loadModBotman()
 			end
 		end
 
-		if ((modBotmanOld.zombieFreeTimeStart ~= modBotman.zombieFreeTimeStart) or (modBotmanOld.zombieFreeTimeEnd ~= modBotman.zombieFreeTimeEnd)) and modBotmanOld.zombieFreeTimeStart then
+
+		if modBotmanOld.zombieFreeTimeStart ~= nil then
+			if ((modBotmanOld.zombieFreeTimeStart ~= modBotman.zombieFreeTimeStart) or (modBotmanOld.zombieFreeTimeEnd ~= modBotman.zombieFreeTimeEnd)) then
+				sendCommand("bm-zombiefreetime set " .. modBotman.zombieFreeTimeStart .. " " .. zombieFreeTimeEnd)
+			end
+		else
 			sendCommand("bm-zombiefreetime set " .. modBotman.zombieFreeTimeStart .. " " .. zombieFreeTimeEnd)
 		end
 	end
@@ -1181,7 +1362,7 @@ function loadShop()
 
 	getTableFields("shop")
 
-	shopCategories = {}
+	shop = {}
 	cursor,errorString = conn:execute("SELECT * FROM shop")
 
 	row = cursor:fetch({}, "a")

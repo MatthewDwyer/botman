@@ -73,7 +73,7 @@ function persistentQueueTimer()
 	end
 
 	-- check all the delayed commands.  send any that are not in the future
-	cursor,errorString = conn:execute("SELECT id, steam, command, action, value, UNIX_TIMESTAMP(timerDelay) AS delay FROM persistentQueue WHERE timerDelay <> '0000-00-00 00:00:00' ORDER BY id limit 0,1")
+	cursor,errorString = conn:execute("SELECT id, steam, command, action, value, UNIX_TIMESTAMP(timerDelay) AS delay FROM persistentQueue WHERE timerDelay <> '0000-00-00 00:00:00' ORDER BY timerDelay, id limit 0,1")
 
 	if cursor then
 		row = cursor:fetch({}, "a")
@@ -108,10 +108,6 @@ function persistentQueueTimer()
 							temp = string.split(command, " ")
 							setChatColour(steam, temp[4])
 						end
-
-						-- if string.find(command, "rlp ") then
-							-- message("pm " .. steam .. " [" .. server.warnColour .. "]Your claim is in a reset zone and will be removed.[-]")
-						-- end
 					end
 				end
 			end
