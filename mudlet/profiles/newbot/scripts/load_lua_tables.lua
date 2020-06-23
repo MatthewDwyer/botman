@@ -1252,6 +1252,15 @@ function loadServer(setupStuff)
 		server.ircWatch = ircChannel .. "_watch"
 	end
 
+	-- fix the alerts and watch channels if they get swapped
+	if string.find(server.ircAlerts, "_watch") then
+		temp = server.ircAlerts
+
+		server.ircAlerts = server.ircWatch
+		server.ircWatch = temp
+		conn:execute("UPDATE server SET ircAlerts = '" .. escape(server.ircAlerts) .. "', ircWatch = '" .. escape(server.ircWatch) .. "'")
+	end
+
 	if (debug) then display("debug loadServer line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	if server.telnetPass ~= "" then

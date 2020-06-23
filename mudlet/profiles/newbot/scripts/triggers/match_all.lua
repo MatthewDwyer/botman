@@ -350,6 +350,7 @@ function matchAll(line, logDate, logTime)
 
 			if collectBans then
 				collectBans = false
+				loadBans()
 			end
 
 			if readVersion then

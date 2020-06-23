@@ -1634,6 +1634,7 @@ function readAPI_BanList()
 	end
 
 	file:close()
+	loadBans()
 
 	for con, q in pairs(conQueue) do
 		if q.command == "ban list" then
@@ -1859,7 +1860,7 @@ function readAPI_BMAnticheatReport()
 					tmp.alert = string.sub(v, string.find(v, "-LVL:") + 5)
 					tmp.alert = string.sub(tmp.alert, string.find(tmp.alert, " ") + 1)
 
-					if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and igplayers[tmp.id] then
+					if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and (not bans[tmp.id]) then
 						if string.find(v, " spawned ") then
 							temp = string.split(tmp.alert, " ")
 							tmp.entity = stripQuotes(temp[3])
@@ -1873,9 +1874,9 @@ function readAPI_BMAnticheatReport()
 								irc_chat(server.ircAlerts, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
 							end
 						else
-							tmp.x = igplayers[tmp.id].xPos
-							tmp.y = igplayers[tmp.id].yPos
-							tmp.z = igplayers[tmp.id].zPos
+							tmp.x = players[tmp.id].xPos
+							tmp.y = players[tmp.id].yPos
+							tmp.z = players[tmp.id].zPos
 							tmp.hack = "using dm at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z
 
 							if tonumber(tmp.level) > 2 then
@@ -1886,19 +1887,11 @@ function readAPI_BMAnticheatReport()
 
 						if tonumber(tmp.level) > 2 then
 							banPlayer(tmp.id, "10 years", tmp.reason, "")
-							logHacker(botman.serverTime, "Botman anticheat detected " .. tmp.id .. " " .. tmp.name .. " " .. tmp.hack .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z)
+							logHacker(botman.serverTime, "Botman anticheat detected " .. tmp.id .. " " .. tmp.name .. " " .. tmp.hack)
 							message("say [" .. server.chatColour .. "]Banning player " .. tmp.name .. " 10 years for using hacks.[-]")
-							irc_chat("#hackers", "[BANNED] Player " .. tm.id .. " " .. tmp.name .. " has has been banned for hacking by anticheat.")
+							irc_chat("#hackers", "[BANNED] Player " .. tmp.id .. " " .. tmp.name .. " has has been banned for hacking by anticheat.")
 							irc_chat("#hackers", v)
-							irc_chat(server.ircMain, "[BANNED] Player " .. tm.id .. " " .. tmp.name .. " has has been banned for " .. tmp.reason .. ".")
-							irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Player " .. tmp.id .. " " .. tmp.name .. " has has been banned for 10 years for " .. tmp.reason .. ".")
-							conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. tmp.x .. "," .. tmp.y .. "," .. tmp.z .. ",'" .. botman.serverTime .. "','ban','Player " .. tmp.id .. " " .. escape(tmp.name) .. " has has been banned for 10 years for " .. escape(tmp.reason) .. ".'," .. tmp.id .. ")")
 							connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player banned','Player banned by anticheat " .. escape(tmp.name) .. "'," .. tmp.id .. ")")
-						end
-					else
-						if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and tonumber(tmp.level) > 2 then
-							irc_chat(server.ircAlerts, "ALERT! Unauthorised admin in anticheat report. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
-							irc_chat("#hackers", v)
 						end
 					end
 				end

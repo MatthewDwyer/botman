@@ -54,8 +54,8 @@ function WebPanelQueue()
 				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 
 				sendCommand("webpermission add web.map 2000")
-				sendCommand("webpermission add webapi.getplayersOnline 2000")
-				sendCommand("webpermission add webapi.getstats 2000")
+				sendCommand("webpermission add webapi.getplayersOnline 1000")
+				sendCommand("webpermission add webapi.getstats 1000")
 				sendCommand("webpermission add webapi.getlandclaims 1000")
 
 				if string.find(actionArgs, "no hostiles") then

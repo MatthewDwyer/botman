@@ -3076,17 +3076,17 @@ function gmsg_server()
 			help[2] = help[2] .. "webapi.viewallclaims 2\n"
 			help[2] = help[2] .. "webapi.getplayerinventory 2\n"
 			help[2] = help[2] .. "webapi.getplayerslocation 2\n"
-			help[2] = help[2] .. "webapi.getplayersOnline 2000\n"
-			help[2] = help[2] .. "webapi.getstats 2000\n"
+			help[2] = help[2] .. "webapi.getplayersOnline 1000\n"
+			help[2] = help[2] .. "webapi.getstats 1000\n"
 			help[2] = help[2] .. "webapi.gethostilelocation 2000\n"
 			help[2] = help[2] .. "webapi.getanimalslocation 2000\n"
 			help[2] = help[2] .. "If setting no hostiles and/or no animals:\n"
 			help[2] = help[2] .. "webapi.gethostilelocation 2\n"
 			help[2] = help[2] .. "webapi.getanimalslocation 2\n"
 			help[2] = help[2] .. "If setting show players, show claims, show inventory:\n"
-			help[2] = help[2] .. "webapi.viewallplayers 2000\n"
-			help[2] = help[2] .. "webapi.viewallclaims 2000\n"
-			help[2] = help[2] .. "webapi.getplayerinventory 2000"
+			help[2] = help[2] .. "webapi.viewallplayers 1000\n"
+			help[2] = help[2] .. "webapi.viewallclaims 1000\n"
+			help[2] = help[2] .. "webapi.getplayerinventory 1000"
 
 			tmp.command = help[1]
 			tmp.keywords = "set,map,perm"
@@ -3130,8 +3130,8 @@ function gmsg_server()
 			end
 
 			sendCommand("webpermission add web.map 2000")
-			sendCommand("webpermission add webapi.getplayersOnline 2000")
-			sendCommand("webpermission add webapi.getstats 2000")
+			sendCommand("webpermission add webapi.getplayersOnline 1000")
+			sendCommand("webpermission add webapi.getstats 1000")
 			sendCommand("webpermission add webapi.getlandclaims 1000")
 
 			if string.find(chatvars.command, "no hostiles") then

@@ -446,7 +446,7 @@ function CheckInventory()
 			end
 		end
 
-		if (ban == true) and (server.gameType ~= "cre") then
+		if (tmp.ban == true) and (server.gameType ~= "cre") then
 			if tmp.playerAccessLevel > 2 then
 				tmp.stopProcessing = true
 				banPlayer(k, "1 year", tmp.banReason, "")

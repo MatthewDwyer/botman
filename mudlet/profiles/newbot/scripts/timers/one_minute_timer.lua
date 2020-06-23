@@ -382,6 +382,7 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 		if server.botman then
 			sendCommand("bm-listplayerbed")
 			sendCommand("bm-listplayerfriends")
+			sendCommand("bm-anticheat report")
 		end
 
 		if tonumber(botman.playersOnline) < 25 then

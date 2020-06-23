@@ -1612,13 +1612,15 @@ function alterTables()
 	doSQL("ALTER TABLE `modBotman` ADD `id` INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (`id`)")
 	doSQL("ALTER TABLE `badWords` ADD PRIMARY KEY(`badWord`)")
 	doSQL("ALTER TABLE `modBotman` CHANGE `chatCommandsHidden` `chatCommandsHidden` TINYINT(1) NULL DEFAULT '1'") -- changed default coz having it default disabled was causing issues
-
+	doSQL("UPDATE `badItems` SET action = 'ban' WHERE item = '*Admin'")
+	doSQL("DELETE FROM `badItems` WHERE item = '*errain'")
+	doSQL("INSERT INTO `badItems` (`item`, `action`, `validated`) VALUES ('terrainFiller', 'ban', '1')")
+	doSQL("INSERT INTO `badItems` (`item`, `action`, `validated`) VALUES ('terrainRemove', 'ban', '1')")
 
 	-- misc inserts and removals
 	doSQL("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('gimmeReset', '120', CURRENT_TIMESTAMP, '0')")
 	doSQL("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('announcements', '60', CURRENT_TIMESTAMP, '0')")
 	doSQL("DELETE FROM badItems WHERE item = 'snow'") -- remove a test item that shouldn't be live :O
-	-- doSQL("INSERT INTO badItems (item, action) VALUES ('*Admin', 'timeout')")
 	doSQL("ALTER TABLE `list` DROP INDEX `thing`")
 	doSQL("ALTER TABLE `list` DROP PRIMARY KEY")
 	doSQL("ALTER TABLE `resetZones` DROP COLUMN x1, DROP COLUMN x2, DROP COLUMN z1, DROP COLUMN z2")

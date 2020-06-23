@@ -1977,17 +1977,17 @@ webapi.viewallplayers 2
 webapi.viewallclaims 2
 webapi.getplayerinventory 2
 webapi.getplayerslocation 2
-webapi.getplayersOnline 2000
-webapi.getstats 2000
+webapi.getplayersOnline 1000
+webapi.getstats 1000
 webapi.gethostilelocation 2000
 webapi.getanimalslocation 2000
 If setting no hostiles and/or no animals:
 webapi.gethostilelocation 2
 webapi.getanimalslocation 2
 If setting show players, show claims, show inventory:
-webapi.viewallplayers 2000
-webapi.viewallclaims 2000
-webapi.getplayerinventory 2000
+webapi.viewallplayers 1000
+webapi.viewallclaims 1000
+webapi.getplayerinventory 1000
 Restricted to server owners in-game and IRC
 
 /set web panel port {port of server's control panel/web panel}
