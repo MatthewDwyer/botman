@@ -657,6 +657,15 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		importResets()
 	end
 
+	if string.find(onlyImportThis, "shop") then
+		if debug then dbug("Loading shop") end
+		shop = {}
+		table.load(path .. pathPrefix .. "shop.lua", shop)
+
+		conn:execute("TRUNCATE shop")
+		importShop()
+	end
+
 	if string.find(onlyImportThis, "teleports") then
 		if debug then dbug("Loading teleports") end
 		teleports = {}

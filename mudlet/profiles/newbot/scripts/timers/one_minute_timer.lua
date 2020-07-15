@@ -170,7 +170,9 @@ function everyMinute()
 		igplayers[k] = nil
 	end
 
-	updateSlots()
+	--if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+	--updateSlots()
 
 	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
@@ -296,6 +298,10 @@ function everyMinute()
 		end
 	end
 
+	if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+	updateSlots()
+
 	if debug then dbug("debug everyMinute end") end
 end
 
@@ -348,7 +354,13 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
-	if botman.botDisabled or botman.botOffline or server.lagged then
+	if botman.botOffline then
+		return
+	end
+
+	botHeartbeat()
+
+	if botman.botDisabled then
 		return
 	end
 
@@ -366,10 +378,6 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 			return
 		end
 	end
-
-if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
-
-	everyMinute()
 
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 
@@ -417,6 +425,10 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 
 	-- check for timed events due to run
 	runTimedEvents()
+
+if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+	everyMinute()
 
 if debug then dbug("debug one minute timer end") end
 end

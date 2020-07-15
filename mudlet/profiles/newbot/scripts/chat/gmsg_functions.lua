@@ -1419,10 +1419,10 @@ function gmsg(line, ircid)
 			irc_chat(server.ircAlerts, "[BANNED] Player " .. chatvars.playerid .. " " .. igplayers[chatvars.playerid].name .. " has has been banned for 10 years for advertising hacks.")
 			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. botman.serverTime .. "','ban','Player " .. chatvars.playerid .. " " .. escape(igplayers[chatvars.playerid].name) .. " has has been banned for 10 years for advertising hacks.'," .. chatvars.playerid .. ")")
 
-			if botman.botsConnected then
-				-- copy in bots db
-				connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','ban','Player " .. chatvars.playerid .. " " .. escape(igplayers[chatvars.playerid].name) .. " has has been banned for 10 years for advertising hacks.'," .. chatvars.playerid .. ")")
-			end
+			-- if botman.botsConnected then
+				-- -- copy in bots db
+				-- connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','ban','Player " .. chatvars.playerid .. " " .. escape(igplayers[chatvars.playerid].name) .. " has has been banned for 10 years for advertising hacks.'," .. chatvars.playerid .. ")")
+			-- end
 
 			botman.faultyChat = false
 			return true

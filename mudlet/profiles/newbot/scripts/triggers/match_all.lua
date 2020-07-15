@@ -24,11 +24,7 @@ function matchAll(line, logDate, logTime)
 		debug = true
 	end
 
--- if string.find(line, "INF StartGame done") then
-	-- debug = true
--- end
-
---if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	-- set counter to help detect the bot going offline
 	botman.botOfflineCount = 0
@@ -295,8 +291,12 @@ function matchAll(line, logDate, logTime)
 		badPlayerJoined = false
 		badJoinLine = ""
 
+		if readAnticheat then
+			readAnticheat = nil
+		end
+
 		if botman.readGG then
-			botman.readGG = false
+			botman.readGG = false -- must be false not nil
 
 			if botman.dbConnected then conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('GamePrefs','panel','" .. escape(yajl.to_string(GamePrefs)) .. "')") end
 
@@ -609,7 +609,7 @@ function matchAll(line, logDate, logTime)
 
 	if not server.useAllocsWebAPI then
 		if getAdminList then
-			if string.sub(line, 1, 3) ~= "   " or string.find(line, 1, 8) == "Total of" then
+			if string.sub(line, 1, 3) ~= "   " or string.find(line, "Defined Group Permissions") or string.find(line, 1, 8) == "Total of" then
 				getAdminList = nil
 				removeOldStaff()
 
@@ -754,7 +754,7 @@ function matchAll(line, logDate, logTime)
 			else
 				if botman.dbConnected then
 					temp = string.trim(line)
-					conn:execute("INSERT INTO spawnableItems (itemName) VALUES ('" .. escape(temp) .. "')")
+					spawnableItems[temp] = {}
 				end
 			end
 		end
@@ -1031,6 +1031,7 @@ function matchAll(line, logDate, logTime)
 
 		if string.find(line, "Executing command 'li ") then
 			botman.listItems = true
+			spawnableItems = {}
 
 			return
 		end
@@ -1045,7 +1046,7 @@ function matchAll(line, logDate, logTime)
 
 
 		-- update owners, admins and mods
-		if string.find(line, "Level: SteamID (Player name if online)", nil, true) then
+		if string.find(line, "Level: SteamID (Player name if online", nil, true) then
 			flagAdminsForRemoval()
 			getAdminList = true
 
@@ -1559,6 +1560,9 @@ function matchAll(line, logDate, logTime)
 
 	if string.find(line, "bot_RemoveInvalidItems") then
 		removeInvalidItems()
+		updateShopItems()
+		spawnableItems = {}
+		tempTimer(3, [[loadShop()]])
 
 		return
 	end
@@ -1589,6 +1593,7 @@ function matchAll(line, logDate, logTime)
 		botman.botOffline = true
 		botman.playersOnline = 0
 		server.uptime = 0
+		anticheatBans = {}
 
 		return
 	end
@@ -1712,6 +1717,7 @@ function matchAll(line, logDate, logTime)
 		temp = tonumber(temp) - 2
 		server.webPanelPort = temp
 		conn:execute("UPDATE server set webPanelPort = " .. server.webPanelPort)
+		anticheatBans = {}
 
 		if tonumber(server.webPanelPort) == 0 then
 			if not server.useAllocsWebAPI then
@@ -1730,6 +1736,9 @@ function matchAll(line, logDate, logTime)
 				startUsingAllocsWebAPI()
 			end
 		end
+
+		stackLimits = {}
+		tempTimer( 20, [[fixShop()]] )
 	end
 
 
@@ -1748,7 +1757,7 @@ function matchAll(line, logDate, logTime)
 
 
 	if server.botman then
-		if string.find(line, "INF ~Botman AntiCheat~") and (not string.find(line, "unauthorized locked container")) then
+		if (readAnticheat or string.find(line,"~Botman AntiCheat~", nil, true)) and (not string.find(line, "unauthorized locked container")) then
 			tmp = {}
 			tmp.name = string.sub(line, string.find(line, "-NAME:") + 6, string.find(line, "--ID:") - 2)
 			tmp.id = string.sub(line, string.find(line, "-ID:") + 4, string.find(line, "--LVL:") - 2)
@@ -1758,7 +1767,7 @@ function matchAll(line, logDate, logTime)
 			tmp.alert = string.sub(line, string.find(line, "-LVL:") + 5)
 			tmp.alert = string.sub(tmp.alert, string.find(tmp.alert, " ") + 1)
 
-			if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and igplayers[tmp.id] then
+			if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and (not bans[tmp.id]) and (not anticheatBans[tmp.id]) then
 				if string.find(line, " spawned ") then
 					temp = string.split(tmp.alert, " ")
 					tmp.entity = stripQuotes(temp[3])
@@ -1772,9 +1781,9 @@ function matchAll(line, logDate, logTime)
 						irc_chat(server.ircAlerts, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert)
 					end
 				else
-					tmp.x = igplayers[tmp.id].xPos
-					tmp.y = igplayers[tmp.id].yPos
-					tmp.z = igplayers[tmp.id].zPos
+					tmp.x = players[tmp.id].xPos
+					tmp.y = players[tmp.id].yPos
+					tmp.z = players[tmp.id].zPos
 					tmp.hack = "using dm at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z
 
 					if tonumber(tmp.level) > 2 then
@@ -1784,19 +1793,16 @@ function matchAll(line, logDate, logTime)
 				end
 
 				if tonumber(tmp.level) > 2 then
+					anticheatBans[tmp.id] = {}
 					banPlayer(tmp.id, "10 years", "hacking", "")
-					logHacker(botman.serverTime, "Botman anticheat detected " .. tmp.id .. " " .. tmp.name .. " " .. tmp.hack .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z)
+					logHacker(botman.serverTime, "Botman anticheat detected " .. tmp.id .. " " .. tmp.name .. " " .. tmp.hack)
 					message("say [" .. server.chatColour .. "]Banning player " .. tmp.name .. " 10 years for using hacks.[-]")
-					irc_chat("#hackers", "[BANNED] Player " .. tm.id .. " " .. tmp.name .. " has has been banned for hacking by anticheat.")
+					irc_chat("#hackers", "[BANNED] Player " .. tmp.id .. " " .. tmp.name .. " has has been banned for hacking by anticheat.")
 					irc_chat("#hackers", line)
-					irc_chat(server.ircMain, "[BANNED] Player " .. tm.id .. " " .. tmp.name .. " has has been banned for hacking.")
+					irc_chat(server.ircMain, "[BANNED] Player " .. tmp.id .. " " .. tmp.name .. " has has been banned for hacking.")
 					irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Player " .. tmp.id .. " " .. tmp.name .. " has has been banned for 10 years for hacking.")
 					conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. tmp.x .. "," .. tmp.y .. "," .. tmp.z .. ",'" .. botman.serverTime .. "','ban','Player " .. tmp.id .. " " .. escape(tmp.name) .. " has has been banned for 10 years for hacking.'," .. tmp.id .. ")")
-					connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player banned','Player banned by anticheat " .. escape(tmp.name) .. "'," .. tmp.id .. ")")
-				end
-			else
-				if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and tonumber(tmp.level) > 2 then
-					irc_chat(server.ircAlerts, "ALERT! Unauthorised admin detected. Player " .. tmp.name .. " Steam: " .. tmp.id .. " Permission level: " .. tmp.level .. " " .. tmp.alert .. " at " .. players[tmp.id].xPos .. " " .. players[tmp.id].yPos .. " " .. players[tmp.id].zPos)
+					--connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player banned','Player banned by anticheat " .. escape(tmp.name) .. "'," .. tmp.id .. ")")
 				end
 			end
 		end
@@ -1823,6 +1829,10 @@ function matchAll(line, logDate, logTime)
 		readWebTokens = true
 	end
 
+	if string.find(line, "bm-anticheat report", nil, true) then
+		readAnticheat = true
+	end
+
 --if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
 	if string.find(line, "Web user with name=bot and password") and string.find(line, "added with permission level of 0.")  then
@@ -1845,6 +1855,14 @@ function matchAll(line, logDate, logTime)
 
 		if badPlayerJoined and not string.find(line, "INF Player connected") then
 			playerConnected(badJoinLine .. line)
+		end
+	end
+
+	-- if Allocs webmap has this error, force the bot to use telnet mode
+	if string.find(line, "at AllocsFixes.NetConnections.Servers.Web.Web.HandleRequest") then
+		if server.useAllocsWebAPI then
+			server.useAllocsWebAPI = false
+			conn:execute("UPDATE server set useAllocsWebAPI = 0")
 		end
 	end
 

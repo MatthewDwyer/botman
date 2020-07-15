@@ -539,6 +539,7 @@ function forgetPlayers()
 	conn:execute("DELETE FROM players WHERE steam NOT IN (SELECT steam FROM list)")
 	conn:execute("DELETE FROM villagers WHERE steam NOT IN (SELECT steam FROM list)")
 	conn:execute("DELETE FROM waypoints WHERE steam NOT IN (SELECT steam FROM list)")
+	conn:execute("TRUNCATE events")
 	conn:execute("TRUNCATE TABLE playersArchived")
 
 	os.remove(homedir .. "/data_backup/players.lua")
@@ -617,19 +618,19 @@ end
 
 
 function getBlockName(block)
-	-- find the block in table spawnableItems and return the block name with correct case so we don't need to worry about case.
-	local cursor, errorString, row, rows
+	-- -- find the block in table spawnableItems and return the block name with correct case so we don't need to worry about case.
+	-- local cursor, errorString, row, rows
 
-	cursor,errorString = conn:execute("SELECT * FROM spawnableItems WHERE itemName LIKE '%" .. block .. "'")
-	rows = cursor:numrows()
+	-- cursor,errorString = conn:execute("SELECT * FROM spawnableItems WHERE itemName LIKE '%" .. block .. "'")
+	-- rows = cursor:numrows()
 
-	if rows == 1 then
-		row = cursor:fetch({}, "a")
-		return row.itemName
-	else
-		-- found multiple matches so give up and return the block name unchanged
-		return block
-	end
+	-- if rows == 1 then
+		-- row = cursor:fetch({}, "a")
+		-- return row.itemName
+	-- else
+		-- -- found multiple matches so give up and return the block name unchanged
+		-- return block
+	-- end
 end
 
 
@@ -789,11 +790,9 @@ function addOrRemoveSlots()
 	else
 		conn:execute("DELETE FROM slots WHERE slot > " .. server.maxPlayers)
 
---		if tonumber(row.numberOfSlots) < tonumber(server.maxPlayers) then
-			for counter=row.numberOfSlots+1,server.maxPlayers,1 do
-				conn:execute("INSERT INTO slots (slot) VALUES (" .. counter .. ")")
-			end
-		--end
+		for counter=row.numberOfSlots+1,server.maxPlayers,1 do
+			conn:execute("INSERT INTO slots (slot) VALUES (" .. counter .. ")")
+		end
 	end
 
 	if tonumber(server.reservedSlots) > 0 then
@@ -825,9 +824,9 @@ function kickASlot(steam)
 	row = cursor:fetch({}, "a")
 
 	if row then
-		if igplayers[row.steam] then
-			kick(row.steam, "Sorry, you have been kicked from a reserved slot to allow another player to join :(")
-			irc_chat(server.ircAlerts, server.gameDate .. " player " .. players[row.steam].name ..  " was kicked to let " .. players[steam].name .. " join.")
+		if igplayers[steam] then
+			kick(steam, "Sorry, you have been kicked from a reserved slot to allow another player to join :(")
+			irc_chat(server.ircAlerts, server.gameDate .. " player " .. players[steam].name ..  " was kicked to let " .. players[steam].name .. " join.")
 		end
 
 		conn:execute("UPDATE slots SET steam = 0, online = 0, staff = 0, canBeKicked = 1, free = 1, joinedSession = 0, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
@@ -845,9 +844,9 @@ function kickASlot(steam)
 		row = cursor:fetch({}, "a")
 
 		if row then
-			if igplayers[row.steam] then
-				kick(row.steam, "Sorry, you have been kicked to allow an admin to join :(")
-				irc_chat(server.ircAlerts, server.gameDate .. " player " .. players[row.steam].name ..  " was kicked to let " .. players[steam].name .. " join.")
+			if igplayers[steam] then
+				kick(steam, "Sorry, you have been kicked to allow an admin to join :(")
+				irc_chat(server.ircAlerts, server.gameDate .. " player " .. players[steam].name ..  " was kicked to let " .. players[steam].name .. " join.")
 			end
 
 			conn:execute("UPDATE slots SET steam = 0, online = 0, joinedTime = 0, joinedSession = 0, expires = 0, staff = 0, free = 1, canBeKicked = 1, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
@@ -914,7 +913,7 @@ function assignASlot(steam)
 		end
 
 		-- is this player an admin?
-		if staffList[steam] then
+		if staffList[tmp.steam] then
 			tmp.canReserve = true
 			tmp.isStaff = true
 			tmp.canBeKicked = false
@@ -922,15 +921,15 @@ function assignASlot(steam)
 
 		if not tmp.isStaff then
 			-- if the player has used a timed reserved slot that expired less than 30 minutes ago, don't let them reserve another slot this time.
-			if players[steam].slotCooldown then
-				if os.time() - players[steam].slotCooldown > 0 then
+			if players[tmp.steam].slotCooldown then
+				if os.time() - players[tmp.steam].slotCooldown > 0 then
 					tmp.canReserve = false
 				end
 			end
 		end
 
 		-- see if this steam ID is already assigned a slot from earlier
-		cursor,errorString = conn:execute("SELECT slot, expires FROM slots WHERE steam = " .. steam)
+		cursor,errorString = conn:execute("SELECT slot, expires FROM slots WHERE steam = " .. tmp.steam)
 		row = cursor:fetch({}, "a")
 
 		if row then
@@ -940,11 +939,11 @@ function assignASlot(steam)
 				if (row.expires - os.time()) < 0 then -- time's up Mr Freeman
 					if not tmp.isStaff then
 						tmp.canBeKicked = true
-						players[steam].slotCooldown = os.time() + 1800 -- make them wait 30 minutes before they can reserve a slot again.
-						conn:execute("UPDATE slots SET canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", expires = 0, joinedSession = " .. players[steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0 WHERE slot = " .. row.slot)
+						players[tmp.steam].slotCooldown = os.time() + 1800 -- make them wait 30 minutes before they can reserve a slot again.
+						conn:execute("UPDATE slots SET canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", expires = 0, joinedSession = " .. players[tmp.steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0 WHERE slot = " .. row.slot)
 					end
 				else
-					conn:execute("UPDATE slots SET canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", joinedSession = " .. players[steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0 WHERE slot = " .. row.slot)
+					conn:execute("UPDATE slots SET canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", joinedSession = " .. players[tmp.steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0 WHERE slot = " .. row.slot)
 				end
 			end
 
@@ -957,14 +956,14 @@ function assignASlot(steam)
 
 				if row then
 					tmp.assigned = true
-					conn:execute("UPDATE slots SET steam = " .. steam .. ", canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", expires = " .. os.time() + (server.reservedSlotTimelimit * 60) .. ", joinedSession = " .. players[steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0, name = '" .. escape(players[steam].name) .. "', gameID = " .. players[steam].id .. ", IP = '" .. players[steam].ip .. "', country = '" .. players[steam].country .. "', ping = " .. players[steam].ping .. ", level = " .. players[steam].level .. ", score = " .. players[steam].score .. ", zombieKills = " .. players[steam].zombies .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. " WHERE slot = " .. row.slot)
+					conn:execute("UPDATE slots SET steam = " .. tmp.steam .. ", canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", expires = " .. os.time() + (server.reservedSlotTimelimit * 60) .. ", joinedSession = " .. players[tmp.steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0, name = '" .. escape(players[tmp.steam].name) .. "', gameID = " .. players[tmp.steam].id .. ", IP = '" .. players[tmp.steam].ip .. "', country = '" .. players[tmp.steam].country .. "', ping = " .. players[tmp.steam].ping .. ", level = " .. players[tmp.steam].level .. ", score = " .. players[tmp.steam].score .. ", zombieKills = " .. players[tmp.steam].zombies .. ", playerKills = " .. players[tmp.steam].playerKills .. ", deaths = " .. players[tmp.steam].deaths .. " WHERE slot = " .. row.slot)
 					server.freeSlots = server.freeSlots - 1
 					server.reservedSlotsUsed = server.reservedSlotsUsed + 1
 				end
 			end
 
 			-- all non-staff joining regular slots can be kicked however it is the player that has been online the longest who is first in line for a kickin
-			if not staffList[steam] then
+			if not staffList[tmp.steam] then
 				tmp.canBeKicked = true
 			end
 
@@ -976,7 +975,7 @@ function assignASlot(steam)
 
 				if row then
 					tmp.assigned = true
-					conn:execute("UPDATE slots SET steam = " .. steam .. ", canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", expires = 0, joinedSession = " .. players[steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0, name = '" .. escape(players[steam].name) .. "', gameID = " .. players[steam].id .. ", IP = '" .. players[steam].ip .. "', country = '" .. players[steam].country .. "', ping = " .. players[steam].ping .. ", level = " .. players[steam].level .. ", score = " .. players[steam].score .. ", zombieKills = " .. players[steam].zombies .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. "  WHERE slot = " .. row.slot)
+					conn:execute("UPDATE slots SET steam = " .. tmp.steam .. ", canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", expires = 0, joinedSession = " .. players[tmp.steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0, name = '" .. escape(players[tmp.steam].name) .. "', gameID = " .. players[tmp.steam].id .. ", IP = '" .. players[tmp.steam].ip .. "', country = '" .. players[tmp.steam].country .. "', ping = " .. players[tmp.steam].ping .. ", level = " .. players[tmp.steam].level .. ", score = " .. players[tmp.steam].score .. ", zombieKills = " .. players[tmp.steam].zombies .. ", playerKills = " .. players[tmp.steam].playerKills .. ", deaths = " .. players[tmp.steam].deaths .. "  WHERE slot = " .. row.slot)
 					server.freeSlots = server.freeSlots - 1
 				end
 			end
@@ -1009,7 +1008,7 @@ function updateSlots(steam)
 
 	while row do
 		if igplayers[row.steam] then
-			if tonumber(server.reservedSlotTimelimit) > 0 and not staffList[row.steam] then
+			if (tonumber(server.reservedSlotTimelimit) > 0) and (not staffList[row.steam]) then
 				-- flag the slot as kickable if its reserved time has expired
 				if (os.time() - row.expires) < 0 and row.canBeKicked == 0 then
 					-- mark the player can be kicked
@@ -1024,10 +1023,12 @@ function updateSlots(steam)
 
 				if row2 then
 					-- copy the reserved slot into the free non-reserved slot
-					if row.staff then
-						conn:execute("UPDATE slots SET steam = " .. row.steam .. ", online = 1, staff = 1, canBeKicked = 0, free = 0, joinedTime = " .. row.joinedTime .. ", joinedSession = " .. row.joinedSession .. ", expires = 0, disconnectedTimestamp = 0, name = '" .. escape(players[steam].name) .. "', gameID = " .. players[steam].id .. ", IP = '" .. players[steam].ip .. "', country = '" .. players[steam].country .. "', ping = " .. players[steam].ping .. ", level = " .. players[steam].level .. ", score = " .. players[steam].score .. ", zombieKills = " .. players[steam].zombies .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. " WHERE slot = " .. row2.slot)
+					if tonumber(row.staff) == 1 then
+
+						conn:execute("UPDATE slots SET steam = " .. row.steam .. ", online = 1, staff = 1, canBeKicked = 0, free = 0, joinedTime = " .. row.joinedTime .. ", joinedSession = " .. row.joinedSession .. ", expires = 0, disconnectedTimestamp = 0, name = '" .. escape(players[row.steam].name) .. "', gameID = " .. players[row.steam].id .. ", IP = '" .. players[row.steam].ip .. "', country = '" .. players[row.steam].country .. "', ping = " .. players[row.steam].ping .. ", level = " .. players[row.steam].level .. ", score = " .. players[row.steam].score .. ", zombieKills = " .. players[row.steam].zombies .. ", playerKills = " .. players[row.steam].playerKills .. ", deaths = " .. players[row.steam].deaths .. " WHERE slot = " .. row2.slot)
 					else
-						conn:execute("UPDATE slots SET steam = " .. row.steam .. ", online = 1, staff = 0, canBeKicked = 1, free = 0, joinedTime = " .. row.joinedTime .. ", joinedSession = " .. row.joinedSession .. ", expires = 0, disconnectedTimestamp = 0, name = '" .. escape(players[steam].name) .. "', gameID = " .. players[steam].id .. ", IP = '" .. players[steam].ip .. "', country = '" .. players[steam].country .. "', ping = " .. players[steam].ping .. ", level = " .. players[steam].level .. ", score = " .. players[steam].score .. ", zombieKills = " .. players[steam].zombies .. ", playerKills = " .. players[steam].playerKills .. ", deaths = " .. players[steam].deaths .. " WHERE slot = " .. row2.slot)
+
+						conn:execute("UPDATE slots SET steam = " .. row.steam .. ", online = 1, staff = 0, canBeKicked = 1, free = 0, joinedTime = " .. row.joinedTime .. ", joinedSession = " .. row.joinedSession .. ", expires = 0, disconnectedTimestamp = 0, name = '" .. escape(players[row.steam].name) .. "', gameID = " .. players[row.steam].id .. ", IP = '" .. players[row.steam].ip .. "', country = '" .. players[row.steam].country .. "', ping = " .. players[row.steam].ping .. ", level = " .. players[row.steam].level .. ", score = " .. players[row.steam].score .. ", zombieKills = " .. players[row.steam].zombies .. ", playerKills = " .. players[row.steam].playerKills .. ", deaths = " .. players[row.steam].deaths .. " WHERE slot = " .. row2.slot)
 					end
 
 					-- free the reserved slot
@@ -1902,7 +1903,7 @@ function runTimedEvents()
 		rows = cursor:numrows()
 
 		if rows == 0 then
-			conn:execute("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('announcements', '60', CURRENT_TIMESTAMP, '0')")
+			conn:execute("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('announcements', 60, CURRENT_TIMESTAMP, 0)")
 		end
 
 		-- make sure the gimmeReset event exists
@@ -1910,7 +1911,7 @@ function runTimedEvents()
 		rows = cursor:numrows()
 
 		if rows == 0 then
-			conn:execute("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('gimmeReset', '120', CURRENT_TIMESTAMP, '0')")
+			conn:execute("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('gimmeReset', 120, CURRENT_TIMESTAMP, 0)")
 		end
 
 
@@ -1959,7 +1960,7 @@ function sendNextAnnouncement()
 	end
 
 	server.nextAnnouncement = tonumber(server.nextAnnouncement) + 1
-	if (server.nextAnnouncement > rows) then server.nextAnnouncement = 1 end
+	if server.nextAnnouncement > tonumber(rows) then server.nextAnnouncement = 1 end
 	conn:execute("UPDATE server SET nextAnnouncement = " .. server.nextAnnouncement)
 end
 
@@ -2020,6 +2021,10 @@ end
 function updateGimme()
 	local rowGimme, rowSpawnable, cursorGimme, cursorSpawnable, errorString, rows
 
+	if type(spawnableItems) ~= "table" then
+		return
+	end
+
 	if botman.dbConnected then
 		-- walk the gimmePrizes table and check that each item exists in the table spawnableItems
 		-- If they don't match, update the gimme prize so it matches spawnableItems
@@ -2027,22 +2032,10 @@ function updateGimme()
 		rowGimme = cursorGimme:fetch({}, "a")
 
 		while rowGimme do
-			cursorSpawnable,errorString = conn:execute("SELECT * FROM spawnableItems WHERE itemName like '%" .. rowGimme.name .. "'")
-			rowSpawnable = cursorSpawnable:fetch({}, "a")
-
-			if rowSpawnable then
-				rows = cursorSpawnable:numrows()
-
-				-- don't do anything if more than 1 match is found.
-				if tonumber(rows) == 1 then
-					if rowGimme.name ~= rowSpawnable.itemName and rowSpawnable.itemName ~= "" then
-
-						conn:execute("UPDATE gimmePrizes SET name = '" .. escape(rowSpawnable.itemName) .. "' WHERE name = '" .. escape(rowGimme.name) .. "'")
-					end
-				end
-			else
-				-- item doesn't exist delete delete delete.
+			if not spawnableItems[rowGimme.name] then
 				conn:execute("DELETE FROM gimmePrizes WHERE name = '" .. escape(rowGimme.name) .. "'")
+			else
+				conn:execute("UPDATE gimmePrizes SET validated = 1 WHERE name = '" .. escape(rowGimme.name) .. "'")
 			end
 
 			rowGimme = cursorGimme:fetch(rowGimme, "a")
@@ -2058,32 +2051,27 @@ function updateShopItems()
 
 	local rowShop, rowSpawnable, cursorShop, cursorSpawnable, errorString, rows
 
+	if type(spawnableItems) ~= "table" then
+		return
+	end
+
 	if botman.dbConnected then
 
 		cursorShop,errorString = conn:execute("SELECT * FROM shop")
 		rowShop = cursorShop:fetch({}, "a")
 
 		while rowShop do
-			cursorSpawnable,errorString = conn:execute("SELECT * FROM spawnableItems WHERE itemName like '%" .. rowShop.item .. "'")
-			rowSpawnable = cursorSpawnable:fetch({}, "a")
-
-			if rowSpawnable then
-				rows = cursorSpawnable:numrows()
-
-				-- don't do anything if more than 1 match is found.
-				if rows == 1 then
-					if rowShop.item ~= rowSpawnable.itemName then
-						conn:execute("UPDATE shop SET item = '" .. escape(rowSpawnable.itemName) .. "' WHERE item = '" .. escape(rowShop.item) .. "'")
-					end
-				end
-			else
-				-- item doesn't exist in A17.  Delete delete delete.
+			if not spawnableItems[rowShop.item] then
 				conn:execute("DELETE FROM shop WHERE item = '" .. escape(rowShop.item) .. "'")
+			else
+				conn:execute("UPDATE shop SET validated = 1 WHERE item = '" .. escape(rowShop.item) .. "'")
 			end
 
 			rowShop = cursorShop:fetch(rowShop, "a")
 		end
 	end
+
+	reindexShop()
 end
 
 
@@ -3826,12 +3814,19 @@ end
 
 
 function removeClaims()
-	local k, v, a, b, dist
+	local k, v, a, b, dist, testing
 
 	if botman.dbConnected then
 		for k, v in pairs(keystones) do
+			testing = false
 
-			if (v.remove and accessLevel(v.steam) > 2) and not players[v.steam].testAsPlayer then
+			if players[v.steam] then
+				if players[v.steam].testAsPlayer then
+					testing = true
+				end
+			end
+
+			if (v.remove and accessLevel(v.steam) > 2) and not testing then
 				for a, b in pairs(igplayers) do
 					dist = distancexz(v.x, v.z, b.xPos, b.zPos)
 
@@ -3963,13 +3958,10 @@ function dailyMaintenance()
 					players[row.steam].maxWaypoints = server.maxWaypoints
 					conn:execute("UPDATE players SET protect2 = 0, donor = 0, donorLevel = 0, maxWaypoints = " .. server.maxWaypoints .. " WHERE steam = " .. row.steam)
 
-					-- remove the player's waypoints
-					conn:execute("DELETE FROM waypoints WHERE steam = " .. row.steam)
-
 					-- reload the player's waypoints
 					loadWaypoints(row.steam)
 
-					conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. row.steam .. ", '" .. escape("Your donor status has expired.  Any waypoints you had will need to be set again and extra bases have lost bot protection.") .. "')")
+					conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. row.steam .. ", '" .. escape("Your donor status has expired.  If you have more waypoints now than your new maximum, you won't be able to set new ones unless you delete your excess waypoints. Also any extra bases have lost bot protection.") .. "')")
 				end
 
 				row = cursor:fetch(row, "a")
@@ -4268,7 +4260,7 @@ function CheckBlacklist(steam, ip)
 			irc_chat(server.ircMain, "Blacklisted player " .. players[steam].name .. " banned.")
 			irc_chat(server.ircAlerts, server.gameDate .. " blacklisted player " .. players[steam].name .. " banned.")
 			banPlayer(steam, "10 years", "blacklisted", "")
-			connBots:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. players[steam].xPos .. "," .. players[steam].yPos .. "," .. players[steam].zPos .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined and banned. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. ip  .. "'," .. steam .. ")")
+			--connBots:execute("INSERT INTO events (x, y, z, serverTime, type, event,steam) VALUES (" .. players[steam].xPos .. "," .. players[steam].yPos .. "," .. players[steam].zPos .. ",'" .. botman.serverTime .. "','info','Blacklisted player joined and banned. Name: " .. escape(player) .. " SteamID: " .. steam .. " IP: " .. ip  .. "'," .. steam .. ")")
 		end
 	else
 		-- do a reverse dns lookup if we haven't already got an IP range for this IP
@@ -4671,7 +4663,16 @@ function initNewPlayer(steam, player, entityid, steamOwner, line)
 	cursor,errorString = conn:execute("SELECT steam FROM players WHERE steam = " .. steam)
 	rows = cursor:numrows()
 
-	if rows > 0 then
+	if tonumber(rows) > 0 then
+		irc_chat(server.ircAlerts, "Init new player record aborted because record already exists!")
+		-- abort! abort! The player record exists!
+		return
+	end
+
+	cursor,errorString = conn:execute("SELECT distinct steam FROM events WHERE steam = " .. steam)
+	rows = cursor:numrows()
+
+	if tonumber(rows) > 2 then
 		irc_chat(server.ircAlerts, "Init new player record aborted because record already exists!")
 		-- abort! abort! The player record exists!
 		return

@@ -1616,6 +1616,10 @@ function alterTables()
 	doSQL("DELETE FROM `badItems` WHERE item = '*errain'")
 	doSQL("INSERT INTO `badItems` (`item`, `action`, `validated`) VALUES ('terrainFiller', 'ban', '1')")
 	doSQL("INSERT INTO `badItems` (`item`, `action`, `validated`) VALUES ('terrainRemove', 'ban', '1')")
+	doSQL("ALTER TABLE `inventoryChanges` CHANGE `item` `item` VARCHAR(60)")
+	doSQL("ALTER TABLE `locations` CHANGE `currency` `currency` VARCHAR(60)")
+	doSQL("ALTER TABLE `restrictedItems` CHANGE `item` `item` VARCHAR(100)")
+	doSQL("ALTER TABLE `memShop` CHANGE `item` `item` VARCHAR(100)")
 
 	-- misc inserts and removals
 	doSQL("INSERT INTO `timedEvents` (`timer`, `delayMinutes`, `nextTime`, `disabled`) VALUES ('gimmeReset', '120', CURRENT_TIMESTAMP, '0')")

@@ -603,8 +603,10 @@ function gmsg_admin()
 				conn:execute(tmp.sql .. " WHERE steam = " .. tmp.id)
 				cursor,errorString = conn:execute("INSERT INTO donors (steam, level, expiry, name, expired) VALUES (" .. tmp.id .. "," .. tmp.level .. "," .. tmp.expiry .. ",'" .. escape(players[tmp.id].name) .. "',0)")
 
-				if string.find(errorString, "Duplicate entry") then
-					cursor,errorString = conn:execute("UPDATE donors SET level = " .. tmp.level .. ", expiry = " .. tmp.expiry .. ", expired=0, name = '" .. escape(players[tmp.id].name) .. "' WHERE steam = " .. tmp.id)
+				if errorString then
+					if string.find(errorString, "Duplicate entry") then
+						cursor,errorString = conn:execute("UPDATE donors SET level = " .. tmp.level .. ", expiry = " .. tmp.expiry .. ", expired=0, name = '" .. escape(players[tmp.id].name) .. "' WHERE steam = " .. tmp.id)
+					end
 				end
 
 				loadDonors()
@@ -4891,17 +4893,19 @@ function gmsg_admin()
 					players[prisonerid].botTimeout = false
 					players[prisonerid].freeze = false
 					players[prisonerid].silentBob = false
+					players[prisonerid].bail = 0
 					gmsg(server.commandPrefix .. "return " .. prisonerid)
 					setChatColour(prisonerid, players[prisonerid].accessLevel)
 
-					if botman.dbConnected then conn:execute("UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0, prisoner = 0 WHERE steam = " .. prisonerid) end
+					if botman.dbConnected then conn:execute("UPDATE players SET timeout = 0, silentBob = 0, botTimeout = 0, prisoner = 0, bail = 0 WHERE steam = " .. prisonerid) end
 				else
 					playersArchived[prisonerid].timeout = false
 					playersArchived[prisonerid].botTimeout = false
 					playersArchived[prisonerid].freeze = false
 					playersArchived[prisonerid].silentBob = false
+					playersArchived[prisonerid].bail = 0
 
-					if botman.dbConnected then conn:execute("UPDATE playersArchived SET timeout = 0, silentBob = 0, botTimeout = 0, prisoner = 0 WHERE steam = " .. prisonerid) end
+					if botman.dbConnected then conn:execute("UPDATE playersArchived SET timeout = 0, silentBob = 0, botTimeout = 0, prisoner = 0, bail = 0 WHERE steam = " .. prisonerid) end
 				end
 			end
 
@@ -4930,7 +4934,7 @@ function gmsg_admin()
 					message("pm " .. prisonerid .. " [" .. server.chatColour .. "]You are a free citizen, but you must find your own way back.[-]")
 				end
 
-				if botman.dbConnected then conn:execute("UPDATE players SET prisoner = 0, silentBob = 0, xPosOld = " .. players[prisonerid].prisonxPosOld .. ", yPosOld = " .. players[prisonerid].prisonyPosOld .. ", zPosOld = " .. players[prisonerid].prisonzPosOld .. " WHERE steam = " .. prisonerid) end
+				if botman.dbConnected then conn:execute("UPDATE players SET bail = 0, prisoner = 0, silentBob = 0, xPosOld = " .. players[prisonerid].prisonxPosOld .. ", yPosOld = " .. players[prisonerid].prisonyPosOld .. ", zPosOld = " .. players[prisonerid].prisonzPosOld .. " WHERE steam = " .. prisonerid) end
 			else
 				if not isArchived then
 					if (players[prisonerid]) then
@@ -4941,7 +4945,7 @@ function gmsg_admin()
 						players[prisonerid].yPosOld = players[prisonerid].prisonyPosOld
 						players[prisonerid].zPosOld = players[prisonerid].prisonzPosOld
 
-						if botman.dbConnected then conn:execute("UPDATE players SET prisoner = 0, silentBob = 0, location = 'return player', xPosOld = " .. players[prisonerid].prisonxPosOld .. ", yPosOld = " .. players[prisonerid].prisonyPosOld .. ", zPosOld = " .. players[prisonerid].prisonzPosOld .. " WHERE steam = " .. prisonerid)  end
+						if botman.dbConnected then conn:execute("UPDATE players SET bail = 0, prisoner = 0, silentBob = 0, location = 'return player', xPosOld = " .. players[prisonerid].prisonxPosOld .. ", yPosOld = " .. players[prisonerid].prisonyPosOld .. ", zPosOld = " .. players[prisonerid].prisonzPosOld .. " WHERE steam = " .. prisonerid)  end
 					end
 				else
 					if (playersArchived[prisonerid]) then
@@ -4952,7 +4956,7 @@ function gmsg_admin()
 						playersArchived[prisonerid].yPosOld = playersArchived[prisonerid].prisonyPosOld
 						playersArchived[prisonerid].zPosOld = playersArchived[prisonerid].prisonzPosOld
 
-						if botman.dbConnected then conn:execute("UPDATE playersArchived SET prisoner = 0, silentBob = 0, location = 'return player', xPosOld = " .. playersArchived[prisonerid].prisonxPosOld .. ", yPosOld = " .. playersArchived[prisonerid].prisonyPosOld .. ", zPosOld = " .. playersArchived[prisonerid].prisonzPosOld .. " WHERE steam = " .. prisonerid) end
+						if botman.dbConnected then conn:execute("UPDATE playersArchived SET bail = 0, prisoner = 0, silentBob = 0, location = 'return player', xPosOld = " .. playersArchived[prisonerid].prisonxPosOld .. ", yPosOld = " .. playersArchived[prisonerid].prisonyPosOld .. ", zPosOld = " .. playersArchived[prisonerid].prisonzPosOld .. " WHERE steam = " .. prisonerid) end
 					end
 				end
 			end
@@ -4961,6 +4965,7 @@ function gmsg_admin()
 				players[prisonerid].xPosOld = 0
 				players[prisonerid].yPosOld = 0
 				players[prisonerid].zPosOld = 0
+				players[prisonerid].bail = 0
 				players[prisonerid].prisoner = false
 				players[prisonerid].prisonReason = ""
 				players[prisonerid].silentBob = false
@@ -4970,6 +4975,7 @@ function gmsg_admin()
 				playersArchived[prisonerid].xPosOld = 0
 				playersArchived[prisonerid].yPosOld = 0
 				playersArchived[prisonerid].zPosOld = 0
+				playersArchived[prisonerid].bail = 0
 				playersArchived[prisonerid].prisoner = false
 				playersArchived[prisonerid].prisonReason = ""
 				playersArchived[prisonerid].silentBob = false
@@ -5068,7 +5074,7 @@ function gmsg_admin()
 					setChatColour(prisonerid, players[prisonerid].accessLevel)
 				end
 
-				if botman.dbConnected then conn:execute("UPDATE players SET prisoner=0,timeout=0,botTimeout=0,silentBob=0 WHERE steam = " .. prisonerid) end
+				if botman.dbConnected then conn:execute("UPDATE players SET bail=0,prisoner=0,timeout=0,botTimeout=0,silentBob=0 WHERE steam = " .. prisonerid) end
 
 				players[prisonerid].prisoner = false
 				players[prisonerid].timeout = false
@@ -5086,6 +5092,7 @@ function gmsg_admin()
 				players[prisonerid].xPosOld = 0
 				players[prisonerid].yPosOld = 0
 				players[prisonerid].zPosOld = 0
+				players[prisonerid].bail = 0
 				players[prisonerid].prisonxPosOld = 0
 				players[prisonerid].prisonyPosOld = 0
 				players[prisonerid].prisonzPosOld = 0
@@ -5529,7 +5536,7 @@ function gmsg_admin()
 				players[id].baseCooldown = 0
 				players[id].gimmeCount = 0
 
-				if botman.dbConnected then conn:execute("UPDATE players SET baseCooldown = 0, gimmeCount = 0 WHERE steam = " .. id) end
+				if botman.dbConnected then conn:execute("UPDATE players SET baseCooldown = 0, gimmeCount = 0, waypointCooldown = 0, teleCooldown = 0, pvpTeleportCooldown = 0, returnCooldown = 0, commandCooldown = 0, p2pCooldown = 0 WHERE steam = " .. id) end
 			end
 
 			message("say [" .. server.chatColour .. "]Cooldown timers have been reset for " .. players[id].name .. "[-]")

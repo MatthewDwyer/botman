@@ -96,6 +96,10 @@ function playerConnected(line)
 		temp = string.split(temp_table[4], "=")
 		tmp.steam = temp[2]
 		foundSteam = true
+
+		if type(tmp.steam) ~= "string" then
+			return
+		end
 	end
 
 	if string.find(line, "steamOwner=") then
@@ -146,10 +150,10 @@ function playerConnected(line)
 		-- log the player connection in events table
 		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")") end
 
-		if	botman.botsConnected then
-			-- copy in bots db
-			connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")")
-		end
+		-- if	botman.botsConnected then
+			-- -- copy in bots db
+			-- connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")")
+		-- end
 
 		lastPlayerConnected = tmp.player
 		lastSteamConnected = tmp.steam

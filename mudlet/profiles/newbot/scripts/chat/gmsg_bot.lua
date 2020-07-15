@@ -775,9 +775,7 @@ function gmsg_bot()
 
 		if (chatvars.words[1] == "rejoin" or chatvars.words[1] == "reconnect") and chatvars.words[2] == "irc" then
 			-- join (or rejoin) the irc server incase the bot has fallen off and failed to reconnect
-			if botman.customMudlet then
-				joinIRCServer()
-			end
+			joinIRCServer()
 
 			botman.faultyChat = false
 			return true
@@ -1109,7 +1107,7 @@ function gmsg_bot()
 
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
-			help[1] = " {#}restore backup {optional backup number} {optional words: bases, cash, donors, colors, locations, waypoints, friends, villagers, teleports, hotspots, resets, players}\n"
+			help[1] = " {#}restore backup {optional backup number} {optional words: bases, cash, donors, colors, locations, waypoints, friends, villagers, teleports, hotspots, resets, players, shop}\n"
 			help[1] = help[1] .. " {#}restore backup {optional backup number} {optional words as above} player {name or steam or player id} (note: player {name} must be specified last)"
 			help[2] = "The bot saves its Lua tables daily at midnight (server time) and each time the server is shut down.\n"
 			help[2] = help[2] .. "If the bot gets messed up, you can try to fix it with this command. Other timestamped backups are made before the bot is reset but you will first need to strip the date part off them to restore with this command.\n"
@@ -1179,6 +1177,10 @@ function gmsg_bot()
 			if string.find(chatvars.command, " player") then
 				pos = string.find(chatvars.command, " player ") + 8
 				onlyImportThis = onlyImportThis .. " player " .. string.sub(chatvars.command, pos)
+			end
+
+			if string.find(chatvars.command, " shop") then
+				onlyImportThis = onlyImportThis .. "shop"
 			end
 
 			if chatvars.number then

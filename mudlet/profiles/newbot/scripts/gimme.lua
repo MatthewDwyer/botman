@@ -46,10 +46,10 @@ function arenaPicknMix(wave, counter, playerLevel)
 		end
 
 		r = rand(maxBossZombies)
-		r = gimmeZombieBosses[r].entityID
+		return gimmeZombieBosses[r].entityID
 	end
 
-	return r
+	return gimmeZombies[r].entityID
 end
 
 
@@ -74,7 +74,7 @@ function PicknMix(level)
 		end
 	end
 
-	return r
+	return gimmeZombies[r].entityID
 end
 
 

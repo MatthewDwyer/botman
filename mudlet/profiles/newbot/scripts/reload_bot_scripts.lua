@@ -120,6 +120,10 @@ function fixTables() -- Waiter!  Where's my table!?
 		admins = {}
 	end
 
+	if type(anticheatBans) ~= "table" then
+		anticheatBans = {}
+	end
+
 	if type(badItems) ~= "table" then
 		badItems = {}
 	end
@@ -239,6 +243,10 @@ function fixTables() -- Waiter!  Where's my table!?
 
 	if type(shopCategories) ~= "table" then
 		shopCategories = {}
+	end
+
+	if type(spawnableItems) ~= "table" then
+		spawnableItems = {}
 	end
 
 	if type(stackLimits) ~= "table" then

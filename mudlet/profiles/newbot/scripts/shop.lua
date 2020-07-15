@@ -32,13 +32,13 @@ function fixShop()
 		row = cursor:fetch(row, "a")
 	end
 
-	-- reindex each category
-	for k, v in pairs(shopCategories) do
-		reindexShop(k)
-	end
-
 	irc_chat(server.ircMain, "Validating shop and gimme prize items.")
 	collectSpawnableItemsList()
+
+	-- -- reindex each category
+	-- for k, v in pairs(shopCategories) do
+		-- reindexShop(k)
+	-- end
 end
 
 
@@ -174,7 +174,7 @@ function reindexShop(category)
 		end
 	end
 
-	removeInvalidItems()
+	--removeInvalidItems()
 end
 
 

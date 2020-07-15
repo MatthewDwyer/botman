@@ -485,7 +485,7 @@ end
 
 function exists(name)
     if type(name)~="string" then return false end
-    return os.rename(name,name) and true or false
+    return io.exists(name)
 end
 
 
@@ -503,7 +503,7 @@ end
 
 function isFileOrDir(name)
     if type(name)~="string" then return false end
-    return os.rename(name, name) and true or false
+    return io.exists(name)
 end
 
 
@@ -708,36 +708,36 @@ end
 
 
 function pvpZone(x, z)
-	local k,v, result
+	local k,v, result, inLocation
+
+	result = false
 
 	if server.gameType == "pvp" then
 		result = true
-	else
-		result = false
 	end
 
 	-- is the coord x,z a pvp zone?
-	if server.northeastZone == "pvp" and tonumber(x) > 0 and tonumber(z) > 0 then
+	if server.northeastZone == "pvp" and tonumber(x) >= 0 and tonumber(z) >= 0 then
 		result = true
 	end
 
-	if server.northeastZone == "pve" and tonumber(x) > 0 and tonumber(z) > 0 then
+	if server.northeastZone == "pve" and tonumber(x) >= 0 and tonumber(z) >= 0 then
 		result = false
 	end
 
-	if server.northwestZone == "pvp" and tonumber(x) < 0 and tonumber(z) > 0 then
+	if server.northwestZone == "pvp" and tonumber(x) < 0 and tonumber(z) >= 0 then
 		result = true
 	end
 
-	if server.northwestZone == "pve" and tonumber(x) < 0 and tonumber(z) > 0 then
+	if server.northwestZone == "pve" and tonumber(x) < 0 and tonumber(z) >= 0 then
 		result = false
 	end
 
-	if server.southeastZone == "pvp" and tonumber(x) > 0 and tonumber(z) < 0 then
+	if server.southeastZone == "pvp" and tonumber(x) >= 0 and tonumber(z) < 0 then
 		result = true
 	end
 
-	if server.southeastZone == "pve" and tonumber(x) > 0 and tonumber(z) < 0 then
+	if server.southeastZone == "pve" and tonumber(x) >= 0 and tonumber(z) < 0 then
 		result = false
 	end
 
@@ -747,20 +747,6 @@ function pvpZone(x, z)
 
 	if server.southwestZone == "pve" and tonumber(x) < 0 and tonumber(z) < 0 then
 		result = false
-	end
-
-	for k, v in pairs(locations) do
-		if (v.pvp) then
-			-- if the coord is inside a pvp location, return true
-			if math.abs(v.x-x) <= (tonumber(v.size)) and math.abs(v.z-z) <= (tonumber(v.size)) then
-				result = true
-			end
-		else
-			-- if the coord is inside a pve location, return false
-			if math.abs(v.x-x) <= (tonumber(v.size)) and math.abs(v.z-z) <= (tonumber(v.size)) then
-				result = false
-			end
-		end
 	end
 
 	return result

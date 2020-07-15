@@ -445,7 +445,7 @@ function gmsg_stompy()
 
 			if chatvars.words[1] == "fill" and chatvars.words[3] ~= "block" then
 				tmp.block = chatvars.wordsOld[3]
-				tmp.block = getBlockName(tmp.block)
+				--tmp.block = getBlockName(tmp.block)
 			end
 
 			for i=2,chatvars.wordCount,1 do
@@ -465,12 +465,12 @@ function gmsg_stompy()
 
 				if chatvars.words[i] == "replace" then
 					tmp.newblock = chatvars.wordsOld[i+1]
-					tmp.newblock = getBlockName(tmp.newblock)
+					--tmp.newblock = getBlockName(tmp.newblock)
 				end
 
 				if chatvars.words[i] == "block" then
 					tmp.block = chatvars.wordsOld[i+1]
-					tmp.block = getBlockName(tmp.block)
+					--tmp.block = getBlockName(tmp.block)
 				end
 
 				if chatvars.words[i] == "tall" or chatvars.words[i] == "deep" or chatvars.words[i] == "height" or chatvars.words[i] == "hieght" then

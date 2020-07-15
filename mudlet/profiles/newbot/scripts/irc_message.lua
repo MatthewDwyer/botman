@@ -4930,8 +4930,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if pid ~= 0 then
 			cursor,errorString = conn:execute("INSERT INTO donors (steam, name, level, expiry, expired) VALUES (" .. pid .. ",'" .. escape(players[pid].name) .. "',1," .. expiry .. ", 0)")
 
-			if string.find(errorString, "Duplicate entry") then
-				cursor,errorString = conn:execute("UPDATE donors SET level = 1, expiry = " .. expiry .. ", expired=0, name = '" .. escape(players[pid].name) .. "' WHERE steam = " .. pid)
+			if errorString then
+				if string.find(errorString, "Duplicate entry") then
+					cursor,errorString = conn:execute("UPDATE donors SET level = 1, expiry = " .. expiry .. ", expired=0, name = '" .. escape(players[pid].name) .. "' WHERE steam = " .. pid)
+				end
 			end
 
 			loadDonors()

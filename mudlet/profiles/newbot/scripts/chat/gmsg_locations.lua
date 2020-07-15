@@ -7,7 +7,7 @@
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
-local loc, locationName, locationName, id, pname, status, pvp, result, debug, temp, tmp, k, v, pos
+local loc, locationName, locationName, id, pname, status, pvp, result, debug, temp, tmp, k, v, pos, delay
 local shortHelp = false
 local skipHelp = false
 
@@ -4258,7 +4258,13 @@ function gmsg_locations()
 		-- reject if not an admin and pvpTeleportCooldown is > zero
 		if tonumber(chatvars.accessLevel) > 2 and tonumber(players[chatvars.playerid].pvpTeleportCooldown) > 0 then
 			if (players[chatvars.playerid].pvpTeleportCooldown - os.time() > 0) then
-				message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, os.date("%H hours %M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())))
+				if players[chatvars.playerid].pvpTeleportCooldown - os.time() < 3600 then
+					delay = os.date("%M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())
+				else
+					delay = os.date("%H hours %M minutes %S seconds",players[chatvars.playerid].pvpTeleportCooldown - os.time())
+				end
+
+				message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport again.", chatvars.playerid, server.chatColour, delay))
 				botman.faultyChat = false
 				result = true
 				return true
@@ -4277,7 +4283,13 @@ function gmsg_locations()
 		if (locations[loc].village == true) then
  			if villagers[chatvars.playerid .. loc] then
 				if (players[chatvars.playerid].baseCooldown - os.time() > 0) and (chatvars.accessLevel > 2 or botman.ignoreAdmins == false) then --  and botman.ignoreAdmins == false
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have to wait " .. os.date("%M minutes %S seconds",players[chatvars.playerid].baseCooldown - os.time()) .. " before you can use " .. server.commandPrefix .. loc .. " again.[-]")
+					if players[chatvars.playerid].baseCooldown - os.time() < 3600 then
+						delay = os.date("%M minutes %S seconds",players[chatvars.playerid].baseCooldown - os.time())
+					else
+						delay = os.date("%H hours %M minutes %S seconds",players[chatvars.playerid].baseCooldown - os.time())
+					end
+
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have to wait " .. delay .. " before you can use " .. server.commandPrefix .. loc .. " again.[-]")
 					botman.faultyChat = false
 					return true
 				else
@@ -4346,7 +4358,13 @@ function gmsg_locations()
 		-- reject if not an admin and the location has a cooldown timer and the player's cooldown timer > 0
 		if players[chatvars.playerid]["loc_" .. loc] then
 			if tonumber(chatvars.accessLevel) > 2 and (tonumber(players[chatvars.playerid]["loc_" .. loc]) - os.time() > 0) then
-				message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport to %s again.", chatvars.playerid, server.chatColour, os.date("%H hours %M minutes %S seconds",players[chatvars.playerid]["loc_" .. loc] - os.time()), loc))
+				if tonumber(players[chatvars.playerid]["loc_" .. loc]) - os.time() < 3600 then
+					delay = os.date("%M minutes %S seconds",tonumber(players[chatvars.playerid]["loc_" .. loc]) - os.time())
+				else
+					delay = os.date("%H hours %M minutes %S seconds",tonumber(players[chatvars.playerid]["loc_" .. loc]) - os.time())
+				end
+
+				message(string.format("pm %s [%s]You must wait %s before you are allowed to teleport to %s again.", chatvars.playerid, server.chatColour, delay, loc))
 				botman.faultyChat = false
 				result = true
 				return true

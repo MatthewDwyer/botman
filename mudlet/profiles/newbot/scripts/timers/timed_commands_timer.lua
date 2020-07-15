@@ -137,6 +137,11 @@ function WebPanelQueue()
 				end
 			end
 
+			if action == "rejoin irc" then
+				irc_chat(server.ircAlerts, "Panel triggered " .. action)
+				joinIRCServer()
+			end
+
 			if action == "reload bot" then
 				irc_chat(server.ircAlerts, "Panel triggered " .. action)
 				reloadBot()
@@ -157,127 +162,127 @@ function WebPanelQueue()
 				irc_chat(server.ircAlerts, "actionTable = " .. actionTable)
 
 				if actionTable == "" then
-					loadTables(true)
+					tempTimer(3, [[loadTables(true)]])
 				end
 
 				if actionTable == "baditems" then
-					loadBadItems()
+					tempTimer(3, [[loadBadItems()]])
 				end
 
 				if actionTable == "bans" then
-					loadBans()
+					tempTimer(3, [[loadBans()]])
 				end
 
 				if actionTable == "bases" then
-					loadBases()
+					tempTimer(3, [[loadBases()]])
 				end
 
 				if actionTable == "custommessages" then
-					loadCustomMessages()
+					tempTimer(3, [[loadCustomMessages()]])
 				end
 
 				if actionTable == "donors" then
 					if steam ~= "0" then
-						loadDonors(steam)
+						tempTimer(3, [[loadDonors(']] .. steam .. [[')]])
 					else
-						loadDonors()
+						tempTimer(3, [[loadDonors()]])
 					end
 				end
 
 				if actionTable == "friends" then
 					if steam ~= "0" then
-						loadFriends(steam)
+						tempTimer(3, [[loadFriends(']] .. steam .. [[')]])
 					else
-						loadFriends()
+						tempTimer(3, [[loadFriends()]])
 					end
 				end
 
 				if actionTable == "gimmeprizes" then
-					loadGimmePrizes()
+					tempTimer(3, [[loadGimmePrizes()]])
 				end
 
 				if actionTable == "gimmezombies" then
-					loadGimmeZombies()
+					tempTimer(3, [[loadGimmeZombies()]])
 				end
 
 				if actionTable == "hotspots" then
-					loadHotspots()
+					tempTimer(3, [[loadHotspots()]])
 				end
 
 				if actionTable == "locations" then
 					if actionArgs == "" then
-						loadLocations()
+						tempTimer(3, [[loadLocations()]])
 					else
-						loadLocations(actionArgs)
+						tempTimer(3, [[loadLocations(']] .. actionArgs .. [[')]])
 					end
 				end
 
 				if actionTable == "locationcategories" then
 					if actionArgs == "" then
-						loadLocationCategories()
+						tempTimer(3, [[loadLocationCategories()]])
 					else
-						loadLocationCategories(actionArgs)
+						tempTimer(3, [[loadLocationCategories(']] .. actionArgs .. [[')]])
 					end
 				end
 
 				if actionTable == "modbotman" then
-					loadModBotman()
+					tempTimer(3, [[loadModBotman()]])
 				end
 
 				if actionTable == "otherentities" then
-					loadOtherEntities()
+					tempTimer(3, [[loadOtherEntities()]])
 				end
 
 				if actionTable == "players" then
 					if steam ~= "0" then
-						loadPlayers(steam)
+						tempTimer(3, [[loadPlayers(']] .. steam .. [[')]])
 					else
-						loadPlayers()
+						tempTimer(3, [[loadPlayers()]])
 					end
 				end
 
 				if actionTable == "resetzones" then
-					loadResetZones()
+					tempTimer(3, [[loadResetZones()]])
 				end
 
 				if actionTable == "restricteditems" then
-					loadRestrictedItems()
+					tempTimer(3, [[loadRestrictedItems()]])
 				end
 
 				if actionTable == "server" then
-					loadServer()
+					tempTimer(3, [[loadServer()]])
 				end
 
 				if actionTable == "shop" then
-					loadShop()
+					tempTimer(3, [[loadShop()]])
 				end
 
 				if actionTable == "shopcategories" then
-					loadShopCategories()
+					tempTimer(3, [[loadShopCategories()]])
 				end
 
 				if actionTable == "teleports" then
 					if actionArgs == "" then
-						loadTeleports()
+						tempTimer(3, [[loadTeleports()]])
 					else
-						loadTeleports(actionArgs)
+						tempTimer(3, [[loadTeleports(']] .. actionArgs .. [[')]])
 					end
 				end
 
 				if actionTable == "villagers" then
-					loadVillagers()
+					tempTimer(3, [[loadVillagers()]])
 				end
 
 				if actionTable == "waypoints" then
 					if steam ~= "0" then
-						loadWaypoints(steam)
+						tempTimer(3, [[loadWaypoints(']] .. steam .. [[')]])
 					else
-						loadWaypoints()
+						tempTimer(3, [[loadWaypoints()]])
 					end
 				end
 
 				if actionTable == "whitelist" then
-					loadWhitelist()
+					tempTimer(3, [[loadWhitelist()]])
 				end
 			end
 

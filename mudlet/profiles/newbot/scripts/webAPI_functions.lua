@@ -1860,7 +1860,7 @@ function readAPI_BMAnticheatReport()
 					tmp.alert = string.sub(v, string.find(v, "-LVL:") + 5)
 					tmp.alert = string.sub(tmp.alert, string.find(tmp.alert, " ") + 1)
 
-					if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and (not bans[tmp.id]) then
+					if (not staffList[tmp.id]) and (not players[tmp.id].testAsPlayer) and (not bans[tmp.id]) and (not anticheatBans[tmp.id]) then
 						if string.find(v, " spawned ") then
 							temp = string.split(tmp.alert, " ")
 							tmp.entity = stripQuotes(temp[3])
@@ -1886,12 +1886,13 @@ function readAPI_BMAnticheatReport()
 						end
 
 						if tonumber(tmp.level) > 2 then
+							anticheatBans[tmp.id] = {}
 							banPlayer(tmp.id, "10 years", tmp.reason, "")
 							logHacker(botman.serverTime, "Botman anticheat detected " .. tmp.id .. " " .. tmp.name .. " " .. tmp.hack)
 							message("say [" .. server.chatColour .. "]Banning player " .. tmp.name .. " 10 years for using hacks.[-]")
-							irc_chat("#hackers", "[BANNED] Player " .. tmp.id .. " " .. tmp.name .. " has has been banned for hacking by anticheat.")
+							irc_chat("#hackers", "[BANNED] Player " .. tmp.id .. " " .. tmp.name .. " has been banned for hacking by anticheat.")
 							irc_chat("#hackers", v)
-							connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player banned','Player banned by anticheat " .. escape(tmp.name) .. "'," .. tmp.id .. ")")
+							--connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player banned','Player banned by anticheat " .. escape(tmp.name) .. "'," .. tmp.id .. ")")
 						end
 					end
 				end
@@ -2112,6 +2113,8 @@ function readAPI_BMReadConfig()
 					else
 						Configs.anticheat = false
 					end
+
+					modBotman.anticheat = Configs.anticheat
 				end
 
 				if string.find(v, "config name=\"botname") then
@@ -2125,6 +2128,9 @@ function readAPI_BMReadConfig()
 					Configs.botname.name = tmp.name
 					Configs.botname.colorpublic = tmp.colorpublic
 					Configs.botname.colorprivate = tmp.colorprivate
+
+					modBotman.botName = Configs.botname
+					server.botName = Configs.botname
 				end
 
 				if string.find(v, "config name=\"chatcommands") then
@@ -2142,6 +2148,9 @@ function readAPI_BMReadConfig()
 					Configs.chatcommands = {}
 					Configs.chatcommands.prefix = tmp.prefix
 					Configs.chatcommands.hide = tmp.hide
+
+					server.commandPrefix = Configs.chatcommands.prefix
+					server.hideCommands = Configs.chatcommands.hide
 				end
 
 
@@ -2172,6 +2181,41 @@ function readAPI_BMReadConfig()
 					end
 				end
 
+				if string.find(v, "config name=\"chat_level_prefix") then
+					-- <config name="chat_level_prefix" enabled="True" color="ff0000"/>
+					Configs.chat_level_prefix = {}
+
+					if string.find(v, "True") then
+						Configs.chat_level_prefix.enabled = true
+					else
+						Configs.chat_level_prefix.enabled = false
+					end
+
+					Configs.chat_level_prefix.color = string.sub(v, string.find(v, "color") + 7, string.find(v, "/>") - 3)
+				end
+
+				if string.find(v, "config name=\"level_achievement_reward") then
+					-- <config name="level_achievement_reward" enabled="True" dukes="1000" max_level="10" />
+					Configs.level_achievement_reward = {}
+
+					if string.find(v, "True") then
+						Configs.level_achievement_reward.enabled = true
+					else
+						Configs.level_achievement_reward.enabled = false
+					end
+
+					Configs.level_achievement_reward.dukes = string.sub(v, string.find(v, "dukes") + 7, string.find(v, "max_level") - 3)
+					Configs.level_achievement_reward.max_level = string.sub(v, string.find(v, "max_level") + 11, string.find(v, "/>") - 3)
+				end
+
+				if string.find(v, "config name=\"milestones") then
+					-- <config name="milestones" enabled="True" />
+					if string.find(v, "True") then
+						Configs.milestones = true
+					else
+						Configs.milestones = false
+					end
+				end
 
 				if string.find(v, "config name=\"dropminer") then
 					-- <config name="dropminer" enabled="False" triggercount-entities="0" triggercount-falling="0" />
@@ -2199,6 +2243,18 @@ function readAPI_BMReadConfig()
 					end
 				end
 
+				if string.find(v, "config name=\"resetprefabs") then
+					-- <config name="resetprefabs" enabled="False" days_between_resets="0"  />
+					Configs.resetprefabs = {}
+
+					if string.find(v, "enabled=\"True") then
+						Configs.resetprefabs.enabled = true
+					else
+						Configs.resetprefabs.enabled = false
+					end
+
+					Configs.resetprefabs.days_between_resets = tonumber(string.match(v, "(-?%d+)"))
+				end
 
 				if string.find(v, "config name=\"resetregions") then
 					-- <config name="resetregions" enabled="True" prefabsonly="False" days_between_resets="0" remove_lcbs="True" />
@@ -2431,8 +2487,10 @@ function readAPI_BMReadConfig()
 	if botman.dbConnected then
 		cursor, errorString = conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('config','panel','" .. escape(yajl.to_string(bmconfig)) .. "')")
 
-		if string.find(errorString, "Duplicate entry") then
-			conn:execute("UPDATE webInterfaceJSON SET json = '" .. escape(yajl.to_string(bmconfig)) .. "' WHERE ident = 'config'")
+		if errorString then
+			if string.find(errorString, "Duplicate entry") then
+				conn:execute("UPDATE webInterfaceJSON SET json = '" .. escape(yajl.to_string(bmconfig)) .. "' WHERE ident = 'config'")
+			end
 		end
 	end
 end
@@ -3068,6 +3126,7 @@ function readAPI_LI()
 
 	fileSize = lfs.attributes (homedir .. "/temp/li.txt", "size")
 	updateItemsList = false
+	spawnableItems = {}
 
 	-- abort if the file is empty
 	if fileSize == nil or tonumber(fileSize) == 0 then
@@ -3100,7 +3159,8 @@ function readAPI_LI()
 					if botman.dbConnected then
 						temp = string.trim(data[k])
 						if temp ~= "" and updateItemsList then
-							conn:execute("INSERT INTO spawnableItems (itemName) VALUES ('" .. escape(temp) .. "')")
+							--conn:execute("INSERT INTO spawnableItems (itemName) VALUES ('" .. escape(temp) .. "')")
+							spawnableItems[temp] = {}
 						end
 					end
 				end
@@ -3131,6 +3191,9 @@ function readAPI_LI()
 
 	if updateItemsList then
 		removeInvalidItems()
+		updateShopItems()
+		spawnableItems = {}
+		tempTimer(3, [[loadShop()]])
 	end
 
 	os.remove(homedir .. "/temp/li.txt")
