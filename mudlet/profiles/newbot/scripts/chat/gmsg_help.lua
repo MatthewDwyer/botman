@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -34,7 +34,7 @@ function commandHelp(command)
 	local list
 
 	if (command == "me") then
-		r = rand(6)
+		r = randSQL(6)
 		if (r==1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry you're beyond help I'm afraid.[-]") end
 		if (r==2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Today I did 6 impossible things, but that ain't one.[-]") end
 		if (r==3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I can't fix that![-]") end

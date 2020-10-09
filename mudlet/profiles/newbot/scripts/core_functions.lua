@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -300,6 +300,7 @@ function sendCommand(command) -- , api, outputFile
 		os.remove(homedir .. "/temp/" .. outputFile)
 
 		if command ~= "gg" then
+			botman.fileDownloadTimestamp = os.time()
 			downloadFile(homedir .. "/temp/" .. outputFile, url)
 		end
 
@@ -805,7 +806,7 @@ function pickRandomArenaPlayer()
 	end
 
 	i = 1
-	r = tonumber(rand(botman.arenaCount))
+	r = tonumber(randSQL(botman.arenaCount))
 
 	for k, v in pairs(arenaPlayers) do
 		if r == i then

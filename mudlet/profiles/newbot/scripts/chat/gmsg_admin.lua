@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -2035,7 +2035,7 @@ function gmsg_admin()
 						tmp.cmd = "bm-give " .. chatvars.playerid .. " " .. item .. " " .. quantity - tonumber(tmp.quantity)
 					end
 
-					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+					if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 					tmp.gaveStuff = true
 				end
 			end
@@ -2043,12 +2043,12 @@ function gmsg_admin()
 			tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, item)
 
 			if not tmp.found then
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+				if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
 				if not ignoreQuality then
 					if tmp.quality < 100 then
-						if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+						if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 						tmp.gaveStuff = true
 					end
 				end
@@ -2401,7 +2401,7 @@ function gmsg_admin()
 					tmp.cmd = "bm-give " .. chatvars.playerid .. " drinkJarRedTea 10"
 				end
 
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+				if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
 				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "drinkJarRedTea")
@@ -2417,7 +2417,7 @@ function gmsg_admin()
 						tmp.cmd = "bm-give " .. chatvars.playerid .. " drinkJarRedTea " .. 10 - tonumber(tmp.quantity)
 					end
 
-					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+					if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 					tmp.gaveStuff = true
 				end
 			end
@@ -2434,7 +2434,7 @@ function gmsg_admin()
 					tmp.cmd = "bm-give " .. chatvars.playerid .. " ammoGasCan 400"
 				end
 
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+				if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
 				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "ammoGasCan")
@@ -2450,7 +2450,7 @@ function gmsg_admin()
 						tmp.cmd = "bm-give " .. chatvars.playerid .. " ammoGasCan /" .. 400 - tonumber(tmp.quantity)
 					end
 
-					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+					if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 					tmp.gaveStuff = true
 				end
 			end
@@ -2467,7 +2467,7 @@ function gmsg_admin()
 					tmp.cmd = "bm-give " .. chatvars.playerid .. " foodMeatStew 20"
 				end
 
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+				if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
 				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "foodMeatStew")
@@ -2483,7 +2483,7 @@ function gmsg_admin()
 						tmp.cmd = "bm-give " .. chatvars.playerid .. " foodMeatStew " .. 20 - tonumber(tmp.quantity)
 					end
 
-					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+					if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 					tmp.gaveStuff = true
 				end
 			end
@@ -2500,7 +2500,7 @@ function gmsg_admin()
 					tmp.cmd = "bm-give " .. chatvars.playerid .. " medicalFirstAidKit 10"
 				end
 
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+				if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
 				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "medicalFirstAidKit")
@@ -2516,7 +2516,7 @@ function gmsg_admin()
 						tmp.cmd = "bm-give " .. chatvars.playerid .. " medicalFirstAidKit " .. 10 - tonumber(tmp.quantity)
 					end
 
-					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+					if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 					tmp.gaveStuff = true
 				end
 			end
@@ -2533,7 +2533,7 @@ function gmsg_admin()
 					tmp.cmd = "bm-give " .. chatvars.playerid .. " drugAntibiotics 10"
 				end
 
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+				if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
 				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "drugAntibiotics")
@@ -2549,7 +2549,7 @@ function gmsg_admin()
 						tmp.cmd = "bm-give " .. chatvars.playerid .. " drugAntibiotics " .. 10 - tonumber(tmp.quantity)
 					end
 
-					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+					if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 					tmp.gaveStuff = true
 				end
 			end
@@ -2566,7 +2566,7 @@ function gmsg_admin()
 					tmp.cmd = "bm-give " .. chatvars.playerid .. " shotgunShell 500"
 				end
 
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+				if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
 				tmp.found, tmp.quantity, tmp.quality = getInventory(tmp.inventory, "shotgunShell")
@@ -2582,7 +2582,7 @@ function gmsg_admin()
 						tmp.cmd = "bm-give " .. chatvars.playerid .. " shotgunShell " .. 500 - tonumber(tmp.quantity)
 					end
 
-					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+					if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 					tmp.gaveStuff = true
 				end
 			end
@@ -2599,7 +2599,7 @@ function gmsg_admin()
 					tmp.cmd = "bm-give " .. chatvars.playerid .. " armorMiningHelmet 1 6"
 				end
 
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+				if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 				tmp.gaveStuff = true
 			else
 				tmp.found, tmp.quality = getEquipment(tmp.equipment, "armorMiningHelmet")
@@ -2619,7 +2619,7 @@ function gmsg_admin()
 						tmp.cmd = "bm-give " .. chatvars.playerid .. " armorMiningHelmet 1 6"
 					end
 
-					if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+					if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 					tmp.gaveStuff = true
 				end
 			end
@@ -2683,7 +2683,7 @@ function gmsg_admin()
 					tmp.cmd = "bm-give " .. chatvars.playerid .. " keystoneBlock " .. players[chatvars.playerid].removedClaims
 				end
 
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
+				if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. chatvars.playerid .. ")") end
 
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I was holding " .. players[chatvars.playerid].removedClaims .. " keystones for you. Check the ground for them if they didn't go directly into your inventory.[-]")
 				players[chatvars.playerid].removedClaims = 0
@@ -2784,7 +2784,7 @@ function gmsg_admin()
 					end
 				end
 
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. k .. ")") end
+				if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. k .. ")") end
 			end
 
 			if (chatvars.playername ~= "Server") then
@@ -2915,7 +2915,7 @@ function gmsg_admin()
 					end
 				end
 
-				if botman.dbConnected then conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. escape(tmp.cmd) .. "', " .. tmp.id .. ")") end
+				if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. connMEM:escape(tmp.cmd) .. "', " .. tmp.id .. ")") end
 
 				if (chatvars.playername ~= "Server") then
 					message(string.format("pm %s [%s]You gave %s %s %s[-]",chatvars.playerid, server.chatColour, players[tmp.id].name, tmp.quantity, tmp.item))
@@ -3110,7 +3110,7 @@ function gmsg_admin()
 
 			for i=1,50,1 do
 				cmd = "se " .. players[chatvars.playerid].id .. " " .. PicknMix()
-				if botman.dbConnected then conn:execute("INSERT INTO gimmeQueue (steam, command) VALUES (" .. chatvars.playerid .. ",'" .. cmd .. "')") end
+				if botman.dbConnected then connMEM:execute("INSERT into gimmeQueue (steam, command) VALUES (" .. chatvars.playerid .. ",'" .. cmd .. "')") end
 			end
 
 			botman.faultyChat = false
@@ -4722,13 +4722,13 @@ function gmsg_admin()
 				message("pm " .. id .. " [" .. server.alertColour .. "]" .. players[chatvars.playerid].name .. " cast poop on you.  It is super effective.[-]")
 			end
 
-			r = rand(30,10)
+			r = randSQL(10,30)
 
 			message("say [" .. server.chatColour .. "]" .. players[id].name .. " ate a bad potato and is shitting potatoes everywhere![-]")
 			cmd = "give " .. id .. " foodBakedPotato 1"
 
 			for i = 1, r do
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. id .. ")")
+				connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. id .. ")")
 			end
 
 			if (chatvars.playername ~= "Server") then
@@ -5222,11 +5222,11 @@ function gmsg_admin()
 			entityRemoved = false
 
 			if chatvars.number ~= nil then
-				sql = "SELECT * from memEntities where type <> 'EntityPlayer' and entityID = " .. chatvars.number
-				cursor,errorString = conn:execute(sql)
+				sql = "SELECT * FROM memEntities WHERE type <> 'EntityPlayer' and entityID = " .. chatvars.number
+				cursor,errorString = connMEM:execute(sql)
 			else
-				sql = "SELECT * from memEntities where type <> 'EntityPlayer'"
-				cursor,errorString = conn:execute(sql)
+				sql = "SELECT * FROM memEntities WHERE type <> 'EntityPlayer'"
+				cursor,errorString = connMEM:execute(sql)
 			end
 
 			row = cursor:fetch({}, "a")
@@ -7170,7 +7170,7 @@ function gmsg_admin()
 
 
 			if tonumber(server.gameVersionNumber) < 17 then
-				r = rand(10)
+				r = randSQL(10)
 
 				for i = 1, r do
 					sendCommand("give " .. igplayers[id].id .. " turd 1")
@@ -9422,7 +9422,7 @@ if debug then dbug("debug admin") end
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('admin', '" .. escape(tmp.topicDescription) .. "')")

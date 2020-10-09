@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -60,12 +60,22 @@ function IRCMessage(event, name, channel, msg)
 	ircID = nil
 	displayIRCHelp = false
 
+	local temp, k, v
+
 	local function dbugi(text)
 		-- this is just a dummy function to prevent us trying to use dbugi() here.  If we call the real dbugi function here we get an infinite loop.
 		dbug(text)
 	end
 
 	result = false
+
+	if string.find(msg, server.ircMain, nil, true) and string.find(msg, " users: ", nil, true) and botman.checkBotOnIRC then
+		if not string.find(msg, server.ircBotName) then
+			joinIRCServer()
+		end
+
+		botman.checkBotOnIRC = nil
+	end
 
 	if debug then dbug(event .. " " .. name .. " " .. channel .. " " .. msg) end
 
@@ -354,7 +364,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			irc_chat(name, "There are  " .. botman.playersOnline .. " players online.")
 
-			cursor,errorString = conn:execute("SELECT * FROM performance  ORDER BY serverdate DESC Limit 0, 1")
+			cursor,errorString = conn:execute("SELECT * FROM performance  ORDER BY serverdate DESC LIMIT 0, 1")
 			row = cursor:fetch({}, "a")
 			irc_chat(name, "Last Server FPS: " .. row.fps .. " Players: " .. row.players .. " Zombies: " .. row.zombies .. " Entities: " .. row.entities .. " Heap: " .. row.heap .. " HeapMax: " .. row.heapMax)
 
@@ -526,7 +536,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if words[1] == "shop" and shopCategories[words[2]] then
 		LookupShop(words[2])
 
-		cursor,errorString = conn:execute("SELECT * FROM memShop ORDER BY idx")
+		cursor,errorString = connMEM:execute("SELECT * FROM memShop ORDER BY idx")
 		row = cursor:fetch({}, "a")
 
 		while row do
@@ -576,14 +586,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
 		LookupShop(wordsOld[2])
 
-		cursor,errorString = conn:execute("SELECT * FROM memShop ORDER BY category, idx")
+		cursor,errorString = connMEM:execute("SELECT * FROM memShop ORDER BY category, idx")
 		row = cursor:fetch({}, "a")
 
 		while row do
 			if tonumber(row.stock) == -1 then
-				msg = "Code:  " .. row.code .. "    item:  " .. row.item .. "    price:  " .. row.price .. " UNLIMITED"
+				msg = "Code:  " .. row.code .. "  item:  " .. row.item .. "  price:  " .. row.price .. " UNLIMITED"
 			else
-				msg = "Code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. "  (" .. row.stock .. ")  left"
+				msg = "Code:  " .. row.code .. "  item:  " .. row.item .. "  price: " .. row.price .. "  (" .. row.stock .. ")  left"
 			end
 
 			irc_chat(name, msg)
@@ -634,7 +644,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "fps" and words[2] == nil then
-		cursor,errorString = conn:execute("SELECT * FROM performance ORDER BY timestamp DESC Limit 0, 1")
+		cursor,errorString = conn:execute("SELECT * FROM performance ORDER BY timestamp DESC LIMIT 0, 1")
 		row = cursor:fetch({}, "a")
 
 		if row then
@@ -1665,7 +1675,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "nuke" or words[1] == "clear" and words[2] == "irc") or ((words[1] == "stop" or words[1] == "sotp" or words[1] == "stahp") and words[2] == nil) then
-		conn:execute("DELETE FROM ircQueue WHERE name = '" .. name .. "'")
+		connMEM:execute("DELETE FROM ircQueue WHERE name = '" .. name .. "'")
 		irc_chat(channel, "IRC spam nuked for " .. name)
 
 		if ircListItems == ircID then ircListItems = nil end
@@ -1688,7 +1698,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if (words[1] == "nuke" or words[1] == "clear" or words[1] == "stop") and words[2] == "all" then
-		conn:execute("TRUNCATE ircQueue")
+		connMEM:execute("DELETE FROM ircQueue")
 		irc_chat(channel, "IRC spam nuked for everyone.")
 
 		ircListItems = nil
@@ -2158,7 +2168,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if not server.allowBotRestarts then
 			irc_chat(name, "This command is disabled.  Enable it with /enable bot restart")
 			irc_chat(name, "If you do not have a script or other process monitoring the bot, it will not restart automatically.")
-			irc_chat(name, "Scripts can be downloaded at http://botman.nz/shellscripts.zip and may require some editing for paths.")
+			irc_chat(name, "Scripts can be downloaded at https://botman.nz/shellscripts.zip and may require some editing for paths.")
 			irc_params = {}
 			return
 		end
@@ -2808,7 +2818,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				irc_chat(name, "Alloc's Command Extensions " .. server.allocsCommandExtensions)
 				irc_chat(name, "Alloc's Map " .. server.allocsMap)
 			else
-				irc_chat(name, "ALERT!  Alloc's mod is not installed!  The bot can't function without it.  Grab it here http://botman.nz/Botman_Mods.zip")
+				irc_chat(name, "ALERT!  Alloc's mod is not installed!  The bot can't function without it.  Grab it here https://botman.nz/Botman_Mods.zip")
 			end
 
 			if server.coppi then
@@ -2846,7 +2856,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		irc_chat(name, "New players in the last " .. math.floor(number / 86400) .. " days:")
 
-		cursor,errorString = conn:execute("SELECT * FROM events where timestamp >= '" .. os.date('%Y-%m-%d %H:%M:%S', os.time() - number).. "' and type = 'new player' order by timestamp desc")
+		cursor,errorString = conn:execute("SELECT * FROM events WHERE timestamp >= '" .. os.date('%Y-%m-%d %H:%M:%S', os.time() - number).. "' AND type = 'new player' ORDER BY timestamp DESC")
 		row = cursor:fetch({}, "a")
 
 		while row do
@@ -2953,7 +2963,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		if debug then dbug("debug ircmessage " .. msg) end
 		if number == nil then number = 20 end
 
-		cursor,errorString = conn:execute("SELECT * FROM alerts order by alertID desc limit " .. number)
+		cursor,errorString = conn:execute("SELECT * FROM alerts ORDER BY alertID DESC LIMIT " .. number)
 		if cursor:numrows() == 0 then
 			irc_chat(name, "There are no alerts recorded.")
 		else
@@ -3010,7 +3020,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	if displayIRCHelp then
 		irc_chat(name, "Command: show inventory")
 		irc_chat(name, "View historic inventory movement of a player.  They do not need to be playing right now.")
-		irc_chat(name, "Full example.. show inventory player Joe xpos 100 zpos 200 days 2 range 50 item tnt qty 20")
+		irc_chat(name, "Full example.. show inventory player Joe xpos 100 zpos 200 days 2 range 50 item tnt qty 20 exclude bob")
 		irc_chat(name, "You can grab the coords from any player by adding, near john (for example)")
 		irc_chat(name, "Defaults: days = 1, range = 100km, xpos = 0, zpos = 0")
 		irc_chat(name, "Optional: player (or near) joe, days 1, hours 1, range 50, item tin, qty 10, xpos 0, zpos 0, session 1")
@@ -3067,6 +3077,10 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 			if words2[i] == "item" then
 				item = words2[i+1]
+			end
+
+			if words2[i] == "exclude" then
+				exclude = words2[i+1]
 			end
 
 			if words2[i] == "qty" then
@@ -3126,24 +3140,26 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		irc_chat(name, sql)
 
 		cursor,errorString = conn:execute(sql)
-		if cursor:numrows() == 0 then
+		row = cursor:fetch({}, "a")
+
+		if not row then
 			irc_chat(name, "No inventory tracking is recorded for your search parameters.")
 		else
 			irc_chat(name, " ")
 			irc_chat(name, "   id   |      steam       |      timestamp     |    item     | qty | x y z | session | name")
-			row = cursor:fetch({}, "a")
+		end
 
-			rows = cursor:numrows()
-
-			if rows > 50 then
-				irc_chat(name, "***** Report length " .. rows .. " rows.  Cancel it with: nuke irc *****")
-			end
-
-			while row do
+		while row do
+			if exclude then
+				if players[row.steam].name ~= exclude then
+					msg = row.id .. ", " .. row.steam .. ", " .. row.timestamp .. ", " .. row.item .. ", " .. row.delta .. ", " .. row.x .. " " .. row.y .. " " .. row.z .. ", " .. row.session .. ", " .. players[row.steam].name
+				end
+			else
 				msg = row.id .. ", " .. row.steam .. ", " .. row.timestamp .. ", " .. row.item .. ", " .. row.delta .. ", " .. row.x .. " " .. row.y .. " " .. row.z .. ", " .. row.session .. ", " .. players[row.steam].name
-				irc_chat(name, msg)
-				row = cursor:fetch(row, "a")
 			end
+
+			irc_chat(name, msg)
+			row = cursor:fetch(row, "a")
 		end
 
 		irc_chat(name, ".")
@@ -5612,7 +5628,8 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 		tmp = {}
 		tmp.count = 0
 		tmp.name = ""
-		conn:execute("DELETE FROM list WHERE steam = " .. ircID)
+
+		connMEM:execute("DELETE FROM list WHERE steam = " .. ircID)
 
 		if words[2] == nil then
 			irc_chat(name, "These are all the donors on record:")
@@ -5628,11 +5645,11 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 					name1 = playersArchived[k].name
 				end
 
-				conn:execute("INSERT INTO list (thing, class, steam) VALUES ('" .. escape(name1) .. "','" .. k .. "'," .. ircID .. ")")
+				connMEM:execute("INSERT INTO list (thing, class, steam) VALUES ('" .. connMEM:escape(name1) .. "','" .. k .. "'," .. ircID .. ")")
 				tmp.count = tmp.count + 1
 			end
 
-			cursor,errorString = conn:execute("SELECT * FROM list where steam = " .. ircID .. " order by thing")
+			cursor,errorString = connMEM:execute("SELECT * FROM list WHERE steam = " .. ircID .. " ORDER BY thing")
 			row = cursor:fetch({}, "a")
 
 			while row do
@@ -5670,7 +5687,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				row = cursor:fetch(row, "a")
 			end
 
-			conn:execute("DELETE FROM list WHERE steam = " .. ircID)
+			connMEM:execute("DELETE FROM list WHERE steam = " .. ircID)
 
 			irc_chat(name, "Total donors: " .. tmp.count)
 		else
@@ -6098,7 +6115,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			irc_chat(name, "For a list of events that can be searched for, just type list event.")
 			irc_chat(name, ".")
 
-			cursor,errorString = conn:execute("SELECT DISTINCT type from events order by type")
+			cursor,errorString = conn:execute("SELECT DISTINCT type FROM events ORDER BY type")
 			row = cursor:fetch({}, "a")
 			while row do
 				irc_chat(name, row.type)
@@ -6321,7 +6338,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 	end
 
 	if words[1] == "list" and words[2] == "regions" then
-		conn:execute("DELETE FROM list WHERE steam = " .. ircID)
+		connMEM:execute("DELETE FROM list WHERE steam = " .. ircID)
 
 		irc_chat(name, "The following regions have player bases in them.")
 
@@ -6337,14 +6354,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 			end
 		end
 
-		cursor,errorString = conn:execute("SELECT * FROM list WHERE steam = " .. ircID .. " order by thing")
+		cursor,errorString = connMEM:execute("SELECT * FROM list WHERE steam = " .. ircID .. " ORDER BY thing")
 		row = cursor:fetch({}, "a")
 		while row do
 			irc_chat(name, row.thing)
 			row = cursor:fetch(row, "a")
 		end
 
-		conn:execute("DELETE FROM list WHERE steam = " .. ircID)
+		connMEM:execute("DELETE FROM list WHERE steam = " .. ircID)
 
 		irc_chat(name, ".")
 		irc_chat(name, "The following regions have locations in them.")
@@ -6354,14 +6371,14 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 				conn:execute("INSERT INTO list (thing, steam) VALUES ('" .. temp .. "'," .. ircID .. ")")
 		end
 
-		cursor,errorString = conn:execute("SELECT * FROM list WHERE steam = " .. ircID .. " order by thing")
+		cursor,errorString = connMEM:execute("SELECT * FROM list WHERE steam = " .. ircID .. " ORDER BY thing")
 		row = cursor:fetch({}, "a")
 		while row do
 			irc_chat(name, row.thing)
 			row = cursor:fetch(row, "a")
 		end
 
-		conn:execute("DELETE FROM list WHERE steam = " .. ircID)
+		connMEM:execute("DELETE FROM list WHERE steam = " .. ircID)
 
 		irc_chat(name, ".")
 		irc_params = {}
@@ -6444,7 +6461,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		irc_chat(name, "The currently loaded entities are:")
 
-		cursor,errorString = conn:execute("SELECT * FROM memEntities order by name")
+		cursor,errorString = connMEM:execute("SELECT * FROM memEntities ORDER BY name")
 		row = cursor:fetch({}, "a")
 		while row do
 			irc_chat(name, "id= " .. row.entityID .. ", " .. row.name .. ", xyz= " .. row.x .. " " .. row.y .. " " .. row.z .. ", health= " .. row.health)
@@ -6473,7 +6490,7 @@ if debug then dbug("debug irc message line " .. debugger.getinfo(1).currentline)
 
 		pid = words[3]
 
-		cursor,errorString = conn:execute("SELECT * FROM memEntities WHERE entityID = " .. pid)
+		cursor,errorString = connMEM:execute("SELECT * FROM memEntities WHERE entityID = " .. pid)
 		row = cursor:fetch({}, "a")
 
 		if row then

@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -33,7 +33,7 @@ function airDropAlert(line)
 		if (tonumber(dist) < 2000) then
 			direction = getCompass(v.xPos, v.zPos, coord[1], coord[3])
 
-			r = rand(100)
+			r = randSQL(100)
 			if r > 90 then
 				message("pm " .. k .. " " ..  " [" .. server.chatColour .. "]Ze plane! Ze plane![-]")
 			end

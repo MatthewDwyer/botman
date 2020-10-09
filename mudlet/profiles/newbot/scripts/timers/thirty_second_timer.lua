@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -13,6 +13,13 @@ function thirtySecondTimer()
 	fixMissingServer() -- test for missing values
 
 	windowMessage(server.windowDebug, "30 second timer\n")
+
+	if botman.checkBotOnIRC then
+		if os.time() - botman.checkBotOnIRC > 25 then
+			botman.checkBotOnIRC = nil
+			joinIRCServer()
+		end
+	end
 
 	if botman.botDisabled then
 		return

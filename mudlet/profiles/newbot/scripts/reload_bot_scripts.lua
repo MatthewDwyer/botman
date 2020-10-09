@@ -1,3 +1,12 @@
+--[[
+    Botman - A collection of scripts for managing 7 Days to Die servers
+    Copyright (C) 2020  Matthew Dwyer
+	           This copyright applies to the Lua source code in this Mudlet profile.
+    Email     smegzor@gmail.com
+    URL       https://botman.nz
+    Source    https://bitbucket.org/mhdwyer/botman
+--]]
+
 -- This script now lives in scripts/functions.lua
 -- After editing it type /reload code or restart the bot for your changes to be used.
 
@@ -21,6 +30,10 @@ function postUpdate()
 	os.remove(homedir .. "/temp/postUpdate.lua")
 	os.execute("wget http://www.botman.nz/" .. server.updateBranch .. "/postUpdate.lua -P \"" .. homedir .. "\"/temp/")
 	tempTimer( 5, [[ dofile(homedir .. "/temp/postUpdate.lua") ]] )
+
+	if not envSQL then
+		openSQLiteDB()
+	end
 end
 
 
@@ -423,6 +436,11 @@ function refreshScripts()
 
 	server.nextCodeReload = "/scripts/save_db_tables.lua"
 	checkScript(homedir .. "/scripts/save_db_tables.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/sqlite.lua"
+	checkScript(homedir .. "/scripts/sqlite.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 

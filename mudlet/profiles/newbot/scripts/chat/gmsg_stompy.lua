@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -319,7 +319,7 @@ function gmsg_stompy()
 				end
 			end
 
-			cursor,errorString = conn:execute("SELECT * FROM list WHERE id = " .. chatvars.number)
+			cursor,errorString = connMEM:execute("SELECT * FROM list WHERE id = " .. chatvars.number)
 			row = cursor:fetch({}, "a")
 
 			if row then
@@ -1233,7 +1233,7 @@ function gmsg_stompy()
 			end
 
 			if botman.dbConnected then
-				conn:execute("TRUNCATE list")
+				connMEM:execute("DELETE FROM list")
 
 				if tmp.pid ~= 0 then
 					cursor,errorString = conn:execute("SELECT * FROM prefabCopies WHERE owner = " .. tmp.pid .. " ORDER BY name")
@@ -1281,7 +1281,7 @@ function gmsg_stompy()
 						irc_chat(chatvars.ircAlias, "#" .. counter .. " " .. name .. ": " .. row.name .. "  P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "  P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2)
 					end
 
-					conn:execute("INSERT INTO list (id, thing, class, steam) VALUES (" .. counter .. ",'" .. escape(row.owner .. " " .. row.name) .. "','" .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "'," .. chatvars.playerid .. ")")
+					connMEM:execute("INSERT INTO list (id, thing, class, steam) VALUES (" .. counter .. ",'" .. connMEM:escape(row.owner .. " " .. row.name) .. "','" .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "'," .. chatvars.playerid .. ")")
 					counter = counter + 1
 					row = cursor:fetch(row, "a")
 				end
@@ -2358,7 +2358,7 @@ function gmsg_stompy()
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('BC', '" .. escape(tmp.topicDescription) .. "')")

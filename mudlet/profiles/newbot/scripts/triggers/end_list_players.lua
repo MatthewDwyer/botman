@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -41,6 +41,14 @@ function endListPlayers(line)
 
 			if (botman.playersOnline == 0) then
 				-- we could schedule something to happen when no players are online
+			end
+
+			if botman.trackingTicker == nil then
+				botman.trackingTicker = 0
+			end
+
+			if tonumber(botman.trackingTicker) > 2 then
+				botman.trackingTicker = 0
 			end
 
 			botman.listPlayers = false

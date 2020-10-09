@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -483,7 +483,6 @@ function loadModBotman()
 
 	if row then
 		modBotman.anticheat = dbTrue(row.anticheat)
-		modBotman.blockTreeRemoval = dbTrue(row.blockTreeRemoval)
 		modBotman.botName = row.botName
 		modBotman.botNameColourPublic = row.botNameColourPublic
 		modBotman.botNameColourPrivate = row.botNameColourPrivate
@@ -532,16 +531,6 @@ function loadModBotman()
 				sendCommand("bm-anticheat disable")
 			end
 		end
-
-		-- if modBotmanOld.blockTreeRemoval ~= modBotman.blockTreeRemoval then
-			-- if modBotman.blockTreeRemoval then
-
-			-- else
-
-			-- end
-		-- end
-
-		-- blockTreeRemoval
 
 
 		if modBotmanOld.botName ~= nil then
@@ -919,10 +908,6 @@ function loadPlayers(steam)
 	getPlayerFields()
 
 	if not steam then
-		if isFile(homedir .. "/data_backup/players.lua") then
-			table.load(homedir .. "/data_backup/players.lua", players)
-		end
-
 		cursor,errorString = conn:execute("SELECT * FROM players")
 	else
 		cursor,errorString = conn:execute("SELECT * FROM players WHERE steam = " .. steam)
@@ -930,28 +915,26 @@ function loadPlayers(steam)
 
 	row = cursor:fetch({}, "a")
 	while row do
-		-- don't load the player if they are in the table playersArchived
-		if not playersArchived[row.steam] then
-			if not players[row.steam] then
-				players[row.steam] = {}
+		if not players[row.steam] then
+
+			players[row.steam] = {}
+		end
+
+		for k,v in pairs(playerFields) do
+			if v.type == "var" or v.type == "big" then
+				players[row.steam][k] = row[k]
 			end
 
-			for k,v in pairs(playerFields) do
-				if v.type == "var" or v.type == "big" then
-					players[row.steam][k] = row[k]
-				end
+			if v.type == "int" then
+				players[row.steam][k] = tonumber(row[k])
+			end
 
-				if v.type == "int" then
-					players[row.steam][k] = tonumber(row[k])
-				end
+			if v.type == "flo" then
+				players[row.steam][k] = tonumber(row[k])
+			end
 
-				if v.type == "flo" then
-					players[row.steam][k] = tonumber(row[k])
-				end
-
-				if v.type == "tin" then
-					players[row.steam][k] = dbTrue(row[k])
-				end
+			if v.type == "tin" then
+				players[row.steam][k] = dbTrue(row[k])
 			end
 		end
 
@@ -1076,7 +1059,7 @@ function loadProxies()
 end
 
 
-function loadResetZones()
+function loadResetZones(skip)
 	local cursor, errorString, row
 	-- load reset zones
 
@@ -1090,7 +1073,7 @@ function loadResetZones()
 		resetRegions[row.region].x = row.x
 		resetRegions[row.region].z = row.z
 
-		if modBotman.version and (os.time() - botman.botStarted > 30) then
+		if modBotman.version and (os.time() - botman.botStarted > 30) and not skip then
 			sendCommand("bm-resetregions add " .. row.x .. "." .. row.z)
 		end
 
@@ -1310,9 +1293,21 @@ function loadServer(setupStuff)
 		server.uptime = 0
 	end
 
-	if telnetPort then
-		if server.telnetPort == 0 then
-			server.telnetPort = telnetPort
+	if tonumber(server.telnetPort) == 0 then
+		if exists(homedir .. "/server_address.lua") then
+			dofile(homedir .. "/server_address.lua")
+
+			if botman.dbConnected then
+				conn:execute("UPDATE server SET IP = '" .. escape(server.IP) .. "', telnetPort = " .. server.telnetPort)
+			end
+
+			if botman.botsConnected then
+				connBots:execute("UPDATE servers SET IP = '" .. escape(server.IP) .. "' WHERE botID = " .. server.botID)
+			end
+		else
+			if telnetPort then
+				server.telnetPort = telnetPort
+			end
 		end
 	end
 
@@ -1342,8 +1337,6 @@ function loadServer(setupStuff)
 			if server.commandPrefix == "" then
 				sendCommand("bm-chatcommands hide false")
 			end
-
-			return
 		end
 
 		-- if using BC mod
@@ -1354,14 +1347,14 @@ function loadServer(setupStuff)
 			if server.commandPrefix == "" then
 				sendCommand("bc-chatprefix \"\"")
 			end
-
-			return
 		end
 	end
 
 	if (server.ircPort ~= serverOld.ircPort) or (server.ircServer ~= serverOld.ircServer) or (server.ircBotName ~= serverOld.ircBotName) or (server.ircMain ~= serverOld.ircMain) or (server.ircWatch ~= serverOld.ircWatch) or (server.ircAlerts ~= serverOld.ircAlerts) then
 		joinIRCServer()
 	end
+
+	conn:execute("UPDATE timedEvents SET delayMinutes = " .. server.gimmeResetTime .. " WHERE timer = 'gimmeReset'")
 end
 
 
@@ -1474,11 +1467,13 @@ function loadTables(skipPlayers)
 	if not skipPlayers then
 		loadPlayersArchived()
 		if (debug) then display("debug loaded playersArchived\n") end
+		sleep(1)
 	end
 
 	if not skipPlayers then
 		loadPlayers()
 		if (debug) then display("debug loaded players\n") end
+		sleep(1)
 	end
 
 	loadStaff()

@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -308,7 +308,7 @@ function gmsg_villages()
 						locations[villageName].village = true
 						message("say [" .. server.chatColour .. "]Congratulations " .. players[pid].name .. " on becoming the new mayor of " .. villageName .. "[-]")
 
-						r = rand(5)
+						r = randSQL(5)
 
 						if r == 1 then message("say [" .. server.chatColour .. "]The best village in all the land![-]") end
 						if r == 2 then message("say [" .. server.chatColour .. "]Now you can show those home owner associations how it's really done![-]") end
@@ -841,7 +841,7 @@ function gmsg_villages()
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('villages', '" .. escape(tmp.topicDescription) .. "')")

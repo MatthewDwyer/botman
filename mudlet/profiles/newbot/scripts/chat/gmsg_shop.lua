@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -186,6 +186,8 @@ function gmsg_shop()
 
 
 	local function cmd_Gamble()
+		local r, a, b, cursor, errorString, row, tickets, tempTickets, ticketCount, k, v
+
 		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
 			help = {}
 			help[1] = " {#}gamble {optional quantity} or {#}buy ticket {optional quantity}"
@@ -232,42 +234,83 @@ function gmsg_shop()
 				return true
 			end
 
+			tickets = {}
 
-			for i=1,math.abs(chatvars.number),1 do
-				found = false
-				tries = 0
-				gotTicket = false
-
-				while not gotTicket do
-					r = rand(100)
-
-					cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE steam = " .. chatvars.playerid .. " AND ticket = " .. r)
-					rows = cursor:numrows()
-
-					if rows > 0 then
-						found = true
-						break
-					end
-
-					if not found then
-						conn:execute("INSERT INTO memLottery (steam, ticket) VALUES (" .. chatvars.playerid .. "," .. r .. ")")
-						conn:execute("INSERT INTO lottery (steam, ticket) VALUES (" .. chatvars.playerid .. "," .. r .. ")")
-
-						players[chatvars.playerid].cash = players[chatvars.playerid].cash - server.lotteryTicketPrice
-						break
-					end
-
-					tries = tries + 1
-					if (tries > 100) then
-						break
-					end
-				end
+			-- start by building a table with all 100 tickets in it
+			for a=1,100,1 do
+				tickets[a] = {}
+				tickets[a].ticket = a
 			end
 
+			cursor,errorString = conn:execute("SELECT * FROM lottery WHERE steam = " .. chatvars.playerid)
+			row = cursor:fetch({}, "a")
+
+			-- now remove each ticket that the player already has
+			while row do
+				tickets[row.ticket] = nil
+				row = cursor:fetch(row, "a")
+			end
+
+			-- copy the remaining tickets into a temp table so we can remove the gaps in the ticket numbering for later
+			tempTickets = {}
+			b = 1
+
+			for k,v in pairs(tickets) do
+				tempTickets[b] = {}
+				tempTickets[b].ticket = v.ticket
+				b = b + 1
+			end
+
+			tickets = tempTickets
+
+			-- get the remaining ticket count
+			ticketCount = tablelength(tickets)
+
+			-- no tickets left? Call social services!
+			if ticketCount == 0 then
+				r = randSQL(5)
+
+				if r == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have every ticket. You should see someone about that.[-]") end
+				if r == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have every ticket. You know that isn't chocolate in the golden ticket right? I guess it is brown though.[-]") end
+				if r == 3 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]There are no tickets left to give! None, nil, zip, zero, nadda. Not even an electronic sausage.[-]") end
+				if r == 4 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You can't have any more tickets! Go away! The ticket office is now closed. OUT![-]") end
+				if r == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No more tickets sorry. Some maniac has purchased the lot![-]") end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			-- loop for the number of tickets that the player wants to buy
+			for a=1,math.abs(chatvars.number),1 do
+				-- pick a random ticket from the remaining tickets
+				r = randSQL(ticketCount)
+				conn:execute("INSERT INTO lottery (steam, ticket) VALUES (" .. chatvars.playerid .. "," .. tickets[r].ticket .. ")")
+				players[chatvars.playerid].cash = players[chatvars.playerid].cash - server.lotteryTicketPrice
+
+				-- remove the chosen ticket from the remaining tickets
+				tickets[r] = nil
+				ticketCount = ticketCount - 1
+
+				-- copy the remaining tickets into a temp table so we can remove the gaps in the ticket numbering for later
+				-- if we don't do this we might pick a number that was already picked and we'd have to muck around with extra loops and checks
+				tempTickets = {}
+				b = 1
+
+				for k,v in pairs(tickets) do
+					tempTickets[b] = {}
+					tempTickets[b].ticket = v.ticket
+					b = b + 1
+				end
+
+				tickets = tempTickets
+			end
+
+			-- shake the player down for the cash they just spent
 			conn:execute("UPDATE players SET cash = " .. players[chatvars.playerid].cash .. " WHERE steam = " .. chatvars.playerid)
 			cursor,errorString = conn:execute("SELECT count(ticket) as tickets FROM lottery WHERE steam = " .. chatvars.playerid)
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 
+			-- tell the player they're a sucker er I mean how many tickets they have.
 			if tonumber(row.tickets) > 0 then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Good Luck!  You have " .. row.tickets .. " tickets in the next draw![-]")
 			end
@@ -1487,7 +1530,7 @@ function gmsg_shop()
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('shop', '" .. escape(tmp.topicDescription) .. "')")

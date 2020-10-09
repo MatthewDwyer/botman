@@ -10,7 +10,7 @@ SET time_zone = "+00:00";
 --
 -- Database: `bots`
 --
-CREATE DATABASE IF NOT EXISTS `bots` DEFAULT CHARACTER SET utf8 COLLATE utf8mb4_general_ci;
+CREATE DATABASE IF NOT EXISTS `bots` DEFAULT CHARACTER SET utf8mb4;
 USE `bots`;
 
 -- --------------------------------------------------------

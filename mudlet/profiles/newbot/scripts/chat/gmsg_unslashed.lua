@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -101,7 +101,7 @@ function gmsg_unslashed()
 		if not server.allowBotRestarts then
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is disabled.  Enable it with /enable bot restart[-]")
 			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]If you do not have a script or other process monitoring the bot, it will not restart automatically.[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Scripts can be downloaded at http://botman.nz/shellscripts.zip and may require some editing for paths.[-]")
+			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Scripts can be downloaded at https://botman.nz/shellscripts.zip and may require some editing for paths.[-]")
 
 			botman.faultyChat = false
 			return true
@@ -227,7 +227,7 @@ function gmsg_unslashed()
 				return true
 			end
 
-			r = rand(10)
+			r = randSQL(10)
 
 			if chatvars.chatPublic then
 				if (r == 1) then message("say [" .. server.chatColour .. "]Look who's talking :P[-]") end
@@ -314,7 +314,7 @@ function gmsg_unslashed()
 
 				if word == "bot" or word == "bot?" or word == "bot!" or word == string.lower(server.botName) then
 					if (chatvars.words[1] == "thanks" or chatvars.words[1] == "ty" or string.find(chatvars.words[1], "thx")) then
-						l = rand(4)
+						l = randSQL(4)
 
 						if chatvars.chatPublic then
 							if l == 1 then message("say [" .. server.chatColour .. "]You're welcome " .. chatvars.playername .. " <3[-]") end
@@ -329,7 +329,7 @@ function gmsg_unslashed()
 						end
 					else
 						if string.find(chatvars.words[1], "bad") then
-							l = rand(46)
+							l = randSQL(46)
 
 							if chatvars.chatPublic then
 								if l == 1 then message("say [" .. server.chatColour .. "]Don't hate me! D:[-]") end
@@ -341,7 +341,7 @@ function gmsg_unslashed()
 
 								if l == 7 then
 									if tonumber(botman.playersOnline) > 1 then
-										r = rand(botman.playersOnline)
+										r = randSQL(botman.playersOnline)
 
 										i = 0
 										for k,v in pairs(igplayers) do
@@ -404,7 +404,7 @@ function gmsg_unslashed()
 
 								if l == 7 then
 									if tonumber(botman.playersOnline) > 1 then
-										r = rand(botman.playersOnline)
+										r = randSQL(botman.playersOnline)
 
 										i = 0
 										for k,v in pairs(igplayers) do
@@ -463,7 +463,7 @@ function gmsg_unslashed()
 							return true
 						end
 
-						r = rand(19)
+						r = randSQL(19)
 
 						if r < 6 and chatvars.words[3] == nil then
 							if chatvars.chatPublic then
@@ -477,7 +477,7 @@ function gmsg_unslashed()
 						end
 
 						if string.find(chatvars.command, "love") then
-							l = rand(6)
+							l = randSQL(6)
 
 							if chatvars.chatPublic then
 								if l == 1 then message("say [" .. server.chatColour .. "]I know.[-]") end
@@ -500,7 +500,7 @@ function gmsg_unslashed()
 						end
 
 						if string.find(chatvars.command, "pretty") then
-							l = rand(6)
+							l = randSQL(6)
 
 							if chatvars.chatPublic then
 								if l == 1 then message("say [" .. server.chatColour .. "]" .. chatvars.words[1]:gsub("^%l", string.upper)  .. " " .. chatvars.playername .. "[-]") end
@@ -523,7 +523,7 @@ function gmsg_unslashed()
 						end
 
 						if string.find(chatvars.command, "cool") or string.find(chatvars.command, "great") or string.find(chatvars.command, "good") then
-							l = rand(4)
+							l = randSQL(4)
 
 							if chatvars.chatPublic then
 								if l == 1 then message("say [" .. server.chatColour .. "]Thanks " .. chatvars.playername .. "![-]") end
@@ -665,7 +665,7 @@ function gmsg_unslashed()
 
 	if not server.beQuietBot then
 		if players[chatvars.playerid].newPlayer == true and (string.find(chatvars.command, "where") or (string.find(chatvars.command, "any"))) and (string.find(chatvars.command, "zed") or string.find(chatvars.command, "zom")) then
-			r = rand(7)
+			r = randSQL(7)
 			if (r == 2) then r = 3 end
 			if (r == 5) then r = 6 end
 

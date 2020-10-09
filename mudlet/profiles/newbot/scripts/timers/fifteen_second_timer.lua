@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -18,6 +18,7 @@ function FifteenSecondTimer()
 	-- run a quick test to prove or disprove that we are still connected to the database incase we've fallen off :O
 	if not botman.dbConnected then
 		openDB()
+		openSQLiteDB()
 	end
 
 	-- force a re-test of the connection to the bot's database

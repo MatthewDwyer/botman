@@ -1,3 +1,12 @@
+--[[
+    Botman - A collection of scripts for managing 7 Days to Die servers
+    Copyright (C) 2020  Matthew Dwyer
+	           This copyright applies to the Lua source code in this Mudlet profile.
+    Email     smegzor@gmail.com
+    URL       https://botman.nz
+    Source    https://bitbucket.org/mhdwyer/botman
+--]]
+
 function table.val_to_str ( v )
   if "string" == type( v ) then
     v = string.gsub( v, "\n", "\\n" )
@@ -21,7 +30,7 @@ function table.key_to_str ( k )
 end
 
 
-function dumpTable( tbl )
+function dumpLuaTable( tbl )
   local k, v, result, file
   local done = {}
 

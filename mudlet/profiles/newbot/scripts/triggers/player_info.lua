@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -501,7 +501,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 				message("say [" .. server.chatColour .. "]" .. name .. " has died.[-]")
 
-				r = rand(14)
+				r = randSQL(14)
 				if (r == 1) then message("say [" .. server.chatColour .. "]" .. name .. " removed themselves from the gene pool.[-]") end
 				if (r == 2) then message("say [" .. server.chatColour .. "]LOL!  Didn't run far away enough did you " .. name .. "?[-]") end
 				if (r == 3) then message("say [" .. server.chatColour .. "]And the prize for most creative way to end themselves goes to.. " .. name .. "[-]") end
@@ -685,7 +685,7 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		if igplayers[steam].doge then
 			dogePhrase = dogeWOW() .. " " .. dogeWOW() .. " "
 
-			r = rand(10)
+			r = randSQL(10)
 			if r == 1 then dogePhrase = dogePhrase .. "WOW" end
 			if r == 3 then dogePhrase = dogePhrase .. "Excite" end
 			if r == 5 then dogePhrase = dogePhrase .. "Amaze" end
@@ -1109,7 +1109,9 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			flag = flag .. "F"
 		end
 
-		if botman.dbConnected then conn:execute("INSERT INTO tracker (steam, x, y, z, session, flag) VALUES (" .. steam .. "," .. intX .. "," .. intY .. "," .. intZ .. "," .. players[steam].sessionCount .. ",'" .. flag .. "')") end
+		if tonumber(botman.trackingTicker) == 3 then
+			if botman.dbConnected then conn:execute("INSERT INTO tracker (steam, x, y, z, session, flag) VALUES (" .. steam .. "," .. intX .. "," .. intY .. "," .. intZ .. "," .. players[steam].sessionCount .. ",'" .. flag .. "')") end
+		end
 
 		if igplayers[steam].location ~= nil then
 			if botman.dbConnected then conn:execute("INSERT INTO locationSpawns (location, x, y, z) VALUES ('" .. igplayers[steam].location .. "'," .. intX .. "," .. intY .. "," .. intZ .. ")") end
@@ -1225,8 +1227,8 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 
 		if tmp.bootPlayer then
 			tmp = {}
-			tmp.side = rand(4)
-			tmp.offset = rand(50)
+			tmp.side = randSQL(4)
+			tmp.offset = randSQL(50)
 
 			if tmp.side == 1 then
 				tmp.x = locations[currentLocation].x - (locations[currentLocation].size + 20 + tmp.offset)

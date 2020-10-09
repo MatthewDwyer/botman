@@ -2,8 +2,8 @@
     Botman - A collection of scripts for managing 7 Days to Die servers
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile
-    Email     mdwyer@snap.net.nz
-    URL       http://botman.nz
+    Email     smegzor@gmail.com
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -649,10 +649,12 @@ function gmsg_who(playerid, number)
 
 						message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. " distance: " .. string.format("%d", dist) .. " region r." .. x .. "." .. z .. ".7rg Hacker score: " .. players[k].hackerScore .. "[-]")
 					else
-						if (accessLevel(playerid) < 11) then
-							message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. " Hacker score: " .. players[k].hackerScore .. "[-]")
-						else
-							message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. "[-]")
+						if accessLevel(playerid) > 2 then
+							if (accessLevel(playerid) < 11) then
+								message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. " Hacker score: " .. players[k].hackerScore .. "[-]")
+							else
+								message("pm " .. playerid .. " [" .. server.chatColour .. "]" .. v.name .. "[-]")
+							end
 						end
 					end
 				end
@@ -1344,7 +1346,7 @@ function gmsg(line, ircid)
 			end
 
 			if not string.find(chatvars.command, "code") then
-				r = rand(4)
+				r = randSQL(4)
 
 				if r == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Something smells fishy.[-]") end
 				if r == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I smell something stinky! :D[-]") end

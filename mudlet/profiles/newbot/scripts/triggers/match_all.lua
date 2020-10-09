@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -316,7 +316,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 				botTokenFound = nil
 
 				if server.useAllocsWebAPI then
-					server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+					server.allocsWebAPIPassword = generatePassword(20)
 					conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "'")
 					botman.APIOffline = false
 					toggleTriggers("api offline")
@@ -334,6 +334,11 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 				echoConsoleTo = nil
 			end
 
+			if 	readResetRegions then
+				tempTimer(3, [[loadResetZones(true)]])
+			end
+
+			readResetRegions = nil
 			readWebTokens = nil
 			botTokenFound = nil
 			botman.listItems = false
@@ -442,6 +447,12 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 			if players[tmp.pid].accessLevel == 0 and not server.allocs then
 				message("pm " .. tmp.pid .. " [" .. server.warnColour .. "]ALERT! The bot requires Alloc's mod but it appears to be missing. The bot will not work well without it.[-]")
+			end
+
+			if server.botman then
+				if players[tmp.pid].nameOverride ~= "" then
+					setOverrideChatName(tmp.pid, players[tmp.pid].nameOverride)
+				end
 			end
 		end
 
@@ -616,6 +627,21 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 				return
 			end
 		end
+
+if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
+
+		if readBotmanConfig then
+			if string.find(line, "</Botman>", nil, true) then
+				readBotmanConfig = nil
+				table.insert(botman.config, line)
+				processBotmanConfig()
+
+				return
+			end
+
+			table.insert(botman.config, line)
+		end
+
 
 		if getAdminList then
 			temp = string.split(line, ":")
@@ -1022,7 +1048,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 			if string.find(line, server.botsIP) then
 				botman.listEntities = true
 				botman.lastListEntities = os.time()
-				conn:execute("TRUNCATE memEntities")
+				connMEM:execute("DELETE FROM memEntities")
 			end
 
 			return
@@ -1721,7 +1747,7 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 		if tonumber(server.webPanelPort) == 0 then
 			if not server.useAllocsWebAPI then
-				server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+				server.allocsWebAPIPassword = generatePassword(20)
 				conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
 				os.remove(homedir .. "/temp/apitest.txt")
 				server.useAllocsWebAPI = true
@@ -1835,6 +1861,11 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 --if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
+	if string.find(line, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>", nil, true) then
+		readBotmanConfig = true
+		botman.config = {}
+	end
+
 	if string.find(line, "Web user with name=bot and password") and string.find(line, "added with permission level of 0.")  then
 		temp = string.sub(line, string.find(line, "password=") + 9, string.find(line, "added with permission") - 1)
 		temp = string.trim(temp)
@@ -1864,6 +1895,40 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 			server.useAllocsWebAPI = false
 			conn:execute("UPDATE server set useAllocsWebAPI = 0")
 		end
+	end
+
+	if readResetRegions then
+		if string.find(line, "There are currently no reset regions") then
+			readResetRegions = nil
+			return
+		end
+
+		if string.sub(line, 1, 2) == "r." then
+			temp = string.split(v, "%.")
+			x = temp[2]
+			z = temp[3]
+
+			if not resetRegions[v .. ".7rg"] then
+				resetRegions[v .. ".7rg"] = {}
+			end
+
+			resetRegions[v .. ".7rg"].x = x
+			resetRegions[v .. ".7rg"].z = z
+			resetRegions[v .. ".7rg"].inConfig = true
+			conn:execute("INSERT INTO resetZones (region, x, z) VALUES ('" .. escape(v .. ".7rg") .. "'," .. x .. "," .. z .. ")")
+		end
+	end
+
+	if string.find(line, "bm-resetregions list", nil, true) and string.find(line, server.botsIP) then
+		readResetRegions = true
+
+		for k,v in pairs(resetRegions) do
+			v.inConfig = false
+		end
+	end
+
+	if string.find(line, "ERROR") and string.find(line, "can only be executed") and not isChat then
+		botman.serverStarting = true
 	end
 
 end

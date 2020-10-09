@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -367,7 +367,7 @@ function gmsg_resets()
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('reset zones', '" .. escape(tmp.topicDescription) .. "')")

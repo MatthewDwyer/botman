@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -130,6 +130,8 @@ function playerConnected(line)
 	end
 
 	if tmp.steam then
+		pid = LookupOfflinePlayer(tmp.steam)
+
 		-- check playersArchived and move the player record back to the players table if found
 		if playersArchived[tmp.steam] then
 			if debug then dbug("Restoring player " .. tmp.steam .. " " .. tmp.player .. " from archive") end
@@ -137,9 +139,8 @@ function playerConnected(line)
 			conn:execute("DELETE FROM playersArchived WHERE steam = " .. tmp.steam)
 			playersArchived[tmp.steam] = nil
 			loadPlayers(tmp.steam)
+			pid = tmp.steam
 		end
-
-		pid = LookupOfflinePlayer(tmp.steam)
 	end
 
 	if tmp.ip == nil then tmp.ip = "" end
@@ -147,9 +148,6 @@ function playerConnected(line)
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
 	if tmp.steam then
-		-- log the player connection in events table
-		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")") end
-
 		-- if	botman.botsConnected then
 			-- -- copy in bots db
 			-- connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")")
@@ -201,6 +199,22 @@ function playerConnected(line)
 				return
 			end
 		end
+	end
+
+	-- do a final check if we failed to lookup the player
+	if pid == 0 and tmp.steam then
+		-- try to find the player in the events table
+		cursor,errorString = conn:execute("SELECT count(steam) AS steamCount FROM events WHERE steam = " .. tmp.steam)
+		row = cursor:fetch({}, "a")
+
+		if tonumber(row.steamCount) > 0 then
+			pid = tmp.steam
+		end
+	end
+
+	if tmp.steam then
+		-- log the player connection in events table
+		if botman.dbConnected then conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (0,0,0,'" .. botman.serverTime .. "','player joined','Player joined " .. escape(tmp.player) .. " " .. tmp.steam .. " Owner " .. tmp.steamOwner .. " " .. tmp.entityid .. " " .. tmp.ip .. "'," .. tmp.steamOwner .. ")") end
 	end
 
 	-- add to players table
@@ -262,7 +276,7 @@ function playerConnected(line)
 		if not server.optOutGlobalBots then
 			-- check if GBL ban
 			if botman.botsConnected then
-				cursor,errorString = connBots:execute("SELECT * FROM bans WHERE (Steam = " .. tmp.steam .. " or Steam = " .. tmp.steamOwner .. ") and GBLBan = 1 and GBLBanActive = 1")
+				cursor,errorString = connBots:execute("SELECT * FROM bans WHERE (Steam = " .. tmp.steam .. " OR Steam = " .. tmp.steamOwner .. ") AND GBLBan = 1 AND GBLBanActive = 1")
 				rows = cursor:numrows()
 
 				if tonumber(rows) > 0 then
@@ -272,7 +286,7 @@ function playerConnected(line)
 					return
 				else
 					-- check number of pending global bans and alert if this player has any, but allow them to join.
-					cursor,errorString = connBots:execute("SELECT count(steam) as pendingBans FROM bans WHERE (Steam = " .. tmp.steam .. " or Steam = " .. tmp.steamOwner .. ") and GBLBan = 1 and GBLBanVetted = 0")
+					cursor,errorString = connBots:execute("SELECT count(steam) AS pendingBans FROM bans WHERE (Steam = " .. tmp.steam .. " OR Steam = " .. tmp.steamOwner .. ") AND GBLBan = 1 AND GBLBanVetted = 0")
 					row = cursor:fetch({}, "a")
 					if tonumber(row.pendingBans) > 0 then
 						irc_chat(server.ircAlerts, "ALERT!  Player " .. tmp.steam ..  " " .. tmp.player .. " has " .. row.pendingBans .. " pending global bans.  If the bot bans them, it will add a new active global ban.")

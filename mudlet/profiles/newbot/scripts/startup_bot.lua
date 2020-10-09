@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	          This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -129,6 +129,8 @@ function login()
 		botman.lastBlockCommandOwner =	0
 		botman.initReservedSlots = true
 		botman.webdavFolderWriteable = true
+		botman.trackingTicker = 0
+		botman.checkBotOnIRC = os.time() + 20
 	end
 
 	tempTimer( 40, [[checkData()]] )
@@ -156,11 +158,6 @@ function login()
 	if botman.sysExitID == nil then
 		botman.sysExitID = registerAnonymousEventHandler("sysExitEvent", "onSysExit")
 		botman.sysExitID = 0
-	end
-
-	if botman.sysIrcStatusMessageID == nil then
-		botman.sysIrcStatusMessageID = registerAnonymousEventHandler("sysIrcStatusMessage", "ircStatusMessage")
-		botman.sysIrcStatusMessageID = 0
 	end
 
 	if botman.sysDisconnectionID == nil then
@@ -196,10 +193,17 @@ function login()
 			reloadBotScripts(false, false, false)
 		end
 
+		if botman.blockTelnetSpam then
+			botman.blockTelnetSpam = false
+			tempTimer(60, [[setBlockTelnetSpam(true)]])
+		end
+
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 		-- this must come after reload_bot_scripts above.
 		fixTables()
+
+		openSQLiteDB() -- this lives in sqlite.lua
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 		initBot() -- this lives in edit_me.lua
@@ -313,13 +317,18 @@ function login()
 		end
 
 		if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
+	else
+		if botman.blockTelnetSpam then
+			botman.blockTelnetSpam = false
+			tempTimer(60, [[setBlockTelnetSpam(true)]])
+		end
 	end
 
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	if not isFile(homedir .. "/botman.ini") then
+	--if not isFile(homedir .. "/botman.ini") then
 		--storeBotmanINI()
-	end
+	--end
 
 	-- load the server API key if it exists
 	readAPI()

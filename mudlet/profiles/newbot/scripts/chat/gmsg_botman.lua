@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -345,7 +345,7 @@ function gmsg_botman()
 				end
 			end
 
-			cursor,errorString = conn:execute("SELECT * FROM list WHERE id = " .. chatvars.number)
+			cursor,errorString = connMEM:execute("SELECT * FROM list WHERE id = " .. chatvars.number)
 			row = cursor:fetch({}, "a")
 
 			if row then
@@ -1180,7 +1180,7 @@ function gmsg_botman()
 			end
 
 			if botman.dbConnected then
-				conn:execute("TRUNCATE list")
+				connMEM:execute("DELETE FROM list")
 
 				if tmp.pid ~= 0 then
 					cursor,errorString = conn:execute("SELECT * FROM prefabCopies WHERE owner = " .. tmp.pid .. " ORDER BY name")
@@ -1228,7 +1228,7 @@ function gmsg_botman()
 						irc_chat(chatvars.ircAlias, "#" .. counter .. " " .. name .. ": " .. row.name .. "  P1: " .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "  P2: " .. row.x2 .. " " .. row.y2 .. " " .. row.z2)
 					end
 
-					conn:execute("INSERT INTO list (id, thing, class, steam) VALUES (" .. counter .. ",'" .. escape(row.owner .. " " .. row.name) .. "','" .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "'," .. chatvars.playerid .. ")")
+					connMEM:execute("INSERT INTO list (id, thing, class, steam) VALUES (" .. counter .. ",'" .. connMEM:escape(row.owner .. " " .. row.name) .. "','" .. row.x1 .. " " .. row.y1 .. " " .. row.z1 .. "'," .. chatvars.playerid .. ")")
 					counter = counter + 1
 					row = cursor:fetch(row, "a")
 				end
@@ -2179,6 +2179,90 @@ function gmsg_botman()
 				-- forget the pre-recorded coords of the horde spawn point
 				igplayers[chatvars.playerid].horde = nil
 				message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]You have unmarked the horde.  Typing " .. server.commandPrefix .. "spawn horde will focus the horde on you if you don't target a player or location.[-]")
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_SetPlayerName()
+		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set player {steam id/name/entity id} name {new name}\n"
+			help[1] = help[1] .. " {#}clear player {steam id/name/entity id} name"
+			help[2] = "A player's name can be replaced with something else. \n"
+			help[2] = help[2] .. "The change is applied each time the player joins until an admin clears it."
+
+			tmp.command = help[1]
+			tmp.keywords = "set,clear,player,name"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+
+			help[3] = helpCommandRestrictions(tmp)
+
+			if botman.registerHelp then
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "botman") or string.find(chatvars.command, "player") or string.find(chatvars.command, "name")) or chatvars.words[1] ~= "help" then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+		end
+
+		if (chatvars.words[1] == "set" or chatvars.words[1] == "clear") and chatvars.words[2] == "player" and string.find(chatvars.command, " name ") then
+			if (chatvars.playername ~= "Server") then
+				if (chatvars.accessLevel > 2) then
+					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+					botman.faultyChat = false
+					return true
+				end
+			else
+				if (chatvars.accessLevel > 2) then
+					irc_chat(chatvars.ircAlias, "This command is restricted.")
+					botman.faultyChat = false
+					return true
+				end
+			end
+
+			tmp.playerName = string.sub(chatvars.command, string.find(chatvars.command, " player ") + 8, string.find(chatvars.command, " name ") - 1)
+			tmp.newName = string.sub(chatvars.commandOld, string.find(chatvars.command, " name ") + 6)
+
+			tmp.pid = LookupPlayer(tmp.playerName)
+			if tmp == 0 then
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found called " .. tmp.playerName .. "[-]")
+				else
+					irc_chat(chatvars.ircAlias, "No player found called " .. tmp.playerName)
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if chatvars.words[1] == "set" then
+				players[tmp.pid].nameOverride = tmp.newName
+				setOverrideChatName(tmp.pid, tmp.newName)
+			else
+				players[tmp.pid].nameOverride = ""
+				setOverrideChatName(tmp.pid, "", true)
+			end
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.pid].name .. " will now be called " .. tmp.newName .. " when they use chat.[-]")
+			else
+				irc_chat(chatvars.ircAlias, players[tmp.pid].name .. " will now be called " .. tmp.newName .. " when they use chat.")
 			end
 
 			botman.faultyChat = false
@@ -3408,7 +3492,7 @@ function gmsg_botman()
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('Botman', '" .. escape(tmp.topicDescription) .. "')")
@@ -3538,6 +3622,15 @@ function gmsg_botman()
 
 	if result then
 		if debug then dbug("debug cmd_SetMapColour triggered") end
+		return result
+	end
+
+	if (debug) then dbug("debug botman line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetPlayerName()
+
+	if result then
+		if debug then dbug("debug cmd_SetPlayerName triggered") end
 		return result
 	end
 

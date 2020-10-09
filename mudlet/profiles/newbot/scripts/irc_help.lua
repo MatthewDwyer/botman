@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -168,7 +168,7 @@ function irc_Manual()
 			irc_chat(irc_params.name, "To do a console command type con followed by the console command.  eg. con help ban.")
 			irc_chat(irc_params.name, "Your bot requires the latest version of Allocs mod, though it may work with older versions.")
 			irc_chat(irc_params.name, "It also supports the BC mod and the Botman mod, which it uses for many great features such as digging, spawning prefabs and detecting flying/clipping players.")
-			irc_chat(irc_params.name, "If you don't have the mods, you can find them online or grab them from here http://botman.nz/download")
+			irc_chat(irc_params.name, "If you don't have the mods, you can find them online or grab them from here https://botman.nz/download")
 			irc_chat(irc_params.name, "Many game hosts block uploading dll files.  If yours does that, send them a support ticket with the url above and request that they install the Mods folder in the zip.")
 		end
 
@@ -200,7 +200,7 @@ function irc_Setup()
 
 	irc_chat(irc_params.name, "When running the bot for the first time, there are several setup tasks to do and some mod requirements.")
 	irc_chat(irc_params.name, "The bot requires Alloc's mod to function. Many very nice extra features require either the BC mod or the Botman mod.")
-	irc_chat(irc_params.name, "You can grab them directly from their authors or from here http://botman.nz/download")
+	irc_chat(irc_params.name, "You can grab them directly from their authors or from here https://botman.nz/download")
 	irc_chat(irc_params.name, "If updating an installed mod, you will need to stop your server first.  If it is a new mod, you only need to restart afterwards.")
 	irc_chat(irc_params.name, "You may need to create the Mods folder first.  It lives in the main folder that contains all of your server files and folders.  If you can see 7daystodie_data you are in the right folder.")
 	irc_chat(irc_params.name, "Copy each mod directly into the Mods folder.  You should not end up with a folder called Mods inside your Mods folder.")

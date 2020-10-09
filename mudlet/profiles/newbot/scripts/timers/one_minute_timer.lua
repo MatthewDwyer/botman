@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -425,6 +425,11 @@ if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).curre
 
 	-- check for timed events due to run
 	runTimedEvents()
+
+if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
+
+	-- check that the bot has not fallen off the main irc channel
+	irc_chat(server.ircMain, "/names")
 
 if (debug) then dbug("debug one minute timer line " .. debugger.getinfo(1).currentline) end
 

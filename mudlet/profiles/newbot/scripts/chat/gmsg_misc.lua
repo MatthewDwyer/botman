@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -755,7 +755,7 @@ function gmsg_misc()
 			end
 
 			if pid ~= 0 then
-				players[pid].ircInvite = rand(10000)
+				players[pid].ircInvite = randSQL(10000)
 
 				if igplayers[pid] then
 					message("pm " .. pid .. " HEY " .. players[pid].name .. "! You have an invite code for IRC :D Reply with " .. server.commandPrefix .. "accept " .. players[pid].ircInvite .. " or ignore it. D:")
@@ -1218,7 +1218,7 @@ function gmsg_misc()
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('misc', '" .. escape(tmp.topicDescription) .. "')")

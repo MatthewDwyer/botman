@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -278,7 +278,7 @@ function gmsg_info()
 			if (igplayers[id]) then
 				if (chatvars.playername ~= "Server") then
 					if chatvars.playerid == id then
-						r = rand(10)
+						r = randSQL(10)
 						if r == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]YOU are playing right now.[-]") end
 						if r == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I dunno, why don't you ask yourself that?[-]") end
 						if r == 3 then message("say ATTENTION! Attention everyone.  Have you seen " .. chatvars.playername .. "? " .. chatvars.playername .. " seems a little lost.[-]") end
@@ -1772,7 +1772,7 @@ function gmsg_info()
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('info', '" .. escape(tmp.topicDescription) .. "')")

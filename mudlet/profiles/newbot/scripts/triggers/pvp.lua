@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -28,7 +28,7 @@ function pvpPolice(line)
 		return
 	 end
 
-	r = rand(23)
+	r = randSQL(23)
 	score = string.format("%.1f", math.random() * 10)
 
 	if (debug) then dbug("debug pvp line " .. debugger.getinfo(1).currentline) end
@@ -128,7 +128,7 @@ function pvpPolice(line)
 			end
 
 			if tonumber(players[killerID].playerKills) == 0 then
-				r = rand(4)
+				r = randSQL(4)
 				if r == 1 then message("say [" .. server.chatColour .. "]" .. killerName .. " makes their first kill and is now a hit.. sorry has a hit on themselves.[-]") end
 				if r == 2 then message("say [" .. server.chatColour .. "]" .. killerName .. " finally scores their first kill! Woo Hoo![-]") end
 				if r == 3 then message("say [" .. server.chatColour .. "]" .. killerName .. " finally scores their first kill! About time you showed up kid.[-]") end
@@ -136,7 +136,7 @@ function pvpPolice(line)
 
 				players[killerID].pvpBounty = 200
 			else
-				r = rand(30)
+				r = randSQL(30)
 				if r == 1 then message("say [" .. server.chatColour .. "]" .. killerName .. " once again asserts their dominance in the world.[-]") end
 				if r == 2 then message("say [" .. server.chatColour .. "]" .. killerName .. " strikes a mighty blow against " .. victimName .. "![-]") end
 				if r == 3 then message("say [" .. server.chatColour .. "]" .. killerName .. " fluked that one! " .. victimName .. " will be pissed.[-]") end
@@ -167,7 +167,7 @@ function pvpPolice(line)
 				if r == 28 then message("say [" .. server.chatColour .. "]" .. victimName .. " is today's mystery organ donor! Thank you for your support " .. victimName .. ":D[-]") end
 
 				if r == 29 then
-					r = rand(10)
+					r = randSQL(10)
 					message("say [" .. server.chatColour .. "]" .. killerName .. " 'accidentally' ran over " .. victimName .. " " .. r .. " times! " .. killerName .. " is such a careful driver.[-]")
 				end
 
@@ -239,7 +239,7 @@ function pvpPolice(line)
 
 		-- don't react if server.pvpIgnoreFriendlyKills is true and the killer is friends with the victim
 		if server.pvpIgnoreFriendlyKills and isFriend(victimID, killerID) then
-			r = rand(10)
+			r = randSQL(10)
 			if r == 1 then message("say [" .. server.chatColour .. "]OOPS! " .. killerName .. " accidentally ended the life of " .. victimName .. ".  It was just a prank bro.[-]") end
 			if r == 2 then message("say [" .. server.chatColour .. "]" .. victimName .. " slipped on " .. killerName .. "'s banana.[-]") end
 			if r == 3 then message("say [" .. server.chatColour .. "]" .. killerName .. " is a terrible person.[-]") end

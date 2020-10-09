@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -674,11 +674,11 @@ function registerBot()
 		-- delete any server records with a botID of zero
 		connBots:execute("DELETE FROM servers WHERE botID = 0")
 
-		id = rand(9999)
+		id = randSQL(9999)
 		cursor,errorString = connBots:execute("select botID from servers where botID = " .. id)
 
 		while tonumber(cursor:numrows()) > 0 do
-			id = rand(9999)
+			id = randSQL(9999)
 			cursor,errorString = connBots:execute("select botID from servers where botID = " .. id)
 		end
 
@@ -859,8 +859,8 @@ function autoBaseDefend(raider, baseOwner, whichBase)
 
 	if dist < server.baseSize and protected then
 		tmp = {}
-		tmp.side = rand(4)
-		tmp.offset = rand(50)
+		tmp.side = randSQL(4)
+		tmp.offset = randSQL(50)
 
 		if tmp.side == 1 then
 			tmp.x = players[baseOwner].homeX - (server.baseSize + 10 + tmp.offset)
@@ -1143,7 +1143,7 @@ function alterTables()
 
 	-- load the previously executed statements from altertables into the Lua statements table for checking by doSQL
 	statements = {}
-	cursor,errorString = conn:execute("select * from altertables")
+	cursor,errorString = conn:execute("SELECT * FROM altertables")
 	row = cursor:fetch({}, "a")
 	while row do
 		statements[row.statement] = {}
@@ -1228,6 +1228,7 @@ function alterTables()
 	doSQL("ALTER TABLE `players` CHANGE `location` `location` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT '', DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci, CHANGE `aliases` `aliases` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL")
 
 	doSQL("ALTER TABLE `playersArchived` CHANGE `name` `name` VARCHAR(100) NOT NULL DEFAULT ''")
+	doSQL("ALTER TABLE `players` ADD `nameOverride` VARCHAR(100) NOT NULL DEFAULT ''")
 
 	if (debug) then display("debug alterTables line " .. debugger.getinfo(1).currentline) end
 
@@ -1615,7 +1616,7 @@ function alterTables()
 	doSQL("UPDATE `badItems` SET action = 'ban' WHERE item = '*Admin'")
 	doSQL("DELETE FROM `badItems` WHERE item = '*errain'")
 	doSQL("INSERT INTO `badItems` (`item`, `action`, `validated`) VALUES ('terrainFiller', 'ban', '1')")
-	doSQL("INSERT INTO `badItems` (`item`, `action`, `validated`) VALUES ('terrainRemove', 'ban', '1')")
+	doSQL("DELETE FROM `badItems` WHERE item = 'terrainRemove'")
 	doSQL("ALTER TABLE `inventoryChanges` CHANGE `item` `item` VARCHAR(60)")
 	doSQL("ALTER TABLE `locations` CHANGE `currency` `currency` VARCHAR(60)")
 	doSQL("ALTER TABLE `restrictedItems` CHANGE `item` `item` VARCHAR(100)")

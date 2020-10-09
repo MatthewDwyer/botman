@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -329,7 +329,7 @@ function CheckInventory()
 						logInventoryChanges(k, b.item, tonumber(items[a].quantity) - tonumber(b.quantity), v.xPos, v.yPos, v.zPos,players[k].sessionCount, tmp.flag)
 					end
 
-					v.afk = os.time() + 900
+					v.afk = os.time() + tonumber(server.idleKickTimer)
 
 					if (items[a] == nil) then
 						d1 = 0
@@ -446,7 +446,7 @@ function CheckInventory()
 			end
 		end
 
-		if (tmp.ban == true) and (server.gameType ~= "cre") then
+		if (tmp.ban) and (server.gameType ~= "cre") then
 			if tmp.playerAccessLevel > 2 then
 				tmp.stopProcessing = true
 				banPlayer(k, "1 year", tmp.banReason, "")
@@ -596,7 +596,7 @@ function readInventorySlot()
 		igplayers[invCheckID].equipment = igplayers[invCheckID].equipment .. slot .. "," .. item .. "," .. quality .. "|"
 	end
 
-	if not server.useAllocsWebAPI then
-		deleteLine()
-	end
+	-- if not server.useAllocsWebAPI then
+		-- deleteLine()
+	-- end
 end

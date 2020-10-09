@@ -2,8 +2,8 @@
     Botman - A collection of scripts for managing 7 Days to Die servers
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
-    URL       http://botman.nz
+    Email     smegzor@gmail.com
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -336,7 +336,7 @@ function gmsg_bot()
 			if string.sub(chatvars.commandOld, string.find(chatvars.command, "password") + 9) ~= server.masterPassword then
 				response = "password attempt failed."
 
-				r = rand(10)
+				r = randSQL(10)
 				if (r == 1) then response = "Your weak " .. response end
 				if (r == 2) then response = "That pathetic " .. response end
 				if (r == 3) then response = "Oh please. " .. firstToUpper(response) end
@@ -479,12 +479,12 @@ function gmsg_bot()
 			getBackupFiles(homedir .. "/data_backup")
 
 			-- the file list isn't in a useful order for numbering.  Let's fix that.
-			cursor,errorString = conn:execute("SELECT * FROM list WHERE class = 'backup' ORDER BY thing desc")
+			cursor,errorString = connMEM:execute("SELECT * FROM list WHERE class = 'backup' ORDER BY thing desc")
 			row = cursor:fetch({}, "a")
 			count = 2
 
 			while row do
-				conn:execute("UPDATE list SET id = " .. count .. " WHERE thing = '" .. escape(row.thing) .. "'")
+				connMEM:execute("UPDATE list SET id = " .. count .. " WHERE thing = '" .. connMEM:escape(row.thing) .. "'")
 				count = count + 1
 				row = cursor:fetch(row, "a")
 			end
@@ -495,7 +495,7 @@ function gmsg_bot()
 				irc_chat(chatvars.ircAlias, "#1 Latest backup")
 			end
 
-			cursor,errorString = conn:execute("SELECT * FROM list WHERE class = 'backup' ORDER BY id")
+			cursor,errorString = connMEM:execute("SELECT * FROM list WHERE class = 'backup' ORDER BY id")
 			row = cursor:fetch({}, "a")
 
 			while row do
@@ -1063,11 +1063,11 @@ function gmsg_bot()
 				if (chatvars.playername ~= "Server") then
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is disabled.  Enable it with /enable bot restart[-]")
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]If you do not have a script or other process monitoring the bot, it will not restart automatically.[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Scripts can be downloaded at http://botman.nz/shellscripts.zip and may require some editing for paths.[-]")
+					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Scripts can be downloaded at https://botman.nz/shellscripts.zip and may require some editing for paths.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "This command is disabled.  Enable it with /enable bot restart")
 					irc_chat(chatvars.ircAlias, "If you do not have a script or other process monitoring the bot, it will not restart automatically.")
-					irc_chat(chatvars.ircAlias, "Scripts can be downloaded at http://botman.nz/shellscripts.zip and may require some editing for paths.")
+					irc_chat(chatvars.ircAlias, "Scripts can be downloaded at https://botman.nz/shellscripts.zip and may require some editing for paths.")
 				end
 
 				botman.faultyChat = false
@@ -1191,7 +1191,7 @@ function gmsg_bot()
 					return true
 				end
 
-				cursor,errorString = conn:execute("SELECT * FROM list WHERE id = " .. chatvars.number .. " AND steam = -10")
+				cursor,errorString = connMEM:execute("SELECT * FROM list WHERE id = " .. chatvars.number .. " AND steam = -10")
 				row = cursor:fetch({}, "a")
 
 				if row.thing then
@@ -2360,7 +2360,7 @@ function gmsg_bot()
 			help[1] = " {#}enable/disable bot restart"
 			help[2] = "Using a launcher script or some other monitoring process you can have the bot automatically restart itself every time it terminates.\n"
 			help[2] = help[2] .. "Periodically restarting the bot helps to keep it running at its best.\n"
-			help[2] = help[2] .. "This feature is disabled by default.  A restart script can be downloaded from http://botman.nz/shellscripts.zip\n"
+			help[2] = help[2] .. "This feature is disabled by default.  A restart script can be downloaded from https://botman.nz/shellscripts.zip\n"
 			help[2] = help[2] .. "You will need to inspect and modify some paths in the scripts to match your setup."
 
 			tmp.command = help[1]
@@ -3267,7 +3267,7 @@ function gmsg_bot()
 				end
 
 				server.useAllocsWebAPI = true
-				server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+				server.allocsWebAPIPassword = generatePassword(20)
 				conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
 				send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 				botman.APIOffline = false
@@ -3344,7 +3344,7 @@ function gmsg_bot()
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('bot', '" .. escape(tmp.topicDescription) .. "')")

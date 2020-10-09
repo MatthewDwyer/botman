@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -81,7 +81,7 @@ function LookupShop(search,all)
 	shopQuality = 0
 	search = string.lower(search)
 
-	conn:execute("TRUNCATE memShop")
+	connMEM:execute("DELETE FROM memShop")
 
 	if all ~= nil then
 		cursor,errorString = conn:execute("SELECT * FROM shop WHERE item = '" .. escape(search) .. "' or category = '" .. escape(search) .. "' ORDER BY idx")
@@ -100,7 +100,7 @@ function LookupShop(search,all)
 		shopUnits = row.units
 		shopQuality = row.quality
 		shopPrice = (row.price + row.variation) * ((100 - row.special) / 100)
-		conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(shopCategory) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "'," .. row.units .. ")")
+		connMEM:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units) VALUES ('" .. connMEM:escape(row.item) .. "'," .. row.idx .. ",'" .. connMEM:escape(shopCategory) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. connMEM:escape(shopCode) .. "'," .. row.units .. ")")
 
 		row = cursor:fetch(row, "a")
 	end
@@ -123,7 +123,7 @@ function LookupShop(search,all)
 				shopUnits = row.units
 				shopQuality = row.quality
 				shopPrice = (row.price + row.variation) * ((100 - row.special) / 100)
-				conn:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units, quality) VALUES ('" .. escape(row.item) .. "'," .. row.idx .. ",'" .. escape(shopCategory) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. escape(shopCode) .. "'," .. row.units .. "," .. row.quality .. ")")
+				connMEM:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units, quality) VALUES ('" .. connMEM:escape(row.item) .. "'," .. row.idx .. ",'" .. connMEM:escape(shopCategory) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. connMEM:escape(shopCode) .. "'," .. row.units .. "," .. row.quality .. ")")
 				return
 			end
 
@@ -193,7 +193,7 @@ function drawLottery(draw)
 	winnersCount = 0
 
 	for x=1,100,1 do
-		prizeDraw = rand(100)
+		prizeDraw = randSQL(100)
 
 		cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE ticket = " .. prizeDraw)
 		rows = cursor:numrows()
@@ -241,7 +241,7 @@ function drawLottery(draw)
 		end
 	else
 		if not server.beQuietBot then
-			r = rand(7)
+			r = randSQL(7)
 
 			if (r == 1) then message("say [" .. server.chatColour .. "]Nobody wins again![-]") end
 			if (r == 2) then
@@ -261,7 +261,7 @@ function drawLottery(draw)
 
 			if (r == 5) then
 				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
-				r = rand(6)
+				r = randSQL(6)
 				if (r == 1) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]ME! I win! IT'S MINE! :P[-]") .. "')") end
 				if (r == 2) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Dead! Congratulations.. oh.. nevermind.[-]") .. "')") end
 				if (r == 3) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]TAX! Oh no! They've found my little illegal gambling scam er.. establishment. D:[-]") .. "')") end
@@ -279,7 +279,7 @@ function drawLottery(draw)
 					conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody!  But he's won enough so we're doing a redraw![-]") .. "')")
 					tempTimer( 15, [[drawLottery(]] .. r .. [[)]] )
 				else
-					r = rand(6)
+					r = randSQL(6)
 					if (r == 1) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Stop buying all of the tickets you dirty cheat![-]") .. "')") end
 					if (r == 2) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Not on my watch. *burns Nobody's ticket*[-]") .. "')") end
 					if (r == 3) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody again.[-]") .. "')") end
@@ -291,7 +291,7 @@ function drawLottery(draw)
 			end
 
 			if (r == 7) then
-				r = rand(6)
+				r = randSQL(6)
 				if r == 1 then thing = "severed head" end
 				if r == 2 then thing = "severed hand" end
 				if r == 3 then thing = "severed foot" end
@@ -395,7 +395,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 		message("pm " .. playerid .. " [" .. server.chatColour .. "]To buy type buy {code} {quantity}[-]")
 
-		cursor,errorString = conn:execute("SELECT * FROM memShop ORDER BY category, item")
+		cursor,errorString = connMEM:execute("SELECT * FROM memShop ORDER BY category, item")
 		row = cursor:fetch({}, "a")
 
 		while row do
@@ -564,7 +564,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		if not cursor == 0 then
 			message("pm " .. playerid .. " [" .. server.chatColour .. "]I sell several items called " .. words[2] .. ".  Try again using with one of the following fine wares.")
 
-			cursor,errorString = conn:execute("SELECT * FROM memShop ORDER BY category, item")
+			cursor,errorString = connMEM:execute("SELECT * FROM memShop ORDER BY category, item")
 			row = cursor:fetch({}, "a")
 
 			while row do
@@ -666,7 +666,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
 		LookupShop(words[2])
 
-		cursor,errorString = conn:execute("SELECT * FROM memShop ORDER BY category, item")
+		cursor,errorString = connMEM:execute("SELECT * FROM memShop ORDER BY category, item")
 		row = cursor:fetch({}, "a")
 
 		while row do

@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -66,7 +66,7 @@ function gmsg_tracker()
 
 			igplayers[chatvars.playerid].trackerID = 0
 			conn:execute("DELETE FROM memTracker WHERE admin = " .. chatvars.playerid)
-			cursor,errorString = conn:execute("SELECT steam, homeX, homeY, homeZ, home2X, home2Y, home2Z from players")
+			cursor,errorString = conn:execute("SELECT steam, homeX, homeY, homeZ, home2X, home2Y, home2Z FROM players WHERE (homeX <> 0 AND homeY <> 0 AND homeZ <> 0) or (home2X <> 0 AND home2Y <> 0 AND home2Z <> 0)")
 
 			row = cursor:fetch({}, "a")
 			while row do
@@ -525,7 +525,7 @@ function gmsg_tracker()
 				return true
 			end
 
-			r = rand(50)
+			r = randSQL(50)
 			if r == 49 then
 				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HAMMER TIME![-]")
 			end
@@ -795,9 +795,8 @@ function gmsg_tracker()
 				return true
 			end
 
+			cursor,errorString = conn:execute("SELECT * FROM memTracker WHERE admin = " .. chatvars.playerid .. " AND trackerID > " .. igplayers[chatvars.playerid].trackerID .. " ORDER BY trackerID LIMIT 1")
 			igplayers[chatvars.playerid].trackerID = igplayers[chatvars.playerid].trackerID + 1
-
-			cursor,errorString = conn:execute("select * from memTracker where admin = " .. chatvars.playerid .. " and trackerID > " .. igplayers[chatvars.playerid].trackerID .. " order by trackerID limit 1")
 			row = cursor:fetch({}, "a")
 
 			if row then
@@ -812,6 +811,8 @@ function gmsg_tracker()
 					igplayers[chatvars.playerid].whichBase = 2
 					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is base two of " .. players[igplayers[chatvars.playerid].atBase].name .. ".[-]")
 				end
+			else
+				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have reached the last base.[-]")
 			end
 
 			botman.faultyChat = false
@@ -859,9 +860,8 @@ function gmsg_tracker()
 				return true
 			end
 
+			cursor,errorString = conn:execute("SELECT * FROM memTracker WHERE admin = " .. chatvars.playerid .. " AND trackerID < " .. igplayers[chatvars.playerid].trackerID .. " ORDER BY trackerID DESC LIMIT 1")
 			igplayers[chatvars.playerid].trackerID = igplayers[chatvars.playerid].trackerID - 1
-
-			cursor,errorString = conn:execute("select * from memTracker where admin = " .. chatvars.playerid .. " and trackerID < " .. igplayers[chatvars.playerid].trackerID .. " order by trackerID desc limit 1")
 			row = cursor:fetch({}, "a")
 
 			if row then
@@ -900,7 +900,7 @@ function gmsg_tracker()
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('tracker', '" .. escape(tmp.topicDescription) .. "')")

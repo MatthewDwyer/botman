@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -52,6 +52,20 @@ function reconnectTimer()
 	end
 
 	-- continue testing
+	if botman.fileDownloadTimestamp then
+		if os.time() - botman.fileDownloadTimestamp > 60 then
+			if server.allowBotRestarts then
+				restartBot()
+				return
+			else
+				-- switch to using telnet
+				server.useAllocsWebAPI = false
+				conn:execute("UPDATE server set useAllocsWebAPI = 0")
+				toggleTriggers("api offline")
+			end
+		end
+	end
+
 	if botman.telnetOffline and not server.telnetDisabled then
 		botman.telnetOfflineCount = tonumber(botman.telnetOfflineCount) + 1
 	end
@@ -65,12 +79,9 @@ function reconnectTimer()
 	end
 
 	if (not botman.botOffline) and server.useAllocsWebAPI and (os.time() - botman.lastAPIResponseTimestamp > 60) and tonumber(server.webPanelPort) > 0 and server.allocs and tonumber(botman.playersOnline) > 0 then
-		server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
-		send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
-		botman.lastBotCommand = "webtokens add bot"
-		conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
-		botman.APIOffline = false
-		toggleTriggers("api online")
+		send("webtokens list")
+		botman.webTokensListSent = os.time()
+		botman.lastAPIResponseTimestamp = os.time()
 	end
 
 	if (not botman.botOffline) and server.useAllocsWebAPI and tonumber(botman.APIOfflineCount) > 5 and tonumber(server.webPanelPort) > 0 and server.allocs then

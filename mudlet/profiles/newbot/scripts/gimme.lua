@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -26,7 +26,7 @@ function arenaPicknMix(wave, counter, playerLevel)
 		return 0
 	end
 
-	r = tostring(rand(botman.maxGimmeZombies))
+	r = tostring(randSQL(botman.maxGimmeZombies))
 
 	if not gimmeZombies[r] then
 		r = arenaPicknMix(wave, counter, playerLevel)
@@ -45,7 +45,7 @@ function arenaPicknMix(wave, counter, playerLevel)
 			return 0
 		end
 
-		r = rand(maxBossZombies)
+		r = randSQL(maxBossZombies)
 		return gimmeZombieBosses[r].entityID
 	end
 
@@ -64,7 +64,7 @@ function PicknMix(level)
 		return 0
 	end
 
-	r = tostring(rand(botman.maxGimmeZombies))
+	r = tostring(randSQL(botman.maxGimmeZombies))
 
 	if not gimmeZombies[r] then
 		r = PicknMix(level)
@@ -274,7 +274,7 @@ function gimme(pid, testGimme)
 		if server.gimmeZombies then
 			r = math.random(1, botman.maxGimmeZombies + 30)
 		else
-			r = rand(5)
+			r = randSQL(5)
 
 			if r==1 then
 				if (not server.gimmePeace) then
@@ -368,15 +368,15 @@ function gimme(pid, testGimme)
 
 	if r <= botman.maxGimmeZombies then
 		-- nasty zombies
-		descriptor = rand(6)
-		chanceOfMultiples = rand(50)
+		descriptor = randSQL(6)
+		chanceOfMultiples = randSQL(50)
 
 		if (chanceOfMultiples > 25) then
-			if (zombies > 99) and (zombies < 300) then spawnCount = rand(3) end
-			if (zombies > 299) and (zombies < 500) then spawnCount = rand(4) end
-			if (zombies > 499) and (zombies < 1000) then spawnCount = rand(5) end
-			if (zombies > 999) and (zombies < 5000) then spawnCount = rand(6) end
-			if (zombies > 4999) then spawnCount = rand(8) end
+			if (zombies > 99) and (zombies < 300) then spawnCount = randSQL(3) end
+			if (zombies > 299) and (zombies < 500) then spawnCount = randSQL(4) end
+			if (zombies > 499) and (zombies < 1000) then spawnCount = randSQL(5) end
+			if (zombies > 999) and (zombies < 5000) then spawnCount = randSQL(6) end
+			if (zombies > 4999) then spawnCount = randSQL(8) end
 		end
 
 		if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
@@ -544,21 +544,21 @@ function gimme(pid, testGimme)
 			botman.maxGimmePrizes = getMaxGimmePrizes()
 		end
 
-		r = rand(botman.maxGimmePrizes)
+		r = randSQL(botman.maxGimmePrizes)
 		cursor,errorString = conn:execute("select * from gimmePrizes limit " .. r - 1 .. ",1")
 		row = cursor:fetch({}, "a")
 
-		qty = rand(tonumber(row.prizeLimit))
+		qty = randSQL(tonumber(row.prizeLimit))
 		category = row.category
 		prize = row.name
 		qual = row.quality
-		quality = rand(4)
+		quality = randSQL(4)
 
 		description = ""
 		if (qty == 1) then description = "a " end
 
 		if (category == "weapon") then
-			descr = rand(12)
+			descr = randSQL(12)
 
 			if (descr==1) then
 				description = description .. "shiny new "
@@ -616,7 +616,7 @@ function gimme(pid, testGimme)
 		end
 
 		if (category == "book") then
-			descr = rand(12)
+			descr = randSQL(12)
 
 			if (descr==1) then description = description .. "rare " end
 			if (descr==2) then description = description .. "wordy " end
@@ -633,7 +633,7 @@ function gimme(pid, testGimme)
 		end
 
 		if (category == "misc") then
-			descr = rand(12)
+			descr = randSQL(12)
 
 			if (descr==1) then description = description .. "common " end
 			if (descr==2) then description = description .. "boring " end
@@ -650,7 +650,7 @@ function gimme(pid, testGimme)
 		end
 
 		if (category == "health") then
-			descr = rand(10)
+			descr = randSQL(10)
 
 			if (descr==1) then description = description .. "dodgy " end
 			if (descr==2) then description = description .. "sterile " end
@@ -665,7 +665,7 @@ function gimme(pid, testGimme)
 		end
 
 		if (category == "food") then
-			descr = rand(12)
+			descr = randSQL(12)
 
 			if (descr==1) then description = description .. "delicious " end
 			if (descr==2) then description = description .. "yummy " end
@@ -682,7 +682,7 @@ function gimme(pid, testGimme)
 		end
 
 		if (category == "tools") then
-			descr = rand(10)
+			descr = randSQL(10)
 
 			if (descr==1) then description = description .. "handy " end
 			if (descr==2) then description = description .. "utilitarian " end
@@ -697,7 +697,7 @@ function gimme(pid, testGimme)
 		end
 
 		if (category == "clothes") then
-			descr = rand(10)
+			descr = randSQL(10)
 
 			if (descr==1) then
 				description = description .. "shitty "
@@ -815,7 +815,7 @@ function gimme(pid, testGimme)
 		end
 
 		if tmp.entityid ~= nil then
-			spawnCount = rand(7,2)
+			spawnCount = randSQL(2,7)
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " won " .. spawnCount .. " BUNNIES![-]")
 			else
@@ -824,7 +824,7 @@ function gimme(pid, testGimme)
 
 			for i = 1, spawnCount do
 				cmd = "se " .. playerid .. " " .. tmp.entityid
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+				connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 			end
 		else
 			if (not server.gimmePeace) then
@@ -841,7 +841,7 @@ function gimme(pid, testGimme)
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if (r == botman.maxGimmeZombies + 4) then
-		r = rand(100)
+		r = randSQL(100)
 		if (r < 70) then
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " almost won an epic prize![-]")
@@ -861,7 +861,7 @@ function gimme(pid, testGimme)
 
 		t = os.time()
 		for i = 1, 100 do
-			r = rand(7)
+			r = randSQL(7)
 
 			if (r == 1) then litter = "drinkCanEmpty" end
 			if (r == 2) then litter = "resourceCandyTin" end
@@ -873,7 +873,7 @@ function gimme(pid, testGimme)
 			if (r == 7) then litter = "drinkJarEmpty" end
 
 			cmd = "give " .. pid .. " " .. litter .. " 1"
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+			connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 		end
 
 		botman.faultyGimme = false
@@ -883,7 +883,7 @@ function gimme(pid, testGimme)
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if (r == botman.maxGimmeZombies + 5) then
-		item = rand(12)
+		item = randSQL(12)
 
 		if (item == 1) then prize = "foodCanBeef" end
 		if (item == 2) then prize = "foodCcanChili" end
@@ -923,7 +923,7 @@ function gimme(pid, testGimme)
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if (r == botman.maxGimmeZombies + 6) then
-		descr = rand(9)
+		descr = randSQL(9)
 
 		if (descr == 1) then cmd = "Nothing!" end
 		if (descr == 2) then cmd = "Nothing!" end
@@ -935,14 +935,14 @@ function gimme(pid, testGimme)
 		end
 
 		if (descr == 5) then
-			i = rand(4)
+			i = randSQL(4)
 
 			cmd = i .. " extra gimmies! =D"
 			players[pid].gimmeCount = players[pid].gimmeCount - i
 		end
 
 		if (descr > 5 and descr < 10) then
-			r = rand(10)
+			r = randSQL(10)
 			 if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " Ruh Roh! Gimmies short circuited!  You win..[-]")
 				cmd = "say Every panels lit up! They're coming out of the walls! RUN !![-]"
@@ -958,7 +958,7 @@ function gimme(pid, testGimme)
 
 				if gimmeZombies[z] then
 					cmd = "se " .. playerid .. " " .. gimmeZombies[z].entityID
-					conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+					connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 				end
 			end
 
@@ -997,7 +997,7 @@ function gimme(pid, testGimme)
 			end
 
 			cmd = "se " .. playerid .. " " .. tmp.entityid
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+			connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 		else
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
@@ -1028,7 +1028,7 @@ function gimme(pid, testGimme)
 			end
 
 			cmd = "se " .. playerid .. " " .. tmp.entityid
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+			connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 		else
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
@@ -1057,7 +1057,7 @@ function gimme(pid, testGimme)
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 	if (r == botman.maxGimmeZombies + 10) then
-		spawnCount = rand(30,10)
+		spawnCount = randSQL(10,30)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " ate a bad potato and is shitting potatoes everywhere![-]")
 		else
@@ -1066,7 +1066,7 @@ function gimme(pid, testGimme)
 
 		for i = 1, spawnCount do
 			cmd = "give " .. pid .. " foodBakedPotato 1"
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+			connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 		end
 
 		botman.faultyGimme = false
@@ -1083,7 +1083,7 @@ function gimme(pid, testGimme)
 		end
 
 		cmd = "give " .. pid .. " resourceTrophy1 1"
-		conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+		connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 
 		botman.faultyGimme = false
 		return
@@ -1136,7 +1136,7 @@ function gimme(pid, testGimme)
 		-- end
 
 		-- cmd = "se " .. playerid .. " " .. tmp.entityid
-		-- conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+		-- connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 
 		-- tmp = {}
 		-- for k,v in pairs(gimmeZombies) do
@@ -1146,7 +1146,7 @@ function gimme(pid, testGimme)
 		-- end
 
 		-- cmd = "se " .. playerid .. " " .. tmp.entityid
-		-- conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+		-- connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 
 		-- botman.faultyGimme = false
 		-- return
@@ -1261,13 +1261,13 @@ if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 		if gimmeZombies[r] then
 			cmd = "se " .. playerid .. " " .. gimmeZombies[r].entityID
-			conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+			connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 		end
 	else
 		if (zombies > 2499) then
 			for i = 1, spawnCount do
 				cmd = "se " .. playerid .. " " .. PicknMix()
-				conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+				connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 			end
 		else
 			for i = 1, spawnCount do
@@ -1275,7 +1275,7 @@ if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 				if gimmeZombies[r] then
 					cmd = "se " .. playerid .. " " .. gimmeZombies[r].entityID
-					conn:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+					connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
 				end
 			end
 		end

@@ -63,20 +63,8 @@ Restricted to server owners in-game and IRC
 Sets the delay of days between resets. 0 for every reboot.
 Restricted to server owners in-game and IRC
 
-/set map colour FF0000 (red is the default colour)
-Set the colour of reset regions on Alloc's web map.
-Restricted to owners and admins in-game and IRC
-
-/enable/disable anticheat
-Enable or disable the anticheat feature in the Botman mod.  Default is disabled.
-Restricted to server owners in-game and IRC
-
 /enable/disable clans
 Enable or disable the clan feature in the Botman mod.  Default is disabled.
-Restricted to server owners in-game and IRC
-
-/enable/disable mapping
-Enable or disable plotting reset regions on Alloc's web map.
 Restricted to server owners in-game and IRC
 
 /enable/disable reset regions
@@ -165,12 +153,8 @@ Restricted to owners, admins and mods in-game only
 /make maze (default maze 20 x 20)
 /make maze wall {block name} fill {air block} width {number} length {number} height {number} x {x coord} y {y coord} z {z coord}
 The bot also accepts wide, long, and tall instead of width, length, and height.
-The maze will generate with no roof.  If you want a roof add the word roof.
-If you want a multi-level maze add levels {number}. Note: it will include a floor.
-You will need to cut holes or make rooms yourself.
 Generate and build a random maze.  Someone must stay there until the maze completes or it will fail to spawn fully.
 Default values: wall steelBlock fill air width 20 length 20 height 3. It uses your current position for x, y and z if not given.
-Note: width and length are multiplied by 2.
 Restricted to owners, admins and mods in-game only
 
 /reset player profile {player name}
@@ -593,10 +577,6 @@ Restricted to owners, admins and mods in-game and IRC
 Allow or block players teleporting to other players via shared waypoints or teleporting to friends.
 Restricted to server owners in-game and IRC
 
-/enable (or /disable) pvp visit (default disabled)
-Normally players cannot visit friends in pvp. They can if you enable this.
-Restricted to owners, admins and mods in-game and IRC
-
 /show/hide teleports
 If bot commands are hidden from chat, you can have the bot announce whenever a player teleports to a location (except /home).
 Restricted to owners and admins in-game and IRC
@@ -620,11 +600,6 @@ Restricted to server owners in-game and IRC
 
 /set pack cost {number}
 By default players can type /pack or /revive when they respawn after a death to return to close to their pack.  You can set a delay and/or a cost before the command is available after a death.
-Restricted to server owners in-game and IRC
-
-/set p2p access {access level}
-Restrict the /visit command to players at and above a bot access level.
-Levels are 99 (everyone), 90 (everyone except new players), 10 (donors), 2 (mods), 1 (admins), 0 (owners).
 Restricted to server owners in-game and IRC
 
 /set p2p cooldown {number in seconds}
@@ -718,14 +693,6 @@ Restricted to owners and admins in-game only
 /set waypoints public/private
 Make waypoints accessible to all (except new players) or restricted to donors only.
 Restricted to owners and admins in-game only
-
-/enable/disable linked waypoints (default enabled)
-If disabled, players will not be able to link waypoints.  Also any non-admin existing linked waypoints will be unlinked.
-Restricted to owners and admins in-game and IRC
-
-/enable/disable waypoints
-Donors will be able to create, use and share waypoints.  To enable them for other players, set waypoints public.
-Restricted to server owners in-game and IRC
 
 /clear wp {name}
 Delete a named waypoint.  If they are linked, this also unlinks them.
@@ -1163,7 +1130,7 @@ Restricted to server owners in-game and IRC
 /enable/disable bot restart
 Using a launcher script or some other monitoring process you can have the bot automatically restart itself every time it terminates.
 Periodically restarting the bot helps to keep it running at its best.
-This feature is disabled by default.  A restart script can be downloaded from http://botman.nz/shellscripts.zip
+This feature is disabled by default.  A restart script can be downloaded from https://botman.nz/shellscripts.zip
 You will need to inspect and modify some paths in the scripts to match your setup.
 Restricted to server owners in-game and IRC
 
@@ -1175,10 +1142,6 @@ Restricted to owners, admins and mods in-game and IRC
 Hackers can give themselves XP but normal play and/or game bugs can also cause large level changes.
 The level check could falsely report legit level changes as hacking so this is disabled by default.
 If you enable it and innocent players get banned, either unban them or turn it off again.
-Restricted to server owners in-game and IRC
-
-/enable/disable bot colours (default enabled)
-If you want something else managing chat colours you can stop the bot replacing them by disabling that feature with this command.
 Restricted to server owners in-game and IRC
 
 /enable/disable hacker tp detection
@@ -1711,6 +1674,10 @@ Restricted to owners and admins in-game and IRC
 Flag a player or all current new players for extra attention and logging.  New players are watched by default.
 Restricted to owners, admins and mods in-game and IRC
 
+/enable/disable waypoints
+Donors will be able to create, use and share waypoints.  To enable them for other players, set waypoints public.
+Restricted to server owners in-game and IRC
+
 /unlockall
 Unlocks all locked containers etc in your immediate area (the current chunk)
 Restricted to owners and admins in-game only
@@ -1947,11 +1914,6 @@ Restricted to owners and admins in-game and IRC
 
 /set pvp cooldown {seconds}
 Set how long after a pvp kill before the player can use teleport commands again.
-Restricted to owners and admins in-game and IRC
-
-/set pvp temp ban {minutes}
-Set how long to temporarily ban a player after a pvp kill.
-This is only used in PVE when there is no prison location.
 Restricted to owners and admins in-game and IRC
 
 /set reserved slots {number of slots}

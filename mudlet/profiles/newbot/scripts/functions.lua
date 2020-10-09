@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -19,6 +19,594 @@ local debug
 
 if botman.debugAll then
 	debug = true -- this should be true
+end
+
+
+function generatePassword(length)
+	local i, a, b, pass
+
+	pass = ""
+
+	for i=1,length,1 do
+		a = randSQL(3)
+
+		if a == 1 then
+			b = randSQL(10) + 47
+		end
+
+		if a == 2 then
+			b = randSQL(26) + 64
+		end
+
+		if a == 3 then
+			b = randSQL(26) + 96
+		end
+
+		pass = pass .. string.char(b)
+	end
+
+	return pass
+end
+
+
+function processBotmanConfig()
+	local k, v, bmconfig, tmp, numbers
+	local Configs, CustomMessages, ResetRegions, ZombieAnnouncer, Zones, ExemptPrefabs, ResetAreas, Milestones
+	local readConfigs, readCustomMessages, readResetRegions, readZombieAnnouncer, readZones, readExemptPrefabs, readResetAreas, readMilestones
+	local cursor, errorString
+
+	readConfigs = false
+	readCustomMessages = false
+	readResetRegions = false
+	readResetAreas = false
+	readZombieAnnouncer = false
+	readZones = false
+	readExemptPrefabs = false
+	readMilestones = false
+
+	bmconfig = {}
+	Configs = {}
+	CustomMessages = {}
+	ResetRegions = {}
+	ResetAreas = {}
+	ZombieAnnouncer = {}
+	Zones = {}
+	ExemptPrefabs = {}
+	Milestones = {}
+
+	for k,v in pairs(botman.config) do
+		if readConfigs then
+			if string.find(v, "config name=\"allocs_web_file") then
+				Configs.mapJS = string.sub(v, string.find(v, "location=") + 10, string.find(v, "map.js\"/>", nil, true) - 3)
+			end
+
+			if string.find(v, "config name=\"anticheat") then
+				-- <config name="anticheat" enabled="True" />
+				Configs.anticheat = {}
+
+				if string.find(v, "True") then
+					Configs.anticheat.enabled = true
+				else
+					Configs.anticheat.enabled = false
+				end
+
+				modBotman.anticheat = Configs.anticheat
+			end
+
+			if string.find(v, "config name=\"botname") then
+				 -- <config name="botname" text="[7FFF00]Devbot" color-public="ffffff" color-private="EA3257" />
+				tmp = {}
+				tmp.name = string.sub(v, string.find(v, "text") + 6, string.find(v, "color-public", nil, true) - 3)
+				tmp.colorpublic = string.sub(v, string.find(v, "color-public", nil, true) + 14, string.find(v, "color-private", nil, true) - 3)
+				tmp.colorprivate = string.sub(v, string.find(v, "color-private", nil, true) + 16, string.find(v, "/>") - 3)
+
+				Configs.botname = {}
+				Configs.botname.name = tmp.name
+				Configs.botname.colorpublic = tmp.colorpublic
+				Configs.botname.colorprivate = tmp.colorprivate
+
+				modBotman.botName = Configs.botname.name
+				server.botName = Configs.botname.name
+			end
+
+			if string.find(v, "config name=\"chatcommands") then
+				-- <config name="chatcommands" prefix="/" hide="False" />
+				tmp = {}
+				tmp.pos = string.find(v, "prefix") + 8
+				tmp.prefix = string.sub(v, tmp.pos, tmp.pos)
+
+				if string.find(v, "True") then
+					tmp.hide = true
+				else
+					tmp.hide =  false
+				end
+
+				Configs.chatcommands = {}
+				Configs.chatcommands.prefix = tmp.prefix
+				Configs.chatcommands.hide = tmp.hide
+
+				server.commandPrefix = Configs.chatcommands.prefix
+				server.hideCommands = Configs.chatcommands.hide
+			end
+
+			if string.find(v, "config name=\"clans") then
+				-- <config name="clans" enabled="False" max_clans="10" max_players="5" required_level_to_create="25" />
+				Configs.clans = {}
+
+				if string.find(v, "True") then
+					Configs.clans.enabled = true
+				else
+					Configs.clans.enabled = false
+				end
+
+				tmp = {}
+				tmp.numbers = getNumbers(v)
+				Configs.clans.max_clans = tmp.numbers[1]
+				Configs.clans.max_players = tmp.numbers[2]
+				Configs.clans.required_level_to_create = tmp.numbers[3]
+			end
+
+			if string.find(v, "config name=\"custommessages") then
+				-- <config name="custommessages" enabled="False" />
+				if string.find(v, "True") then
+					Configs.custommessages = true
+				else
+					Configs.custommessages = false
+				end
+			end
+
+			if string.find(v, "config name=\"chat_level_prefix") then
+				-- <config name="chat_level_prefix" enabled="True" color="ff0000"/>
+				Configs.chat_level_prefix = {}
+
+				if string.find(v, "True") then
+					Configs.chat_level_prefix.enabled = true
+				else
+					Configs.chat_level_prefix.enabled = false
+				end
+
+				Configs.chat_level_prefix.color = string.sub(v, string.find(v, "color") + 7, string.find(v, "/>") - 3)
+			end
+
+			if string.find(v, "config name=\"level_achievement_reward") then
+				-- <config name="level_achievement_reward" enabled="True" dukes="1000" max_level="10" />
+				Configs.level_achievement_reward = {}
+
+				if string.find(v, "True") then
+					Configs.level_achievement_reward.enabled = true
+				else
+					Configs.level_achievement_reward.enabled = false
+				end
+
+				Configs.level_achievement_reward.dukes = string.sub(v, string.find(v, "dukes") + 7, string.find(v, "max_level") - 3)
+				Configs.level_achievement_reward.max_level = string.sub(v, string.find(v, "max_level") + 11, string.find(v, "/>") - 3)
+			end
+
+			if string.find(v, "config name=\"milestones") then
+				-- <config name="milestones" enabled="True" />
+				Configs.milestones = {}
+
+				if string.find(v, "True") then
+					Configs.milestones.enabled = true
+				else
+					Configs.milestones.enabled = false
+				end
+			end
+
+			if string.find(v, "config name=\"dropminer") then
+				-- <config name="dropminer" enabled="False" />
+				Configs.dropminer = {}
+
+				if string.find(v, "True") then
+					Configs.dropminer.enabled = true
+				else
+					Configs.dropminer.enabled = false
+				end
+			end
+
+			if string.find(v, "config name=\"lcbprefabrule") then
+				-- <config name="lcbprefabrule" enabled="True" distance="25" />
+				Configs.lcbprefabrule = {}
+
+				if string.find(v, "True") then
+					Configs.lcbprefabrule.enabled = true
+				else
+					Configs.lcbprefabrule.enabled = false
+				end
+
+				Configs.lcbprefabrule.distance = tonumber(string.match(v, "(-?%d+)"))
+			end
+
+			if string.find(v, "config name=\"resetallprefabs") then
+				-- <config name="resetallprefabs" enabled="False" days_between_resets="0"  />
+				Configs.resetallprefabs = {}
+
+				if string.find(v, "enabled=\"True") then
+					Configs.resetallprefabs.enabled = true
+				else
+					Configs.resetallprefabs.enabled = false
+				end
+
+				Configs.resetallprefabs.days_between_resets = tonumber(string.match(v, "(-?%d+)"))
+			end
+
+			if string.find(v, "config name=\"resetareas") then
+				-- <config name="resetareas" enabled="False" days_between_resets="3"  />
+				Configs.resetareas = {}
+
+				if string.find(v, "enabled=\"True") then
+					Configs.resetareas.enabled = true
+				else
+					Configs.resetareas.enabled = false
+				end
+
+				Configs.resetareas.days_between_resets = tonumber(string.match(v, "(-?%d+)"))
+			end
+
+			if string.find(v, "config name=\"resetregions") then
+				-- <config name="resetregions" enabled="True" prefabsonly="False" days_between_resets="0" remove_lcbs="True" />
+				Configs.resetregions = {}
+
+				if string.find(v, "enabled=\"True") then
+					Configs.resetregions.enabled = true
+				else
+					Configs.resetregions.enabled = false
+				end
+
+				if string.find(v, "prefabsonly=\"True") then
+					Configs.resetregions.prefabsonly = true
+				else
+					Configs.resetregions.prefabsonly = false
+				end
+
+				if string.find(v, "lcbs=\"True") then
+					Configs.resetregions.remove_lcbs = true
+				else
+					Configs.resetregions.remove_lcbs = false
+				end
+
+				Configs.resetregions.days_between_resets = tonumber(string.match(v, "(-?%d+)"))
+			end
+
+			if string.find(v, "config name=\"vehiclefiledelete") then
+				-- <config name="vehiclefiledelete" enabled="False" />
+				Configs.vehiclefiledelete = {}
+
+				if string.find(v, "True") then
+					Configs.vehiclefiledelete.enabled = true
+				else
+					Configs.vehiclefiledelete.enabled = false
+				end
+			end
+
+			if string.find(v, "config name=\"webmaptraceprefabs") then
+				-- <config name="webmaptraceprefabs" enabled="False" color="00ff00" />
+				Configs.webmaptraceprefabs = {}
+
+				if string.find(v, "True") then
+					Configs.webmaptraceprefabs.enabled = true
+				else
+					Configs.webmaptraceprefabs.enabled = false
+				end
+
+				Configs.webmaptraceprefabs.colour = string.sub(v, string.find(v, "color") + 7, string.find(v, "/>") - 4)
+			end
+
+			if string.find(v, "config name=\"webmaptracetraders") then
+				-- <config name="webmaptracetraders" enabled="True" color="FF0000" />
+				Configs.webmaptracetraders = {}
+
+				if string.find(v, "True") then
+					Configs.webmaptracetraders.enabled = true
+				else
+					Configs.webmaptracetraders.enabled = false
+				end
+
+				Configs.webmaptracetraders.colour = string.sub(v, string.find(v, "color") + 7, string.find(v, "/>") - 4)
+			end
+
+			if string.find(v, "config name=\"webmaptraceresetareas") then
+				-- <config name="webmaptraceresetareas" enabled="False" color="FF4500"/>
+				Configs.webmaptraceresetareas = {}
+
+				if string.find(v, "True") then
+					Configs.webmaptraceresetareas.enabled = true
+				else
+					Configs.webmaptraceresetareas.enabled = false
+				end
+
+				Configs.webmaptraceresetareas.colour = string.sub(v, string.find(v, "color") + 7, string.find(v, "/>") - 4)
+			end
+
+			if string.find(v, "config name=\"webmaptraceresetregions") then
+				-- <config name="webmaptraceresetregions" enabled="True" color="FF4500"/>
+				Configs.webmaptraceresetregions = {}
+
+				if string.find(v, "True") then
+					Configs.webmaptraceresetregions.enabled = true
+				else
+					Configs.webmaptraceresetregions.enabled = false
+				end
+
+				Configs.webmaptraceresetregions.colour = string.sub(v, string.find(v, "color") + 7, string.find(v, "/>") - 4)
+			end
+
+			if string.find(v, "config name=\"zombieannouncer") then
+				-- <config name="zombieannouncer" enabled="False" />
+				if string.find(v, "True") then
+					Configs.zombieannouncer = true
+				else
+					Configs.zombieannouncer = false
+				end
+			end
+
+			if string.find(v, "config name=\"zombiefreetime") then
+				-- <config name="zombiefreetime" enabled="False" start="17" end="18" />
+				Configs.zombiefreetime = {}
+
+				if string.find(v, "True") then
+					Configs.zombiefreetime.enabled = true
+				else
+					Configs.zombiefreetime.enabled = false
+				end
+
+				tmp = {}
+				tmp.numbers = getNumbers(v)
+				Configs.zombiefreetime.startTime = tmp.numbers[1]
+				Configs.zombiefreetime.endTime = tmp.numbers[2]
+			end
+
+			if string.find(v, "config name=\"zones") then
+				-- <config name="zones" enabled="False" />
+				Configs.zones = {}
+
+				if string.find(v, "True") then
+					Configs.zones.enabled = true
+				else
+					Configs.zones.enabled = false
+				end
+			end
+		end
+
+		if readCustomMessages then
+			-- <message name="login" name_color="[00FF00]" message_color="[FFFFFF]" message="[name] has joined the game." />
+			if string.find(v, "message name=\"login") then
+				tmp = {}
+				tmp.name_color = string.sub(v, string.find(v, "name_color", nil, true) + 12, string.find(v, "message_color", nil, true) - 3)
+				tmp.message_color = string.sub(v, string.find(v, "message_color", nil, true) + 15, string.find(v, "message=\"", nil, true) - 3)
+				tmp.message = string.sub(v, string.find(v, "message=\"", nil, true) + 9, string.len(v) - 4)
+
+				CustomMessages.login = {}
+				CustomMessages.login.name_color = tmp.name_color
+				CustomMessages.login.message_color = tmp.message_color
+				CustomMessages.login.message = tmp.message
+			end
+
+			-- <message name="logout" name_color="[00FF00]" message_color="[FFFFFF]" message="[name] has logged out." />
+			if string.find(v, "message name=\"logout") then
+				tmp = {}
+				tmp.name_color = string.sub(v, string.find(v, "name_color", nil, true) + 12, string.find(v, "message_color", nil, true) - 3)
+				tmp.message_color = string.sub(v, string.find(v, "message_color", nil, true) + 15, string.find(v, "message=\"", nil, true) - 3)
+				tmp.message = string.sub(v, string.find(v, "message=\"", nil, true) + 9, string.len(v) - 4)
+
+				CustomMessages.logout = {}
+				CustomMessages.logout.name_color = tmp.name_color
+				CustomMessages.logout.message_color = tmp.message_color
+				CustomMessages.logout.message = tmp.message
+			end
+
+			-- <message name="died" name_color="[00FF00]" message_color="[FFFFFF]" message="[name] has died." />
+			if string.find(v, "message name=\"died") then
+				tmp = {}
+				tmp.name_color = string.sub(v, string.find(v, "name_color", nil, true) + 12, string.find(v, "message_color", nil, true) - 3)
+				tmp.message_color = string.sub(v, string.find(v, "message_color", nil, true) + 15, string.find(v, "message=\"", nil, true) - 3)
+				tmp.message = string.sub(v, string.find(v, "message=\"", nil, true) + 9, string.len(v) - 4)
+
+				CustomMessages.died = {}
+				CustomMessages.died.name_color = tmp.name_color
+				CustomMessages.died.message_color = tmp.message_color
+				CustomMessages.died.message = tmp.message
+			end
+
+			-- <message name="killed" killer_name_color="[FF0000]" victim_name_color="[0000FF]" message_color="[FFFFFF]" message="[killer] has killed [victim]." />
+			if string.find(v, "message name=\"killed") then
+				tmp = {}
+				tmp.name_color = string.sub(v, string.find(v, "name_color", nil, true) + 12, string.find(v, "message_color", nil, true) - 3)
+				tmp.message_color = string.sub(v, string.find(v, "message_color", nil, true) + 15, string.find(v, "message=\"", nil, true) - 3)
+				tmp.message = string.sub(v, string.find(v, "message=\"", nil, true) + 9, string.len(v) - 4)
+
+				CustomMessages.killed = {}
+				CustomMessages.killed.name_color = tmp.name_color
+				CustomMessages.killed.message_color = tmp.message_color
+				CustomMessages.killed.message = tmp.message
+			end
+		end
+
+		if readResetRegions then
+			-- <Region type="manual" region="r.-4.-1" />
+			if string.find(v, "Region type=\"", nil, true) then
+				tmp = {}
+				tmp.region_type = string.sub(v, string.find(v, "Region type=", nil, true) + 13, string.find(v, "region=", nil, true) - 3)
+				tmp.region = string.sub(v, string.find(v, "region=", nil, true) + 8, string.len(v) - 4)
+
+				table.insert(ResetRegions, tmp)
+			end
+		end
+
+		if readZombieAnnouncer then
+			-- <entity name="zombiename" message="A Boss zombie has spawned at COORDS"/>
+			if string.find(v, "entity name=", nil, true) then
+				tmp = {}
+				tmp.entity = string.sub(v, string.find(v, "name=", nil, true) + 6, string.find(v, "message=", nil, true) - 3)
+				tmp.message = string.sub(v, string.find(v, "message=", nil, true) + 9, string.len(v) - 3)
+
+				table.insert(ZombieAnnouncer, tmp)
+			end
+		end
+
+		if readZones then
+			-- <zone name="killzone" corner1="0,0,0" corner2="0,0,0" />
+			if string.find(v, "zone name=\"", nil, true) then
+				tmp = {}
+				tmp.name = string.sub(v, string.find(v, "zone name=", nil, true) + 11, string.find(v, "corner1=", nil, true) - 3)
+				tmp.corner1 = string.sub(v, string.find(v, "corner1=", nil, true) + 9, string.find(v, "corner2=", nil, true) - 3)
+				tmp.corner2 = string.sub(v, string.find(v, "corner2=", nil, true) + 9, string.len(v) - 4)
+
+				table.insert(Zones, tmp)
+			end
+		end
+
+		if readExemptPrefabs then
+			-- <prefab name="Prefab_Name_Here_01"/>
+			if string.find(v, "prefab name=\"", nil, true) then
+				tmp = {}
+				tmp.prefab = string.sub(v, string.find(v, "prefab name=", nil, true) + 13, string.len(v) - 3)
+
+				table.insert(ExemptPrefabs, tmp)
+			end
+		end
+
+		if readResetAreas then
+			-- <resetarea name="namehere" x1="0" z1="0" x2="10" z2="10" /> -->
+			if string.find(v, "resetarea name=\"", nil, true) then
+				tmp = {}
+				tmp.name = string.sub(v, string.find(v, "resetarea name=", nil, true) + 16, string.find(v, "x1=", nil, true) - 5)
+				tmp.numbers = getNumbers(v)
+				tmp.x1 = tmp.numbers[1]
+				tmp.z1 = tmp.numbers[2]
+				tmp.x2 = tmp.numbers[3]
+				tmp.z2 = tmp.numbers[4]
+				tmp.numbers = nil
+
+				table.insert(ResetAreas, tmp)
+			end
+		end
+
+		if readMilestones then
+			-- <milestone lvl="#" message="[playername] has reached [lvl]!!" />
+			if string.find(v, "milestone lvl=\"", nil, true) then
+				tmp = {}
+				tmp.numbers = getNumbers(v)
+				tmp.level = tmp.numbers[1]
+				tmp.numbers = nil
+				tmp.message = string.sub(v, string.find(v, "message=", nil, true) + 9, string.len(v) - 3)
+
+				table.insert(Milestones, tmp)
+			end
+		end
+
+		-- set read flags when we detect a new XML child
+		if string.find(v, "<Configs>") then
+			readConfigs = true
+		end
+
+		if string.find(v, "<CustomMessages>") then
+			readCustomMessages = true
+			readConfigs = false
+		end
+
+		if string.find(v, "<Milestones>") then
+			readMilestones = true
+			readCustomMessages = false
+		end
+
+		if string.find(v, "<ResetRegions>") then
+			readResetRegions = true
+			readCustomMessages = false
+		end
+
+		if string.find(v, "<ZombieAnnouncer>") then
+			readZombieAnnouncer = true
+			readResetRegions = false
+		end
+
+		if string.find(v, "<Zones>") then
+			readZones = true
+			readZombieAnnouncer = false
+		end
+
+		if string.find(v, "<ExemptPrefabs>") then
+			readExemptPrefabs = true
+			readZones = false
+		end
+
+		if string.find(v, "<ResetAreas>") then
+			readResetAreas = true
+			readExemptPrefabs = false
+		end
+	end
+
+	botman.config = nil
+
+	bmconfig = {}
+	bmconfig.Configs = Configs
+	bmconfig.CustomMessages = CustomMessages
+	bmconfig.Milestones = Milestones
+	bmconfig.ResetRegions = ResetRegions
+	bmconfig.ResetAreas = ResetAreas
+	bmconfig.ZombieAnnouncer = ZombieAnnouncer
+	bmconfig.Zones = Zones
+	bmconfig.ExemptPrefabs = ExemptPrefabs
+
+	if botman.dbConnected then
+		cursor, errorString = conn:execute("INSERT INTO webInterfaceJSON (ident, recipient, json) VALUES ('config','panel','" .. escape(yajl.to_string(bmconfig)) .. "')")
+
+		if errorString then
+			if string.find(errorString, "Duplicate entry") then
+				conn:execute("UPDATE webInterfaceJSON SET json = '" .. escape(yajl.to_string(bmconfig)) .. "' WHERE ident = 'config'")
+			end
+		end
+	end
+end
+
+
+function disableTimers()
+	disableTimer("APITimer")
+	disableTimer("Every10Seconds")
+	disableTimer("Every15Seconds")
+	disableTimer("Every45Seconds")
+	disableTimer("Every5Seconds")
+	disableTimer("EveryHalfMinute")
+	disableTimer("EverySecond")
+	disableTimer("five_minute_timer")
+	disableTimer("GimmeQueuedCommands")
+	disableTimer("GimmeReset")
+	disableTimer("listPlayers")
+	disableTimer("messageQueue")
+	disableTimer("OneHourTimer")
+	disableTimer("OneMinuteTimer")
+	disableTimer("PlayerQueuedCommands")
+	disableTimer("Reconnect")
+	disableTimer("ten_minute_timer")
+	disableTimer("ThirtyMinuteTimer")
+	disableTimer("TimedCommands")
+	disableTimer("TrackPlayer")
+	disableTimer("TwoMinuteTimer")
+end
+
+
+function enableTimers()
+	enableTimer("APITimer")
+	enableTimer("Every10Seconds")
+	enableTimer("Every15Seconds")
+	enableTimer("Every45Seconds")
+	enableTimer("Every5Seconds")
+	enableTimer("EveryHalfMinute")
+	enableTimer("EverySecond")
+	enableTimer("five_minute_timer")
+	enableTimer("GimmeQueuedCommands")
+	enableTimer("GimmeReset")
+	enableTimer("listPlayers")
+	enableTimer("messageQueue")
+	enableTimer("OneHourTimer")
+	enableTimer("OneMinuteTimer")
+	enableTimer("PlayerQueuedCommands")
+	enableTimer("Reconnect")
+	enableTimer("ten_minute_timer")
+	enableTimer("ThirtyMinuteTimer")
+	enableTimer("TimedCommands")
+	enableTimer("TrackPlayer")
+	enableTimer("TwoMinuteTimer")
 end
 
 
@@ -327,6 +915,11 @@ function logTelnet(line)
 end
 
 
+function setBlockTelnetSpam(state)
+	botman.blockTelnetSpam = state
+end
+
+
 function blockTelnetSpam()
 	if botman.blockTelnetSpam then
 		deleteLine()
@@ -483,11 +1076,7 @@ end
 
 
 function newBotProfile()
-	local file, file_copy, ln, foundInitBot, foundIP, foundTelnet
-
-	foundInitBot = false
-	foundIP = false
-	foundTelnet = false
+	local file
 
 	loadServer()
 
@@ -512,8 +1101,8 @@ function newBotProfile()
 
 	os.remove(homedir .. "/server_address.lua")
 	file = io.open(homedir .. "/server_address.lua", "a")
-	file:write("serverIP = \"" .. server.IP .. "\"\n")
-	file:write("telnetPort = " .. server.telnetPort .. "\n")
+	file:write("server.IP = \"" .. server.IP .. "\"\n")
+	file:write("server.telnetPort = " .. server.telnetPort .. "\n")
 	file:close()
 
 	irc_chat(server.ircMain, "Connecting to new 7 Days to Die server " .. server.IP .. " port " .. server.telnetPort)
@@ -523,10 +1112,10 @@ end
 function forgetPlayers()
 	local k, v
 
-	conn:execute("TRUNCATE TABLE list")
+	connMEM:execute("DELETE FROM list")
 
 	for k,v in pairs(staffList) do
-		conn:execute("INSERT INTO list(steam) VALUES (" .. k ..")")
+		connMEM:execute("INSERT INTO list(steam) VALUES (" .. k ..")")
 	end
 
 	-- now that we have all of the steam id's of the admins in the list table we can use it to nuke other tables except for those id's
@@ -588,14 +1177,14 @@ function rewardServerVote(playerID)
 
 	if serverVoteReward == "random" then
 		if serverVoteRewardQuantity == 0 then
-			quantity = rand(5,3)
+			quantity = randSQL(3,5)
 		else
 			quantity = serverVoteRewardQuantity
 		end
 
 		for i=1,quantity,1 do
 			if serverVoteRewardQuality == 0 then
-				quality = rand(6)
+				quality = randSQL(6)
 			else
 				quality = serverVoteRewardQuality
 			end
@@ -815,7 +1404,6 @@ end
 
 function kickASlot(steam)
 	local cursor, errorString, row
---debug = true
 
 	-- if (debug) then dbug("debug freeASlot line " .. debugger.getinfo(1).currentline) end
 
@@ -830,8 +1418,8 @@ function kickASlot(steam)
 		end
 
 		conn:execute("UPDATE slots SET steam = 0, online = 0, staff = 0, canBeKicked = 1, free = 1, joinedSession = 0, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
-		server.freeSlots = server.freeSlots + 1
-		server.reservedSlotsUsed = server.reservedSlotsUsed - 1
+		getFreeSlots()
+		getReservedSlotsUsed()
 		return true
 	end
 
@@ -850,13 +1438,14 @@ function kickASlot(steam)
 			end
 
 			conn:execute("UPDATE slots SET steam = 0, online = 0, joinedTime = 0, joinedSession = 0, expires = 0, staff = 0, free = 1, canBeKicked = 1, disconnectedTimestamp = 0, name = '', gameID = 0, IP = '0.0.0.0', country = '', ping = 0, level = 0, score = 0, zombieKills = 0, playerKills = 0, deaths = 0 WHERE slot = " .. row.slot)
-			server.freeSlots = server.freeSlots + 1
+			getFreeSlots()
 			return true
 		end
 	end
 
-	-- if (debug) then dbug("debug freeASlot end") end
---debug = false
+	if (debug) then dbug("debug freeASlot end") end
+
+	getFreeSlots()
 
 	return false
 end
@@ -864,8 +1453,7 @@ end
 
 function freeASlot(steam)
 	local cursor, errorString, row
---debug = true
-	-- if (debug) then dbug("debug freeASlot line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug freeASlot line " .. debugger.getinfo(1).currentline) end
 
 	-- free the slot that was occupied by the player.  If they are a donor and their expires timer hasn't expired, retain some info in case they rejoin within 5 minutes
 	cursor,errorString = conn:execute("SELECT slot, expires FROM slots WHERE steam = " .. steam)
@@ -884,8 +1472,7 @@ function freeASlot(steam)
 		getReservedSlotsUsed()
 	end
 
-	-- if (debug) then dbug("debug freeASlot end") end
---debug = false
+	if (debug) then dbug("debug freeASlot end") end
 end
 
 
@@ -894,9 +1481,7 @@ function assignASlot(steam)
 
 	tmp = {}
 
--- debug = true
-
--- 	if (debug) then dbug("debug assignSlot line " .. debugger.getinfo(1).currentline) end
+ 	if (debug) then dbug("debug assignSlot line " .. debugger.getinfo(1).currentline) end
 
 	-- I think I can slot you in here.  *shuffles papers*
 	if botman.dbConnected then
@@ -957,8 +1542,8 @@ function assignASlot(steam)
 				if row then
 					tmp.assigned = true
 					conn:execute("UPDATE slots SET steam = " .. tmp.steam .. ", canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", expires = " .. os.time() + (server.reservedSlotTimelimit * 60) .. ", joinedSession = " .. players[tmp.steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0, name = '" .. escape(players[tmp.steam].name) .. "', gameID = " .. players[tmp.steam].id .. ", IP = '" .. players[tmp.steam].ip .. "', country = '" .. players[tmp.steam].country .. "', ping = " .. players[tmp.steam].ping .. ", level = " .. players[tmp.steam].level .. ", score = " .. players[tmp.steam].score .. ", zombieKills = " .. players[tmp.steam].zombies .. ", playerKills = " .. players[tmp.steam].playerKills .. ", deaths = " .. players[tmp.steam].deaths .. " WHERE slot = " .. row.slot)
-					server.freeSlots = server.freeSlots - 1
-					server.reservedSlotsUsed = server.reservedSlotsUsed + 1
+					getFreeSlots()
+					getReservedSlotsUsed()
 				end
 			end
 
@@ -976,27 +1561,23 @@ function assignASlot(steam)
 				if row then
 					tmp.assigned = true
 					conn:execute("UPDATE slots SET steam = " .. tmp.steam .. ", canBeKicked = " .. dbBool(tmp.canBeKicked) .. ", online = 1, joinedTime = " .. os.time() .. ", expires = 0, joinedSession = " .. players[tmp.steam].sessionCount .. ", staff = " .. dbBool(tmp.isStaff) .. ", free = 0, disconnectedTimestamp = 0, name = '" .. escape(players[tmp.steam].name) .. "', gameID = " .. players[tmp.steam].id .. ", IP = '" .. players[tmp.steam].ip .. "', country = '" .. players[tmp.steam].country .. "', ping = " .. players[tmp.steam].ping .. ", level = " .. players[tmp.steam].level .. ", score = " .. players[tmp.steam].score .. ", zombieKills = " .. players[tmp.steam].zombies .. ", playerKills = " .. players[tmp.steam].playerKills .. ", deaths = " .. players[tmp.steam].deaths .. "  WHERE slot = " .. row.slot)
-					server.freeSlots = server.freeSlots - 1
+					getFreeSlots()
 				end
 			end
 		end
 	end
 
-	-- if (debug) then dbug("debug assignSlot end") end
-
--- debug = false
+	if (debug) then dbug("debug assignSlot end") end
 end
 
 
 function updateSlots(steam)
 	-- update the status of slots and free any reserved slots who's player is not online and it has been more than 5 minutes since they left
 
--- debug = true
-
 	local cursor, errorString, row
 	local cursor2, errorString2, row2, rows2
 
-	-- if (debug) then dbug("debug updateSlots line " .. debugger.getinfo(1).currentline) end
+	if (debug) then dbug("debug updateSlots line " .. debugger.getinfo(1).currentline) end
 
 	if steam then
 		cursor,errorString = conn:execute("SELECT * FROM slots WHERE steam = " .. steam)
@@ -1068,8 +1649,7 @@ function updateSlots(steam)
 		row = cursor:fetch(row, "a")
 	end
 
-	-- if (debug) then dbug("debug updateSlots end") end
--- debug = false
+	if (debug) then dbug("debug updateSlots end") end
 end
 
 -- End of slots functions
@@ -1079,14 +1659,14 @@ function dogeWOW()
 	-- So words. Many doge. WOW!
 	local r, doge
 
-	r = rand(5)
+	r = randSQL(5)
 	if r == 1 then doge = "So " end
 	if r == 2 then doge = "Such " end
 	if r == 3 then doge = "Many " end
 	if r == 4 then doge = "Much " end
 	if r == 5 then doge = "Very " end
 
-	r = rand(16)
+	r = randSQL(16)
 	if r == 1 then doge = doge .. "Kill." end
 	if r == 2 then doge = doge .. "Death." end
 	if r == 3 then doge = doge .. "Bullet." end
@@ -1264,9 +1844,9 @@ function setOverrideChatName(steam, newName, clear)
 		end
 
 		if clear then
-			sendCommand("bm-overridechatname " .. steam .. " " .. players[steam].name)
+			sendCommand("bm-overridechatname " .. steam .. " \"" .. players[steam].name .. "\"")
 		else
-			sendCommand("bm-overridechatname " .. steam .. " " .. newName)
+			sendCommand("bm-overridechatname " .. steam .. " \"" .. newName .. "\"")
 		end
 
 		return
@@ -1287,7 +1867,7 @@ end
 function getBackupFiles(path)
 	local file, str, backups, count, lastUnderscore
 
-	conn:execute("DELETE FROM list WHERE steam = -10")
+	connMEM:execute("DELETE FROM list WHERE steam = -10")
 	backups = {}
 	count = 2
 
@@ -1299,7 +1879,7 @@ function getBackupFiles(path)
 
 			if not backups[str] then
 				backups[str] = {}
-				conn:execute("INSERT INTO list (id, thing, class, steam) VALUES (" .. count .. ",'" .. escape(str) .. "','backup',-10)")
+				connMEM:execute("INSERT INTO list (id, thing, class, steam) VALUES (" .. count .. ",'" .. connMEM:escape(str) .. "','backup',-10)")
 				count = count + 1
 			end
 		end
@@ -1446,7 +2026,7 @@ function sleep(s)
 	if debug then dbug("sleeping " .. s) end
 
 	local ntime = os.time() + s
-	repeat until os.time() > ntime
+	repeat until os.time() >= ntime
 end
 
 
@@ -1533,7 +2113,7 @@ function reloadBot(getAllPlayers)
 	end
 
 	if server.useAllocsWebAPI and tonumber(server.webPanelPort) > 0 and botman.APIOffline and server.allocs then
-		server.allocsWebAPIPassword = (rand(100000) * rand(5)) + rand(10000)
+		server.allocsWebAPIPassword = generatePassword(20)
 		send("webtokens add bot " .. server.allocsWebAPIPassword .. " 0")
 		botman.lastBotCommand = "webtokens add bot"
 		conn:execute("UPDATE server set allocsWebAPIUser = 'bot', allocsWebAPIPassword = '" .. escape(server.allocsWebAPIPassword) .. "', useAllocsWebAPI = 1")
@@ -2724,7 +3304,7 @@ function restrictedCommandMessage()
 		igplayers[chatvars.playerid].restrictedCommand = true
 		return("This command is restricted")
 	else
-		r = rand(16)
+		r = randSQL(16)
 		if r == 1 then return("It's still restricted") end
 		if r == 2 then return("This command is not happening") end
 		if r == 3 then return("Which part of NO are you having trouble with?") end
@@ -2757,6 +3337,8 @@ function downloadHandler(event, ...)
 	local steam
 
    if event == "sysDownloadDone" then
+		botman.fileDownloadTimestamp = nil
+
 		if customAPIHandler ~= nil then
 			-- read the note on overriding bot code in custom/custom_functions.lua
 			if customAPIHandler(...) then
@@ -3860,7 +4442,7 @@ function dbWho(name, x, y, z, dist, days, hours, height, steamid, ingame)
 		end
 	end
 
-	conn:execute("DELETE FROM searchResults WHERE owner = " .. steamid)
+	connMEM:execute("DELETE FROM searchResults WHERE owner = " .. steamid)
 
 	if tonumber(hours) > 0 then
 		sql = "SELECT DISTINCT steam, session FROM tracker WHERE abs(x - " .. x .. ") <= " .. dist .. " AND ABS(z - " .. z .. ") <= " .. dist .. " AND ABS(y - " .. y .. ") <= " .. height .. " AND timestamp >= '" .. os.date("%Y-%m-%d %H:%M:%S", os.time() - (tonumber(hours) * 3600)) .. "'"
@@ -3986,7 +4568,7 @@ function startReboot()
 	botman.serverRebooting = true
 
 	-- add a random delay to mess with dupers
-	local rnd = rand(10)
+	local rnd = randSQL(10)
 
 	sendCommand("sa")
 	botman.rebootTimerID = tempTimer( 10 + rnd, [[finishReboot()]] )
@@ -4044,9 +4626,9 @@ function finishReboot()
 	end
 
 	clearRebootFlags()
-	conn:execute("TRUNCATE TABLE memTracker")
+	conn:execute("DELETE FROM TABLE memTracker")
 	conn:execute("TRUNCATE TABLE commandQueue")
-	conn:execute("TRUNCATE TABLE gimmeQueue")
+	connMEM:execute("DELETE FROM TABLE gimmeQueue")
 	tempTimer( 10, [[sendCommand("shutdown")]] )
 
 	-- check for bot updates
@@ -4157,6 +4739,11 @@ function Translate(playerid, command, lang, override)
 
 	os.remove(botman.userHome .. "/" .. server.botID .. "trans.txt")
 	os.execute(botman.userHome .. "/" .. server.botID .. "trans.txt")
+
+	-- disabled for now.
+	if true then
+		return
+	end
 
 	words = {}
 	for word in command:gmatch("%S+") do table.insert(words, word) end
@@ -4394,7 +4981,7 @@ function readDNS(steam)
 			IP = IPToInt(players[steam].ip)
 		end
 
-		if (not (whitelist[steam] or isDonor(steam))) and accessLevel(steam) > 2 then
+		if (not (whitelist[steam] or isDonor(steam))) and (not server.allowProxies) and accessLevel(steam) > 2 then
 			for k,v in pairs(proxies) do
 				if string.find(ln, string.upper(v.scanString), nil, true) then
 					v.hits = tonumber(v.hits) + 1
@@ -4972,7 +5559,7 @@ function saveDisconnectedPlayer(steam)
 
 	if botman.dbConnected then
 		conn:execute("DELETE FROM messageQueue WHERE recipient = " .. steam)
-		conn:execute("DELETE FROM gimmeQueue WHERE steam = " .. steam)
+		connMEM:execute("DELETE FROM gimmeQueue WHERE steam = '" .. steam .. "'")
 		conn:execute("DELETE FROM commandQueue WHERE steam = " .. steam)
 		conn:execute("DELETE FROM playerQueue WHERE steam = " .. steam)
 	end

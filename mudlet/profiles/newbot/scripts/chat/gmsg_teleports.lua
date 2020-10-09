@@ -1,9 +1,9 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2016  Matthew Dwyer
+    Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
-    URL       http://botman.nz
+    Email     smegzor@gmail.com
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -1015,7 +1015,7 @@ function gmsg_teleports()
 					if not locations[loc].allowP2P then
 						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in a location that does not allow fetching friends.[-]")
 
-						r = rand(10)
+						r = randSQL(10)
 						if r == 8 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]It's not a very fetching location if you ask me.[-]") end
 						if r == 9 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Also I don't think you want " .. players[id].name  .. ".  I hear they don't wash.[-]") end
 						if r == 10 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Well this is a bit sticky isn't it?.[-]") end
@@ -2062,7 +2062,7 @@ function gmsg_teleports()
 				-- this is most likely from a numbered list and the admin wants to go to its coordinates
 
 				temp = string.match(chatvars.words[2], "#(%d+)")
-				cursor,errorString = conn:execute("select * from list where id = " .. temp)
+				cursor,errorString = connMEM:execute("select * from list where id = " .. temp)
 				row = cursor:fetch({}, "a")
 
 				if row then
@@ -3158,7 +3158,7 @@ function gmsg_teleports()
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('teleports', '" .. escape(tmp.topicDescription) .. "')")

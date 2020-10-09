@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -80,23 +80,23 @@ function gimmeQueuedCommands()
 		return
 	end
 
-	cursor1,errorString = conn:execute("SELECT DISTINCT steam FROM gimmeQueue")
+	cursor1,errorString = connMEM:execute("SELECT DISTINCT steam FROM gimmeQueue")
 
 	if cursor1 then
 		row1 = cursor1:fetch({}, "a")
 
 		while row1 do
 			if not igplayers[row1.steam] then
-				conn:execute("DELETE FROM gimmeQueue WHERE steam = " .. row1.steam)
+				connMEM:execute("DELETE FROM gimmeQueue WHERE steam = " .. row1.steam)
 			else
-				cursor2,errorString = conn:execute("SELECT * FROM gimmeQueue WHERE steam = " .. row1.steam .. " ORDER BY id limit 0,1")
+				cursor2,errorString = connMEM:execute("SELECT * FROM gimmeQueue WHERE steam = " .. row1.steam .. " ORDER BY id limit 1")
 
 				if cursor2 then
 					row2 = cursor2:fetch({}, "a")
 
 					if row2 then
 						command = row2.command
-						conn:execute("DELETE FROM gimmeQueue WHERE id = " .. row2.id)
+						connMEM:execute("DELETE FROM gimmeQueue WHERE id = " .. row2.id)
 						sendCommand(command)
 					end
 				end

@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -110,7 +110,7 @@ function WebPanelQueue()
 
 			if action == "new profile" then
 				irc_chat(server.ircAlerts, "Panel triggered " .. action)
-				tempTimer(4, [[newBotProfile()]])
+				tempTimer(5, [[newBotProfile()]])
 			end
 
 			if action == "pause bot" then
@@ -242,7 +242,7 @@ function WebPanelQueue()
 				end
 
 				if actionTable == "resetzones" then
-					tempTimer(3, [[loadResetZones()]])
+					tempTimer(3, [[loadResetZones(true)]])
 				end
 
 				if actionTable == "restricteditems" then

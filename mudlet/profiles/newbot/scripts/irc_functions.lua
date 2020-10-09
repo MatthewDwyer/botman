@@ -3,18 +3,43 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
 -- if you have oper status on your irc server, you can set channel modes.  This one sets flood protection to 5000 chars in 1 second which should prevent the bot from getting banned for flooding.
 -- /mode #channel +f [5000t#b]:1
 
+-- /mode #mychannel +k mypassword
+--
+
 local debug = false -- should be false unless testing
 local debugAdmin = false -- does not give unrestricted access to critical functions, mostly info.
 
 function getNick()
 	server.ircBotName = ircGetNick()
+end
+
+
+function secureIRCChannels()
+	sendIrc("", "/join " .. server.ircMain .. " " .. server.ircMainPassword)
+	sendIrc("", "/join " .. server.ircAlerts .. " " .. server.ircAlertsPassword)
+	sendIrc("", "/join " .. server.ircWatch .. " " .. server.ircWatchPassword)
+
+	--sendIrc("", "/mode +s " .. server.ircMain)
+	if server.ircMainPassword ~= "" then
+		sendIrc("", "/mode " .. server.ircMain .. " +k " .. server.ircMainPassword)
+	end
+
+	--sendIrc("", "/mode +s " .. server.ircAlerts)
+	if server.ircAlertsPassword ~= "" then
+		sendIrc("", "/mode " .. server.ircAlerts .. " +k " .. server.ircAlertsPassword)
+	end
+
+	--sendIrc("", "/mode +s " .. server.ircWatch)
+	if server.ircWatchPassword ~= "" then
+		sendIrc("", "/mode " .. server.ircWatch .. " +k " .. server.ircWatchPassword)
+	end
 end
 
 
@@ -45,6 +70,7 @@ function joinIRCServer()
 		setIrcServer(server.ircServer, server.ircPort)
 		setIrcChannels(channels)
 		tempTimer(5, [[restartIrc()]])
+		tempTimer(7, [[secureIRCChannels()]])
 	else
 		ircSetHost(server.ircServer, server.ircPort)
 
@@ -109,7 +135,7 @@ function irc_chat(name, msg)
 			file:write(v .. "\n")
 			file:close()
 		else
-			conn:execute("INSERT INTO ircQueue (name, command) VALUES ('" .. name .. "','" .. escape(v) .. "')")
+			connMEM:execute("INSERT INTO ircQueue (name, command) VALUES ('" .. name .. "','" .. connMEM:escape(v) .. "')")
 		end
 
 		if name == server.ircAlerts then
@@ -490,7 +516,7 @@ function irc_EntitiesNearPlayer(name, name1, range, xPos, zPos, otherTarget)
 		irc_chat(name, "Entities within " .. range .. " meters of " .. players[name].name .. " are:")
 	end
 
-	cursor,errorString = conn:execute("SELECT * from memEntities where type <> 'EntityPlayer'")
+	cursor,errorString = connMEM:execute("SELECT * FROM memEntities WHERE type <> 'EntityPlayer'")
 
 	row = cursor:fetch({}, "a")
 	while row do
@@ -561,7 +587,6 @@ function irc_PlayerShortInfo()
 	irc_chat(irc_params.name, "Info for player " .. irc_params.pname)
 	if players[irc_params.pid].newPlayer == true then irc_chat(irc_params.name, "A new player") end
 	irc_chat(irc_params.name, "SteamID " .. irc_params.pid)
-	irc_chat(irc_params.name, "CBSM GBL https://gbl.envul.com/lookup/" .. irc_params.pid .. "/")
 	irc_chat(irc_params.name, "Steam Rep http://steamrep.com/search?q=" .. irc_params.pid)
 	irc_chat(irc_params.name, "Steam http://steamcommunity.com/profiles/" .. irc_params.pid)
 
@@ -987,7 +1012,7 @@ end
 function irc_players(name)
 	local id, x, z, flags, line, sort
 
-	conn:execute("TRUNCATE list")
+	connMEM:execute("DELETE FROM list")
 
 	id = LookupPlayer(name, "all")
 
@@ -1047,17 +1072,17 @@ function irc_players(name)
 			end
 		end
 
-		conn:execute("INSERT INTO list (id, thing) VALUES (" .. sort .. ",'" .. escape(line) .. "')")
+		connMEM:execute("INSERT INTO list (id, thing) VALUES (" .. sort .. ",'" .. connMEM:escape(line) .. "')")
 	end
 
-	cursor,errorString = conn:execute("SELECT * FROM list order by id")
+	cursor,errorString = connMEM:execute("SELECT * FROM list ORDER BY id")
 	row = cursor:fetch({}, "a")
 	while row do
 		irc_chat(name, row.thing)
 		row = cursor:fetch(row, "a")
 	end
 
-	conn:execute("TRUNCATE list")
+	connMEM:execute("DELETE FROM list")
 
 	irc_chat(irc_params.name, "There are " .. botman.playersOnline .. " players online.")
 	irc_chat(name, ".")
@@ -1177,26 +1202,28 @@ function irc_listAllPlayers(name) --tested
 		for k, v in ipairs(a) do
 			steam = LookupOfflinePlayer(v, "all")
 
-			if players[steam].prisoner then
-				isPrisoner = "Prisoner"
-			else
-				isPrisoner = ""
-			end
+			if tonumber(steam) > 0 then
+				if players[steam].prisoner then
+					isPrisoner = "Prisoner"
+				else
+					isPrisoner = ""
+				end
 
-			if isDonor(steam) then
-				isADonor = "Donor"
-			else
-				isADonor = ""
-			end
+				if isDonor(steam) then
+					isADonor = "Donor"
+				else
+					isADonor = ""
+				end
 
-			if players[steam].accessLevel < 3 then
-				isAdmin = "Admin"
-			else
-				isAdmin = "Player"
-			end
+				if players[steam].accessLevel < 3 then
+					isAdmin = "Admin"
+				else
+					isAdmin = "Player"
+				end
 
-			cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", players[steam].id) .. " name: " .. v .. " [ " .. string.trim(isAdmin .. " " .. isADonor .. " " .. isPrisoner) .. " ] seen " .. players[steam].seen .. " playtime " .. players[steam].playtime .. " cash " .. players[steam].cash
-			irc_chat(irc_params.name, cmd)
+				cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", players[steam].id) .. " name: " .. v .. " [ " .. string.trim(isAdmin .. " " .. isADonor .. " " .. isPrisoner) .. " ] seen " .. players[steam].seen .. " playtime " .. players[steam].playtime .. " cash " .. players[steam].cash
+				irc_chat(irc_params.name, cmd)
+			end
 		end
 	else
 		steam = LookupPlayer(irc_params.pname)
@@ -1247,26 +1274,28 @@ function irc_listAllArchivedPlayers(name) --tested
 		for k, v in ipairs(a) do
 			steam = LookupArchivedPlayer(v, "all")
 
-			if playersArchived[steam].prisoner then
-				isPrisoner = "Prisoner"
-			else
-				isPrisoner = ""
-			end
+			if tonumber(steam) > 0 then
+				if playersArchived[steam].prisoner then
+					isPrisoner = "Prisoner"
+				else
+					isPrisoner = ""
+				end
 
-			if isDonor(steam) then
-				isADonor = "Donor"
-			else
-				isADonor = ""
-			end
+				if isDonor(steam) then
+					isADonor = "Donor"
+				else
+					isADonor = ""
+				end
 
-			if playersArchived[steam].accessLevel < 3 then
-				isAdmin = "Admin"
-			else
-				isAdmin = "Player"
-			end
+				if playersArchived[steam].accessLevel < 3 then
+					isAdmin = "Admin"
+				else
+					isAdmin = "Player"
+				end
 
-			cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", playersArchived[steam].id) .. " name: " .. v .. " [ " .. isAdmin .. " " .. isADonor .. " " .. isPrisoner .. " ] seen " .. playersArchived[steam].seen .. " playtime " .. playersArchived[steam].playtime
-			irc_chat(irc_params.name, cmd)
+				cmd = "steam: " .. steam .. " id: " .. string.format("%-8d", playersArchived[steam].id) .. " name: " .. v .. " [ " .. isAdmin .. " " .. isADonor .. " " .. isPrisoner .. " ] seen " .. playersArchived[steam].seen .. " playtime " .. playersArchived[steam].playtime
+				irc_chat(irc_params.name, cmd)
+			end
 		end
 	else
 		irc_chat(name, "Archived player " .. irc_params.pname .. ":")

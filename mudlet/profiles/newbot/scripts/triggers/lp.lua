@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -13,6 +13,12 @@ function lpTrigger(line)
 	if botman.botDisabled then
 		return
 	end
+
+	if botman.trackingTicker == nil then
+		botman.trackingTicker = 0
+	end
+
+	botman.trackingTicker = botman.trackingTicker + 1
 
 	botman.listPlayers = true
 	relogCount = 0

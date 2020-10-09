@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -17,7 +17,7 @@ function ircQueueTimer()
 		return
 	end
 
-	cursor1,errorString = conn:execute("select distinct name from ircQueue")
+	cursor1,errorString = connMEM:execute("SELECT DISTINCT name FROM ircQueue")
 
 	if not cursor1 then
 		return
@@ -31,7 +31,7 @@ function ircQueueTimer()
 	end
 
 	while row1 do
-		cursor2,errorString = conn:execute("select * from ircQueue where name = '" .. escape(row1.name) .. "' order by id limit 0,2")
+		cursor2,errorString = connMEM:execute("SELECT * FROM ircQueue WHERE name = '" .. connMEM:escape(row1.name) .. "' ORDER BY id LIMIT 2")
 
 		if cursor2 then
 			row2 = cursor2:fetch({}, "a")
@@ -39,7 +39,11 @@ function ircQueueTimer()
 			if row2 then
 				name = row2.name
 				command = row2.command
-				conn:execute("delete from ircQueue where id = " .. row2.id)
+				connMEM:execute("DELETE FROM ircQueue WHERE id = " .. row2.id)
+
+				if name == server.ircMain and command == "/names" then
+					botman.checkBotOnIRC = os.time()
+				end
 
 				if name ~= "#mudlet" then
 					sendIrc(name, command)

@@ -3,7 +3,7 @@
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
-    URL       http://botman.nz
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -282,20 +282,20 @@ function gmsg_fun()
 
 				if tonumber(server.gimmeRaincheck) > 0 then
 					if (players[chatvars.playerid].gimmeCooldown - os.time() > 0) then
-						r = rand(5)
+						r = randSQL(5)
 						if r == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]WOAH WOAH WOAH there fella. Don't do gimme so fast![-]") end
 						if r == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Ya cannay gimme wi that thing.  Git a real gun Jimmy.[-]") end
 						if r == 3 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Hold it! You need to wait a bit before you can gimme some more.[-]") end
 						if r == 4 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Don't eat all your gimmes at once. Where are your manners?[-]") end
 						if r == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Gimme gimme gimme.[-]") end
 
-						r = rand(5)
+						r = randSQL(5)
 						if r == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Wait till you see the reds of their eyes.[-]") end
 						if r == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Ya gotta sneak up on them real careful like.[-]") end
 						if r == 3 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You'll reach your daily bag limit too soon.[-]") end
 						if r == 4 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Gimme that![-]") end
-						r1 = rand(10)
-						r2 = rand(10)
+						r1 = randSQL(10)
+						r2 = randSQL(10)
 						if r == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Article " .. r1 .. ", section " .. r2 .. " states, You must wait " .. server.gimmeRaincheck .. " seconds between gimmes.[-]") end
 
 						botman.faultyChat = false
@@ -493,7 +493,7 @@ function gmsg_fun()
 				end
 
 				-- add the ending
-				r = rand(5)
+				r = randSQL(5)
 				if r == 1 then cmd = "Congratulations!  You have survived to the end of the fight!  Er.. once you've finished mopping up." end
 				if r == 2 then cmd = "GG!!  The arena game has ended." end
 				if r == 3 then cmd = "Curses!  You survived my arena OF DOOM!  It's so hard to find good help these days." end
@@ -517,7 +517,7 @@ function gmsg_fun()
 	local function cmd_Poke()
 		-- Annoy the bot
 		if string.find(chatvars.words[1], "poke") and chatvars.words[2] ==  nil then
-			r = rand(45)
+			r = randSQL(45)
 			if r == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Hey![-]") end
 			if r == 3 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Stop that![-]") end
 			if r == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Ouch![-]") end
@@ -629,14 +629,14 @@ function gmsg_fun()
 			if string.find(chatvars.words[1], "rage") then
 				kick(chatvars.playerid, "RAAAAGE! xD")
 			else
-				r = rand(4)
+				r = randSQL(4)
 				if r == 1 then kick(chatvars.playerid, "You'll be back :P") end
 				if r == 2 then kick(chatvars.playerid, "Quitter! :V") end
 				if r == 3 then kick(chatvars.playerid, "Nice quit    *removes glasses*    YEEEEEEEEAH!") end
 				if r == 4 then kick(chatvars.playerid, "You'll never quit xD") end
 			end
 
-			r = rand(10)
+			r = randSQL(10)
 
 			if r == 1 then
 				message("say [" .. server.chatColour .. "]" .. players[chatvars.playerid].name .. " has left the building.[-]")
@@ -834,7 +834,7 @@ function gmsg_fun()
 					sendCommand("bm-give " .. chatvars.playerid .. " medicalSplint 1")
 				end
 
-				r = rand(2)
+				r = randSQL(2)
 				if r == 1 then
 					cmd = "give " .. chatvars.playerid .. " medicalFirstAidBandage 1"
 
@@ -865,7 +865,7 @@ function gmsg_fun()
 
 				players[chatvars.playerid].cash = tonumber(players[chatvars.playerid].cash) + 200
 
-				r = rand(26)
+				r = randSQL(26)
 				if r == 1 then
 					cmd = "give " .. chatvars.playerid .. " foodCanBeef 1"
 
@@ -1851,7 +1851,7 @@ function gmsg_fun()
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('fun', '" .. escape(tmp.topicDescription) .. "')")

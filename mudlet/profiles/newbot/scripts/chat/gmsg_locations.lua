@@ -2,8 +2,8 @@
     Botman - A collection of scripts for managing 7 Days to Die servers
     Copyright (C) 2020  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
-    Email     mdwyer@snap.net.nz
-    URL       http://botman.nz
+    Email     smegzor@gmail.com
+    URL       https://botman.nz
     Source    https://bitbucket.org/mhdwyer/botman
 --]]
 
@@ -1308,7 +1308,6 @@ function gmsg_locations()
 		end
 
 		if (chatvars.words[1] == "location" and string.find(chatvars.command, " category") and chatvars.words[3] ~= nil) then
-
 			if (chatvars.playername ~= "Server") then
 				if (chatvars.accessLevel > 2) then
 					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
@@ -3460,7 +3459,7 @@ function gmsg_locations()
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now a safezone.")
 					end
 				else
-					locations[loc].killZombies = true
+					locations[loc].killZombies = false
 					server.scanZombies = true
 					conn:execute("UPDATE locations set killZombies = 0 WHERE name = '" .. escape(loc) .. "'")
 
@@ -3811,12 +3810,12 @@ function gmsg_locations()
 		rows = cursor:numrows()
 		if rows == 0 then
 			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.Auto_increment
 
 			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('locations', 'A location is usually a teleport destination. They can be configured for many purposes.')")
 		else
-			row = cursor:fetch(row, "a")
+			row = cursor:fetch({}, "a")
 			tmp.topicID = row.topicID
 		end
 	end
