@@ -1,13 +1,15 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 function TenSecondTimer()
+	local k, v
+
 	if botman.botDisabled or botman.botOffline then
 		return
 	end
@@ -19,45 +21,34 @@ function TenSecondTimer()
 		end
 	end
 
-	-- if server.lagged then
-		-- -- test for telnet command lag as it can creep up on busy servers or when there are lots of telnet errors going on
-		-- if not botman.botOffline and not botman.botDisabled then
-			-- if server.enableLagCheck then
-				-- botman.lagCheckTime = os.time()
-				-- sendCommand("pm LagCheck " .. os.time())
-			-- end
-		-- else
-			-- if server.enableLagCheck then
-				-- botman.lagCheckTime = os.time()
-			-- end
-		-- end
-
-		-- server.lagged = false
-	-- else
-		if tonumber(botman.playersOnline) > 0 and tonumber(botman.playersOnline) < 25 then
-			if server.coppi and tonumber(botman.playersOnline) > 0 then
-				if server.scanNoclip and tonumber(server.gameVersionNumber) < 17 then
-					if server.coppiRelease == "Mod CSMM Patrons" then
-						sendCommand("pinc")
-					else
-						sendCommand("pug")
-					end
-				end
-
-				if not server.playersCanFly and tonumber(server.gameVersionNumber) < 17 then
-					if server.coppiRelease == "Mod CSMM Patrons" then
-						sendCommand("cph")
-					else
-						sendCommand("pgd")
-					end
-				end
+	if tonumber(botman.playersOnline) > 0 then
+		if (server.scanZombies or server.scanEntities) then
+			if server.useAllocsWebAPI then
+				sendCommand("gethostilelocation")
+			else
+				sendCommand("le")
 			end
+		end
+	end
 
-			if (server.scanZombies or server.scanEntities) then
-				if server.useAllocsWebAPI then
-					sendCommand("gethostilelocation")
+	if tablelength(igplayers) ~= tonumber(botman.playersOnline) then
+		if botman.playersOnline == 0 then
+			playersOnlineList = {}
+			igplayers = {}
+			botman.oneMinuteTimer_faulty = false
+		end
+
+		if botman.oneMinuteTimer_faulty then
+			for k,v in pairs(playersOnlineList) do
+				if not igplayers[k] then
+					-- this player has disconnected but is still in the igplayers table so we need to remove them
+					igplayers[k] = nil
 				end
 			end
 		end
-	-- end
+	end
+
+	if tablelength(igplayers) == 0 and tonumber(botman.playersOnline) == 0 and not botman.oneMinuteTimer_faulty then
+		playersOnlineList = {}
+	end
 end

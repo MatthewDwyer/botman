@@ -1,23 +1,23 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
-local debug, tmp, msg, result, help
-local shortHelp = false
-local skipHelp = false
-
--- enable debug to see where the code is stopping. Any error will be somewhere after the last successful debug line.
-debug = false -- should be false unless testing
-
 function gmsg_server()
+	local debug, tmp, msg, result, help
+	local shortHelp = false
+
+	-- enable debug to see where the code is stopping. Any error will be somewhere after the last successful debug line.
+	debug = false -- should be false unless testing
+
 	calledFunction = "gmsg_server"
 	result = false
 	tmp = {}
+	tmp.topic = "server"
 
 	if botman.debugAll then
 		debug = true -- this should be true
@@ -26,25 +26,26 @@ function gmsg_server()
 -- ################## server command functions ##################
 
 	local function cmd_CancelReboot()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}cancel reboot"
 			help[2] = "Cancel a scheduled reboot.  You may not be able to stop a forced or automatically scheduled reboot but you can pause it instead."
 
 			tmp.command = help[1]
-			tmp.keywords = "reboo,shut,canc,stop"
+			tmp.keywords = "reboot,shutdown,cancel,stop,restart"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "cancel") or string.find(chatvars.command, "reboot"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "cancel") or string.find(chatvars.command, "reboot") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -55,21 +56,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "cancel" and chatvars.words[2] == "reboot" and chatvars.words[3] == nil) then
-			if (chatvars.playername ~= "Server") then
-				if chatvars.accessLevel > 1 then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]This command is for admins only[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if (chatvars.playername ~= "Server") then
@@ -112,25 +106,26 @@ function gmsg_server()
 
 
 	local function cmd_JoinGameServer()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}join server {ip} port {telnet port} pass {telnet password}"
 			help[2] = "Tell the bot to join a different game server."
 
 			tmp.command = help[1]
-			tmp.keywords = "server,join,new,change,ip,port,pass"
+			tmp.keywords = "server,join,new,change,ip,port,password"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "join") or string.find(chatvars.command, "server"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "join") or string.find(chatvars.command, "server") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -141,21 +136,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "join" and chatvars.words[2] == "server" and string.find(chatvars.command, "port") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			serverMove = {}
@@ -189,25 +177,26 @@ function gmsg_server()
 
 
 	local function cmd_PauseReboot()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}pause reboot"
 			help[2] = "Pause a scheduled reboot.  It will stay paused until you unpause it or restart the bot."
 
 			tmp.command = help[1]
-			tmp.keywords = "server,rebo,pause,resu"
+			tmp.keywords = "server,reboot,pause,resume"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pause") or string.find(chatvars.command, "reboot"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "pause") or string.find(chatvars.command, "reboot") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -218,31 +207,54 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "pause" or chatvars.words[1] == "paws") and chatvars.words[2] == "reboot" and chatvars.words[3] == nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
-			if botman.scheduledRestart == true and botman.scheduledRestartPaused == false then
+			if botman.scheduledRestartPaused then
+				if chatvars.words[1] == "paws" then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The paws are already on the reboot.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The paws are already on the reboot.")
+					end
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The reboot is already paused.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The reboot is already paused.")
+					end
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			if server.allowReboot then
+				if server.maxServerUptime < 25 then
+					botman.restartTimeRemaining = (tonumber(server.maxServerUptime) * 3600) - server.uptime + 900
+				else
+					botman.restartTimeRemaining = (tonumber(server.maxServerUptime) * 60) - server.uptime + 900
+				end
+
 				botman.scheduledRestartPaused = true
-				restartTimeRemaining = botman.scheduledRestartTimestamp - os.time()
 
 				if chatvars.words[1] == "paws" then
 					message("say [" .. server.chatColour .. "]The reboot has been pawsed.[-]")
 				else
 					message("say [" .. server.chatColour .. "]The reboot has been paused.[-]")
+				end
+			else
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Server reboots are not managed by the bot.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Server reboots are not managed by the bot.")
 				end
 			end
 
@@ -253,26 +265,27 @@ function gmsg_server()
 
 
 	local function cmd_RunConsoleCommand()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}run command {a console command}"
 			help[2] = "Sometimes you need to make the bot run a specific console command.\n"
 			help[2] = help[2] .. "This can be used to force the bot re-parse a list.  Only server owners can do this."
 
 			tmp.command = help[1]
-			tmp.keywords = "bot,run,comm,cons"
+			tmp.keywords = "bot,run,command,console"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "run") or string.find(chatvars.command, "comm") or string.find(chatvars.command, "cons"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "run") or string.find(chatvars.command, "comm") or string.find(chatvars.command, "cons") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -283,21 +296,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "run" and chatvars.words[2] == "command" and chatvars.words[3] ~= nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			tmp = string.sub(line, string.find(line, "command") + 8)
@@ -309,7 +315,7 @@ function gmsg_server()
 
 
 	local function cmd_Say()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}say{2 letter language code} {something you want translated}"
 			help[2] = "If the translator utility is installed, the bot can translate from english what you say into the language you specify.\n"
@@ -317,19 +323,20 @@ function gmsg_server()
 			help[2] = help[2] .. "Note: This uses Google and due to the number of bots I host, it is not installed on my servers as I don't want to risk an invoice from them.\n"
 
 			tmp.command = help[1]
-			tmp.keywords = "bot,run,comm,cons"
+			tmp.keywords = "bot,run,command,console"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "say"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "say") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -340,6 +347,8 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (string.find(chatvars.words[1], "say") and (string.len(chatvars.words[1]) == 5) and chatvars.words[2] ~= nil) then
@@ -357,29 +366,30 @@ function gmsg_server()
 
 
 	local function cmd_ScheduleServerReboot()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}reboot\n"
-			help[1] = help[1] .. " {#}reboot {n} minute (or hour) (optional: forced)\n"
-			help[1] = help[1] .. " {#}reboot now"
+			help[1] = help[1] .. "Or {#}reboot {n} minute (or hour) (optional: forced)\n"
+			help[1] = help[1] .. "Or {#}reboot now"
 			help[2] = "Schedule a timed or immediate server reboot.  The actual restart must be handled externally by something else.\n"
 			help[2] = help[2] .. "Just before the reboot happens, the bot issues a save command. If you add forced, only a level 0 admin can stop the reboot.\n"
 			help[2] = help[2] .. "Shutting down the bot will also cancel a reboot but any automatic (timed) reboots will reschedule if the server wasn't also restarted."
 
 			tmp.command = help[1]
-			tmp.keywords = "server,rebo,now,time,sched"
+			tmp.keywords = "server,reboots,now,time,schedule"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and string.find(chatvars.command, "reboot")) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "reboot")) and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -390,29 +400,20 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "reboot") then
 				if server.allowReboot == false then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]This command is disabled for this server.  Reboot manually.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]This command is disabled for this server.  Reboot manually.[-]")
 					botman.faultyChat = false
 					return true
 				end
 
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if tonumber(chatvars.ircid) > 0 then
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if (chatvars.words[2] ~= "now") then
@@ -436,12 +437,10 @@ function gmsg_server()
 				if not botMaintenance.lastSA then
 					botMaintenance.lastSA = os.time()
 					saveBotMaintenance()
-					sendCommand("sa")
 				else
 					if (os.time() - botMaintenance.lastSA) > 30 then
 						botMaintenance.lastSA = os.time()
 						saveBotMaintenance()
-						sendCommand("sa")
 					end
 				end
 
@@ -491,26 +490,27 @@ function gmsg_server()
 
 
 	local function cmd_SetAccessOverride()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}override access {number from 99 to 4}"
 			help[2] = "All players have an access level which governs what they can do.  You can override it for everyone to temporarily raise their access.\n"
 			help[2] = help[2] .. "eg. {#}overide access 10 would make all players donors until you restore it.  To do that type {#}override access 99.  This is faster than giving individual players donor access if you just want to do a free donor weekend."
 
 			tmp.command = help[1]
-			tmp.keywords = "bot,acce,over,set"
+			tmp.keywords = "bot,acceess,override,set"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "overr") or string.find(chatvars.command, "acc"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "overr") or string.find(chatvars.command, "acc") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -521,21 +521,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "override" and chatvars.words[2] == "access" and chatvars.words[3] ~= nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
@@ -543,7 +536,7 @@ function gmsg_server()
 
 				if chatvars.number < 3 then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Do not set the access override lower than 3![-]")
+						message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Do not set the access override lower than 3![-]")
 					else
 						irc_chat(chatvars.ircAlias, "Do not set the access override lower than 3!")
 					end
@@ -556,7 +549,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET accessLevelOverride = " .. chatvars.number)
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player access levels have been over-ridden! Minimum access level is now " .. chatvars.number .. ".[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Player access levels have been over-ridden! Minimum access level is now " .. chatvars.number .. ".[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Player access levels have been over-ridden! Minimum access level is now " .. chatvars.number .. ".")
 				end
@@ -569,26 +562,27 @@ function gmsg_server()
 
 
 	local function cmd_SetArchivePlayersThreshold()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set archive players day {number (days) default is 60}"
 			help[2] = "The bot will archive players who haven't played in 60 days except for admins.  You can disable this feature by setting it to 0.\n"
 			help[2] = help[2] .. "The bot will archive players at startup or if you use the command {#}archive players."
 
 			tmp.command = help[1]
-			tmp.keywords = "bot,set,arch,day,play,seen"
+			tmp.keywords = "bot,set,archived,day,players,seen"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "arch") or string.find(chatvars.command, "play") or string.find(chatvars.command, "seen"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "set") or string.find(chatvars.command, "arch") or string.find(chatvars.command, "play") or string.find(chatvars.command, "seen") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -599,21 +593,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "archive" and chatvars.words[3] == "players" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
@@ -623,14 +610,14 @@ function gmsg_server()
 
 				if chatvars.number == 0 then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will not be archived.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will not be archived.[-]")
 					else
 						irc_chat(chatvars.ircAlias, "Players will not be archived.")
 					end
 				else
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who are not admins and haven't played in " .. server.archivePlayersLastSeenDays .. " days will be archived when the bot starts up.  You can force it now with {#}archive players.[-]")
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]If you have a lot of players it will make the bot unresponsive for a short time.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players who are not admins and haven't played in " .. server.archivePlayersLastSeenDays .. " days will be archived when the bot starts up.  You can force it now with {#}archive players.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]If you have a lot of players it will make the bot unresponsive for a short time.[-]")
 					else
 						irc_chat(chatvars.ircAlias, "Players who are not admins and haven't played in " .. chatvars.number .. " days will be archived when the bot starts up.  You can force it now with {#}archive players.")
 						irc_chat(chatvars.ircAlias, "If you have a lot of players it will make the bot unresponsive for a short time.")
@@ -645,7 +632,7 @@ function gmsg_server()
 
 
 	local function cmd_SetBailCost()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set bail {number}"
 			help[2] = "Set how many " .. server.moneyPlural .. " it costs to bail out of prison.  To disable bail set it to zero (the default)"
@@ -656,14 +643,15 @@ function gmsg_server()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "bail") or string.find(chatvars.command, "prison") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "bail") or string.find(chatvars.command, "prison") or string.find(chatvars.command, "set") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -674,21 +662,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "bail" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number == nil then
@@ -704,13 +685,13 @@ function gmsg_server()
 
 			if server.bailCost == 0 then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Bail is disabled on this server.  Players must be released by someone to get out of prison.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Bail is disabled on this server.  Players must be released by someone to get out of prison.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Bail is disabled on this server.  Players must be released by someone to get out of prison.")
 				end
 			else
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Players can release themselves from prison at a cost of " .. server.bailCost .. " " .. server.moneyPlural .. ".[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Players can release themselves from prison at a cost of " .. server.bailCost .. " " .. server.moneyPlural .. ".[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players can release themselves from prison at a cost of " .. server.bailCost .. " " .. server.moneyPlural)
 				end
@@ -723,7 +704,7 @@ function gmsg_server()
 
 
 	local function cmd_SetClearViewMOTD()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}motd (to view it)\n"
 			help[1] = help[1] .. " {#}motd (or {#}set motd) {your message here} (to set it)\n"
@@ -732,19 +713,20 @@ function gmsg_server()
 			help[2] = help[2] .. "To remove it type {#}motd clear"
 
 			tmp.command = help[1]
-			tmp.keywords = "set,motd,mess,day"
+			tmp.keywords = "set,motd,message,day"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "motd") or string.find(chatvars.command, "mess"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "motd") or string.find(chatvars.command, "mess") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -755,33 +737,26 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "motd") or (chatvars.words[1] == "set" and chatvars.words[2] == "motd") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[2] == nil then
 				if server.MOTD == nil then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]There is no MOTD set.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]There is no MOTD set.[-]")
 					else
 						irc_chat(chatvars.ircAlias, "There is no MOTD set.")
 					end
 				else
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.MOTD .. "[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. server.MOTD .. "[-]")
 					else
 						irc_chat(chatvars.ircAlias, server.MOTD)
 					end
@@ -792,7 +767,7 @@ function gmsg_server()
 					conn:execute("UPDATE server SET MOTD = ''")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]MOTD has been cleared.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]MOTD has been cleared.[-]")
 					else
 						irc_chat(chatvars.ircAlias, "MOTD has been cleared.")
 					end
@@ -801,8 +776,8 @@ function gmsg_server()
 					conn:execute("UPDATE server SET MOTD = '" .. escape(server.MOTD) .. "'")
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New message of the day recorded.[-]")
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.MOTD .. "[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]New message of the day recorded.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. server.MOTD .. "[-]")
 					else
 						irc_chat(chatvars.ircAlias, "New message of the day recorded.")
 						irc_chat(chatvars.ircAlias, server.MOTD)
@@ -817,7 +792,7 @@ function gmsg_server()
 
 
 	local function cmd_SetIdleKickTimer()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set idle kick {seconds} (default 900. 15 minutes)"
 			help[2] = "How many seconds a player can be idle for before being kicked from the server. Does not include joining players that have not spawned yet."
@@ -828,14 +803,15 @@ function gmsg_server()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "idle") or string.find(chatvars.command, "kick"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "idle") or string.find(chatvars.command, "kick") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -846,26 +822,19 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "idle" and chatvars.words[3] == "kick" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number == nil then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Number expected.  Default is 900 seconds which is 15 minutes.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Number expected.  Default is 900 seconds which is 15 minutes.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Number expected.  Default is 900 seconds which is 15 minutes.")
 				end
@@ -878,7 +847,7 @@ function gmsg_server()
 
 			if chatvars.number == 0 then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Timer can't be zero seconds.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Timer can't be zero seconds.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Timer can't be zero seconds.")
 				end
@@ -891,7 +860,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET idleKick = 1, idleKickTimer = " .. server.idleKickTimer)
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Idle players will be kicked after " .. server.idleKickTimer .. " seconds. Those slackers![-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Idle players will be kicked after " .. server.idleKickTimer .. " seconds. Those slackers![-]")
 				else
 					irc_chat(chatvars.ircAlias, "Idle players will be kicked after " .. server.idleKickTimer .. " seconds. Those slackers!")
 				end
@@ -904,25 +873,26 @@ function gmsg_server()
 
 
 	local function cmd_SetIRCChannels()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set irc main (or alerts or watch) {channel name without a # sign}"
 			help[2] = "Change the bot's IRC channels."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,irc,web,chan,main,alert,watc"
+			tmp.keywords = "set,irc,web,channel,main,alert,watch"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and string.find(chatvars.command, " irc")) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, " irc")) and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -933,21 +903,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "irc" and (chatvars.words[3] == "main" or chatvars.words[3] == "alerts" or chatvars.words[3] == "watch") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			pname = chatvars.words[4]
@@ -956,10 +919,9 @@ function gmsg_server()
 				server.ircMain = "#" .. pname
 				server.ircAlerts = "#" .. pname .. "_alerts"
 				server.ircWatch = "#" .. pname .. "_watch"
-				server.ircTracker = "#" .. pname .. "_tracker"
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The main irc channel is now " .. server.ircMain .. ", alerts is " ..  server.ircAlerts .. " and watch is " ..  server.ircWatch .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The main irc channel is now " .. server.ircMain .. ", alerts is " ..  server.ircAlerts .. " and watch is " ..  server.ircWatch .. "[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The main irc channel is now " .. server.ircMain .. ", alerts is " ..  server.ircAlerts .. " and watch is " ..  server.ircWatch)
 				end
@@ -969,7 +931,7 @@ function gmsg_server()
 				server.ircAlerts = "#" .. pname
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The alerts irc channel is now " .. server.ircAlerts .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The alerts irc channel is now " .. server.ircAlerts .. "[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The alerts irc channel is now " .. server.ircAlerts)
 				end
@@ -979,17 +941,15 @@ function gmsg_server()
 				server.ircWatch = "#" .. pname
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The watch irc channel is now " .. server.ircWatch .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The watch irc channel is now " .. server.ircWatch .. "[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The watch irc channel is now " .. server.ircWatch)
 				end
 			end
 
-			conn:execute("UPDATE server SET ircMain = '" .. escape(server.ircMain) .. "', ircAlerts = '" .. escape(server.ircAlerts) .. "', ircWatch = '" .. escape(server.ircWatch) .. "', ircTracker = '" .. escape(server.ircTracker) .. "'")
+			conn:execute("UPDATE server SET ircMain = '" .. escape(server.ircMain) .. "', ircAlerts = '" .. escape(server.ircAlerts) .. "', ircWatch = '" .. escape(server.ircWatch) .. "'")
 
-			if botman.customMudlet then
-				joinIRCServer()
-			end
+			joinIRCServer()
 
 			botman.faultyChat = false
 			return true
@@ -998,7 +958,7 @@ function gmsg_server()
 
 
 	local function cmd_SetIRCNick()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set irc nick {bot name}"
 			help[2] = "Change the bot's IRC nickname. Sometimes it can have a nick collision with itself and it gets an underscore appended to it."
@@ -1009,14 +969,15 @@ function gmsg_server()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and string.find(chatvars.command, " irc")) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, " irc")) and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1027,27 +988,20 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "irc" and chatvars.words[3] == "nick" and chatvars.words[4] ~= "" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			pname = chatvars.wordsOld[4]
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot's irc nick is now " .. pname .. ".[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot's irc nick is now " .. pname .. ".[-]")
 			else
 				irc_chat(chatvars.ircAlias, "The bot's irc nick is now " .. pname)
 			end
@@ -1072,7 +1026,7 @@ function gmsg_server()
 
 
 	local function cmd_SetIRCServer()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set irc server {IP or URL and optional port}"
 			help[2] = "Use this command if you want players to know your IRC server's address."
@@ -1083,14 +1037,15 @@ function gmsg_server()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and string.find(chatvars.command, " irc")) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, " irc")) and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1101,21 +1056,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "set" and chatvars.words[2] == "irc" and chatvars.words[3] == "server") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			tmp = string.sub(chatvars.command, string.find(chatvars.command, "server") + 7)
@@ -1123,13 +1071,13 @@ function gmsg_server()
 
 			if tmp == nil or tmp == "" then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]A server name is required.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]A server name is required.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "A server name is required.")
 				end
 			else
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The IRC server is now at " .. tmp .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The IRC server is now at " .. tmp .. "[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The IRC server is now at " .. tmp)
 				end
@@ -1155,7 +1103,7 @@ function gmsg_server()
 
 
 	local function cmd_SetMapSize()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set map size {number}"
 			help[2] = "Set the maximum distance from 0,0 that players are allowed to travel. Any players already outside this limit will be teleported to 0,0 and may get stuck under the map.  They can relog.\n"
@@ -1168,14 +1116,15 @@ function gmsg_server()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and string.find(chatvars.command, " map")) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, " map")) and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1186,21 +1135,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "set" and chatvars.words[2] == "map" and chatvars.words[3] == "size") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
@@ -1217,25 +1159,26 @@ function gmsg_server()
 
 
 	local function cmd_SetMaxAnimals()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set max animals {number}"
 			help[2] = "Change the server's max spawned animals."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,max,anim,enti"
+			tmp.keywords = "set,max,animals,entities"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " max") or string.find(chatvars.command, "anim"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, " max") or string.find(chatvars.command, "anim") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1246,21 +1189,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "max" and chatvars.words[3] == "animals" and chatvars.words[4] ~= nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
@@ -1268,7 +1204,7 @@ function gmsg_server()
 
 				if chatvars.number > 150 then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. chatvars.number .. " is too high. Set a lower limit.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]" .. chatvars.number .. " is too high. Set a lower limit.[-]")
 					else
 						irc_chat(chatvars.ircAlias, chatvars.number .. " is too high. Set a lower limit.")
 					end
@@ -1280,7 +1216,7 @@ function gmsg_server()
 				sendCommand("sg MaxSpawnedAnimals " .. chatvars.number)
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Max spawned animals is now " .. chatvars.number .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Max spawned animals is now " .. chatvars.number .. "[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Max spawned animals is now " .. chatvars.number)
 				end
@@ -1292,8 +1228,80 @@ function gmsg_server()
 	end
 
 
+	local function cmd_SetMaxHackerFlyingGroundHeight()
+		if chatvars.showHelp or botman.registerHelp then
+			help = {}
+			help[1] = " {#}set hacker flying trigger {number}"
+			help[2] = "The anti-cheat flying detection will trigger when a player is detected more than this high above the ground."
+			help[2] = help[2] .. "Default is 7. Used by the bot's flying hacker detection when enabled with {#}disallow flying."
+
+			tmp.command = help[1]
+			tmp.keywords = "set,max,fly,height"
+			tmp.accessLevel = 0
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
+
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
+
+			if botman.registerHelp then
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, " max") or string.find(chatvars.command, "fly") or string.find(chatvars.command, "height") and chatvars.showHelp or botman.registerHelp then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+
+			return false
+		end
+
+		if chatvars.words[1] == "set" and string.find(chatvars.words[2], "hack") and string.find(chatvars.words[3], "fly") then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
+			if chatvars.number ~= nil then
+				chatvars.number = math.abs(math.floor(chatvars.number))
+
+				if chatvars.number == 0 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Set a higher value than 0 or disable this feature with {#}allow flying[-]")
+					else
+						irc_chat(chatvars.ircAlias, "Set a higher value than 0 or disable this feature with cmd {#}allow flying")
+					end
+
+					botman.faultyChat = false
+					return true
+				end
+
+				server.hackerFlyingTrigger = tonumber(chatvars.number)
+				conn:execute("UPDATE server SET hackerFlyingTrigger = " .. chatvars.number)
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Hacker flying detection will trigger for players flying more than " .. chatvars.number .. " blocks above the ground.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "Hacker flying detection will trigger for players flying more than " .. chatvars.number .. " blocks above the ground.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
 	local function cmd_SetMaxPing()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set (or clear) max ping {number}"
 			help[2] = "To kick high ping players set a max ping.  It will only be applied to new players. You can also whitelist a new player to make them exempt.\n"
@@ -1305,14 +1313,15 @@ function gmsg_server()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "ping"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "ping") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1323,21 +1332,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "set" or chatvars.words[1] == "clear") and chatvars.words[2] == "max" and chatvars.words[3] == "ping" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "clear" then
@@ -1345,7 +1347,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET pingKick = -1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Ping kicking is disabled.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Ping kicking is disabled.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Ping kicking is disabled.")
 				end
@@ -1357,7 +1359,7 @@ function gmsg_server()
 			if chatvars.number ~= nil then
 				if tonumber(chatvars.number) > -1 and tonumber(chatvars.number) < 100 then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. chatvars.number .. " is quite low. Enter a number > 99[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]" .. chatvars.number .. " is quite low. Enter a number > 99[-]")
 					else
 						irc_chat(chatvars.ircAlias, chatvars.number .. " is quite low. Enter a number > 99")
 					end
@@ -1366,7 +1368,7 @@ function gmsg_server()
 					conn:execute("UPDATE server SET pingKick = " .. chatvars.number)
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New players with a ping above " .. chatvars.number .. " will be kicked from the server.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]New players with a ping above " .. chatvars.number .. " will be kicked from the server.[-]")
 					else
 						irc_chat(chatvars.ircAlias, "New players with a ping above " .. chatvars.number .. " will be kicked from the server.")
 					end
@@ -1380,25 +1382,26 @@ function gmsg_server()
 
 
 	local function cmd_SetMaxPlayers()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set max players {number}"
 			help[2] = "Change the server's max players. Admins can always join using the automated reserved slots feature."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,max,play"
+			tmp.keywords = "set,max,players"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " max") or string.find(chatvars.command, "play"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, " max") or string.find(chatvars.command, "play") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1409,21 +1412,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "max" and chatvars.words[3] == "players" and chatvars.words[4] ~= nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
@@ -1439,7 +1435,7 @@ function gmsg_server()
 				end
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Max players is now " .. chatvars.number .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Max players is now " .. chatvars.number .. "[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Max players is now " .. chatvars.number)
 				end
@@ -1452,26 +1448,28 @@ function gmsg_server()
 
 
 	local function cmd_SetMaxUptime()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set max uptime {number}\n"
-			help[1] = help[1] .. " {#}max uptime (to see it)"
-			help[2] = "Set how long (in hours) that the server can be running before the bot schedules a reboot.  The bot will always add 15 minutes as the reboot is only scheduled at that time."
+			help[1] = help[1] .. " {#}max uptime (to review it)"
+			help[2] = "Set how long the server will run before the bot schedules a reboot.  The bot will always add 15 minutes as the reboot is only scheduled at that time.\n"
+			help[2] = help[2] .. "Numbers 1 - 24 will be treated as hours, numbers above that will be treated as minutes.  So to set an uptime of 2 hours and 30 minutes use {#}set max uptime 150."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,max,upt"
+			tmp.keywords = "set,max,uptime,time"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " max") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, " max") or string.find(chatvars.command, "time") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1482,12 +1480,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "max" and chatvars.words[2] == "uptime" and chatvars.words[3] == nil then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Max server uptime is " .. server.maxServerUptime .. " hours.[-]")
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Change it with " .. server.commandPrefix .. "set max uptime {hours}[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Max server uptime is " .. server.maxServerUptime .. " hours.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Change it with " .. server.commandPrefix .. "set max uptime {hours}[-]")
 			else
 				irc_chat(chatvars.ircAlias, "Max server uptime is " .. server.maxServerUptime .. " hours.")
 				irc_chat(chatvars.ircAlias, "Change it with " .. server.commandPrefix .. "set max uptime {hours}")
@@ -1498,18 +1498,9 @@ function gmsg_server()
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "max" and chatvars.words[3] == "uptime" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
@@ -1517,9 +1508,9 @@ function gmsg_server()
 
 				if chatvars.number == 0 then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The minimum uptime allowed is 1 hour. Max uptime has not been changed.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]A number is required. Up to 24 hours can be set with 1 to 24. Numbers above that are in minutes.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "The minimum uptime allowed is 1 hour. Max uptime has not been changed.")
+						irc_chat(chatvars.ircAlias, "A number is required. Up to 24 hours can be set with 1 to 24. Numbers above that are in minutes.")
 					end
 
 					botman.faultyChat = false
@@ -1529,10 +1520,18 @@ function gmsg_server()
 				server.maxServerUptime = chatvars.number
 				conn:execute("UPDATE server SET maxServerUptime = " .. chatvars.number)
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I will reboot the server when the server has been running " .. chatvars.number .. " hours.[-]")
+				if chatvars.number < 25 then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]I will reboot the server when the server has been up " .. chatvars.number .. " hours.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "I will reboot the server when the server has been up " .. chatvars.number .. " hours.")
+					end
 				else
-					irc_chat(chatvars.ircAlias, "I will reboot the server when the server has been running " .. chatvars.number .. " hours.")
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]I will reboot the server when the server has been up " .. chatvars.number .. " minutes.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "I will reboot the server when the server has been up " .. chatvars.number .. " minutes.")
+					end
 				end
 			end
 
@@ -1543,25 +1542,26 @@ function gmsg_server()
 
 
 	local function cmd_SetMaxZombies()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set max zombies {number}"
 			help[2] = "Change the server's max spawned zombies."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,max,zed,zom"
+			tmp.keywords = "set,max,zeds,zombies"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " max") or string.find(chatvars.command, "zom"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, " max") or string.find(chatvars.command, "zom") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1572,21 +1572,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "max" and (chatvars.words[3] == "zeds" or chatvars.words[3] == "zombies") and chatvars.words[4] ~= nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
@@ -1594,7 +1587,7 @@ function gmsg_server()
 
 				if chatvars.number > 150 then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. chatvars.number .. " is too high. Set a lower limit.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]" .. chatvars.number .. " is too high. Set a lower limit.[-]")
 					else
 						irc_chat(chatvars.ircAlias, chatvars.number .. " is too high. Set a lower limit.")
 					end
@@ -1606,7 +1599,7 @@ function gmsg_server()
 				sendCommand("sg MaxSpawnedZombies " .. chatvars.number)
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Max spawned zombies is now " .. chatvars.number .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Max spawned zombies is now " .. chatvars.number .. "[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Max spawned zombies is now " .. chatvars.number)
 				end
@@ -1619,26 +1612,27 @@ function gmsg_server()
 
 
 	local function cmd_SetNewPlayerMaxLevel()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set new player max level {number} (game level)"
 			help[2] = "By default a new player is automatically upgraded to a regular player once they pass level 9.\n"
 			help[2] = help[2] .. "Use this command to change it to a different player level."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,new,play,max,level"
+			tmp.keywords = "set,new,player,max,level"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " level") or string.find(chatvars.command, " play"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, " level") or string.find(chatvars.command, " play") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1649,11 +1643,13 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.command == "new player max level" then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New players stop being new after level " .. server.newPlayerMaxLevel .. ".[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]New players stop being new after level " .. server.newPlayerMaxLevel .. ".[-]")
 			else
 				irc_chat(chatvars.ircAlias, "New players stop being new after level " .. server.newPlayerMaxLevel)
 			end
@@ -1663,18 +1659,9 @@ function gmsg_server()
 		end
 
 		if string.find(chatvars.command, "new player max level") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
@@ -1684,7 +1671,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET newPlayerMaxLevel = " .. chatvars.number)
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New players stop being new after level " .. chatvars.number .. ".[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]New players stop being new after level " .. chatvars.number .. ".[-]")
 				else
 					irc_chat(chatvars.ircAlias, "New players stop being new after level " .. chatvars.number)
 				end
@@ -1697,7 +1684,7 @@ function gmsg_server()
 
 
 	local function cmd_SetNewPlayerTimer()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set new player timer {number} (in minutes)\n"
 			help[1] = help[1] .. " {#}new player timer (to see it)"
@@ -1705,19 +1692,20 @@ function gmsg_server()
 			help[2] = help[2] .. "Set it to 0 to disable this feature."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,new,play,time"
+			tmp.keywords = "set,new,player,timer"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, " time") or string.find(chatvars.command, " play"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, " time") or string.find(chatvars.command, " play") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1728,12 +1716,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "new" and chatvars.words[2] == "player" and chatvars.words[3] == "timer" and chatvars.words[4] == nil then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New players stop being new after " .. server.newPlayerTimer .. " minutes total play time.[-]")
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Change it with " .. server.commandPrefix .. "set new player timer {number} (in minutes)[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]New players stop being new after " .. server.newPlayerTimer .. " minutes total play time.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Change it with " .. server.commandPrefix .. "set new player timer {number} (in minutes)[-]")
 			else
 				irc_chat(chatvars.ircAlias, "New players stop being new after " .. server.newPlayerTimer .. " minutes total play time.")
 				irc_chat(chatvars.ircAlias, "Change it with cmd " .. server.commandPrefix .. "set new player timer {number} (in minutes)")
@@ -1744,18 +1734,9 @@ function gmsg_server()
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "new" and chatvars.words[3] == "player" and chatvars.words[4] == "timer" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
@@ -1765,7 +1746,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET newPlayerTimer = " .. chatvars.number)
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New players stop being new after " .. chatvars.number .. " minutes total play time.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]New players stop being new after " .. chatvars.number .. " minutes total play time.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "New players stop being new after " .. chatvars.number .. " minutes total play time.")
 				end
@@ -1778,25 +1759,26 @@ function gmsg_server()
 
 
 	local function cmd_SetOverstackLimit()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set overstack {number} (default 1000)"
 			help[2] = "Sets the maximum stack size before the bot will warn a player about overstacking.  Usually the bot learns this directly from the server as stack sizes are exceeded."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,over,stack,time"
+			tmp.keywords = "set,over,stack,size,limit,trigger"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "overs"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "overs") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1807,28 +1789,21 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "overstack" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			server.overstackThreshold = chatvars.number
 			conn:execute("UPDATE server SET overstackThreshold = " .. chatvars.number)
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]If no overstack limit is recorded, the minimum stack size to trigger an overstack warning is " .. server.overstackThreshold .. ".[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]If no overstack limit is recorded, the minimum stack size to trigger an overstack warning is " .. server.overstackThreshold .. ".[-]")
 			else
 				irc_chat(chatvars.ircAlias, "If no overstack limit is recorded, the minimum stack size to trigger an overstack warning is " .. server.overstackThreshold .. ".")
 			end
@@ -1840,26 +1815,27 @@ function gmsg_server()
 
 
 	local function cmd_SetPingKickTarget()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set ping kick target {new or all}"
 			help[2] = "By default if a ping kick is set it only applies to new players. Set to all to have it applied to everyone.\n"
 			help[2] = help[2] .. "Note: Does not apply to exempt players which includes admins, donors and individuals that have been bot whitelisted."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,ping,kick,targ"
+			tmp.keywords = "set,ping,kick,target"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "ping"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "ping") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1870,21 +1846,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "ping" and chatvars.words[3] == "kick" and chatvars.words[4] == "target" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[5] == "new" then
@@ -1892,7 +1861,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET pingKickTarget = 'new'")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Ping kicks will only happen to new players.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Ping kicks will only happen to new players.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Ping kicks will only happen to new players.")
 				end
@@ -1906,7 +1875,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET pingKickTarget = 'all'")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Anyone except staff, donors and bot whitelisted players can be ping kicked.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Anyone except staff, donors and bot whitelisted players can be ping kicked.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Anyone except staff, donors and bot whitelisted players can be ping kicked.")
 				end
@@ -1922,7 +1891,7 @@ function gmsg_server()
 
 
 	local function cmd_SetPrisonTimer()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set prison timer {number} (in minutes)"
 			help[2] = "Set how long someone stays in prison when jailed by the bot.  To not have a time limit, set this to 0 which is the default."
@@ -1933,14 +1902,15 @@ function gmsg_server()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "time") or string.find(chatvars.command, "prison") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "time") or string.find(chatvars.command, "prison") or string.find(chatvars.command, "set") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1951,21 +1921,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "prison" and chatvars.words[3] == "timer" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number == nil then
@@ -1981,13 +1944,13 @@ function gmsg_server()
 
 			if server.maxPrisonTime == 0 then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Prisoners must be released by someone to get out of prison. There is no time limit.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Prisoners must be released by someone to get out of prison. There is no time limit.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Prisoners must be released by someone to get out of prison. There is no time limit.")
 				end
 			else
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Prisoners will be automatically released from prison after " .. server.maxPrisonTime .. " minutes.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Prisoners will be automatically released from prison after " .. server.maxPrisonTime .. " minutes.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Prisoners will be automatically released from prison after " .. server.maxPrisonTime .. " minutes.")
 				end
@@ -2000,25 +1963,26 @@ function gmsg_server()
 
 
 	local function cmd_SetPVPCooldown()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set pvp cooldown {seconds}"
 			help[2] = "Set how long after a pvp kill before the player can use teleport commands again."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,pvp,time,cool,delay"
+			tmp.keywords = "set,pvp,timer,cooldown,delay,kill"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pvp") or string.find(chatvars.command, "cool") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "pvp") or string.find(chatvars.command, "cool") or string.find(chatvars.command, "time") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2029,28 +1993,21 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "pvp" and (chatvars.words[3] == "cooldown" or chatvars.words[3] == "delay" or chatvars.words[3] == "timer") and chatvars.words[4] ~= nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
 				chatvars.number = math.abs(chatvars.number) -- eliminate the negative
 
 				if (chatvars.playername ~= "Server") then
-					message(string.format("pm %s [%s]Players must wait %s seconds after killing a player before they can teleport.[-]", chatvars.playerid, server.chatColour, chatvars.number))
+					message(string.format("pm %s [%s]Players must wait %s seconds after killing a player before they can teleport.[-]", chatvars.userID, server.chatColour, chatvars.number))
 				else
 					irc_chat(chatvars.ircAlias, string.format("Players must wait %s seconds after killing a player before they can teleport.", chatvars.number))
 				end
@@ -2059,7 +2016,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET pvpTeleportCooldown = " .. chatvars.number)
 			else
 				if (chatvars.playername ~= "Server") then
-					message(string.format("pm %s [%s]A number (seconds) is required.  Set to 0 to have no timer.[-]", chatvars.playerid, server.chatColour))
+					message(string.format("pm %s [%s]A number (seconds) is required.  Set to 0 to have no timer.[-]", chatvars.userID, server.chatColour))
 				else
 					irc_chat(chatvars.ircAlias, "A number (seconds) is required.  Set to 0 to have no timer.")
 				end
@@ -2072,26 +2029,27 @@ function gmsg_server()
 
 
 	local function cmd_SetPVPTempBanCooldown()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set pvp temp ban {minutes}"
 			help[2] = "Set how long to temporarily ban a player after a pvp kill.\n"
 			help[2] = help[2] .. "This is only used in PVE when there is no prison location."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,pvp,ban,cool"
+			tmp.keywords = "set,pvp,ban,cooldown,timer,delay"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pvp") or string.find(chatvars.command, "cool") or string.find(chatvars.command, "ban"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "pvp") or string.find(chatvars.command, "cool") or string.find(chatvars.command, "ban") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2102,28 +2060,21 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "pvp" and chatvars.words[3] == "temp" and chatvars.words[4] == "ban" and chatvars.words[5] ~= nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
 				chatvars.number = math.abs(chatvars.number) -- eliminate the negative
 
 				if (chatvars.playername ~= "Server") then
-					message(string.format("pm %s [%s]PVP kills will be banned for %s minutes in PVE rules with no prison location set up.[-]", chatvars.playerid, server.chatColour, chatvars.number))
+					message(string.format("pm %s [%s]PVP kills will be banned for %s minutes in PVE rules with no prison location set up.[-]", chatvars.userID, server.chatColour, chatvars.number))
 				else
 					irc_chat(chatvars.ircAlias, string.format("PVP kills will be banned for %s minutes in PVE rules with no prison location set up.", chatvars.number))
 				end
@@ -2132,7 +2083,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET pvpTempBanCooldown = " .. chatvars.number)
 			else
 				if (chatvars.playername ~= "Server") then
-					message(string.format("pm %s [%s]A number (in minutes) is required.[-]", chatvars.playerid, server.chatColour))
+					message(string.format("pm %s [%s]A number (in minutes) is required.[-]", chatvars.userID, server.chatColour))
 				else
 					irc_chat(chatvars.ircAlias, "A number (in minutes) is required.")
 				end
@@ -2145,7 +2096,7 @@ function gmsg_server()
 
 
 	local function cmd_SetReservedSlots()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set reserved slots {number of slots}"
 			help[2] = "You can have a number of server slots reserved for admins and selected players.\n"
@@ -2153,19 +2104,20 @@ function gmsg_server()
 			help[2] = help[2] .. "To disable, set reserved slots to 0."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,reser,slot"
+			tmp.keywords = "set,reserved,slot,player"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "reser") or string.find(chatvars.command, "slot") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "reser") or string.find(chatvars.command, "slot") or string.find(chatvars.command, "set") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2176,27 +2128,20 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "reserved" and chatvars.words[3] == "slots" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
 				if math.abs(chatvars.number) > server.maxPlayers then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Reserved slots can't be more than max players.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Reserved slots can't be more than max players.[-]")
 					else
 						irc_chat(chatvars.ircAlias, "Reserved slots can't be more than max players.")
 					end
@@ -2221,14 +2166,14 @@ function gmsg_server()
 				addOrRemoveSlots()
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "] " .. chatvars.number .. " slots are now reserved slots.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "] " .. chatvars.number .. " slots are now reserved slots.[-]")
 				else
 					irc_chat(chatvars.ircAlias, chatvars.number .. " slots are now reserved slots.")
 				end
 			else
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]You didn't give me a number.[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]eg " .. server.commandPrefix .. "set reserved slots 5[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]You didn't give me a number.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]eg " .. server.commandPrefix .. "set reserved slots 5[-]")
 				else
 					irc_chat(chatvars.ircAlias, "You didn't give me a number.")
 					irc_chat(chatvars.ircAlias, "eg " .. server.commandPrefix .. "set reserved slots 5")
@@ -2242,25 +2187,26 @@ function gmsg_server()
 
 
 	local function cmd_SetRollingAnnouncementTimer()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set rolling delay {minutes}"
 			help[2] = "Set the delay in minutes between rolling announcements."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,roll,anno,time,delay"
+			tmp.keywords = "set,rolling,announcements,timer,delay"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "anno") or string.find(chatvars.command, "set") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "anno") or string.find(chatvars.command, "set") or string.find(chatvars.command, "time") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2271,21 +2217,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "rolling" and chatvars.words[3] == "delay" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number ~= nil then
@@ -2294,7 +2233,7 @@ function gmsg_server()
 				conn:execute("UPDATE timedEvents SET delayMinutes = " .. chatvars.number .. " WHERE timer = 'announcements'")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A rolling announcement will display every " .. chatvars.number .. " minutes when players are on.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]A rolling announcement will display every " .. chatvars.number .. " minutes when players are on.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "A rolling announcement will display every " .. chatvars.number .. " minutes when players are on.")
 				end
@@ -2307,26 +2246,27 @@ function gmsg_server()
 
 
 	local function cmd_SetRules()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set rules {new rules}"
 			help[2] = "Set the server rules.  You can use supported bbcode tags, but only when setting the rules from IRC.  Each tag must be closed with this tag [-] or colours will bleed into the next line.\n"
 			help[2] = help[2] .. "To display the rules type {#}rules"
 
 			tmp.command = help[1]
-			tmp.keywords = "set,rule"
+			tmp.keywords = "set,rules,server"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "rules") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "rules") or string.find(chatvars.command, "set") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2337,29 +2277,22 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "set" and chatvars.words[2] == "rules" and chatvars.words[3] ~= nil) then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			server.rules = stripQuotes(string.sub(chatvars.oldLine, string.find(chatvars.oldLine, "rules") + 6))
 			conn:execute("UPDATE server SET rules = '" .. escape(server.rules) .. "'")
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New rules recorded.[-]")
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.rules .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]New rules recorded.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. server.rules .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, "New rules recorded.")
 				irc_chat(chatvars.ircAlias, server.rules)
@@ -2372,26 +2305,27 @@ function gmsg_server()
 
 
 	local function cmd_SetServerAPIKey()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set server api {api key from 7daystodie-servers.com}"
 			help[2] = "Your API key is not recorded in logs or the databases and no bot command reports it.  It is used to determine if a player has voted for your server today.\n"
 			help[2] = help[2] .. "While the bot takes precautions to keep your API key a secret, you should be careful not to type it anywhere in public.  The safest place to give it to the bot is in private chat on IRC or on the bot's web interface when that is available."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,api,key"
+			tmp.keywords = "set,api,key,7daystodie-servers.com,7days,7daystodie,servers"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "api") or string.find(chatvars.command, "set") or string.find(chatvars.command, "server"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "api") or string.find(chatvars.command, "set") or string.find(chatvars.command, "server") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2402,26 +2336,19 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "server" and chatvars.words[3] == "api" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[4] == nil then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]API key required. Get it from 7daystodie-servers.com.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]API key required. Get it from 7daystodie-servers.com.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "API key required. Get it from 7daystodie-servers.com.")
 				end
@@ -2434,7 +2361,7 @@ function gmsg_server()
 			writeAPI()
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]If you have enabled voting, players will receive a reward item for voting for your server once per day.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]If you have enabled voting, players will receive a reward item for voting for your server once per day.[-]")
 			else
 				irc_chat(chatvars.ircAlias, "If you have enabled voting, players will receive a reward item for voting for your server once per day.")
 			end
@@ -2448,10 +2375,10 @@ function gmsg_server()
 	local function cmd_SetServerVoteReward()
 		local cursor, errorString, row, item, i, quantity, quality
 
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set server vote reward {default/random/list/item/entity}\n"
-			help[1] = " {#}set server vote reward random quantity {number} quality {number}"
+			help[1] = help[1] .. " {#}set server vote reward random quantity {number} quality {number}"
 			help[2] = "The default reward is the sc_General supply crate. \n"
 			help[2] = help[2] .. "If you set a random reward you can optionally set a quantity and quality.\n"
 			help[2] = help[2] .. "Quality is random if not specified.\n"
@@ -2461,19 +2388,20 @@ function gmsg_server()
 			help[2] = help[2] .. "If you have a custom entity (eg sc_General2) type {#}set server vote reward entity sc_General2."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,vote,reward"
+			tmp.keywords = "set,vote,reward,server"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "vote") or string.find(chatvars.command, "reward") or string.find(chatvars.command, "set") or string.find(chatvars.command, "server"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "vote") or string.find(chatvars.command, "reward") or string.find(chatvars.command, "set") or string.find(chatvars.command, "server") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2484,21 +2412,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "server" and chatvars.words[3] == "vote" and chatvars.words[4] == "reward" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			item = ""
@@ -2507,8 +2428,8 @@ function gmsg_server()
 
 			if chatvars.words[5] ~= "crate" and chatvars.words[5] ~= "random" and chatvars.words[5] ~= "list" and chatvars.words[5] ~= "item" and chatvars.words[5] ~= "entity" then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Valid options are crate, random, list, or item.[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]eg. {#}set server vote reward {crate/random/list/item}[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Valid options are crate, random, list, or item.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]eg. {#}set server vote reward {crate/random/list/item}[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Valid options are crate, random, list, or item.")
 					irc_chat(chatvars.ircAlias, "eg. {#}set server vote reward {crate/random/list/item}")
@@ -2524,7 +2445,7 @@ function gmsg_server()
 				writeAPI()
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server votes will be rewarded with an sc_General crate next to the player.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Server votes will be rewarded with an sc_General crate next to the player.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Server votes will be rewarded with an sc_General crate next to the player.")
 				end
@@ -2549,7 +2470,7 @@ function gmsg_server()
 				writeAPI()
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server votes will be rewarded with random items.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Server votes will be rewarded with random items.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Server votes will be rewarded with random items.")
 				end
@@ -2566,38 +2487,21 @@ function gmsg_server()
 				writeAPI()
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server votes will be rewarded with set items from a list.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Server votes will be rewarded with set items from a list.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Server votes will be rewarded with set items from a list.")
 				end
 			end
 
 			if chatvars.words[5] == "item" then
-				cursor,errorString = conn:execute("SELECT itemName FROM spawnableItems WHERE itemName = '" .. escape(chatvars.words[6]) .. "'")
-				row = cursor:fetch({}, "a")
-
-				if not row then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The item " .. chatvars.wordsOld[6] .. " does not exist or is wrong.[-]")
-					else
-						irc_chat(chatvars.ircAlias, "The item " .. chatvars.wordsOld[6] .. " does not exist or is wrong.")
-					end
-
-					botman.faultyChat = false
-					return true
-				else
-					item = row.itemName
-				end
-
-
 				serverVoteReward = "item"
-				serverVoteRewardItem = row.itemName
+				serverVoteRewardItem = chatvars.wordsOld[6]
 				writeAPI()
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server votes will be rewarded with an " .. serverVoteRewardItem .. " spawned next to the player.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Server votes will be rewarded with a " .. serverVoteRewardItem .. " given to the player.[-]")
 				else
-					irc_chat(chatvars.ircAlias, "Server votes will be rewarded with an " .. serverVoteRewardItem .. " spawned next to the player.")
+					irc_chat(chatvars.ircAlias, "Server votes will be rewarded with a " .. serverVoteRewardItem .. " given to the player.")
 				end
 			end
 
@@ -2607,9 +2511,9 @@ function gmsg_server()
 				writeAPI()
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server votes will be rewarded with an " .. serverVoteRewardItem .. " spawned next to the player.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Server votes will be rewarded with a " .. serverVoteRewardItem .. " spawned next to the player.[-]")
 				else
-					irc_chat(chatvars.ircAlias, "Server votes will be rewarded with an " .. serverVoteRewardItem .. " spawned next to the player.")
+					irc_chat(chatvars.ircAlias, "Server votes will be rewarded with a " .. serverVoteRewardItem .. " spawned next to the player.")
 				end
 			end
 
@@ -2620,7 +2524,7 @@ function gmsg_server()
 
 
 	local function cmd_SetServerGroup()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set server group {group name} (one word)"
 			help[2] = "This is used by the bots database which could be a cloud database.  It is used to identify this bot as belonging to a group if you have more than one server.  You do not need to set this."
@@ -2631,14 +2535,15 @@ function gmsg_server()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "serv") or string.find(chatvars.command, "group"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "serv") or string.find(chatvars.command, "group") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2649,21 +2554,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "server" and chatvars.words[3] == "group" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			tmp = {}
@@ -2671,7 +2569,7 @@ function gmsg_server()
 
 			if tmp.group == nil then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Group name required.  One word, no spaces.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Group name required.  One word, no spaces.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Group name required.  One word, no spaces.")
 				end
@@ -2688,7 +2586,7 @@ function gmsg_server()
 				end
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This server is now a member of " .. tmp.group .. ".[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This server is now a member of " .. tmp.group .. ".[-]")
 				else
 					irc_chat(chatvars.ircAlias, "This server is now a member of " .. tmp.group .. ".")
 				end
@@ -2701,7 +2599,7 @@ function gmsg_server()
 
 
 	local function cmd_SetServerIP()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set server ip {IP of your 7 Days to Die server}"
 			help[2] = "The bot is unable to read the IP from its own profile for the server so enter it here.  It will display in the {#}info command and be used if a few other places."
@@ -2712,14 +2610,15 @@ function gmsg_server()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "server") or string.find(chatvars.command, " ip"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "server") or string.find(chatvars.command, " ip") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2730,28 +2629,21 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "server" and chatvars.words[3] == "ip" and chatvars.words[5] == nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			tmp = chatvars.words[4]
 
 			if tmp == nil then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]The server ip is required.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]The server ip is required.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The server ip is required.")
 				end
@@ -2764,7 +2656,7 @@ function gmsg_server()
 				end
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The server ip is now " .. server.IP .. ".[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The server ip is now " .. server.IP .. ".[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The server ip is now " .. server.IP)
 				end
@@ -2777,25 +2669,26 @@ function gmsg_server()
 
 
 	local function cmd_SetServerRebootHour()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set reboot hour {0 to 23}"
 			help[2] = "Reboot the server when the server time matches the hour (24 hour time).  To disable clock based reboots set this to -1 or don't enter a number."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,server,reboo,hour,time"
+			tmp.keywords = "set,server,reboot,hour,time,restart"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "reboot") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "reboot") or string.find(chatvars.command, "time") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2806,21 +2699,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "reboot" and chatvars.words[3] == "hour" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			tmp = {}
@@ -2836,7 +2722,7 @@ function gmsg_server()
 
 					if chatvars.number > 23 then
 						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]A number from 0 to 23 was expected.[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]A number from 0 to 23 was expected.[-]")
 						else
 							irc_chat(chatvars.ircAlias, "A number from 0 to 23 was expected.")
 						end
@@ -2852,7 +2738,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET rebootHour = -1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]You have disabled clock based reboots.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]You have disabled clock based reboots.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "You have disabled clock based reboots.")
 				end
@@ -2861,7 +2747,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET rebootHour = " .. chatvars.number)
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]A reboot will be scheduled when the server time is " .. server.rebootHour .. ":" .. string.format("%02d", server.rebootMinute) .. ".[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]A reboot will be scheduled when the server time is " .. server.rebootHour .. ":" .. string.format("%02d", server.rebootMinute) .. ".[-]")
 				else
 					irc_chat(chatvars.ircAlias, "A reboot will be scheduled when the server time is " .. server.rebootHour .. ":" .. string.format("%02d", server.rebootMinute) .. ".")
 				end
@@ -2874,25 +2760,26 @@ function gmsg_server()
 
 
 	local function cmd_SetServerRebootMinute()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set reboot minute {0 to 59}"
 			help[2] = "Reboot the server when the server time matches the hour and minute (24 hour time).  To disable clock based reboots use {#}set reboot hour (without a number)"
 
 			tmp.command = help[1]
-			tmp.keywords = "set,server,reboo,mini,time"
+			tmp.keywords = "set,server,reboot,minutes,time,restart"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "reboot") or string.find(chatvars.command, "time"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "reboot") or string.find(chatvars.command, "time") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2903,21 +2790,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "reboot" and chatvars.words[3] == "minute" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			tmp = {}
@@ -2939,7 +2819,7 @@ function gmsg_server()
 
 			if tmp.invalid then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]A number from 0 to 59 was expected.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]A number from 0 to 59 was expected.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "A number from 0 to 59 was expected.")
 				end
@@ -2949,13 +2829,13 @@ function gmsg_server()
 
 				if tonumber(server.rebootHour) > -1 then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]A reboot will be scheduled when the server time is " .. server.rebootHour .. ":" .. string.format("%02d", server.rebootMinute) .. ".[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]A reboot will be scheduled when the server time is " .. server.rebootHour .. ":" .. string.format("%02d", server.rebootMinute) .. ".[-]")
 					else
 						irc_chat(chatvars.ircAlias, "A reboot will be scheduled when the server time is " .. server.rebootHour .. ":" .. string.format("%02d", server.rebootMinute) .. ".")
 					end
 				else
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Now set the reboot hour with " .. server.commandPrefix .. "set reboot hour {0-23}.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Now set the reboot hour with " .. server.commandPrefix .. "set reboot hour {0-23}.[-]")
 					else
 						irc_chat(chatvars.ircAlias, "Now set the reboot hour with " .. server.commandPrefix .. "set reboot hour {0-23}.")
 					end
@@ -2969,26 +2849,27 @@ function gmsg_server()
 
 
 	local function cmd_SetServerType()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set server pve (or pvp, creative or contest)"
 			help[2] = "Set the entire server to be PVE, PVP, Creative or Contest.\n"
 			help[2] = help[2] .. "Contest mode is not implemented yet and all setting it creative does is stop the bot pestering players about their inventory."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,server,pvp,pve,crea"
+			tmp.keywords = "set,server,pvp,pve,creative,contest,mode,game"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "server") or string.find(chatvars.command, "pve") or string.find(chatvars.command, "pvp"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "server") or string.find(chatvars.command, "pve") or string.find(chatvars.command, "pvp") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -2999,21 +2880,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "set" and chatvars.words[2] == "server") and chatvars.words[3] ~= nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[3] == "pvp" then
@@ -3064,11 +2938,15 @@ function gmsg_server()
 
 
 	local function cmd_SetupAllocsWebMap()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		local web
+
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}setup map"
 			help[2] = "Optional extras after setup map: no hostiles, no animals, show players, show claims, show inventory\n"
 			help[2] = help[2] .. "eg. {#}setup map no hostiles no animals show players show claims show inventory\n"
+			help[2] = help[2] .. "If you want to manually set a web permission, here is a valid console command for reference\n"
+			help[2] = help[2] .. "webpermission add webapi.getplayersOnline global 1000\n"
 			help[2] = help[2] .. "The bot can fix your server map's permissions with some nice settings.  If you use this command, the following permissions are set:\n"
 			help[2] = help[2] .. "web.map 2000\n"
 			help[2] = help[2] .. "webapi.getlandclaims 1000\n"
@@ -3089,19 +2967,20 @@ function gmsg_server()
 			help[2] = help[2] .. "webapi.getplayerinventory 1000"
 
 			tmp.command = help[1]
-			tmp.keywords = "set,map,perm"
+			tmp.keywords = "set,map,permissions,live"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "map"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "map") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -3112,64 +2991,59 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "setup" and string.find(chatvars.words[2], "map") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
-			sendCommand("webpermission add web.map 2000")
-			sendCommand("webpermission add webapi.getplayersOnline 1000")
-			sendCommand("webpermission add webapi.getstats 1000")
-			sendCommand("webpermission add webapi.getlandclaims 1000")
+			web = "webpermission"
+
+			sendCommand(web .. " add web.map global 2000")
+			sendCommand(web .. " add webapi.getplayersOnline global 1000")
+			sendCommand(web .. " add webapi.getstats global 1000")
+			sendCommand(web .. " add webapi.getlandclaims global 1000")
 
 			if string.find(chatvars.command, "no hostiles") then
-				sendCommand("webpermission add webapi.gethostilelocation 2")
+				sendCommand(web .. " add webapi.gethostilelocation global 2")
 			else
-				sendCommand("webpermission add webapi.gethostilelocation 2000")
+				sendCommand(web .. " add webapi.gethostilelocation global 2000")
 			end
 
 			if string.find(chatvars.command, "no animals") then
-				sendCommand("webpermission add webapi.getanimalslocation 2")
+				sendCommand(web .. " add webapi.getanimalslocation global 2")
 			else
-				sendCommand("webpermission add webapi.getanimalslocation 2000")
+				sendCommand(web .. " add webapi.getanimalslocation global 2000")
 			end
 
 			if string.find(chatvars.command, "show players") then
-				sendCommand("webpermission add webapi.viewallplayers 2000")
-				sendCommand("webpermission add webapi.GetPlayersLocation 2000")
+				sendCommand(web .. " add webapi.viewallplayers global 2000")
+				sendCommand(web .. " add webapi.GetPlayersLocation global 2000")
 			else
-				sendCommand("webpermission add webapi.viewallplayers 2")
-				sendCommand("webpermission add webapi.GetPlayersLocation 0")
+				sendCommand(web .. " add webapi.viewallplayers global 2")
+				sendCommand(web .. " add webapi.GetPlayersLocation global 0")
 			end
 
 			if string.find(chatvars.command, "show claims") then
-				sendCommand("webpermission add webapi.viewallclaims 2000")
-				sendCommand("webpermission add webapi.getlandclaims 2000")
+				sendCommand(web .. " add webapi.viewallclaims global 2000")
+				sendCommand(web .. " add webapi.getlandclaims global 2000")
 			else
-				sendCommand("webpermission add webapi.viewallclaims 2")
-				sendCommand("webpermission add webapi.getlandclaims 1000")
+				sendCommand(web .. " add webapi.viewallclaims global 2")
+				sendCommand(web .. " add webapi.getlandclaims global 1000")
 			end
 
 			if string.find(chatvars.command, "show inventory") then
-				sendCommand("webpermission add webapi.getplayerinventory 2000")
+				sendCommand(web .. " add webapi.getplayerinventory global 2000")
 			else
-				sendCommand("webpermission add webapi.getplayerinventory 2")
+				sendCommand(web .. " add webapi.getplayerinventory global 2")
 			end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The map permissions have been set.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The map permissions have been set.[-]")
 			else
 				irc_chat(chatvars.ircAlias, "The map permissions have been set.")
 			end
@@ -3181,26 +3055,27 @@ function gmsg_server()
 
 
 	local function cmd_SetWebPanelPort() -- tested
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set web panel port {port of server's control panel/web panel}\n"
 			help[1] = help[1] .. "or {#}set api port {number}"
 			help[2] = "The bot needs to be told the port for Alloc's web map. If you give it the wrong port and API support is enabled or you enable that later, the bot will try that port and the ports +/- 2 above and below it."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,web,port"
+			tmp.keywords = "set,web,port,panel"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "web"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "web") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -3211,26 +3086,19 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "set" and (chatvars.words[2] == "web" or chatvars.words[2] == "control") and chatvars.words[3] == "panel" and chatvars.words[4] == "port") or (chatvars.words[1] == "set" and chatvars.words[2] == "api" and chatvars.words[3] == "port") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number == nil then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Port number between 1 and 65535 expected.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Port number between 1 and 65535 expected.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Port number between 1 and 65535 expected.")
 				end
@@ -3243,7 +3111,7 @@ function gmsg_server()
 
 			if tonumber(chatvars.number) > 65535 then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Valid ports range from 1 to 65535.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Valid ports range from 1 to 65535.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Valid ports range from 1 to 65535.")
 				end
@@ -3254,7 +3122,7 @@ function gmsg_server()
 
 			if server.useAllocsWebAPI then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The web API will now be re-tested because the port has changed.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The web API will now be re-tested because the port has changed.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The web API will now be re-tested because the port has changed.")
 				end
@@ -3266,14 +3134,12 @@ function gmsg_server()
 			conn:execute("UPDATE server SET webPanelPort = " .. chatvars.number)
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You set the web panel port to " .. chatvars.number .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You set the web panel port to " .. chatvars.number .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, "You set the web panel port to " .. chatvars.number)
 			end
 
-			if server.useAllocsWebAPI then
-				send("webtokens list")
-			end
+			connectToAPI()
 
 			botman.faultyChat = false
 			return true
@@ -3282,25 +3148,26 @@ function gmsg_server()
 
 
 	local function cmd_SetWebsite()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set website {your website or steam group}"
 			help[2] = "Tell the bot the URL of your website or steam group so your players can ask for it."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,web,url"
+			tmp.keywords = "set,website,url"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "web"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "web") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -3311,21 +3178,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "set" and chatvars.words[2] == "website") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			tmp = string.sub(chatvars.command, string.find(chatvars.command, "website") + 8)
@@ -3349,26 +3209,27 @@ function gmsg_server()
 
 
 	local function cmd_SetWelcomeMessage()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}set welcome message {your message here}\n"
 			help[1] = help[1] .. " {#}clear welcome message"
 			help[2] = "You can set a custom welcome message that will override the default greeting message when a player joins."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,welc,mess"
+			tmp.keywords = "set,welcome,messages"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "welc"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "welc") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -3379,21 +3240,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "set" or chatvars.words[1] == "clear") and chatvars.words[2] == "welcome" and chatvars.words[3] == "message" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "clear" then
@@ -3401,7 +3255,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET welcome = null")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server welcome message cleared.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Server welcome message cleared.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Server welcome message cleared.")
 				end
@@ -3417,7 +3271,7 @@ function gmsg_server()
 			conn:execute("UPDATE server SET welcome = '" .. escape(msg) .. "'")
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New welcome message " .. msg .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]New welcome message " .. msg .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, "New welcome message " .. msg)
 			end
@@ -3429,25 +3283,26 @@ function gmsg_server()
 
 
 	local function cmd_TestVoteReward()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}test vote reward"
 			help[2] = "Admin and in-game only. The bot will try to spawn the server vote reward beside you."
 
 			tmp.command = help[1]
-			tmp.keywords = "test,vote,reward"
+			tmp.keywords = "test,vote,reward,server"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "test") or string.find(chatvars.command, "vote") or string.find(chatvars.command, "rewa"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "test") or string.find(chatvars.command, "vote") or string.find(chatvars.command, "rewa") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -3458,17 +3313,12 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "test" and chatvars.words[2] == "vote" and chatvars.words[3] == "reward" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				irc_chat(chatvars.ircAlias, "This command is in-game only.")
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
@@ -3476,7 +3326,7 @@ function gmsg_server()
 			rewardServerVote(chatvars.gameid)
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The server vote reward item or entity should have spawned beside you or been added to inventory.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The server vote reward item or entity should have spawned beside you or been added to inventory.[-]")
 			end
 
 			botman.faultyChat = false
@@ -3486,26 +3336,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleBadNames()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}allow/disallow/kick bad names"
+			help[1] = " {#}allow/disallow bad names"
 			help[2] = "Auto-kick players with numeric names or names that contain no letters such as ascii art crap.\n"
 			help[2] = help[2] .. "They will see a kick message asking them to change their name."
 
 			tmp.command = help[1]
-			tmp.keywords = "allow,bad,name,kick"
+			tmp.keywords = "allow,bad,names"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "bad") or string.find(chatvars.command, "name"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "bad") or string.find(chatvars.command, "name") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -3516,26 +3367,19 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
-		if (chatvars.words[1] == "allow" or chatvars.words[1] == "disallow" or chatvars.words[1] == "kick") and chatvars.words[2] == "bad" and chatvars.words[3] == "names" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+		if (chatvars.words[1] == "allow" or chatvars.words[1] == "disallow") and chatvars.words[2] == "bad" and chatvars.words[3] == "names" then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "allow" then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players with names that have no letters can play here.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players with names that have no letters can play here.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players with names that have no letters can play here.")
 				end
@@ -3545,7 +3389,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET allowNumericNames = 1, allowGarbageNames = 1")
 			else
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I will kick players with names that have no letters.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]I will kick players with names that have no letters.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "I will kick players with names that have no letters.")
 				end
@@ -3562,26 +3406,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleBanVACBannedPlayers()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}enable/disable vac (disable is the default)"
+			help[1] = " {#}enable (or {#}disable) vac (disable is the default)"
 			help[2] = "If a player has any VAC bans you can auto-ban them or allow them in.\n"
 			help[2] = help[2] .. "Each time they join, admins will be alerted to their VAC ban. To stop that, add the them to the bot's whitelist."
 
 			tmp.command = help[1]
-			tmp.keywords = "able,vac,ban,alert"
+			tmp.keywords = "enable,disable,vac,ban,alerts"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "ban") or string.find(chatvars.command, "vac"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "ban") or string.find(chatvars.command, "vac") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -3592,26 +3437,19 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "vac" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "enable" then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players with VAC bans can play here.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players with VAC bans can play here.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players with VAC bans can play here.")
 				end
@@ -3620,7 +3458,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET banVACBannedPlayers = 0")
 			else
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players with VAC bans will be banned from the server unless they are staff or whitelisted.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players with VAC bans will be banned from the server unless they are staff or whitelisted.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players with VAC bans will be banned from the server unless they are staff or whitelisted.")
 				end
@@ -3635,105 +3473,28 @@ function gmsg_server()
 	end
 
 
-	local function cmd_ToggleCBSMFriendly()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
-			help = {}
-			help[1] = " {#}set cbsm friendly (the default)\n"
-			help[1] = help[1] .. " {#}set cbsm unfriendly (or anything other than the word friendly such as die die die)"
-			help[2] = "If set to friendly, the bot will automatically switch from / commands to using the ! since CBSM uses the /\n"
-			help[2] = help[2] .. "Set to anything else and the bot will use / commands whether CBSM is present or not."
-
-			tmp.command = help[1]
-			tmp.keywords = "set,cbsm"
-			tmp.accessLevel = 1
-			tmp.description = help[2]
-			tmp.notes = ""
-			tmp.ingameOnly = 0
-
-			help[3] = helpCommandRestrictions(tmp)
-
-			if botman.registerHelp then
-				registerHelp(tmp)
-			end
-
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "set") or string.find(chatvars.command, "cbsm"))) or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, help[1])
-
-				if not shortHelp then
-					irc_chat(chatvars.ircAlias, help[2])
-					irc_chat(chatvars.ircAlias, help[3])
-					irc_chat(chatvars.ircAlias, ".")
-				end
-
-				chatvars.helpRead = true
-			end
-		end
-
-		if chatvars.words[1] == "set" and chatvars.words[2] == "cbsm" and chatvars.words[3] ~= nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
-			end
-
-			if chatvars.words[3] == "friendly" then
-				server.CBSMFriendly = true
-				conn:execute("UPDATE server SET CBSMFriendly = 1")
-
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Commands will automatically remap from / to = when CBSM is detected.[-]")
-				else
-					irc_chat(chatvars.ircAlias, "Commands will automatically remap from / to = when CBSM is detected.")
-				end
-			else
-				server.CBSMFriendly = false
-				server.commandPrefix = "/"
-				conn:execute("UPDATE server SET CBSMFriendly = 0, commandPrefix = '/'")
-
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Commands will continue to expect a / with CBSM present.[-]")
-				else
-					irc_chat(chatvars.ircAlias, "Commands will continue to expect a / with CBSM present.")
-				end
-
-				message("say [" .. server.chatColour .. "]Commands now begin with a " .. server.commandPrefix .. "  To use commands such as who type " .. server.commandPrefix .. "who[-]")
-			end
-
-			botman.faultyChat = false
-			return true
-		end
-	end
-
-
 	local function cmd_ToggleDespawnZombiesBeforeBloodMoon()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}remove zombies before bloodmoon\n"
 			help[1] = help[1] .. " {#}leave zombies before bloodmoon\n"
-			help[2] = "If you have Stompy's BC mod or the Botman mod, the bot can despawn all zombies server wide a few minutes before bloodmoon starts.  It may trigger more than once.\n"
+			help[2] = "This command is temporarily disabled until the Botman mod can despawn multiple entities using a filter."
 
 			tmp.command = help[1]
-			tmp.keywords = "blood,horde,remo,desp"
+			tmp.keywords = "blood,horde,remove,despawn,day"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "remov") or string.find(chatvars.command, "zomb"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "remov") or string.find(chatvars.command, "zomb") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -3744,21 +3505,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "remove" or chatvars.words[1] == "leave") and chatvars.words[2] == "zombies" and chatvars.words[3] == "before" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "remove" then
@@ -3766,7 +3520,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET despawnZombiesBeforeBloodMoon = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]All zombies will despawn one or more times during 9pm before bloodmoon begins.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]All zombies will despawn one or more times during 9pm before bloodmoon begins.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "All zombies will despawn one or more times during 9pm before bloodmoon begins.")
 				end
@@ -3775,7 +3529,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET despawnZombiesBeforeBloodMoon = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Zombies will not be despawned before bloodmoon begins.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Zombies will not be despawned before bloodmoon begins.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Zombies will not be despawned before bloodmoon begins.")
 				end
@@ -3788,26 +3542,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleEntityScan()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}enable/disable entity scan (disabled by default)"
+			help[1] = " {#}enable (or {#}disable) entity scan (disabled by default)"
 			help[2] = "Scan for entities server wide every 30 seconds.\n"
 			help[2] = help[2] .. "The resulting list is copied to the entities Lua table where it can be further processed for other bot features."
 
 			tmp.command = help[1]
-			tmp.keywords = "able,scan,enti"
+			tmp.keywords = "enable,disable,scan,entity"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "scan") or string.find(chatvars.command, "ent"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "scan") or string.find(chatvars.command, "ent") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -3818,21 +3573,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "entity" and chatvars.words[3] == "scan" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "enable" then
@@ -3840,7 +3588,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET scanEntities = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]I will scan entities every 30 seconds.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]I will scan entities every 30 seconds.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "I will scan entities every 30 seconds.")
 				end
@@ -3849,7 +3597,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET scanEntities = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]I will not scan for entities.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]I will not scan for entities.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "I will not scan for entities.")
 				end
@@ -3862,26 +3610,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleErrorScan()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}enable/disable error scan (disabled by default)"
+			help[1] = " {#}enable (or {#}disable) error scan (disabled by default)"
 			help[2] = "The server can automatically scan for and fix some errors using console commands if you have the BC mod or Botman mod installed.\n"
 			help[2] = help[2] .. "You can disable the scan if you suspect it is creating lag."
 
 			tmp.command = help[1]
-			tmp.keywords = "able,scan,err"
+			tmp.keywords = "enable,disable,scan,error"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "scan") or string.find(chatvars.command, "err") or string.find(chatvars.command, "fix"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "scan") or string.find(chatvars.command, "err") or string.find(chatvars.command, "fix") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -3892,21 +3641,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "error" and chatvars.words[3] == "scan" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "enable" then
@@ -3914,7 +3656,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET scanErrors = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]I will scan the server for errors.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]I will scan the server for errors.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "I will scan the server for errors.")
 				end
@@ -3923,7 +3665,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET scanErrors = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]I will not scan for errors.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]I will not scan for errors.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "I will not scan for errors.")
 				end
@@ -3936,7 +3678,7 @@ function gmsg_server()
 
 
 	local function cmd_ToggleFamilySteamKeys()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}allow/disallow family (allowed by default)"
 			help[2] = "Set to disallow if you require all players use the owner steam key and want to block players with a steamid that does not match the steamOwner."
@@ -3947,14 +3689,15 @@ function gmsg_server()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "allow") or string.find(chatvars.command, "steam") or string.find(chatvars.command, "family") or string.find(chatvars.command, "owner"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "allow") or string.find(chatvars.command, "steam") or string.find(chatvars.command, "family") or string.find(chatvars.command, "owner") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -3965,21 +3708,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "allow" or chatvars.words[1] == "disallow") and chatvars.words[2] == "family" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "allow" then
@@ -3987,7 +3723,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET allowFamilySteamKeys = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Players can join using a family key.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Players can join using a family key.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players can join using a family key.")
 				end
@@ -3996,7 +3732,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET allowFamilySteamKeys = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Players that join with a family key will be kicked.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Players that join with a family key will be kicked.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players that join with a family key will be kicked.")
 				end
@@ -4009,26 +3745,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleHardcoreMode()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}enable/disable hardcore mode"
+			help[1] = " {#}enable (or {#}disable) hardcore mode"
 			help[2] = "Allow players to use bot commands.  This is the default.\n"
 			help[2] = help[2] .. "Players can still talk to the bot and use info commands such as {#}rules."
 
 			tmp.command = help[1]
-			tmp.keywords = "able,hard,mode,comm"
+			tmp.keywords = "enable,disable,hardcore,mode,commands"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "hard") or string.find(chatvars.command, "mode") or string.find(chatvars.command, "server"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "hard") or string.find(chatvars.command, "mode") or string.find(chatvars.command, "server") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -4039,21 +3776,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "hardcore" and chatvars.words[3] == "mode" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "disable" then
@@ -4061,7 +3791,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET hardcore = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players can command the bot.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players can command the bot.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players can command the bot.")
 				end
@@ -4070,7 +3800,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET hardcore = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players can only talk to the bot and do basic info commands.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players can only talk to the bot and do basic info commands.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players can only talk to the bot and do basic info commands.")
 				end
@@ -4083,25 +3813,26 @@ function gmsg_server()
 
 
 	local function cmd_ToggleIdleKick()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}enable/disable idle kick (disabled is default)"
+			help[1] = " {#}enable (or {#}disable) idle kick (disabled is default)"
 			help[2] = "When the server is full, if idle kick is on players will get kick warnings for 15 minutes of no movement then they get kicked."
 
 			tmp.command = help[1]
-			tmp.keywords = "able,idle,kick"
+			tmp.keywords = "enable,disable,idle,kick"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "idle") or string.find(chatvars.command, "kick"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "idle") or string.find(chatvars.command, "kick") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -4112,21 +3843,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "idle" and chatvars.words[3] == "kick" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "enable" then
@@ -4134,7 +3858,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET idleKick = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]When the server is full, idling players will get kick warnings for 15 minutes then kicked if they don't move.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]When the server is full, idling players will get kick warnings for 15 minutes then kicked if they don't move.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "When the server is full, idling players will get kick warnings for 15 minutes then kicked if they don't move.")
 				end
@@ -4143,7 +3867,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET idleKick = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will not be kicked for idling on the server.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will not be kicked for idling on the server.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players will not be kicked for idling on the server.")
 				end
@@ -4156,7 +3880,7 @@ function gmsg_server()
 
 
 	local function cmd_ToggleIdleKickAnytime()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}allow/disallow idling (allowed is default)"
 			help[2] = "If idle kick is enabled the default is to only kick idle players when the server is full. By setting disallow idling, players can be kicked for idling any time."
@@ -4167,14 +3891,15 @@ function gmsg_server()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "idle") or string.find(chatvars.command, "kick"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "idle") or string.find(chatvars.command, "kick") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -4185,21 +3910,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "allow" or chatvars.words[1] == "disallow") and chatvars.words[2] == "idling" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "allow" then
@@ -4207,7 +3925,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET idleKickAnytime = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Idle players will only be kicked when the server is full and idle kicking is enabled.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Idle players will only be kicked when the server is full and idle kicking is enabled.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Idle players will only be kicked when the server is full and idle kicking is enabled.")
 				end
@@ -4216,7 +3934,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET idleKickAnytime = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Idle players can be kicked any time if idle kicking is enabled.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Idle players can be kicked any time if idle kicking is enabled.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Idle players can be kicked any time if idle kicking is enabled.")
 				end
@@ -4229,25 +3947,26 @@ function gmsg_server()
 
 
 	local function cmd_ToggleIgnorePlayerFlying()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}allow/disallow flying"
 			help[2] = "Toggle the bot's player flying detection.  You would want to do this if players can use debug mode on your server."
 
 			tmp.command = help[1]
-			tmp.keywords = "allow,fly"
+			tmp.keywords = "allow,flying"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "fly") or string.find(chatvars.command, "hack") or string.find(chatvars.command, "tele"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "fly") or string.find(chatvars.command, "hack") or string.find(chatvars.command, "tele") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -4258,21 +3977,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "allow" or chatvars.words[1] == "disallow") and chatvars.words[2] == "flying" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "allow" then
@@ -4280,7 +3992,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET playersCanFly = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players are allowed to fly.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players are allowed to fly.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players are allowed to fly.")
 				end
@@ -4289,7 +4001,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET playersCanFly = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will be temp banned for flying.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will be temp banned for flying.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players will be temp banned for flying.")
 				end
@@ -4303,26 +4015,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleIRCPrivate()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}set irc private/public"
+			help[1] = " {#}set irc private (or public)"
 			help[2] = "If IRC is private, the bot won't share the url or info with players and players can't invite anyone to irc using the invite command.\n"
 			help[2] = help[2] .. "When public, players can find the IRC info with {#}help irc and they can create irc invites for themselves and others."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,irc,pub,priv"
+			tmp.keywords = "set,irc,public,private"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "irc") or string.find(chatvars.command, "pub") or string.find(chatvars.command, "priv"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "irc") or string.find(chatvars.command, "pub") or string.find(chatvars.command, "priv") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -4333,21 +4046,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "irc" and (chatvars.words[3] == "public" or chatvars.words[3] == "private") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[3] == "public" then
@@ -4355,7 +4061,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET ircPrivate = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players can see the IRC server info and can create IRC invites.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players can see the IRC server info and can create IRC invites.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players can see the IRC server info and can create IRC invites.")
 				end
@@ -4364,7 +4070,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET ircPrivate = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players will not see the IRC server info and cannot create IRC invites.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will not see the IRC server info and cannot create IRC invites.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players will not see the IRC server info and cannot create IRC invites.")
 				end
@@ -4377,26 +4083,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleNoClipScan()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}enable/disable noclip scan (the default)"
-			help[2] = "Using the BC mod or Botman mod you can detect players that are noclipping under the map.\n"
+			help[1] = " {#}enable (or {#}disable) noclip scan (defaults disabled)"
+			help[2] = "Using the Botman mod you can detect players that are noclipping under the map.\n"
 			help[2] = help[2] .. "It can false flag but it is still a useful early warning of a possible hacker.  The bot will ban a player found clipping a lot for one week."
 
 			tmp.command = help[1]
-			tmp.keywords = "able,clip,scan"
+			tmp.keywords = "enable,disable,scan,noclip,hackers,flying,map,underground"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "scan") or string.find(chatvars.command, "clip") or string.find(chatvars.command, "fly"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "scan") or string.find(chatvars.command, "clip") or string.find(chatvars.command, "fly") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -4407,21 +4114,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "noclip" and chatvars.words[3] == "scan" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "enable" then
@@ -4429,7 +4129,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET scanNoclip = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]I will scan for noclipping players and report them to IRC.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]I will scan for noclipping players and report them to IRC.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "I will scan for noclipping players and report them to IRC.")
 				end
@@ -4438,7 +4138,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET scanNoclip = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]I will not scan for noclipping players.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]I will not scan for noclipping players.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "I will not scan for noclipping players.")
 				end
@@ -4451,25 +4151,26 @@ function gmsg_server()
 
 
 	local function cmd_ToggleOverstackChecking()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}allow/disallow overstack or {#}enable/disable overstack"
+			help[1] = " {#}enable (or {#}disable) overstack checking"
 			help[2] = "By default the bot reads overstack warnings coming from the server to learn what the stack limits are and it will pester players with excessive stack sizes and can send them to timeout for non-compliance."
 
 			tmp.command = help[1]
-			tmp.keywords = "able,allow,over,stack"
+			tmp.keywords = "enable,disable,allow,overstack,hackers,duping,dupers,cheaters"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "overs"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "overs") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -4480,40 +4181,33 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
-		if (chatvars.words[1] == "allow" or chatvars.words[1] == "disallow" or chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and string.find(chatvars.words[2], "overstack") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and string.find(chatvars.words[2], "overstack") then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
-			if chatvars.words[1] == "allow" or chatvars.words[1] == "enable" then
-				server.allowOverstacking = true
-				conn:execute("UPDATE server SET allowOverstacking = 1")
-
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I will ignore overstacking.[-]")
-				else
-					irc_chat(chatvars.ircAlias, "I will ignore overstacking.")
-				end
-			else
+			if chatvars.words[1] == "enable" then
 				server.allowOverstacking = false
 				conn:execute("UPDATE server SET allowOverstacking = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I will monitor stack sizes, warn and alert for overstacking.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]I will monitor stack sizes, warn and alert for overstacking.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "I will monitor stack sizes, warn and alert for overstacking.")
+				end
+			else
+				server.allowOverstacking = true
+				conn:execute("UPDATE server SET allowOverstacking = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]I will ignore overstacking.[-]")
+				else
+					irc_chat(chatvars.ircAlias, "I will ignore overstacking.")
 				end
 
 			end
@@ -4525,33 +4219,34 @@ function gmsg_server()
 
 
 	local function cmd_TogglePVPRulesByCompass()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}northeast pve/pvp\n"
-			help[1] = help[1] .. " {#}northeast pve/pvp\n"
-			help[1] = help[1] .. " {#}northwest pve/pvp\n"
-			help[1] = help[1] .. " {#}southeast pve/pvp\n"
-			help[1] = help[1] .. " {#}southwest pve/pvp\n"
-			help[1] = help[1] .. " {#}north pve/pvp\n"
-			help[1] = help[1] .. " {#}south pve/pvp\n"
-			help[1] = help[1] .. " {#}east pve/pvp\n"
-			help[1] = help[1] .. " {#}west pve/pvp"
+			help[1] = " {#}northeast pve (or pvp)\n"
+			help[1] = help[1] .. " {#}northeast pve (or pvp)\n"
+			help[1] = help[1] .. " {#}northwest pve (or pvp)\n"
+			help[1] = help[1] .. " {#}southeast pve (or pvp)\n"
+			help[1] = help[1] .. " {#}southwest pve (or pvp)\n"
+			help[1] = help[1] .. " {#}north pve (or pvp)\n"
+			help[1] = help[1] .. " {#}south pve (or pvp)\n"
+			help[1] = help[1] .. " {#}east pve (or pvp)\n"
+			help[1] = help[1] .. " {#}west pve (or pvp)"
 			help[2] = "Make northeast/northwest/southeast/southwest/north/south/east/west of 0,0 PVE or PVP."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,pvp,pve,north,south,east,west"
+			tmp.keywords = "set,pvp,pve,north,south,east,west,map,world,game,rules"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "pvp") or string.find(chatvars.command, "pve"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "pvp") or string.find(chatvars.command, "pve") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -4562,26 +4257,19 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "northeast" or chatvars.words[1] == "northwest" or chatvars.words[1] == "southeast" or chatvars.words[1] == "southwest" or chatvars.words[1] == "north" or chatvars.words[1] == "south" or chatvars.words[1] == "east" or chatvars.words[1] == "west") and chatvars.words[2] ~= nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[2] ~= "pvp" and chatvars.words[2] ~= "pve" then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]Command expects pvp or pve as 2nd part eg " .. server.commandPrefix .. "northeast pvp.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.warnColour .. "]Command expects pvp or pve as 2nd part eg " .. server.commandPrefix .. "northeast pvp.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Command expects pvp or pve as 2nd part eg " .. server.commandPrefix .. "northeast pvp.")
 				end
@@ -4689,26 +4377,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleRapidRelogTempBan()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}allow/disallow rapid relog"
+			help[1] = " {#}allow (or {#}disallow) rapid relog"
 			help[2] = "New players who want to cheat often relog rapidly in order to spawn lots of items into the server using cheats or bugs.\n"
 			help[2] = help[2] .. "If enabled, the bot will temp ban (10 minutes) players caught relogging several times in short order."
 
 			tmp.command = help[1]
-			tmp.keywords = "allow,rapid,relog,log,join"
+			tmp.keywords = "disallow,rapid,relogging,join,players"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "relog") or string.find(chatvars.command, "allow"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "relog") or string.find(chatvars.command, "allow") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -4719,21 +4408,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "allow" or chatvars.words[1] == "disallow") and chatvars.words[2] == "rapid" and string.find(chatvars.command, "relog") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "allow"	then
@@ -4741,7 +4423,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET allowRapidRelogging = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will do nothing about new players relogging multiple times rapidly.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot will do nothing about new players relogging multiple times rapidly.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The bot will do nothing about new players relogging multiple times rapidly.")
 				end
@@ -4750,7 +4432,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET allowRapidRelogging = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players relogging a lot in a short time will be banned for 10 minutes.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players relogging a lot in a short time will be banned for 10 minutes.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Players relogging a lot in a short time will be banned for 10 minutes.")
 				end
@@ -4763,25 +4445,26 @@ function gmsg_server()
 
 
 	local function cmd_ToggleRegionPM()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}enable/disable region pm"
+			help[1] = " {#}enable (or {#}disable) region pm"
 			help[2] = "A PM for admins that tells them the region name when they move to a new region."
 
 			tmp.command = help[1]
-			tmp.keywords = "able,region,pm"
+			tmp.keywords = "enable,disable,region,pm"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "region") or string.find(chatvars.command, " pm"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "region") or string.find(chatvars.command, " pm") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -4792,21 +4475,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "region" and chatvars.words[3] == "pm" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "enable" then
@@ -4814,7 +4490,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET enableRegionPM = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The current region will be PM'ed to admins.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The current region will be PM'ed to admins.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The current region will be PM'ed to admins.")
 				end
@@ -4823,7 +4499,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET enableRegionPM = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The current region will not be PM'ed.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The current region will not be PM'ed.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The current region will not be PM'ed.")
 				end
@@ -4837,26 +4513,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleServerReboots()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}enable (or disable) reboot"
 			help[2] = "By default the bot does not manage server reboots.\n"
 			help[2] = help[2] .. "See also {#}set max uptime (default 12 hours)"
 
 			tmp.command = help[1]
-			tmp.keywords = "able,rebo,rest,shut,start,stop"
+			tmp.keywords = "enable,disable,reboots,restarts,shutdowns,stop"
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and string.find(chatvars.command, "reboot")) or chatvars.words[1] ~= "help" then
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "reboot")) and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -4867,21 +4544,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "reboot" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 1) then
-					message("pm " .. chatvars.playerid .. " [" .. server.warnColour .. "]" .. restrictedCommandMessage() .. "[-]")
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 1) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "enable" then
@@ -4889,7 +4559,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET allowReboot = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I will automatically reboot the server as needed.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]I will automatically reboot the server as needed.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "I will automatically reboot the server as needed.")
 				end
@@ -4910,7 +4580,7 @@ function gmsg_server()
 				rebootTimerDelayID = nil
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I will not reboot the server.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]I will not reboot the server.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "I will not reboot the server.")
 				end
@@ -4923,26 +4593,27 @@ function gmsg_server()
 
 
 	local function cmd_ToggleTelnetDisabled()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}set telnet enabled/disabled (enabled is the default)"
+			help[1] = " {#}set telnet enabled (or disabled) (enabled is the default)"
 			help[2] = "This doesn't change telnet in the server.  Instead use this to tell the bot if the server's telnet is enabled or disabled.\n"
 			help[2] = help[2] .. "This is used by the bot as part of monitoring the status of telnet.  If telnet is disabled, the bot won't keep trying to connect to it."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,able,telnet"
+			tmp.keywords = "set,telnet,enable,disable"
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "able") or string.find(chatvars.command, "telnet") or string.find(chatvars.command, "set"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "able") or string.find(chatvars.command, "telnet") or string.find(chatvars.command, "set") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -4953,21 +4624,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "set" and chatvars.words[2] == "telnet" and (chatvars.words[3] == "enabled" or chatvars.words[3] == "disabled") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[3] == "enabled" then
@@ -4975,7 +4639,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET telnetDisabled = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will try to stay connected to telnet even when in API mode.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot will try to stay connected to telnet even when in API mode.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The bot will try to stay connected to telnet even when in API mode.")
 				end
@@ -4984,7 +4648,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET telnetDisabled = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot won't keep trying to connect to telnet.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot won't keep trying to connect to telnet.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "The bot won't keep trying to connect to telnet.")
 				end
@@ -4999,19 +4663,21 @@ function gmsg_server()
 	local function cmd_ToggleTranslate()
 		local playerName, isArchived
 
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}translate on/off {player name}"
-			help[2] = "If the Google translate API is installed, the bot can automatically translate the players chat to english."
+			help[1] = " {#}translate on (or off) {player name}"
+			help[2] = "If the Google translate API is installed, the bot can automatically translate the players chat to english.\n"
+			help[2] = "Note:  On hosted bots this feature is not installed so Google doesn't send me a large invoice."
 
 			tmp.command = help[1]
-			tmp.keywords = "on,off,trans,lang"
+			tmp.keywords = "on,off,translate,language"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
@@ -5028,6 +4694,8 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "translate" and (chatvars.words[2] == "on" or chatvars.words[2] == "off") and chatvars.words[3] ~= nil) then
@@ -5038,17 +4706,17 @@ function gmsg_server()
 			end
 
 			pname = string.trim(pname)
-			id = LookupPlayer(pname)
+			tmp.steam, tmp.steamOwner, tmp.userID = LookupPlayer(pname)
 
-			if id == 0 then
-				id = LookupArchivedPlayer(pname)
+			if tmp.steam == "0" then
+				tmp.steam, tmp.steamOwner, tmp.userID = LookupArchivedPlayer(pname)
 
-				if not (id == 0) then
-					playerName = playersArchived[id].name
+				if not (tmp.steam == "0") then
+					playerName = playersArchived[tmp.steam].name
 					isArchived = true
 				else
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No player found matching " .. pname .. "[-]")
 					else
 						irc_chat(chatvars.ircAlias, "No player found matching " .. pname)
 					end
@@ -5057,27 +4725,27 @@ function gmsg_server()
 					return true
 				end
 			else
-				playerName = players[id].name
+				playerName = players[tmp.steam].name
 				isArchived = false
 			end
 
 			if chatvars.words[2] == "on" then
 				if not isArchived then
-					players[id].translate = true
-					conn:execute("UPDATE players SET translate = 1 WHERE steam = " .. id)
+					players[tmp.steam].translate = true
+					conn:execute("UPDATE players SET translate = 1 WHERE steam = '" .. tmp.steam .. "'")
 				else
-					playersArchived[id].translate = true
-					conn:execute("UPDATE playersArchived SET translate = 1 WHERE steam = " .. id)
+					playersArchived[tmp.steam].translate = true
+					conn:execute("UPDATE playersArchived SET translate = 1 WHERE steam = '" .. tmp.steam .. "'")
 				end
 
 				message("say [" .. server.chatColour .. "]Chat from player " .. playerName ..  " will be translated to English.[-]")
 			else
 				if not isArchived then
-					players[id].translate = false
-					conn:execute("UPDATE players SET translate = 0 WHERE steam = " .. id)
+					players[tmp.steam].translate = false
+					conn:execute("UPDATE players SET translate = 0 WHERE steam = '" .. tmp.steam .. "'")
 				else
-					playersArchived[id].translate = false
-					conn:execute("UPDATE playersArchived SET translate = 0 WHERE steam = " .. id)
+					playersArchived[tmp.steam].translate = false
+					conn:execute("UPDATE playersArchived SET translate = 0 WHERE steam = '" .. tmp.steam .. "'")
 				end
 
 				message("say [" .. server.chatColour .. "]Chat from player " .. playerName ..  " will not be translated.[-]")
@@ -5090,25 +4758,26 @@ function gmsg_server()
 
 
 	local function cmd_ToggleWatchAlerts()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}disable/enable watch alerts"
+			help[1] = " {#}enable (or {#}disable) watch alerts"
 			help[2] = "Enable or disable ingame private messages about watched player inventory and base raiding. Alerts will still go to IRC."
 
 			tmp.command = help[1]
-			tmp.keywords = "able,watch,alert,pm,irc"
+			tmp.keywords = "enable,disable,watch,alert,pm,irc"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "watch") or string.find(chatvars.command, "player") or string.find(chatvars.command, "new"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "watch") or string.find(chatvars.command, "player") or string.find(chatvars.command, "new") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -5119,21 +4788,14 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and chatvars.words[2] == "watch" and chatvars.words[3] == "alerts" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.words[1] == "enable" then
@@ -5141,7 +4803,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET disableWatchAlerts = 0")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Alerts on the activities of watched players will be PM'ed to admins.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Alerts on the activities of watched players will be PM'ed to admins.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Alerts on the activities of watched players will be PM'ed to admins.")
 				end
@@ -5150,7 +4812,7 @@ function gmsg_server()
 				conn:execute("UPDATE server SET disableWatchAlerts = 1")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Watch alerts will go to IRC only.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Watch alerts will go to IRC only.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Watch alerts will go to IRC only.")
 				end
@@ -5162,26 +4824,28 @@ function gmsg_server()
 	end
 
 
-	local function cmd_UnpauseReboot()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+	local function cmd_ToggleWelcomeMessages()
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}resume/unpause reboot"
-			help[2] = "Resume a paused reboot."
+			help[1] = " {#}enable (or {#}disable) welcome messages"
+			help[2] = "You can stop the bot greeting players when they join. This does not block alerts about mail, pending reboots or about being in timeout.\n"
+			help[2] = "The welcome messages are enabled by default."
 
 			tmp.command = help[1]
-			tmp.keywords = "pause,resume,rebo"
-			tmp.accessLevel = 2
+			tmp.keywords = "enable,disable,welcome,messages,greeting"
+			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and string.find(chatvars.command, "reboot")) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "able") or string.find(chatvars.command, "welc") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -5192,32 +4856,33 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
-		if (chatvars.words[1] == "unpause" or chatvars.words[1] == "unpaws" or chatvars.words[1] == "resume") and chatvars.words[2] == "reboot" and chatvars.words[3] == nil then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+		if (chatvars.words[1] == "enable" or chatvars.words[1] == "disable") and string.find(chatvars.words[2], "welc") and string.find(chatvars.words[3], "mess") then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
-			if botman.scheduledRestartPaused == true then
-				botman.scheduledRestartTimestamp = os.time() + restartTimeRemaining
-				botman.scheduledRestartPaused = false
-				rebootTimer = restartTimeRemaining
+			if chatvars.words[1] == "enable" then
+				server.noGreetingMessages = false
+				conn:execute("UPDATE server SET noGreetingMessages = 0")
 
-				if chatvars.words[1] == "unpaws" then
-					message("say [" .. server.chatColour .. "]The paws have been removed from the reboot countdown.[-]")
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot will greet players when they join the server.[-]")
 				else
-					message("say [" .. server.chatColour .. "]The reboot countdown has resumed.[-]")
+					irc_chat(chatvars.ircAlias, "The bot will greet players when they join the server.")
+				end
+			else
+				server.noGreetingMessages = true
+				conn:execute("UPDATE server SET noGreetingMessages = 1")
+
+				if (chatvars.playername ~= "Server") then
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will not be welcomed to the server by the bot. How rude![-]")
+				else
+					irc_chat(chatvars.ircAlias, "Players will not be welcomed to the server by the bot. How rude!")
 				end
 			end
 
@@ -5227,13 +4892,92 @@ function gmsg_server()
 	end
 
 
-	local function cmd_VisitMap()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+	local function cmd_UnpauseReboot()
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}visit map\n"
-			help[1] = help[1] .. " {#}visit map x1 z1 x2 z2\n"
-			help[1] = help[1] .. " {#}visit map range {distance}\n"
-			help[1] = help[1] .. " {#}visit map stop"
+			help[1] = " {#}resume (or {#}unpause) reboot"
+			help[2] = "Resume a paused reboot."
+
+			tmp.command = help[1]
+			tmp.keywords = "pause,resume,reboots,bot"
+			tmp.accessLevel = 2
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
+
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
+
+			if botman.registerHelp then
+				registerHelp(tmp)
+			end
+
+			if (chatvars.words[1] == "help" and string.find(chatvars.command, "reboot")) and chatvars.showHelp or botman.registerHelp then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+
+			return false
+		end
+
+		if (chatvars.words[1] == "unpause" or chatvars.words[1] == "unpaws" or chatvars.words[1] == "resume") and chatvars.words[2] == "reboot" and chatvars.words[3] == nil then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
+			if botman.scheduledRestartPaused then
+				if botman.scheduledRestartTimestamp then
+					botman.scheduledRestartTimestamp = os.time() + botman.restartTimeRemaining
+					botman.restartTimeRemaining = nil
+				end
+
+				botman.scheduledRestartPaused = false
+
+				if chatvars.words[1] == "unpaws" then
+					message("say [" .. server.chatColour .. "]The paws have been removed from the reboot countdown.[-]")
+				else
+					message("say [" .. server.chatColour .. "]The reboot countdown has resumed.[-]")
+				end
+			else
+				if chatvars.words[1] == "unpaws" then
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]There are no paws.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "There are no paws.")
+					end
+				else
+					if (chatvars.playername ~= "Server") then
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The reboot is already resumed.[-]")
+					else
+						irc_chat(chatvars.ircAlias, "The reboot is already resumed.")
+					end
+				end
+
+				botman.faultyChat = false
+				return true
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_VisitMap()
+		if chatvars.showHelp or botman.registerHelp then
+			help = {}
+			help[1] = " {#}visitmap\n"
+			help[1] = help[1] .. "Or {#}visitmap x1 z1 x2 z2\n"
+			help[1] = help[1] .. "Or {#}visitmap range {distance}\n"
+			help[1] = help[1] .. "Or {#}visitmap stop"
 			help[2] = "Make the server explore the map while you hit up some zombie chicks.\n"
 			help[2] = help[2] .. "If you add the optional word 'check' at the end of the command it will also check chunk density.\n"
 			help[2] = help[2] .. "To visit the entire map do not include coordinates or a range."
@@ -5244,14 +4988,15 @@ function gmsg_server()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "visit") or string.find(chatvars.command, "map"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "visit") or string.find(chatvars.command, "map") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -5262,28 +5007,21 @@ function gmsg_server()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
-		if (chatvars.words[1] == "visit" and chatvars.words[2] == "map") or chatvars.words[1] == "visitmap" then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 0) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 0) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+		if chatvars.words[1] == "visitmap" then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if string.find(chatvars.command, "stop") then
 				sendCommand("visitmap stop")
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Stopping then visitmap command.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Stopping then visitmap command.[-]")
 				else
 					irc_chat(chatvars.ircAlias, "Stopping then visitmap command.")
 				end
@@ -5341,7 +5079,7 @@ function gmsg_server()
 			sendCommand(string.trim("visitmap " .. tmp.x1 .. " " .. tmp.z1 .. " " .. tmp.x2  .. " " .. tmp.z2 .. " " .. tmp.check))
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sending the visitmap command to the server.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Sending the visitmap command to the server.[-]")
 			else
 				irc_chat(chatvars.ircAlias, "Sending the visitmap command to the server.")
 			end
@@ -5356,38 +5094,39 @@ function gmsg_server()
 if debug then dbug("debug server") end
 
 	if botman.registerHelp then
-		irc_chat(chatvars.ircAlias, "==== Registering help - server commands ====")
 		if debug then dbug("Registering help - server commands") end
 
-		tmp = {}
 		tmp.topicDescription = "Server commands mainly cover settings that change the nature of the server or turn features on or off that relate to the server."
 
-		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'server'")
-		rows = cursor:numrows()
-		if rows == 0 then
-			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch({}, "a")
-			tmp.topicID = row.Auto_increment
+		if chatvars.ircAlias ~= "" then
+			irc_chat(chatvars.ircAlias, ".")
+			irc_chat(chatvars.ircAlias, "Server Commands:")
+			irc_chat(chatvars.ircAlias, ".")
+			irc_chat(chatvars.ircAlias, tmp.topicDescription)
+			irc_chat(chatvars.ircAlias, ".")
+		end
 
-			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('server', '" .. escape(tmp.topicDescription) .. "')")
+		cursor,errorString = connSQL:execute("SELECT count(*) FROM helpTopics WHERE topic = '" .. tmp.topic .. "'")
+		row = cursor:fetch({}, "a")
+		rows = row["count(*)"]
+
+		if rows == 0 then
+			connSQL:execute("INSERT INTO helpTopics (topic, description) VALUES ('" .. tmp.topic .. "', '" .. connMEM:escape(tmp.topicDescription) .. "')")
 		end
 	end
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
 		botman.faultyChat = false
-		return false
+		return false, ""
 	end
 
 	if chatvars.showHelp then
 		if chatvars.words[3] then
-			if chatvars.words[3] ~= "server" then
-				skipHelp = true
+			if not string.find(chatvars.words[3], "server") then
+				botman.faultyChat = false
+				return true, ""
 			end
-		end
-
-		if chatvars.words[1] == "help" then
-			skipHelp = false
 		end
 
 		if chatvars.words[1] == "list" then
@@ -5395,10 +5134,9 @@ if debug then dbug("debug server") end
 		end
 	end
 
-	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
+	if chatvars.showHelp and chatvars.words[1] ~= "help" and not botman.registerHelp then
 		irc_chat(chatvars.ircAlias, ".")
 		irc_chat(chatvars.ircAlias, "Server Commands:")
-		irc_chat(chatvars.ircAlias, "================")
 		irc_chat(chatvars.ircAlias, ".")
 	end
 
@@ -5412,7 +5150,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleTelnetDisabled triggered") end
-		return result
+		return result, "cmd_ToggleTelnetDisabled"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5421,7 +5159,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleTranslate triggered") end
-		return result
+		return result, "cmd_ToggleTranslate"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5430,21 +5168,21 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_Say triggered") end
-		return result
+		return result, "cmd_Say"
 	end
 
 	-- ###################  Staff only beyond this point ################
 	-- Don't proceed if this is a player.  Server and staff only here.
 	if (chatvars.playername ~= "Server") then
-		if (chatvars.accessLevel > 2) then
+		if (not chatvars.isAdminHidden) then
 			botman.faultyChat = false
-			return false
+			return false, ""
 		end
 	else
-		if tonumber(chatvars.ircid) > 0 then
-			if (chatvars.accessLevel > 2) then
+		if chatvars.ircid ~= "0" then
+			if (not chatvars.isAdminHidden) then
 				botman.faultyChat = false
-				return false
+				return false, ""
 			end
 		end
 	end
@@ -5456,7 +5194,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_CancelReboot triggered") end
-		return result
+		return result, "cmd_CancelReboot"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5465,7 +5203,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_JoinGameServer triggered") end
-		return result
+		return result, "cmd_JoinGameServer"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5474,7 +5212,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_PauseReboot triggered") end
-		return result
+		return result, "cmd_PauseReboot"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5483,7 +5221,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_RunConsoleCommand triggered") end
-		return result
+		return result, "cmd_RunConsoleCommand"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5492,7 +5230,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ScheduleServerReboot triggered") end
-		return result
+		return result, "cmd_ScheduleServerReboot"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5501,7 +5239,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetAccessOverride triggered") end
-		return result
+		return result, "cmd_SetAccessOverride"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5510,7 +5248,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetArchivePlayersThreshold triggered") end
-		return result
+		return result, "cmd_SetArchivePlayersThreshold"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5519,7 +5257,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetBailCost triggered") end
-		return result
+		return result, "cmd_SetBailCost"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5528,7 +5266,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetClearViewMOTD triggered") end
-		return result
+		return result, "cmd_SetClearViewMOTD"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5537,7 +5275,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetIdleKickTimer triggered") end
-		return result
+		return result, "cmd_SetIdleKickTimer"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5546,7 +5284,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetIRCChannels triggered") end
-		return result
+		return result, "cmd_SetIRCChannels"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5555,7 +5293,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetIRCNick triggered") end
-		return result
+		return result, "cmd_SetIRCNick"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5564,7 +5302,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetIRCServer triggered") end
-		return result
+		return result, "cmd_SetIRCServer"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5573,7 +5311,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetMapSize triggered") end
-		return result
+		return result, "cmd_SetMapSize"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5582,7 +5320,16 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetMaxAnimals triggered") end
-		return result
+		return result, "cmd_SetMaxAnimals"
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_SetMaxHackerFlyingGroundHeight()
+
+	if result then
+		if debug then dbug("debug cmd_SetMaxHackerFlyingGroundHeight triggered") end
+		return result, "cmd_SetMaxHackerFlyingGroundHeight"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5591,7 +5338,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetMaxPing triggered") end
-		return result
+		return result, "cmd_SetMaxPing"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5600,7 +5347,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetMaxPlayers triggered") end
-		return result
+		return result, "cmd_SetMaxPlayers"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5609,7 +5356,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetMaxUptime triggered") end
-		return result
+		return result, "cmd_SetMaxUptime"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5618,7 +5365,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetMaxZombies triggered") end
-		return result
+		return result, "cmd_SetMaxZombies"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5627,7 +5374,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetNewPlayerMaxLevel triggered") end
-		return result
+		return result, "cmd_SetNewPlayerMaxLevel"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5636,7 +5383,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetNewPlayerTimer triggered") end
-		return result
+		return result, "cmd_SetNewPlayerTimer"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5645,7 +5392,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetOverstackLimit triggered") end
-		return result
+		return result, "cmd_SetOverstackLimit"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5654,7 +5401,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetPingKickTarget triggered") end
-		return result
+		return result, "cmd_SetPingKickTarget"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5663,7 +5410,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetPrisonTimer triggered") end
-		return result
+		return result, "cmd_SetPrisonTimer"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5672,7 +5419,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetPVPCooldown triggered") end
-		return result
+		return result, "cmd_SetPVPCooldown"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5681,7 +5428,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetPVPTempBanCooldown triggered") end
-		return result
+		return result, "cmd_SetPVPTempBanCooldown"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5690,7 +5437,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetReservedSlots triggered") end
-		return result
+		return result, "cmd_SetReservedSlots"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5699,7 +5446,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetRollingAnnouncementTimer triggered") end
-		return result
+		return result, "cmd_SetRollingAnnouncementTimer"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5708,7 +5455,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetRules triggered") end
-		return result
+		return result, "cmd_SetRules"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5717,7 +5464,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetServerAPIKey triggered") end
-		return result
+		return result, "cmd_SetServerAPIKey"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5726,7 +5473,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetServerVoteReward triggered") end
-		return result
+		return result, "cmd_SetServerVoteReward"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5735,7 +5482,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetServerGroup triggered") end
-		return result
+		return result, "cmd_SetServerGroup"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5744,7 +5491,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetServerIP triggered") end
-		return result
+		return result, "cmd_SetServerIP"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5753,7 +5500,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetServerRebootHour triggered") end
-		return result
+		return result, "cmd_SetServerRebootHour"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5762,7 +5509,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetServerRebootMinute triggered") end
-		return result
+		return result, "cmd_SetServerRebootMinute"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5771,7 +5518,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetServerType triggered") end
-		return result
+		return result, "cmd_SetServerType"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5780,7 +5527,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetupAllocsWebMap triggered") end
-		return result
+		return result, "cmd_SetupAllocsWebMap"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5789,7 +5536,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetWebPanelPort triggered") end
-		return result
+		return result, "cmd_SetWebPanelPort"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5798,7 +5545,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetWebsite triggered") end
-		return result
+		return result, "cmd_SetWebsite"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5807,7 +5554,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_SetWelcomeMessage triggered") end
-		return result
+		return result, "cmd_SetWelcomeMessage"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5816,7 +5563,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_TestVoteReward triggered") end
-		return result
+		return result, "cmd_TestVoteReward"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5825,7 +5572,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleBadNames triggered") end
-		return result
+		return result, "cmd_ToggleBadNames"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5834,16 +5581,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleBanVACBannedPlayers triggered") end
-		return result
-	end
-
-	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
-
-	result = cmd_ToggleCBSMFriendly()
-
-	if result then
-		if debug then dbug("debug cmd_ToggleCBSMFriendly triggered") end
-		return result
+		return result, "cmd_ToggleBanVACBannedPlayers"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5852,7 +5590,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleDespawnZombiesBeforeBloodMoon triggered") end
-		return result
+		return result, "cmd_ToggleDespawnZombiesBeforeBloodMoon"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5861,7 +5599,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleEntityScan triggered") end
-		return result
+		return result, "cmd_ToggleEntityScan"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5870,7 +5608,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleErrorScan triggered") end
-		return result
+		return result, "cmd_ToggleErrorScan"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5879,7 +5617,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleFamilySteamKeys triggered") end
-		return result
+		return result, "cmd_ToggleFamilySteamKeys"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5888,7 +5626,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleHardcoreMode triggered") end
-		return result
+		return result, "cmd_ToggleHardcoreMode"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5897,7 +5635,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleIdleKick triggered") end
-		return result
+		return result, "cmd_ToggleIdleKick"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5906,7 +5644,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleIdleKickAnytime triggered") end
-		return result
+		return result, "cmd_ToggleIdleKickAnytime"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5915,7 +5653,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleIgnorePlayerFlying triggered") end
-		return result
+		return result, "cmd_ToggleIgnorePlayerFlying"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5924,7 +5662,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleIRCPrivate triggered") end
-		return result
+		return result, "cmd_ToggleIRCPrivate"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5933,7 +5671,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleNoClipScan triggered") end
-		return result
+		return result, "cmd_ToggleNoClipScan"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5942,7 +5680,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleOverstackChecking triggered") end
-		return result
+		return result, "cmd_ToggleOverstackChecking"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5951,7 +5689,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_TogglePVPRulesByCompass triggered") end
-		return result
+		return result, "cmd_TogglePVPRulesByCompass"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5960,7 +5698,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleRapidRelogTempBan triggered") end
-		return result
+		return result, "cmd_ToggleRapidRelogTempBan"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5969,7 +5707,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleRegionPM triggered") end
-		return result
+		return result, "cmd_ToggleRegionPM"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5978,7 +5716,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleServerReboots triggered") end
-		return result
+		return result, "cmd_ToggleServerReboots"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5987,7 +5725,16 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_ToggleWatchAlerts triggered") end
-		return result
+		return result, "cmd_ToggleWatchAlerts"
+	end
+
+	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_ToggleWelcomeMessages()
+
+	if result then
+		if debug then dbug("debug cmd_ToggleWelcomeMessages triggered") end
+		return result, "cmd_ToggleWelcomeMessages"
 	end
 
 	if (debug) then dbug("debug server line " .. debugger.getinfo(1).currentline) end
@@ -5996,7 +5743,7 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_UnpauseReboot triggered") end
-		return result
+		return result, "cmd_UnpauseReboot"
 	end
 
 	if debug then dbug("debug server end of remote commands") end
@@ -6005,21 +5752,19 @@ if debug then dbug("debug server") end
 
 	if result then
 		if debug then dbug("debug cmd_VisitMap triggered") end
-		return result
+		return result, "cmd_VisitMap"
 	end
 
 	if debug then dbug("debug server end of remote commands") end
 
 	if botman.registerHelp then
-		irc_chat(chatvars.ircAlias, "**** Server commands help registered ****")
 		if debug then dbug("Server commands help registered") end
-		topicID = topicID + 1
 	end
 
 	if debug then dbug("debug server end") end
 
 	-- can't touch dis
 	if true then
-		return result
+		return result, ""
 	end
 end

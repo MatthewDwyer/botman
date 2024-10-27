@@ -1,21 +1,22 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 
 function irc_HelpAccess()
-	irc_chat(irc_params.name, "Access Levels:")
-	irc_chat(irc_params.name, "==============")
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "Access Levels")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "Access levels control who can do what.  Commands that are above a players level return unknown command.")
 	irc_chat(irc_params.name, "Level 0 server owners")
 	irc_chat(irc_params.name, "Level 1 admins")
 	irc_chat(irc_params.name, "Level 2 mods")
-	irc_chat(irc_params.name, "Level 10 Donors")
+	irc_chat(irc_params.name, "Level 3 - 89 custom admin levels")
 	irc_chat(irc_params.name, "Level 90 Regular players")
 	irc_chat(irc_params.name, "Level 99 New players")
 	irc_chat(irc_params.name, ".")
@@ -27,12 +28,17 @@ end
 function irc_commands()
 	calledFunction = "irc_commands"
 
-	local id
-	id = LookupIRCAlias(irc_params.name)
+	local steam, steamOwner, userID
+
+	if not botman.registerHelp then
+		steam = LookupIRCAlias(irc_params.name)
+		steam, steamOwner, userID = LookupPlayer(steam)
+	end
 
 	-- help visible to all
-	irc_chat(irc_params.name, "Commands that output to IRC:")
-	irc_chat(irc_params.name, "============================")
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "Bot Commands On IRC (The Lounge):")
+	irc_chat(irc_params.name, ".")
 
 	irc_chat(irc_params.name, "help (display this list)")
 	irc_chat(irc_params.name, "help manual (New to the bot and IRC?  Read this.)")
@@ -56,9 +62,8 @@ function irc_commands()
 	irc_chat(irc_params.name, "shop {category}  (list items in a category)")
 	irc_chat(irc_params.name, "shop {item}  (list all items that partially match what you type)")
 	irc_chat(irc_params.name, "villages (list)")
-	irc_chat(irc_params.name, ".")
 
-	if (accessLevel(id) > 2) then
+	if (not isAdmin(steam, userID) and not botman.registerHelp) then
 		return
 	end
 
@@ -121,8 +126,10 @@ end
 
 
 function irc_Manual()
-	local id
-	id = LookupIRCAlias(irc_params.name)
+	local steam, steamOwner, userID
+
+	steam = LookupIRCAlias(irc_params.name)
+	steam, steamOwner, userID = LookupPlayer(steam)
 
 	irc_chat(irc_params.name, string.format("Hi %s! Here is a quick guide on getting started with your bot on IRC.", irc_params.name))
 	irc_chat(irc_params.name, ".")
@@ -147,23 +154,23 @@ function irc_Manual()
 	irc_chat(irc_params.name, ".")
 
 	-- staff only
-	if (accessLevel(id) > 2) then
+	if (not isAdmin(steam, userID)) then
 		irc_chat(irc_params.name, "For further assistance, please read help or talk to your admins.")
 		irc_chat(irc_params.name, ".")
 		return
 	end
 
-	if not players[id].ircAuthenticated then
+	if not players[steam].ircAuthenticated then
 		irc_chat(irc_params.name, "You are currently not logged in to the bot and you won't have access to admin commands until you login.")
 		irc_chat(irc_params.name, "If you don't yet have a login or you've lost it >.< Type bow before me.  This will only work if your IRC nick matches your steam name or you've been logged in before.")
 		irc_chat(irc_params.name, "If you typed bow before me, you should have been told by the bot that you have logged in.  You can do admin commands, but if you want, you can also set yourself a bot login using a user and pass.")
-		irc_chat(irc_params.name, string.format("To do that type new login %s pass somepassword", id))
+		irc_chat(irc_params.name, string.format("To do that type new login %s pass somepassword", steam))
 		irc_chat(irc_params.name, ".")
 	else
 		irc_chat(irc_params.name, "As an admin, you have a lot more help available to you with the help command.  The best thing to do is explore.")
 		irc_chat(irc_params.name, "To talk to players in your server type say followed by what you want said in-game.  You can also pm players eg. pm joe You're on fire!")
 
-		if (accessLevel(id) == 0) then
+		if (accessLevel(steam, userID) == 0) then
 			irc_chat(irc_params.name, "As server owner, you have access to server console commands from IRC.")
 			irc_chat(irc_params.name, "To do a console command type con followed by the console command.  eg. con help ban.")
 			irc_chat(irc_params.name, "Your bot requires the latest version of Allocs mod, though it may work with older versions.")
@@ -195,8 +202,10 @@ end
 
 function irc_Setup()
 	-- TODO:  Finish this
-	local id
-	id = LookupIRCAlias(irc_params.name)
+	local steam, steamOwner, userID
+
+	steam = LookupIRCAlias(irc_params.name)
+	steam, steamOwner, userID = LookupPlayer(steam)
 
 	irc_chat(irc_params.name, "When running the bot for the first time, there are several setup tasks to do and some mod requirements.")
 	irc_chat(irc_params.name, "The bot requires Alloc's mod to function. Many very nice extra features require either the BC mod or the Botman mod.")
@@ -214,12 +223,20 @@ end
 
 
 function irc_HelpTopics()
-	local id
-	id = LookupIRCAlias(irc_params.name)
-	if (accessLevel(id) > 2) then return end
+	local steam, steamOwner, userID
 
-	irc_chat(irc_params.name, "Commands by topic:")
-	irc_chat(irc_params.name, "==================")
+	if not botman.registerHelp then
+		steam = LookupIRCAlias(irc_params.name)
+		steam, steamOwner, userID = LookupPlayer(steam)
+
+		if (not isAdmin(steam, userID)) then
+			return
+		end
+	end
+
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "Commands By Topic:")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "help announcements")
 	irc_chat(irc_params.name, "help bad items")
 	irc_chat(irc_params.name, "help commands")
@@ -236,12 +253,20 @@ end
 
 
 function irc_HelpServer()
-	local id
-	id = LookupIRCAlias(irc_params.name)
-	if (accessLevel(id) > 2) then return end
+	local steam, steamOwner, userID
 
-	irc_chat(irc_params.name, "Customising the bot and server")
-	irc_chat(irc_params.name, "==============================")
+	if not botman.registerHelp then
+		steam = LookupIRCAlias(irc_params.name)
+		steam, steamOwner, userID = LookupPlayer(steam)
+
+		if (not isAdmin(steam, userID)) then
+			return
+		end
+	end
+
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "Customising The Bot And Server")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "reset bot (Do after a wipe. BE CAREFUL. This will make the bot forget map specific things like locations and bases.)")
 	irc_chat(irc_params.name, "server ip {internet address of server} (to view just type server)")
 	irc_chat(irc_params.name, "server ip:port pass {telnet password} (point the bot to a new 7 Days server)")
@@ -253,12 +278,20 @@ end
 
 
 function irc_HelpCSI()
-	local id
-	id = LookupIRCAlias(irc_params.name)
-	if (accessLevel(id) > 2) then return end
+	local steam, steamOwner, userID
 
+	if not botman.registerHelp then
+		steam = LookupIRCAlias(irc_params.name)
+		steam, steamOwner, userID = LookupPlayer(steam)
+
+		if (not isAdmin(steam, userID)) then
+			return
+		end
+	end
+
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "Forensic Investigative Tools")
-	irc_chat(irc_params.name, "============================")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "claims {player name} (list each placed claim for a player with coords)")
 	irc_chat(irc_params.name, "info {player name} (lots of quick info about a player)")
 	irc_chat(irc_params.name, "inv {player name} (current inventory of player)")
@@ -271,14 +304,25 @@ end
 
 
 function irc_HelpAnnouncements()
-	local id
-	id = LookupIRCAlias(irc_params.name)
-	if (accessLevel(id) > 2) then return end
+	local steam, steamOwner, userID
 
+	if not botman.registerHelp then
+		steam = LookupIRCAlias(irc_params.name)
+		steam, steamOwner, userID = LookupPlayer(steam)
+
+		if (not isAdmin(steam, userID)) then
+			return
+		end
+	end
+
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "Announcements Management")
-	irc_chat(irc_params.name, "========================")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "announcements (view a numbered list of the server announcements).")
 	irc_chat(irc_params.name, "add announcement {your message here}")
+	irc_chat(irc_params.name, "You can also set an announcement to trigger when the server time is a specific hour and minute. (Valid hour is 0-23 and minute 0-59)")
+	irc_chat(irc_params.name, "add announcement time {hour:minute} {your message here}")
+	irc_chat(irc_params.name, "eg. add announcement time 0:30 This is a test of the emergency broadcast syst.. *[i]radio static[/i]*")
 	irc_chat(irc_params.name, "delete announcement {number} (from the numbered list given with announcements)")
 	irc_chat(irc_params.name, "set rolling delay 10 (The next rolling announcement will happen every 10 minutes)")
 	irc_chat(irc_params.name, ".")
@@ -286,12 +330,20 @@ end
 
 
 function irc_HelpCustomCommands()
-	local id
-	id = LookupIRCAlias(irc_params.name)
-	if (accessLevel(id) > 2) then return end
+	local steam, steamOwner, userID
 
+	if not botman.registerHelp then
+		steam = LookupIRCAlias(irc_params.name)
+		steam, steamOwner, userID = LookupPlayer(steam)
+
+		if (not isAdmin(steam, userID)) then
+			return
+		end
+	end
+
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "Custom Commands")
-	irc_chat(irc_params.name, "===============")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "You can create commands that send a private message.")
 	irc_chat(irc_params.name, "Type custom commands (list them)")
 	irc_chat(irc_params.name, "Type add command {command} level {access level} message {message}.")
@@ -303,12 +355,20 @@ end
 
 
 function irc_HelpBadItems()
-	local id
-	id = LookupIRCAlias(irc_params.name)
-	if (accessLevel(id) > 2) then return end
+	local steam, steamOwner, userID
 
-	irc_chat(irc_params.name, "Bad Item (uncraftable) Management")
-	irc_chat(irc_params.name, "=================================")
+	if not botman.registerHelp then
+		steam = LookupIRCAlias(irc_params.name)
+		steam, steamOwner, userID = LookupPlayer(steam)
+
+		if (not isAdmin(steam, userID)) then
+			return
+		end
+	end
+
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "Bad Item (Uncraftable) Management")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "list bad items")
 	irc_chat(irc_params.name, "add bad item {name of item as given by server}")
 	irc_chat(irc_params.name, "remove bad item {name of item as given by server}")
@@ -322,49 +382,45 @@ end
 
 
 function irc_HelpCommands()
-	local id
-	id = LookupIRCAlias(irc_params.name)
-	if (accessLevel(id) > 2) then return end
+	local steam, steamOwner, userID
 
-	irc_chat(irc_params.name, "Remote server commands:")
-	irc_chat(irc_params.name, "=======================")
-	irc_chat(irc_params.name, "Most ingame commands can be done from IRC by putting cmd infront.  These commands do require a slash.")
-	irc_chat(irc_params.name, "If an ingame command does not support running from IRC you will get 'Unknown command'.")
+	if not botman.registerHelp then
+		steam = LookupIRCAlias(irc_params.name)
+		steam, steamOwner, userID = LookupPlayer(steam)
+
+		if (not isAdmin(steam, userID)) then
+			return
+		end
+	end
+
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "Remote Server Commands")
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "Most ingame commands can be done from IRC by putting 'cmd' in front.  These commands do require a slash.")
+	irc_chat(irc_params.name, "If an ingame command does not support running from IRC the bot will tell you.")
 	irc_chat(irc_params.name, "For the full list type list help or for detailed help type command help. If you know the section you want add that eg list help server.")
-	irc_chat(irc_params.name, "cmd {#}arrest {playername}")
-	irc_chat(irc_params.name, "cmd {#}release {playername}")
-	irc_chat(irc_params.name, "cmd {#}gimme gimme")
-	irc_chat(irc_params.name, "cmd {#}gimme off")
-	irc_chat(irc_params.name, "cmd {#}gimme on")
-	irc_chat(irc_params.name, "cmd {#}gimme peace")
-	irc_chat(irc_params.name, "cmd {#}gimme reset")
-	irc_chat(irc_params.name, "cmd {#}reset gimmearena")
-	irc_chat(irc_params.name, "cmd {#}exclude admins")
-	irc_chat(irc_params.name, "cmd {#}include admins")
-	irc_chat(irc_params.name, "cmd {#}tele {teleport} enable")
-	irc_chat(irc_params.name, "cmd {#}tele {teleport} disable")
-	irc_chat(irc_params.name, "cmd {#}tele {teleport} delete")
-	irc_chat(irc_params.name, "cmd {#}tele {teleport} owner {playername}")
-	irc_chat(irc_params.name, "cmd {#}tele {teleport} private")
-	irc_chat(irc_params.name, "cmd {#}tele {teleport} public")
-	irc_chat(irc_params.name, "cmd {#}set base size {size} {playername}")
-	irc_chat(irc_params.name, "cmd {#}protect {playername}")
-	irc_chat(irc_params.name, "cmd {#}unprotect {playername}")
-	irc_chat(irc_params.name, "cmd {#}resettimers {playername}")
-	irc_chat(irc_params.name, "cmd {#}sendhome {playername}")
-	irc_chat(irc_params.name, "cmd {#}timeout {playername}")
-	irc_chat(irc_params.name, "cmd {#}return {playername}")
+	irc_chat(irc_params.name, "example. cmd {#}arrest {playername}")
+	irc_chat(irc_params.name, "If you are a level 0 admin (owner) you can also send console commands to the server. Currently the bot must be in API mode or you will not see any feedback.")
+	irc_chat(irc_params.name, "example. con help ban")
 	irc_chat(irc_params.name, ".")
 end
 
 
 function irc_HelpMOTD()
-	local id
-	id = LookupIRCAlias(irc_params.name)
-	if (accessLevel(id) > 2) then return end
+	local steam, steamOwner, userID
 
+	if not botman.registerHelp then
+		steam = LookupIRCAlias(irc_params.name)
+		steam, steamOwner, userID = LookupPlayer(steam)
+
+		if (not isAdmin(steam, userID)) then
+			return
+		end
+	end
+
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "Message Of The Day Management")
-	irc_chat(irc_params.name, "=============================")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "motd (view the current message of the day if set).")
 	irc_chat(irc_params.name, "motd clear (or motd delete).")
 	irc_chat(irc_params.name, "set motd followed by anything else sets the message of the day.")
@@ -373,12 +429,20 @@ end
 
 
 function irc_HelpWatchlist()
-	local id
-	id = LookupIRCAlias(irc_params.name)
-	if (accessLevel(id) > 2) then return end
+	local steam, steamOwner, userID
 
+	if not botman.registerHelp then
+		steam = LookupIRCAlias(irc_params.name)
+		steam, steamOwner, userID = LookupPlayer(steam)
+
+		if (not isAdmin(steam, userID)) then
+			return
+		end
+	end
+
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "Watchlist Management")
-	irc_chat(irc_params.name, "====================")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "Changes to player inventories can be sent to a channel called #watch")
 	irc_chat(irc_params.name, "New players and watched players are automatically included.")
 	irc_chat(irc_params.name, "To add a player type watch {player name}")
@@ -389,12 +453,20 @@ end
 
 
 function irc_HelpDonors()
-	local id
-	id = LookupIRCAlias(irc_params.name)
-	if (accessLevel(id) > 2) then return end
+	local steam, steamOwner, userID
 
+	if not botman.registerHelp then
+		steam = LookupIRCAlias(irc_params.name)
+		steam, steamOwner, userID = LookupPlayer(steam)
+
+		if (not isAdmin(steam, userID)) then
+			return
+		end
+	end
+
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "Donor Management")
-	irc_chat(irc_params.name, "================")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "donors (list donors known to the bot)")
 	irc_chat(irc_params.name, "add donor {player name}")
 	irc_chat(irc_params.name, "remove donor {player name}")
@@ -403,28 +475,70 @@ end
 
 
 function irc_HelpShop()
-	local id
-	id = LookupIRCAlias(irc_params.name)
-	if (accessLevel(id) > 2) then return end
+	local steam, steamOwner, userID
 
+	if not botman.registerHelp then
+		steam = LookupIRCAlias(irc_params.name)
+		steam, steamOwner, userID = LookupPlayer(steam)
+
+		if (not isAdmin(steam, userID)) then
+			return
+		end
+	end
+
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "Shop Manglement")
-	irc_chat(irc_params.name, "===============")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "empty shop (Everything must go! Deletes everything except the misc category which is a catchall)")
 	irc_chat(irc_params.name, "shop categories (list categories)")
 	irc_chat(irc_params.name, "shop {category} (list items in a category)")
+	irc_chat(irc_params.name, "eg. shop food")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "shop {item} (list all items that partially match what you type)")
-	irc_chat(irc_params.name, "shop add category {food} code {code} (1 or more letters only)")
-	irc_chat(irc_params.name, "shop remove category {food}")
-	irc_chat(irc_params.name, "shop change category {old category} {new category}")
+
+	irc_chat(irc_params.name, "shop add category {category name} code {code} (1 or more letters only)")
+	irc_chat(irc_params.name, "eg. shop add category food code foo.  Category name should be one word only.")
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "shop remove category {category name}")
+	irc_chat(irc_params.name, "eg. shop remove category food. Any items in the category are moved to the misc category which is an automatic catch-all category for stuff.")
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "shop change category {old category} to {new category} code {new code}")
+	irc_chat(irc_params.name, "eg. shop change category food to noms code nom.  The food category becomes noms and the items in the food category move to the noms category with the code nom.")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "shop add item {item} category {a category} price {number} stock {number} units {number} quality {0-6 or custom quality number}")
+	irc_chat(irc_params.name, "eg. shop add item armorLeatherBoots category clothing price 500 stock 100 units 1 quality 6")
+	irc_chat(irc_params.name, "Units are how many of the item to spawn and quality is random if not specified and the server ignores quality for items that do not have a quality.")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "shop remove item {item}")
+	irc_chat(irc_params.name, "eg. shop remove item armorLeatherBoots")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "shop price {item} {number}")
+	irc_chat(irc_params.name, "eg. shop price armorLeatherBoots 100.  Change the price of an item.")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "shop quality {item} {number}")
+	irc_chat(irc_params.name, "eg. shop quality armorLeatherBoots 0.  A quality of 0 will spawn a random quality of the item.")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "shop units {item} {number}")
-	irc_chat(irc_params.name, "shop restock {item} +-{number}")
-	irc_chat(irc_params.name, "shop special {item} {number}")
-	irc_chat(irc_params.name, "shop variation {item} {number}")
+	irc_chat(irc_params.name, "eg. shop units armorLeatherBoots 2.  Buy one get one free!")
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "shop restock {item} {number}")
+	irc_chat(irc_params.name, "eg. shop restock armorLeatherBoots 100.  Increase the stock of this item by 100.")
+	irc_chat(irc_params.name, ".")
 	irc_chat(irc_params.name, "open shop")
 	irc_chat(irc_params.name, "close shop (staff can still access)")
+	irc_chat(irc_params.name, ".")
+
+	irc_chat(irc_params.name, "Special Bulk Editing Shop Commands")
+	irc_chat(irc_params.name, "~*~*~*~*~*~*~*~*~*~*~*~*~*~*~")
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "Use these commands along with a text editor to change multiple items at once.")
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "Command: shop edit {category name}")
+	irc_chat(irc_params.name, "Copy, edit, then paste the items in the specified shop category formatted for easy editing back into this chat.")
+	irc_chat(irc_params.name, "Using your favourite text editor you can bulk edit all the items in a category with the bot commands ready to re-paste.")
+	irc_chat(irc_params.name, ".")
+	irc_chat(irc_params.name, "Command: shop edit stock")
+	irc_chat(irc_params.name, "Copy, edit, then paste the items for the entire shop formatted for easy editing back into this chat.")
+	irc_chat(irc_params.name, "Using your favourite text editor you can bulk edit all the items in the shop with the bot commands ready to re-paste.")
 	irc_chat(irc_params.name, ".")
 end

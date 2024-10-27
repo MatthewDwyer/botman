@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 function memTrigger(line)
@@ -13,6 +13,10 @@ function memTrigger(line)
 	end
 
 	local time, fps, heap, heapMax, chunks, cgo, ply, zom, ent, items, k, v
+
+	if botman.performance == nil then
+		botman.performance = {}
+	end
 
 	if (string.find(line, "Heap:")) then
 		time = string.sub(line, string.find(line, "Time:") + 6, string.find(line, "FPS:") - 3)
@@ -29,8 +33,20 @@ function memTrigger(line)
 
 		botman.playersOnline = 0
 		ply = string.trim(ply)
-
 		server.uptime = math.floor(time * 60)
+		server.serverStartTimestamp = os.time() - server.uptime
+
+		botman.performance.serverdate = botman.serverTime
+		botman.performance.gametime = tonumber(time)
+		botman.performance.fps = tonumber(fps)
+		botman.performance.heap = tonumber(heap)
+		botman.performance.heapMax = tonumber(heapMax)
+		botman.performance.chunks = tonumber(chunks)
+		botman.performance.cgo = tonumber(cgo)
+		botman.performance.players = tonumber(ply)
+		botman.performance.zombies = tonumber(zom)
+		botman.performance.entities = ent
+		botman.performance.items = tonumber(items)
 
 		if botman.dbConnected then
 			conn:execute("INSERT INTO performance (serverdate, gametime, fps, heap, heapMax, chunks, cgo, players, zombies, entities, items) VALUES ('" .. botman.serverTime .. "'," .. time .. "," .. fps .. "," .. heap .. "," .. heapMax .. "," .. chunks .. "," .. cgo .. "," .. ply .. "," .. zom .. ",'" .. ent .. "'," .. items .. ")")
@@ -38,6 +54,7 @@ function memTrigger(line)
 
 		if tonumber(ply) >= 0 then
 			botman.playersOnline = tonumber(ply)
+			botStatus.playersOnline = botman.playersOnline
 		end
 
 		if botman.getMetrics then

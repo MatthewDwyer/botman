@@ -1,268 +1,216 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 
 function baseProtection(steam, posX, posY, posZ)
+	-- steam is the steam id of the player we are testing against base protection.
+
+	local k, v
+	local tmp = {}
+
 	calledFunction = "baseProtection"
 
 	if server.disableBaseProtection then
 		return
 	end
 
-	local k, v, testMode, dist, size, alert, cmd
-
-	testMode = false
+	tmp.testMode = false
 	players[steam].inABase = false
+	tmp.userID = players[steam].userID
+	tmp.isAdmin = isAdmin(steam, tmp.userID)
+	tmp.inVehicle = igplayers[steam].inVehicle
+
+	if igplayers[steam].protectTest then
+		tmp.testMode = true
+	end
 
 	-- check for and record any non-friend who gets within protectSize meters of a players /setbase coord
-	for k, v in pairs(players) do
+	for k, v in pairs(bases) do
+		tmp.dist = distancexz(posX, posZ, v.x, v.z)
+		tmp.size = tonumber(v.size)
 
-		if (math.abs(tonumber(v.homeX)) > 100 or math.abs(tonumber(v.homeZ)) > 100) then
-			dist = distancexz(posX, posZ, v.homeX, v.homeZ)
-			size = tonumber(v.protectSize)
+		-- is the player inside the base protection area?
+		if (tmp.dist < tmp.size) then
+			tmp.inBaseProtection = true
+			players[steam].inABase = true
+		else
+			tmp.inBaseProtection = false
+		end
 
-			if (dist < size) then
-				players[steam].inABase = true
-			end
-
-			if (v.steam == steam and v.protectPaused) then
-				if (dist > 100) then
-					v.protectPaused = nil
-					message("pm " .. steam .. " [" .. server.chatColour .. "]Your base protection has re-activated.[-]")
-				end
-			end
-
-			if igplayers[steam].protectTest ~= nil and v.steam == steam then
-				if igplayers[steam].protectTestEnd - os.time() < 0 then
-					igplayers[steam].protectTest = nil
-				else
-					testMode = true
-				end
-			end
-
-			if (v.steam ~= steam or testMode) and (v.protectSize ~= nil)  then
-				if isFriend(v.steam, steam) == false or testMode then
-					if (dist < size) then
-						if (accessLevel(steam) > 2) or botman.ignoreAdmins == false or testMode then
-
-							if (players[steam].watchPlayer == true) then
-								alert = false
-
-								if (players[steam].lastBaseRaid == nil) then
-									players[steam].lastBaseRaid = os.time()
-									alert = true
-									-- spam prevention
-									igplayers[steam].xPosLastAlert = 0
-									igplayers[steam].yPosLastAlert = 0
-									igplayers[steam].zPosLastAlert = 0
-								end
-
-								if (os.time() - tonumber(players[steam].lastBaseRaid) > 15) and ((posX ~= igplayers[steam].xPosLastAlert) or (posY ~= igplayers[steam].yPosLastAlert) or (posZ ~= igplayers[steam].zPosLastAlert)) then
-									alert = true
-								end
-
-								if (alert == true) then
-									-- spam prevention
-									igplayers[steam].xPosLastAlert = posX
-									igplayers[steam].yPosLastAlert = posY
-									igplayers[steam].zPosLastAlert = posZ
-
-									if (dist < 20) then
-										if not server.disableWatchAlerts then
-											alertAdmins("Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s base")
-										end
-
-										irc_chat(server.ircAlerts, server.gameDate .. " Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s base")
-									end
-
-									players[steam].lastBaseRaid = os.time()
-								end
-							end
-
-							igplayers[steam].raiding = true
-							igplayers[steam].raidingBase = k
-
-							-- do the base protection magic
-							if (v.protect and v.protectSize and v.protect == true and not v.protectPaused) and v.homeX ~= 0 and v.homeY ~= 0 and v.homeZ ~= 0 then
-								irc_chat(server.ircAlerts, "base protection triggered for base1 of " .. players[k].name .. " " .. k .. " against " .. players[steam].name .. " " .. steam)
-
-								if (igplayers[k] ~= nil) and not igplayers[k].currentLocationPVP then
-									message("pm " .. k .. " [" .. server.chatColour .. "]" .. igplayers[steam].name .. " has been bounced away from your base.[-]")
-								end
-
-								if not server.disableWatchAlerts then
-									alertAdmins(igplayers[steam].name .. " has been ejected from " .. v.name  .."'s 1st base.")
-								end
-
-								dist = distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.homeX, v.homeZ)
-
-								if dist > size then
-									message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to a protected player base. The base owner needs to add you to their friends list by typing " .. server.commandPrefix .. "friend " .. igplayers[steam].name .. "[-]")
-									cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK
-
-									teleport(cmd, steam)
-								else
-									cmd = "tele " .. steam .. " " .. v.exitX .. " -1 " .. v.exitZ
-
-									teleport(cmd, steam)
-									message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to a protected player base.  The base owner needs to add you to their friends list by typing " .. server.commandPrefix .. "friend " .. igplayers[steam].name .. "[-]")
-								end
-
-								return true
-							end
-						end
-					end
-				end
+		if (v.steam == steam and players[v.steam].protectPaused) then
+			if (tmp.dist > 100) then
+				players[v.steam].protectPaused = nil
+				message("pm " .. tmp.userID .. " [" .. server.chatColour .. "]Your base protection has re-activated.[-]")
 			end
 		end
 
+		-- ignore the player if they are in a vehicle
+		if not tmp.inVehicle then
+			tmp.baseNumber = v.baseNumber
+			tmp.baseName = v.title
+			tmp.isFriend = isFriend(v.steam, steam)
+			tmp.isBaseMember = isBaseMember(steam, v.steam, v.baseNumber)
+			tmp.baseMemberCount = countBaseMembers(v.steam, v.baseNumber)
+			tmp.baseOwner = v.steam
+			tmp.protectBase = false
+			tmp.alertBaseRaid = true
 
-		-- 2nd base for donors and admins
-		if (math.abs(tonumber(v.home2X)) > 100 or math.abs(tonumber(v.home2Z)) > 100) then
-			dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, v.home2X, v.home2Z)
-			size = tonumber(v.protect2Size)
-
-			if (dist < size) then
-				players[steam].inABase = true
+			if v.steam == steam then
+				tmp.isBaseOwner = true
+			else
+				tmp.isBaseOwner = false
 			end
 
-			if (v.steam == steam and v.protect2Paused) then
-				if (dist > 100) then
-					v.protect2Paused = nil
-					message("pm " .. steam .. " [" .. server.chatColour .. "]Protection on your 2nd base has re-activated.[-]")
-				end
+			-- flag to activate base protection if base protected and protection is not paused
+			if v.protect and not players[v.steam].protectPaused then
+				tmp.protectBase = true
 			end
 
-			if igplayers[steam].protectTest ~= nil and v.steam == steam then
-				if igplayers[steam].protectTestEnd - os.time() < 0 then
-					igplayers[steam].protectTest = nil
-				else
-					testMode = true
-				end
+			-- don't protect if player is an admin and the bot is ignoring admins
+			if tmp.protectBase and tmp.isAdmin and botman.ignoreAdmins then
+				tmp.protectBase = false
 			end
 
-			if (v.steam ~= steam or testMode) and (v.protect2Size ~= nil)  then
-				if isFriend(v.steam, steam) == false or testMode then
-					if (dist < size) then
-						if (accessLevel(steam) > 2) or botman.ignoreAdmins == false or testMode then
+			-- don't alert for base raiding if player is an admin and the bot is ignoring admins
+			if tmp.isAdmin and botman.ignoreAdmins then
+				tmp.alertBaseRaid = false
+			end
 
-							if (players[steam].watchPlayer == true) then
-								alert = false
+			-- don't boot friends unless testmode is active
+			if (tmp.isFriend or tmp.isBaseMember) and not v.keepOut and not tmp.testMode then
+				tmp.protectBase = false
+			end
 
-								if (players[steam].lastBaseRaid == nil) then
-									players[steam].lastBaseRaid = os.time()
-									alert = true
-									-- spam prevention
-									igplayers[steam].xPosLastAlert = 0
-									igplayers[steam].yPosLastAlert = 0
-									igplayers[steam].zPosLastAlert = 0
-								end
-
-								if (os.time() - tonumber(players[steam].lastBaseRaid) > 15) and ((posX ~= igplayers[steam].xPosLastAlert) or (posY ~= igplayers[steam].yPosLastAlert) or (posZ ~= igplayers[steam].zPosLastAlert)) then
-									alert = true
-								end
-
-								if (alert == true) then
-									-- spam prevention
-									igplayers[steam].xPosLastAlert = posX
-									igplayers[steam].yPosLastAlert = posY
-									igplayers[steam].zPosLastAlert = posZ
-
-									if (dist < 20) then
-										if not server.disableWatchAlerts then
-											alertAdmins("Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s 2nd base teleport.")
-										end
-
-										irc_chat(server.ircAlerts, server.gameDate .. " Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", dist) .. " meters from " .. v.name .. "'s 2nd base teleport")
-									end
-
-									players[steam].lastBaseRaid = os.time()
-								end
-							end
-
-							igplayers[steam].raiding = true
-							igplayers[steam].raidingBase = k
-
-							-- do the base protection magic
-
-							-- -- if base owner's donor status expired a week or more ago, disable protection
-							-- if (v.protect2 and v.protect2 == true) and v.home2X ~= 0 and v.home2Y ~= 0 and v.home2Z ~= 0 then
-								-- if os.time() - tonumber(players[k].donorExpiry) > (60 * 60 * 24 * 7) then
-									-- players[k].protect2 = false
-									-- if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 0 WHERE steam = " .. k) end
-								-- end
-							-- end
-
-							if (v.protect2 and v.protect2Size and v.protect2 == true and not v.protect2Paused) and v.home2X ~= 0 and v.home2Y ~= 0 and v.home2Z ~= 0 then
-								irc_chat(server.ircAlerts, "base protection triggered for base2 of " .. players[k].name .. " " .. k .. " against " .. players[steam].name .. " " .. steam)
-
-								if (igplayers[k] ~= nil) and not igplayers[k].currentLocationPVP then
-									message("pm " .. k .. " [" .. server.chatColour .. "]" .. igplayers[steam].name .. " has been ejected from your 2nd base.[-]")
-								end
-
-								if not server.disableWatchAlerts then
-									alertAdmins(igplayers[steam].name .. " has been ejected from " .. v.name  .."'s 2nd base.")
-								end
-
-								dist = distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.home2X, v.home2Z)
-
-								if dist > size then
-									message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to a protected player base.  The base owner needs to add you to their friends list by typing " .. server.commandPrefix .. "friend " .. igplayers[steam].name .. "[-]")
-									cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK
-
-									teleport(cmd, steam)
-								else
-									cmd = "tele " .. steam .. " " .. v.exit2X .. " -1 " .. v.exit2Z
-
-									teleport(cmd, steam)
-									message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to a protected player base.  The base owner needs to add you to their friends list by typing " .. server.commandPrefix .. "friend " .. igplayers[steam].name .. "[-]")
-								end
-
-								return true
-							end
-						end
+			-- don't activate protection if player is a member of the base
+			if v.keepOut and tmp.protectBase and not tmp.isBaseOwner then
+				if tmp.baseMemberCount > 0 then
+					if tmp.isBaseMember then
+						tmp.protectBase = false
 					end
 				end
 			end
-		end
 
+			-- catch-all so we don't boot out the base owner unless testMode is true
+			if (tmp.isBaseOwner and not tmp.testMode) and tmp.protectBase then
+				tmp.protectBase = false
+			end
+
+			if tmp.inBaseProtection and tmp.alertBaseRaid then
+				if (players[steam].watchPlayer == true) then
+					tmp.alert = false
+
+					if (players[steam].lastBaseRaid == nil) then
+						players[steam].lastBaseRaid = os.time()
+						tmp.alert = true
+						-- spam prevention
+						igplayers[steam].xPosLastAlert = 0
+						igplayers[steam].yPosLastAlert = 0
+						igplayers[steam].zPosLastAlert = 0
+					end
+
+					if (os.time() - tonumber(players[steam].lastBaseRaid) > 15) and ((posX ~= igplayers[steam].xPosLastAlert) or (posY ~= igplayers[steam].yPosLastAlert) or (posZ ~= igplayers[steam].zPosLastAlert)) then
+						tmp.alert = true
+					end
+
+					if tmp.alert then
+						-- spam prevention
+						igplayers[steam].xPosLastAlert = posX
+						igplayers[steam].yPosLastAlert = posY
+						igplayers[steam].zPosLastAlert = posZ
+
+						if (tmp.dist < 20) then
+							if v.title ~= "" then
+								tmp.msg = "Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", tmp.dist) .. " meters from " .. players[v.steam].name .. "'s base " .. v.baseNumber .. " called " .. v.title
+							else
+								tmp.msg = "Watched player " .. players[steam].id .. " " .. players[steam].name .. " is " .. string.format("%-8.2d", tmp.dist) .. " meters from " .. players[v.steam].name .. "'s base " .. v.baseNumber
+							end
+
+							if not server.disableWatchAlerts then
+								alertAdmins(tmp.msg)
+							end
+
+							irc_chat(server.ircAlerts, server.gameDate .. " " .. tmp.msg)
+						end
+
+						players[steam].lastBaseRaid = os.time()
+					end
+				end
+
+				igplayers[steam].raiding = true
+				igplayers[steam].raidingBase = k
+
+				-- do the base protection magic
+				if tmp.protectBase then
+					irc_chat(server.ircAlerts, "base protection triggered for base " .. v.baseNumber .. " of " .. players[v.steam].name .. " against " .. players[steam].name .. " " .. steam)
+
+					if (igplayers[v.steam]) and not igplayers[v.steam].currentLocationPVP then
+						message("pm " .. players[v.steam].userID .. " [" .. server.chatColour .. "]" .. igplayers[steam].name .. " has been bounced away from your base.[-]")
+					end
+
+					if not server.disableWatchAlerts then
+						alertAdmins(igplayers[steam].name .. " has been ejected from " .. players[v.steam].name  .."'s base # " .. v.baseNumber)
+					end
+
+					tmp.dist = distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.x, v.z)
+
+					if math.floor(tmp.dist) > tmp.size then
+						message("pm " .. tmp.userID .. " [" .. server.chatColour .. "]You are too close to a protected player base. The base owner needs to add you to their friends list.[-]")
+						tmp.cmd = "tele " .. tmp.userID .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK
+
+						teleport(tmp.cmd, steam, tmp.userID)
+					else
+						tmp.cmd = "tele " .. tmp.userID .. " " .. v.exitX .. " -1 " .. v.exitZ
+
+						teleport(tmp.cmd, steam, tmp.userID)
+						message("pm " .. tmp.userID .. " [" .. server.chatColour .. "]You are too close to a protected player base.  The base owner needs to add you to their friends list.[-]")
+					end
+
+					return true
+				end
+			end
+		end
 	end
 
 
 	-- location/village protection
-	if (accessLevel(steam) > 2) or botman.ignoreAdmins == false then --  or testMode
+	if (not tmp.isAdmin or not botman.ignoreAdmins or tmp.testMode) and not tmp.inVehicle then
 		for k, v in pairs(locations) do
-			if (v.protected and tonumber(v.x) ~= 0 and tonumber(v.y) ~= 0 and tonumber(v.z) ~= 0) then
-				if (not LookupVillager(steam, k) ) and steam ~= v.owner then
-					dist = distancexz(posX, posZ, v.x, v.z)
+			if v.protected then
+				if not LookupVillager(steam, k) and steam ~= v.owner then
+					tmp.dist = distancexz(posX, posZ, v.x, v.z)
+					tmp.size = tonumber(v.size)
 
-					if v.size == nil then
-						size = tonumber(server.baseSize)
-					else
-						size = tonumber(v.size)
-					end
-
-					if tonumber(dist) < tonumber(size) then
+					if tonumber(tmp.dist) < tonumber(tmp.size) then
 						igplayers[steam].raiding = true
-						dist = distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.x, v.z)
+						tmp.dist = distancexz(igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK, v.x, v.z)
 
-						-- do the base protection magic
-						if dist > size then
-							message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to " .. k .. ".[-]")
-							cmd = "tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK
-							igplayers[steam].lastTP = cmd
-							teleport(cmd, steam)
+						-- do the village protection magic
+						if tmp.dist > tmp.size then
+							if v.village then
+								message("pm " .. tmp.userID .. " [" .. server.chatColour .. "]You are too close to the protected village called " .. k .. ".[-]")
+							else
+								message("pm " .. tmp.userID .. " [" .. server.chatColour .. "]You are too close to the protected location called " .. k .. ".[-]")
+							end
+
+							tmp.cmd = "tele " .. tmp.userID .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK
+							igplayers[steam].lastTP = tmp.cmd
+							teleport(tmp.cmd, steam, tmp.userID)
 						else
-							cmd = "tele " .. steam .. " " .. v.exitX .. " -1 " .. v.exitZ
-							igplayers[steam].lastTP = cmd
-							teleport(cmd, steam)
-							message("pm " .. steam .. " [" .. server.chatColour .. "]You are too close to " .. k .. ".[-]")
+							tmp.cmd = "tele " .. tmp.userID .. " " .. v.exitX .. " -1 " .. v.exitZ
+							igplayers[steam].lastTP = tmp.cmd
+							teleport(tmp.cmd, steam, tmp.userID)
+
+							if v.village then
+								message("pm " .. tmp.userID .. " [" .. server.chatColour .. "]You are too close to the protected village called " .. k .. ".[-]")
+							else
+								message("pm " .. tmp.userID .. " [" .. server.chatColour .. "]You are too close to the protected location called " .. k .. ".[-]")
+							end
 						end
 
 						return true
@@ -271,5 +219,4 @@ function baseProtection(steam, posX, posY, posZ)
 			end
 		end
 	end
-
 end

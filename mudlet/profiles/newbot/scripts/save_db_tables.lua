@@ -1,17 +1,16 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
-			  https://botman.nz/latest_bot.zip
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 local sql
 
 function updateTable(table, key, condition)
-	local k,v,value,temp, tbl
+	local k, v, value, temp, tbl
 
 	-- update the db
 	sql = {}
@@ -34,14 +33,7 @@ end
 
 
 function updatePlayer(steam)
-	local k,v,value,temp
-
-	if tonumber(steam) == nil or (string.len(steam) < 17) then
-		if debug then dbug("skipping player " .. v.name .. " for invalid steam id") end
-
-		-- don't process if steam is invalid
-		return
-	end
+	local k, v, value, temp
 
 	-- update the db
 	sql = {}
@@ -78,14 +70,7 @@ end
 
 
 function updateArchivedPlayer(steam)
-	local k,v,value,temp
-
-	if tonumber(steam) == nil or (string.len(steam) < 17) then
-		if debug then dbug("skipping player " .. steam .. " for invalid steam id") end
-
-		-- don't process if steam is invalid
-		return
-	end
+	local k, v, value, temp
 
 	-- update the db
 	sql = {}
@@ -122,7 +107,7 @@ end
 
 
 function getServerFields()
-	local field
+	local field, cursor, errorString, row
 
 	--function inspect the server table and store field names and types
 	serverFields = {}
@@ -223,7 +208,7 @@ end
 
 
 function getPlayerFields()
-	local field
+	local field, cursor, errorString, row
 
 	--function inspect the player table and store field names and types
 	playerFields = {}
@@ -252,9 +237,10 @@ function getPlayerFields()
 end
 
 
-function savePlayer(steam, action)
+function savePlayer(steam)
 	-- DO NOT call this function directly.  Call updatePlayer instead.
 	local k, v, i, sqlString, sqlValues, status, errorString, max, cursor
+
 
 	if debugdb then
 		dbug("saving player " .. steam .. " " .. players[steam].name)
@@ -264,44 +250,10 @@ function savePlayer(steam, action)
 		getPlayerFields()
 	end
 
-	cursor,errorString = conn:execute("SELECT steam FROM players WHERE steam = " .. steam)
+	cursor,errorString = conn:execute("SELECT steam FROM players WHERE steam = '" .. steam .. "'")
 	rows = cursor:numrows()
 
 	if rows == 0 then
-		action = true
-	end
-
-	if action == nil then
-		sqlString = "update players set"
-
-		for k,v in pairs(playerFields) do
-			if sql[k] and sql[k].value and v.type ~= "tim" then
-				if v.type == "var" then
-					sql[k].value = "'" .. escape(sql[k].value) .. "'"
-				end
-
-				if v.type == "tin" then
-					if sql[k].value == true then sql[k].value = 1 end
-					if sql[k].value == false then sql[k].value = 0 end
-				end
-
-				if v.type == "tim" and sql[k].value ~= nil then
-					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"
-				end
-
-				 if v.type == "dat" and sql[k].value ~= nil then
-					if string.sub(sql[k].value, 1, 1) ~= "'" then
-						sql[k].value = "'" .. sql[k].value .. "'"
-					end
-				 end
-
-				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. "=" .. sql[k].value .. ","
-			end
-		end
-
-		sqlString = string.sub(sqlString, 1, string.len(sqlString) - 1)
-		sqlString = sqlString .. " where steam = '" .. steam .. "'"
-	else
 		sqlString = "insert into players ("
 		sqlValues = " values ("
 
@@ -334,6 +286,36 @@ function savePlayer(steam, action)
 		sqlString = string.sub(sqlString, 1, string.len(sqlString) - 1) .. ")"
 		sqlValues = string.sub(sqlValues, 1, string.len(sqlValues) - 1) .. ")"
 		sqlString = sqlString .. sqlValues
+	else
+		sqlString = "update players set"
+
+		for k,v in pairs(playerFields) do
+			if sql[k] and sql[k].value and v.type ~= "tim" then
+				if v.type == "var" then
+					sql[k].value = "'" .. escape(sql[k].value) .. "'"
+				end
+
+				if v.type == "tin" then
+					if sql[k].value == true then sql[k].value = 1 end
+					if sql[k].value == false then sql[k].value = 0 end
+				end
+
+				if v.type == "tim" and sql[k].value ~= nil then
+					sql[k].value = "'" .. os.date("%Y-%m-%d %H:%M:%S", sql[k].value) .. "'"
+				end
+
+				 if v.type == "dat" and sql[k].value ~= nil then
+					if string.sub(sql[k].value, 1, 1) ~= "'" then
+						sql[k].value = "'" .. sql[k].value .. "'"
+					end
+				 end
+
+				sqlString = sqlString .. " " .. string.lower(sql[k].field) .. "=" .. sql[k].value .. ","
+			end
+		end
+
+		sqlString = string.sub(sqlString, 1, string.len(sqlString) - 1)
+		sqlString = sqlString .. " where steam = '" .. steam .. "'"
 	end
 
 	if debugdb then
@@ -464,7 +446,7 @@ end
 
 
 function getTableFields(table)
-	local field, tbl
+	local field, tbl, cursor, errorString, row
 
 	--function inspect the table and store field names, types and default values
 	tbl = table .. "Fields"
@@ -510,7 +492,7 @@ function saveTable(table, condition)
 
 	-- sqlString = "UPDATE " .. table .. " SET"
 
-	-- max = table.maxn(fields)
+	-- max = tablelength(fields)
 	-- for i=1,max,1 do
 		-- fields[i] = string.lower(fields[i])
 

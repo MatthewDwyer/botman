@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 function unbanPlayer(line)
@@ -12,20 +12,17 @@ function unbanPlayer(line)
 		return
 	end
 
-	local temp, steam
+	local steam
 
-	--Executing command 'ban remove 76561197983251951'
-
-	temp = string.split(line, " ")
-	steam = string.sub(temp[8], 1, string.len(temp[8]) - 1)
+	steam = string.match(line, "(-?%d+)")
 	players[steam].hackerScore = 0
 	players[steam].timeout = false
 	players[steam].botTimeout = false
 	players[steam].freeze = false
 	players[steam].silentBob = false
 	players[steam].permanentBan = false
-	if botman.dbConnected then conn:execute("UPDATE players SET hackerScore=0,timeout=0,botTimeout=0,silentBob=0,permanentBan=0 WHERE steam = " .. steam) end
+	if botman.dbConnected then conn:execute("UPDATE players SET hackerScore=0,timeout=0,botTimeout=0,silentBob=0,permanentBan=0 WHERE steam = '" .. steam .. "'") end
 
 	-- also remove the steam owner from the bans table
-	if botman.dbConnected then conn:execute("DELETE FROM bans WHERE steam = " .. steam .. " or steam = " .. players[steam].steamOwner) end
+	if botman.dbConnected then conn:execute("DELETE FROM bans WHERE steam = '" .. steam .. "' or steam = '" .. players[steam].steamOwner .. "'") end
 end

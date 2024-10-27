@@ -1,18 +1,20 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 function oneHourTimer()
-	local k, v, status
+	local k, v, status, diff
 
 	if botman.botDisabled then
 		return
 	end
+
+	expireDonors()
 
 	if customHourlyTimer ~= nil then
 		-- read the note on overriding bot code in custom/custom_functions.lua
@@ -29,12 +31,14 @@ function oneHourTimer()
 	botman.webdavFolderWriteable = true
 
 	if botman.chatlogPath == nil then
-		botman.chatlogPath = webdavFolder
-		if botman.dbConnected then conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'") end
-	end
+		if not isDir(webdavFolder) then
+			botman.webdavFolderExists = false
+			botman.chatlogPath = homedir .. "/chatlogs"
+		else
+			botman.chatlogPath = webdavFolder
+		end
 
-	if not isDir(botman.chatlogPath) then
-		botman.webdavFolderExists = false
+		if botman.dbConnected then conn:execute("UPDATE server SET chatlogPath = '" .. escape(botman.chatlogPath) .. "'") end
 	end
 
 	-- nuke the error log .xsession-errors to prevent Mudlet filling up the harddrive with crap
@@ -55,12 +59,27 @@ function oneHourTimer()
 
 	-- Flag all players as offline so we don't have any showing as online who left without being updated
 	if tonumber(server.botID) > 0 then
-		if botman.dbBotsConnected then connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID) end
+		--if botman.dbBotsConnected then connBots:execute("UPDATE players set online = 0 WHERE botID = " .. server.botID) end
 	end
 
 	-- fix any problems with player records
 	for k,v in pairs(players) do
-		fixMissingPlayer(k)
+		if tonumber(v.groupExpiry) > 0 then
+			diff = os.difftime(v.groupExpiry, os.time())
+
+			if tonumber(diff) < 0 then
+				-- group membership has expired
+				v.groupID = v.groupExpiryFallbackGroup
+				v.groupExpiryFallbackGroup = 0
+				v.groupExpiry = 0
+			end
+		end
+
+		fixMissingPlayer(v.platform, k, v.steamOwner, v.userID)
+
+		if tonumber(diff) < 0 then
+			updatePlayer(k)
+		end
 	end
 
 	--sendCommand("llp parseable")

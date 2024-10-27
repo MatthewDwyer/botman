@@ -1,16 +1,18 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 function collectBan(line)
 	if botman.botDisabled then
 		return
 	end
+
+dbug(line)
 
 	local temp, reason, yr, mth, dy, hr, min, sec, tdate, steam, expiryDate, bannedTo
 
@@ -37,9 +39,9 @@ function collectBan(line)
 	reason = string.sub(line, string.find(line, "reason:") + 8)
 
 	if reason ~= nil then
-		if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",'" .. escape(reason) .. "',STR_TO_DATE('" .. expiryDate .. "', '%Y%m%d %H:%i:%s')") end
+		if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, reason, expiryDate) VALUES ('" .. bannedTo .. "','" .. steam .. "','" .. escape(reason) .. "',STR_TO_DATE('" .. expiryDate .. "', '%Y%m%d %H:%i:%s')") end
 	else
-		if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, expiryDate) VALUES ('" .. bannedTo .. "'," .. steam .. ",STR_TO_DATE('" .. expiryDate .. "', '%Y%m%d %H:%i:%s')") end
+		if botman.dbConnected then conn:execute("INSERT INTO bans (BannedTo, steam, expiryDate) VALUES ('" .. bannedTo .. "','" .. steam .. "',STR_TO_DATE('" .. expiryDate .. "', '%Y%m%d %H:%i:%s')") end
 	end
 
 	if botman.botsConnected then

@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 function airDropAlert(line)
@@ -35,10 +35,10 @@ function airDropAlert(line)
 
 			r = randSQL(100)
 			if r > 90 then
-				message("pm " .. k .. " " ..  " [" .. server.chatColour .. "]Ze plane! Ze plane![-]")
+				message("pm " .. v.userID .. " " ..  " [" .. server.chatColour .. "]Ze plane! Ze plane![-]")
 			end
 
-			message("pm " .. k .. " " ..  " [" .. server.chatColour .. "]Supplies have been dropped " .. math.floor(dist) .. " meters to the " .. direction .."![-]")
+			message("pm " .. v.userID .. " " ..  " [" .. server.chatColour .. "]Supplies have been dropped " .. math.floor(dist) .. " meters to the " .. direction .."![-]")
 		end
 	end
 end

@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 -- a17 items done
@@ -92,35 +92,29 @@ function setupArenaPlayers(pid)
 			arenaPlayers[k] = {}
 			arenaPlayers[k].id = v.id
 			arenaPlayers[k].steam = k
+			arenaPlayers[k].userID = v.userID
 
 			-- give arena players stuff
-			if not server.botman and not server.stompy then
-				sendCommand("give " .. k .. " medicalFirstAidBandage 1")
-				sendCommand("give " .. k .. " medicalSplint 1")
-				sendCommand("give " .. k .. " drinkJarBeer 1")
-				sendCommand("give " .. k .. " trapSpikesNew 3")
-			end
-
-			if server.stompy and not server.botman then
-				sendCommand("bc-give " .. k .. " medicalFirstAidBandage /c=1 /silent")
-				sendCommand("bc-give " .. k .. " medicalSplint /c=1 /silent")
-				sendCommand("bc-give " .. k .. " drinkJarBeer /c=1 /silent")
-				sendCommand("bc-give " .. k .. " trapSpikesNew /c=3 /silent")
+			if not server.botman then
+				sendCommand("give " .. v.userID .. " medicalFirstAidBandage 1")
+				sendCommand("give " .. v.userID .. " medicalSplint 1")
+				sendCommand("give " .. v.userID .. " drinkJarBeer 1")
+				sendCommand("give " .. v.userID .. " trapSpikesNew 3")
 			end
 
 			if server.botman then
-				sendCommand("bm-give " .. k .. " medicalFirstAidBandage 1")
-				sendCommand("bm-give " .. k .. " medicalSplint 1")
-				sendCommand("bm-give " .. k .. " drinkJarBeer 1")
-				sendCommand("bm-give " .. k .. " trapSpikesNew 3")
+				sendCommand("bm-give " .. v.userID .. " medicalFirstAidBandage 1")
+				sendCommand("bm-give " .. v.userID .. " medicalSplint 1")
+				sendCommand("bm-give " .. v.userID .. " drinkJarBeer 1")
+				sendCommand("bm-give " .. v.userID .. " trapSpikesNew 3")
 			end
 
-			message("pm " .. k .. " [" .. server.chatColour .. "]You have 10 seconds to prepare for battle![-]")
+			message("pm " .. v.userID .. " [" .. server.chatColour .. "]You have 10 seconds to prepare for battle![-]")
 		end
 	end
 
 	if (botman.arenaCount == 0) then
-		message("pm " .. pid .. " [" .. server.chatColour .. "]Nobody is in the arena and you can't play from the spectator area.  Get in the arena coward.[-]")
+		message("pm " .. igplayers[pid].userID .. " [" .. server.chatColour .. "]Nobody is in the arena and you can't play from the spectator area.  Get in the arena coward.[-]")
 		botman.gimmeHell = 0
 	end
 end
@@ -135,7 +129,8 @@ function announceGimmeHell(wave, delay)
 		cmd = "Here comes round " .. wave .. "!"
 	end
 
-	conn:execute("INSERT into playerQueue (command, arena, steam, delayTimer) VALUES ('" .. escape(cmd) .. "', true, " .. 0 .. ",'" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + delay) .. "')")
+	connSQL:execute("INSERT INTO playerQueue (command, arena, steam, delayTimer) VALUES ('" .. connMEM:escape(cmd) .. "', 1,'0'," .. os.time() + delay .. ")")
+	botman.playerQueueEmpty = false
 end
 
 
@@ -144,12 +139,12 @@ function resetGimmeArena()
 
 	botman.gimmeHell = 0
 	arenaPlayers = {}
-	conn:execute("TRUNCATE playerQueue")
+	connSQL:execute("DELETE FROM playerQueue")
 	arena = LookupLocation("arena")
 
 	for k, v in pairs(igplayers) do
 		if (distancexyz(v.xPos, v.yPos, v.zPos, locations[arena].x, locations[arena].y, locations[arena].z) < tonumber(locations[arena].size) + 20) then
-			message("pm " .. k .. " [" .. server.chatColour .. "]The Gimme Arena is ready to play![-]")
+			message("pm " .. v.userID .. " [" .. server.chatColour .. "]The Gimme Arena is ready to play![-]")
 		end
 	end
 
@@ -192,9 +187,10 @@ function queueGimmeHell(wave, level, silent)
 		if tonumber(zed) > 0 then
 			p = pickRandomArenaPlayer()
 
-			if tonumber(p) > 0 then
+			if p > "0" then
 				cmd = "se " .. arenaPlayers[p].id .. " " .. zed
-				conn:execute("INSERT into playerQueue (command, arena, steam, boss) VALUES ('" .. cmd .. "', true, " .. p .. "," .. boss .. ")")
+				connSQL:execute("INSERT INTO playerQueue (command, arena, steam, boss) VALUES ('" .. cmd .. "', 1,'" .. p .. "'," .. boss .. ")")
+				botman.playerQueueEmpty = false
 			end
 		end
 	end
@@ -221,10 +217,13 @@ function gimme(pid, testGimme)
 		dbug("gimme pid " .. pid)
 	end
 
-	local cmd, maxGimmies, dist, r, rows, row, prize, category, entity, entityID, description, quality
+	local cmd, dist, r, rows, row, prize, category, entity, entityID, description, quality
 	local pname = players[pid].name
 	local playerid = igplayers[pid].id
 	local zombies = tonumber(igplayers[pid].zombies)
+	local steam, steamOwner, userID
+
+	steam, steamOwner, userID = LookupPlayer(pid)
 
 	if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
@@ -232,7 +231,7 @@ function gimme(pid, testGimme)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]Oh No! Gimme is empty![-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]Oh No! Gimme is empty![-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]Oh No! Gimme is empty![-]")
 		end
 
 		-- the gimmeZombies table is empty so run se to fill it.
@@ -249,11 +248,7 @@ function gimme(pid, testGimme)
 
 	botman.faultyGimme = true
 
-	if isDonor(pid) then
-		maxGimmies = 16
-	else
-		maxGimmies = 11
-	end
+	maxGimmies = LookupSettingValue(pid, "maxGimmies")
 
 	if players[pid].gimmeCount == nil then
 		players[pid].gimmeCount = 0
@@ -262,14 +257,14 @@ function gimme(pid, testGimme)
 	if tonumber(players[pid].gimmeCount) < tonumber(maxGimmies) then
 		players[pid].gimmeCount = players[pid].gimmeCount + 1
 	else
-		message("pm " .. pid .. " [" .. server.chatColour .. "]You are out of gimmies.  You have to wait until the next gimme reset.[-]")
+		message("pm " .. userID .. " [" .. server.chatColour .. "]You are out of gimmies.  You have to wait until the next gimme reset.[-]")
 		botman.faultyGimme = false
 		return
 	end
 
 	if testGimme ~= nil then
 		r = tonumber(testGimme)
-		message("pm " .. pid .. " [" .. server.chatColour .. "]Testing gimme prize " .. testGimme .. "[-]")
+		message("pm " .. userID .. " [" .. server.chatColour .. "]Testing gimme prize " .. testGimme .. "[-]")
 	else
 		if server.gimmeZombies then
 			r = math.random(1, botman.maxGimmeZombies + 30)
@@ -280,7 +275,7 @@ function gimme(pid, testGimme)
 				if (not server.gimmePeace) then
 					message("say [" .. server.chatColour .. "]" .. pname .. " almost won a prize![-]")
 				else
-					message("pm " .. pid .. " [" .. server.chatColour .. "]You almost won a prize![-]")
+					message("pm " .. userID .. " [" .. server.chatColour .. "]You almost won a prize![-]")
 				end
 
 				botman.faultyGimme = false
@@ -295,7 +290,7 @@ function gimme(pid, testGimme)
 				if (not server.gimmePeace) then
 					message("say [" .. server.chatColour .. "]" .. pname .. " nearly won a cool prize![-]")
 				else
-					message("pm " .. pid .. " [" .. server.chatColour .. "]You nearly won a cool prize![-]")
+					message("pm " .. userID .. " [" .. server.chatColour .. "]You nearly won a cool prize![-]")
 				end
 
 				botman.faultyGimme = false
@@ -306,7 +301,7 @@ function gimme(pid, testGimme)
 				if (not server.gimmePeace) then
 					message("say [" .. server.chatColour .. "]Surprise! " .. pname .. " didn't win anything.[-]")
 				else
-					message("pm " .. pid .. " [" .. server.chatColour .. "]Surprise! You didn't win anything.[-]")
+					message("pm " .. userID .. " [" .. server.chatColour .. "]Surprise! You didn't win anything.[-]")
 				end
 
 				botman.faultyGimme = false
@@ -326,7 +321,7 @@ function gimme(pid, testGimme)
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " almost won a prize![-]")
 			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]You almost won a prize![-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]You almost won a prize![-]")
 			end
 
 			botman.faultyGimme = false
@@ -336,7 +331,7 @@ function gimme(pid, testGimme)
 				if (not server.gimmePeace) then
 					message("say [" .. server.chatColour .. "]" .. pname .. " almost won a prize![-]")
 				else
-					message("pm " .. pid .. " [" .. server.chatColour .. "]You almost won a prize![-]")
+					message("pm " .. userID .. " [" .. server.chatColour .. "]You almost won a prize![-]")
 				end
 
 				botman.faultyGimme = false
@@ -356,7 +351,7 @@ function gimme(pid, testGimme)
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " won a party but nobody came.[-]")
 			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]You won a party but nobody came.[-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]You won a party but nobody came.[-]")
 			end
 
 			botman.faultyGimme = false
@@ -545,7 +540,7 @@ function gimme(pid, testGimme)
 		end
 
 		r = randSQL(botman.maxGimmePrizes)
-		cursor,errorString = conn:execute("select * from gimmePrizes limit " .. r - 1 .. ",1")
+		cursor,errorString = conn:execute("SELECT * FROM gimmePrizes LIMIT " .. r - 1 .. ",1")
 		row = cursor:fetch({}, "a")
 
 		qty = randSQL(tonumber(row.prizeLimit))
@@ -759,29 +754,21 @@ function gimme(pid, testGimme)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " won " .. description .. "[-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]You won " .. description .. "[-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]You won " .. description .. "[-]")
 		end
 
 		cmd = ""
 		if qual ~= 0 then
-			cmd = "give " .. pid .. " " .. prize .. " " .. qty .. " " .. quality
-
-			if server.stompy then
-				cmd = "bc-give " .. pid .. " " .. prize .. " /c=" .. qty .. " /q=" .. quality .. " /silent"
-			end
+			cmd = "give " .. userID .. " " .. prize .. " " .. qty .. " " .. quality
 
 			if server.botman then
-				cmd = "bm-give " .. pid .. " " .. prize .. " " .. qty .. " " .. quality
+				cmd = "bm-give " .. userID .. " " .. prize .. " " .. qty .. " " .. quality
 			end
 		else
-			cmd = "give " .. pid .. " " .. prize .. " " .. qty
-
-			if server.stompy then
-				cmd = "bc-give " .. pid .. " " .. prize .. " /c=" .. qty .. " /silent"
-			end
+			cmd = "give " .. userID .. " " .. prize .. " " .. qty
 
 			if server.botman then
-				cmd = "bm-give " .. pid .. " " .. prize .. " " .. qty
+				cmd = "bm-give " .. userID .. " " .. prize .. " " .. qty
 			end
 		end
 
@@ -797,7 +784,7 @@ function gimme(pid, testGimme)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " almost won a prize![-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]You almost won a prize![-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]You almost won a prize![-]")
 		end
 
 		botman.faultyGimme = false
@@ -819,18 +806,19 @@ function gimme(pid, testGimme)
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " won " .. spawnCount .. " BUNNIES![-]")
 			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]You won " .. spawnCount .. " BUNNIES![-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]You won " .. spawnCount .. " BUNNIES![-]")
 			end
 
 			for i = 1, spawnCount do
 				cmd = "se " .. playerid .. " " .. tmp.entityid
-				connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+				connMEM:execute("INSERT INTO gimmeQueue (command, steam) VALUES ('" .. cmd .. "', '" .. pid .. "')")
+				botman.gimmeQueueEmpty = false
 			end
 		else
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
 			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
 			end
 		end
 
@@ -846,7 +834,7 @@ function gimme(pid, testGimme)
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " almost won an epic prize![-]")
 			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]You almost won an epic prize![-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]You almost won an epic prize![-]")
 			end
 
 			botman.faultyGimme = false
@@ -856,7 +844,7 @@ function gimme(pid, testGimme)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " won epic litter![-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]You won epic litter![-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]You won epic litter![-]")
 		end
 
 		t = os.time()
@@ -872,8 +860,9 @@ function gimme(pid, testGimme)
 			if (r == 6) then litter = "resourceBulletCasing" end
 			if (r == 7) then litter = "drinkJarEmpty" end
 
-			cmd = "give " .. pid .. " " .. litter .. " 1"
-			connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+			cmd = "give " .. userID .. " " .. litter .. " 1"
+			connMEM:execute("INSERT INTO gimmeQueue (command, steam) VALUES ('" .. cmd .. "', '" .. pid .. "')")
+			botman.gimmeQueueEmpty = false
 		end
 
 		botman.faultyGimme = false
@@ -900,14 +889,10 @@ function gimme(pid, testGimme)
 
 		for k, v in pairs(igplayers) do
 			if (k ~= pid) then
-				cmd = "give " .. k .. " " .. prize .. " 1"
-
-				if server.stompy then
-					cmd = "bc-give " .. k .. " " .. prize .. " /c=1 /silent"
-				end
+				cmd = "give " .. v.userID .. " " .. prize .. " 1"
 
 				if server.botman then
-					cmd = "bm-give " .. k .. " " .. prize .. " 1"
+					cmd = "bm-give " .. v.userID .. " " .. prize .. " 1"
 				end
 
 				sendCommand(cmd)
@@ -947,8 +932,8 @@ function gimme(pid, testGimme)
 				message("say [" .. server.chatColour .. "]" .. pname .. " Ruh Roh! Gimmies short circuited!  You win..[-]")
 				cmd = "say Every panels lit up! They're coming out of the walls! RUN !![-]"
 			else
-				message("pm [" .. server.chatColour .. "]" .. playerid .. " Ruh Roh! Gimmies short circuited!  You win..[-]")
-				cmd = "pm " .. playerid .. " [" .. server.chatColour .. "]Every panels lit up! They're coming out of the walls! RUN !![-]"
+				message("pm [" .. server.chatColour .. "]" .. userID .. " Ruh Roh! Gimmies short circuited!  You win..[-]")
+				cmd = "pm " .. userID .. " [" .. server.chatColour .. "]Every panels lit up! They're coming out of the walls! RUN !![-]"
 			end
 
 			tempTimer( 1, [[message("]].. cmd .. [[")]] )
@@ -958,7 +943,8 @@ function gimme(pid, testGimme)
 
 				if gimmeZombies[z] then
 					cmd = "se " .. playerid .. " " .. gimmeZombies[z].entityID
-					connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+					connMEM:execute("INSERT INTO gimmeQueue (command, steam) VALUES ('" .. cmd .. "', '" .. pid .. "')")
+					botman.gimmeQueueEmpty = false
 				end
 			end
 
@@ -971,7 +957,7 @@ function gimme(pid, testGimme)
 			cmd = "say [" .. server.chatColour .. "]" .. cmd .. "[-]"
 			tempTimer( 2, [[message("]].. cmd .. [[")]] )
 		else
-			cmd = "pm " .. pid .. " [" .. server.chatColour .. "]" .. cmd .. "[-]"
+			cmd = "pm " .. userID .. " [" .. server.chatColour .. "]" .. cmd .. "[-]"
 			tempTimer( 2, [[message("]].. cmd .. [[")]] )
 		end
 
@@ -993,16 +979,17 @@ function gimme(pid, testGimme)
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]HAPPY BIRTHDAY " .. pname .. "!  We got you a puppy![-]")
 			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]HAPPY BIRTHDAY " .. pname .. "! We got you a puppy![-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]HAPPY BIRTHDAY " .. pname .. "! We got you a puppy![-]")
 			end
 
 			cmd = "se " .. playerid .. " " .. tmp.entityid
-			connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+			connMEM:execute("INSERT INTO gimmeQueue (command, steam) VALUES ('" .. cmd .. "', '" .. pid .. "')")
+			botman.gimmeQueueEmpty = false
 		else
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
 			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
 			end
 		end
 
@@ -1024,16 +1011,17 @@ function gimme(pid, testGimme)
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]You won a HUGE STEAK!!! " .. pname .. "!  But this guy ate it :(  Deal with him![-]")
 			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]You won a HUGE STEAK!!! " .. pname .. "!  But this guy ate it :(  Deal with him![-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]You won a HUGE STEAK!!! " .. pname .. "!  But this guy ate it :(  Deal with him![-]")
 			end
 
 			cmd = "se " .. playerid .. " " .. tmp.entityid
-			connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+			connMEM:execute("INSERT INTO gimmeQueue (command, steam) VALUES ('" .. cmd .. "', '" .. pid .. "')")
+			botman.gimmeQueueEmpty = false
 		else
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
 			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
 			end
 		end
 
@@ -1047,7 +1035,7 @@ function gimme(pid, testGimme)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " won invisiblity!  Press Alt-F4 to claim your prize!!![-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]You won invisiblity!  Press Alt-F4 to claim your prize!!![-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]You won invisiblity!  Press Alt-F4 to claim your prize!!![-]")
 		end
 
 		botman.faultyGimme = false
@@ -1061,12 +1049,13 @@ function gimme(pid, testGimme)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " ate a bad potato and is shitting potatoes everywhere![-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]" .. pname .. " ate a bad potato and is shitting potatoes everywhere![-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]" .. pname .. " ate a bad potato and is shitting potatoes everywhere![-]")
 		end
 
 		for i = 1, spawnCount do
-			cmd = "give " .. pid .. " foodBakedPotato 1"
-			connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+			cmd = "give " .. userID .. " foodBakedPotato 1"
+			connMEM:execute("INSERT INTO gimmeQueue (command, steam) VALUES ('" .. cmd .. "', '" .. pid .. "')")
+			botman.gimmeQueueEmpty = false
 		end
 
 		botman.faultyGimme = false
@@ -1079,11 +1068,12 @@ function gimme(pid, testGimme)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " voted first place WINNER! Here's your trophy.[-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]" .. pname .. " voted first place WINNER! Here's your trophy.[-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]" .. pname .. " voted first place WINNER! Here's your trophy.[-]")
 		end
 
-		cmd = "give " .. pid .. " resourceTrophy1 1"
-		connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+		cmd = "give " .. userID .. " resourceTrophy1 1"
+		connMEM:execute("INSERT INTO gimmeQueue (command, steam) VALUES ('" .. cmd .. "', '" .. pid .. "')")
+		botman.gimmeQueueEmpty = false
 
 		botman.faultyGimme = false
 		return
@@ -1095,7 +1085,7 @@ function gimme(pid, testGimme)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " won a care package via air drop.  Gee I hope the pilot knows where the drop zone is![-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]" .. pname .. " won a care package via air drop.  Gee I hope the pilot knows where the drop zone is![-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]" .. pname .. " won a care package via air drop.  Gee I hope the pilot knows where the drop zone is![-]")
 		end
 
 		sendCommand("spawnairdrop")
@@ -1107,12 +1097,12 @@ function gimme(pid, testGimme)
 
 	if (r == botman.maxGimmeZombies + 13) then
 		players[pid].baseCooldown = 0
-		conn:execute("UPDATE players SET baseCooldown = 0 WHERE steam = " .. pid)
+		conn:execute("UPDATE players SET baseCooldown = 0 WHERE steam = '" .. pid .. "'")
 
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " won a get out of Dodge free card!  Their base cooldown has been reset.[-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]" .. pname .. " won a get out of Dodge free card!  Your base cooldown has been reset.[-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]" .. pname .. " won a get out of Dodge free card!  Your base cooldown has been reset.[-]")
 		end
 
 		botman.faultyGimme = false
@@ -1158,7 +1148,7 @@ function gimme(pid, testGimme)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]You lose!  Try again " .. pname .. "[-]")
 		end
 
 		botman.faultyGimme = false
@@ -1171,7 +1161,7 @@ function gimme(pid, testGimme)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]Something sticky is blocking the Gimme chute.[-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]Something sticky is blocking the Gimme chute.[-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]Something sticky is blocking the Gimme chute.[-]")
 		end
 
 		botman.faultyGimme = false
@@ -1184,7 +1174,7 @@ function gimme(pid, testGimme)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " did not win a prize.[-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]You did not win a prize.[-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]You did not win a prize.[-]")
 		end
 
 		botman.faultyGimme = false
@@ -1197,7 +1187,7 @@ function gimme(pid, testGimme)
 		if (not server.gimmePeace) then
 			message("say [" .. server.chatColour .. "]" .. pname .. " won " .. description .. entity .. "[-]")
 		else
-			message("pm " .. pid .. " [" .. server.chatColour .. "]You have won " .. description .. entity .. "[-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]You have won " .. description .. entity .. "[-]")
 		end
 	else
 		if (zombies > 2499) then
@@ -1226,13 +1216,13 @@ function gimme(pid, testGimme)
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. descr .. "[-]")
 			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]" .. pname .. descr .. "[-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]" .. pname .. descr .. "[-]")
 			end
 		else
 			if (not server.gimmePeace) then
 				message("say [" .. server.chatColour .. "]" .. pname .. " won " .. spawnCount .. " " .. description .. entity .."s![-]")
 			else
-				message("pm " .. pid .. " [" .. server.chatColour .. "]You have won " .. spawnCount .. " " .. description .. entity .."s![-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]You have won " .. spawnCount .. " " .. description .. entity .."s![-]")
 			end
 		end
 	end
@@ -1248,7 +1238,7 @@ if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 				if (not server.gimmePeace) then
 					message("say [" .. server.alertColour .. "][ERROR][-][" .. server.chatColour .. "] Gimme prize stuck in chute! [-][" .. server.alertColour .. "][ERROR][-]")
 				else
-					message("pm " .. pid .. " [" .. server.alertColour .. "][ERROR][-][" .. server.chatColour .. "] Gimme prize stuck in chute! [-][" .. server.alertColour .. "][ERROR][-]")
+					message("pm " .. userID .. " [" .. server.alertColour .. "][ERROR][-][" .. server.chatColour .. "] Gimme prize stuck in chute! [-][" .. server.alertColour .. "][ERROR][-]")
 				end
 
 				botman.faultyGimme = false
@@ -1261,13 +1251,15 @@ if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 		if gimmeZombies[r] then
 			cmd = "se " .. playerid .. " " .. gimmeZombies[r].entityID
-			connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+			connMEM:execute("INSERT INTO gimmeQueue (command, steam) VALUES ('" .. cmd .. "', '" .. pid .. "')")
+			botman.gimmeQueueEmpty = false
 		end
 	else
 		if (zombies > 2499) then
 			for i = 1, spawnCount do
 				cmd = "se " .. playerid .. " " .. PicknMix()
-				connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+				connMEM:execute("INSERT INTO gimmeQueue (command, steam) VALUES ('" .. cmd .. "', '" .. pid .. "')")
+				botman.gimmeQueueEmpty = false
 			end
 		else
 			for i = 1, spawnCount do
@@ -1275,7 +1267,8 @@ if (debug) then dbug("debug gimme line " .. debugger.getinfo(1).currentline) end
 
 				if gimmeZombies[r] then
 					cmd = "se " .. playerid .. " " .. gimmeZombies[r].entityID
-					connMEM:execute("INSERT into gimmeQueue (command, steam) VALUES ('" .. cmd .. "', " .. pid .. ")")
+					connMEM:execute("INSERT INTO gimmeQueue (command, steam) VALUES ('" .. cmd .. "', '" .. pid .. "')")
+					botman.gimmeQueueEmpty = false
 				end
 			end
 		end

@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 
@@ -15,14 +15,14 @@ function forgetLastTP(steam)
 end
 
 
-function prepareTeleport(steam, cmd)
+function prepareTeleport(steam, userID, cmd)
 	if igplayers[steam] then
 		igplayers[steam].lastTP = cmd
 		igplayers[steam].tp = 1
 		igplayers[steam].hackerTPScore = 0
 
 		-- record the player's current x y z
-		if tonumber(players[steam].accessLevel) < 3 or (string.lower(players[steam].inLocation) ~= "prison") then
+		if isAdminHidden(steam, userID) or (string.lower(players[steam].inLocation) ~= "prison") then
 			players[steam].xPosOld = players[steam].xPos
 			players[steam].yPosOld = players[steam].yPos
 			players[steam].zPosOld = players[steam].zPos
@@ -33,17 +33,39 @@ function prepareTeleport(steam, cmd)
 end
 
 
-function teleport(cmd, steam, justTeleport)
-	local coords, delay, dist
+function teleport(cmd, steam, userID, justTeleport)
+	local coords, delay, dist, temp, i, max, num, newCmd, searchStr
 	dist = nil
 
-	prepareTeleport(steam, cmd)
+	prepareTeleport(steam, userID, cmd)
+
+	temp = string.split(cmd, " ")
+	newCmd = ""
+	searchStr = userID
+
+
+	max = tablelength(temp)
+	for i=1,max,1 do
+		num = tonumber(temp[i])
+		if num ~= nil then
+			if string.len(temp[i]) == 17 then
+				-- this is a steam id that is missing Steam_ so we will add that and rebuild the command
+				temp[i] = "Steam_" .. temp[i]
+				searchStr = temp[i]
+			end
+		end
+
+		newCmd = newCmd .. " " .. temp[i]
+	end
+
+	newCmd = string.trim(newCmd)
+	cmd = newCmd
 
 	-- disable some stuff because we are teleporting
 	igplayers[steam].location = nil
 	igplayers[steam].lastTP = cmd
 
-	coords = string.sub(cmd, 24)
+	coords = string.sub(cmd, string.find(cmd, searchStr) + string.len(searchStr) + 1)
 	coords = string.split(coords, " ")
 
 	-- make sure all 3 coords are integers
@@ -66,20 +88,18 @@ function teleport(cmd, steam, justTeleport)
 	igplayers[steam].hackerTPScore = 0
 	igplayers[steam].spawnPending = true
 	igplayers[steam].lastTPTimestamp = os.time()
+
 	sendCommand(cmd)
+
 	igplayers[steam].tp = 1
 	igplayers[steam].hackerTPScore = 0
 
 	if not justTeleport then
-		if tonumber(server.returnCooldown) > 0 and accessLevel(steam) > 2 then
-			if isDonor(steam) then
-				delay = os.time() + math.floor(server.returnCooldown / 2)
-			else
-				delay = os.time() + server.returnCooldown
-			end
+		delay = LookupSettingValue(steam, "returnCooldown")
 
+		if tonumber(delay) > 0 and not isAdmin(steam) then
 			players[steam].returnCooldown = delay
-			if botman.dbConnected then conn:execute("UPDATE players SET returnCooldown = " .. delay .. " WHERE steam = " .. steam) end
+			if botman.dbConnected then conn:execute("UPDATE players SET returnCooldown = " .. delay .. " WHERE steam = '" .. steam .. "'") end
 		end
 	end
 
@@ -87,8 +107,8 @@ function teleport(cmd, steam, justTeleport)
 end
 
 
-function randomTP(playerid, location, forced)
-	local r, rows, row, rowCount, cmd, cursor, errorString
+function randomTP(playerid, userID, location, forced)
+	local r, rows, row, rowCount, cmd, cursor, errorString, delay
 
 	if not locations[location] then
 		-- Lua is case sensitive and location didn't match any keys so do a lookup on it (not case sensitive) and return the correct cased key name
@@ -96,44 +116,47 @@ function randomTP(playerid, location, forced)
 	end
 
 	if botman.dbConnected then
-		cursor,errorString = conn:execute("select * from locationSpawns where location='" .. location .. "'")
-		rows = tonumber(cursor:numrows())
+		cursor,errorString = connSQL:execute("select count(*) from locationSpawns where location='" .. connMEM:escape(location) .. "'")
+		row = cursor:fetch({}, "a")
+		rowCount = row["count(*)"]
 
-		if rows == 0 then
-			cmd = "tele " .. playerid .. " " .. locations[location].x .. " " .. locations[location].y .. " " .. locations[location].z
+		delay = LookupSettingValue(playerid, "playerTeleportDelay")
 
-			if tonumber(server.playerTeleportDelay) == 0 or forced or tonumber(players[playerid].accessLevel) < 2 then
-				teleport(cmd, playerid)
+		if rowCount == 0 then
+			cmd = "tele " .. userID .. " " .. locations[location].x .. " " .. locations[location].y .. " " .. locations[location].z
+
+			if tonumber(delay) == 0 or forced or isAdmin(playerid) then
+				teleport(cmd, playerid, userID)
 			else
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
-				conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. delay .. " seconds.[-]")
+				connSQL:execute("insert into persistentQueue (steam, command, timerDelay) values ('" .. playerid .. "','" .. connMEM:escape(cmd) .. "','" .. os.time() + delay .. "')")
+				botman.persistentQueueEmpty = false
 			end
 
 			return
 		else
-			rowCount = 1
-			r = rand(rows)
-
-			cursor,errorString = conn:execute("select * from locationSpawns where location='" .. location .. "' limit " .. r - 1 .. ",1")
+			r = randSQL(rowCount)
+			cursor,errorString = connSQL:execute("select * from locationSpawns where location='" .. connMEM:escape(location) .. "' limit " .. r - 1 .. ",1")
 			row = cursor:fetch({}, "a")
-			cmd = "tele " .. playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z
+			cmd = "tele " .. userID .. " " .. row.x .. " " .. row.y .. " " .. row.z
 
 			-- handle new player's being moved to lobby or spawn on first arrival.
 			if (string.lower(location) == "lobby" or string.lower(location) == "spawn") and players[playerid].location ~= "" then
-				teleport(cmd, playerid)
+				teleport(cmd, playerid, userID)
 			else
-				if tonumber(server.playerTeleportDelay) == 0 or forced or tonumber(players[playerid].accessLevel) < 2 then
-					teleport(cmd, playerid)
+				if tonumber(delay) == 0 or forced or isAdmin(playerid)  then
+					teleport(cmd, playerid, userID)
 				else
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. server.playerTeleportDelay .. " seconds.[-]")
-					conn:execute("insert into persistentQueue (steam, command, timerDelay) values (" .. playerid .. ",'" .. escape(cmd) .. "','" .. os.date("%Y-%m-%d %H:%M:%S", os.time() + server.playerTeleportDelay) .. "')")
+					message("pm " .. userID .. " [" .. server.chatColour .. "]You will be teleported to " .. location .. " in " .. delay .. " seconds.[-]")
+					connSQL:execute("insert into persistentQueue (steam, command, timerDelay) values ('" .. playerid .. "','" .. connMEM:escape(cmd) .. "','" .. os.time() + delay .. "')")
+					botman.persistentQueueEmpty = false
 					igplayers[playerid].lastTPTimestamp = os.time()
 				end
 			end
 		end
 	else
-		cmd = "tele " .. playerid .. " " .. locations[location].x .. " " .. locations[location].y .. " " .. locations[location].z
-		teleport(cmd, playerid)
+		cmd = "tele " .. userID .. " " .. locations[location].x .. " " .. locations[location].y .. " " .. locations[location].z
+		teleport(cmd, playerid, userID)
 
 		return
 	end

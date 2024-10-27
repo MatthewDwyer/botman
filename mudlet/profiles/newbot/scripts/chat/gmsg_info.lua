@@ -1,23 +1,23 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
-local debug, xdir, zdir, dist, x, z, diff, days, hours, minutes, result, time, werds, word, cmd, direction, help, tmp
-local shortHelp = false
-local skipHelp = false
-
--- enable debug to see where the code is stopping. Any error will be after the last debug line.
-debug = false -- should be false unless testing
-
 function gmsg_info()
+	local debug, xdir, zdir, dist, x, z, diff, days, hours, minutes, result, time, werds, word, cmd, direction, help, tmp
+	local shortHelp = false
+
+	-- enable debug to see where the code is stopping. Any error will be after the last debug line.
+	debug = false -- should be false unless testing
+
 	calledFunction = "gmsg_info"
 	result = false
 	tmp = {}
+	tmp.topic = "info"
 
 	if botman.debugAll then
 		debug = true -- this should be true
@@ -26,25 +26,26 @@ function gmsg_info()
 -- ################## info command functions ##################
 
 	local function cmd_BotInfo()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}bot info"
 			help[2] = "Displays info about the bot."
 
 			tmp.command = help[1]
-			tmp.keywords = "info,bot"
+			tmp.keywords = "information,bot"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if chatvars.words[1] == "bot" and chatvars.words[2] == "info" or chatvars.words[1] ~= "help" then
+			if chatvars.words[1] == "bot" and chatvars.words[2] == "info" and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -55,47 +56,54 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if chatvars.words[1] == "bot" and chatvars.words[2] == "info" then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
 			if (chatvars.playername ~= "Server") then
 				-- bot name
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is called " .. server.botName .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot is called " .. server.botName .. "[-]")
 
 				-- API or telnet
 				if server.useAllocsWebAPI then
 					if botman.APIOffline then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]API is offline.[-]")
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is using telnet.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]API is offline.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot is using telnet.[-]")
 					else
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]API is online.[-]")
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is using Alloc's web API.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]API is online.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot is using Alloc's web API.[-]")
 					end
 				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is using telnet.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot is using telnet.[-]")
 				end
 
 				if botman.telnetOffline then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Telnet is offline.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Telnet is offline.[-]")
 				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Telnet is online.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Telnet is online.[-]")
 				end
 
 				-- code branch
 				if server.updateBranch ~= '' then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The code branch is " .. server.updateBranch .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The code branch is " .. server.updateBranch .. "[-]")
 				end
 
 				-- code version
 				if server.botVersion ~= '' then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot version is " .. server.botVersion .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot version is " .. server.botVersion .. "[-]")
 				end
 
 				-- bot updates enabled or not
 				if server.updateBot then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot checks for new code daily.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot checks for new code daily.[-]")
 				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bot updates are set to happen manually using the {#}update code command[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Bot updates are set to happen manually using the {#}update code command[-]")
 				end
 			end
 
@@ -106,25 +114,26 @@ function gmsg_info()
 
 
 	local function cmd_ListNewPlayers()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}new players {optional number (days)"
 			help[2] = "List the new players and basic info about them in the last day or more."
 
 			tmp.command = help[1]
-			tmp.keywords = "list,new,play"
+			tmp.keywords = "list,new,players"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "new") or string.find(chatvars.command, "play") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "new") or string.find(chatvars.command, "play") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -135,21 +144,14 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "new" and chatvars.words[2] == "players") then
-			if (chatvars.playername ~= "Server") then
-				if (chatvars.accessLevel > 2) then
-					message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
-					botman.faultyChat = false
-					return true
-				end
-			else
-				if (chatvars.accessLevel > 2) then
-					irc_chat(chatvars.ircAlias, "This command is restricted.")
-					botman.faultyChat = false
-					return true
-				end
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
 			end
 
 			if chatvars.number == nil then
@@ -159,7 +161,7 @@ function gmsg_info()
 			end
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New players in the last " .. math.floor(number / 86400) .. " days:[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]New players in the last " .. math.floor(number / 86400) .. " days:[-]")
 			else
 				irc_chat(chatvars.ircAlias, "New players in the last " .. math.floor(number / 86400) .. " days:")
 			end
@@ -187,7 +189,7 @@ function gmsg_info()
 
 				msg = msg .. " Playtime " .. hours .. "h " .. minutes .. "m"
 
-				cursor2,errorString = conn:execute("SELECT * FROM bans WHERE steam =  " .. row.steam)
+				cursor2,errorString = conn:execute("SELECT * FROM bans WHERE steam = '" .. row.steam .. "'")
 				if cursor2:numrows() > 0 then
 					msg = msg .. " BANNED"
 				end
@@ -201,7 +203,7 @@ function gmsg_info()
 				end
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. msg .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. msg .. "[-]")
 				else
 					irc_chat(chatvars.ircAlias, msg)
 				end
@@ -218,25 +220,26 @@ function gmsg_info()
 	local function cmd_SeenPlayer()
 		local playerName, isArchived, lastSeenMessage, r
 
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}seen {player name}"
 			help[2] = "Reports when the player was last on the server."
 
 			tmp.command = help[1]
-			tmp.keywords = "seen,play,when,last"
+			tmp.keywords = "seen,player,when,last"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "see") or string.find(chatvars.command, "play") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "see") or string.find(chatvars.command, "play") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -247,22 +250,29 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "seen") then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
 			pname = string.sub(chatvars.command, string.find(chatvars.command, "seen ") + 5)
 			pname = string.trim(pname)
 			id = LookupPlayer(pname)
 
-			if id == 0 then
+			if id == "0" then
 				id = LookupArchivedPlayer(pname)
 
-				if not (id == 0) then
+				if not (id == "0") then
 					playerName = playersArchived[id].name
 					isArchived = true
 				else
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Sorry I don't know a player called " .. pname .. ". Check your spelling.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Sorry I don't know a player called " .. pname .. ". Check your spelling.[-]")
 					else
 						irc_chat(chatvars.ircAlias, "Sorry I don't know a player called " .. pname .. ". Check your spelling.")
 					end
@@ -279,18 +289,18 @@ function gmsg_info()
 				if (chatvars.playername ~= "Server") then
 					if chatvars.playerid == id then
 						r = randSQL(10)
-						if r == 1 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]YOU are playing right now.[-]") end
-						if r == 2 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I dunno, why don't you ask yourself that?[-]") end
+						if r == 1 then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]YOU are playing right now.[-]") end
+						if r == 2 then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]I dunno, why don't you ask yourself that?[-]") end
 						if r == 3 then message("say ATTENTION! Attention everyone.  Have you seen " .. chatvars.playername .. "? " .. chatvars.playername .. " seems a little lost.[-]") end
-						if r == 4 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No. No I have not.[-]") end
-						if r == 5 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Dear diary. Today I was asked by " .. chatvars.playername .. " if I have seen " .. chatvars.playername .. ". I suspect one of us is losing it, I pray it is not me.[-]") end
-						if r == 6 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Have I seen " .. chatvars.playername .. "? Why yes! Yes I have. If you go home right now, you will find " .. chatvars.playername .. " waiting for you. :D[-]") end
-						if r == 7 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Oh God I am so depressed.[-]") end
-						if r == 8 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. chatvars.playername .. "? Meh! Who cares?[-]") end
-						if r == 9 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]What is seen cannot be unseen.. but I'm willing to give it a go. Got any bleach?[-]") end
-						if r == 10 then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I'm beginning to wish I hadn't :([-]") end
+						if r == 4 then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No. No I have not.[-]") end
+						if r == 5 then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Dear diary. Today I was asked by " .. chatvars.playername .. " if I have seen " .. chatvars.playername .. ". I suspect one of us is losing it, I pray it is not me.[-]") end
+						if r == 6 then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Have I seen " .. chatvars.playername .. "? Why yes! Yes I have. If you go home right now, you will find " .. chatvars.playername .. " waiting for you. :D[-]") end
+						if r == 7 then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Oh God I am so depressed.[-]") end
+						if r == 8 then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. chatvars.playername .. "? Meh! Who cares?[-]") end
+						if r == 9 then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]What is seen cannot be unseen.. but I'm willing to give it a go. Got any bleach?[-]") end
+						if r == 10 then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]I'm beginning to wish I hadn't :([-]") end
 					else
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " is playing right now.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. players[id].name .. " is playing right now.[-]")
 					end
 				else
 					irc_chat(chatvars.ircAlias, players[id].name .. " is playing right now.")
@@ -303,7 +313,7 @@ function gmsg_info()
 			lastSeenMessage = seen(id)
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. lastSeenMessage .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. lastSeenMessage .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, lastSeenMessage)
 			end
@@ -315,26 +325,27 @@ function gmsg_info()
 
 
 	local function cmd_SendAlertToAdmins()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}alert {message}"
 			help[2] = "Whatever is typed after {#}alert is recorded to the database and displayed on irc.\n"
 			help[2] = help[2] .. "You can recall the alerts with the irc command view alerts {optional days}"
 
 			tmp.command = help[1]
-			tmp.keywords = "alert,mess,msg,admin"
+			tmp.keywords = "alert,messages,msg,admin"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "alert") or string.find(chatvars.command, "info") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "alert") or string.find(chatvars.command, "info") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -345,20 +356,27 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "alert") then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
 			if (chatvars.words[2] == nil) then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Please include a message eg " .. server.commandPrefix .. "alert Claimed shop here![-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Please include a message eg " .. server.commandPrefix .. "alert Claimed shop here![-]")
 				botman.faultyChat = false
 				return true
 			end
 
 			command = string.sub(chatvars.commandOld, string.find(chatvars.command, "alert ") + 6)
-			sendIrc(server.ircAlerts, "***** " .. chatvars.playerid .. " " .. chatvars.playername .. " at position " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ .. " said: " .. command .. "\n")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Thank you! Your message has been recorded! =D[-]")
+			sendIrc(server.ircAlerts, "***** " .. chatvars.userID .. " " .. chatvars.playername .. " at position " .. chatvars.intX .. " " .. chatvars.intY .. " " .. chatvars.intZ .. " said: " .. command .. "\n")
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Thank you! Your message has been recorded! =D[-]")
 
-			if botman.dbConnected then conn:execute("INSERT INTO alerts (steam, x, y, z, message) VALUES (" .. chatvars.playerid .. "," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. command .. "')") end
+			if botman.dbConnected then conn:execute("INSERT INTO alerts (steam, x, y, z, message, timestamp) VALUES ('" .. chatvars.playerid .. "'," .. chatvars.intX .. "," .. chatvars.intY .. "," .. chatvars.intZ .. ",'" .. command .. "'," .. botman.serverTimeStamp .. ")") end
 
 			botman.faultyChat = false
 			return true
@@ -367,25 +385,26 @@ function gmsg_info()
 
 
 	local function cmd_ServerInfo()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}server or {#}info"
 			help[2] = "Displays info mostly from the server config."
 
 			tmp.command = help[1]
-			tmp.keywords = "info,serv"
+			tmp.keywords = "information,server"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "server") or string.find(chatvars.command, "info") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "server") or string.find(chatvars.command, "info") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -396,88 +415,91 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "server" or chatvars.words[1] == "info") and chatvars.words[2] == nil then
 			if (chatvars.playername ~= "Server") then
-				-- Server name
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This server is " .. server.serverName .. " " .. server.IP .. ":" .. server.ServerPort .. "[-]")
+				if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+					botman.faultyChat = false
+					return true
+				end
 
-				if (server.gameType == "pve") then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is a PVE server.[-]") end
-				if (server.gameType == "pvp") then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is a PVP server.[-]") end
-				if (server.gameType == "cre") then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is a creative mode server.[-]") end
+				-- Server name
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This server is " .. server.serverName .. " " .. server.IP .. ":" .. server.ServerPort .. "[-]")
+
+				if (server.gameType == "pve") then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This is a PVE server.[-]") end
+				if (server.gameType == "pvp") then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This is a PVP server.[-]") end
+				if (server.gameType == "cre") then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This is a creative mode server.[-]") end
 
 				-- day/night length
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A full day runs " .. server.DayNightLength .. " minutes[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]A full day runs " .. server.DayNightLength .. " minutes[-]")
 
 				-- drop on death
-				if (server.DropOnDeath == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop nothing on death[-]") end
-				if (server.DropOnDeath == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop everything on death[-]") end
-				if (server.DropOnDeath == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop toolbelt on death[-]") end
-				if (server.DropOnDeath == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop backpack on death[-]") end
-				if (server.DropOnDeath == 4) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You permanently lose everything on death[-]") end
+				if (server.DropOnDeath == 0) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You drop nothing on death[-]") end
+				if (server.DropOnDeath == 1) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You drop everything on death[-]") end
+				if (server.DropOnDeath == 2) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You drop toolbelt on death[-]") end
+				if (server.DropOnDeath == 3) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You drop backpack on death[-]") end
+				if (server.DropOnDeath == 4) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You permanently lose everything on death[-]") end
 
 				-- drop on quit
-				if (server.DropOnQuit == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You keep everything on quit[-]") end
-				if (server.DropOnQuit == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop everything on quit[-]") end
-				if (server.DropOnQuit == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop toolbelt only on quit[-]") end
-				if (server.DropOnQuit == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You drop backpack only on quit[-]") end
+				if (server.DropOnQuit == 0) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You keep everything on quit[-]") end
+				if (server.DropOnQuit == 1) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You drop everything on quit[-]") end
+				if (server.DropOnQuit == 2) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You drop toolbelt only on quit[-]") end
+				if (server.DropOnQuit == 3) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You drop backpack only on quit[-]") end
 
 				-- land claim size
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Land claim size is " .. server.LandClaimSize .. " meters. Expiry " .. server.LandClaimExpiryTime .. " days[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Land claim size is " .. server.LandClaimSize .. " meters. Expiry " .. server.LandClaimExpiryTime .. " days[-]")
 
 				-- loot abundance
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Loot abundance is " .. server.LootAbundance .. "%[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Loot abundance is " .. server.LootAbundance .. "%[-]")
 
 				-- loot respawn
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Loot respawns after " .. server.LootRespawnDays .. " days[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Loot respawns after " .. server.LootRespawnDays .. " days[-]")
 
 				-- zombies run
-				if (server.ZombiesRun == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Zombies run at night[-]") end
-				if (server.ZombiesRun == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Zombies never run[-]") end
-				if (server.ZombiesRun == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Zombies always run[-]") end
+				if (server.ZombiesRun == 0) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Zombies run at night[-]") end
+				if (server.ZombiesRun == 1) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Zombies never run[-]") end
+				if (server.ZombiesRun == 2) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Zombies always run[-]") end
 
 				if server.ZombieMove then
-					if (server.ZombieMove == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMove: walk[-]") end
-					if (server.ZombieMove == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMove: jog[-]") end
-					if (server.ZombieMove == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMove: run[-]") end
-					if (server.ZombieMove == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMove: sprint[-]") end
-					if (server.ZombieMove == 4) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMove: nightmare[-]") end
+					if (server.ZombieMove == 0) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieMove: walk[-]") end
+					if (server.ZombieMove == 1) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieMove: jog[-]") end
+					if (server.ZombieMove == 2) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieMove: run[-]") end
+					if (server.ZombieMove == 3) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieMove: sprint[-]") end
+					if (server.ZombieMove == 4) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieMove: nightmare[-]") end
 				end
 
 				if server.ZombieMoveNight then
-					if (server.ZombieMoveNight == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMoveNight: walk[-]") end
-					if (server.ZombieMoveNight == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMoveNight: jog[-]") end
-					if (server.ZombieMoveNight == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMoveNight: run[-]") end
-					if (server.ZombieMoveNight == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMoveNight: sprint[-]") end
-					if (server.ZombieMoveNight == 4) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieMoveNight: nightmare[-]") end
+					if (server.ZombieMoveNight == 0) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieMoveNight: walk[-]") end
+					if (server.ZombieMoveNight == 1) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieMoveNight: jog[-]") end
+					if (server.ZombieMoveNight == 2) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieMoveNight: run[-]") end
+					if (server.ZombieMoveNight == 3) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieMoveNight: sprint[-]") end
+					if (server.ZombieMoveNight == 4) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieMoveNight: nightmare[-]") end
 				end
 
 				if server.ZombieFeralMove then
-					if (server.ZombieFeralMove == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieFeralMove: walk[-]") end
-					if (server.ZombieFeralMove == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieFeralMove: jog[-]") end
-					if (server.ZombieFeralMove == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieFeralMove: run[-]") end
-					if (server.ZombieFeralMove == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieFeralMove: sprint[-]") end
-					if (server.ZombieFeralMove == 4) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieFeralMove: nightmare[-]") end
+					if (server.ZombieFeralMove == 0) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieFeralMove: walk[-]") end
+					if (server.ZombieFeralMove == 1) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieFeralMove: jog[-]") end
+					if (server.ZombieFeralMove == 2) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieFeralMove: run[-]") end
+					if (server.ZombieFeralMove == 3) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieFeralMove: sprint[-]") end
+					if (server.ZombieFeralMove == 4) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieFeralMove: nightmare[-]") end
 				end
 
 				if server.ZombieBMMove then
-					if (server.ZombieBMMove == 0) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieBMMove: walk[-]") end
-					if (server.ZombieBMMove == 1) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieBMMove: jog[-]") end
-					if (server.ZombieBMMove == 2) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieBMMove: run[-]") end
-					if (server.ZombieBMMove == 3) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieBMMove: sprint[-]") end
-					if (server.ZombieBMMove == 4) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]ZombieBMMove: nightmare[-]") end
+					if (server.ZombieBMMove == 0) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieBMMove: walk[-]") end
+					if (server.ZombieBMMove == 1) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieBMMove: jog[-]") end
+					if (server.ZombieBMMove == 2) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieBMMove: run[-]") end
+					if (server.ZombieBMMove == 3) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieBMMove: sprint[-]") end
+					if (server.ZombieBMMove == 4) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]ZombieBMMove: nightmare[-]") end
 				end
 
-				-- -- map limit
-				-- if players[chatvars.playerid].donor == true then
-					-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The world is limited to  " .. (server.mapSize + 10000) / 1000 .. " km from map center[-]")
-				-- else
-					-- message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The world is limited to  " .. server.mapSize / 1000 .. " km from map center[-]")
-				-- end
+				-- map limit
+				--message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The world is limited to  " .. chatvars.settings.mapSize / 1000 .. " km from map center[-]")
 
 				if server.idleKick then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]When the server is full, idle players are kicked after " .. server.idleKickTimer .. " seconds.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]When the server is full, idle players are kicked after " .. server.idleKickTimer .. " seconds.[-]")
 				end
 			else
 				-- Server name
@@ -567,25 +589,26 @@ function gmsg_info()
 
 
 	local function cmd_ShowRules()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}rules"
 			help[2] = "Reports the server rules."
 
 			tmp.command = help[1]
-			tmp.keywords = "view,rules"
+			tmp.keywords = "view,rules,server"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "rule") or string.find(chatvars.command, "server") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "rule") or string.find(chatvars.command, "server") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -596,11 +619,13 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "rules" and chatvars.words[2] == nil) then
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.rules .."[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. server.rules .."[-]")
 			else
 				irc_chat(chatvars.ircAlias, server.rules)
 			end
@@ -612,60 +637,26 @@ function gmsg_info()
 
 
 	local function cmd_ShowServerFPS()
-		if chatvars.showHelp and not skipHelp then
-			if string.find(chatvars.command, "fps") or string.find(chatvars.command, "perf") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, " " .. server.commandPrefix .. "fps")
-
-				if not shortHelp then
-					irc_chat(chatvars.ircAlias, "Displays the most recent output from the server mem command.")
-					irc_chat(chatvars.ircAlias, ".")
-				end
-
-				chatvars.helpRead = true
-			end
-		end
-
-		if (chatvars.words[1] == "fps" and chatvars.words[2] == nil) then
-			if botman.dbConnected then
-				cursor,errorString = conn:execute("SELECT * FROM performance  ORDER BY timestamp DESC Limit 0, 1")
-				row = cursor:fetch({}, "a")
-
-				if row then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server FPS: " .. server.fps .. " Players: " .. row.players .. " Zombies: " .. row.zombies .. " Entities: " .. row.entities .. " Heap: " .. row.heap .. " HeapMax: " .. row.heapMax .. "[-]")
-					else
-						irc_chat(chatvars.ircAlias, "Server FPS: " .. server.fps .. " Players: " .. row.players .. " Zombies: " .. row.zombies .. " Entities: " .. row.entities .. " Heap: " .. row.heap .. " HeapMax: " .. row.heapMax)
-					end
-				end
-			end
-
-			botman.faultyChat = false
-			return true
-		end
-	end
-
-
-	local function cmd_ShowServerStats()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
-			help[1] = " {#}server stats"
-			help[2] = "Displays various server totals for the last 24 hours or more days if you add a number.\n"
-			help[2] = help[2] .. "eg. {#}server stats 5 (gives you the last 5 days cummulative stats)"
+			help[1] = " {#}fps"
+			help[2] = "Displays the most recent output from the server mem command."
 
 			tmp.command = help[1]
-			tmp.keywords = "view,server,stat"
+			tmp.keywords = "view,fps,performance"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "server") or string.find(chatvars.command, "stat") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "fps") or string.find(chatvars.command, "perf") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -676,9 +667,70 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
+		end
+
+		if (chatvars.words[1] == "fps" and chatvars.words[2] == nil) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Server FPS: " .. botman.performance.fps .. " Players: " .. botman.performance.players .. " Zombies: " .. botman.performance.zombies .. " Entities: " .. botman.performance.entities .. " Heap: " .. botman.performance.heap .. " HeapMax: " .. botman.performance.heapMax .. "[-]")
+			else
+				irc_chat(chatvars.ircAlias, "Server FPS: " .. botman.performance.fps .. " Players: " .. botman.performance.players .. " Zombies: " .. botman.performance.zombies .. " Entities: " .. botman.performance.entities .. " Heap: " .. botman.performance.heap .. " HeapMax: " .. botman.performance.heapMax)
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ShowServerStats()
+		if chatvars.showHelp or botman.registerHelp then
+			help = {}
+			help[1] = " {#}server stats"
+			help[2] = "Displays various server totals for the last 24 hours or more days if you add a number.\n"
+			help[2] = help[2] .. "eg. {#}server stats 5 (gives you the last 5 days cummulative stats)"
+
+			tmp.command = help[1]
+			tmp.keywords = "view,server,stats,statistics"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
+
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
+
+			if botman.registerHelp then
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "server") or string.find(chatvars.command, "stat") and chatvars.showHelp or botman.registerHelp then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
+					irc_chat(chatvars.ircAlias, ".")
+				end
+
+				chatvars.helpRead = true
+			end
+
+			return false
 		end
 
 		if ((chatvars.words[1] == "server" and string.find(chatvars.command, "stat")) and chatvars.words[4] == nil) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
 			if chatvars.number == nil then
 				chatvars.number = 1
 			else
@@ -689,13 +741,13 @@ function gmsg_info()
 
 			if chatvars.number == 1 then
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]24 hour stats to now:[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]24 hour stats to now:[-]")
 				else
 					irc_chat(chatvars.ircAlias, "24 hour stats to now:")
 				end
 			else
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. chatvars.number .. " day stats to now:[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. chatvars.number .. " day stats to now:[-]")
 				else
 					irc_chat(chatvars.ircAlias, chatvars.number .. " day stats to now:")
 				end
@@ -705,7 +757,7 @@ function gmsg_info()
 			row = cursor:fetch({}, "a")
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]PVPs: " .. row.number .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]PVPs: " .. row.number .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, "PVPs: " .. row.number)
 			end
@@ -714,7 +766,7 @@ function gmsg_info()
 			row = cursor:fetch({}, "a")
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Timeouts: " .. row.number .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Timeouts: " .. row.number .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, "Timeouts: " .. row.number)
 			end
@@ -723,7 +775,7 @@ function gmsg_info()
 			row = cursor:fetch({}, "a")
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Arrests: " .. row.number .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Arrests: " .. row.number .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, "Arrests: " .. row.number)
 			end
@@ -732,7 +784,7 @@ function gmsg_info()
 			row = cursor:fetch({}, "a")
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]New players: " .. row.number .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]New players: " .. row.number .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, "New players: " .. row.number)
 			end
@@ -741,7 +793,7 @@ function gmsg_info()
 			row = cursor:fetch({}, "a")
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bans: " .. row.number .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Bans: " .. row.number .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, "Bans: " .. row.number)
 			end
@@ -750,7 +802,7 @@ function gmsg_info()
 			row = cursor:fetch({}, "a")
 
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Most players online: " .. row.number .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Most players online: " .. row.number .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, "Most players online: " .. row.number)
 			end
@@ -762,25 +814,26 @@ function gmsg_info()
 
 
 	local function cmd_ShowServerTime()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}server date"
 			help[2] = "Displays the system clock of the game server."
 
 			tmp.command = help[1]
-			tmp.keywords = "view,server,date,time"
+			tmp.keywords = "view,server,date,time,current"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "date") or string.find(chatvars.command, "time") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "date") or string.find(chatvars.command, "time") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -791,11 +844,18 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if ((chatvars.words[1] == "server" and (chatvars.words[2] == "date" or chatvars.words[2] == "time")) and chatvars.words[3] == nil) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
 			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The server date is " .. botman.serverTime .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The server date is " .. botman.serverTime .. "[-]")
 			else
 				irc_chat(chatvars.ircAlias, "The server date is " .. botman.serverTime)
 			end
@@ -809,25 +869,26 @@ function gmsg_info()
 	local function cmd_ShowWherePlayer()
 		local inResetZone
 
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}where"
 			help[2] = "Gives info about where you are in the world and the rules that apply there."
 
 			tmp.command = help[1]
-			tmp.keywords = "where,play,loca,coord"
+			tmp.keywords = "where,player,location,coordinates"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "where") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "where") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -838,22 +899,29 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "where" or chatvars.words[1] == "whereami") and chatvars.words[2] == nil then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
 			inResetZone = false
 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are " .. string.format("%.2f", (distancexz(chatvars.intX, chatvars.intZ,0,0) / 1000)) .. " km from the center of the map.[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are at " .. mapPosition(chatvars.playerid) .. "[-]")
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You are " .. string.format("%.2f", (distancexz(chatvars.intX, chatvars.intZ,0,0) / 1000)) .. " km from the center of the map.[-]")
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You are at " .. mapPosition(chatvars.playerid) .. "[-]")
 
 			if igplayers[chatvars.playerid].currentLocationPVP then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]PVP is allowed here.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]PVP is allowed here.[-]")
 			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]PVE rules apply here. Do not kill players.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]PVE rules apply here. Do not kill players.[-]")
 			end
 
 			if players[chatvars.playerid].inLocation ~= "" then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in the location " .. players[chatvars.playerid].inLocation .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You are in the location " .. players[chatvars.playerid].inLocation .. "[-]")
 			end
 
 			if players[chatvars.playerid].inLocation ~= "" then
@@ -867,23 +935,14 @@ function gmsg_info()
 			end
 
 			if inResetZone then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in a reset zone.  Don't build here or place a claim.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You are in a reset zone.  Don't build here or place a claim.[-]")
 			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are not in a reset zone.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You are not in a reset zone.[-]")
 			end
 
 			if players[chatvars.playerid].atHome then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are at home.[-]")
-			else
-				if tonumber(players[chatvars.playerid].homeY) > 0 then
-					direction = getCompass(players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ, chatvars.intX, chatvars.intZ)
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are " .. string.format("%.2f", (distancexz(chatvars.intX, chatvars.intZ, players[chatvars.playerid].homeX, players[chatvars.playerid].homeZ) / 1000)) .. " km to the " .. direction .. " of your first home.[-]")
-				end
-
-				if tonumber(players[chatvars.playerid].home2Y) > 0 then
-					direction = getCompass(players[chatvars.playerid].home2X, players[chatvars.playerid].home2Z, chatvars.intX, chatvars.intZ)
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are " .. string.format("%.2f", (distancexz(chatvars.intX, chatvars.intZ, players[chatvars.playerid].home2X, players[chatvars.playerid].home2Z) / 1000)) .. " km to the " .. direction .. " of your second home.[-]")
-				end
+				tmp.baseFound, tmp.base = getNearestBase(chatvars.intX, chatvars.intZ, chatvars.playerid)
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You are home in base " .. string.trim(tmp.base.baseNumber .. " " .. tmp.base.title) .. ".[-]")
 			end
 
 			botman.faultyChat = false
@@ -893,7 +952,7 @@ function gmsg_info()
 
 
 	local function cmd_Uptime()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}uptime"
 			help[2] = "Reports the bot and server's running times."
@@ -904,14 +963,15 @@ function gmsg_info()
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "time") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "time") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -922,10 +982,28 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "uptime" and chatvars.words[2] == nil) then
-				diff = os.difftime(os.time(), botman.botStarted)
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
+			tmp.days, tmp.hours, tmp.minutes, tmp.seconds = timestampToString(botman.botStarted, true)
+
+			if (chatvars.playername ~= "Server") then
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The server time is " .. os.date("%Y-%m-%d %H:%M:%S", calculateServerTime(os.time())) .."[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. server.botName .. " has been online " .. tmp.days .. " days " .. tmp.hours .. " hours " .. tmp.minutes .. " minutes.[-]")
+			else
+				irc_chat(chatvars.ircAlias, "The server time is " .. os.date("%Y-%m-%d %H:%M:%S", calculateServerTime(os.time())))
+				irc_chat(chatvars.ircAlias, server.botName .. " has been online " .. tmp.days .. " days " .. tmp.hours .. " hours " .. tmp.minutes .. " minutes " .. tmp.seconds .. " seconds.")
+			end
+
+			if server.uptime > 0 then
+				diff = server.uptime
 				days = math.floor(diff / 86400)
 
 				if (days > 0) then
@@ -941,19 +1019,134 @@ function gmsg_info()
 				minutes = math.floor(diff / 60)
 
 				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.botName .. " has been online " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Server uptime is " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.[-]")
 				else
-					irc_chat(chatvars.ircAlias, server.botName .. " has been online " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.")
+					irc_chat(chatvars.ircAlias, "Server uptime is " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.")
+				end
+			end
+
+			botman.faultyChat = false
+			return true
+		end
+	end
+
+
+	local function cmd_ViewPlayerInfo()
+		local donor, expiry, k, v, protected
+
+		if chatvars.showHelp or botman.registerHelp then
+			help = {}
+			help[1] = " {#}info {player}"
+			help[2] = "Displays info about a player.  Only staff can specify a player.  Players just see their own info."
+
+			tmp.command = help[1]
+			tmp.keywords = "view,player,information"
+			tmp.accessLevel = 99
+			tmp.description = help[2]
+			tmp.notes = ""
+			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
+
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
+
+			if botman.registerHelp then
+				registerHelp(tmp)
+			end
+
+			if string.find(chatvars.command, "info") or string.find(chatvars.command, "play") and chatvars.showHelp or botman.registerHelp then
+				irc_chat(chatvars.ircAlias, help[1])
+
+				if not shortHelp then
+					irc_chat(chatvars.ircAlias, help[2])
+					irc_chat(chatvars.ircAlias, help[3])
+					irc_chat(chatvars.ircAlias, ".")
 				end
 
-				if server.uptime < 0 then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server uptime is unknown due to a server fault. Ask and admin to reboot the server.[-]")
+				chatvars.helpRead = true
+			end
+
+			return false
+		end
+
+		if (chatvars.words[1] == "info" and chatvars.words[2] ~= nil) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
+			pname = string.sub(chatvars.command, string.find(chatvars.command, "info") + 5)
+			pname = string.trim(pname)
+			id = LookupPlayer(pname)
+
+			if not chatvars.isAdminHidden then
+				id = chatvars.userID
+			end
+
+			if id == "0" and chatvars.isAdminHidden then
+				-- show info for archived player
+				id = LookupArchivedPlayer(pname)
+
+				if not (id == "0") then
+					donor, expiry = isDonor(id)
+
+					if (igplayers[id]) then
+						time = tonumber(playersArchived[id].timeOnServer) + tonumber(igplayers[id].sessionPlaytime)
 					else
-						irc_chat(chatvars.ircAlias, "Server uptime is unknown due to a server fault. Ask and admin to reboot the server.")
+						time = tonumber(playersArchived[id].timeOnServer)
 					end
-				else
-					diff = server.uptime
+
+					days = math.floor(time / 86400)
+
+					if (days > 0) then
+						time = time - (days * 86400)
+					end
+
+					hours = math.floor(time / 3600)
+
+					if (hours > 0) then
+						time = time - (hours * 3600)
+					end
+
+					minutes = math.floor(time / 60)
+					time = time - (minutes * 60)
+
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Info for player " .. playersArchived[id].name .. "[-]")
+					if playersArchived[id].newPlayer == true then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]A new player.[-]") end
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Steam: " .. id .. " ID: " .. playersArchived[id].id .. "[-]")
+					if playersArchived[id].firstSeen ~= nil then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]First seen: " .. os.date("%Y-%m-%d %H:%M:%S", playersArchived[id].firstSeen) .. "[-]") end
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Total time played: " .. days .. " days " .. hours .. " hours " .. minutes .. " minutes " .. time .. " seconds[-]")
+
+					if playersArchived[id].bedX ~= 0 and playersArchived[id].bedY ~= 0 and playersArchived[id].bedZ ~= 0 then
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Has a bedroll at " .. playersArchived[id].bedX .. " " .. playersArchived[id].bedY .. " " .. playersArchived[id].bedZ .. "[-]")
+					end
+
+					werds = {}
+					for word in botman.serverTime:gmatch("%w+") do table.insert(werds, word) end
+
+					ryear = werds[1]
+					rmonth = werds[2]
+					rday = string.sub(werds[3], 1, 2)
+					rhour = string.sub(werds[3], 4, 5)
+					rmin = werds[4]
+					rsec = werds[5]
+
+					dateNow = {year=ryear, month=rmonth, day=rday, hour=rhour, min=rmin, sec=rsec}
+					Now = os.time(dateNow)
+
+					werds = {}
+					for word in playersArchived[id].seen:gmatch("%w+") do table.insert(werds, word) end
+
+					ryear = werds[1]
+					rmonth = werds[2]
+					rday = string.sub(werds[3], 1, 2)
+					rhour = string.sub(werds[3], 4, 5)
+					rmin = werds[4]
+					rsec = werds[5]
+
+					dateSeen = {year=ryear, month=rmonth, day=rday, hour=rhour, min=rmin, sec=rsec}
+					Seen = os.time(dateSeen)
+
+					diff = os.difftime(Now, Seen)
 					days = math.floor(diff / 86400)
 
 					if (days > 0) then
@@ -968,195 +1161,45 @@ function gmsg_info()
 
 					minutes = math.floor(diff / 60)
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Server uptime is " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.[-]")
-					else
-						irc_chat(chatvars.ircAlias, "Server uptime is " .. days .. " days " .. hours .. " hours " .. minutes .." minutes.")
-					end
-				end
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" ..playersArchived[id].name .. " was last seen " .. days .. " days " .. hours .. " hours " .. minutes .." minutes ago[-]")
 
-			botman.faultyChat = false
-			return true
-		end
-	end
-
-
-	local function cmd_ViewPlayerInfo()
-		local donor, expiry
-
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
-			help = {}
-			help[1] = " {#}info {player}"
-			help[2] = "Displays info about a player.  Only staff can specify a player.  Players just see their own info."
-
-			tmp.command = help[1]
-			tmp.keywords = "view,play,info"
-			tmp.accessLevel = 99
-			tmp.description = help[2]
-			tmp.notes = ""
-			tmp.ingameOnly = 1
-
-			help[3] = helpCommandRestrictions(tmp)
-
-			if botman.registerHelp then
-				registerHelp(tmp)
-			end
-
-			if string.find(chatvars.command, "info") or string.find(chatvars.command, "play") or chatvars.words[1] ~= "help" then
-				irc_chat(chatvars.ircAlias, help[1])
-
-				if not shortHelp then
-					irc_chat(chatvars.ircAlias, help[2])
-					irc_chat(chatvars.ircAlias, help[3])
-					irc_chat(chatvars.ircAlias, ".")
-				end
-
-				chatvars.helpRead = true
-			end
-		end
-
-		if (chatvars.words[1] == "info" and chatvars.words[2] ~= nil) then
-			pname = string.sub(chatvars.command, string.find(chatvars.command, "info") + 5)
-			pname = string.trim(pname)
-			id = LookupPlayer(pname)
-
-			if chatvars.accessLevel > 2 then
-				if chatvars.playerid ~= id then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You may only view your own info.[-]")
-
-					botman.faultyChat = false
-					return true
-				end
-			else
-				-- this is used if the command came from an admin
-				if id == 0 then
-					-- show info for archived player
-					id = LookupArchivedPlayer(pname)
-
-					if not (id == 0) then
-						donor, expiry = isDonor(id)
-
-						if (igplayers[id]) then
-							time = tonumber(playersArchived[id].timeOnServer) + tonumber(igplayers[id].sessionPlaytime)
-						else
-							time = tonumber(playersArchived[id].timeOnServer)
-						end
-
-						days = math.floor(time / 86400)
-
-						if (days > 0) then
-							time = time - (days * 86400)
-						end
-
-						hours = math.floor(time / 3600)
-
-						if (hours > 0) then
-							time = time - (hours * 3600)
-						end
-
-						minutes = math.floor(time / 60)
-						time = time - (minutes * 60)
-
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Info for player " .. playersArchived[id].name .. "[-]")
-						if playersArchived[id].newPlayer == true then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A new player.[-]") end
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Steam: " .. id .. " ID: " .. playersArchived[id].id .. "[-]")
-						if playersArchived[id].firstSeen ~= nil then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]First seen: " .. os.date("%Y-%m-%d %H:%M:%S", playersArchived[id].firstSeen) .. "[-]") end
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Total time played: " .. days .. " days " .. hours .. " hours " .. minutes .. " minutes " .. time .. " seconds[-]")
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Has a bedroll at " .. playersArchived[id].bedX .. " " .. playersArchived[id].bedY .. " " .. playersArchived[id].bedZ .. "[-]")
-
-						if playersArchived[id].homeX ~= 0 and playersArchived[id].homeY ~= 0 and playersArchived[id].homeZ ~= 0 then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base one is at " .. playersArchived[id].homeX .. " " .. playersArchived[id].homeY .. " " .. playersArchived[id].homeZ .. "[-]")
-						else
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base one has not been set.[-]")
-						end
-
-						if playersArchived[id].home2X ~= 0 and playersArchived[id].home2Y ~= 0 and playersArchived[id].home2Z ~= 0 then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base two is at " .. playersArchived[id].home2X .. " " .. playersArchived[id].home2Y .. " " .. playersArchived[id].home2Z .. "[-]")
-						else
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base two has not been set.[-]")
-						end
-
-						werds = {}
-						for word in botman.serverTime:gmatch("%w+") do table.insert(werds, word) end
-
-						ryear = werds[1]
-						rmonth = werds[2]
-						rday = string.sub(werds[3], 1, 2)
-						rhour = string.sub(werds[3], 4, 5)
-						rmin = werds[4]
-						rsec = werds[5]
-
-						dateNow = {year=ryear, month=rmonth, day=rday, hour=rhour, min=rmin, sec=rsec}
-						Now = os.time(dateNow)
-
-						werds = {}
-						for word in playersArchived[id].seen:gmatch("%w+") do table.insert(werds, word) end
-
-						ryear = werds[1]
-						rmonth = werds[2]
-						rday = string.sub(werds[3], 1, 2)
-						rhour = string.sub(werds[3], 4, 5)
-						rmin = werds[4]
-						rsec = werds[5]
-
-						dateSeen = {year=ryear, month=rmonth, day=rday, hour=rhour, min=rmin, sec=rsec}
-						Seen = os.time(dateSeen)
-
-						diff = os.difftime(Now, Seen)
-						days = math.floor(diff / 86400)
-
-						if (days > 0) then
-							diff = diff - (days * 86400)
-						end
-
-						hours = math.floor(diff / 3600)
-
-						if (hours > 0) then
-							diff = diff - (hours * 3600)
-						end
-
-						minutes = math.floor(diff / 60)
-
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" ..playersArchived[id].name .. " was last seen " .. days .. " days " .. hours .. " hours " .. minutes .." minutes ago[-]")
-
-						if playersArchived[id].timeout then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is in timeout[-]") end
-						if playersArchived[id].prisoner then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is a prisoner[-]")
-							if playersArchived[id].prisonReason ~= nil then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reason Arrested: " .. playersArchived[id].prisonReason .. "[-]") end
-						end
-
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Keystones placed " .. playersArchived[id].keystones .. "[-]")
-
-						if server.allowBank then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.moneyPlural .. " " .. string.format("%d", playersArchived[id].cash) .. "[-]")
-						end
-
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Current Session " .. playersArchived[id].sessionCount .. "[-]")
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]IP " .. playersArchived[id].ip .. "[-]")
-
-						if donor then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is a donor[-]")
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor status expires on " .. os.date("%Y-%m-%d %H:%M:%S",  expiry))
-						else
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is not a donor[-]")
-						end
-
-						cursor,errorString = conn:execute("SELECT * FROM bans WHERE steam =  " .. id)
-						if cursor:numrows() > 0 then
-							row = cursor:fetch({}, "a")
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]BANNED until " .. row.BannedTo .. " " .. row.Reason .. "[-]")
-						end
-					else
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player name required or no match found.[-]")
+					if playersArchived[id].timeout then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Is in timeout[-]") end
+					if playersArchived[id].prisoner then
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Is a prisoner[-]")
+						if playersArchived[id].prisonReason ~= nil then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Reason Arrested: " .. playersArchived[id].prisonReason .. "[-]") end
 					end
 
-					botman.faultyChat = false
-					return true
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Keystones placed " .. playersArchived[id].keystones .. "[-]")
+
+					if server.allowBank then
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. server.moneyPlural .. " " .. string.format("%d", playersArchived[id].cash) .. "[-]")
+					end
+
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Current Session " .. playersArchived[id].sessionCount .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]IP " .. playersArchived[id].ip .. "[-]")
+
+					if donor then
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Is a donor[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Donor status expires on " .. os.date("%Y-%m-%d %H:%M:%S",  expiry))
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Is not a donor[-]")
+					end
+
+					cursor,errorString = conn:execute("SELECT * FROM bans WHERE steam = '" .. id .. "'")
+					if cursor:numrows() > 0 then
+						row = cursor:fetch({}, "a")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]BANNED until " .. row.BannedTo .. " " .. row.Reason .. "[-]")
+					end
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Player name required or no match found.[-]")
 				end
+
+				botman.faultyChat = false
+				return true
 			end
 
 			-- show info for player who isn't archived.
-			if (id ~= 0) then
+			if (id ~= "0") then
 				donor, expiry = isDonor(id)
 
 				if (igplayers[id]) then
@@ -1180,23 +1223,26 @@ function gmsg_info()
 				minutes = math.floor(time / 60)
 				time = time - (minutes * 60)
 
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Info for player " .. players[id].name .. "[-]")
-				if players[id].newPlayer == true then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]A new player.[-]") end
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Steam: " .. id .. " ID: " .. players[id].id .. "[-]")
-				if players[id].firstSeen ~= nil then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]First seen: " .. os.date("%Y-%m-%d %H:%M:%S", players[id].firstSeen) .. "[-]") end
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Total time played: " .. days .. " days " .. hours .. " hours " .. minutes .. " minutes " .. time .. " seconds[-]")
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Has a bedroll at " .. players[id].bedX .. " " .. players[id].bedY .. " " .. players[id].bedZ .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Info for player " .. players[id].name .. "[-]")
+				if players[id].newPlayer == true then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]A new player.[-]") end
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Steam: " .. id .. " ID: " .. players[id].id .. "[-]")
+				if players[id].firstSeen ~= nil then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]First seen: " .. os.date("%Y-%m-%d %H:%M:%S", players[id].firstSeen) .. "[-]") end
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Total time played: " .. days .. " days " .. hours .. " hours " .. minutes .. " minutes " .. time .. " seconds[-]")
 
-				if players[id].homeX ~= 0 and players[id].homeY ~= 0 and players[id].homeZ ~= 0 then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base one is at " .. players[id].homeX .. " " .. players[id].homeY .. " " .. players[id].homeZ .. "[-]")
-				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base one has not been set.[-]")
+				if players[id].bedX ~= 0 and players[id].bedY ~= 0 and players[id].bedZ ~= 0 then
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Has a bedroll at " .. players[id].bedX .. " " .. players[id].bedY .. " " .. players[id].bedZ .. "[-]")
 				end
 
-				if players[id].home2X ~= 0 and players[id].home2Y ~= 0 and players[id].home2Z ~= 0 then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base two is at " .. players[id].home2X .. " " .. players[id].home2Y .. " " .. players[id].home2Z .. "[-]")
-				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base two has not been set.[-]")
+				for k,v in pairs(bases) do
+					protected = ""
+
+					if v.steam == id then
+						if v.protect then
+							protected = " protected"
+						end
+
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Base " .. string.trim(v.baseNumber .. " " .. v.title) .. " at " .. v.x .. " " .. v.y .. " " .. v.z .. protected .. "[-]")
+					end
 				end
 
 				werds = {}
@@ -1240,37 +1286,37 @@ function gmsg_info()
 
 				minutes = math.floor(diff / 60)
 
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" ..players[id].name .. " was last seen " .. days .. " days " .. hours .. " hours " .. minutes .." minutes ago[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" ..players[id].name .. " was last seen " .. days .. " days " .. hours .. " hours " .. minutes .." minutes ago[-]")
 
-				if players[id].timeout then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is in timeout[-]") end
+				if players[id].timeout then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Is in timeout[-]") end
 				if players[id].prisoner then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is a prisoner[-]")
-					if players[id].prisonReason ~= nil then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Reason Arrested: " .. players[id].prisonReason .. "[-]") end
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Is a prisoner[-]")
+					if players[id].prisonReason ~= nil then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Reason Arrested: " .. players[id].prisonReason .. "[-]") end
 				end
 
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Keystones placed " .. players[id].keystones .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Keystones placed " .. players[id].keystones .. "[-]")
 
 				if server.allowBank then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.moneyPlural .. " " .. string.format("%d", players[id].cash) .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. server.moneyPlural .. " " .. string.format("%d", players[id].cash) .. "[-]")
 				end
 
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Current Session " .. players[id].sessionCount .. "[-]")
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]IP " .. players[id].ip .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Current Session " .. players[id].sessionCount .. "[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]IP " .. players[id].ip .. "[-]")
 
 				if donor then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is a donor[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Donor status expires on " .. os.date("%Y-%m-%d %H:%M:%S",  expiry))
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Is a donor[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Donor status expires on " .. os.date("%Y-%m-%d %H:%M:%S",  expiry))
 				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Is not a donor[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Is not a donor[-]")
 				end
 
-				cursor,errorString = conn:execute("SELECT * FROM bans WHERE steam =  " .. id)
+				cursor,errorString = conn:execute("SELECT * FROM bans WHERE steam = '" .. id .. "'")
 				if cursor:numrows() > 0 then
 					row = cursor:fetch({}, "a")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]BANNED until " .. row.BannedTo .. " " .. row.Reason .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]BANNED until " .. row.BannedTo .. " " .. row.Reason .. "[-]")
 				end
 			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player name required or no match found.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Player name required or no match found.[-]")
 			end
 
 			botman.faultyChat = false
@@ -1280,25 +1326,26 @@ function gmsg_info()
 
 
 	local function cmd_WhenDay7()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}day7 or {#}when feral or {#}bloodmoon"
 			help[2] = "Reports the number of days remaining until the next horde night."
 
 			tmp.command = help[1]
-			tmp.keywords = "day,horde,night"
+			tmp.keywords = "day,horde,night,feral"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "feral") or string.find(chatvars.command, "blood") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "feral") or string.find(chatvars.command, "blood") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1309,10 +1356,12 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "when" and chatvars.words[2] == "feral") or chatvars.words[1] == "day7" or chatvars.words[1] == "bloodmoon" then
-			day7(chatvars.playerid)
+			day7(chatvars.userID)
 
 			botman.faultyChat = false
 			return true
@@ -1321,25 +1370,26 @@ function gmsg_info()
 
 
 	local function cmd_WhenNextReboot()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}next reboot"
 			help[2] = "Reports the time remaining before the next scheduled reboot."
 
 			tmp.command = help[1]
-			tmp.keywords = "rebo,rest"
+			tmp.keywords = "reboot,restart"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 0
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "next") or string.find(chatvars.command, "boot") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "next") or string.find(chatvars.command, "boot") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1350,13 +1400,15 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if ((chatvars.words[1] == "when" or chatvars.words[1] == "next") and chatvars.words[2] == "reboot") then
 			if server.delayReboot then
 				if (server.gameDay % server.hordeNight == 0) then
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The reboot will happen after bloodmoon. Admins can force it with " .. server.commandPrefix .. "reboot now.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The reboot will happen after bloodmoon. Admins can force it with " .. server.commandPrefix .. "reboot now.[-]")
 					else
 						irc_chat(chatvars.ircAlias, "The reboot will happen after bloodmoon. Admins can force it with " .. server.commandPrefix .. "reboot now.")
 					end
@@ -1382,25 +1434,26 @@ function gmsg_info()
 
 
 	local function cmd_WhoIsNearPlayer()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}who {optional number distance}"
 			help[2] = "Donors can see 300 metres and other players can see 200.  New and watched players can't see staff near them."
 
 			tmp.command = help[1]
-			tmp.keywords = "who,near,me,play"
+			tmp.keywords = "who,near,me,players"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "who") or string.find(chatvars.command, "info") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "who") or string.find(chatvars.command, "info") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1411,14 +1464,21 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "who" and chatvars.words[2] ~= "visited" and chatvars.words[3] == nil) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
 			alone = true
 
 			if (chatvars.number == nil) then chatvars.number = 500 end
 
-			if (chatvars.accessLevel > 2) then
+			if (not chatvars.isAdminHidden) then
 				chatvars.number = 300
 			end
 
@@ -1432,29 +1492,29 @@ function gmsg_info()
 			if (tonumber(chatvars.intX) < 0) then xdir = " west " else xdir = " east " end
 			if (tonumber(chatvars.intZ) < 0) then zdir = " south" else zdir = " north" end
 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are at " .. chatvars.intX .. xdir .. chatvars.intZ .. zdir .. " at a height of " .. chatvars.intY .. "[-]")
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You are in region r." .. x .. "." .. z .. ".7rg[-]")
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You are at " .. chatvars.intX .. xdir .. chatvars.intZ .. zdir .. " at a height of " .. chatvars.intY .. "[-]")
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You are in region r." .. x .. "." .. z .. ".7rg[-]")
 
-			if (pvpZone(chatvars.intX, chatvars.intZ) == false) or chatvars.accessLevel < 3 then
+			if (pvpZone(chatvars.intX, chatvars.intZ) == false) or chatvars.isAdminHidden then
 				for k, v in pairs(igplayers) do
 					dist = distancexz(chatvars.intX, chatvars.intZ, v.xPos, v.zPos)
 
 					if dist <= tonumber(chatvars.number) then
 						if (v.steam ~= chatvars.playerid) then
-							if (alone == true) then message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]players within " .. chatvars.number .. " meters of you are:[-]") end
+							if (alone == true) then message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]players within " .. chatvars.number .. " meters of you are:[-]") end
 
-							if (chatvars.accessLevel < 11) then
+							if chatvars.isAdminHidden or chatvars.isDonor then
 								x = math.floor(v.xPos / 512)
 								z = math.floor(v.zPos / 512)
 
-								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. " distance: " .. string.format("%d", dist) .. " region r." .. x .. "." .. z .. ".7rg[-]")
+								message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. v.name .. " distance: " .. string.format("%d", dist) .. " region r." .. x .. "." .. z .. ".7rg[-]")
 							else
-								if (players[chatvars.playerid].watchPlayer == true) and accessLevel(v.steam) > 2 then
-									message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. "[-]")
+								if (players[chatvars.playerid].watchPlayer == true) and not isAdminHidden(v.steam, v.userID) then
+									message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. v.name .. "[-]")
 								end
 
 								if (players[chatvars.playerid].watchPlayer == false) then
-									message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. v.name .. "[-]")
+									message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. v.name .. "[-]")
 								end
 							end
 							alone = false
@@ -1463,7 +1523,7 @@ function gmsg_info()
 				end
 
 				if alone then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Nobody is within " .. chatvars.number .. " meters of you.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Nobody is within " .. chatvars.number .. " meters of you.[-]")
 				end
 			end
 
@@ -1476,7 +1536,7 @@ function gmsg_info()
 	local function cmd_WhoVisitedMe()
 		local playerName, isArchived
 
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}who visited player {player name} days {days} hours {hrs} range {dist} height {ht}"
 			help[2] = "See who visited a player location or base.\n"
@@ -1486,19 +1546,20 @@ function gmsg_info()
 			help[2] = help[2] .. "Use this command to discover who's been at the player's location."
 
 			tmp.command = help[1]
-			tmp.keywords = "who,bed,visit,play"
+			tmp.keywords = "who,bed,visited,player"
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if (chatvars.words[1] == "help" and (string.find(chatvars.command, "who") or string.find(chatvars.command, "visit"))) or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "who") or string.find(chatvars.command, "visit") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -1509,12 +1570,19 @@ function gmsg_info()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "who" and chatvars.words[2] == "visited") then
-			if chatvars.accessLevel > 2 then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
+				botman.faultyChat = false
+				return true
+			end
+
+			if not chatvars.isAdminHidden then
 				if server.gameType == "pvp" then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is not available in PVP.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This command is not available in PVP.[-]")
 
 					botman.faultyChat = false
 					return true
@@ -1522,7 +1590,7 @@ function gmsg_info()
 
 				if igplayers[chatvars.playerid] then
 					if igplayers[chatvars.playerid].currentLocationPVP then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This command is not available in PVP.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This command is not available in PVP.[-]")
 
 						botman.faultyChat = false
 						return true
@@ -1531,21 +1599,21 @@ function gmsg_info()
 			end
 
 			if (chatvars.words[3] == nil) then
-				if (chatvars.accessLevel > 2) then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]See who visited your base (or 2nd base).[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Examples with defaults:[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited base1/base2 days 1 hours 0 range 10 height 5[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited my bed[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Setting hours will reset days to zero[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot will report up to right now.  You can't ask for just 2 days ago currently.[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Range is limited to 100 metres from your base teleport.[-]")
+				if (not chatvars.isAdminHidden) then
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]See who visited your base (or 2nd base).[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Examples with defaults:[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited base1/base2 days 1 hours 0 range 10 height 5[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited my bed[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Setting hours will reset days to zero[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot will report up to right now.  You can't ask for just 2 days ago currently.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Range is limited to 100 metres from your base teleport.[-]")
 				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]See who visited a player location or base.[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Example with defaults:[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited player smeg days 1 hours 0 range 10 height 5[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited bed smeg[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Add base to just see their base visitors[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Setting hours will reset days to zero[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]See who visited a player location or base.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Example with defaults:[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited player smeg days 1 hours 0 range 10 height 5[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. server.commandPrefix .. "who visited bed smeg[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Add base to just see their base visitors[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Setting hours will reset days to zero[-]")
 				end
 
 				botman.faultyChat = false
@@ -1580,7 +1648,7 @@ function gmsg_info()
 				end
 
 				-- staff only settings
-				if (chatvars.accessLevel < 3) then
+				if (chatvars.isAdminHidden) then
 					if chatvars.words[i] == "x" then
 						tmp.x = tonumber(chatvars.words[i+1])
 					end
@@ -1601,15 +1669,15 @@ function gmsg_info()
 						tmp.name = chatvars.words[i+1]
 						tmp.steam = LookupPlayer(tmp.name)
 
-						if tmp.steam == 0 then
+						if tmp.steam == "0" then
 							tmp.steam = LookupArchivedPlayer(tmp.name)
 
-							if not (tmp.steam == 0) then
+							if not (tmp.steam == "0") then
 								playerName = playersArchived[tmp.steam].name
 								isArchived = true
 							else
 								if (chatvars.playername ~= "Server") then
-									message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player found matching " .. tmp.name .. "[-]")
+									message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No player found matching " .. tmp.name .. "[-]")
 								else
 									irc_chat(chatvars.ircAlias, "No player found matching " .. tmp.name)
 								end
@@ -1653,7 +1721,7 @@ function gmsg_info()
 				end
 
 				-- player settings
-				if (chatvars.accessLevel > 2) then
+				if (not chatvars.isAdminHidden) then
 					if chatvars.words[i] == "bed" then
 						tmp.bed = true
 						tmp.x = players[tmp.steam].bedX
@@ -1672,31 +1740,31 @@ function gmsg_info()
 			end
 
 			-- staff version
-			if (chatvars.accessLevel < 3) then
+			if (chatvars.isAdminHidden) then
 				if (tmp.basesOnly == "base") and tmp.steam then
 					if not isArchived then
 						if players[tmp.steam].homeX ~= 0 and players[tmp.steam].homeZ ~= 0 then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 1 of " .. players[tmp.steam].name .. " at " .. players[tmp.steam].homeX .. " " .. players[tmp.steam].homeY .. " " .. players[tmp.steam].homeZ .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-							dbWho(chatvars.playerid, players[tmp.steam].homeX, players[tmp.steam].homeY, players[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 1 of " .. players[tmp.steam].name .. " at " .. players[tmp.steam].homeX .. " " .. players[tmp.steam].homeY .. " " .. players[tmp.steam].homeZ .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+							dbWho(chatvars.userID, players[tmp.steam].homeX, players[tmp.steam].homeY, players[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.userID, true)
 						else
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[tmp.steam].name .. " does not have a base set yet.[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. players[tmp.steam].name .. " does not have a base set yet.[-]")
 						end
 
 						if players[tmp.steam].home2X ~= 0 and players[tmp.steam].home2Z ~= 0 then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 2 of " .. players[tmp.steam].name .. " at " .. players[tmp.steam].home2X .. " " .. players[tmp.steam].home2Y .. " " .. players[tmp.steam].home2Z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-							dbWho(chatvars.playerid, players[tmp.steam].home2X, players[tmp.steam].home2Y, players[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 2 of " .. players[tmp.steam].name .. " at " .. players[tmp.steam].home2X .. " " .. players[tmp.steam].home2Y .. " " .. players[tmp.steam].home2Z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+							dbWho(chatvars.userID, players[tmp.steam].home2X, players[tmp.steam].home2Y, players[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.userID, true)
 						end
 					else
 						if playersArchived[tmp.steam].homeX ~= 0 and playersArchived[tmp.steam].homeZ ~= 0 then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 1 of " .. players[tmp.steam].name .. " at " .. playersArchived[tmp.steam].homeX .. " " .. playersArchived[tmp.steam].homeY .. " " .. playersArchived[tmp.steam].homeZ .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-							dbWho(chatvars.playerid, playersArchived[tmp.steam].homeX, playersArchived[tmp.steam].homeY, playersArchived[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 1 of " .. players[tmp.steam].name .. " at " .. playersArchived[tmp.steam].homeX .. " " .. playersArchived[tmp.steam].homeY .. " " .. playersArchived[tmp.steam].homeZ .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+							dbWho(chatvars.userID, playersArchived[tmp.steam].homeX, playersArchived[tmp.steam].homeY, playersArchived[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.userID, true)
 						else
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. playersArchived[tmp.steam].name .. " does not have a base set yet.[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. playersArchived[tmp.steam].name .. " does not have a base set yet.[-]")
 						end
 
 						if playersArchived[tmp.steam].home2X ~= 0 and playersArchived[tmp.steam].home2Z ~= 0 then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 2 of " .. playersArchived[tmp.steam].name .. " at " .. playersArchived[tmp.steam].home2X .. " " .. playersArchived[tmp.steam].home2Y .. " " .. playersArchived[tmp.steam].home2Z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-							dbWho(chatvars.playerid, playersArchived[tmp.steam].home2X, playersArchived[tmp.steam].home2Y, playersArchived[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of base 2 of " .. playersArchived[tmp.steam].name .. " at " .. playersArchived[tmp.steam].home2X .. " " .. playersArchived[tmp.steam].home2Y .. " " .. playersArchived[tmp.steam].home2Z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+							dbWho(chatvars.userID, playersArchived[tmp.steam].home2X, playersArchived[tmp.steam].home2Y, playersArchived[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.userID, true)
 						end
 					end
 				end
@@ -1704,53 +1772,53 @@ function gmsg_info()
 				if tmp.basesOnly == "player" and tmp.steam then
 					if not isArchived then
 						if tmp.player then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of player " .. players[tmp.steam].name .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of player " .. players[tmp.steam].name .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
 						end
 
 						if tmp.bed then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of player " .. players[tmp.steam].name .. "'s bed at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of player " .. players[tmp.steam].name .. "'s bed at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
 						end
 					else
 						if tmp.player then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of player " .. playersArchived[tmp.steam].name .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of player " .. playersArchived[tmp.steam].name .. " at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
 						end
 
 						if tmp.bed then
-							message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of player " .. playersArchived[tmp.steam].name .. "'s bed at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of player " .. playersArchived[tmp.steam].name .. "'s bed at " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
 						end
 					end
 
-					dbWho(chatvars.playerid, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
+					dbWho(chatvars.userID, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.userID, true)
 				end
 
 				if not tmp.steam then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-					dbWho(chatvars.playerid, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of " .. tmp.x .. " " .. tmp.y .. " " .. tmp.z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+					dbWho(chatvars.userID, tmp.x, tmp.y, tmp.z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.userID, true)
 				end
 			end
 
 
 			-- player version
-			if (chatvars.accessLevel > 2) then
+			if (not chatvars.isAdminHidden) then
 				-- set some defaults and limits
 				if tmp.height == 0 then tmp.height = 30 end
 				if tmp.range > 100 then tmp.range = 100 end
 
 				if tmp.base == "1" then
 					if players[tmp.steam].homeX ~= 0 and players[tmp.steam].homeZ ~= 0 then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of your home at " .. players[tmp.steam].homeX .. " " .. players[tmp.steam].homeY .. " " .. players[tmp.steam].homeZ .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-						dbWho(chatvars.playerid, players[tmp.steam].homeX, players[tmp.steam].homeY, players[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of your home at " .. players[tmp.steam].homeX .. " " .. players[tmp.steam].homeY .. " " .. players[tmp.steam].homeZ .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+						dbWho(chatvars.userID, players[tmp.steam].homeX, players[tmp.steam].homeY, players[tmp.steam].homeZ, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.userID, true)
 					else
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have not done " .. server.commandPrefix .. "sethome yet.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You have not done " .. server.commandPrefix .. "sethome yet.[-]")
 					end
 				end
 
 				if tmp.base == "2" then
 					if players[tmp.steam].home2X ~= 0 and players[tmp.steam].home2Z ~= 0 then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of your second home at " .. players[tmp.steam].home2X .. " " .. players[tmp.steam].home2Y .. " " .. players[tmp.steam].home2Z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
-						dbWho(chatvars.playerid, players[tmp.steam].home2X, players[tmp.steam].home2Y, players[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.playerid, true)
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players who visited within " .. tmp.range .. " metres of your second home at " .. players[tmp.steam].home2X .. " " .. players[tmp.steam].home2Y .. " " .. players[tmp.steam].home2Z .. " days " .. tmp.days .. " hours " .. tmp.hours .. " height " .. tmp.height .. "[-]")
+						dbWho(chatvars.userID, players[tmp.steam].home2X, players[tmp.steam].home2Y, players[tmp.steam].home2Z, tmp.range, tmp.days, tmp.hours, tmp.height, chatvars.userID, true)
 					else
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have not done " .. server.commandPrefix .. "sethome2 yet (if you can have a 2nd home).[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You have not done " .. server.commandPrefix .. "sethome2 yet (if you can have a 2nd home).[-]")
 					end
 				end
 			end
@@ -1763,19 +1831,24 @@ function gmsg_info()
 -- ################## End of command functions ##################
 
 	if botman.registerHelp then
-		irc_chat(chatvars.ircAlias, "==== Registering help - info commands ====")
 		if debug then dbug("Registering help - info commands") end
 
 		tmp.topicDescription = "Info commands show players information about specific things such as rules, when the next horde night is, etc."
 
-		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'info'")
-		rows = cursor:numrows()
-		if rows == 0 then
-			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch({}, "a")
-			tmp.topicID = row.Auto_increment
+		if chatvars.ircAlias ~= "" then
+			irc_chat(chatvars.ircAlias, ".")
+			irc_chat(chatvars.ircAlias, "Info Commands:")
+			irc_chat(chatvars.ircAlias, ".")
+			irc_chat(chatvars.ircAlias, tmp.topicDescription)
+			irc_chat(chatvars.ircAlias, ".")
+		end
 
-			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('info', '" .. escape(tmp.topicDescription) .. "')")
+		cursor,errorString = connSQL:execute("SELECT count(*) FROM helpTopics WHERE topic = '" .. tmp.topic .. "'")
+		row = cursor:fetch({}, "a")
+		rows = row["count(*)"]
+
+		if rows == 0 then
+			connSQL:execute("INSERT INTO helpTopics (topic, description) VALUES ('" .. tmp.topic .. "', '" .. connMEM:escape(tmp.topicDescription) .. "')")
 		end
 	end
 
@@ -1788,23 +1861,19 @@ function gmsg_info()
 	if chatvars.showHelp then
 		if chatvars.words[3] then
 			if chatvars.words[3] ~= "info" then
-				skipHelp = true
+				botman.faultyChat = false
+				return true
 			end
 		end
-
-		-- if chatvars.words[1] == "help" then
-			-- skipHelp = false
-		-- end
 
 		if chatvars.words[1] == "list" then
 			shortHelp = true
 		end
 	end
 
-	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
+	if chatvars.showHelp and chatvars.words[1] ~= "help" and not botman.registerHelp then
 		irc_chat(chatvars.ircAlias, ".")
 		irc_chat(chatvars.ircAlias, "Info Commands:")
-		irc_chat(chatvars.ircAlias, "==============")
 		irc_chat(chatvars.ircAlias, ".")
 	end
 
@@ -1818,7 +1887,7 @@ function gmsg_info()
 
 	if result then
 		if debug then dbug("debug cmd_BotInfo triggered") end
-		return result
+		return result, "cmd_BotInfo"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -1827,7 +1896,7 @@ function gmsg_info()
 
 	if result then
 		if debug then dbug("debug cmd_Uptime triggered") end
-		return result
+		return result, "cmd_Uptime"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -1836,7 +1905,7 @@ function gmsg_info()
 
 	if result then
 		if debug then dbug("debug cmd_ServerInfo triggered") end
-		return result
+		return result, "cmd_ServerInfo"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -1845,7 +1914,7 @@ function gmsg_info()
 
 	if result then
 		if debug then dbug("debug cmd_WhenNextReboot triggered") end
-		return result
+		return result, "cmd_WhenNextReboot"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -1854,7 +1923,7 @@ function gmsg_info()
 
 	if result then
 		if debug then dbug("debug cmd_WhenDay7 triggered") end
-		return result
+		return result, "cmd_WhenDay7"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -1863,7 +1932,7 @@ function gmsg_info()
 
 	if result then
 		if debug then dbug("debug cmd_ShowServerFPS triggered") end
-		return result
+		return result, "cmd_ShowServerFPS"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -1872,7 +1941,7 @@ function gmsg_info()
 
 	if result then
 		if debug then dbug("debug cmd_ShowServerTime triggered") end
-		return result
+		return result, "cmd_ShowServerTime"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -1881,7 +1950,7 @@ function gmsg_info()
 
 	if result then
 		if debug then dbug("debug cmd_ShowServerStats triggered") end
-		return result
+		return result, "cmd_ShowServerStats"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -1890,7 +1959,7 @@ function gmsg_info()
 
 	if result then
 		if debug then dbug("debug cmd_ListNewPlayers triggered") end
-		return result
+		return result, "cmd_ListNewPlayers"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -1899,7 +1968,7 @@ function gmsg_info()
 
 	if result then
 		if debug then dbug("debug cmd_SeenPlayer triggered") end
-		return result
+		return result, "cmd_SeenPlayer"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -1908,22 +1977,21 @@ function gmsg_info()
 
 	if result then
 		if debug then dbug("debug cmd_ShowRules triggered") end
-		return result
+		return result, "cmd_ShowRules"
 	end
 
 	if debug then dbug("debug info end of remote commands") end
 
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
+	if chatvars.userID == "0" and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
 		return false
 	end
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
 
-	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
+	if chatvars.showHelp and chatvars.words[1] ~= "help" and not botman.registerHelp then
 		irc_chat(chatvars.ircAlias, ".")
 		irc_chat(chatvars.ircAlias, "Info Commands (In-Game Only):")
-		irc_chat(chatvars.ircAlias, "=============================")
 		irc_chat(chatvars.ircAlias, ".")
 	end
 
@@ -1931,13 +1999,13 @@ function gmsg_info()
 
 	if result then
 		if debug then dbug("debug cmd_ShowWherePlayer triggered") end
-		return result
+		return result, "cmd_ShowWherePlayer"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	-- help
-	if chatvars.words[1] == "help" and chatvars.ircid == 0 then
+	if chatvars.words[1] == "help" and chatvars.ircid == "0" then
 		if chatvars.words[2] ~= nil then
 			cmd = string.trim(string.sub(chatvars.command, 7))
 		end
@@ -1945,13 +2013,13 @@ function gmsg_info()
 		commandHelp(cmd)
 
 		botman.faultyChat = false
-		return true
+		return true, ""
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	-- db help
-	if chatvars.words[1] == "hhelp" and chatvars.ircid == 0 then
+	if chatvars.words[1] == "hhelp" and chatvars.ircid == "0" then
 		if chatvars.words[2] ~= nil then
 			cmd = string.sub(chatvars.command, string.find(chatvars.command, chatvars.words[2]))
 --			cmd = string.trim(string.sub(chatvars.command, 7))
@@ -1960,7 +2028,7 @@ function gmsg_info()
 		dbHelp(cmd)
 
 		botman.faultyChat = false
-		return true
+		return true, ""
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -1968,27 +2036,27 @@ function gmsg_info()
 	if (chatvars.words[1] == "commands") then
 		commandHelp("commands")
 		botman.faultyChat = false
-		return true
+		return true, ""
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if (chatvars.words[1] == "status") then
-		botman.faultyChat = baseStatus(chatvars.command, chatvars.playerid)
-		return true
+		botman.faultyChat = baseStatus(chatvars.command, chatvars.playerid, chatvars.userID)
+		return true, ""
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
 
 	if string.find(chatvars.command, "pvp") and (chatvars.accessLevel == 99) and (chatvars.words[1] ~= "help") then
 		if (server.gameType == "pvp") then
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is a PVP server.[-]")
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This is a PVP server.[-]")
 		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is a PVE server.  No PVP except in PVP zones.  Read /help pvp for info.[-]")
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This is a PVE server.  No PVP except in PVP zones.  Read /help pvp for info.[-]")
 		end
 
 		botman.faultyChat = false
-		return true
+		return true, ""
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -1996,7 +2064,7 @@ function gmsg_info()
 	result = cmd_WhoIsNearPlayer()
 	if result then
 		if debug then dbug("debug cmd_WhoIsNearPlayer triggered") end
-		return result
+		return result, "cmd_WhoIsNearPlayer"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -2004,7 +2072,7 @@ function gmsg_info()
 	result = cmd_SendAlertToAdmins()
 	if result then
 		if debug then dbug("debug cmd_SendAlertToAdmins triggered") end
-		return result
+		return result, "cmd_SendAlertToAdmins"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -2012,7 +2080,7 @@ function gmsg_info()
 	result = cmd_ViewPlayerInfo()
 	if result then
 		if debug then dbug("debug cmd_ViewPlayerInfo triggered") end
-		return result
+		return result, "cmd_ViewPlayerInfo"
 	end
 
 	if (debug) then dbug("debug info line " .. debugger.getinfo(1).currentline) end
@@ -2020,20 +2088,18 @@ function gmsg_info()
 	result = cmd_WhoVisitedMe()
 	if result then
 		if debug then dbug("debug cmd_WhoVisitedMe triggered") end
-		return result
+		return result, "cmd_WhoVisitedMe"
 	end
 
 	if botman.registerHelp then
-		irc_chat(chatvars.ircAlias, "**** Info commands help registered ****")
 		if debug then dbug("Info commands help registered") end
-		topicID = topicID + 1
 	end
 
 	if debug then dbug("debug info end") end
 
 	-- can't touch dis
 	if true then
-		return result
+		return result, ""
 	end
 
 end

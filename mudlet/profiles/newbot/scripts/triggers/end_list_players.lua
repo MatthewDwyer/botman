@@ -1,16 +1,21 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 function endListPlayers(line)
 	local cursor, errorString, row, k, v, freeSlots
 
 	if botman.botDisabled then
+		return
+	end
+
+	-- this check should not be needed but just in case future telnet messages start with 'Total of', we only want the list players count.
+	if not string.find(line, "in the game", nil, true) then
 		return
 	end
 
@@ -24,7 +29,8 @@ function endListPlayers(line)
 				--	Everyone who is flagged notInLKP gets archived.
 				for k,v in pairs(players) do
 					if v.notInLKP then
-						if botman.dbConnected then conn:execute("INSERT into miscQueue (steam, command) VALUES (" .. k .. ", 'archive player')") end
+						if botman.dbConnected then connSQL:execute("INSERT INTO miscQueue (steam, command) VALUES ('" .. k .. "', 'archive player')") end
+						botman.miscQueueEmpty = false
 					end
 				end
 			end
@@ -32,9 +38,11 @@ function endListPlayers(line)
 
 		if botman.listPlayers and not botman.listEntities then
 			botman.playersOnline = tonumber(string.match(line, "%d+"))
+			botStatus.playersOnline = botman.playersOnline
 
 			if not botman.playersOnline then
 				botman.playersOnline = 0
+				botStatus.playersOnline = 0
 			end
 
 			playerConnectCounter = botman.playersOnline
@@ -53,14 +61,12 @@ function endListPlayers(line)
 
 			botman.listPlayers = false
 
-			if botman.initReservedSlots then
-				initSlots()
+			if tonumber(server.reservedSlots) > 0 then
+				if botman.initReservedSlots then
+					initSlots()
 
-				-- for k,v in pairs(igplayers) do
-					-- assignASlot(k)
-				-- end
-
-				botman.initReservedSlots = false
+					botman.initReservedSlots = false
+				end
 			end
 		end
 

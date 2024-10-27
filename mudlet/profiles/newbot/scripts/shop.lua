@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 -- 	if not server.beQuietBot then
@@ -25,20 +25,28 @@ function fixShop()
 	row = cursor:fetch({}, "a")
 
 	while row do
-		if row.category == "" or shopCategories[row.category] == nil then
+		if row.category == "" or tonumber(row.category) then
 			cursor2,errorString = conn:execute("UPDATE shop SET category = 'misc' WHERE item = '" .. escape(row.item) .. "'")
+		else
+			-- add a new category if it exists in the shop and not in shopCategories
+			if not shopCategories[row.category] then
+				shopCategories[row.category] = {}
+				shopCategories[row.category].idx = 1
+				shopCategories[row.category].code = string.sub(row.category, 1, 3)
+				cursor2,errorString = conn:execute("INSERT INTO shopCategories (category, idx, code) VALUES ('" .. escape(row.category) .. "', 1, '" .. string.sub(row.category, 1, 3) .. "')")
+			end
 		end
 
 		row = cursor:fetch(row, "a")
 	end
 
-	irc_chat(server.ircMain, "Validating shop and gimme prize items.")
-	collectSpawnableItemsList()
+	-- also fix the gimme Zombies since we are reading the entire server's items list.
+	gimmeZombies = {}
+	if botman.dbConnected then conn:execute("TRUNCATE gimmeZombies") end
+	sendCommand("se")
 
-	-- -- reindex each category
-	-- for k, v in pairs(shopCategories) do
-		-- reindexShop(k)
-	-- end
+	irc_chat(server.ircMain, "Validating shop and gimme prize items. A report will display here in 80 seconds.")
+	collectSpawnableItemsList()
 end
 
 
@@ -51,13 +59,13 @@ function payPlayer()
 				players[chatvars.playerid].cash = players[chatvars.playerid].cash - players[chatvars.playerid].botQuestionValue
 			end
 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[chatvars.playerid].botQuestionValue .. " has been paid to " .. players[players[chatvars.playerid].botQuestionID].name .. "[-]")
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. players[chatvars.playerid].botQuestionValue .. " has been paid to " .. players[players[chatvars.playerid].botQuestionID].name .. "[-]")
 
 			if (igplayers[players[chatvars.playerid].botQuestionID]) then
 				message("pm " .. players[chatvars.playerid].botQuestionID .. " [" .. server.chatColour .. "]Payday! " .. players[chatvars.playerid].name .. " has paid you " .. players[chatvars.playerid].botQuestionValue .. " " .. server.moneyPlural .. "![-]")
 			end
 		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I regret to inform you that you do not have sufficient funds to pay " .. players[players[chatvars.playerid].botQuestionID].name .. "[-]")
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]I regret to inform you that you do not have sufficient funds to pay " .. players[players[chatvars.playerid].botQuestionID].name .. "[-]")
 		end
 	end
 
@@ -81,7 +89,7 @@ function LookupShop(search,all)
 	shopQuality = 0
 	search = string.lower(search)
 
-	connMEM:execute("DELETE FROM memShop")
+	connMEM:execute("DELETE FROM shop")
 
 	if all ~= nil then
 		cursor,errorString = conn:execute("SELECT * FROM shop WHERE item = '" .. escape(search) .. "' or category = '" .. escape(search) .. "' ORDER BY idx")
@@ -99,8 +107,8 @@ function LookupShop(search,all)
 		shopStock = row.stock
 		shopUnits = row.units
 		shopQuality = row.quality
-		shopPrice = (row.price + row.variation) * ((100 - row.special) / 100)
-		connMEM:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units) VALUES ('" .. connMEM:escape(row.item) .. "'," .. row.idx .. ",'" .. connMEM:escape(shopCategory) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. connMEM:escape(shopCode) .. "'," .. row.units .. ")")
+		shopPrice = row.price
+		connMEM:execute("INSERT INTO shop (item, idx, category, price, stock, code, units) VALUES ('" .. connMEM:escape(row.item) .. "'," .. row.idx .. ",'" .. connMEM:escape(shopCategory) .. "'," .. row.price .. "," .. row.stock .. ",'" .. connMEM:escape(shopCode) .. "'," .. row.units .. ")")
 
 		row = cursor:fetch(row, "a")
 	end
@@ -122,8 +130,9 @@ function LookupShop(search,all)
 				shopStock = row.stock
 				shopUnits = row.units
 				shopQuality = row.quality
-				shopPrice = (row.price + row.variation) * ((100 - row.special) / 100)
-				connMEM:execute("INSERT INTO memShop (item, idx, category, price, stock, code, units, quality) VALUES ('" .. connMEM:escape(row.item) .. "'," .. row.idx .. ",'" .. connMEM:escape(shopCategory) .. "'," .. (row.price + row.variation) * ((100 - row.special) / 100) .. "," .. row.stock .. ",'" .. connMEM:escape(shopCode) .. "'," .. row.units .. "," .. row.quality .. ")")
+				shopPrice = row.price
+
+				connMEM:execute("INSERT INTO shop (item, idx, category, price, stock, code, units, quality) VALUES ('" .. connMEM:escape(row.item) .. "'," .. row.idx .. ",'" .. connMEM:escape(shopCategory) .. "'," .. row.price .. "," .. row.stock .. ",'" .. connMEM:escape(shopCode) .. "'," .. row.units .. "," .. row.quality .. ")")
 				return
 			end
 
@@ -173,13 +182,12 @@ function reindexShop(category)
 			rowCat = cursorCat:fetch(rowCat, "a")
 		end
 	end
-
-	--removeInvalidItems()
 end
 
 
 function drawLottery(draw)
 	local winners, winnersCount, prizeDraw, x, rows, thing
+	local queued = false
 
 	if tonumber(server.lottery) == 0 then
 		return
@@ -195,15 +203,17 @@ function drawLottery(draw)
 	for x=1,100,1 do
 		prizeDraw = randSQL(100)
 
-		cursor,errorString = conn:execute("SELECT * FROM memLottery WHERE ticket = " .. prizeDraw)
-		rows = cursor:numrows()
+		cursor,errorString = connSQL:execute("SELECT count(*) FROM lottery WHERE ticket = " .. prizeDraw)
+		rowSQL = cursor:fetch({}, "a")
+		rowCount = rowSQL["count(*)"]
 
-		if rows > 0 then
-			winnersCount = rows
+		if tonumber(rowCount) > 0 then
+			winnersCount = rowCount
 			break
 		end
 	end
 
+	cursor,errorString = connSQL:execute("SELECT * FROM lottery WHERE ticket = " .. prizeDraw)
 	message("say [" .. server.chatColour .. "]It's time for the daily lottery draw for " .. server.lottery .. " " .. server.moneyPlural .. "![-]")
 
 	if tonumber(winnersCount) > 0 then
@@ -212,14 +222,14 @@ function drawLottery(draw)
 		row = cursor:fetch({}, "a")
 		while row do
 			players[row.steam].cash = players[row.steam].cash + prizeDraw
-			conn:execute("UPDATE players SET cash = " .. players[row.steam].cash .. " WHERE steam = " .. row.steam)
+			conn:execute("UPDATE players SET cash = " .. players[row.steam].cash .. " WHERE steam = '" .. row.steam .. "'")
 			message("say [" .. server.chatColour .. "]" .. players[row.steam].name .. " won " .. prizeDraw .. " " .. server.moneyPlural .. "![-]")
 
 			if not igplayers[row.steam] then
 				if winnersCount > 1 then
-					conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. row.steam .. ", 'Congratulations!  You won " .. prizeDraw .. " " .. server.moneyPlural .. " in the daily lottery along with " .. winnersCount - 1 .. " others. :)')")
+					connSQL:execute("INSERT INTO mail (sender, recipient, message) VALUES ('0','" .. row.steam .. "', 'Congratulations!  You won " .. prizeDraw .. " " .. server.moneyPlural .. " in the daily lottery along with " .. winnersCount - 1 .. " others. :)')")
 				else
-					conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (0," .. row.steam .. ", 'Congratulations!  You won " .. prizeDraw .. " " .. server.moneyPlural .. " in the daily lottery! =D')")
+					connSQL:execute("INSERT INTO mail (sender, recipient, message) VALUES ('0','" .. row.steam .. "', 'Congratulations!  You won " .. prizeDraw .. " " .. server.moneyPlural .. " in the daily lottery! =D')")
 				end
 			end
 
@@ -231,13 +241,11 @@ function drawLottery(draw)
 		end
 
 		if steam == nil then
-			conn:execute("TRUNCATE memLottery")
-			conn:execute("TRUNCATE lottery")
+			connSQL:execute("DELETE FROM lottery")
 			server.lottery = 0
 			conn:execute("UPDATE server SET lottery = 0")
 		else
-			conn:execute("DELETE FROM memLottery where steam = '" .. steam .. "'")
-			conn:execute("DELETE FROM lottery where steam = '" .. steam .. "'")
+			connSQL:execute("DELETE FROM lottery where steam = '" .. steam .. "'")
 		end
 	else
 		if not server.beQuietBot then
@@ -251,43 +259,49 @@ function drawLottery(draw)
 
 			if (r == 3) then
 				message("say [" .. server.chatColour .. "]OH NO! A zombie ate the winning number![-]")
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]BAD ZOMBIE!  No biscuit![-]") .. "')")
+				connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]BAD ZOMBIE!  No biscuit![-]") .. "')")
+				queued = true
 			end
 
 			if (r == 4) then
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody again!  That guy has all the luck.[-]") .. "')")
+				connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
+				connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Nobody again!  That guy has all the luck.[-]") .. "')")
+				queued = true
 			end
 
 			if (r == 5) then
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
+				connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
 				r = randSQL(6)
-				if (r == 1) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]ME! I win! IT'S MINE! :P[-]") .. "')") end
-				if (r == 2) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Dead! Congratulations.. oh.. nevermind.[-]") .. "')") end
-				if (r == 3) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]TAX! Oh no! They've found my little illegal gambling scam er.. establishment. D:[-]") .. "')") end
-				if (r == 4) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Being eaten by zombies! Poor guy :([-]") .. "')") end
-				if (r == 5) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]No one! HA HA HAAAA![-]") .. "')") end
-				if (r == 6) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Sorry folks. Tonight's draw is cancelled.[-]") .. "')") end
+				if (r == 1) then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]ME! I win! IT'S MINE! :P[-]") .. "')") end
+				if (r == 2) then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Dead! Congratulations.. oh.. nevermind.[-]") .. "')") end
+				if (r == 3) then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]TAX! Oh no! They've found my little illegal gambling scam er.. establishment. D:[-]") .. "')") end
+				if (r == 4) then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Being eaten by zombies! Poor guy :([-]") .. "')") end
+				if (r == 5) then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]No one! HA HA HAAAA![-]") .. "')") end
+				if (r == 6) then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Sorry folks. Tonight's draw is cancelled.[-]") .. "')") end
 				r = 0
+				queued = true
 			end
 
 			if (r == 6) then
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
+				connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
 
 				-- don't redraw more than once
 				if draw ~= 6 then
-					conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody!  But he's won enough so we're doing a redraw![-]") .. "')")
+					connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Nobody!  But he's won enough so we're doing a redraw![-]") .. "')")
+					queued = true
 					tempTimer( 15, [[drawLottery(]] .. r .. [[)]] )
 				else
 					r = randSQL(6)
-					if (r == 1) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Stop buying all of the tickets you dirty cheat![-]") .. "')") end
-					if (r == 2) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Not on my watch. *burns Nobody's ticket*[-]") .. "')") end
-					if (r == 3) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody again.[-]") .. "')") end
-					if (r == 4) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody. Right! That's it you've had it. *BANG* Nobody died.[-]") .. "')") end
-					if (r == 5) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Nobody! Stop gambling you lunatic![-]") .. "')") end
-					if (r == 6) then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Not Nobody, please don't draw Nobody.. and its Nobody again.[-]") .. "')") end
+					if (r == 1) then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Nobody! Stop buying all of the tickets you dirty cheat![-]") .. "')") end
+					if (r == 2) then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Nobody! Not on my watch. *burns Nobody's ticket*[-]") .. "')") end
+					if (r == 3) then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Nobody again.[-]") .. "')") end
+					if (r == 4) then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Nobody. Right! That's it you've had it. *BANG* Nobody died.[-]") .. "')") end
+					if (r == 5) then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Nobody! Stop gambling you lunatic![-]") .. "')") end
+					if (r == 6) then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Not Nobody, please don't draw Nobody.. and its Nobody again.[-]") .. "')") end
 					r = 0
 				end
+
+				queued = true
 			end
 
 			if (r == 7) then
@@ -298,9 +312,14 @@ function drawLottery(draw)
 				if r == 4 then thing = "mouldy eyeball" end
 				if r == 5 then thing = "used nappy" end
 				if r == 6 then thing = "rotten cheese" end
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
-				conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0,0,'" .. escape("[" .. server.chatColour .. "]EWW!  Who put a " .. thing .. " in the bag?  That's gross![-]") .. "')")
+				connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]Tonight's winner is..[-]") .. "')")
+				connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','0','" .. connMEM:escape("[" .. server.chatColour .. "]EWW!  Who put a " .. thing .. " in the bag?  That's gross![-]") .. "')")
+				queued = true
 				r = 0
+			end
+
+			if queued then
+				tempTimer(1, [[ botman.messageQueueEmpty = false  ]])
 			end
 		else
 			message("say [" .. server.chatColour .. "]Nobody won this time.[-]")
@@ -328,8 +347,11 @@ function resetShop(forced)
 end
 
 
-function doShop(command, playerid, words)
+function doShop(command, playerid, gameid, words)
 	local k, v, i, number, cmd, list, cursor, errorString, example, units, cmd
+	local steam, steamOwner, userID
+
+	steam, steamOwner, userID = LookupPlayer(playerid)
 
 if (debug) then
 dbug("debug shop line " .. debugger.getinfo(1).currentline)
@@ -343,6 +365,7 @@ end
 
 	cmd = ""
 	list = ""
+
 	for k, v in pairs(shopCategories) do
 		if k ~= "misc" then
 			example = k
@@ -368,34 +391,33 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if words[1] == "shop" and words[2] == nil then
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have " .. string.format("%d", players[playerid].cash) .. " " .. server.moneyPlural .. " in the bank. Shop is " .. shopState .. "[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]Shop categories are " .. list .. ".[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]Type shop " .. example .. " (to browse our fine collection).[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]New stock arrives every 3 days.[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]Type help shop for more info.[-]")
-		if (accessLevel(playerid) < 3) then message("pm " .. playerid .. " [" .. server.chatColour .. "]shop admin (for admin commands)[-]") end
+		message("pm " .. userID .. " [" .. server.chatColour .. "]You have " .. string.format("%d", players[playerid].cash) .. " " .. server.moneyPlural .. " in the bank. Shop is " .. shopState .. "[-]")
+		message("pm " .. userID .. " [" .. server.chatColour .. "]Shop categories are " .. list .. ".[-]")
+		message("pm " .. userID .. " [" .. server.chatColour .. "]Type shop " .. example .. " (to browse our fine collection).[-]")
+		message("pm " .. userID .. " [" .. server.chatColour .. "]New stock arrives every 3 days.[-]")
+		message("pm " .. userID .. " [" .. server.chatColour .. "]Type help shop for more info.[-]")
+		if (isAdminHidden(steam, userID)) then message("pm " .. userID .. " [" .. server.chatColour .. "]shop admin (for admin commands)[-]") end
 		return false
 	end
 
 if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
-	if (words[1] == "shop" and words[2] == "admin") and (accessLevel(playerid) < 3) then
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop price {code or item name} {whole number without $}[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop restock {code or item name} {quantity} or -1 (add quantity to stock)[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop special {code or item name} {number from 0 to 100}[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]shop variation {code or item name} {number} (can be negative)[-]")
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]You can manage categories and items for sale via IRC.[-]")
+	if (words[1] == "shop" and words[2] == "admin") and (isAdminHidden(steam, userID)) then
+		message("pm " .. userID .. " [" .. server.chatColour .. "]shop price {code or item name} {whole number without $}[-]")
+		message("pm " .. userID .. " [" .. server.chatColour .. "]shop restock {code or item name} {quantity} or -1 (add quantity to stock)[-]")
+		message("pm " .. userID .. " [" .. server.chatColour .. "]You can manage categories and items for sale via IRC.[-]")
 		return false
 	end
 
 if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (shopCategories[words[2]]) then
-		LookupShop(words[2],all)
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+		LookupShop(words[2], true)
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+		message("pm " .. userID .. " [" .. server.chatColour .. "]To buy type buy {code} {quantity}[-]")
 
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]To buy type buy {code} {quantity}[-]")
-
-		cursor,errorString = connMEM:execute("SELECT * FROM memShop ORDER BY category, item")
+		cursor,errorString = connMEM:execute("SELECT * FROM shop ORDER BY category, item")
 		row = cursor:fetch({}, "a")
 
 		while row do
@@ -406,12 +428,12 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			end
 
 			if tonumber(row.stock) == -1 then
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price:  " .. row.price .. " units:  " .. units .. " UNLIMITED STOCK![-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price:  " .. row.price .. " units:  " .. units .. " UNLIMITED STOCK![-]")
 			else
 				if row.stock == 0 then
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "[-]  [FF0000]SOLD OUT[-]")
+					message("pm " .. userID .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "[-]  [FF0000]SOLD OUT[-]")
 				else
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "  (" .. row.stock .. " left)[-]")
+					message("pm " .. userID .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "  (" .. row.stock .. " left)[-]")
 				end
 			end
 
@@ -431,56 +453,23 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		end
 		list = string.sub(list, 1, string.len(list) - 3)
 
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]To browse my wares type shop {category}.  The categories are " .. list .. ".[-]")
+		message("pm " .. userID .. " [" .. server.chatColour .. "]To browse my wares type shop {category}.  The categories are " .. list .. ".[-]")
 
-		return false
-	end
-
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
-
-	if (words[2] == "variation" and words[3] ~= nil) then
-		if (accessLevel(playerid) > 2) then
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			return false
-		end
-
-		LookupShop(words[3])
-
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have changed the price variation for " .. shopItem .. " to " .. number .. "[-]")
-		conn:execute("UPDATE shop SET variation = " .. escape(number) .. " WHERE item = '" .. escape(shopItem) .. "'")
-
-		return false
-	end
-
-if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
-
-	if (words[2] == "special" and words[3] ~= nil) then
-		if (accessLevel(playerid) > 2) then
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
-			return false
-		end
-
-		LookupShop(words[3])
-		number = tonumber(words[4])
-
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have changed the shop special for " .. shopItem .. " to " .. number .. "[-]")
-
-		conn:execute("UPDATE shop SET special = " .. escape(number) .. " WHERE item = '" .. escape(shopItem) .. "'")
 		return false
 	end
 
 if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[2] == "price" and words[3] ~= nil) then
-		if (accessLevel(playerid) > 2) then
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
+		if (not isAdminHidden(steam, userID)) then
+			message("pm " .. userID .. " [" .. server.chatColour .. "]This command is restricted[-]")
 			return false
 		end
 
 		LookupShop(words[3])
 		number = tonumber(words[4])
 
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have changed the shop price for " .. shopItem .. " to " .. number .. "[-]")
+		message("pm " .. userID .. " [" .. server.chatColour .. "]You have changed the shop price for " .. shopItem .. " to " .. number .. "[-]")
 
 		conn:execute("UPDATE shop SET price = " .. escape(number) .. " WHERE item = '" .. escape(shopItem) .. "'")
 		return false
@@ -489,15 +478,15 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[2] == "units" and words[3] ~= nil) then
-		if (accessLevel(playerid) > 2) then
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
+		if (not isAdminHidden(steam, userID)) then
+			message("pm " .. userID .. " [" .. server.chatColour .. "]This command is restricted[-]")
 			return false
 		end
 
 		LookupShop(words[3])
 		number = tonumber(words[4])
 
-		message("pm " .. playerid .. " [" .. server.chatColour .. "]You have changed the units per sale for " .. shopItem .. " to " .. number .. "[-]")
+		message("pm " .. userID .. " [" .. server.chatColour .. "]You have changed the units per sale for " .. shopItem .. " to " .. number .. "[-]")
 
 		conn:execute("UPDATE shop SET units = " .. escape(number) .. " WHERE item = '" .. escape(shopItem) .. "'")
 		return false
@@ -506,15 +495,16 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[2] == "restock" and words[3] ~= nil) then
-		if (accessLevel(playerid) > 2) then
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]This command is restricted[-]")
+if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
+		if (not isAdminHidden(steam, userID)) then
+			message("pm " .. userID .. " [" .. server.chatColour .. "]This command is restricted[-]")
 			return false
 		end
 
 		LookupShop(words[3])
 
 		if (tonumber(shopStock) > -1) then
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have added " .. number .. " " .. shopItem .. " to the shop[-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]You have added " .. number .. " " .. shopItem .. " to the shop[-]")
 
 			conn:execute("UPDATE shop SET stock = stock + " .. escape(number) .. " WHERE item = '" .. escape(shopItem) .. "'")
 			conn:execute("UPDATE shop SET stock = -1 WHERE stock < 0")
@@ -527,8 +517,8 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 	if (words[1] == "buy" and words[2] ~= nil) then
 		if server.shopOpenHour ~= server.shopCloseHour then
-			if (tonumber(server.gameHour) < tonumber(server.shopOpenHour) or tonumber(server.gameHour) > tonumber(server.shopCloseHour)) and (accessLevel(playerid) > 2) then
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]The shop is closed! Go play with zombies or something![-]")
+			if (tonumber(server.gameHour) < tonumber(server.shopOpenHour) or tonumber(server.gameHour) > tonumber(server.shopCloseHour)) and (not isAdminHidden(steam, userID)) then
+				message("pm " .. userID .. " [" .. server.chatColour .. "]The shop is closed! Go play with zombies or something![-]")
 				return false
 			end
 		end
@@ -543,9 +533,9 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			else
 				dist = distancexz(igplayers[playerid].xPos, igplayers[playerid].zPos, locations[server.shopLocation].x, locations[server.shopLocation].z)
 
-				if (dist > 20) and (accessLevel(playerid) > 2) then
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]The shop is only available at " .. server.shopLocation .. ".[-]")
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]Type " .. server.commandPrefix .. server.shopLocation .. " to go there now and " .. server.commandPrefix .. "return when finished.[-]")
+				if (dist > 20) and (not isAdminHidden(steam, userID)) then
+					message("pm " .. userID .. " [" .. server.chatColour .. "]The shop is only available at " .. server.shopLocation .. ".[-]")
+					message("pm " .. userID .. " [" .. server.chatColour .. "]Type " .. server.commandPrefix .. server.shopLocation .. " to go there now and " .. server.commandPrefix .. "return when finished.[-]")
 					return false
 				end
 			end
@@ -562,9 +552,9 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		end
 
 		if not cursor == 0 then
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]I sell several items called " .. words[2] .. ".  Try again using with one of the following fine wares.")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]I sell several items called " .. words[2] .. ".  Try again using with one of the following fine wares.")
 
-			cursor,errorString = connMEM:execute("SELECT * FROM memShop ORDER BY category, item")
+			cursor,errorString = connMEM:execute("SELECT * FROM shop ORDER BY category, item")
 			row = cursor:fetch({}, "a")
 
 			while row do
@@ -575,12 +565,12 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 				end
 
 				if tonumber(row.stock) == -1 then
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price:  " .. row.price .. " units:  " .. units .. " UNLIMITED STOCK![-]")
+					message("pm " .. userID .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price:  " .. row.price .. " units:  " .. units .. " UNLIMITED STOCK![-]")
 				else
 					if v.remaining == 0 then
-						message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "[-]  [FF0000]SOLD OUT[-]")
+						message("pm " .. userID .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "[-]  [FF0000]SOLD OUT[-]")
 					else
-						message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "  (" .. row.stock .. " left)[-]")
+						message("pm " .. userID .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "  (" .. row.stock .. " left)[-]")
 					end
 				end
 
@@ -594,7 +584,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 		if (tonumber(players[playerid].cash) > (tonumber(shopPrice) * number)) and ((number <= tonumber(shopStock) or (tonumber(shopStock) == -1))) then
 			players[playerid].cash = tonumber(players[playerid].cash) - (tonumber(shopPrice) * number)
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. string.format("%d", players[playerid].cash) .. " " .. server.moneyPlural .. " remaining.[-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]You have purchased " .. number .. " " .. shopItem .. ". You have " .. string.format("%d", players[playerid].cash) .. " " .. server.moneyPlural .. " remaining.[-]")
 			unitsPurchased = number
 
 			if tonumber(shopUnits) > 0 then
@@ -602,24 +592,16 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			end
 
 			if tonumber(shopQuality) == 0 then
-				cmd = "give " .. playerid .. " " .. shopItem .. " " .. number
+				cmd = "give " .. gameid .. " " .. shopItem .. " " .. number
 			else
-				cmd = "give " .. playerid .. " " .. shopItem .. " " .. number .. " " .. shopQuality
-			end
-
-			if server.stompy then
-				if tonumber(shopQuality) == 0 then
-					cmd = "bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number  .. " /silent"
-				else
-					cmd = "bc-give " .. playerid .. " " .. shopItem .. " /c=" .. number  .. " /silent /q=" .. shopQuality
-				end
+				cmd = "give " .. gameid .. " " .. shopItem .. " " .. number .. " " .. shopQuality
 			end
 
 			if server.botman then
 				if tonumber(shopQuality) == 0 then
-					cmd = "bm-give " .. playerid .. " " .. shopItem .. " " .. number
+					cmd = "bm-give " .. gameid .. " " .. shopItem .. " " .. number
 				else
-					cmd = "bm-give " .. playerid .. " " .. shopItem .. " " .. number  .. " " .. shopQuality
+					cmd = "bm-give " .. gameid .. " " .. shopItem .. " " .. number  .. " " .. shopQuality
 				end
 			end
 
@@ -629,21 +611,19 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 
 			-- Not even Wensleydale?
 
-			if server.stompy then
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase should be in your inventory but may be at your feet.  Check the ground.[-]")
-			else
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]Your purchase is at your feet.  Grab it before a zombie eats it.[-]")
+			if not server.botman then
+				message("pm " .. userID .. " [" .. server.chatColour .. "]Your purchase should be at your feet. Check the ground.[-]")
 			end
 
-			conn:execute("UPDATE players SET cash = " .. players[playerid].cash .. " WHERE steam = " .. playerid)
+			conn:execute("UPDATE players SET cash = " .. players[playerid].cash .. " WHERE steam = '" .. playerid .. "'")
 			conn:execute("UPDATE shop SET stock = " .. shopStock - tonumber(unitsPurchased) .. " WHERE item = '" .. escape(shopItem) .. "'")
 
 			return false
 		else
 			if (number > tonumber(shopStock)) and (tonumber(shopStock) >= 0)  then
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]I do not have that many " .. shopItem .. " in stock.[-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]I do not have that many " .. shopItem .. " in stock.[-]")
 			else
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]I am sorry but you have insufficient " .. server.moneyPlural .. ".[-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]I am sorry but you have insufficient " .. server.moneyPlural .. ".[-]")
 			end
 		end
 
@@ -656,7 +636,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 		cursor,errorString = conn:execute("SELECT * FROM shop")
 
 		if cursor:numrows() == 0 then
-			message("pm " .. playerid .. " [" .. server.chatColour .. "]CALL THE POLICE!  The shop is empty![-]")
+			message("pm " .. userID .. " [" .. server.chatColour .. "]CALL THE POLICE!  The shop is empty![-]")
 			return false
 		end
 	end
@@ -666,7 +646,7 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 	if (words[1] == "shop" and words[2] ~= nil and words[3] == nil) then
 		LookupShop(words[2])
 
-		cursor,errorString = connMEM:execute("SELECT * FROM memShop ORDER BY category, item")
+		cursor,errorString = connMEM:execute("SELECT * FROM shop ORDER BY category, item")
 		row = cursor:fetch({}, "a")
 
 		while row do
@@ -677,12 +657,12 @@ if (debug) then dbug("debug shop line " .. debugger.getinfo(1).currentline) end
 			end
 
 			if tonumber(row.stock) == -1 then
-				message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price:  " .. row.price .. " units:  " .. units .. " UNLIMITED STOCK![-]")
+				message("pm " .. userID .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price:  " .. row.price .. " units:  " .. units .. " UNLIMITED STOCK![-]")
 			else
 				if v.remaining == 0 then
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "[-]  [FF0000]SOLD OUT[-]")
+					message("pm " .. userID .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "[-]  [FF0000]SOLD OUT[-]")
 				else
-					message("pm " .. playerid .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "  (" .. row.stock .. " left)[-]")
+					message("pm " .. userID .. " [" .. server.chatColour .. "]code:  " .. row.code .. "    item:  " .. row.item .. " price: " .. row.price .. " units:  " .. units .. "  (" .. row.stock .. " left)[-]")
 				end
 			end
 

@@ -1,23 +1,22 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
-local debug, result, tmp, r, cursor ,errorString, help
-local shortHelp = false
-local skipHelp = false
-local filter = ""
-
-debug = false -- should be false unless testing
-
 function gmsg_tracker()
+	local debug, result, tmp, r, cursor , errorString, help
+	local shortHelp = false
+
+	debug = false -- should be false unless testing
+
 	calledFunction = "gmsg_tracker"
 	result = false
 	tmp = {}
+	tmp.topic = "tracker"
 
 	if botman.debugAll then
 		debug = true -- this should be true
@@ -26,25 +25,28 @@ function gmsg_tracker()
 -- ################## tracker command functions ##################
 
 	local function cmd_CheckBases()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		local k, v
+
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}check bases"
 			help[2] = "Load base coordinates into the tracker so you can tp directly to each base in sequence.  Used for visiting every single base ingame."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,base,visit,check"
+			tmp.keywords = "tracker,bases,visit,check"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or string.find(chatvars.command, "base") or string.find(chatvars.command, "visit") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") or string.find(chatvars.command, "base") or string.find(chatvars.command, "visit") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -55,33 +57,30 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if ((chatvars.words[1] == "check") and (chatvars.words[2] == "bases")) then
-			if (chatvars.accessLevel > 2) then
-				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
 
 			igplayers[chatvars.playerid].trackerID = 0
-			conn:execute("DELETE FROM memTracker WHERE admin = " .. chatvars.playerid)
-			cursor,errorString = conn:execute("SELECT steam, homeX, homeY, homeZ, home2X, home2Y, home2Z FROM players WHERE (homeX <> 0 AND homeY <> 0 AND homeZ <> 0) or (home2X <> 0 AND home2Y <> 0 AND home2Z <> 0)")
+			connMEM:execute("DELETE FROM tracker WHERE admin = '" .. chatvars.playerid .. "'")
 
-			row = cursor:fetch({}, "a")
-			while row do
-				if tonumber(row.homeX) ~= 0 and tonumber(row.homeY) ~= 0 and tonumber(row.homeZ) ~= 0 then
-					conn:execute("INSERT into memTracker (admin, steam, x, y, z, flag) VALUES (" .. chatvars.playerid .. "," .. row.steam .. "," .. row.homeX .. "," .. row.homeY .. "," .. row.homeZ .. ",'base1')")
+			for k,v in pairs(bases) do
+				if v.title ~= "" then
+					connMEM:execute("INSERT INTO tracker (admin, steam, x, y, z, flag, baseKey) VALUES ('" .. chatvars.playerid .. "','" .. v.steam .. "'," .. v.x .. "," .. v.y .. "," .. v.z .. ",'" .. v.title .. "','" ..  k.. "')")
+				else
+					connMEM:execute("INSERT INTO tracker (admin, steam, x, y, z, flag, baseKey) VALUES ('" .. chatvars.playerid .. "','" .. v.steam .. "'," .. v.x .. "," .. v.y .. "," .. v.z .. ",'" .. v.baseNumber .. "','" ..  k.. "')")
 				end
-
-				if tonumber(row.home2X) ~= 0 and tonumber(row.home2Y) ~= 0 and tonumber(row.home2Z) ~= 0 then
-					conn:execute("INSERT into memTracker (admin, steam, x, y, z, flag) VALUES (" .. chatvars.playerid .. "," .. row.steam .. "," .. row.home2X .. "," .. row.home2Y .. "," .. row.home2Z .. ",'base2')")
-				end
-
-				row = cursor:fetch(row, "a")
 			end
 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Bases are loaded into the tracker. Use " .. server.commandPrefix .. "nb to move forward, " .. server.commandPrefix .. "pb to move back and " .. server.commandPrefix .. "killbase to remove the current base.[-]")
+			enableTimer("TrackPlayer")
+
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Bases are loaded into the tracker. Use " .. server.commandPrefix .. "nb to move forward, " .. server.commandPrefix .. "pb to move back and " .. server.commandPrefix .. "killbase to remove the current base.[-]")
 
 			botman.faultyChat = false
 			return true
@@ -90,25 +89,28 @@ function gmsg_tracker()
 
 
 	local function cmd_DeleteBase()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		local temp
+
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}killbase"
 			help[2] = "Remove the current base and protection that the tracker has teleported you to.  Used with " .. server.commandPrefix .. "check base."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,base,kill,dele,remo"
+			tmp.keywords = "tracker,bases,kill,delete,remove"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or string.find(chatvars.command, "base") or string.find(chatvars.command, "remo") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") or string.find(chatvars.command, "base") or string.find(chatvars.command, "remo") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -119,34 +121,22 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "killbase" and chatvars.words[2] == nil) then
-			if (chatvars.accessLevel > 2) then
-				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
 
 			if igplayers[chatvars.playerid].atBase ~= nil then
-				if tonumber(igplayers[chatvars.playerid].whichBase) == 1 then
-					players[igplayers[chatvars.playerid].atBase].homeX = 0
-					players[igplayers[chatvars.playerid].atBase].homeY = 0
-					players[igplayers[chatvars.playerid].atBase].homeZ = 0
-					players[igplayers[chatvars.playerid].atBase].protect = false
+				if igplayers[chatvars.playerid].whichBase then
+					temp = string.split(igplayers[chatvars.playerid].whichBase, "_")
 
-					conn:execute("UPDATE players SET homeX = 0, homeY = 0, homeZ = 0, protect = 0  WHERE steam = " .. igplayers[chatvars.playerid].atBase)
-
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base one of " .. players[igplayers[chatvars.playerid].atBase].name .. " has been deleted.[-]")
-				else
-					players[igplayers[chatvars.playerid].atBase].home2X = 0
-					players[igplayers[chatvars.playerid].atBase].home2Y = 0
-					players[igplayers[chatvars.playerid].atBase].home2Z = 0
-					players[igplayers[chatvars.playerid].atBase].protect2 = false
-
-					conn:execute("UPDATE players SET home2X = 0, home2Y = 0, home2Z = 0, protect2 = 0  WHERE steam = " .. igplayers[chatvars.playerid].atBase)
-
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Base two of " .. players[igplayers[chatvars.playerid].atBase].name .. " has been deleted.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Base " .. bases[igplayers[chatvars.playerid].whichBase].baseNumber .. " " .. bases[igplayers[chatvars.playerid].whichBase].title .. " belonging to " .. players[igplayers[chatvars.playerid].atBase].name .. " has been deleted.[-]")
+					conn:execute("DELETE FROM bases WHERE steam = '" .. temp[1] .. "' AND baseNumber = " .. temp[2])
 				end
 			end
 
@@ -157,25 +147,26 @@ function gmsg_tracker()
 
 
 	local function cmd_GoBack()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}go back"
 			help[2] = "Remove the current base and protection that the tracker has teleported you to.  Used with " .. server.commandPrefix .. "check base."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,back,chang,dire"
+			tmp.keywords = "tracker,back,change,direction"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or string.find(chatvars.command, "dire") or string.find(chatvars.command, "back") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") or string.find(chatvars.command, "dire") or string.find(chatvars.command, "back") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -186,10 +177,12 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "go" and chatvars.words[2] == "back") then
-			if (chatvars.accessLevel > 2) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
@@ -209,25 +202,26 @@ function gmsg_tracker()
 
 
 	local function cmd_GotoEnd()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}goto end"
 			help[2] = "Move to the end of the current track."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,end,jump,move"
+			tmp.keywords = "tracker,end,jump,move"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or string.find(chatvars.command, "jump") or string.find(chatvars.command, "back") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") or string.find(chatvars.command, "jump") or string.find(chatvars.command, "back") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -238,10 +232,12 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "goto" and chatvars.words[2] == "end") then
-			if (chatvars.accessLevel > 2) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
@@ -256,25 +252,26 @@ function gmsg_tracker()
 
 
 	local function cmd_GotoStart()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}goto start"
 			help[2] = "Move to the start of the current track."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,start,jump,move"
+			tmp.keywords = "tracker,start,jump,move"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or string.find(chatvars.command, "jump") or string.find(chatvars.command, "start") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") or string.find(chatvars.command, "jump") or string.find(chatvars.command, "start") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -285,10 +282,12 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "goto" and chatvars.words[2] == "start") then
-			if (chatvars.accessLevel > 2) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
@@ -303,25 +302,26 @@ function gmsg_tracker()
 
 
 	local function cmd_Jump()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}jump {number of steps}"
 			help[2] = "Jump forward {number} steps or backwards if given a negative number."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,jump,move"
+			tmp.keywords = "tracker,jump,move,steps"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or string.find(chatvars.command, "jump") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") or string.find(chatvars.command, "jump") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -332,10 +332,12 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "jump" and chatvars.number ~= nil) then
-			if (chatvars.accessLevel > 2) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
@@ -351,25 +353,26 @@ function gmsg_tracker()
 
 
 	local function cmd_ResumeTracking()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}go"
 			help[2] = "Resume tracking."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,go,cont"
+			tmp.keywords = "tracker,go,continue,resume"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -380,10 +383,12 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "go" and chatvars.words[2] == nil) then
-			if (chatvars.accessLevel > 2) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
@@ -396,25 +401,26 @@ function gmsg_tracker()
 
 
 	local function cmd_SetSpeed()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}speed {number}"
 			help[2] = "The default pause between each tracked step is 3 seconds. Change it to any number of seconds from 1 to whatever."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,step,speed"
+			tmp.keywords = "tracker,steps,speed"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -425,10 +431,12 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "speed" and chatvars.number ~= nil) then
-			if (chatvars.accessLevel > 2) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
@@ -442,25 +450,26 @@ function gmsg_tracker()
 
 
 	local function cmd_SkipSteps()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}skip {number of steps}"
 			help[2] = "Skip {number} of steps.  Instead of tracking each recorded step, you will skip {number} steps for faster but less precise tracking."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,step,speed,skip"
+			tmp.keywords = "tracker,steps,skip"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -471,10 +480,12 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "skip" and chatvars.number ~= nil) then
-			if (chatvars.accessLevel > 2) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
@@ -488,25 +499,26 @@ function gmsg_tracker()
 
 
 	local function cmd_Stop()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}stop"
 			help[2] = "Stop tracking.  Resume it with " .. server.commandPrefix .. "go"
 
 			tmp.command = help[1]
-			tmp.keywords = "track,stop"
+			tmp.keywords = "tracker,stop"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -517,32 +529,37 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
-		if (chatvars.words[1] == "stop" or chatvars.words[1] == "sotp" or chatvars.words[1] == "s") and chatvars.words[2] == nil and chatvars.playerid ~= 0 then
-			if (chatvars.accessLevel > 2) then
+		if (chatvars.words[1] == "stop" or chatvars.words[1] == "sotp" or chatvars.words[1] == "s") and chatvars.words[2] == nil and chatvars.playerid ~= "0" then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
 
 			r = randSQL(50)
 			if r == 49 then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]HAMMER TIME![-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]HAMMER TIME![-]")
 			end
 
 			if igplayers[chatvars.playerid].trackerStopped ~= nil then
 				if not igplayers[chatvars.playerid].trackerStopped then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Tracking stopped.[-]")
-
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Tracking stopped.[-]")
+					igplayers[chatvars.playerid].trackerStopped = true
+					connMEM:execute("DELETE FROM tracker WHERE admin = '" .. chatvars.playerid .. "'")
+					igplayers[chatvars.playerid].trackerCount = nil
+					connMEM:execute("VACUUM")
 				end
 			end
 
 			if igplayers[chatvars.playerid].following ~= nil then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have stopped following " .. players[igplayers[chatvars.playerid].following].name .. ".[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You have stopped following " .. players[igplayers[chatvars.playerid].following].name .. ".[-]")
 			end
 
 			if igplayers[chatvars.playerid].location ~= nil then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have stopped recording random spawn points.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You have stopped recording random spawn points.[-]")
 			end
 
 			igplayers[chatvars.playerid].trackerStopped = true
@@ -555,25 +572,26 @@ function gmsg_tracker()
 
 
 	local function cmd_StopTracking()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}stop tracking"
 			help[2] = "Stops tracking and clears the tracking data from memory.  This happens when you exit the server anyway so you don't have to do this."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,stop"
+			tmp.keywords = "tracker,stop"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -584,17 +602,20 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "stop" and chatvars.words[2] == "tracking") then
-			if (chatvars.accessLevel > 2) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
 
 			igplayers[chatvars.playerid].trackerStopped = true
-			conn:execute("DELETE FROM memTracker WHERE admin = " .. chatvars.playerid)
+			connMEM:execute("DELETE FROM tracker WHERE admin = '" .. chatvars.playerid .. "'")
 			igplayers[chatvars.playerid].trackerCount = nil
+			connMEM:execute("VACUUM")
 
 			botman.faultyChat = false
 			return true
@@ -603,29 +624,35 @@ function gmsg_tracker()
 
 
 	local function cmd_TrackPlayer()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		local cursor, errorString, row
+		local filter = ""
+
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}track {player name} session {number} (session is optional and defaults to the latest)\n"
-			help[1] = " {#}track {player name} session {number} range {distance}\n"
-			help[1] = help[1] .. " {#}next (track the next session)\n"
-			help[1] = help[1] .. " {#}last (track the previous session)"
+			help[1] = help[1] .. "Or {#}trackshadow {player name} session {number} (session is optional and defaults to the latest)\n"
+			help[1] = help[1] .. "Or {#}track {player name} session {number} range {distance}\n"
+			help[1] = help[1] .. "Or {#}next (track the next session)\n"
+			help[1] = help[1] .. "Or {#}last (track the previous session)"
 			help[2] = "Track the movements of a player.  If a session is given, you will track their movements from that session.\n"
-			help[2] = help[2] .. "If you add the word hax, hacking or cheat the bot will only send you to coordinates that were flagged as flying or clipping."
+			help[2] = help[2] .. "If you add the word hax, hacking or cheat the bot will only send you to coordinates that were flagged as flying or clipping.\n"
+			help[2] = help[2] .. "If you suspect that the bot has lost the tracking data you can use the shadow copy instead using trackshadow instead of track."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,next,last"
+			tmp.keywords = "tracker,next,last"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -636,17 +663,18 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
-		if ((chatvars.words[1] == "track") or (chatvars.words[1] == "next") or (chatvars.words[1] == "last")) then
-			if (chatvars.accessLevel > 2) then
-				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+		if ((chatvars.words[1] == "track" or chatvars.words[1] == "trackshadow") or (chatvars.words[1] == "next") or (chatvars.words[1] == "last")) then
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
 
 			tmp = {}
-			conn:execute("DELETE FROM memTracker WHERE admin = " .. chatvars.playerid)
+			connMEM:execute("DELETE FROM tracker WHERE admin = '" .. chatvars.playerid .. "'")
 			igplayers[chatvars.playerid].trackerStopped = false
 			igplayers[chatvars.playerid].trackerReversed = false
 
@@ -661,7 +689,7 @@ function gmsg_tracker()
 			if (chatvars.words[1] ~= "next") and (chatvars.words[1] ~= "last") then
 				igplayers[chatvars.playerid].trackerCountdown = igplayers[chatvars.playerid].trackerSpeed
 				igplayers[chatvars.playerid].trackerCount = 0
-				igplayers[chatvars.playerid].trackerSteam = 0
+				igplayers[chatvars.playerid].trackerSteam = "0"
 				igplayers[chatvars.playerid].trackerSession = 0
 			else
 				if (chatvars.words[1] == "next") then
@@ -685,12 +713,12 @@ function gmsg_tracker()
 					tmp.name = chatvars.words[i+1]
 					tmp.id = LookupPlayer(tmp.name)
 
-					if tmp.id == 0 then
+					if tmp.id == "0" then
 						tmp.id = LookupArchivedPlayer(tmp.name)
 
-						if not (tmp.id == 0) then
+						if not (tmp.id == "0") then
 							if (chatvars.playername ~= "Server") then
-								message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player " .. playersArchived[tmp.id].name .. " was archived. There won't be any tracking data for them.[-]")
+								message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Player " .. playersArchived[tmp.id].name .. " was archived. There won't be any tracking data for them.[-]")
 							else
 								irc_chat(chatvars.ircAlias, "Player " .. playersArchived[tmp.id].name .. " was archived. There won't be any tracking data for them.")
 							end
@@ -700,7 +728,7 @@ function gmsg_tracker()
 						end
 					end
 
-					if tmp.id ~= 0 then
+					if tmp.id ~= "0" then
 						tmp.session = players[tmp.id].sessionCount
 						igplayers[chatvars.playerid].trackerSession = players[tmp.id].sessionCount
 						igplayers[chatvars.playerid].trackerSteam = tmp.id
@@ -736,17 +764,36 @@ function gmsg_tracker()
 				end
 			end
 
-			if tmp.id ~= 0 then
-				if tmp.dist ~= nil then
-					conn:execute("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. tmp.id .. " and session = " .. tmp.session .. " and abs(x - " .. tmp.x .. ") <= " .. tmp.dist .. " AND abs(z - " .. tmp.z .. ") <= " .. tmp.dist .. " " .. filter .. ")")
+			if tmp.id ~= "0" then
+				if chatvars.words[1] ~= "trackshadow" then
+					if tmp.dist ~= nil then
+						cursor,errorString = connTRAK:execute("SELECT * FROM tracker WHERE steam = '" .. tmp.id .. "' AND session = " .. tmp.session .. " AND abs(x - " .. tmp.x .. ") <= " .. tmp.dist .. " AND abs(z - " .. tmp.z .. ") <= " .. tmp.dist .. " " .. filter)
+					else
+						cursor,errorString = connTRAK:execute("SELECT * FROM tracker WHERE steam = '" .. tmp.id .. "' AND session = " .. tmp.session .. " " .. filter)
+					end
 				else
-					conn:execute("INSERT into memTracker (SELECT trackerID, " .. chatvars.playerid .. " AS admin, steam, timestamp, x, y, z, SESSION , flag from tracker where steam = " .. tmp.id .. " and session = " .. tmp.session .. " " .. filter .. ")")
+					if tmp.dist ~= nil then
+						cursor,errorString = connTRAKSHADOW:execute("SELECT * FROM tracker WHERE steam = '" .. tmp.id .. "' AND session = " .. tmp.session .. " AND abs(x - " .. tmp.x .. ") <= " .. tmp.dist .. " AND abs(z - " .. tmp.z .. ") <= " .. tmp.dist .. " " .. filter)
+					else
+						cursor,errorString = connTRAKSHADOW:execute("SELECT * FROM tracker WHERE steam = '" .. tmp.id .. "' AND session = " .. tmp.session .. " " .. filter)
+					end
 				end
+
+				row = cursor:fetch({}, "a")
+
+				while row do
+					connMEM:execute("INSERT INTO tracker (trackerID, admin, steam, timestamp, x, y, z, session, flag) VALUES (" .. row.trackerID .. ",'" .. chatvars.playerid .. "','" .. row.steam .. "'," .. row.timestamp .. "," .. row.x .. "," .. row.y .. "," .. row.z .. "," .. row.session .. ",'" .. row.flag .. "')")
+					row = cursor:fetch(row, "a")
+				end
+
+				enableTimer("TrackPlayer")
+
+				enableTimer("TrackPlayer")
 			else
 				if tmp.name == nil then
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Player name, game id, or steam id required.[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Player name, game id, or steam id required.[-]")
 				else
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]No player or steam id matched " .. tmp.name .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No player or steam id matched " .. tmp.name .. "[-]")
 				end
 			end
 
@@ -757,25 +804,28 @@ function gmsg_tracker()
 
 
 	local function cmd_VisitNextBase()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		local cursor, errorString, row
+
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}nb"
 			help[2] = "Visit the next base in the tracker."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,next,base,visit"
+			tmp.keywords = "tracker,next,base,visit"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -786,33 +836,33 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "nb" and chatvars.words[2] == nil) then
-			if (chatvars.accessLevel > 2) then
-				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
 
-			cursor,errorString = conn:execute("SELECT * FROM memTracker WHERE admin = " .. chatvars.playerid .. " AND trackerID > " .. igplayers[chatvars.playerid].trackerID .. " ORDER BY trackerID LIMIT 1")
+			cursor,errorString = connMEM:execute("SELECT * FROM tracker WHERE admin = '" .. chatvars.playerid .. "' AND trackerID > " .. igplayers[chatvars.playerid].trackerID .. " ORDER BY trackerID LIMIT 1")
 			igplayers[chatvars.playerid].trackerID = igplayers[chatvars.playerid].trackerID + 1
 			row = cursor:fetch({}, "a")
 
 			if row then
-				sendCommand("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z)
+				sendCommand("tele " .. chatvars.userID .. " " .. row.x .. " " .. row.y .. " " .. row.z)
 				igplayers[chatvars.playerid].atBase = row.steam
 				igplayers[chatvars.playerid].trackerID = row.trackerID
+				igplayers[chatvars.playerid].whichBase = row.baseKey
 
-				if row.flag == "base1" then
-					igplayers[chatvars.playerid].whichBase = 1
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is base one of " .. players[igplayers[chatvars.playerid].atBase].name .. ".[-]")
+				if row.flag ~= "" then
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This is base " .. row.flag .. " owned by " .. players[igplayers[chatvars.playerid].atBase].name .. ".[-]")
 				else
-					igplayers[chatvars.playerid].whichBase = 2
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is base two of " .. players[igplayers[chatvars.playerid].atBase].name .. ".[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This base is owned by " .. players[igplayers[chatvars.playerid].atBase].name .. ".[-]")
 				end
 			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have reached the last base.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You have reached the last base.[-]")
 			end
 
 			botman.faultyChat = false
@@ -822,25 +872,28 @@ function gmsg_tracker()
 
 
 	local function cmd_VisitPreviousBase()
-		if (chatvars.showHelp and not skipHelp) or botman.registerHelp then
+		local cursor, errorString, row
+
+		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}pb"
 			help[2] = "Visit the previous base in the tracker."
 
 			tmp.command = help[1]
-			tmp.keywords = "track,prev,base,visit"
+			tmp.keywords = "tracker,previous,base,visit"
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
 			tmp.ingameOnly = 1
+			tmp.functionName = debugger.getinfo(1, "n").name
 
-			help[3] = helpCommandRestrictions(tmp)
+			help[3] = helpCommandRestrictions(tmp.topic .. "_" .. tmp.functionName)
 
 			if botman.registerHelp then
 				registerHelp(tmp)
 			end
 
-			if string.find(chatvars.command, "track") or chatvars.words[1] ~= "help" then
+			if string.find(chatvars.command, "track") and chatvars.showHelp or botman.registerHelp then
 				irc_chat(chatvars.ircAlias, help[1])
 
 				if not shortHelp then
@@ -851,33 +904,33 @@ function gmsg_tracker()
 
 				chatvars.helpRead = true
 			end
+
+			return false
 		end
 
 		if (chatvars.words[1] == "pb" and chatvars.words[2] == nil) then
-			if (chatvars.accessLevel > 2) then
-				message(string.format("pm %s [%s]" .. restrictedCommandMessage(), chatvars.playerid, server.chatColour))
+			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
 
-			cursor,errorString = conn:execute("SELECT * FROM memTracker WHERE admin = " .. chatvars.playerid .. " AND trackerID < " .. igplayers[chatvars.playerid].trackerID .. " ORDER BY trackerID DESC LIMIT 1")
+			cursor,errorString = connMEM:execute("SELECT * FROM tracker WHERE admin = '" .. chatvars.playerid .. "' AND trackerID < " .. igplayers[chatvars.playerid].trackerID .. " ORDER BY trackerID DESC LIMIT 1")
 			igplayers[chatvars.playerid].trackerID = igplayers[chatvars.playerid].trackerID - 1
 			row = cursor:fetch({}, "a")
 
 			if row then
-				sendCommand("tele " .. chatvars.playerid .. " " .. row.x .. " " .. row.y .. " " .. row.z)
+				sendCommand("tele " .. chatvars.userID .. " " .. row.x .. " " .. row.y .. " " .. row.z)
 				igplayers[chatvars.playerid].atBase = row.steam
 				igplayers[chatvars.playerid].trackerID = row.trackerID
+				igplayers[chatvars.playerid].whichBase = row.baseKey
 
-				if row.flag == "base1" then
-					igplayers[chatvars.playerid].whichBase = 1
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is base one of " .. players[igplayers[chatvars.playerid].atBase].name .. ".[-]")
+				if row.flag ~= "" then
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This is base " .. row.flag .. " owned by " .. players[igplayers[chatvars.playerid].atBase].name .. ".[-]")
 				else
-					igplayers[chatvars.playerid].whichBase = 2
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]This is base two of " .. players[igplayers[chatvars.playerid].atBase].name .. ".[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]This base is owned by " .. players[igplayers[chatvars.playerid].atBase].name .. ".[-]")
 				end
 			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]You have reached the first base.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You have reached the first base.[-]")
 			end
 
 			botman.faultyChat = false
@@ -888,7 +941,6 @@ function gmsg_tracker()
 -- ################## End of command functions ##################
 
 	if botman.registerHelp then
-		irc_chat(chatvars.ircAlias, "==== Registering help - tracker commands ====")
 		if debug then dbug("Registering help - tracker commands") end
 
 		tmp.topicDescription = "All player movement is recorded every 3 seconds.\n"
@@ -896,32 +948,35 @@ function gmsg_tracker()
 		tmp.topicDescription = tmp.topicDescription .. "The tracker can also be used to visit every recorded player base using special commands.\n"
 		tmp.topicDescription = tmp.topicDescription .. "The tracker runs slowly by default to give admins time to look around and time to command the tracker. Several controls are available to change speed, direction and more."
 
-		cursor,errorString = conn:execute("SELECT * FROM helpTopics WHERE topic = 'tracker'")
-		rows = cursor:numrows()
-		if rows == 0 then
-			cursor,errorString = conn:execute("SHOW TABLE STATUS LIKE 'helpTopics'")
-			row = cursor:fetch({}, "a")
-			tmp.topicID = row.Auto_increment
+		if chatvars.ircAlias ~= "" then
+			irc_chat(chatvars.ircAlias, ".")
+			irc_chat(chatvars.ircAlias, "Tracker Commands:")
+			irc_chat(chatvars.ircAlias, ".")
+			irc_chat(chatvars.ircAlias, tmp.topicDescription)
+			irc_chat(chatvars.ircAlias, ".")
+		end
 
-			conn:execute("INSERT INTO helpTopics (topic, description) VALUES ('tracker', '" .. escape(tmp.topicDescription) .. "')")
+		cursor,errorString = connSQL:execute("SELECT count(*) FROM helpTopics WHERE topic = '" .. tmp.topic .. "'")
+		row = cursor:fetch({}, "a")
+		rows = row["count(*)"]
+
+		if rows == 0 then
+			connSQL:execute("INSERT INTO helpTopics (topic, description) VALUES ('" .. tmp.topic .. "', '" .. connMEM:escape(tmp.topicDescription) .. "')")
 		end
 	end
 
 	-- don't proceed if there is no leading slash
 	if (string.sub(chatvars.command, 1, 1) ~= server.commandPrefix and server.commandPrefix ~= "") then
 		botman.faultyChat = false
-		return false
+		return false, ""
 	end
 
 	if chatvars.showHelp then
 		if chatvars.words[3] then
 			if not string.find(chatvars.words[3], "track") then
-				skipHelp = true
+				botman.faultyChat = false
+				return true, ""
 			end
-		end
-
-		if chatvars.words[1] == "help" then
-			skipHelp = false
 		end
 
 		if chatvars.words[1] == "list" then
@@ -929,10 +984,9 @@ function gmsg_tracker()
 		end
 	end
 
-	if chatvars.showHelp and not skipHelp and chatvars.words[1] ~= "help" then
+	if chatvars.showHelp and chatvars.words[1] ~= "help" and not botman.registerHelp then
 		irc_chat(chatvars.ircAlias, ".")
 		irc_chat(chatvars.ircAlias, "Tracker Commands:")
-		irc_chat(chatvars.ircAlias, "=================")
 		irc_chat(chatvars.ircAlias, ".")
 	end
 
@@ -943,18 +997,18 @@ function gmsg_tracker()
 	if debug then dbug("debug tracker end of remote commands") end
 
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
+	if chatvars.playerid == "0" and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
-		return false
+		return false, ""
 	end
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
 
 	-- ###################  Staff only beyond this point ################
 	-- Don't proceed if this is a player.  Server and staff only here.
 	if (chatvars.playername ~= "Server") then
-		if (chatvars.accessLevel > 2) then
+		if (not chatvars.isAdminHidden) then
 			botman.faultyChat = false
-			return false
+			return false, ""
 		end
 	end
 	-- ##################################################################
@@ -965,7 +1019,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_TrackPlayer triggered") end
-		return result
+		return result, "cmd_TrackPlayer"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -974,7 +1028,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_SkipSteps triggered") end
-		return result
+		return result, "cmd_SkipSteps"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -983,7 +1037,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_SetSpeed triggered") end
-		return result
+		return result, "cmd_SetSpeed"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -992,7 +1046,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_Jump triggered") end
-		return result
+		return result, "cmd_Jump"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -1001,7 +1055,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_GotoStart triggered") end
-		return result
+		return result, "cmd_GotoStart"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -1010,7 +1064,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_GotoEnd triggered") end
-		return result
+		return result, "cmd_GotoEnd"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -1019,7 +1073,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_GoBack triggered") end
-		return result
+		return result, "cmd_GoBack"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -1028,7 +1082,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_Stop triggered") end
-		return result
+		return result, "cmd_Stop"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -1037,7 +1091,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_ResumeTracking triggered") end
-		return result
+		return result, "cmd_ResumeTracking"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -1046,7 +1100,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_StopTracking triggered") end
-		return result
+		return result, "cmd_StopTracking"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -1055,7 +1109,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_CheckBases triggered") end
-		return result
+		return result, "cmd_CheckBases"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -1064,7 +1118,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_VisitNextBase triggered") end
-		return result
+		return result, "cmd_VisitNextBase"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -1073,7 +1127,7 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_VisitPreviousBase triggered") end
-		return result
+		return result, "cmd_VisitPreviousBase"
 	end
 
 	if (debug) then dbug("debug tracker line " .. debugger.getinfo(1).currentline) end
@@ -1082,19 +1136,17 @@ function gmsg_tracker()
 
 	if result then
 		if debug then dbug("debug cmd_DeleteBase triggered") end
-		return result
+		return result, "cmd_DeleteBase"
 	end
 
 	if botman.registerHelp then
-		irc_chat(chatvars.ircAlias, "**** Tracker commands help registered ****")
 		if debug then dbug("Tracker commands help registered") end
-		topicID = topicID + 1
 	end
 
 	if debug then dbug("debug tracker end") end
 
 	-- can't touch dis
 	if true then
-		return result
+		return result, ""
 	end
 end

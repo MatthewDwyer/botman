@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 
@@ -19,33 +19,39 @@ function quickBotReset()
 	server.lottery = 0
 	server.mapSize = 10000
 
+	-- empty tables in mysql
 	conn:execute("TRUNCATE TABLE alerts")
-	conn:execute("TRUNCATE TABLE bookmarks")
-	conn:execute("TRUNCATE TABLE commandQueue")
-	conn:execute("TRUNCATE TABLE connectQueue")
 	conn:execute("TRUNCATE TABLE events")
-	connMEM:execute("DELETE FROM gimmeQueue")
 	conn:execute("TRUNCATE TABLE hotspots")
-	connMEM:execute("DELETE FROM ircQueue")
-	conn:execute("TRUNCATE TABLE keystones")
-	connMEM:execute("DELETE FROM list")
-	connMEM:execute("DELETE FROM list2")
-	conn:execute("TRUNCATE TABLE lottery")
-	conn:execute("TRUNCATE TABLE mail")
-	conn:execute("TRUNCATE TABLE memLottery")
-	conn:execute("DELETE FROM memTracker")
-	conn:execute("TRUNCATE TABLE messageQueue")
-	conn:execute("TRUNCATE TABLE miscQueue")
 	conn:execute("TRUNCATE TABLE performance")
-	conn:execute("TRUNCATE TABLE playerQueue")
 	conn:execute("TRUNCATE TABLE polls")
 	conn:execute("TRUNCATE TABLE pollVotes")
 	conn:execute("TRUNCATE TABLE teleports")
-	conn:execute("TRUNCATE TABLE tracker")
-	connMEM:execute("DELETE FROM searchResults")
-	conn:execute("TRUNCATE TABLE inventoryChanges")
-	conn:execute("TRUNCATE TABLE inventoryTracker")
 	conn:execute("TRUNCATE TABLE waypoints")
+
+	-- empty tables in sqlite
+	connSQL:execute("DELETE FROM bookmarks")
+	connSQL:execute("DELETE FROM commandQueue")
+	connSQL:execute("DELETE FROM connectQueue")
+	connSQL:execute("DELETE FROM keystones")
+	connSQL:execute("DELETE FROM lottery")
+	connSQL:execute("DELETE FROM mail")
+	connSQL:execute("DELETE FROM messageQueue")
+	connSQL:execute("DELETE FROM miscQueue")
+	connSQL:execute("DELETE FROM playerQueue")
+
+	connMEM:execute("DELETE FROM gimmeQueue")
+	connMEM:execute("DELETE FROM ircQueue")
+	connMEM:execute("DELETE FROM list")
+	connMEM:execute("DELETE FROM list2")
+	connMEM:execute("DELETE FROM tracker")
+	connMEM:execute("DELETE FROM searchResults")
+
+	connTRAK:execute("DELETE FROM tracker")
+	connTRAKSHADOW:execute("DELETE FROM tracker")
+
+	connINVDELTA:execute("DELETE FROM inventoryChanges")
+	connINVTRAK:execute("DELETE FROM inventoryTracker")
 
 	-- remove a flag so that the bot will re-test for installed mods.
 	botMaintenance.modsInstalled = false
@@ -54,13 +60,8 @@ end
 
 
 function resetBases()
-	local sql
-
 	conn:execute("TRUNCATE TABLE bases")
-
-	-- reset bases in the players table
-	sql = "UPDATE players SET homeX=0, home2X=0, homeY=0, home2Y=0, homeZ=0, home2Z=0, exitX=0, exit2X=0, exitY=0, exit2Y=0, exitZ=0, exit2Z=0, baseCooldown=0, protect=0, protect2=0, protectSize=" .. server.LandClaimSize .. ", protect2Size=" .. server.LandClaimSize
-	conn:execute(sql)
+	conn:execute("UPDATE players SET baseCooldown=0")
 	loadPlayers()
 end
 
@@ -75,13 +76,17 @@ function ResetBot(keepTheMoney, backupName)
 	-- save some additional tables from mysql
 	dumpTable("events")
 	dumpTable("announcements")
-	dumpTable("locationSpawns")
 	dumpTable("alerts")
 
+	-- and sqlite
+	dumpSQLiteTable("locationSpawns")
+
 	-- clean up other tables
+	bases = {}
 	teleports = {}
 	invTemp = {}
 	hotspots = {}
+	keystones = {}
 	resetRegions = {}
 	lastHotspots = {}
 	stackLimits = {}
@@ -93,59 +98,70 @@ function ResetBot(keepTheMoney, backupName)
 	server.warnBotReset = false
 	server.playersCanFly = true
 
+	-- empty tables in mysql
 	conn:execute("TRUNCATE TABLE alerts")
 	conn:execute("TRUNCATE TABLE bases")
-	conn:execute("TRUNCATE TABLE bookmarks")
-	conn:execute("TRUNCATE TABLE commandQueue")
-	conn:execute("TRUNCATE TABLE connectQueue")
 	conn:execute("TRUNCATE TABLE events")
-	connMEM:execute("DELETE FROM gimmeQueue")
 	conn:execute("TRUNCATE TABLE hotspots")
-	connMEM:execute("DELETE FROM ircQueue")
-	conn:execute("TRUNCATE TABLE keystones")
-	connMEM:execute("DELETE FROM list")
-	connMEM:execute("DELETE FROM list2")
 	conn:execute("TRUNCATE TABLE locations")
-	conn:execute("TRUNCATE TABLE locationSpawns")
-	conn:execute("TRUNCATE TABLE lottery")
-	conn:execute("TRUNCATE TABLE mail")
-	conn:execute("TRUNCATE TABLE memLottery")
-	conn:execute("DELETE FROM memTracker")
-	conn:execute("TRUNCATE TABLE messageQueue")
-	conn:execute("TRUNCATE TABLE miscQueue")
 	conn:execute("TRUNCATE TABLE performance")
-	conn:execute("TRUNCATE TABLE playerQueue")
 	conn:execute("TRUNCATE TABLE polls")
 	conn:execute("TRUNCATE TABLE pollVotes")
-	conn:execute("TRUNCATE TABLE prefabCopies")
 	conn:execute("TRUNCATE TABLE reservedSlots")
 	conn:execute("TRUNCATE TABLE resetZones")
 	conn:execute("TRUNCATE TABLE teleports")
-	conn:execute("TRUNCATE TABLE tracker")
-	connMEM:execute("DELETE FROM searchResults")
 	conn:execute("TRUNCATE TABLE villagers")
-	conn:execute("TRUNCATE TABLE inventoryChanges")
-	conn:execute("TRUNCATE TABLE inventoryTracker")
 	conn:execute("TRUNCATE TABLE waypoints")
 
+	-- empty tables in sqlite
+	connSQL:execute("DELETE FROM bookmarks")
+	connSQL:execute("DELETE FROM commandQueue")
+	connSQL:execute("DELETE FROM connectQueue")
+	connSQL:execute("DELETE FROM keystones")
+	connSQL:execute("DELETE FROM locationSpawns")
+	connSQL:execute("DELETE FROM lottery")
+	connSQL:execute("DELETE FROM mail")
+	connSQL:execute("DELETE FROM messageQueue")
+	connSQL:execute("DELETE FROM miscQueue")
+	connSQL:execute("DELETE FROM playerQueue")
+	connSQL:execute("DELETE FROM prefabCopies")
+
+	connMEM:execute("DELETE FROM tracker")
+	connMEM:execute("DELETE FROM list")
+	connMEM:execute("DELETE FROM list2")
+	connMEM:execute("DELETE FROM gimmeQueue")
+	connMEM:execute("DELETE FROM ircQueue")
+	connMEM:execute("DELETE FROM searchResults")
+
+	connTRAK:execute("DELETE FROM tracker")
+	connTRAKSHADOW:execute("DELETE FROM tracker")
+
+	connINVDELTA:execute("DELETE FROM inventoryChanges")
+	connINVTRAK:execute("DELETE FROM inventoryTracker")
+
 	-- reset some data in the players table
-	sql = "UPDATE players SET bail=0, bed='', bedX=0, bedY=0, bedZ=0, deaths=0, xPos=0, xPosOld=0, yPos=0, yPosOld=0, zPos=0, zPosOld=0, homeX=0, home2X=0, homeY=0, home2Y=0, homeZ=0, home2Z=0, exitX=0, exit2X=0, exitY=0, exit2Y=0, exitZ=0, exit2Z=0, exiled=0, keystones=0, location='lobby', canTeleport=1, botTimeout=0, allowBadInventory=0, baseCooldown=0, overstackTimeout=0, playerKills=0, prisoner=0, prisonReason='', prisonReleaseTime=0, prisonxPosOld=0, prisonyPosOld=0, prisonzPosOld=0, protect=0, protect2=0, protectSize=" .. server.LandClaimSize .. ", protect2Size=" .. server.LandClaimSize .. ", pvpBounty=0, pvpCount=0, pvpVictim=0, score=0, sessionCount=0, silentBob=0, walkies=0, zombies=0, timeout=0"
+	sql = "UPDATE players SET bail=0, bed='', bedX=0, bedY=0, bedZ=0, deaths=0, xPos=0, xPosOld=0, yPos=0, yPosOld=0, zPos=0, zPosOld=0, exiled=0, keystones=0, location='lobby', canTeleport=1, botTimeout=0, allowBadInventory=0, baseCooldown=0, overstackTimeout=0, playerKills=0, prisoner=0, prisonReason='', prisonReleaseTime=0, prisonxPosOld=0, prisonyPosOld=0, prisonzPosOld=0, pvpBounty=0, pvpCount=0, pvpVictim='0', score=0, sessionCount=0, silentBob=0, walkies=0, zombies=0, timeout=0"
 
 	if keepTheMoney == nil then
 		sql = sql .. ", cash=0"
 	end
 
 	conn:execute(sql)
-	loadPlayers()
 	getServerData(true)
 
 	-- remove a flag so that the bot will re-test for installed mods.
 	botMaintenance.modsInstalled = false
 	saveBotMaintenance()
 
+	if server.botman then
+		tempTimer( 1, [[sendCommand("bm-resetregions clearall")]] )
+	end
+
 	if botman.resetServer then
 		botman.resetServer = nil
 		restartBot()
+	else
+		loadTables()
 	end
 end
 
@@ -198,6 +214,6 @@ function ResetServer()
 		server.lottery = 0
 	end
 
-	forgetPlayers()
+	forgetPlayers() -- forget Freeman
 	ResetBot()
 end

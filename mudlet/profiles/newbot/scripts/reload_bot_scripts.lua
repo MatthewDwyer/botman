@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 -- This script now lives in scripts/functions.lua
@@ -17,9 +17,10 @@ debug = false -- should be false unless testing
 
 if not telnetLogFileName then
 	lfs.mkdir(homedir .. "/telnet_logs")
-	telnetLogFileName = homedir .. "/telnet_logs/" .. os.date("%Y-%m-%d#%H-%M-%S", os.time()) .. ".txt"
+	telnetLogFileName = homedir .. "/telnet_logs/" .. os.date("%Y-%m-%d#%H-%M-%S") .. ".txt"
 	telnetLogFile = io.open(telnetLogFileName, "a")
 end
+
 
 if botman.debugAll then
 	debug = true -- this should be true
@@ -27,12 +28,18 @@ end
 
 
 function postUpdate()
+	local k, v
+
 	os.remove(homedir .. "/temp/postUpdate.lua")
-	os.execute("wget http://www.botman.nz/" .. server.updateBranch .. "/postUpdate.lua -P \"" .. homedir .. "\"/temp/")
+	os.execute("wget https://github.com/MatthewDwyer/botupdates/raw/master/" .. string.lower(server.updateBranch) .. "/postUpdate.lua -P \"" .. homedir .. "\"/temp/")
 	tempTimer( 5, [[ dofile(homedir .. "/temp/postUpdate.lua") ]] )
 
 	if not envSQL then
 		openSQLiteDB()
+	end
+
+	for k,v in pairs(igplayers) do
+		pcall(savePlayerData(k))
 	end
 end
 
@@ -44,13 +51,13 @@ function updateBot(forced, steam)
 		return
 	end
 
-	if server.allocs and (server.stompy or server.botman) then
+	if server.allocs and server.botman then
 		botMaintenance.modsInstalled = true
 		saveBotMaintenance()
 	end
 
 	if steam == nil then
-		steamID = 0
+		steamID = "0"
 	else
 		steamID = steam
 	end
@@ -58,7 +65,7 @@ function updateBot(forced, steam)
 	if server.updateBranch ~= "" then
 		os.remove(homedir .. "/temp/scripts.zip")
 		os.remove(homedir .. "/temp/version.txt")
-		os.execute("wget http://www.botman.nz/" .. server.updateBranch .. "/version.txt -P \"" .. homedir .. "\"/temp/")
+		os.execute("wget https://github.com/MatthewDwyer/botupdates/raw/master/" .. string.lower(server.updateBranch) .. "/version.txt -P \"" .. homedir .. "\"/temp/")
 
 		if forced then
 			tempTimer( 5, [[ checkScriptVersion(true) ]] )
@@ -83,21 +90,21 @@ function checkScriptVersion(forced)
 				botman.refreshCode = nil
 
 				if server.updateBot or forced then
-					irc_chat(server.ircMain, "Updating " .. server.botName .. " to version " .. version .. " code branch " .. server.updateBranch)
+					irc_chat(server.ircMain, "Updating " .. server.botName .. " to version " .. version .. " code branch " .. string.lower(server.updateBranch))
 					server.botVersion = version
 					conn:execute("UPDATE server set botVersion = '" .. version .. "'")
 
-					os.execute("wget http://www.botman.nz/" .. server.updateBranch .. "/scripts.zip -P \"" .. homedir .. "\"/temp/")
+					os.execute("wget https://github.com/MatthewDwyer/botupdates/raw/master/" .. string.lower(server.updateBranch) .. "/scripts.zip -P \"" .. homedir .. "\"/temp/")
 					tempTimer( 10, [[ unpackScripts() ]] )
 				else
 					irc_chat(server.ircMain, "A bot update is available. Version " .. split[2] .. " Automatic updates are disabled.  Type update code to force it.")
 				end
 			else
 				if forced then
-					irc_chat(server.ircMain, "The bot is running the latest " .. server.updateBranch .. " version.")
+					irc_chat(server.ircMain, "The bot is running the latest " .. string.lower(server.updateBranch) .. " version.")
 
-					if tonumber(steamID) > 0 then
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]The bot is running the latest " .. server.updateBranch .. " version.[-]")
+					if steamID ~= "0" then
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot is running the latest " .. string.lower(server.updateBranch) .. " version.[-]")
 					end
 				end
 			end
@@ -109,12 +116,6 @@ end
 
 
 function unpackScripts()
-	local k, v
-
-	for k,v in pairs(igplayers) do
-		savePlayerData(k)
-	end
-
 	dofile(homedir .. "/scripts/update.lua")
 	runBeforeBotUpdate()
 
@@ -124,15 +125,12 @@ function unpackScripts()
 	tempTimer( 10, [[ loadPlayers() ]] )
 	tempTimer( 15, [[ loadPlayersArchived() ]] )
 	tempTimer( 20, [[ postUpdate() ]] )
+	tempTimer( 30, [[ updateCommandHelp() ]] )
 	dofile(homedir .. "/scripts/reload_bot_scripts.lua")
 end
 
 
 function fixTables() -- Waiter!  Where's my table!?
-	if type(admins) ~= "table" then
-		admins = {}
-	end
-
 	if type(anticheatBans) ~= "table" then
 		anticheatBans = {}
 	end
@@ -152,6 +150,7 @@ function fixTables() -- Waiter!  Where's my table!?
 	if type(botman) ~= "table" then
 		botman = {}
 		botman.playersOnline = 0
+		botStatus.playersOnline = 0
 	end
 
 	if type(botMaintenance) ~= "table" then
@@ -186,6 +185,10 @@ function fixTables() -- Waiter!  Where's my table!?
 		gimmeZombies = {}
 	end
 
+	if type(helpCommands) ~= "table" then
+		helpCommands = {}
+	end
+
 	if type(hotspots) ~= "table" then
 		hotspots = {}
 	end
@@ -214,16 +217,16 @@ function fixTables() -- Waiter!  Where's my table!?
 		metrics.telnetLines = 0
 	end
 
-	if type(mods) ~= "table" then
-		mods = {}
-	end
-
 	if type(modVersions) ~= "table" then
 		modVersions = {}
 	end
 
 	if type(modBotman) ~= "table" then
 		modBotman = {}
+	end
+
+	if type(playerGroup) ~= "table" then
+		playerGroup = {}
 	end
 
 	if type(players) ~= "table" then
@@ -234,16 +237,16 @@ function fixTables() -- Waiter!  Where's my table!?
 		playersArchived = {}
 	end
 
+	if type(playersOnlineList) ~= "table" then
+		playersOnlineList = {}
+	end
+
 	if type(proxies) ~= "table" then
 		proxies = {}
 	end
 
 	if type(otherEntities) ~= "table" then
 		otherEntities = {}
-	end
-
-	if type(owners) ~= "table" then
-		owners = {}
 	end
 
 	if type(restrictedItems) ~= "table" then
@@ -286,6 +289,14 @@ function reportReloadCode()
 
 		if server.ircMain ~= nil then
 			irc_chat(server.ircMain, "The bot's scripts have reloaded.")
+		end
+
+		if helpCommands then
+			if tablelength(helpCommands) == 0 then
+				-- automatically register command help and create a new help.txt file in the temp folder of the bot's daily logs web folder.
+				botman.registerHelp	= true
+				gmsg(server.commandPrefix .. "register help")
+			end
 		end
 	else
 		alertAdmins("Script error in " .. server.nextCodeReload)
@@ -360,6 +371,8 @@ function refreshScripts()
 	server.nextCodeReload = "/scripts/functions.lua"
 	dofile(homedir .. "/scripts/functions.lua")
 
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
 	fixMissingStuff()
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -396,6 +409,11 @@ function refreshScripts()
 
 	server.nextCodeReload = "/scripts/inventory.lua"
 	checkScript(homedir .. "/scripts/inventory.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/queues.lua"
+	checkScript(homedir .. "/scripts/queues.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -459,8 +477,8 @@ function refreshScripts()
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	server.nextCodeReload = "/scripts/webAPI_functions.lua"
-	checkScript(homedir .. "/scripts/webAPI_functions.lua")
+	server.nextCodeReload = "/scripts/webAPI_functions_JSON.lua"
+	checkScript(homedir .. "/scripts/webAPI_functions_JSON.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -545,11 +563,6 @@ function refreshScripts()
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	server.nextCodeReload = "/scripts/chat/gmsg_stompy.lua"
-	checkScript(homedir .. "/scripts/chat/gmsg_stompy.lua")
-
-	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
-
 	server.nextCodeReload = "/scripts/chat/gmsg_teleports.lua"
 	checkScript(homedir .. "/scripts/chat/gmsg_teleports.lua")
 
@@ -577,6 +590,11 @@ function refreshScripts()
 
 	server.nextCodeReload = "/scripts/chat/gmsg_waypoints.lua"
 	checkScript(homedir .. "/scripts/chat/gmsg_waypoints.lua")
+
+	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+
+	server.nextCodeReload = "/scripts/chat/gmsg_groups.lua"
+	checkScript(homedir .. "/scripts/chat/gmsg_groups.lua")
 
 	if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
@@ -810,7 +828,6 @@ if (debug) then display("debug refreshScripts line " .. debugger.getinfo(1).curr
 		toggleTriggers("api offline")
 	end
 
-	--enableTrigger("Spam")
 	enableTrigger("Logon Successful")
 	enableTrigger("lp")
 	enableTrigger("Tele")
@@ -905,7 +922,7 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 
 	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
 
-	server.nextCodeReload = "finishing reload"
+	server.nextCodeReload = "finishing reload 1"
 	if type(server) == "table" then
 		if server.windowGMSG ~= nil then
 
@@ -916,6 +933,7 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 			getServerFields() -- refresh server fields
 
 	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
+			server.nextCodeReload = "finishing reload 2"
 
 			if skipTables then
 	if (debug) then display("debug reloadBotScripts line " .. debugger.getinfo(1).currentline .. "\n") end
@@ -929,27 +947,41 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 			openUserWindow(server.windowDebug)
 			openUserWindow(server.windowLists)
 
+			server.nextCodeReload = "finishing reload 3"
 			for k,v in pairs(igplayers) do
-				fixMissingIGPlayer(k)
+				fixMissingIGPlayer(v.platform, k, v.steamOwner, v.userID)
 			end
 
+			server.nextCodeReload = "finishing reload 4"
 			for k,v in pairs(players) do
-				fixMissingPlayer(k)
+				fixMissingPlayer(v.platform, k, v.steamOwner, v.userID)
 			end
 
+			server.nextCodeReload = "finishing reload 5"
 			fixMissingServer()
 			registerBot()
 			botman.webdavFolderExists = true
 
 			if botman.chatlogPath == nil or botman.chatlogPath == "" then
-				botman.chatlogPath = webdavFolder
-				if botman.dbConnected then conn:execute("UPDATE server SET chatlogPath = '" .. escape(webdavFolder) .. "'") end
+				if not isDir(webdavFolder) then
+					botman.webdavFolderExists = false
+					botman.chatlogPath = homedir .. "/chatlogs"
+				else
+					botman.chatlogPath = webdavFolder
+				end
+
+				if botman.dbConnected then conn:execute("UPDATE server SET chatlogPath = '" .. escape(botman.chatlogPath) .. "'") end
 			end
 
 			if not skipFetchData then
 				tempTimer( 30, [[reloadBot()]] )
 			else
-				tempTimer( 5, [[sendCommand("version")]] )
+				if server.allocsMap then
+					if tonumber(server.allocsMap) == 0 then
+						tempTimer( 5, [[sendCommand("version")]] )
+					end
+				end
+
 				tempTimer( 10, [[sendCommand("gg")]] )
 			end
 
@@ -960,10 +992,15 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 	end
 
 	if botman.spamID == nil then
-		botman.blockTelnetSpam = true
+		botman.blockTelnetSpam = false
 		botman.spamID = tempRegexTrigger("^", [[blockTelnetSpam()]])
 	end
 
+	if botman.tokenTriggerID == nil then
+		botman.tokenTriggerID = tempTrigger("Invalid Admintoken", [[invalidAdminTokenTrigger(line)]])
+	end
+
+	server.nextCodeReload = "finishing reload 6"
 	-- load the server API key if it exists
 	readAPI()
 
@@ -973,12 +1010,14 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 			botMaintenance = {}
 		end
 
+		server.nextCodeReload = "finishing reload 7"
 		-- run llp once per day
 		if not botMaintenance.lastLLP then
 			botMaintenance.lastLLP = server.dateTest
 			saveBotMaintenance()
 			sendCommand("llp parseable")
 		else
+			server.nextCodeReload = "finishing reload 8"
 			if botMaintenance.lastLLP ~= server.dateTest then
 				botMaintenance.lastLLP = server.dateTest
 				saveBotMaintenance()
@@ -986,12 +1025,14 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 			end
 		end
 
+		server.nextCodeReload = "finishing reload 9"
 		-- make sure we have run lkp at least once.  After that we will run it daily if there are 10 or less players online.
 		if not botMaintenance.lastLKP then
 				botMaintenance.lastLKP = server.dateTest
 				saveBotMaintenance()
 				sendCommand("lkp")
 		else
+			server.nextCodeReload = "finishing reload 10"
 			if botMaintenance.lastLKP ~= server.dateTest then
 				if tonumber(botman.playersOnline) < 11 then
 					botMaintenance.lastLKP = server.dateTest
@@ -1001,6 +1042,8 @@ function reloadBotScripts(skipTables, skipFetchData, silent)
 			end
 		end
 	end
+
+	enableTimer("APITimer")
 
 	server.reloadCodeSuccess = true
 

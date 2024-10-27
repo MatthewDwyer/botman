@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 -- to stop the bot getting booted from irc for flooding set something like this for each channel the bot uses
@@ -12,8 +12,9 @@
 
 function ircQueueTimer()
 	local row1, row2, cursor1, cursor2, errorString, name, command
+	local tmp = {}
 
-	if not botman.dbConnected or botman.ircQueueEmpty then
+	if not botman.dbConnected then
 		return
 	end
 
@@ -26,7 +27,6 @@ function ircQueueTimer()
 	row1 = cursor1:fetch({}, "a")
 
 	if not row1 then
-		botman.ircQueueEmpty = true
 		disableTimer("ircQueue")
 	end
 
@@ -37,16 +37,12 @@ function ircQueueTimer()
 			row2 = cursor2:fetch({}, "a")
 
 			if row2 then
-				name = row2.name
-				command = row2.command
+				tmp.name = row2.name
+				tmp.command = string.trim(row2.command)
 				connMEM:execute("DELETE FROM ircQueue WHERE id = " .. row2.id)
 
-				if name == server.ircMain and command == "/names" then
-					botman.checkBotOnIRC = os.time()
-				end
-
-				if name ~= "#mudlet" then
-					sendIrc(name, command)
+				if name ~= "#mudlet" and name ~= "#" .. server.ircBotName then
+					sendIrc(tmp.name, " " .. tmp.command) -- the leading space prevents Mudlet from assuming all lines starting with a / are irc commands.
 				end
 			end
 		end

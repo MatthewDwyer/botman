@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 
@@ -33,11 +33,11 @@ function initServer()
 	server.allowLottery = false
 	server.allowNumericNames = true
 	server.allowOverstacking = false
-	server.allowPhysics = true
 	server.allowPlayerVoteTopics = false
 	server.allowRapidRelogging = true
 	server.allowReboot = false
 	server.allowShop = false
+	server.allowSuicide = true
 	server.allowTeleporting = true
 	server.allowVoting = false
 	server.allowWaypoints = false
@@ -49,6 +49,7 @@ function initServer()
 	server.blacklistResponse = "ban"
 	server.blacklistCountries = "CN,HK"
 	server.botID = 0
+	server.botLoggingLevel = 0
 	server.botName = "Bot"
 	server.botNameColour = "6495ED"
 	server.chatColour = "D4FFD4"
@@ -59,7 +60,12 @@ function initServer()
 	server.disableLinkedWaypoints = false
 	server.enableRegionPM = false
 	server.gameType = "pve"
+	server.northeastZone = "pve"
+	server.northwestZone = "pve"
+	server.southeastZone = "pve"
+	server.southwestZone = "pve"
 	server.gimmePeace = false
+	server.hackerFlyingTrigger = 3
 	server.hackerTPDetection = false
 	server.hardcore = false
 	server.hideCommands = true
@@ -77,7 +83,6 @@ function initServer()
 	server.ircPrivate = true
 	server.ircServer = "127.0.0.1"
 	server.ircPort = "6667"
-	server.ircTracker = "#bot_tracker"
 	server.ircWatch = "#bot_watch"
 	server.lastDailyReboot = 0
 	server.lottery = 0
@@ -85,7 +90,7 @@ function initServer()
 	server.mapSize = 10000
 	server.maxPlayers = 0
 	server.maxPrisonTime = -1
-	server.maxServerUptime = 12
+	server.maxServerUptime = 4
 	server.maxWaypoints = 2
 	server.moneyName = "Zenny"
 	server.moneyPlural = "Zennies"
@@ -111,6 +116,7 @@ function initServer()
 	server.shopCountdown = 3
 	server.southeastZone = ""
 	server.southwestZone = ""
+	server.suicideCost = 0
 	server.swearCash = 0
 	server.swearFine = 5
 	server.swearJar = false
@@ -128,7 +134,6 @@ function initServer()
 	server.warnColour = "FFA500"
 	server.waypointCooldown = 0
 	server.waypointCost = 0
-	server.waypointsPublic = false
 	server.website = ""
 	server.welcome = ""
 	server.windowDebug = "Debug"
@@ -139,6 +144,7 @@ function initServer()
 	if botman.dbConnected then
 		conn:execute("TRUNCATE server")
 		cursor,errorString = conn:execute("INSERT INTO server (botName, windowGMSG, windowAlerts, windowDebug, windowLists, windowPlayers) values ('Bot', 'Chat', 'Alerts', 'Debug', 'Lists', 'Players')")
+		-- SAVE ALL THE THINGS!
 		-- save all the settings above to the server table
 		saveServer()
 	end

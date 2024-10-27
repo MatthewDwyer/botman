@@ -1,62 +1,103 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
+-- dbug("debug core_functions line " .. debugger.getinfo(1).currentline)
 
-function dateToTimestamp(dateString)
-	local pattern = "(%d+)-(%d+)-(%d+) (%d+):(%d+)"
-	local runyear, runmonth, runday, runhour, runminute = dateString:match(pattern)
 
-	return os.time({year = runyear, month = runmonth, day = runday, hour = runhour, min = runminute})
+function isAdmin(steam, userID)
+	if players[steam] then
+		if not userID then
+			userID = players[steam].userID
+		end
+
+		if userID == "" then
+			userID = players[steam].userID
+		end
+
+		if players[steam].testAsPlayer then
+			return false, 90
+		end
+	end
+
+	if staffList[steam] then
+		if staffList[steam].hidden then
+			return false, 90
+		else
+			return true, tonumber(staffList[steam].adminLevel)
+		end
+	end
+
+	if userID then
+		if staffList[userID] then
+			if staffList[userID].hidden then
+				return false, 90
+			else
+				return true, tonumber(staffList[userID].adminLevel)
+			end
+		end
+	end
+
+	return false, 99
 end
 
 
-function calcCurrentServerTime(timestamp)
-	local dateString, dayMonth
+function isAdminHidden(steam, userID)
+	if players[steam] then
+		if not userID then
+			userID = players[steam].userID
+		end
 
-	if not timestamp then
-		timestamp = botman.serverTimeStamp
+		if userID == "" then
+			userID = players[steam].userID
+		end
 	end
 
-	timestamp = timestamp + (os.time() - timestamp)
-	dateString = os.date('%Y-%m-%d %H:%M', timestamp)
-	dayMonth = os.date('%m-%d', timestamp)
-
-	botman.serverTime = dateString
-	botman.serverTimeStamp = timestamp
-
-	botman.serverHour = os.date('%H', timestamp)
-	botman.serverMinute = os.date('%M', timestamp)
-	specialDay = ""
-
-	if dayMonth == "02-14" then specialDay = "valentine" end
-	if dayMonth == "12-25" then specialDay = "christmas" end
-
-	if server.dateTest == nil then
-		server.dateTest = string.sub(botman.serverTime, 1, 10)
+	if staffList[steam] then
+		return true, tonumber(staffList[steam].adminLevel)
 	end
 
-	if tonumber(server.uptime) > 0 then
-		server.uptime = server.uptime + 1
+	if userID then
+		if staffList[userID] then
+			return true, tonumber(staffList[userID].adminLevel)
+		end
 	end
 
+	return false, 99
+end
 
-	-- if tonumber(botman.serverHour) == tonumber(server.botRestartHour) and server.allowBotRestarts then
-		-- uptime = math.floor((os.difftime(os.time(), botman.botStarted) / 3600))
 
-		-- if uptime > 1 then
-			-- -- if the bot has been running less than 1 hour it won't restart itself.
-			-- restartBot()
-			-- return
-		-- end
-	-- end
+function isAdminOnline()
+	-- this function helps us choose different actions depending on if an admin is playing or not.
+	local k, v
 
-	return botman.serverTime
+	for k,v in pairs(igplayers) do
+		if staffList[v.steam] then
+			return true
+		end
+
+		if staffList[v.userID] then
+			return true
+		end
+	end
+
+	return false
+end
+
+
+function dateToTimestamp(dateString)
+	local ts
+
+	local pattern = "(%d+)-(%d+)-(%d+) (%d+):(%d+)"
+	local runyear, runmonth, runday, runhour, runminute = dateString:match(pattern)
+
+	ts = os.time({year = runyear, month = runmonth, day = runday, hour = runhour, min = runminute})
+	return ts
 end
 
 
@@ -121,11 +162,11 @@ function getSWNECoordsXZ(x1, z1, x2, z2)
 end
 
 
-function sendCommand(command) -- , api, outputFile
-	local api, outputFile
+function sendCommand(command)
+	local APICommand, outputFile, sendToQueue, doNotQueue
+	local httpHeaders = {["X-SDTD-API-TOKENNAME"] = server.allocsWebAPIUser, ["X-SDTD-API-SECRET"] = server.allocsWebAPIPassword}
 
 	-- send the command to the server via Allocs web API if enabled otherwise use telnet
-
 	-- any commands that must be sent via telnet, trap and send them first.
 
 	if botman.worldGenerating then
@@ -134,192 +175,222 @@ function sendCommand(command) -- , api, outputFile
 	end
 
 	botman.lastBotCommand = command
+	doNotQueue = false
 
-	if server.useAllocsWebAPI and not botman.APIOffline and not string.find(command, "webtokens ") and not string.find(command, "#") then
+	if not botman.gameStarted then
+		sendToQueue = true
+	end
+
+	if server.useAllocsWebAPI and not string.find(command, "webtokens") and not string.find(command, "#") then -- and not botman.APIOffline
+		-- send the command to Alloc's web API
+
 		-- fix missing api and outputFile for some commands
 		if command == "admin list" then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "adminList.txt"
 		end
 
 		if command == "APICheck" then
-			botman.APICheckTimestamp = os.time()
-			botman.APICheckPassed = false
-			api = "executeconsolecommand?command=apicheck&"
+			APICommand = "executeconsolecommand?command=apicheck"
 			outputFile = "apicheck.txt"
 		end
 
 		if command == "ban list" then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "banList.txt"
 		end
 
-		if command == "bc-go prefabs" then
-			api = "executeconsolecommand?command=" .. command .. "&"
-			outputFile = "bc-go.txt"
-		end
-
-		if command == "bc-go Items /filter=Name" then
-			api = "executeconsolecommand?command=" .. command .. "&"
-			outputFile = "bc-go.txt"
-		end
-
-		if command == "bc-time" then -- this is used to read server ticks and grab the players online.
-			api = "executeconsolecommand?command=" .. command .. "&"
-			outputFile = "bc-time.txt"
-		end
-
-		if string.find(command, "bc-lp", nil, true) then
-			api = "executeconsolecommand?command=" .. command .. "&"
-			outputFile = "bc-lp.txt"
-		end
-
 		if string.find(command, "bm-anticheat report", nil, true) then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "bm-anticheat-report.txt"
 		end
 
 		if string.find(command, "bm-listplayerbed", nil, true) then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "bm-listplayerbed.txt"
+			doNotQueue = true
 		end
 
 		if string.find(command, "bm-listplayerfriends", nil, true) then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "bm-listplayerfriends.txt"
+			doNotQueue = true
 		end
 
 		if command == "bm-readconfig" then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "bm-config.txt"
 		end
 
 		if command == "bm-resetregions list" then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "bm-resetregions-list.txt"
 		end
 
 		if command == "bm-uptime" then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "bm-uptime.txt"
 		end
 
 		if command == "gethostilelocation" then
-			api = "gethostilelocation?&"
+			APICommand = "gethostilelocation?&"
 			outputFile = "hostiles.txt"
+			doNotQueue = true
 		end
 
 		if command == "getplayerinventories" then
-			api = "getplayerinventories?&"
+			APICommand = "getplayerinventories?&"
 			outputFile = "inventories.txt"
+			doNotQueue = true
+		end
+
+		if command == "getserverinfo" then
+			APICommand = "getserverinfo?&"
+			outputFile = "serverinfo.txt"
+			doNotQueue = true
 		end
 
 		-- don't send gg to the API for now as it messes up in the BC mod's JSON encoding if the Server Login Confirmation Text contains any /r/n's which is probably fairly common.
 		if command == "gg" then
 			-- instead send it to telnet as that parses it just fine.
-			send(command)
+			if sendToQueue then
+				connMEM:execute('INSERT INTO serverCommandQueue (command) VALUES (' .. connMEM:escape(command) .. ')')
+			else
+				if server.readLogUsingTelnet then
+					send(command)
+				else
+					APICommand = "executeconsolecommand?command=" .. command
+					outputFile = "gg.txt"
+				end
+			end
 		end
 
 		if command == "gt" then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "gametime.txt"
 		end
 
 		if string.sub(command, 1, 4) == "help" then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "help.txt"
+			doNotQueue = true
 		end
 
 		if command == "le" then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "le.txt"
+			doNotQueue = true
 		end
 
 		if string.sub(command, 1, 3) == "li " then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "li.txt"
+			doNotQueue = true
+
 		end
 
 		if string.find(command, "lkp") then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "lkp.txt"
 		end
 
 		if string.find(command, "llp") then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "llp.txt"
 		end
 
 		if command == "lp" then
-			api = "getplayersonline?"
-			outputFile = "playersOnline.txt"
+			APICommand = "executeconsolecommand?command=" .. command
+			outputFile = "lp.txt"
+			doNotQueue = true
 		end
 
-		if string.find(command, "lpf") then
-			api = "executeconsolecommand?command=" .. command .. "&"
-			outputFile = "lpf.txt"
-		end
+		-- if string.find(command, "lpf") then
+			-- APICommand = "executeconsolecommand?command=" .. command
+			-- outputFile = "lpf.txt"
+		-- end
 
 		if command == "mem" then -- this is used to read server time, grab the players online and some performance metrics.
-			api = "executeconsolecommand?command=mem&"
+			APICommand = "executeconsolecommand?command=mem"
 			outputFile = "mem.txt"
+			doNotQueue = true
+		end
+
+		if command == "pm apicheck" then
+			APICommand = "executeconsolecommand?command=" .. command
+			outputFile = "apicheck.txt"
+			doNotQueue = true
 		end
 
 		if string.find(command, "bm-playergrounddistance", nil, true) then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "pgd.txt"
+			doNotQueue = true
 		end
 
 		if string.find(command, "bm-playerunderground", nil, true) then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "pug.txt"
+			doNotQueue = true
 		end
 
 		if string.sub(command, 1,3) == "se " or command == "se" then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "se.txt"
+			doNotQueue = true
 		end
 
 		if command == "version" then
-			api = "executeconsolecommand?command=" .. command .. "&"
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "installedMods.txt"
 		end
 
 		-- this must be last.  It is a catch-all for anything not matched above.
-		if api == nil then
-			api = "executeconsolecommand?command=" .. command .. "&"
+		if APICommand == nil then
+			APICommand = "executeconsolecommand?command=" .. command
 			outputFile = "command.txt"
+			doNotQueue = true
 		end
 
-		url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/" .. api .. "adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+		if command ~= "gg" or not server.readLogUsingTelnet then
+			if sendToQueue then
+				if not doNotQueue then
+					connMEM:execute('INSERT INTO serverCommandQueue (command) VALUES (' .. connMEM:escape(command) .. ')')
+				end
+			else
+				if botman.fileDownloadTimestamp == nil then
+					botman.fileDownloadTimestamp = os.time()
+				end
 
-		if outputFile == nil then
-			outputFile = "dummy.txt"
-		end
+				if server.allocsMap == 0 and (command == "version" or command == "pm apitest") then
+					-- version has not yet been sent so let's fix that.
+					pcall(postHTTP("", "http://" .. server.IP .. ":" .. server.webPanelPort .. "/api/" .. APICommand, httpHeaders))
+					-- the response from the server is processed in function onHttpPostDone(_, url, body) in functions.lua
+				end
 
-		os.remove(homedir .. "/temp/" .. outputFile)
+				pcall(postHTTP("", "http://" .. server.IP .. ":" .. server.webPanelPort .. "/api/" .. APICommand, httpHeaders))
+				-- the response from the server is processed in function onHttpPostDone(_, url, body) in functions.lua
 
-		if command ~= "gg" then
-			botman.fileDownloadTimestamp = os.time()
-			downloadFile(homedir .. "/temp/" .. outputFile, url)
-		end
+				-- should be able to remove list later.  Just put it here to fix an issue with older bots updating and not having the metrics table.
+				if type(metrics) ~= "table" then
+					metrics = {}
+					metrics.commands = 0
+					metrics.commandLag = 0
+					metrics.errors = 0
+					metrics.telnetLines = 0
+				end
 
-		-- should be able to remove list later.  Just put it here to fix an issue with older bots updating and not having the metrics table.
-		if type(metrics) ~= "table" then
-			metrics = {}
-			metrics.commands = 0
-			metrics.commandLag = 0
-			metrics.errors = 0
-			metrics.telnetLines = 0
-		end
+				metrics.commands = metrics.commands + 1
 
-		metrics.commands = metrics.commands + 1
-
-		if server.logBotCommands then
-			logBotCommand(botman.serverTime, url)
+				if server.logBotCommands then
+					logBotCommand(botman.serverTime, url)
+				end
+			end
 		end
 	else
-		if command == "getplayerinventories" or command == "gethostilelocation" then
+		-- send the command to telnet
+
+		if command == "getplayerinventories" or command == "gethostilelocation" or command == "li *" then
 			return
 		end
 
@@ -332,15 +403,63 @@ function sendCommand(command) -- , api, outputFile
 			metrics.telnetLines = 0
 		end
 
-		send(command)
-		metrics.commands = metrics.commands + 1
+		if string.find(command, "bm-listplayerbed", nil, true) then
+			doNotQueue = true
+		end
 
-		if server.logBotCommands then
-			logBotCommand(botman.serverTime, command)
+		if string.find(command, "bm-listplayerfriends", nil, true) then
+			doNotQueue = true
+		end
+
+		if string.sub(command, 1, 4) == "help" then
+			doNotQueue = true
+		end
+
+		if command == "le" then
+			doNotQueue = true
+		end
+
+		if string.sub(command, 1, 3) == "li " then
+			doNotQueue = true
+		end
+
+		if command == "lp" then
+			doNotQueue = true
+		end
+
+		if command == "mem" then
+			doNotQueue = true
+		end
+
+		if string.find(command, "bm-playergrounddistance", nil, true) then
+			doNotQueue = true
+		end
+
+		if string.find(command, "bm-playerunderground", nil, true) then
+			doNotQueue = true
+		end
+
+		if string.sub(command, 1,3) == "se " or command == "se" then
+			doNotQueue = true
+		end
+
+		if sendToQueue then
+			if not doNotQueue then
+				connMEM:execute('INSERT INTO serverCommandQueue (command) VALUES (' .. connMEM:escape(command) .. ')')
+			end
+		else
+			send(command)
+			metrics.commands = metrics.commands + 1
+
+			if server.logBotCommands then
+				logBotCommand(botman.serverTime, command)
+			end
 		end
 	end
 
-	if command == "shutdown" and botman.telnetOffline then
+	if command == "shutdown" then
+		server.uptime = 0
+		server.serverStartTimestamp = os.time()
 		saveLuaTables()
 	end
 end
@@ -373,8 +492,8 @@ function alertAdmins(msg, alert)
 	end
 
 	for k, v in pairs(igplayers) do
-		if (accessLevel(k) < 3) then
-			message("pm " .. k .. " [" .. msgColour .. "]" .. msg .. "[-]")
+		if (isAdmin(k, v.userID)) then
+			message("pm " .. v.userID .. " [" .. msgColour .. "]" .. msg .. "[-]")
 		end
 	end
 end
@@ -422,9 +541,9 @@ function stripBBCodes(text)
 
 	text = string.trim(text)
 	oldText = text
-
-
-	text = string.gsub(text, "%[[%/%!]-[^%[%]]-]", "")
+	--text = string.gsub(text, "%[/c%]", "")
+	--text = string.gsub(text, "%b[]", "")
+	text = string.gsub(text, "%[[0-9a-fA-F]]-[^%[%]]-]", "")
 
 	if text == nil then
 		text = oldtext
@@ -439,8 +558,8 @@ function stripAngleBrackets(text)
 
 	text = string.trim(text)
 	oldText = text
-
-	text = string.match(text, "^<(.*)>$")
+	text = string.gsub(text, "<", "")
+	text = string.gsub(text, ">", "")
 
 	if text == nil then
 		text = oldtext
@@ -455,7 +574,6 @@ function stripQuotes(name)
 
 	name = string.trim(name)
 	oldName = name
-
 	name = string.match(name, "^'(.*)'$")
 
 	if name == nil then
@@ -543,25 +661,59 @@ function isFriend(testid, steamid)
 		return false
 	end
 
-	if friends[testid] == nil then -- testid is missing from friends data
+	if not friends[testid] then
+		-- testid is not in the friends table
 		return false
 	end
 
-	if friends[testid].friends == nil then -- testid has no friends
+	if tablelength(friends[testid].friends) == 0 then
+		-- testid's friends list is empty
 		return false
 	end
 
-	if testid == steamid then -- self
-		return true -- I hope you are friends with yourself! (sorry if not)
-	end
-
-	if string.find(friends[testid].friends, steamid) then
-		-- found steamid in testid's friends list.
+	-- try to find steamid in the friends list of testid
+	if friends[testid].friends[steamid] then
 		return true
 	end
 
 	-- steamid is not a friend of testid
 	return false
+end
+
+
+function countFriends(steam)
+	-- how many friends?
+	if not friends[steam] then
+		return 0
+	end
+
+	return tablelength(friends[steam].friends)
+end
+
+
+function isBaseMember(testID, baseOwner, baseNumber)
+	if not baseMembers[baseOwner .. "_" .. baseNumber] then
+		-- there are no base members recorded for this base
+		return false
+	end
+
+	-- try to find testID in the baseMembers table matching baseOwner and baseNumber
+	if baseMembers[baseOwner .. "_" .. baseNumber].baseMembers[testID] then
+		return true
+	end
+
+	-- could not find testID in the baseMembers table matching baseOwner and baseNumber
+	return false
+end
+
+
+function countBaseMembers(baseOwner, baseNumber)
+	-- how many members does this base have?
+	if not baseMembers[baseOwner .. "_" .. baseNumber] then
+		return 0
+	end
+
+	return tablelength(baseMembers[baseOwner .. "_" .. baseNumber].baseMembers)
 end
 
 
@@ -599,7 +751,13 @@ end
 
 function message(msg, steam)
 	-- parse msg and enclose the actual message in double quotes
-	local words, word, skip, url, k, v, sayCommand, pmCommand
+	local words, word, skip, url, k, v, sayCommand, pmCommand, num, oldWord
+
+	if server.suppressDisabledCommand then
+		if string.find(msg, "This command is disabled") then
+			return
+		end
+	end
 
 	if server.botman then
 		sayCommand = "bm-say"
@@ -644,10 +802,12 @@ function message(msg, steam)
 				metrics.commands = metrics.commands + 1
 			else
 				msg = string.sub(msg, 5)
-				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=" .. sayCommand .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+				url = "http://" .. server.IP .. ":" .. server.webPanelPort .. "/api/executeconsolecommand?command=" .. sayCommand .. " \"" .. msg .. "\""
 
 				if botman.dbConnected then
-					conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+					connSQL:execute("INSERT into APIQueue (URL, outputFile, timestamp) VALUES ('" .. connMEM:escape(url) .. "','" .. homedir .. "/temp/dummy.txt" .. "'," .. os.time() .. ")")
+					botman.apiQueueEmpty = false
+					enableTimer("APITimer")
 				end
 			end
 		else
@@ -664,14 +824,28 @@ function message(msg, steam)
 	else
 		if players[words[2]] then
 			if server.useAllocsWebAPI then
-				msg = string.sub(msg, 22)
-				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=" .. pmCommand .. " " .. words[2] .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+				msg = string.sub(msg, string.find(msg, words[2]) + string.len(words[2]))
+				url = "http://" .. server.IP .. ":" .. server.webPanelPort .. "/api/executeconsolecommand?command=" .. pmCommand .. " " .. words[2] .. " \"" .. msg .. "\""
 
 				if botman.dbConnected then
-					conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+					connSQL:execute("INSERT into APIQueue (URL, outputFile, timestamp) VALUES ('" .. connMEM:escape(url) .. "','" .. homedir .. "/temp/dummy.txt" .. "'," .. os.time() .. ")")
+					botman.apiQueueEmpty = false
+					enableTimer("APITimer")
 				end
 			else
-				msg = pmCommand .. " " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
+				-- check for wrongly formatted steam id
+				num = tonumber(words[2])
+
+				if num ~= nil then
+					if string.len(words[2]) == 17 then
+						oldWord = words[2]
+						-- this is a steam id without Steam_ in front of it so let's fix that now.
+						words[2] = "Steam_" .. words[2]
+						msg = string.gsub(msg, oldWord, words[2])
+					end
+				end
+
+				msg = pmCommand .. " " .. words[2] .. " \"" .. string.sub(msg, string.find(msg, words[2]) + string.len(words[2])) .. "\""
 				send(msg)
 
 				if server.logBotCommands then
@@ -682,18 +856,33 @@ function message(msg, steam)
 			end
 		else
 			if server.useAllocsWebAPI then
-				msg = string.sub(msg, 22)
-				url = "http://" .. server.IP .. ":" .. server.webPanelPort + 2 .. "/api/executeconsolecommand?command=" .. pmCommand .. " " .. words[2] .. " \"" .. msg .. "\"&adminuser=bot&admintoken=" .. server.allocsWebAPIPassword
+				msg = string.sub(msg, string.find(msg, words[2]) + string.len(words[2]))
+				url = "http://" .. server.IP .. ":" .. server.webPanelPort .. "/api/executeconsolecommand?command=" .. pmCommand .. " " .. words[2] .. " \"" .. msg .. "\""
 
 				if botman.dbConnected then
-					if words[2] == "APItest" then
-						conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/apitest.txt") .. "')")
+					if words[2] == "apitest" then
+						connSQL:execute("INSERT into APIQueue (URL, outputFile, timestamp) VALUES ('" .. connMEM:escape(url) .. "','" .. homedir .. "/temp/apitest.txt" .. "'," .. os.time() .. ")")
 					else
-						conn:execute("INSERT into APIQueue (URL, outputFile) VALUES ('" .. escape(url) .. "','" .. escape(homedir .. "/temp/dummy.txt") .. "')")
+						connSQL:execute("INSERT into APIQueue (URL, outputFile, timestamp) VALUES ('" .. connMEM:escape(url) .. "','" .. homedir .. "/temp/dummy.txt" .. "'," .. os.time() .. ")")
 					end
+
+					botman.apiQueueEmpty = false
+					enableTimer("APITimer")
 				end
 			else
-				msg = pmCommand .. " " .. words[2] .. " \"" .. string.sub(msg, 22) .. "\""
+				-- check for wrongly formatted steam id
+				num = tonumber(words[2])
+
+				if num ~= nil then
+					if string.len(words[2]) == 17 then
+						oldWord = words[2]
+						-- this is a steam id without Steam_ in front of it so let's fix that now.
+						words[2] = "Steam_" .. words[2]
+						msg = string.gsub(msg, oldWord, words[2])
+					end
+				end
+
+				msg = pmCommand .. " " .. words[2] .. " \"" .. string.sub(msg, string.find(msg, words[2]) + string.len(words[2])) .. "\""
 				send(msg)
 
 				if server.logBotCommands then
@@ -758,7 +947,7 @@ function inLocation(x, z)
 	-- is the coord inside a location?
 	local closestLocation, closestDistance, dist, reset, inside
 
-	if x == nil then
+	if x == nil or locations == nil then
 		return false, false
 	end
 
@@ -802,7 +991,7 @@ function pickRandomArenaPlayer()
 
 	-- abort to prevent an infinite loop
 	if tonumber(botman.arenaCount) == 0 then
-		return 0
+		return "0"
 	end
 
 	i = 1
@@ -816,7 +1005,7 @@ function pickRandomArenaPlayer()
 		end
 	end
 
-	return 0 -- return something
+	return "0" -- return something
 end
 
 
@@ -835,57 +1024,148 @@ function dbLookupPlayer(search, match)
 end
 
 
+function getNextBaseNumber(steam)
+	local k, v, lastBaseNumber
+
+	lastBaseNumber = 0
+
+	-- lookup the base
+	for k, v in pairs(bases) do
+		if v.steam == steam then
+			if tonumber(v.baseNumber) > lastBaseNumber then
+				lastBaseNumber = tonumber(v.baseNumber)
+			end
+		end
+	end
+
+	return lastBaseNumber + 1
+end
+
+
+function getNearestBase(x, z, steam)
+	local k, v, base, dist, shortestDist
+
+	shortestDist = 1000000
+
+	-- find the nearest base to x, z
+	for k, v in pairs(bases) do
+		if steam then
+			-- just look at bases owned by steam
+			if v.steam == steam then
+				dist = distancexz(x, z, v.x, v.z)
+
+				if dist < shortestDist then
+					shortestDist = dist
+					base = v
+				end
+			end
+		else
+			-- check every base for those two droids
+			dist = distancexz(x, z, v.x, v.z)
+
+			if dist < shortestDist then
+				shortestDist = dist
+				base = v
+			end
+		end
+	end
+
+	if base then
+		return true, base
+	else
+		-- no base matched search
+		return false, nil
+	end
+end
+
+
+function LookupBase(steam, baseID)
+	local k, v, base, baseNumber, baseName
+
+	if baseID then
+		baseNumber = tonumber(baseID)
+
+		if baseNumber == nil then
+			baseName = baseID
+		end
+	end
+
+	-- lookup the base
+	for k, v in pairs(bases) do
+		if v.steam == steam then
+			if not baseNumber and not baseName then
+				base = v
+				return true, base
+			end
+
+			if baseNumber then
+				if tonumber(v.baseNumber) == baseNumber then
+					base = v
+					return true, base
+				end
+			end
+
+			if baseName then
+				baseName = string.lower(baseName)
+
+				if string.lower(v.title) == baseName then
+					base = v
+					return true, base
+				end
+			end
+		end
+	end
+
+	-- no base matched search
+	return false, nil
+end
+
+
 function LookupPlayer(search, match)
-	-- try to find the player amoung those who are playing right now
-	local steam, owner, k, v, test, name
+	-- try to find the player in those who are playing right now
+	-- returns steam, owner, userID, platform
+	local steam, owner, userID, k, v, eos, name, platform, searchOld, searchUpper
 
 	if string.trim(search) == "" then
-		return 0, 0
+		return "0", "0", "", ""
 	end
+
+	search = string.lower(search)
+	searchUpper = string.upper(search)
+	search = stripMatching(search, "steam_")
+	search = stripMatching(search, "xbl_")
+	searchOld = search
+	eos = "eos_" .. search
 
 	if not match then
 		match = ""
 	end
 
-	test = tonumber(search)
-
-	-- if the search is a steam ID, don't bother walking through the list of in game players, just check that it is a member of the lua table igplayers
-	if string.len(search) == 17 then
-		if (test ~= nil) then
-			if igplayers[test] then
-				return test
-			end
-
-			if igplayers[search] then
-				return search
-			end
-		end
+	if igplayers[search] then
+		return search, igplayers[search].steamOwner, igplayers[search].userID, igplayers[search].platform
 	end
 
-	search = string.lower(search)
+	if igplayers[searchUpper] then
+		return searchUpper, igplayers[searchUpper].steamOwner, igplayers[searchUpper].userID, igplayers[searchUpper].platform
+	end
 
 	if string.starts(search, "\"") and string.ends(search,"\"") then
-		search = search:match("%w+")
+		search = string.sub(search, 2, string.len(search) - 1)
 		match = "all"
 	end
 
 	for k, v in pairs(igplayers) do
 		if match == "code" then
 			if tonumber(search) == tonumber(players[k].ircInvite) then
-				return k, v.steamOwner
+				return k, v.steamOwner, v.userID, v.platform
 			end
 		else
-			if test ~= nil then
-				if test == tonumber(v.id) then
-					if tonumber(v.id) > 0 then
-						-- matched the player id
-						return k, v.steamOwner
-					end
-				end
+			if v.userID ~= nil then
+				-- look for the EOS id
+				userID = string.lower(v.userID)
 
-				if k == test or v.steamOwner == test then
-					-- matched the steam id or steamOwner id
-					return k, v.steamOwner
+				if (search == userID) or (eos == userID) then
+					return k, v.steamOwner, v.userID, v.platform
 				end
 			end
 
@@ -895,20 +1175,20 @@ function LookupPlayer(search, match)
 				if match == "all" then
 					-- look for an exact match
 					if (search == name) then
-						return k, v.steamOwner
+						return k, v.steamOwner, v.userID, v.platform
 					end
 
 					if (v.ircAlias ~= nil) and (search == string.lower(v.ircAlias)) then
-						return k, v.steamOwner
+						return k, v.steamOwner, v.userID, v.platform
 					end
 				else
 					-- if it contains the search it is a match
 					if (search == name) or (string.find(name, search, nil, true)) then
-						return k, v.steamOwner
+						return k, v.steamOwner, v.userID, v.platform
 					end
 
 					if (string.find(v.id, search)) then
-						return k, v.steamOwner
+						return k, v.steamOwner, v.userID, v.platform
 					end
 				end
 			end
@@ -916,164 +1196,160 @@ function LookupPlayer(search, match)
 	end
 
 	-- no matches so try again but including all players
-	steam, owner = LookupOfflinePlayer(search, match)
+	steam, owner, userID, platform = LookupOfflinePlayer(searchOld, match)
+
+	if steam ~= "0" and platform == "" then
+		platform = "Steam"
+	end
 
 	-- if steam isn't 0 we found a match
-	return steam, owner
+	return steam, owner, userID, platform
 end
 
 
 function LookupOfflinePlayer(search, match)
-	local k, v, test, name
+	-- try to find the player in all known players
+	-- returns steam, owner, userID, platform
+	local k, v, eos, name, platform, userID, searchUpper
 
 	if string.trim(search) == "" then
-		return 0, 0
+		return "0", "0", "", ""
 	end
+
+	search = string.lower(search)
+	searchUpper = string.upper(search)
+	search = stripMatching(search, "steam_")
+	search = stripMatching(search, "xbl_")
+	eos = "eos_" .. search
 
 	if not match then
 		match = ""
 	end
 
-	test = tonumber(search)
-
-	-- if the search is a steam ID, don't bother walking through the list of players, just check that it is a member of the lua table players
-	if string.len(search) == 17 then
-		if (test ~= nil) then
-			if players[test] then
-				return test, players[test].steamOwner
-			end
-
-			if players[search] then
-				return search, players[search].steamOwner
-			end
-		end
+	if players[search] then
+		return search, players[search].steamOwner, players[search].userID, players[search].platform
 	end
 
-	search = string.lower(search)
+	if players[searchUpper] then
+		return searchUpper, players[searchUpper].steamOwner, players[searchUpper].userID, players[searchUpper].platform
+	end
 
 	if string.starts(search, "\"") and string.ends(search,"\"") then
-		search = search:match("%w+")
+		search = string.sub(search, 2, string.len(search) - 1)
 		match = "all"
 	end
 
 	for k, v in pairs(players) do
 		if match == "code" then
 			if tonumber(search) == tonumber(players[k].ircInvite) then
-				return k, v.steamOwner
+				return k, v.steamOwner, v.userID, v.platform
 			end
 		else
+			if v.userID ~= nil then
+				-- look for the EOS id
+				userID = string.lower(v.userID)
+
+				if (search == userID) or (eos == userID) then
+					return k, v.steamOwner, v.userID, v.platform
+				end
+			end
+
 			if (v.name ~= nil) then
 				name = string.lower(v.name)
 
 				if match == "all" then
 					if (search == name) then
-						return k, v.steamOwner
+						return k, v.steamOwner, v.userID, v.platform
 					end
 
 					if (v.ircAlias ~= nil) and (search == string.lower(v.ircAlias)) then
-						return k, v.steamOwner
+						return k, v.steamOwner, v.userID, v.platform
 					end
 				else
 					if (search == name) or (string.find(name, search, nil, true)) then
-						return k, v.steamOwner
+						return k, v.steamOwner, v.userID, v.platform
 					end
-				end
-			end
-
-			if test ~= nil then
-				if test == tonumber(v.id) then
-					if tonumber(v.id) > 0 then
-						return k, v.steamOwner
-					end
-				end
-
-				if k == test or v.steamOwner == test then
-					return k, v.steamOwner
 				end
 			end
 		end
 	end
 
 	-- got to here so no match found
-	return 0, 0
+	return "0", "0", "", ""
 end
 
 
 function LookupArchivedPlayer(search, match)
-	local k, v, test, name
+	-- try to find the player in archived players
+	-- returns steam, owner, userID, platform
+	local k, v, name, platform, eos, userID, searchUpper
 
 	if string.trim(search) == "" then
-		return 0, 0
-	end
-
-	test = tonumber(search)
-
-	-- if the search is a steam ID, don't bother walking through the list of players, just check that it is a member of the lua table playersArchived
-	if string.len(search) == 17 then
-		if (test ~= nil) then
-			if playersArchived[test] then
-				return test
-			end
-
-			if playersArchived[search] then
-				return search
-			end
-		end
+		return "0", "0", "", ""
 	end
 
 	search = string.lower(search)
+	searchUpper = string.upper(search)
+	search = stripMatching(search, "steam_")
+	search = stripMatching(search, "xbl_")
+	eos = "eos_" .. search
+
+	if playersArchived[search] then
+		return search, playersArchived[search].steamOwner, playersArchived[search].userID, playersArchived[search].platform
+	end
+
+	if playersArchived[searchUpper] then
+		return searchUpper, playersArchived[searchUpper].steamOwner, playersArchived[searchUpper].userID, playersArchived[searchUpper].platform
+	end
 
 	if string.starts(search, "\"") and string.ends(search,"\"") then
-		search = search:match("%w+")
+		search = string.sub(search, 2, string.len(search) - 1)
 		match = "all"
 	end
 
 	for k, v in pairs(playersArchived) do
 		if match == "code" then
 			if tonumber(search) == tonumber(playersArchived[k].ircInvite) then
-				return k, v.steamOwner
+				return k, v.steamOwner, v.userID, v.platform
 			end
 		else
+			if v.userID ~= nil then
+				userID = string.lower(v.userID)
+
+				-- look for the EOS id
+				if (search == userID) or (eos == userID) then
+					return k, v.steamOwner, v.userID, v.platform
+				end
+			end
+
 			if (v.name ~= nil) then
 				name = string.lower(v.name)
 
 				if match == "all" then
 					if (search == name) then
-						return k, v.steamOwner
+						return k, v.steamOwner, v.userID, v.platform
 					end
 
 					if (v.ircAlias ~= nil) and (search == string.lower(v.ircAlias)) then
-						return k, v.steamOwner
+						return k, v.steamOwner, v.userID, v.platform
 					end
 				else
 					if (search == name) or (string.find(name, search, nil, true)) then
-						return k, v.steamOwner
+						return k, v.steamOwner, v.userID, v.platform
 					end
-				end
-			end
-
-			if test ~= nil then
-				if test == tonumber(v.id) then
-					if tonumber(v.id) > 0 then
-						return k, v.steamOwner
-					end
-				end
-
-				if k == test or v.steamOwner == test then
-					return k, v.steamOwner
 				end
 			end
 		end
 	end
 
 	-- got to here so no match found
-	return 0, 0
+	return "0", "0", "", ""
 end
 
 
 function LookupIRCAlias(name)
 	-- returns a steam ID if only 1 player record uses the name.
-	local k,v, nickCount, steam
+	local k,v, nickCount, steam, userID
 
 	nickCount = 0
 
@@ -1082,14 +1358,15 @@ function LookupIRCAlias(name)
 			if (name == v.ircAlias) then
 				nickCount = nickCount + 1
 				steam = k
+				userID = v.userID
 			end
 		end
 	end
 
 	if nickCount == 1 then
-		return steam
+		return steam, userID
 	else
-		return 0
+		return "0", "0"
 	end
 end
 
@@ -1098,18 +1375,18 @@ function LookupIRCPass(login, pass)
 	local k,v
 
 	if string.trim(pass) == "" then
-		return 0
+		return "0"
 	end
 
 	for k, v in pairs(players) do
 		if (v.ircPass ~= nil) then
 			if (login == v.ircLogin) and (pass == v.ircPass) then
-				return k
+				return k, v.userID
 			end
 		end
 	end
 
-	return 0
+	return "0", "0"
 end
 
 
@@ -1131,6 +1408,30 @@ function LookupMarkedArea(name, steam)
 	end
 
 	return ""
+end
+
+
+function LookupPlayerGroup(name)
+	local k,v, idx
+
+	if not name then
+		return 0, ""
+	end
+
+	name = string.lower(name)
+	idx = "G" .. name
+
+	for k,v in pairs(playerGroups) do
+		if k == idx then
+			return v.groupID, v.name
+		end
+
+		if (name == string.lower(v.name)) then
+			return v.groupID, v.name
+		end
+	end
+
+	return 0, ""
 end
 
 
@@ -1235,7 +1536,7 @@ function LookupWaypoint(x,y,z)
 
 	for k, v in pairs(waypoints) do
 		if tonumber(v.y) > 0 then
-			if distancexyz(x, y, z, v.x, v.y, v.z) <= 2 then
+			if distancexyz(x, y, z, v.x, v.y, v.z) < 2 then
 				return k
 			end
 		end
@@ -1320,6 +1621,26 @@ function ClosestHotspot(x, y, z)
 end
 
 
+function LookupVillage(village)
+	local k,v
+
+	-- is command the name of a location?
+	village = string.lower(village)
+
+	if (string.find(village, server.commandPrefix) == 1) then
+		village = string.sub(village, 2) -- strip off the leading /
+	end
+
+	for k, v in pairs(locations) do
+		if (village == string.lower(v.name)) and v.village then
+			return k
+		end
+	end
+
+	return "0"
+end
+
+
 function LookupVillager(steam, village)
 	-- is steam a member of village?
 	if villagers[steam .. village] ~= nil then
@@ -1335,6 +1656,34 @@ function tablelength(T)
 	local count = 0
 	for _ in pairs(T) do count = count + 1 end
 	return count
+end
+
+
+function sortTable(tbl)
+	-- take an unsorted table and create a sorted table containing just the original table's keys
+	local n
+	local a = {}
+
+	for n in pairs(tbl) do
+		table.insert(a, n)
+	end
+
+	table.sort(a)
+
+	return a
+end
+
+
+function copyTable(t)
+	-- In Lua if we assign a table to another table it just creates a reference to table rather than a copy.  To fix this we need to read the values in individually.
+	-- This code does not handle nested tables.
+	local tempTable = {}
+
+	for k,v in pairs(t) do
+		tempTable[k] = v
+	end
+
+	return tempTable
 end
 
 
@@ -1429,6 +1778,25 @@ function ToInt(number)
 end
 
 
+function getMapCoords(x, z)
+	local dirX, dirZ
+
+	if x > 0 then
+		dirX = " E"
+	else
+		dirX = " W"
+	end
+
+	if z > 0 then
+		dirZ = " N"
+	else
+		dirZ = " S"
+	end
+
+	return math.abs(x) .. dirX .. " " .. math.abs(z) .. dirZ
+end
+
+
 function getAngle(x1, z1, x2, z2)
 	-- Returns the angle between two points.
 	return math.atan2(z2-z1, x2-x1)
@@ -1464,12 +1832,12 @@ function getCompass(x1, z1, x2, z2)
 end
 
 
-function getNumbers(string)
+function getNumbers(str)
 	local word, numbers
 
 	numbers = {}
 
-	for word in string.gmatch (string, "(-?\%d+)") do
+	for word in string.gmatch (str, "(-?\%d+)") do
 		table.insert(numbers, tonumber(word))
 	end
 
@@ -1477,84 +1845,74 @@ function getNumbers(string)
 end
 
 
-function accessLevel(pid)
+function accessLevel(steam, userID)
 	local debug
 
 	debug = false
 
 	-- determine the access level of the player
 
-	if debug then dbug("accesslevel pid " .. pid) end
+	if debug then dbug("accesslevel steam " .. steam) end
 
-	if pid == 0 then
-		-- no pid?  return the worst possible access level. That'll show em!
+	if steam == "0" then
+		-- no steam?  return the worst possible access level. That'll show em!
 		return 99
 	end
 
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
-	if owners[pid] then
-		if players[pid] then
-			players[pid].accessLevel = 0
-		end
+	if userID then
+		if staffList[userID] then
+			if players[steam] then
+				players[steam].accessLevel = tonumber(staffList[userID].adminLevel)
+			end
 
-		return 0
+			return tonumber(staffList[userID].adminLevel)
+		end
 	end
 
-	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
-
-	if admins[pid] then
-		if players[pid] then
-			players[pid].accessLevel = 1
+	if staffList[steam] then
+		if players[steam] then
+			players[steam].accessLevel = tonumber(staffList[steam].adminLevel)
 		end
 
-		return 1
-	end
-
-	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
-
-	if mods[pid] then
-		if players[pid] then
-			players[pid].accessLevel = 2
-		end
-
-		return 2
+		return tonumber(staffList[steam].adminLevel)
 	end
 
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
 	-- anyone stripped of certain rights
-	if players[pid] then
-		if players[pid].denyRights == true then
-			players[pid].accessLevel = 99
+	if players[steam] then
+		if players[steam].denyRights == true then
+			players[steam].accessLevel = 99
 			return 99
-		end
-
-		if isDonor(pid) then
-	--TODO: Add donor levels
-			players[pid].accessLevel = 10
-			return 10
 		end
 	end
 
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
-	if tonumber(server.accessLevelOverride) < 99 and players[pid] then
+	if tonumber(server.accessLevelOverride) < 99 and players[steam] then
 		return tonumber(server.accessLevelOverride)
 	end
 
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
+	if tonumber(players[steam].groupID) > 0 then
+		return playerGroups["G" .. players[steam].groupID].accessLevel
+	end
+
+	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
+
 	-- regulars
-	if igplayers[pid] then
-		if tonumber(players[pid].timeOnServer) + tonumber(igplayers[pid].sessionPlaytime) > (tonumber(server.newPlayerTimer) * 60) then
-			players[pid].accessLevel = 90
+	if igplayers[steam] then
+		if tonumber(players[steam].timeOnServer) + tonumber(igplayers[steam].sessionPlaytime) > (tonumber(server.newPlayerTimer) * 60) then
+			players[steam].accessLevel = 90
 			return 90
 		end
 	else
-		if players[pid] then
-			if tonumber(players[pid].timeOnServer) > (tonumber(server.newPlayerTimer) * 60) then
-				players[pid].accessLevel = 90
+		if players[steam] then
+			if tonumber(players[steam].timeOnServer) > (tonumber(server.newPlayerTimer) * 60) then
+				players[steam].accessLevel = 90
 				return 90
 			end
 		end
@@ -1563,19 +1921,23 @@ function accessLevel(pid)
 	if debug then dbug("debug accesslevel line " .. debugger.getinfo(1).currentline) end
 
 	-- new players
-	if players[pid] then
-		players[pid].accessLevel = 99
+	if players[steam] then
+		players[steam].accessLevel = 99
 	end
 
 	return 99
 end
 
 
-function fixMissingPlayer(steam)
+function fixMissingPlayer(platform, steam, steamOwner, userID)
 	-- if any fields are missing from the players player record, add them with default values
 	local k,v
 
-	if players[steam] == nil then
+	if steamOwner == "nil" then
+		steamOwner = steam
+	end
+
+	if not players[steam] then
 		players[steam] = {}
 	end
 
@@ -1616,7 +1978,7 @@ function fixMissingPlayer(steam)
 
 	if (friends[steam] == nil) then
 		friends[steam] = {}
-		friends[steam].friends = ""
+		friends[steam].friends = {}
 	end
 
 	if (lastHotspots[steam] == nil) then
@@ -1691,14 +2053,6 @@ function fixMissingPlayer(steam)
 		players[steam].exiled = false
 	end
 
-	if players[steam].exit2X == 0 and players[steam].exit2Z == 0 then
-		players[steam].exit2Y = 0
-	end
-
-	if players[steam].exitX == 0 and players[steam].exitZ == 0 then
-		players[steam].exitY = 0
-	end
-
 	if players[steam].GBLCount == nil then
 		players[steam].GBLCount = 0
 	end
@@ -1709,14 +2063,6 @@ function fixMissingPlayer(steam)
 
 	if players[steam].gimmeCount == nil then
 		players[steam].gimmeCount = 0
-	end
-
-	if players[steam].home2X == 0 and players[steam].home2Z == 0 then
-		players[steam].home2Y = 0
-	end
-
-	if players[steam].homeX == 0 and players[steam].homeZ == 0 then
-		players[steam].homeY = 0
 	end
 
 	if players[steam].inLocation == nil then
@@ -1772,6 +2118,10 @@ function fixMissingPlayer(steam)
 		players[steam].relogCount = 0
 	end
 
+	if players[steam].nameOverride == nil then
+		players[steam].nameOverride = ""
+	end
+
 	if players[steam].notInLKP == nil then
 		players[steam].notInLKP = false
 	end
@@ -1796,24 +2146,12 @@ function fixMissingPlayer(steam)
 		players[steam].pendingBans = 0
 	end
 
+	if players[steam].platform == nil then
+		players[steam].platform = platform
+	end
+
 	if players[steam].prisonReason == nil then
 		players[steam].prisonReason = ""
-	end
-
-	if (players[steam].protect2Size == nil) then
-		players[steam].protect2Size = server.baseSize
-	else
-		if tonumber(players[steam].protect2Size) < tonumber(server.baseSize) then
-			players[steam].protect2Size = server.baseSize
-		end
-	end
-
-	if (players[steam].protectSize == nil) then
-		players[steam].protectSize = server.baseSize
-	else
-		if tonumber(players[steam].protectSize) < tonumber(server.baseSize) then
-			players[steam].protectSize = server.baseSize
-		end
 	end
 
 	if players[steam].pvpTeleportCooldown == nil then
@@ -1836,9 +2174,8 @@ function fixMissingPlayer(steam)
 		players[steam].seen = ""
 	end
 
-	if (players[steam].steamOwner == nil) then
-		players[steam].steamOwner = steam
-	end
+	players[steam].steam = steam
+	players[steam].steamOwner = steamOwner
 
 	if (players[steam].watchPlayerTimer == nil) then
 		if players[steam].watchPlayer then
@@ -1852,8 +2189,22 @@ function fixMissingPlayer(steam)
 		players[steam].waypointCooldown = 0
 	end
 
+	if userID then
+		if (players[steam].userID == nil) then
+			players[steam].userID = userID
+		end
+	end
+
 	if players[steam].VACBanned == nil then
 		players[steam].VACBanned = false
+	end
+
+	if players[steam].maxBases == nil then
+		players[steam].maxBases = server.maxBases
+	end
+
+	if players[steam].maxProtectedBases == nil then
+		players[steam].maxProtectedBases = server.maxProtectedBases
 	end
 end
 
@@ -1862,7 +2213,7 @@ function fixMissingArchivedPlayer(steam)
 	-- if any fields are missing from the players player record, add them with default values
 	local k,v
 
-	if playersArchived[steam] == nil then
+	if not playersArchived[steam] then
 		playersArchived[steam] = {}
 	end
 
@@ -1949,28 +2300,12 @@ function fixMissingArchivedPlayer(steam)
 		playersArchived[steam].country = ""
 	end
 
-	if playersArchived[steam].exit2X == 0 and playersArchived[steam].exit2Z == 0 then
-		playersArchived[steam].exit2Y = 0
-	end
-
-	if playersArchived[steam].exitX == 0 and playersArchived[steam].exitZ == 0 then
-		playersArchived[steam].exitY = 0
-	end
-
 	if playersArchived[steam].GBLCount == nil then
 		playersArchived[steam].GBLCount = 0
 	end
 
 	if playersArchived[steam].gimmeCooldown == nil then
 		playersArchived[steam].gimmeCooldown = 0
-	end
-
-	if playersArchived[steam].home2X == 0 and playersArchived[steam].home2Z == 0 then
-		playersArchived[steam].home2Y = 0
-	end
-
-	if playersArchived[steam].homeX == 0 and playersArchived[steam].homeZ == 0 then
-		playersArchived[steam].homeY = 0
 	end
 
 	if playersArchived[steam].ip == nil then
@@ -2038,22 +2373,6 @@ function fixMissingArchivedPlayer(steam)
 		playersArchived[steam].prisonReason = ""
 	end
 
-	if (playersArchived[steam].protect2Size == nil) then
-		playersArchived[steam].protect2Size = server.baseSize
-	else
-		if tonumber(playersArchived[steam].protect2Size) < tonumber(server.baseSize) then
-			playersArchived[steam].protect2Size = server.baseSize
-		end
-	end
-
-	if (playersArchived[steam].protectSize == nil) then
-		playersArchived[steam].protectSize = server.baseSize
-	else
-		if tonumber(playersArchived[steam].protectSize) < tonumber(server.baseSize) then
-			playersArchived[steam].protectSize = server.baseSize
-		end
-	end
-
 	if playersArchived[steam].pvpTeleportCooldown == nil then
 		playersArchived[steam].pvpTeleportCooldown = 0
 	end
@@ -2096,8 +2415,16 @@ function fixMissingArchivedPlayer(steam)
 end
 
 
-function fixMissingIGPlayer(steam)
+function fixMissingIGPlayer(platform, steam, steamOwner, userID)
 	-- if any fields are missing from the players in-game player record, add them with default values
+
+	if steamOwner == "nil" then
+		steamOwner = steam
+	end
+
+	if not igplayers[steam] then
+		igplayers[steam] = {}
+	end
 
 	if (igplayers[steam].afk == nil) then
 		igplayers[steam].afk = os.time() + tonumber(server.idleKickTimer)
@@ -2255,6 +2582,10 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].notifyTP = false
 	end
 
+	if igplayers[steam].platform == nil then
+		igplayers[steam].platform = platform
+	end
+
 	if (igplayers[steam].oldBelt == nil) then
 		igplayers[steam].oldBelt = ""
 	end
@@ -2281,10 +2612,6 @@ function fixMissingIGPlayer(steam)
 
 	if igplayers[steam].rawPosition == nil then
 		igplayers[steam].rawPosition = 0
-	end
-
-	if igplayers[steam].rawRotation == nil then
-		igplayers[steam].rawRotation = 0
 	end
 
 	if (igplayers[steam].region == nil) then
@@ -2335,9 +2662,8 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].spawnedCoordsOld = "0 0 0"
 	end
 
-	if (igplayers[steam].steamOwner == nil) then
-		igplayers[steam].steamOwner = steam
-	end
+	igplayers[steam].steam = steam
+	igplayers[steam].steamOwner = steamOwner
 
 	if (igplayers[steam].teleCooldown == nil) then
 		igplayers[steam].teleCooldown = 200
@@ -2351,19 +2677,31 @@ function fixMissingIGPlayer(steam)
 		igplayers[steam].tp = 1
 	end
 
-	if (igplayers[steam].xPos == nil) then
+	if userID then
+		igplayers[steam].userID = userID
+	else
+		igplayers[steam].userID = ""
+	end
+
+	if not igplayers[steam].xPos then
 		igplayers[steam].xPos = 0
 		igplayers[steam].yPos = 0
 		igplayers[steam].zPos = 0
+	end
 
+	if not igplayers[steam].xPosLast then
 		igplayers[steam].xPosLast = 0
 		igplayers[steam].yPosLast = 0
 		igplayers[steam].zPosLast = 0
+	end
 
+	if not igplayers[steam].xPosLastOK then
 		igplayers[steam].xPosLastOK = 0
 		igplayers[steam].yPosLastOK = 0
 		igplayers[steam].zPosLastOK = 0
+	end
 
+	if not igplayers[steam].xPosLastAlert then
 		igplayers[steam].xPosLastAlert = 0
 		igplayers[steam].yPosLastAlert = 0
 		igplayers[steam].zPosLastAlert = 0
@@ -2392,5 +2730,234 @@ function fixMissingServer()
 				end
 			end
 		end
+	end
+end
+
+
+function LookupSettingValue(steam, setting)
+	-- The server table contains values for cooldowns and limits on things.  These can be overridden by settings in the playerGroup table or in the player record.
+	-- Get the server setting then see if we need to use a different value from a group or the player record and return the setting's value
+	local player = players[steam]
+	-- first load the server setting into value.  This will be returned if nothing replaces it below.
+	local value, idx
+
+	if server[setting] then
+		value = server[setting]
+	end
+
+	if tonumber(player.groupID) > 0 then
+		idx = "G" .. player.groupID
+
+		-- the player is a member of a group so replace value with the group's setting
+		if playerGroups[idx][setting] then
+			value = playerGroups[idx][setting]
+		else
+			value = player[setting]
+		end
+	end
+
+	if setting == "maxWaypoints" then
+		if tonumber(player.maxWaypoints) > value then
+			-- the player has been given more waypoints so use the player's limit
+			value = tonumber(player.maxWaypoints)
+			return value
+		end
+	end
+
+	if setting == "maxBases" then
+		if tonumber(player.maxBases) > value then
+			-- the player has been given more bases so use the player's limit
+			value = tonumber(player.maxBases)
+			return value
+		end
+	end
+
+	if setting == "maxProtectedBases" then
+		if tonumber(player.maxProtectedBases) > value then
+			-- the player has been given more base protects so use the player's limit
+			value = tonumber(player.maxProtectedBases)
+			return value
+		end
+	end
+
+	-- the setting in the player record overrides server settings but not group settings (except for maxWaypoints, maxBases and maxProtectedBases unless lower than the group max)
+	if tonumber(player.groupID) == 0 then
+		if player[setting] then
+			value = player[setting]
+		end
+	end
+
+	-- return the final value
+	return value
+end
+
+
+function getSettings(steam)
+	local settings, player, idx
+
+	settings = {}
+
+	-- special case for non-player (the bot)
+	if steam == "0" then
+		settings.maxGimmies = 11
+		settings.teleportPublicCost = server.teleportPublicCost
+		settings.maxWaypoints = 0
+		settings.maxBases = 0
+		settings.allowTeleporting = server.allowTeleporting
+		settings.allowGimme = server.allowGimme
+		settings.lotteryTicketPrice = server.lotteryTicketPrice
+		settings.packCost = server.packCost
+		settings.baseCooldown = server.baseCooldown
+		settings.packCooldown = server.packCooldown
+		settings.teleportCost = server.teleportCost
+		settings.allowLottery = server.allowLottery
+		settings.waypointCreateCost = server.waypointCreateCost
+		settings.deathCost = server.deathCost
+		settings.maxProtectedBases = 0
+		settings.allowShop = server.allowShop
+		settings.gimmeZombies = server.gimmeZombies
+		settings.hardcore = server.hardcore
+		settings.p2pCooldown = server.p2pCooldown
+		settings.zombieKillReward = server.zombieKillReward
+		settings.waypointCooldown = server.waypointCooldown
+		settings.baseCost = server.baseCost
+		settings.teleportPublicCooldown = server.teleportPublicCooldown
+		settings.pvpAllowProtect = server.pvpAllowProtect
+		settings.perMinutePayRate = server.perMinutePayRate
+		settings.lotteryMultiplier = server.lotteryMultiplier
+		settings.playerTeleportDelay = server.playerTeleportDelay
+		settings.returnCooldown = server.returnCooldown
+		settings.baseSize = server.baseSize
+		settings.waypointCost = server.waypointCost
+		settings.allowHomeTeleport = server.allowHomeTeleport
+		settings.allowPlayerToPlayerTeleporting = server.allowPlayerToPlayerTeleporting
+		settings.allowVisitInPVP = server.allowVisitInPVP
+		settings.allowWaypoints = server.allowWaypoints
+		settings.reserveSlot = false
+		settings.gimmeRaincheck = server.gimmeRaincheck
+		settings.groupID = 0
+		settings.groupName = ""
+		settings.suicideCost = server.suicideCost
+		settings.allowSuicide = server.allowSuicide
+
+		return settings
+	end
+
+	player = players[steam]
+
+	if tonumber(player.groupID) > 0 then
+		idx = "G" .. player.groupID
+		settings = copyTable(playerGroups[idx])
+		settings.groupName = playerGroups[idx].name
+		settings.groupID = player.groupID
+
+		if tonumber(player.maxBases) > tonumber(settings.maxBases) then
+			settings.maxBases = player.maxBases
+		end
+
+		if tonumber(player.maxProtectedBases) > tonumber(settings.maxProtectedBases) then
+			settings.maxProtectedBases = player.maxProtectedBases
+		end
+
+		if tonumber(player.maxWaypoints) > tonumber(settings.maxWaypoints) then
+			settings.maxWaypoints = player.maxWaypoints
+		end
+
+		if player.reserveSlot then
+			settings.reserveSlot = true
+		end
+	else
+		settings = {}
+		settings.maxGimmies = 11
+		settings.teleportPublicCost = server.teleportPublicCost
+		settings.maxWaypoints = server.maxWaypoints
+		settings.maxBases = server.maxBases
+		settings.allowTeleporting = server.allowTeleporting
+		settings.allowGimme = server.allowGimme
+		settings.lotteryTicketPrice = server.lotteryTicketPrice
+		settings.packCost = server.packCost
+		settings.baseCooldown = server.baseCooldown
+		settings.packCooldown = server.packCooldown
+		settings.teleportCost = server.teleportCost
+		settings.allowLottery = server.allowLottery
+		settings.waypointCreateCost = server.waypointCreateCost
+		settings.deathCost = server.deathCost
+		settings.maxProtectedBases = server.maxProtectedBases
+		settings.allowShop = server.allowShop
+		settings.gimmeZombies = server.gimmeZombies
+		settings.hardcore = server.hardcore
+		settings.p2pCooldown = server.p2pCooldown
+		settings.zombieKillReward = server.zombieKillReward
+		settings.waypointCooldown = server.waypointCooldown
+		settings.baseCost = server.baseCost
+		settings.teleportPublicCooldown = server.teleportPublicCooldown
+		settings.pvpAllowProtect = server.pvpAllowProtect
+		settings.perMinutePayRate = server.perMinutePayRate
+		settings.lotteryMultiplier = server.lotteryMultiplier
+		settings.playerTeleportDelay = server.playerTeleportDelay
+		settings.returnCooldown = server.returnCooldown
+		settings.baseSize = server.baseSize
+		settings.waypointCost = server.waypointCost
+		settings.allowHomeTeleport = server.allowHomeTeleport
+		settings.allowPlayerToPlayerTeleporting = server.allowPlayerToPlayerTeleporting
+		settings.allowVisitInPVP = server.allowVisitInPVP
+		settings.allowWaypoints = server.allowWaypoints
+		settings.reserveSlot = player.reserveSlot
+		settings.gimmeRaincheck = server.gimmeRaincheck
+		settings.groupID = 0
+		settings.groupName = ""
+		settings.suicideCost = server.suicideCost
+		settings.allowSuicide = server.allowSuicide
+
+		if player.newPlayer then
+			settings.mapSize = server.mapSizeNewPlayers
+		else
+			settings.mapSize = server.mapSizePlayers
+		end
+
+		if tonumber(player.maxBases) > tonumber(server.maxBases) then
+			settings.maxBases = player.maxBases
+		end
+
+		if tonumber(player.maxProtectedBases) > tonumber(server.maxProtectedBases) then
+			settings.maxProtectedBases = player.maxProtectedBases
+		end
+
+		if tonumber(player.maxWaypoints) > tonumber(server.maxWaypoints) then
+			settings.maxWaypoints = player.maxWaypoints
+		end
+
+		if player.reserveSlot then
+			settings.reserveSlot = true
+		end
+	end
+
+	return settings
+end
+
+
+function calculateServerTime(timestamp)
+	-- given a timestamp, return what the server time was at that time.
+	-- if botman.serverTimeSync doesn't exist yet just return the timestamp for the current server time rather than returning nothing or zero
+
+	if botman.serverTimeSync then
+		return timestamp + botman.serverTimeSync
+	else
+		return dateToTimestamp(botman.serverTime)
+	end
+end
+
+
+function LookupJoiningPlayer(steam)
+	local k, v
+
+	if type(joiningPlayers) == "table" then
+		for k, v in pairs(joiningPlayers) do
+			if v.steam == steam then
+				return v.userID
+			end
+		end
+	else
+		return ""
 	end
 end

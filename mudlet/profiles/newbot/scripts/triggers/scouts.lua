@@ -1,50 +1,47 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
+
 function scoutsWarning(line)
+	local dist, direction, pos
+	local tmp = {}
+	local numbers = {}
+
 	if botman.botDisabled then
 		return
 	end
-
-	local test, dist, xStart, zStart, xEnd, zEnd, direction
 
 	if not server.enableScreamerAlert then
 		return
 	end
 
-	if string.find(line, "towards") then
-		-- get the origin coords
-		if string.find(line, "heading") then
-			test = string.sub(line, string.find(line, "scouts") + 11, string.find(line, "heading") - 4)
-		end
+	-- we need to remove everything before INF for the gmatch below to work correctly.
+	pos = string.find(line, "INF")
+	line = string.sub(line, pos)
 
-		if string.find(line, " at ") then
-			test = string.sub(line, string.find(line, " at ") + 5, string.find(line, "towards") - 4)
-		end
+	-- Iterate through all matches in the string
+	for number in line:gmatch("(-?%d+%.?%d*)") do
+		-- Convert the matched string to a number and add it to the table
+		table.insert(numbers, tonumber(number))
+	end
 
-		split = string.split(test, ",")
-		xStart = string.match(split[1], "-?%d+")
-		zStart = string.match(split[3], "-?%d+")
+	tmp.spawnX = numbers[1]
+	tmp.spawnZ = numbers[3]
+	tmp.destX = numbers[4]
+	tmp.destZ = numbers[6]
 
-		-- get the destination coords
-		test = string.sub(line, string.find(line, "towards") + 7)
-		split = string.split(test, ",")
-		xEnd = string.match(split[1], "-?%d+")
-		zEnd = string.match(split[3], "-?%d+")
+	for k, v in pairs(igplayers) do
+		direction = getCompass(v.xPos, v.zPos, tmp.spawnX, tmp.spawnZ)
+		dist = distancexz(v.xPos, v.zPos, tmp.destX, tmp.destZ)
 
-		for k, v in pairs(igplayers) do
-			direction = getCompass(v.xPos, v.zPos, xStart, zStart)
-			dist = distancexz(v.xPos, v.zPos, xEnd, zEnd)
-
-			if (dist < 100) then
-				message("pm " .. k .. " " ..  " [" .. server.chatColour .. "]Screamers have been detected heading your way from the " .. direction .. ".[-]")
-			end
+		if (dist < 200) then
+			message("pm " .. v.userID .. " " ..  " [" .. server.chatColour .. "]Screamers have been detected heading your way from the " .. direction .. ".[-]")
 		end
 	end
 end

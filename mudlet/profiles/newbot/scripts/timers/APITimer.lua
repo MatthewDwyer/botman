@@ -1,29 +1,35 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 function APITimer()
-	local row, cursor, errorString, url, outputFile, cmd
+	local row, cursor, errorString, url, cmd
+	local httpHeaders = {["X-SDTD-API-TOKENNAME"] = server.allocsWebAPIUser, ["X-SDTD-API-SECRET"] = server.allocsWebAPIPassword}
 
-	if not botman.dbConnected or botman.botOffline then
+	if (not botman.dbConnected) or botman.botOffline then
 		return
 	end
 
-	cursor,errorString = conn:execute("select * from APIQueue order by id limit 1")
+	connSQL:execute("DELETE FROM APIQueue WHERE timestamp < " .. os.time() - 30)
+
+	cursor,errorString = connSQL:execute("SELECT * FROM APIQueue ORDER BY id LIMIT 1")
 
 	if cursor then
 		row = cursor:fetch({}, "a")
 
+		if not row then
+			disableTimer("APITimer")
+		end
+
 		if row then
 			url = row.URL
-			outputFile = row.OutputFile
-			os.remove(outputFile)
-			conn:execute("delete from APIQueue where id = " .. row.id)
+
+			connSQL:execute("DELETE FROM APIQueue WHERE id = " .. row.id)
 
 			-- should be able to remove list later.  Just put it here to fix an issue with older bots updating and not having the metrics table.
 			if type(metrics) ~= "table" then
@@ -41,7 +47,8 @@ function APITimer()
 			end
 
 			if not string.find(url, "#") then
-				downloadFile(outputFile, url)
+				pcall(postHTTP("", url, httpHeaders))
+				-- the response from the server is processed in function onHttpPostDone(_, url, body) in functions.lua
 			else
 				cmd = string.sub(url, string.find(url, "command=") + 8, string.find(url, "&adminuser") - 1)
 				sendCommand(cmd)

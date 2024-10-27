@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 local counter, status, debug, n, help
@@ -23,7 +23,7 @@ function gmsg_mail()
 	if (debug) then dbug("debug mail line " .. debugger.getinfo(1).currentline) end
 
 	-- ###################  do not run remote commands beyond this point unless displaying command help ################
-	if chatvars.playerid == 0 and not (chatvars.showHelp or botman.registerHelp) then
+	if chatvars.playerid == "0" and not (chatvars.showHelp or botman.registerHelp) then
 		botman.faultyChat = false
 		return false
 	end
@@ -36,7 +36,7 @@ function gmsg_mail()
 			alertAdmins(msg, "chat")
 
 			if chatvars.accessLevel > 2 then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Thank you. An admin may respond to your PM.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Thank you. An admin may respond to your PM.[-]")
 			end
 
 			botman.faultyChat = false
@@ -49,11 +49,11 @@ function gmsg_mail()
 
 			for k,v in pairs(igplayers) do
 				if string.find(v.name, chatvars.wordsOld[3]) then
-					message("pm " .. k .. " [" .. server.chatColour .. "]" .. msg .. "[-]")
+					message("pm " .. v.userID .. " [" .. server.chatColour .. "]" .. msg .. "[-]")
 				end
 			end
 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message sent to all " .. chatvars.wordsOld[3] .. " players that are ingame right now.[-]")
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Message sent to all " .. chatvars.wordsOld[3] .. " players that are ingame right now.[-]")
 
 			botman.faultyChat = false
 			return true
@@ -62,7 +62,7 @@ function gmsg_mail()
 		msg = string.sub(chatvars.commandOld, 4, string.len(chatvars.commandOld))
 
 		irc_chat(server.ircMain, server.gameDate .. " " .. chatvars.playername .. " said " .. msg)
-		message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Your hidden message has been sent to IRC.[-]")
+		message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Your hidden message has been sent to IRC.[-]")
 
 		botman.faultyChat = false
 		return true
@@ -83,22 +83,22 @@ function gmsg_mail()
 		counter = 1
 
 		if chatvars.number ~= nil then
-			cursor,errorString = conn:execute("SELECT * FROM mail WHERE recipient = " .. chatvars.playerid)
+			cursor,errorString = connSQL:execute("SELECT * FROM mail WHERE recipient = '" .. chatvars.playerid .. "'")
 		else
-			cursor,errorString = conn:execute("SELECT * FROM mail WHERE recipient = " .. chatvars.playerid .. " and status = 0")
+			cursor,errorString = connSQL:execute("SELECT * FROM mail WHERE recipient = '" .. chatvars.playerid .. "' AND status = 0")
 		end
 
 		row = cursor:fetch({}, "a")
 		while row do
 			if chatvars.number ~= nil then
 				if tonumber(chatvars.number) == counter then
-					conn:execute("UPDATE mail set status = 1 WHERE id = " .. row.id)
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message #" .. counter .. "[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")
+					connSQL:execute("UPDATE mail SET status = 1 WHERE id = " .. row.id)
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Message #" .. counter .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")
 				end
 			else
-				conn:execute("UPDATE mail set status = 1 WHERE id = " .. row.id)
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")
+				connSQL:execute("UPDATE mail SET status = 1 WHERE id = " .. row.id)
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. row.message .. "[-]")
 			end
 
 			counter = counter + 1
@@ -114,17 +114,17 @@ function gmsg_mail()
 	if (chatvars.words[1] == "list" and chatvars.words[2] == "mail") then
 		counter = 1
 
-		cursor,errorString = conn:execute("SELECT * FROM mail WHERE recipient = " .. chatvars.playerid)
+		cursor,errorString = connSQL:execute("SELECT * FROM mail WHERE recipient = '" .. chatvars.playerid .. "'")
 		row = cursor:fetch({}, "a")
 		while row do
 			if row.status == "0" then status = " [NEW]" end
 			if row.status == "1" then status = " [SEEN]" end
 			if row.status == "2" then status = " [SAVED]" end
 
-			if tonumber(row.sender) == 0 then
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "](" .. counter .. ")  Message from server" .. status .. " " .. string.sub(row.message, 1, 100) .. "..[-]")
+			if row.sender == "0" then
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "](" .. counter .. ")  Message from server" .. status .. " " .. string.sub(row.message, 1, 100) .. "..[-]")
 			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "](" .. counter .. ")  Message from " .. players[row.sender].name .. status .. " " .. string.sub(row.message, 1, 100) .. "..[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "](" .. counter .. ")  Message from " .. players[row.sender].name .. status .. " " .. string.sub(row.message, 1, 100) .. "..[-]")
 			end
 
 			counter = counter + 1
@@ -140,12 +140,12 @@ function gmsg_mail()
 	if (chatvars.words[1] == "save" and chatvars.words[2] == "mail" and chatvars.number ~= nil) then
 		counter = 1
 
-		cursor,errorString = conn:execute("SELECT * FROM mail WHERE recipient = " .. chatvars.playerid)
+		cursor,errorString = connSQL:execute("SELECT * FROM mail WHERE recipient = '" .. chatvars.playerid .. "'")
 		row = cursor:fetch({}, "a")
 		while row do
 			if tonumber(chatvars.number) == counter then
-				conn:execute("UPDATE mail SET status = 2 WHERE id = " .. row.id)
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message (" .. counter .. ") saved.[-]")
+				connSQL:execute("UPDATE mail SET status = 2 WHERE id = " .. row.id)
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Message (" .. counter .. ") saved.[-]")
 
 				botman.faultyChat = false
 				return true
@@ -161,12 +161,12 @@ function gmsg_mail()
 	if (chatvars.words[1] == "delete" and chatvars.words[2] == "mail" and chatvars.number ~= nil) then
 		counter = 1
 
-		cursor,errorString = conn:execute("SELECT * FROM mail WHERE recipient = " .. chatvars.playerid)
+		cursor,errorString = connSQL:execute("SELECT * FROM mail WHERE recipient = '" .. chatvars.playerid .. "'")
 		row = cursor:fetch({}, "a")
 		while row do
 			if tonumber(chatvars.number) == counter then
-				conn:execute("DELETE FROM mail WHERE id = " .. row.id)
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Message (" .. counter .. ") deleted.[-]")
+				connSQL:execute("DELETE FROM mail WHERE id = " .. row.id)
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Message (" .. counter .. ") deleted.[-]")
 
 				botman.faultyChat = false
 				return true
@@ -198,10 +198,10 @@ function gmsg_mail()
 
 		id = LookupPlayer(pname)
 
-		if id == 0 then
+		if id == "0" then
 			id = LookupArchivedPlayer(pname)
 
-			if not (id == 0) then
+			if not (id == "0") then
 				playerName = playersArchived[id].name
 				isArchived = true
 			end
@@ -215,40 +215,40 @@ if debug then dbug("debug mail msg" .. msg) end
 
 		if string.lower(pname) == "admin" or  string.lower(pname) == "admins" then
 			for k,v in pairs(players) do
-				if accessLevel(k) < 3 then
+				if isAdminHidden(k, v.userID) then
 					if igplayers[k] then
-						message("pm " .. k .. " [" .. server.chatColour .. "]Message from " .. players[chatvars.playerid].name .. ": " .. msg .. "[-]")
+						message("pm " .. v.userID .. " [" .. server.chatColour .. "]Message from " .. players[chatvars.playerid].name .. ": " .. msg .. "[-]")
 					else
-						conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (" .. chatvars.playerid .. "," .. k .. ", '" .. escape(msg) .. "')")
+						connSQL:execute("INSERT INTO mail (sender, recipient, message) VALUES ('" .. chatvars.playerid .. "','" .. v.userID .. "', '" .. connMEM:escape(msg) .. "')")
 					end
 				end
 			end
 
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]Thank you. An admin will receive your message soon.[-]")
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Thank you. An admin will receive your message soon.[-]")
 
 			botman.faultyChat = false
 			return true
 		end
 
-		if id ~= 0 then
+		if id ~= "0" then
 			if isFriend(id, chatvars.playerid) or chatvars.accessLevel < 3 then
 				if igplayers[id] then
-					message("pm " .. id .. " [" .. server.chatColour .. "]Message from " .. players[chatvars.playerid].name .. ": " .. msg .. "[-]")
-					message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has received your message.[-]")
+					message("pm " .. igplayers[id].userID .. " [" .. server.chatColour .. "]Message from " .. players[chatvars.playerid].name .. ": " .. msg .. "[-]")
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. players[id].name .. " has received your message.[-]")
 				else
 					if not isArchived then
-						conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (" .. chatvars.playerid .. "," .. id .. ", '" .. escape(msg) .. "')")
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " will receive your message when they return.[-]")
+						connSQL:execute("INSERT INTO mail (sender, recipient, message) VALUES ('" .. chatvars.playerid .. "','" .. id .. "', '" .. connMEM:escape(msg) .. "')")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. players[id].name .. " will receive your message when they return.[-]")
 					else
-						conn:execute("INSERT INTO mail (sender, recipient, message) VALUES (" .. chatvars.playerid .. "," .. id .. ", '" .. escape(msg) .. "')")
-						message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. playerName .. " will receive your message when they return.[-]")
+						connSQL:execute("INSERT INTO mail (sender, recipient, message) VALUES ('" .. chatvars.playerid .. "','" .. id .. "', '" .. connMEM:escape(msg) .. "')")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. playerName .. " will receive your message when they return.[-]")
 					end
 				end
 			else
-				message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]" .. players[id].name .. " has not friended you so you are not allowed to send them private messages yet.[-]")
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. players[id].name .. " has not friended you so you are not allowed to send them private messages yet.[-]")
 			end
 		else
-			message("pm " .. chatvars.playerid .. " [" .. server.chatColour .. "]I do not know a player called " .. pname .. "[-]")
+			message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]I do not know a player called " .. pname .. "[-]")
 		end
 
 		botman.faultyChat = false

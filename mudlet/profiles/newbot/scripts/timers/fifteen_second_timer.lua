@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 function FifteenSecondTimer()
@@ -30,32 +30,4 @@ function FifteenSecondTimer()
 
 	-- force a re-test of the connection to the shared database called bots
 	botman.botsConnected = isDBBotsConnected()
-
-	if not server.lagged then
-		if tonumber(botman.playersOnline) > 24 then
-			if server.coppi and tonumber(botman.playersOnline) > 0 then
-				if server.scanNoclip and tonumber(server.gameVersionNumber) < 17 then
-					if server.coppiRelease == "Mod CSMM Patrons" then
-						sendCommand("pinc")
-					else
-						sendCommand("pug")
-					end
-				end
-
-				if not server.playersCanFly and tonumber(server.gameVersionNumber) < 17 then
-					if server.coppiRelease == "Mod CSMM Patrons" then
-						sendCommand("cph")
-					else
-						sendCommand("pgd")
-					end
-				end
-			end
-
-			if (server.scanZombies or server.scanEntities) then
-				if server.useAllocsWebAPI then
-					sendCommand("gethostilelocation", "gethostilelocation?", "hostiles.txt")
-				end
-			end
-		end
-	end
 end

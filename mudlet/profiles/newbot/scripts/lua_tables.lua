@@ -1,10 +1,10 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 function table.val_to_str ( v )
@@ -45,7 +45,7 @@ function dumpLuaTable( tbl )
     end
   end
 
-  file = io.open(homedir .. "/" .. "table_dump.txt", "a")
+  file = io.open(homedir .. "/data_backup/" .. "table_dump.txt", "a")
   file:write("{" .. table.concat( result, "," ) .. "}" .. "\n")
   file:close()
 end
@@ -86,9 +86,12 @@ function saveLuaTables(date, name)
 		-- save with a date or name
 		table.save(homedir .. "/data_backup/" .. date .. name .. "badItems.lua", badItems)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "bases.lua", bases)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "baseMembers.lua", baseMembers)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "customMessages.lua", customMessages)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "donors.lua", donors)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "friends.lua", friends)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "gimmePrizes.lua", gimmePrizes)
+		table.save(homedir .. "/data_backup/" .. date .. name .. "gimmeZombies.lua", gimmeZombies)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "hotspots.lua", hotspots)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "locationCategories.lua", locationCategories)
 		table.save(homedir .. "/data_backup/" .. date .. name .. "locations.lua", locations)
@@ -108,9 +111,12 @@ function saveLuaTables(date, name)
 		-- save without a date or name
 		table.save(homedir .. "/data_backup/badItems.lua", badItems)
 		table.save(homedir .. "/data_backup/bases.lua", bases)
+		table.save(homedir .. "/data_backup/baseMembers.lua", baseMembers)
 		table.save(homedir .. "/data_backup/customMessages.lua", customMessages)
 		table.save(homedir .. "/data_backup/donors.lua", donors)
 		table.save(homedir .. "/data_backup/friends.lua", friends)
+		table.save(homedir .. "/data_backup/gimmePrizes.lua", gimmePrizes)
+		table.save(homedir .. "/data_backup/gimmeZombies.lua", gimmeZombies)
 		table.save(homedir .. "/data_backup/hotspots.lua", hotspots)
 		table.save(homedir .. "/data_backup/locationCategories.lua", locationCategories)
 		table.save(homedir .. "/data_backup/locations.lua", locations)
@@ -182,14 +188,16 @@ function importPlayers()
 
 	for k,v in pairs(players) do
 		if debug then dbug("Importing " .. k .. " " .. v.id .. " " .. v.name) end
-		conn:execute("INSERT INTO players (steam, id, name) VALUES (" .. k .. "," .. v.id .. ",'" .. escape(v.name) .. "')")
-		conn:execute("INSERT INTO persistentQueue (steam, command) VALUES (" .. k .. ",'update player')")
+		conn:execute("INSERT INTO players (steam, id, name) VALUES ('" .. k .. "'," .. v.id .. ",'" .. escape(v.name) .. "')")
+		connSQL:execute("INSERT INTO persistentQueue (steam, command) VALUES ('" .. k .. "','update player')")
+		botman.persistentQueueEmpty = false
 	end
 
 	for k,v in pairs(playersArchived) do
 		if debug then dbug("Importing archived " .. k .. " " .. v.id .. " " .. v.name) end
-		conn:execute("INSERT INTO playersArchived (steam, id, name) VALUES (" .. k .. "," .. v.id .. ",'" .. escape(v.name) .. "')")
-		conn:execute("INSERT INTO persistentQueue (steam, command) VALUES (" .. k .. ",'update archived player')")
+		conn:execute("INSERT INTO playersArchived (steam, id, name) VALUES ('" .. k .. "'," .. v.id .. ",'" .. escape(v.name) .. "')")
+		connSQL:execute("INSERT INTO persistentQueue (steam, command) VALUES ('" .. k .. "','update archived player')")
+		botman.persistentQueueEmpty = false
 	end
 
 	if debug then dbug("Players Imported") end
@@ -202,7 +210,7 @@ function importTeleports()
 	if debug then dbug("Importing Teleports") end
 
 	for k,v in pairs(teleports) do
-		conn:execute("INSERT INTO teleports (name, active, public, oneway, friends, x, y, z, dx, dy, dz, owner) VALUES ('" .. escape(v.name) .. "'," .. dbBool(v.active) .. "," .. dbBool(v.public) .. "," .. dbBool(v.oneway) .. "," .. dbBool(v.friends) .. "," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. v.dx .. "," .. v.dy .. "," .. v.owner .. ")")
+		conn:execute("INSERT INTO teleports (name, active, public, oneway, friends, x, y, z, dx, dy, dz, owner) VALUES ('" .. escape(v.name) .. "'," .. dbBool(v.active) .. "," .. dbBool(v.public) .. "," .. dbBool(v.oneway) .. "," .. dbBool(v.friends) .. "," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. v.dx .. "," .. v.dy .. ",'" .. v.owner .. "')")
 	end
 end
 
@@ -213,7 +221,7 @@ function importLocationCategories()
 	if debug then dbug("Importing locationCategories") end
 
 	for k,v in pairs(locationCategories) do
-		conn:execute("INSERT INTO locationCategories (categoryName, minAccessLevel, maxAccessLevel) VALUES (" .. escape(k) .. "," .. v.minAccessLevel .. "," .. v.maxAccessLevel .. ")")
+		conn:execute("INSERT INTO locationCategories (categoryName, minAccessLevel, maxAccessLevel) VALUES ('" .. escape(k) .. "'," .. v.minAccessLevel .. "," .. v.maxAccessLevel .. ")")
 	end
 
 	if debug then dbug("locationCategories Imported") end
@@ -294,10 +302,10 @@ function importFriends()
 		if v.friends then
 			friendlist = string.split(v.friends, ",")
 
-			max = table.maxn(friendlist)
+			max = tablelength(friendlist)
 			for i=1,max,1 do
 				if friendlist[i] ~= "" then
-					conn:execute("INSERT INTO friends (steam, friend) VALUES (" .. k .. "," .. friendlist[i] .. ")")
+					conn:execute("INSERT INTO friends (steam, friend) VALUES ('" .. k .. "','" .. friendlist[i] .. "')")
 				end
 			end
 		end
@@ -307,13 +315,39 @@ function importFriends()
 end
 
 
+function importGimmePrizes()
+	local k, v
+
+	if debug then dbug("Importing Gimme Prizes") end
+
+	for k,v in pairs(gimmePrizes) do
+		conn:execute("INSERT INTO gimmePrizes (name, category, prizeLimit, quality) VALUES ('" .. escape(v.name) .. "','" .. escape(v.category) .. "'," .. v.prizeLimit .. "," .. v.quality .. ")")
+	end
+
+	if debug then dbug("Gimme Prizes Imported") end
+end
+
+
+function importGimmeZombies()
+	local k, v
+
+	if debug then dbug("Importing Gimme Zombies") end
+
+	for k,v in pairs(gimmeZombies) do
+		conn:execute("INSERT INTO gimmeZombies (zombie, minPlayerLevel, minArenaLevel, entityID, bossZombie, doNotSpawn, maxHealth) VALUES ('" .. escape(v.zombie) .. "'," .. v.minPlayerLevel .. "," .. v.minArenaLevel .. "," .. v.entityID .. "," .. dbBool(v.bossZombie) .. "," .. dbBool(v.doNotSpawn) .. "," .. v.maxHealth .. ")")
+	end
+
+	if debug then dbug("Gimme Zombies Imported") end
+end
+
+
 function importVillagers()
 	local k, v
 
 	if debug then dbug("Importing Villagers") end
 
 	for k,v in pairs(villagers) do
-		conn:execute("INSERT INTO villagers (steam, village) VALUES (" .. k .. ",'" .. escape(v.village) .. "')")
+		conn:execute("INSERT INTO villagers (steam, village) VALUES ('" .. k .. "','" .. escape(v.village) .. "')")
 	end
 
 	if debug then dbug("Villagers Imported") end
@@ -364,13 +398,39 @@ function importBaditems()
 end
 
 
+function importBases()
+	local k, v
+
+	if debug then dbug("Importing Bases") end
+
+	for k,v in pairs(bases) do
+		conn:execute("INSERT INTO bases (steam, baseNumber, title, x, y, z, exitX, exitY, exitZ, size, protect, keepOut, creationTimestamp, creationGameDay, protectSize) VALUES ('" .. v.steam .. "'," .. v.baseNumber .. ",'" .. escape(v.title) .. "'," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. v.exitX .. "," .. v.exitY .. "," .. v.exitZ .. "," .. v.size .. "," .. dbBool(v.protect) .. "," .. dbBool(v.keepOut) .. "," .. v.creationTimestamp .. "," .. v.creationGameDay .. "," .. v.protectSize .. ")")
+	end
+
+	if debug then dbug("Bases Imported") end
+end
+
+
+function importBaseMembers()
+	local k, v
+
+	if debug then dbug("Importing Base Members") end
+
+	for k,v in pairs(baseMembers) do
+		conn:execute("INSERT INTO baseMembers (baseOwner, baseNumber, baseMember) VALUES ('" .. v.baseOwner .. "'," .. v.baseNumber .. ",'" .. v.baseMember .. "')")
+	end
+
+	if debug then dbug("Base Members Imported") end
+end
+
+
 function importDonors()
 	local k, v
 
 	if debug then dbug("Importing Donors") end
 
 	for k,v in pairs(donors) do
-		conn:execute("INSERT INTO donors (steam, level, expiry) VALUES (" .. k .. "," .. v.level .. "," .. v.expiry .. ")")
+		conn:execute("INSERT INTO donors (steam, level, expiry) VALUES ('" .. k .. "'," .. v.level .. "," .. v.expiry .. ")")
 	end
 
 	if debug then dbug("Donors Imported") end
@@ -396,7 +456,7 @@ function importWaypoints()
 	if debug then dbug("Importing Waypoints") end
 
 	for k,v in pairs(waypoints) do
-		conn:execute("INSERT INTO waypoints (steam, name, x, y, z, linked, shared) VALUES (" .. v.steam .. ",'" .. escape(v.name) .. "'," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. v.linked .. "," .. dbBool(v.shared) .. ")")
+		conn:execute("INSERT INTO waypoints (steam, name, x, y, z, linked, shared) VALUES ('" .. v.steam .. "','" .. escape(v.name) .. "'," .. v.x .. "," .. v.y .. "," .. v.z .. "," .. v.linked .. "," .. dbBool(v.shared) .. ")")
 	end
 
 	if debug then dbug("Waypoints Imported") end
@@ -409,14 +469,9 @@ function importModVersions()
 	if isFile(homedir .. "/data_backup/modVersions.lua") then
 		modVersions = {}
 		table.load(homedir .. "/data_backup/modVersions.lua", modVersions)
-		server.coppi = false
-		server.csmm = false
-		server.SDXDetected = false
-		server.ServerToolsDetected = false
-		server.djkrose = false
+		server.otherManager = false
 
 		if not botMaintenance.modsInstalled then
-			server.stompy = false
 			server.allocs = false
 		end
 
@@ -424,6 +479,19 @@ function importModVersions()
 			matchAll(k)
 		end
 	end
+end
+
+
+function importHelpCommands()
+	local k, v
+
+	if debug then dbug("Importing Help Commands") end
+
+	for k,v in pairs(helpCommands) do
+		connSQL:execute("UPDATE helpCommands SET accessLevel = " .. v.accessLevel .. ", ingameOnly = " .. dbBool(v.ingameOnly) .. " WHERE command = '" .. connMEM:escape(k) .. "'" )
+	end
+
+	if debug then dbug("Help Commands Imported") end
 end
 
 
@@ -468,13 +536,33 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 	end
 
 	if onlyImportThis == "" then
+		if debug then dbug("Loading modVersions") end
+		modVersions = {}
+		table.load(path .. pathPrefix .. "modVersions.lua", modVersions)
+
 		if debug then dbug("Loading bad items") end
 		badItems = {}
 		table.load(path .. pathPrefix .. "badItems.lua", badItems)
 
+		if debug then dbug("Loading bases") end
+		bases = {}
+		table.load(path .. pathPrefix .. "bases.lua", bases)
+
+		if debug then dbug("Loading base members") end
+		baseMembers = {}
+		table.load(path .. pathPrefix .. "baseMembers.lua", baseMembers)
+
 		if debug then dbug("Loading friends") end
 		friends = {}
 		table.load(path .. pathPrefix .. "friends.lua", friends)
+
+		if debug then dbug("Loading gimme prizes") end
+		gimmePrizes = {}
+		table.load(path .. pathPrefix .. "gimmePrizes.lua", gimmePrizes)
+
+		if debug then dbug("Loading gimme zombies") end
+		gimmeZombies = {}
+		table.load(path .. pathPrefix .. "gimmeZombies.lua", gimmeZombies)
 
 		if debug then dbug("Loading hotspots") end
 		hotspots = {}
@@ -520,8 +608,12 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		table.load(path .. pathPrefix .. "waypoints.lua", waypoints)
 
 		conn:execute("TRUNCATE badItems")
+		conn:execute("TRUNCATE bases")
+		conn:execute("TRUNCATE baseMembers")
 		conn:execute("TRUNCATE donors")
 		conn:execute("TRUNCATE friends")
+		conn:execute("TRUNCATE gimmePrizes")
+		conn:execute("TRUNCATE gimmeZombies")
 		conn:execute("TRUNCATE hotspots")
 		conn:execute("TRUNCATE locations")
 		conn:execute("TRUNCATE locationCategories")
@@ -534,20 +626,24 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		conn:execute("TRUNCATE villagers")
 		conn:execute("TRUNCATE waypoints")
 
-		importBaditems()
-		importDonors()
-		importRestricteditems()
-		importHotspots()
-		importLocationCategories()
-		importLocations()
-		importResets()
-		importTeleports()
-		importVillagers()
-		importFriends()
-		importShopCategories()
-		importShop()
-		importWaypoints()
-		importPlayers()
+		tempTimer( 2, [[importModVersions()]] )
+		tempTimer( 2, [[importBaditems()]] )
+		tempTimer( 2, [[importBases()]] ) -- includes base members
+		tempTimer( 4, [[importDonors()]] )
+		tempTimer( 4, [[importRestricteditems()]] )
+		tempTimer( 4, [[importHotspots()]] )
+		tempTimer( 6, [[importLocationCategories()]] )
+		tempTimer( 6, [[importLocations()]] )
+		tempTimer( 6, [[importResets()]] )
+		tempTimer( 8, [[importTeleports()]] )
+		tempTimer( 8, [[importVillagers()]] )
+		tempTimer( 8, [[importFriends()]] )
+		tempTimer( 10, [[importGimmePrizes()]] )
+		tempTimer( 10, [[importGimmeZombies()]] )
+		tempTimer( 10, [[importShopCategories()]] )
+		tempTimer( 12, [[importShop()]] )
+		tempTimer( 12, [[importWaypoints()]] )
+		tempTimer( 12, [[importPlayers()]] )
 	else
 		-- restore bases and cash for the players table
 		playersTemp = {}
@@ -561,37 +657,9 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		end
 
 		for k,v in pairs(playersTemp) do
-			if string.find(onlyImportThis, "bases") then
-				if players[k] then
-					if players[k].homeX == 0 and players[k].homeZ == 0 then
-						players[k].homeX = v.homeX
-						players[k].homeY = v.homeY
-						players[k].homeZ = v.homeZ
-						players[k].protect = v.protect
-						players[k].protectSize = v.protectSize
-					end
-
-					if players[k].home2X == 0 and players[k].home2Z == 0 then
-						players[k].home2X = v.home2X
-						players[k].home2Y = v.home2Y
-						players[k].home2Z = v.home2Z
-						players[k].protect2 = v.protect2
-						players[k].protect2Size = v.protect2Size
-					end
-				end
-			end
-
 			if string.find(onlyImportThis, "cash") then
 				if players[k] then
 					players[k].cash = players[k].cash + v.cash
-				end
-			end
-
-			if string.find(onlyImportThis, "donors") then
-				if players[k] then
-					players[k].donor = v.donor
-					players[k].donorLevel = v.donorLevel
-					players[k].donorExpiry = v.donorExpiry
 				end
 			end
 
@@ -606,7 +674,8 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 					players[k] = {}
 					players[k] = playersTemp[k]
 					conn:execute("INSERT INTO players (steam) VALUES (" .. k .. ")")
-					conn:execute("INSERT INTO persistentQueue (steam, command) VALUES (" .. k .. ",'update player')")
+					connSQL:execute("INSERT INTO persistentQueue (steam, command) VALUES ('" .. k .. "','update player')")
+					botman.persistentQueueEmpty = false
 					importedAPlayer = true
 				end
 			end
@@ -621,7 +690,25 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		table.load(path .. pathPrefix .. "friends.lua", friends)
 
 		conn:execute("TRUNCATE friends")
-		importFriends()
+		tempTimer( 2, [[importFriends()]] )
+	end
+
+	if string.find(onlyImportThis, "gimme") then
+		if debug then dbug("Loading gimme prizes") end
+		gimmeZombies = {}
+		table.load(path .. pathPrefix .. "gimmePrizes.lua", gimmePrizes)
+
+		conn:execute("TRUNCATE gimmePrizes")
+		tempTimer( 2, [[importGimmePrizes()]] )
+	end
+
+	if string.find(onlyImportThis, "zombies") then
+		if debug then dbug("Loading gimme zombies") end
+		gimmeZombies = {}
+		table.load(path .. pathPrefix .. "gimmeZombies.lua", gimmeZombies)
+
+		conn:execute("TRUNCATE gimmeZombies")
+		tempTimer( 2, [[importGimmeZombies()]] )
 	end
 
 	if string.find(onlyImportThis, "hotspots") then
@@ -630,7 +717,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		table.load(path .. pathPrefix .. "hotspots.lua", hotspots)
 
 		conn:execute("TRUNCATE hotspots")
-		importHotspots()
+		tempTimer( 2, [[importHotspots()]] )
 	end
 
 	if string.find(onlyImportThis, "locations") then
@@ -644,8 +731,9 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 
 		conn:execute("TRUNCATE locations")
 		conn:execute("TRUNCATE locationCategories")
-		importLocationCategories()
-		importLocations()
+
+		tempTimer( 2, [[importLocationCategories()]] )
+		tempTimer( 2, [[importLocations()]] )
 	end
 
 	if string.find(onlyImportThis, "players") then
@@ -654,7 +742,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		table.load(path .. pathPrefix .. "players.lua", players)
 
 		conn:execute("TRUNCATE players")
-		importPlayers()
+		tempTimer( 2, [[importPlayers()]] )
 	end
 
 	if string.find(onlyImportThis, "resets") then
@@ -663,7 +751,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		table.load(path .. pathPrefix .. "resetRegions.lua", resetRegions)
 
 		conn:execute("TRUNCATE resetZones")
-		importResets()
+		tempTimer( 2, [[importResets()]] )
 	end
 
 	if string.find(onlyImportThis, "shop") then
@@ -672,7 +760,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		table.load(path .. pathPrefix .. "shop.lua", shop)
 
 		conn:execute("TRUNCATE shop")
-		importShop()
+		tempTimer( 2, [[importShop()]] )
 	end
 
 	if string.find(onlyImportThis, "teleports") then
@@ -681,7 +769,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		table.load(path .. pathPrefix .. "teleports.lua", teleports)
 
 		conn:execute("TRUNCATE teleports")
-		importTeleports()
+		tempTimer( 2, [[importTeleports()]] )
 	end
 
 	if string.find(onlyImportThis, "villagers") then
@@ -690,7 +778,7 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		table.load(path .. pathPrefix .. "villagers.lua", villagers)
 
 		conn:execute("TRUNCATE villagers")
-		importVillagers()
+		tempTimer( 2, [[importVillagers()]] )
 	end
 
 	if string.find(onlyImportThis, "waypoints") then
@@ -699,7 +787,24 @@ function importLuaData(pathPrefix, onlyImportThis, path)
 		table.load(path .. pathPrefix .. "waypoints.lua", waypoints)
 
 		conn:execute("TRUNCATE waypoints")
-		importWaypoints()
+		tempTimer( 2, [[importWaypoints()]] )
+	end
+
+	if string.find(onlyImportThis, "bases") then
+		if debug then dbug("Loading bases") end
+		-- import bases
+		bases = {}
+		table.load(path .. pathPrefix .. "bases.lua", bases)
+
+		conn:execute("TRUNCATE bases")
+		tempTimer( 2, [[importBases()]] )
+
+		-- import base members
+		baseMembers = {}
+		table.load(path .. pathPrefix .. "baseMembers.lua", baseMembers)
+
+		conn:execute("TRUNCATE baseMembers")
+		tempTimer( 2, [[importBaseMembers()]] )
 	end
 
 	if debug then dbug("Import of Lua tables Complete") end

@@ -1,14 +1,14 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
 function gameTimeTrigger(line)
-	local word, words, k, v, closed, closingSoon, oldGameDay, temp
+	local word, words, k, v, closed, closingSoon, oldGameDay, temp, allowLottery
 
 	if botman.botDisabled then
 		return
@@ -74,19 +74,28 @@ function gameTimeTrigger(line)
 		server.delayReboot = false
 	end
 
-	if (botman.hordeNightToday and tonumber(server.gameHour) == 21 and tonumber(server.gameMinute) > 45 and server.despawnZombiesBeforeBloodMoon and server.stompy) then
-		if server.BloodMoonRange then
-			if tonumber(server.BloodMoonRange) == 0 then
-				sendCommand("bc-remove /type=EntityZombie")
-				sendCommand("bc-remove /type=EntityZombieCrawl")
-			end
-		else
-			sendCommand("bc-remove /type=EntityZombie")
-			sendCommand("bc-remove /type=EntityZombieCrawl")
+-- todo: add to bm-remove so that it can be told to remove all hostiles
+	-- if (botman.hordeNightToday and tonumber(server.gameHour) == 21 and tonumber(server.gameMinute) > 45 and server.despawnZombiesBeforeBloodMoon) then
+		-- if server.BloodMoonRange then
+			-- if tonumber(server.BloodMoonRange) == 0 then
+				-- sendCommand("bc-remove /type=EntityZombie")
+				-- sendCommand("bc-remove /type=EntityZombieCrawl")
+			-- end
+		-- else
+			-- sendCommand("bc-remove /type=EntityZombie")
+			-- sendCommand("bc-remove /type=EntityZombieCrawl")
+		-- end
+	-- end
+
+	allowLottery = server.allowLottery
+
+	for k,v in pairs(playerGroup) do
+		if v.allowLottery then
+			allowLottery = true
 		end
 	end
 
-	if (tonumber(server.gameHour) == 0 and server.allowLottery == true) then
+	if (tonumber(server.gameHour) == 0 and allowLottery) then
 		if not botman.dailyDraw then
 			drawLottery()
 			botman.dailyDraw = true
@@ -101,10 +110,10 @@ function gameTimeTrigger(line)
 			server.warnBotReset = true
 
 			for k,v in pairs(igplayers) do
-				if accessLevel(k) == 0 then
-					message("pm " .. k .. " [" .. server.chatColour .. "]ALERT!  It appears that the server has been reset but not the bot.[-]")
-					message("pm " .. k .. " [" .. server.chatColour .. "]To reset me type " .. server.commandPrefix .. "reset bot.[-]")
-					message("pm " .. k .. " [" .. server.chatColour .. "]To dismiss this alert type " .. server.commandPrefix .. "no reset.[-]")
+				if accessLevel(k, v.userID) == 0 then
+					message("pm " .. v.userID .. " [" .. server.chatColour .. "]ALERT!  It appears that the server has been reset but not the bot.[-]")
+					message("pm " .. v.userID .. " [" .. server.chatColour .. "]To reset me type " .. server.commandPrefix .. "reset bot.[-]")
+					message("pm " .. v.userID .. " [" .. server.chatColour .. "]To dismiss this alert type " .. server.commandPrefix .. "no reset.[-]")
 				end
 			end
 		end
@@ -115,6 +124,10 @@ function gameTimeTrigger(line)
 	end
 
 	if botman.dbConnected then conn:execute("UPDATE server SET server.gameDay = " .. server.gameDay) end
+
+	if locations == nil then
+		return
+	end
 
 	 --check locations for opening and closing times
 	for k,v in pairs(locations) do

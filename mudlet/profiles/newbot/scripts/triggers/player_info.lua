@@ -1,13 +1,13 @@
 --[[
     Botman - A collection of scripts for managing 7 Days to Die servers
-    Copyright (C) 2020  Matthew Dwyer
+    Copyright (C) 2024  Matthew Dwyer
 	           This copyright applies to the Lua source code in this Mudlet profile.
     Email     smegzor@gmail.com
     URL       https://botman.nz
-    Source    https://bitbucket.org/mhdwyer/botman
+    Sources   https://github.com/MatthewDwyer
 --]]
 
-function playerInfo(faultyInfo)
+function playerInfo(lpdata)
 	-- EDIT THIS FUNCTION WITH CARE.  This function is central to player management.  Some lines need to be run before others.
 	-- Lua will stop execution wherever it strikes a fault (usually trying to use a non-existing variable)
 	-- enable debugging to see roughly where the bot gets to.  It should reach 'end playerinfo'.
@@ -15,147 +15,58 @@ function playerInfo(faultyInfo)
 
 	local tmp = {}
 
-	faultyPlayerinfo = true
-	faultyPlayerinfoID = 0
-	faultyPlayerinfoLine = line
+	-- faultyPlayerinfo = true
+	-- faultyPlayerinfoID = 0
+	-- faultyPlayerinfoLine = line
 
-	local debug, id, name, posX, posY, posZ, lastX, lastY, lastZ, lastDist, mapCenterDistance, regionX, regionZ, chunkX, chunkZ, exile, prison
-	local deaths, zombies, kills, score, level, steam, steamtest, admin, lastGimme, lastLogin, playerAccessLevel, temp
-	local xPosOld, yPosOld, zPosOld, rawPosition, rawRotation, outsideMap, outsideMapDonor, fields, values, flag, cmd
+	local debug, chunkX, chunkZ, exile, prison
+	local steamtest, admin, lastGimme, lastLogin, playerAccessLevel, temp, settings
+	local outsideMap, mapCenterDistance, regionX, regionZ
+	local fields, values, flag, cmd, k, v, key
 	local timestamp = os.time()
 	local region = ""
 	local resetZone = false
-	local ping, dist, IP, hotspot, currentLocation
+	local dist, hotspot, currentLocation
 	local skipTPtest = false
-	local badData = false -- no biscuit!
-
-	if customPlayerInfo ~= nil then
-		-- read the note on overriding bot code in custom/custom_functions.lua
-		if customPlayerInfo(line) then
-			return
-		end
-	end
 
 	debug = false -- should be false unless testing
 
-if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if debugPlayerInfo == nil then debugPlayerInfo = 0 end
-
-	-- Set debugPlayerInfo to the steam id or player name that you want to monitor.  If the player is not on the server, the bot will reset debugPlayerInfo to zero.
-	debugPlayerInfo = 0 -- should be 0 unless testing against a steam id
-
-	if (debugPlayerInfo ~= 0) then
-		if debug then
-			dbug("debug playerinfo " .. debugPlayerInfo, true)
-			dbug(line, true)
+	if customPlayerInfo ~= nil then
+		-- read the note on overriding bot code in custom/custom_functions.lua
+		if customPlayerInfo then
+			if customPlayerInfo(line) then
+				return true, "custom playerInfo"
+			end
 		end
+	end
+
+	if not lpdata.userID then
+		lpdata.steam, lpdata.steamOwner, lpdata.userID, lpdata.platform = LookupPlayer(lpdata.steam)
+	end
+
+	if lpdata.userID == "" then
+		lpdata.steam, lpdata.steamOwner, lpdata.userID, lpdata.platform = LookupPlayer(lpdata.steam)
+	end
+
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
+	if server.kickXBox and lpdata.platform == "XBL" and not botman.botDisabled then
+		kick(lpdata.userID, "This server does not allow connections from XBox.")
+		irc_chat(server.ircAlerts, server.gameDate .. " player " .. lpdata.userID .. " kicked because XBox players are not allowed to play here " .. lpdata.platform .. "_" .. lpdata.steam)
+		return true, "xbox player kicked"
 	end
 
 	exile = LookupLocation("exile")
 	prison = LookupLocation("prison")
 
 	flag = ""
-	name_table = string.split(line, ", ")
 
-	if string.find(name_table[3], "pos") then
-		name = string.trim(name_table[2])
-	else
-		temp = name_table[1] .. ", name" .. string.sub(line, string.find(line, ", pos="), string.len(line))
-		name_table = string.split(temp, ", ")
-		name = string.trim(string.sub(line, string.find(line, ",") + 2, string.find(line, ", pos=") - 1))
-	end
-
-	-- stop processing this player if we don't have 18 parts to the line after splitting on comma
-	-- it is probably a read error
-	if (table.maxn(name_table) < 18) then
-		faultyPlayerinfoID = 0
-		if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-		return
-	end
-
-	temp = string.split(name_table[1], "=")
-	id = temp[2]
-
-	num = tonumber(string.sub(name_table[3], 6))
-	if (num == nil) then badData = true end
-	posX = num
-
-	num = tonumber(name_table[4])
-	if (num == nil) then badData = true end
-	posY = num
-
-	temp = string.split(name_table[5], ")")
-	num = tonumber(temp[1])
-	if (num == nil) then badData = true end
-	posZ = num
-
-	num = tonumber(name_table[7])
-	if (num == nil) then badData = true end
-	rotY = num
-
-	temp = string.split(name_table[11], "=")
-	num = tonumber(temp[2])
-	if (num == nil) then badData = true end
-	deaths = num
-
-	temp = string.split(name_table[12], "=")
-	num = tonumber(temp[2])
-	if (num == nil) then badData = true end
-	zombies = num
-
-	temp = string.split(name_table[13], "=")
-	num = tonumber(temp[2])
-	if (num == nil) then badData = true end
-	kills = num
-
-	temp = string.split(name_table[14], "=")
-	num = tonumber(temp[2])
-	if (num == nil) then badData = true end
-	score = num
-
-	temp = string.split(name_table[15], "=")
-	num = tonumber(temp[2])
-	if (num == nil) then badData = true end
-	level = num
-
-	temp = string.split(name_table[16], "=")
-	if (num == nil) then badData = true end
-	steam = temp[2]
-
-	faultyPlayerinfoID = steam
-
-	temp = string.split(name_table[17], "=")
-	IP = temp[2]
-	IP = IP:gsub("::ffff:","")
-
-	temp = string.split(name_table[18], "=")
-	ping = tonumber(temp[2])
-
-	if badData then
-		if debug then
-			dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true)
-			dbug("Bad lp line: " .. line .. "\n", true)
-		end
-
-		return
-	end
-
-if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
-	rawPosition = posX .. posY .. posZ
-	rawRotation = rotY
-
-	posX = math.floor(posX)
-	posY = math.floor(posY)
-	posZ = math.floor(posZ)
-
-	intX = posX
-	intY = posY
-	intZ = posZ
-
-	region = getRegion(intX, intZ)
-	regionX, regionZ, chunkX, chunkZ = getRegionChunkXZ(intX, intZ)
+	region = getRegion(lpdata.x, lpdata.z)
+	regionX, regionZ, chunkX, chunkZ = getRegionChunkXZ(lpdata.x, lpdata.z)
 
 	if (resetRegions[region]) then
 		resetZone = true
@@ -163,441 +74,492 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		resetZone = false
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	-- check for invalid or missing steamid.  kick if not passed
-	steamtest = tonumber(steam)
-	if (steamtest == nil) then
-		sendCommand("kick " .. id)
-		irc_chat(server.ircMain, "Player " .. name .. " kicked for invalid Steam ID: " .. steam)
-		faultyPlayerinfo = false
-		return
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
+	if lpdata.userID == "" then
+		lpdata.userID = LookupJoiningPlayer(lpdata.steam)
 	end
-
-if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
-	if (string.len(steam) < 17) then
-		sendCommand("kick " .. id)
-		irc_chat(server.ircMain, "Player " .. name .. " kicked for invalid Steam ID: " .. steam)
-		faultyPlayerinfo = false
-		return
-	end
-
-if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- add to in-game players table
-	if (igplayers[steam] == nil) then
-		igplayers[steam] = {}
-		igplayers[steam].id = id
-		igplayers[steam].name = name
-		igplayers[steam].steam = steam
-		igplayers[steam].steamOwner = steam
+	if (not igplayers[lpdata.steam]) then
+		igplayers[lpdata.steam] = {}
+		igplayers[lpdata.steam].id = lpdata.entityid
+		igplayers[lpdata.steam].name = lpdata.name
+		igplayers[lpdata.steam].steam = lpdata.steam
+		igplayers[lpdata.steam].steamOwner = lpdata.steam
+		igplayers[lpdata.steam].userID = lpdata.userID
+		igplayers[lpdata.steam].platform = lpdata.platform
 
-		fixMissingIGPlayer(steam)
-
-		-- don't initially warn the player about pvp or pve zone.  Too many players complain about it when the bot is restarted.  We can warn them next time their zone changes.
-		if pvpZone(posX, posZ) then
-			if players[steam].alertPVP == true then
-				players[steam].alertPVP = false
-			end
-		else
-			if players[steam].alertPVP == false then
-				players[steam].alertPVP = true
-			end
-		end
+		fixMissingIGPlayer(lpdata.platform, lpdata.steam, lpdata.steam, lpdata.userID)
 	end
 
-	if igplayers[steam].readCounter == nil then
-		igplayers[steam].readCounter = 0
+	if igplayers[lpdata.steam].readCounter == nil then
+		igplayers[lpdata.steam].readCounter = 0
 	else
-		igplayers[steam].readCounter = igplayers[steam].readCounter + 1
+		igplayers[lpdata.steam].readCounter = igplayers[lpdata.steam].readCounter + 1
 	end
 
-	if igplayers[steam].checkNewPlayer == nil then
-		fixMissingIGPlayer(steam)
+	if igplayers[lpdata.steam].checkNewPlayer == nil then
+		fixMissingIGPlayer(lpdata.platform, lpdata.steam, lpdata.steam, lpdata.userID)
+	end
+
+	-- if player is missing from player lua table, try to load them from the databases.
+	if not players[lpdata.steam] then
+		-- try to load them from the sqlite database
+		restoreSQLitePlayer(lpdata.steam)
+
+		-- still missing?  try to load them from the players table in mysql
+		if not players[lpdata.steam] then
+			loadPlayers(lpdata.steam)
+		end
+
+		-- If the player record is still missing we make a new record below (and hope for the best)
 	end
 
 	-- add to players table
-	if (players[steam] == nil) then
-		players[steam] = {}
-		players[steam].id = id
-		players[steam].name = name
-		players[steam].steam = steam
+	if not players[lpdata.steam] then
+		players[lpdata.steam] = {}
+		players[lpdata.steam].id = lpdata.entityid
+		players[lpdata.steam].name = lpdata.name
+		players[lpdata.steam].steam = lpdata.steam
+		players[lpdata.steam].steamOwner = lpdata.steam
+		players[lpdata.steam].userID = lpdata.userID
 
-		if tonumber(score) == 0 and tonumber(zombies) == 0 and tonumber(deaths) == 0 then
-			players[steam].newPlayer = true
+		if tonumber(lpdata.score) == 0 and tonumber(lpdata.zombiekills) == 0 and tonumber(lpdata.playerdeaths) == 0 then
+			players[lpdata.steam].newPlayer = true
 		else
-			players[steam].newPlayer = false
+			players[lpdata.steam].newPlayer = false
 		end
 
-		players[steam].watchPlayer = true
-		players[steam].watchPlayerTimer = os.time() + 2419200 -- stop watching in one month or until no longer a new player
-		players[steam].ip = IP
-		players[steam].exiled = false
+		players[lpdata.steam].watchPlayer = true
+		players[lpdata.steam].watchPlayerTimer = os.time() + 2419200 -- stop watching in one month or until no longer a new player
+		players[lpdata.steam].ip = lpdata.ip
+		players[lpdata.steam].exiled = false
 
-		irc_chat(server.ircMain, "###  New player joined " .. player .. " steam: " .. steam.. " id: " .. id .. " ###")
+		irc_chat(server.ircMain, "###  New player joined " .. player .. " userID: " .. lpdata.userID .. " platform: " .. lpdata.platform .. " steam: " .. lpdata.steam .. " id: " .. lpdata.entityid .. " ###")
 		irc_chat(server.ircAlerts, "New player joined " .. server.gameDate .. " " .. line:gsub("%,", ""))
 
 		if botman.dbConnected then
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. posX .. "," .. posY .. "," .. posZ .. ",'" .. botman.serverTime .. "','new player','New player joined " .. name .. " steam: " .. steam.. " id: " .. id .. "'," .. steam .. ")")
-			conn:execute("INSERT INTO players (steam, name, id, IP, newPlayer, watchPlayer, watchPlayerTimer) VALUES (" .. steam .. ",'" .. escape(name) .. "'," .. id .. "," .. IP .. ",1,1, " .. os.time() + 2419200 .. ")")
+			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. lpdata.x .. "," .. lpdata.y .. "," .. lpdata.z .. ",'" .. botman.serverTime .. "','new player','New player joined (player info) " .. lpdata.name .. " steam: " .. lpdata.steam.. " id: " .. lpdata.entityid .. "','" .. lpdata.steam .. "')")
+			conn:execute("INSERT INTO players (steam, lpdata.name, id, IP, newPlayer, watchPlayer, watchPlayerTimer) VALUES ('" .. lpdata.steam .. "','" .. escape(lpdata.name) .. "'," .. lpdata.entityid .. ",'" .. lpdata.ip .. "',1,1, " .. os.time() + 2419200 .. ")")
 		end
 
-		fixMissingPlayer(steam)
+		fixMissingPlayer(lpdata.platform, lpdata.steam, lpdata.steam, lpdata.userID)
+
+		-- don't initially warn the player about pvp or pve zone.  Too many players complain about it when the bot is restarted.  We can warn them next time their zone changes.
+		if pvpZone(lpdata.x, lpdata.z) then
+			if players[lpdata.steam].alertPVP == true then
+				players[lpdata.steam].alertPVP = false
+			end
+		else
+			if players[lpdata.steam].alertPVP == false then
+				players[lpdata.steam].alertPVP = true
+			end
+		end
+
+		if players[lpdata.steam].newPlayer then
+			setGroupMembership(lpdata.steam, "New Players", true)
+		else
+			setGroupMembership(lpdata.steam, "New Players", false)
+		end
 
 		if not server.optOutGlobalBots then
-			CheckBlacklist(steam, IP)
+			CheckBlacklist(lpdata.steam, lpdata.ip)
 		end
-	end
-
-	if igplayers[steam].greet then
-		if tonumber(igplayers[steam].greetdelay) > 0 then
-			igplayers[steam].greetdelay = igplayers[steam].greetdelay -1
-		end
-	end
-
-if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
-	if tonumber(ping) > 0 then
-		igplayers[steam].ping = ping
-		players[steam].ping = ping
 	else
-		igplayers[steam].ping = 0
-		players[steam].ping = 0
-	end
-
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
-	if faultyInfo == steam then
-		-- Attempt to fix the fault assuming it set some stuff because of it
-		if igplayers[steam].yPosLastOK == 0 then
-			igplayers[steam].xPosLastOK = intX
-			igplayers[steam].yPosLastOK = intY
-			igplayers[steam].zPosLastOK = intZ
+		if not players[lpdata.steam].country then
+			players[lpdata.steam].country = ""
 		end
 	end
 
-	playerAccessLevel = accessLevel(steam)
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if playerAccessLevel < 3 then
-		-- admins don't hack (no lie) ^^
-		players[steam].hackerScore = 0
-		admin = true
+	settings = getSettings(lpdata.steam)
+
+	if igplayers[lpdata.steam].greet then
+		if tonumber(igplayers[lpdata.steam].greetdelay) > 0 then
+			igplayers[lpdata.steam].greetdelay = igplayers[lpdata.steam].greetdelay -1
+		end
 	end
 
-	if IP ~= "" and players[steam].ip == "" then
-		players[steam].ip = IP
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
+	if tonumber(lpdata.ping) > 0 then
+		igplayers[lpdata.steam].ping = lpdata.ping
+		players[lpdata.steam].ping = lpdata.ping
+	else
+		igplayers[lpdata.steam].ping = 0
+		players[lpdata.steam].ping = 0
+	end
+
+	if not igplayers[lpdata.steam].xPosLast then
+		-- this shouldn't be missing so give it the player's current position
+		igplayers[lpdata.steam].xPosLast = lpdata.x
+		igplayers[lpdata.steam].yPosLast = lpdata.y
+		igplayers[lpdata.steam].zPosLast = lpdata.z
+	end
+
+	playerAccessLevel = tonumber(accessLevel(lpdata.steam, lpdata.userID))
+
+	if isAdminHidden(lpdata.steam, lpdata.userID) then
+		-- admins don't hack (no lie) ^^
+		players[lpdata.steam].hackerScore = 0
+		admin = true
+	else
+		admin = false
+	end
+
+	if lpdata.ip ~= "" and players[lpdata.steam].ip == "" then
+		players[lpdata.steam].ip = lpdata.ip
 
 		if not server.optOutGlobalBots then
-			CheckBlacklist(steam, IP)
+			CheckBlacklist(lpdata.steam, lpdata.ip)
 		end
 	end
 
-if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- ping kick
-	if not whitelist[steam] and not isDonor(steam) and tonumber(playerAccessLevel) > 2 then
-		if (server.pingKickTarget == "new" and players[steam].newPlayer) or server.pingKickTarget == "all" then
-			if tonumber(ping) < tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
-				igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) - 1
-				if tonumber(igplayers[steam].highPingCount) < 0 then igplayers[steam].highPingCount = 0 end
+	if not whitelist[lpdata.steam] and not isDonor(lpdata.steam) and not admin then
+		if (server.pingKickTarget == "new" and players[lpdata.steam].newPlayer) or server.pingKickTarget == "all" then
+			if tonumber(lpdata.ping) < tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
+				igplayers[lpdata.steam].highPingCount = tonumber(igplayers[lpdata.steam].highPingCount) - 1
+				if tonumber(igplayers[lpdata.steam].highPingCount) < 0 then igplayers[lpdata.steam].highPingCount = 0 end
 			end
 
-			if tonumber(ping) > tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
-				igplayers[steam].highPingCount = tonumber(igplayers[steam].highPingCount) + 1
+			if tonumber(lpdata.ping) > tonumber(server.pingKick) and tonumber(server.pingKick) > 0 then
+				igplayers[lpdata.steam].highPingCount = tonumber(igplayers[lpdata.steam].highPingCount) + 1
 
-				if tonumber(igplayers[steam].highPingCount) > 15 then
-					irc_chat(server.ircMain, "Kicked " .. name .. " steam: " .. steam.. " for high ping " .. ping)
-					kick(steam, "High ping kicked.")
-					return
+				if tonumber(igplayers[lpdata.steam].highPingCount) > 15 then
+					irc_chat(server.ircMain, "Kicked " .. lpdata.name .. " steam: " .. lpdata.steam.. " for high ping " .. lpdata.ping)
+					kick(lpdata.steam, "High ping kicked.")
+					return true, "high ping kicked"
 				end
 			end
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if tonumber(intY) > 0 and tonumber(intY) < 500 then
-		igplayers[steam].lastTP = nil
-		forgetLastTP(steam)
+	if tonumber(lpdata.y) > 0 and tonumber(lpdata.y) < 500 then
+		igplayers[lpdata.steam].lastTP = nil
+		forgetLastTP(lpdata.steam)
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
-	if players[steam].location ~= "" and igplayers[steam].spawnedInWorld then --  and igplayers[steam].teleCooldown < 1
-		igplayers[steam].teleCooldown = 0
+	if players[lpdata.steam].location ~= "" and igplayers[lpdata.steam].spawnedInWorld and not botman.botDisabled then
+		igplayers[lpdata.steam].teleCooldown = 0
 
 		-- spawn the player at location
-		if (locations[players[steam].location]) then
-			temp = players[steam].location
-			irc_chat(server.ircMain, "Player " .. steam .. " " .. name .. " is being moved to " .. temp)
-			irc_chat(server.ircAlerts, "Player " .. steam .. " " .. name .. " is being moved to " .. temp)
-			players[steam].location = ""
-			if botman.dbConnected then conn:execute("UPDATE players SET location = '' WHERE steam = " .. steam) end
+		if (locations[players[lpdata.steam].location]) then
+			temp = players[lpdata.steam].location
+			irc_chat(server.ircMain, "Player " .. lpdata.steam .. " " .. lpdata.name .. " is being moved to " .. temp)
+			irc_chat(server.ircAlerts, "Player " .. lpdata.steam .. " " .. lpdata.name .. " is being moved to " .. temp)
+			players[lpdata.steam].location = ""
+			if botman.dbConnected then conn:execute("UPDATE players SET location = '' WHERE steam = '" .. lpdata.steam .. "'") end
 
-			message(string.format("pm %s [%s]You are being moved to %s[-]", steam, server.chatColour, temp))
-			randomTP(steam, temp, true)
+			message(string.format("pm %s [%s]You are being moved to %s[-]", lpdata.userID, server.chatColour, temp))
+			randomTP(lpdata.steam, lpdata.userID, temp, true)
 		end
 
-		if (players[steam].location == "return player") then
-			if players[steam].xPosTimeout ~= 0 and players[steam].zPosTimeout ~= 0 then
-				cmd = "tele " .. steam .. " " .. players[steam].xPosTimeout .. " " .. players[steam].yPosTimeout .. " " .. players[steam].zPosTimeout
-				players[steam].xPosTimeout = 0
-				players[steam].yPosTimeout = 0
-				players[steam].zPosTimeout = 0
+		if (players[lpdata.steam].location == "return player") then
+			if players[lpdata.steam].xPosTimeout ~= 0 and players[lpdata.steam].zPosTimeout ~= 0 then
+				cmd = "tele " .. lpdata.userID .. " " .. players[lpdata.steam].xPosTimeout .. " " .. players[lpdata.steam].yPosTimeout .. " " .. players[lpdata.steam].zPosTimeout
+				players[lpdata.steam].xPosTimeout = 0
+				players[lpdata.steam].yPosTimeout = 0
+				players[lpdata.steam].zPosTimeout = 0
 			else
-				cmd = "tele " .. steam .. " " .. players[steam].xPosOld .. " " .. players[steam].yPosOld .. " " .. players[steam].zPosOld
+				cmd = "tele " .. lpdata.userID .. " " .. players[lpdata.steam].xPosOld .. " " .. players[lpdata.steam].yPosOld .. " " .. players[lpdata.steam].zPosOld
 			end
 
-			players[steam].location = ""
-			if botman.dbConnected then conn:execute("UPDATE players SET location = '' WHERE steam = " .. steam) end
-			teleport(cmd, steam)
+			players[lpdata.steam].location = ""
+			if botman.dbConnected then conn:execute("UPDATE players SET location = '' WHERE steam = '" .. lpdata.steam .. "'") end
+			teleport(cmd, lpdata.steam, lpdata.userID)
 		end
 	end
 
-	if tonumber(players[steam].hackerScore) >= 10000 then
-		players[steam].hackerScore = 0
+	if botman.botDisabled then
+		players[lpdata.steam].location = ""
+	end
 
-		if igplayers[steam].hackerDetection ~= nil then
-			message(string.format("say [%s]Banning %s. Hacking suspected. Evidence: " .. igplayers[steam].hackerDetection .. "[-]", server.chatColour, players[steam].name))
-		else
-			message(string.format("say [%s]Banning %s. Detected possible evidence of hacking.[-]", server.chatColour, players[steam].name))
-		end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-		banPlayer(steam, "1 year", "Automatic ban for suspected hacking. Admins have been alerted.", "")
+	if not botman.botDisabled then
+		if tonumber(players[lpdata.steam].hackerScore) >= 10000 then
+			players[lpdata.steam].hackerScore = 0
 
-		-- if the player has any pending global bans, activate them
-		connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. steam)
-	else
-		if tonumber(players[steam].hackerScore) >= 49  then
-			-- if the player has pending global bans recorded against them, we ban them early and also activate the global ban
-			if tonumber(players[steam].pendingBans) > 0 then
-				players[steam].hackerScore = 0
-				if igplayers[steam].hackerDetection ~= nil then
-					message(string.format("say [%s]Temp banning %s. May be hacking. Detected " .. igplayers[steam].hackerDetection .. "[-]", server.chatColour, players[steam].name))
-				else
-					message(string.format("say [%s]Temp banning %s 1 week. Detected clipping or flying too much. Admins have been alerted.[-]", server.chatColour, players[steam].name))
-				end
-
-				banPlayer(steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
-
-				-- activate the pending bans
-				connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. steam)
-			end
-		end
-
-		if tonumber(players[steam].hackerScore) >= 60 then
-			players[steam].hackerScore = 0
-			if igplayers[steam].hackerDetection ~= nil then
-				message(string.format("say [%s]Temp banning %s 1 week for suspected hacking. Detected " .. igplayers[steam].hackerDetection .. "[-]", server.chatColour, players[steam].name))
+			if igplayers[lpdata.steam].hackerDetection ~= nil then
+				message(string.format("say [%s]Banning %s. Hacking suspected. Evidence: " .. igplayers[lpdata.steam].hackerDetection .. "[-]", server.chatColour, players[lpdata.steam].name))
 			else
-				message(string.format("say [%s]Temp banning %s 1 week for suspected hacking.[-]", server.chatColour, players[steam].name))
+				message(string.format("say [%s]Banning %s. Detected possible evidence of hacking.[-]", server.chatColour, players[lpdata.steam].name))
 			end
 
-			banPlayer(steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
+			banPlayer(lpdata.platform, lpdata.userID, lpdata.steam, "1 year", "Automatic ban for suspected hacking. Admins have been alerted.", "")
 
 			-- if the player has any pending global bans, activate them
-			connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. steam)
+			connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = '" .. lpdata.steam .. "'")
+		else
+			if tonumber(players[lpdata.steam].hackerScore) >= 49  then
+				-- if the player has pending global bans recorded against them, we ban them early and also activate the global ban
+				if tonumber(players[lpdata.steam].pendingBans) > 0 then
+					players[lpdata.steam].hackerScore = 0
+					if igplayers[lpdata.steam].hackerDetection ~= nil then
+						message(string.format("say [%s]Temp banning %s. May be hacking. Detected " .. igplayers[lpdata.steam].hackerDetection .. "[-]", server.chatColour, players[lpdata.steam].name))
+					else
+						message(string.format("say [%s]Temp banning %s 1 week. Detected clipping or flying too much. Admins have been alerted.[-]", server.chatColour, players[lpdata.steam].name))
+					end
+
+					banPlayer(lpdata.platform, lpdata.userID, lpdata.steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
+
+					-- activate the pending bans
+					connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = '" .. lpdata.steam .. "'")
+				end
+			end
+
+			if tonumber(igplayers[lpdata.steam].flyCount) > 2 and not admin then
+				players[lpdata.steam].hackerScore = 0
+				if igplayers[lpdata.steam].hackerDetection ~= nil then
+					message(string.format("say [%s]Temp banning %s 1 week for suspected hacking. Detected " .. igplayers[lpdata.steam].hackerDetection .. "[-]", server.chatColour, players[lpdata.steam].name))
+				else
+					message(string.format("say [%s]Temp banning %s 1 week for suspected hacking.[-]", server.chatColour, players[lpdata.steam].name))
+				end
+
+				banPlayer(lpdata.platform, lpdata.userID, lpdata.steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
+
+				-- if the player has any pending global bans, activate them
+				if botman.botsConnected then
+					connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = '" .. lpdata.steam .. "'")
+				end
+			end
+
+		if tonumber(igplayers[lpdata.steam].flyCount) > 2 and not admin then
+			players[lpdata.steam].hackerScore = 0
+			if igplayers[lpdata.steam].hackerDetection ~= nil then
+				message(string.format("say [%s]Temp banning %s 1 week for suspected hacking. Detected " .. igplayers[lpdata.steam].hackerDetection .. "[-]", server.chatColour, players[lpdata.steam].name))
+			else
+				message(string.format("say [%s]Temp banning %s 1 week for suspected hacking.[-]", server.chatColour, players[lpdata.steam].name))
+			end
+
+				banPlayer(lpdata.platform, lpdata.userID, lpdata.steam, "1 week", "Automatic ban for suspected hacking. Admins have been alerted.", "")
+
+				-- if the player has any pending global bans, activate them
+				connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = '" .. lpdata.steam .. "'")
+			end
 		end
 	end
 
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- test for hackers teleporting
-	if server.hackerTPDetection and igplayers[steam].spawnChecked == false and not igplayers[steam].spawnPending then
-		igplayers[steam].spawnChecked = true
+	if not botman.botDisabled then
+		if server.hackerTPDetection and igplayers[lpdata.steam].spawnChecked == false and not igplayers[lpdata.steam].spawnPending then
+			igplayers[lpdata.steam].spawnChecked = true
 
-		-- ignore tele spawns for 10 seconds after the last legit tp to allow for lag and extra tp commands on delayed tp servers.
-		if (os.time() - igplayers[steam].lastTPTimestamp > 10) and (igplayers[steam].spawnedCoordsOld ~= igplayers[steam].spawnedCoords)then
-			if not (players[steam].timeout or players[steam].botTimeout or players[steam].ignorePlayer) then
-				if tonumber(intX) ~= 0 and tonumber(intZ) ~= 0 and tonumber(igplayers[steam].xPos) ~= 0 and tonumber(igplayers[steam].zPos) ~= 0 then
-					dist = 0
+			-- ignore tele spawns for 10 seconds after the last legit tp to allow for lag and extra tp commands on delayed tp servers.
+			if (os.time() - igplayers[lpdata.steam].lastTPTimestamp > 10) and (igplayers[lpdata.steam].spawnedCoordsOld ~= igplayers[lpdata.steam].spawnedCoords)then
+				if not (players[lpdata.steam].timeout or players[lpdata.steam].botTimeout or players[lpdata.steam].ignorePlayer) then
+					if tonumber(lpdata.x) ~= 0 and tonumber(lpdata.z) ~= 0 and tonumber(igplayers[lpdata.steam].xPos) ~= 0 and tonumber(igplayers[lpdata.steam].zPos) ~= 0 then
+						dist = 0
 
-					if igplayers[steam].spawnedInWorld and igplayers[steam].spawnedReason == "teleport" and igplayers[steam].spawnedCoordsOld ~= "0 0 0" then
-						dist = distancexz(posX, posZ, igplayers[steam].xPos, igplayers[steam].zPos)
-					end
-
-					if (dist >= 900) then
-						if tonumber(igplayers[steam].tp) < 1 then
-							if players[steam].newPlayer == true then
-								new = " [FF8C40]NEW player "
-							else
-								new = " [FF8C40]Player "
-							end
-
-							if playerAccessLevel > 2 then
-								irc_chat(server.ircMain, botman.serverTime .. " Player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
-								irc_chat(server.ircAlerts, server.gameDate .. " player " .. id .. " " .. steam .. " name: " .. name .. " detected teleporting to " .. intX .. " " .. intY .. " " .. intZ .. " distance " .. string.format("%-8.2d", dist))
-
-								igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
-								players[steam].watchPlayer = true
-								players[steam].watchPlayerTimer = os.time() + 259200 -- watch for 3 days
-								if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = " .. steam) end
-
-								if players[steam].exiled == true or players[steam].newPlayer then
-									igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
-								end
-
-								if igplayers[steam].hackerTPScore > 0 and players[steam].newPlayer and tonumber(players[steam].ping) > 180 then
-									if locations[exile] and not players[steam].prisoner then
-										players[steam].exiled = true
-									else
-										igplayers[steam].hackerTPScore = tonumber(igplayers[steam].hackerTPScore) + 1
-									end
-								end
-
-								if tonumber(igplayers[steam].hackerTPScore) > 1 then
-									igplayers[steam].hackerTPScore = 0
-									igplayers[steam].tp = 0
-									message(string.format("say [%s]Temp banning %s 1 week for unexplained teleporting. An admin will investigate the circumstances.[-]", server.chatColour, players[steam].name))
-									banPlayer(steam, "1 week", "We detected unusual teleporting from you and are investigating the circumstances.", "")
-
-									-- if the player has any pending global bans, activate them
-									connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = " .. steam)
-								end
-
-								alertAdmins(id .. " name: " .. name .. " detected teleporting! In fly mode, type " .. server.commandPrefix .. "near " .. id .. " to shadow them.", "warn")
-							end
+						if igplayers[lpdata.steam].spawnedInWorld and igplayers[lpdata.steam].spawnedReason == "teleport" and igplayers[lpdata.steam].spawnedCoordsOld ~= "0 0 0" then
+							dist = distancexz(lpdata.x, lpdata.z, igplayers[lpdata.steam].xPos, igplayers[lpdata.steam].zPos)
 						end
 
-						igplayers[steam].tp = 0
-					else
-						igplayers[steam].tp = 0
+						if (tonumber(dist) >= 900) then
+							if tonumber(igplayers[lpdata.steam].tp) < 1 then
+								if players[lpdata.steam].newPlayer == true then
+									new = " [FF8C40]NEW player "
+								else
+									new = " [FF8C40]Player "
+								end
+
+								if not admin then
+									irc_chat(server.ircMain, botman.serverTime .. " Player " .. lpdata.entityid .. " " .. lpdata.steam .. " name: " .. lpdata.name .. " detected teleporting to " .. lpdata.x .. " " .. lpdata.y .. " " .. lpdata.z .. " distance " .. string.format("%-8.2d", dist))
+									irc_chat(server.ircAlerts, server.gameDate .. " player " .. lpdata.entityid .. " " .. lpdata.steam .. " name: " .. lpdata.name .. " detected teleporting to " .. lpdata.x .. " " .. lpdata.y .. " " .. lpdata.z .. " distance " .. string.format("%-8.2d", dist))
+
+									igplayers[lpdata.steam].hackerTPScore = tonumber(igplayers[lpdata.steam].hackerTPScore) + 1
+									players[lpdata.steam].watchPlayer = true
+									players[lpdata.steam].watchPlayerTimer = os.time() + 259200 -- watch for 3 days
+									if botman.dbConnected then conn:execute("UPDATE players SET watchPlayer = 1, watchPlayerTimer = " .. os.time() + 259200 .. " WHERE steam = '" .. lpdata.steam .. "'") end
+
+									if players[lpdata.steam].exiled == true or players[lpdata.steam].newPlayer then
+										igplayers[lpdata.steam].hackerTPScore = tonumber(igplayers[lpdata.steam].hackerTPScore) + 1
+									end
+
+									if tonumber(igplayers[lpdata.steam].hackerTPScore) > 0 and players[lpdata.steam].newPlayer and tonumber(players[lpdata.steam].ping) > 180 then
+										if locations[exile] and not players[lpdata.steam].prisoner then
+											players[lpdata.steam].exiled = true
+										else
+											igplayers[lpdata.steam].hackerTPScore = tonumber(igplayers[lpdata.steam].hackerTPScore) + 1
+										end
+									end
+
+									if tonumber(igplayers[lpdata.steam].hackerTPScore) > 1 then
+										igplayers[lpdata.steam].hackerTPScore = 0
+										igplayers[lpdata.steam].tp = 0
+										message(string.format("say [%s]Temp banning %s 1 week for unexplained teleporting. An admin will investigate the circumstances.[-]", server.chatColour, players[lpdata.steam].name))
+										banPlayer(lpdata.platform, lpdata.userID, lpdata.steam, "1 week", "We detected unusual teleporting from you and are investigating the circumstances.", "")
+
+										-- if the player has any pending global bans, activate them
+										connBots:execute("UPDATE bans set GBLBanActive = 1 WHERE GBLBan = 1 AND steam = '" .. lpdata.steam .. "'")
+									end
+
+									alertAdmins(lpdata.entityid .. " name: " .. lpdata.name .. " detected teleporting! In fly mode, type " .. server.commandPrefix .. "near " .. lpdata.entityid .. " to shadow them.", "warn")
+								end
+							end
+
+							igplayers[lpdata.steam].tp = 0
+						else
+							igplayers[lpdata.steam].tp = 0
+						end
 					end
 				end
 			end
-		end
 
-		igplayers[steam].spawnChecked = true
-		igplayers[steam].spawnedCoordsOld = igplayers[steam].spawnedCoords
+			igplayers[lpdata.steam].spawnChecked = true
+			igplayers[lpdata.steam].spawnedCoordsOld = igplayers[lpdata.steam].spawnedCoords
+		end
 	end
 
-	igplayers[steam].lastLP = os.time()
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	igplayers[lpdata.steam].lastLP = os.time()
 
-	players[steam].id = id
-	players[steam].name = name
-	players[steam].steamOwner = igplayers[steam].steamOwner
-	igplayers[steam].id = id
-	igplayers[steam].name = name
-	igplayers[steam].steam = steam
+	players[lpdata.steam].id = lpdata.entityid
+	players[lpdata.steam].userID = lpdata.userID
+	players[lpdata.steam].name = lpdata.name
+	players[lpdata.steam].steamOwner = igplayers[lpdata.steam].steamOwner
+	igplayers[lpdata.steam].id = lpdata.entityid
+	igplayers[lpdata.steam].name = lpdata.name
+	igplayers[lpdata.steam].steam = lpdata.steam
+	igplayers[lpdata.steam].userID = lpdata.userID
 
-	if igplayers[steam].deaths ~= nil then
-		if tonumber(igplayers[steam].deaths) < tonumber(deaths) then
-			if server.SDXDetected and tonumber(igplayers[steam].yPosLast) > 0 then
-				players[steam].deathX = igplayers[steam].xPosLast
-				players[steam].deathY = igplayers[steam].yPosLast
-				players[steam].deathZ = igplayers[steam].zPosLast
+	if igplayers[lpdata.steam].deaths ~= nil then
+		if tonumber(igplayers[lpdata.steam].deaths) < tonumber(lpdata.playerdeaths) then
+			if tonumber(igplayers[lpdata.steam].yPosLast) > 0 then
+				players[lpdata.steam].deathX = igplayers[lpdata.steam].xPosLast
+				players[lpdata.steam].deathY = igplayers[lpdata.steam].yPosLast
+				players[lpdata.steam].deathZ = igplayers[lpdata.steam].zPosLast
 
-				igplayers[steam].deadX = igplayers[steam].xPosLast
-				igplayers[steam].deadY = igplayers[steam].yPosLast
-				igplayers[steam].deadZ = igplayers[steam].zPosLast
-				igplayers[steam].teleCooldown = 1000
+				igplayers[lpdata.steam].deadX = igplayers[lpdata.steam].xPosLast
+				igplayers[lpdata.steam].deadY = igplayers[lpdata.steam].yPosLast
+				igplayers[lpdata.steam].deadZ = igplayers[lpdata.steam].zPosLast
+				igplayers[lpdata.steam].teleCooldown = 1000
 
-				irc_chat(server.ircMain, "Player " .. steam .. " name: " .. name .. "'s death recorded at " .. igplayers[steam].deadX .. " " .. igplayers[steam].deadY .. " " .. igplayers[steam].deadZ)
-				irc_chat(server.ircAlerts, server.gameDate .. " player " .. steam .. " name: " .. name .. "'s death recorded at " .. igplayers[steam].deadX .. " " .. igplayers[steam].deadY .. " " .. igplayers[steam].deadZ)
+				--irc_chat(server.ircMain, "Player " .. lpdata.steam .. " name: " .. lpdata.name .. "'s death recorded at " .. igplayers[lpdata.steam].deadX .. " " .. igplayers[lpdata.steam].deadY .. " " .. igplayers[lpdata.steam].deadZ)
+				irc_chat(server.ircAlerts, server.gameDate .. " player " .. lpdata.steam .. " name: " .. lpdata.name .. "'s death recorded at " .. igplayers[lpdata.steam].deadX .. " " .. igplayers[lpdata.steam].deadY .. " " .. igplayers[lpdata.steam].deadZ)
 
-				message("say [" .. server.chatColour .. "]" .. name .. " has died.[-]")
+				if not server.beQuietBot then
+					-- r = randSQL(14)
+					-- if (r == 1) then message("say [" .. server.chatColour .. "]" .. lpdata.name .. " removed themselves from the gene pool.[-]") end
+					-- if (r == 2) then message("say [" .. server.chatColour .. "]LOL!  Didn't run far away enough did you " .. lpdata.name .. "?[-]") end
+					-- if (r == 3) then message("say [" .. server.chatColour .. "]And the prize for most creative way to end themselves goes to.. " .. lpdata.name .. "[-]") end
+					-- if (r == 4) then message("say [" .. server.chatColour .. "]" .. lpdata.name .. " really shouldn't handle explosives.[-]") end
+					-- if (r == 5) then message("say Oh no! " .. lpdata.name .. " died.  What a shame.[-]") end
+					-- if (r == 6) then message("say [" .. server.chatColour .. "]Great effort there " .. lpdata.name .. ". I'm awarding " .. randSQL(10) .. " points.[-]") end
+					-- if (r == 7) then message("say [" .. server.chatColour .. "]LOL! REKT[-]") end
 
-				r = randSQL(14)
-				if (r == 1) then message("say [" .. server.chatColour .. "]" .. name .. " removed themselves from the gene pool.[-]") end
-				if (r == 2) then message("say [" .. server.chatColour .. "]LOL!  Didn't run far away enough did you " .. name .. "?[-]") end
-				if (r == 3) then message("say [" .. server.chatColour .. "]And the prize for most creative way to end themselves goes to.. " .. name .. "[-]") end
-				if (r == 4) then message("say [" .. server.chatColour .. "]" .. name .. " really shouldn't handle explosives.[-]") end
-				if (r == 5) then message("say Oh no! " .. name .. " died.  What a shame.[-]") end
-				if (r == 6) then message("say [" .. server.chatColour .. "]Great effort there " .. name .. ". I'm awarding " .. score .. " points.[-]") end
-				if (r == 7) then message("say [" .. server.chatColour .. "]LOL! REKT[-]") end
+					-- if (r == 8) then
+						-- message("say [" .. server.chatColour .. "]We are gathered here today to remember with sadness the passing of " .. lpdata.name .. ". Rest in pieces. Amen.[-]")
+					-- end
 
-				if (r == 8) then
-					message("say [" .. server.chatColour .. "]We are gathered here today to remember with sadness the passing of " .. name .. ". Rest in pieces. Amen.[-]")
+					-- if (r == 9) then message("say [" .. server.chatColour .. "]" .. lpdata.name .. " cut the wrong wire.[-]") end
+					-- if (r == 10) then message("say [" .. server.chatColour .. "]" .. lpdata.name .. " really showed that explosive who's boss![-]") end
+					-- if (r == 11) then message("say [" .. server.chatColour .. "]" .. lpdata.name .. " shouldn't play Russian Roulette with a fully loaded gun.[-]") end
+					-- if (r == 12) then message("say [" .. server.chatColour .. "]" .. lpdata.name .. " added a new stain to the floor.[-]") end
+					-- if (r == 13) then message("say [" .. server.chatColour .. "]ISIS got nothing on " .. lpdata.name .. "'s suicide bomber skillz.[-]") end
+					-- if (r == 14) then message("say [" .. server.chatColour .. "]" .. lpdata.name .. " reached a new low with that death. Six feet under.[-]") end
 				end
 
-				if (r == 9) then message("say [" .. server.chatColour .. "]" .. name .. " cut the wrong wire.[-]") end
-				if (r == 10) then message("say [" .. server.chatColour .. "]" .. name .. " really showed that explosive who's boss![-]") end
-				if (r == 11) then message("say [" .. server.chatColour .. "]" .. name .. " shouldn't play Russian Roulette with a fully loaded gun.[-]") end
-				if (r == 12) then message("say [" .. server.chatColour .. "]" .. name .. " added a new stain to the floor.[-]") end
-				if (r == 13) then message("say [" .. server.chatColour .. "]ISIS got nothing on " .. name .. "'s suicide bomber skillz.[-]") end
-				if (r == 14) then message("say [" .. server.chatColour .. "]" .. name .. " reached a new low with that death. Six feet under.[-]") end
-
-				if tonumber(server.packCooldown) > 0 then
-					if isDonor(steam) then
-						players[steam].packCooldown = os.time() + math.floor(server.packCooldown / 2)
-					else
-						players[steam].packCooldown = os.time() + server.packCooldown
-					end
-				end
+				players[lpdata.steam].packCooldown = os.time() + settings.packCooldown
 			end
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	igplayers[lpdata.steam].xPosLast = igplayers[lpdata.steam].xPos
+	igplayers[lpdata.steam].yPosLast = igplayers[lpdata.steam].yPos
+	igplayers[lpdata.steam].zPosLast = igplayers[lpdata.steam].zPos
+	igplayers[lpdata.steam].xPos = lpdata.x
+	igplayers[lpdata.steam].yPos = lpdata.y
+	igplayers[lpdata.steam].zPos = lpdata.z
 
-	igplayers[steam].xPosLast = igplayers[steam].xPos
-	igplayers[steam].yPosLast = igplayers[steam].yPos
-	igplayers[steam].zPosLast = igplayers[steam].zPos
-	igplayers[steam].xPos = posX
-	igplayers[steam].yPos = posY
-	igplayers[steam].zPos = posZ
-	igplayers[steam].playerKills = kills
-	igplayers[steam].deaths = deaths
-	igplayers[steam].zombies = zombies
-	igplayers[steam].score = score
+	-- also add intX etc to prevent bad code breaking because it can't find it
+	igplayers[lpdata.steam].intX = lpdata.x
+	igplayers[lpdata.steam].intY = lpdata.y
+	igplayers[lpdata.steam].intZ = lpdata.z
 
-	if igplayers[steam].oldLevel == nil then
-		igplayers[steam].oldLevel = level
+	igplayers[lpdata.steam].playerKills = lpdata.playerkills
+	igplayers[lpdata.steam].deaths = lpdata.playerdeaths
+	igplayers[lpdata.steam].zombies = lpdata.zombiekills
+	igplayers[lpdata.steam].score = lpdata.score
+
+	if igplayers[lpdata.steam].oldLevel == nil then
+		igplayers[lpdata.steam].oldLevel = lpdata.level
 	end
 
 	-- hacker detection
-	if tonumber(igplayers[steam].oldLevel) ~= -1 then
-		if tonumber(level) - tonumber(igplayers[steam].oldLevel) > 50 and not admin and server.alertLevelHack then
-			alertAdmins(id .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel), "alert")
-			irc_chat(server.ircAlerts, server.gameDate .. " " .. steam .. " name: " .. name .. " detected possible level hacking!  Old level was " .. igplayers[steam].oldLevel .. " new level is " .. level .. " an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel))
+	if tonumber(igplayers[lpdata.steam].oldLevel) ~= -1 and not botman.botDisabled then
+		if tonumber(lpdata.level) - tonumber(igplayers[lpdata.steam].oldLevel) > 50 and not admin and server.alertLevelHack then
+			alertAdmins(lpdata.entityid .. " name: " .. lpdata.name .. " detected possible level hacking!  Old level was " .. igplayers[lpdata.steam].oldLevel .. " new level is " .. lpdata.level .. " an increase of " .. tonumber(lpdata.level) - tonumber(igplayers[lpdata.steam].oldLevel), "alert")
+			irc_chat(server.ircAlerts, server.gameDate .. " " .. lpdata.steam .. " name: " .. lpdata.name .. " detected possible level hacking!  Old level was " .. igplayers[lpdata.steam].oldLevel .. " new level is " .. lpdata.level .. " an increase of " .. tonumber(lpdata.level) - tonumber(igplayers[lpdata.steam].oldLevel))
 		end
 
 		if server.checkLevelHack then
-			if tonumber(level) - tonumber(igplayers[steam].oldLevel) > 50 and not admin then
-				players[steam].hackerScore = 10000
-				igplayers[steam].hackerDetection = "Suspected level hack. (" .. level .. ") an increase of " .. tonumber(level) - tonumber(igplayers[steam].oldLevel)
+			if tonumber(lpdata.level) - tonumber(igplayers[lpdata.steam].oldLevel) > 50 and not admin then
+				players[lpdata.steam].hackerScore = 10000
+				igplayers[lpdata.steam].hackerDetection = "Suspected level hack. (" .. lpdata.level .. ") an increase of " .. tonumber(lpdata.level) - tonumber(igplayers[lpdata.steam].oldLevel)
 			end
 		end
 	end
 
-	players[steam].level = level
-	igplayers[steam].level = level
-	igplayers[steam].oldLevel = level
-	igplayers[steam].killTimer = 0 -- to help us detect a player that has disconnected unnoticed
-	igplayers[steam].raiding = false
-	igplayers[steam].regionX = regionX
-	igplayers[steam].regionZ = regionZ
-	igplayers[steam].chunkX = chunkX
-	igplayers[steam].chunkZ = chunkZ
+	players[lpdata.steam].level = lpdata.level
+	igplayers[lpdata.steam].level = lpdata.level
+	igplayers[lpdata.steam].oldLevel = lpdata.level
+	igplayers[lpdata.steam].killTimer = 0 -- to help us detect a player that has disconnected unnoticed
+	igplayers[lpdata.steam].raiding = false
+	igplayers[lpdata.steam].regionX = regionX
+	igplayers[lpdata.steam].regionZ = regionZ
+	igplayers[lpdata.steam].chunkX = chunkX
+	igplayers[lpdata.steam].chunkZ = chunkZ
 
-	if pvpZone(posX, posZ) then
-		igplayers[steam].currentLocationPVP = true
+	if pvpZone(lpdata.x, lpdata.z) then
+		igplayers[lpdata.steam].currentLocationPVP = true
 	else
-		igplayers[steam].currentLocationPVP = false
+		igplayers[lpdata.steam].currentLocationPVP = false
 	end
 
-	if (igplayers[steam].xPosLast == nil) then
-		igplayers[steam].xPosLast = posX
-		igplayers[steam].yPosLast = posY
-		igplayers[steam].zPosLast = posZ
-		igplayers[steam].xPosLastOK = intX
-		igplayers[steam].yPosLastOK = intY
-		igplayers[steam].zPosLastOK = intZ
+	if (igplayers[lpdata.steam].xPosLast == nil) then
+		igplayers[lpdata.steam].xPosLast = lpdata.x
+		igplayers[lpdata.steam].yPosLast = lpdata.y
+		igplayers[lpdata.steam].zPosLast = lpdata.z
+		igplayers[lpdata.steam].xPosLastOK = lpdata.x
+		igplayers[lpdata.steam].yPosLastOK = lpdata.y
+		igplayers[lpdata.steam].zPosLastOK = lpdata.z
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	atHome(steam)
-	currentLocation = inLocation(intX, intZ)
+	atHome(lpdata.steam)
+	currentLocation = inLocation(lpdata.x, lpdata.z)
 
 	if currentLocation ~= false then
-		igplayers[steam].currentLocationPVP = locations[currentLocation].pvp
-		igplayers[steam].inLocation = currentLocation
-		players[steam].inLocation = currentLocation
+		igplayers[lpdata.steam].currentLocationPVP = locations[currentLocation].pvp
+		igplayers[lpdata.steam].inLocation = currentLocation
+		players[lpdata.steam].inLocation = currentLocation
 
 		resetZone = locations[currentLocation].resetZone
 
@@ -605,84 +567,52 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			server.scanZombies = true
 		end
 	else
-		players[steam].inLocation = ""
-		igplayers[steam].inLocation = ""
+		players[lpdata.steam].inLocation = ""
+		igplayers[lpdata.steam].inLocation = ""
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
-	if server.showLocationMessages then
-		if igplayers[steam].alertLocation ~= currentLocation and currentLocation ~= false then
-			if (locations[currentLocation].public) or playerAccessLevel < 3 then
-				message(string.format("pm %s [%s]Welcome to %s[-]", steam, server.chatColour, currentLocation))
+	if server.showLocationMessages and not botman.botDisabled then
+		if igplayers[lpdata.steam].alertLocation ~= currentLocation and currentLocation ~= false then
+			if (locations[currentLocation].public) or admin then
+				message(string.format("pm %s [%s]Welcome to %s[-]", lpdata.userID, server.chatColour, currentLocation))
 			end
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
 	if currentLocation == false then
-		if server.showLocationMessages then
-			if igplayers[steam].alertLocation ~= "" then
-				if not locations[igplayers[steam].alertLocation] then
-					igplayers[steam].alertLocation = ""
+		if server.showLocationMessages and not botman.botDisabled then
+			if igplayers[lpdata.steam].alertLocation ~= "" then
+				if not locations[igplayers[lpdata.steam].alertLocation] then
+					igplayers[lpdata.steam].alertLocation = ""
 				else
-					if locations[igplayers[steam].alertLocation].public or playerAccessLevel < 3 then
-						message(string.format("pm %s [%s]You have left %s[-]", steam, server.chatColour, igplayers[steam].alertLocation))
+					if locations[igplayers[lpdata.steam].alertLocation].public or admin then
+						message(string.format("pm %s [%s]You have left %s[-]", lpdata.userID, server.chatColour, igplayers[lpdata.steam].alertLocation))
 					end
 				end
 			end
 		end
 
-		igplayers[steam].alertLocation = ""
+		igplayers[lpdata.steam].alertLocation = ""
 	else
-		igplayers[steam].alertLocation = currentLocation
+		igplayers[lpdata.steam].alertLocation = currentLocation
 	end
 
-	-- if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
-	-- if igplayers[steam].checkNewPlayer == true then
-		-- igplayers[steam].checkNewPlayer = false
-
-		-- if tonumber(level) > server.newPlayerMaxLevel and players[steam].newPlayer then
-			-- players[steam].newPlayer = false
-			-- players[steam].watchPlayer = false
-			-- players[steam].watchPlayerTimer = 0
-			-- if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0  WHERE steam = " .. steam) end
-			-- irc_chat(server.ircMain, "Player " .. name .. "'s new player status has been removed because their level is " .. level)
-
-			-- if string.upper(players[steam].chatColour) == "FFFFFF" then
-				-- setChatColour(steam)
-			-- end
-		-- end
-	-- end
-
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
 	-- fix weird cash bug
-	if tonumber(players[steam].cash) < 0 then
-		players[steam].cash = 0
+	if tonumber(players[lpdata.steam].cash) < 0 then
+		players[lpdata.steam].cash = 0
 	end
 
 	-- convert zombie kills to cash
-	if (tonumber(igplayers[steam].zombies) > tonumber(players[steam].zombies)) and (math.abs(igplayers[steam].zombies - players[steam].zombies) < 20) then
+	if (tonumber(igplayers[lpdata.steam].zombies) > tonumber(players[lpdata.steam].zombies)) and (math.abs(igplayers[lpdata.steam].zombies - players[lpdata.steam].zombies) < 20) then
 		if server.allowBank then
-			if isDonor(steam) then
-				players[steam].cash = tonumber(players[steam].cash) + math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillRewardDonors
+			players[lpdata.steam].cash = tonumber(players[lpdata.steam].cash) + math.abs(igplayers[lpdata.steam].zombies - players[lpdata.steam].zombies) * settings.zombieKillReward
 
-				if (players[steam].watchCash) then
-					message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", steam, server.chatColour, math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillRewardDonors, server.moneyPlural, string.format("%d", players[steam].cash)))
-				end
-			else
-				players[steam].cash = tonumber(players[steam].cash) + math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillReward
-
-				if (players[steam].watchCash) then
-					message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", steam, server.chatColour, math.abs(igplayers[steam].zombies - players[steam].zombies) * server.zombieKillReward, server.moneyPlural, string.format("%d", players[steam].cash)))
-				end
+			if (players[lpdata.steam].watchCash) and not botman.botDisabled then
+				message(string.format("pm %s [%s]+%s %s $%s in the bank[-]", lpdata.userID, server.chatColour, math.abs(igplayers[lpdata.steam].zombies - players[lpdata.steam].zombies) * settings.zombieKillReward, server.moneyPlural, string.format("%d", players[lpdata.steam].cash)))
 			end
 		end
 
-		if igplayers[steam].doge then
+		if igplayers[lpdata.steam].doge and not botman.botDisabled then
 			dogePhrase = dogeWOW() .. " " .. dogeWOW() .. " "
 
 			r = randSQL(10)
@@ -692,537 +622,448 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 			if r == 7 then dogePhrase = dogePhrase .. "OMG" end
 			if r == 9 then dogePhrase = dogePhrase .. "Respect" end
 
-			message(string.format("pm %s [%s]" .. dogePhrase .. "[-]", data.steamid, server.chatColour))
+			message(string.format("pm %s [%s]" .. dogePhrase .. "[-]", lpdata.userID, server.chatColour))
 		end
 
 		if server.allowBank then
 			-- update the lottery prize pool
-			server.lottery = server.lottery + (math.abs(igplayers[steam].zombies - players[steam].zombies) * server.lotteryMultiplier)
+			server.lottery = server.lottery + (math.abs(igplayers[lpdata.steam].zombies - players[lpdata.steam].zombies) * settings.lotteryMultiplier)
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- update player record of zombies
-	players[steam].zombies = igplayers[steam].zombies
+	players[lpdata.steam].zombies = igplayers[lpdata.steam].zombies
 
-	if tonumber(players[steam].playerKills) < tonumber(kills) then
-		players[steam].playerKills = kills
+	if tonumber(players[lpdata.steam].playerKills) < tonumber(lpdata.playerkills) then
+		players[lpdata.steam].playerKills = lpdata.playerkills
 	end
 
-	if tonumber(players[steam].deaths) < tonumber(deaths) then
-		players[steam].deaths = deaths
+	if tonumber(players[lpdata.steam].deaths) < tonumber(lpdata.playerdeaths) then
+		players[lpdata.steam].deaths = lpdata.playerdeaths
 	end
 
-	if tonumber(players[steam].score) < tonumber(score) then
-		players[steam].score = score
+	if tonumber(players[lpdata.steam].score) < tonumber(lpdata.score) then
+		players[lpdata.steam].score = lpdata.score
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	players[lpdata.steam].xPos = lpdata.x
+	players[lpdata.steam].yPos = lpdata.y
+	players[lpdata.steam].zPos = lpdata.z
 
-	players[steam].xPos = posX
-	players[steam].yPos = posY
-	players[steam].zPos = posZ
+	mapCenterDistance = distancexz(lpdata.x,lpdata.z,0,0)
+	outsideMap = squareDistance(lpdata.x, lpdata.z, settings.mapSize)
 
-	mapCenterDistance = distancexz(intX,intZ,0,0)
-	outsideMap = squareDistance(intX, intZ, server.mapSize)
-	outsideMapDonor = squareDistance(intX, intZ, server.mapSize + 5000)
-
-	if (players[steam].alertReset == nil) then
-		players[steam].alertReset = true
+	if (players[lpdata.steam].alertReset == nil) then
+		players[lpdata.steam].alertReset = true
 	end
 
-	if (igplayers[steam].greet) then
-		if tonumber(igplayers[steam].greetdelay) == 0 then
-			igplayers[steam].greet = false
+	if (igplayers[lpdata.steam].greet) and not botman.botDisabled then
+		if tonumber(igplayers[lpdata.steam].greetdelay) == 0 then
+			igplayers[lpdata.steam].greet = false
 
-			if server.welcome ~= nil and server.welcome ~= "" then
-				message(string.format("pm %s [%s]%s[-]", steam, server.chatColour, server.welcome))
-			else
-				message("pm " .. steam .. " [" .. server.chatColour .. "]Welcome to " .. server.serverName .. "!  Type " .. server.commandPrefix .. "info, " .. server.commandPrefix .. "rules or " .. server.commandPrefix .. "help for commands.[-]")
-				message(string.format("pm %s [%s]We have a server manager bot called %s[-]", steam, server.chatColour, server.botName))
-			end
-
-			if (tonumber(igplayers[steam].zombies) ~= 0) then
-				if isDonor(steam) then
-					welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Welcome back " .. name .. "! Thanks for supporting us. =D[-]"
+			if not server.noGreetingMessages then
+				if server.welcome ~= nil and server.welcome ~= "" then
+					message(string.format("pm %s [%s]%s[-]", lpdata.userID, server.chatColour, server.welcome))
 				else
-					welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Welcome back " .. name .. "![-]"
+					message("pm " .. lpdata.userID .. " [" .. server.chatColour .. "]Welcome to " .. server.serverName .. "!  Type " .. server.commandPrefix .. "info, " .. server.commandPrefix .. "rules or " .. server.commandPrefix .. "help for commands.[-]")
+					message(string.format("pm %s [%s]We have a server manager bot called %s[-]", lpdata.userID, server.chatColour, server.botName))
 				end
 
-				if (string.find(botman.serverTime, "02-14", 5, 10)) then welcome = "pm " .. steam .. " [" .. server.chatColour .. "]Happy Valentines Day " .. name .. "! ^^[-]" end
+				if (tonumber(igplayers[lpdata.steam].zombies) ~= 0) then
+					if isDonor(lpdata.steam) then
+						welcome = "pm " .. lpdata.userID .. " [" .. server.chatColour .. "]Welcome back " .. lpdata.name .. "! Thanks for supporting us. =D[-]"
+					else
+						welcome = "pm " .. lpdata.userID .. " [" .. server.chatColour .. "]Welcome back " .. lpdata.name .. "![-]"
+					end
 
-				message(welcome)
-			else
-				message("pm " .. steam .. " [" .. server.chatColour .. "]Welcome " .. name .. "![-]")
-			end
+					if (string.find(botman.serverTime, "02-14", 5, 10)) then welcome = "pm " .. lpdata.userID .. " [" .. server.chatColour .. "]Happy Valentines Day " .. lpdata.name .. "! ^^[-]" end
 
-			if (players[steam].timeout == true) then
-				message("pm " .. steam .. " [" .. server.warnColour .. "]You are in timeout, not glitched or lagged.  You will stay here until released by an admin.[-]")
-			end
-
-			if (botman.scheduledRestart) then
-				message("pm " .. steam .. " [" .. server.alertColour .. "]<!>[-][" .. server.warnColour .. "] SERVER WILL REBOOT SHORTLY [-][" .. server.alertColour .. "]<!>[-]")
-			end
-
-			if server.MOTD ~= "" then
-				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]" .. server.MOTD .. "[-]") .. "')") end
-			end
-
-			if tonumber(players[steam].removedClaims) > 0 then
-				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]I am holding " .. players[steam].removedClaims .. " land claim blocks for you. Type " .. server.commandPrefix .. "give claims to receive them.[-]") .. "')") end
-			end
-
-			if botman.dbConnected then
-				cursor,errorString = conn:execute("SELECT * FROM mail WHERE recipient = " .. steam .. " and status = 0")
-				rows = cursor:numrows()
-
-				if rows > 0 then
-					if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]NEW MAIL HAS ARRIVED!  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')") end
+					message(welcome)
+				else
+					message("pm " .. lpdata.userID .. " [" .. server.chatColour .. "]Welcome " .. lpdata.name .. "![-]")
 				end
-			end
 
-			if players[steam].newPlayer == true and server.rules ~= "" then
-				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]" .. server.rules .."[-]") .. "')") end
-			end
+				if (players[lpdata.steam].timeout == true) then
+					message("pm " .. lpdata.userID .. " [" .. server.warnColour .. "]You are in timeout, not glitched or lagged.  You will stay here until released by an admin.[-]")
+				end
 
-			if server.warnBotReset == true and playerAccessLevel == 0 then
+				if (botman.scheduledRestart) then
+					message("pm " .. lpdata.userID .. " [" .. server.alertColour .. "]<!>[-][" .. server.warnColour .. "] SERVER WILL REBOOT SHORTLY [-][" .. server.alertColour .. "]<!>[-]")
+				end
+
+				if server.MOTD ~= "" then
+					if botman.dbConnected then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','" .. lpdata.steam .. "','" .. connMEM:escape("[" .. server.chatColour .. "]" .. server.MOTD .. "[-]") .. "')") end
+					tempTimer(1, [[ botman.messageQueueEmpty = false  ]])
+				end
+
+				if tonumber(players[lpdata.steam].removedClaims) > 0 then
+					if botman.dbConnected then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','" .. lpdata.steam .. "','" .. connMEM:escape("[" .. server.chatColour .. "]I am holding " .. players[lpdata.steam].removedClaims .. " land claim blocks for you. Type " .. server.commandPrefix .. "give claims to receive them.[-]") .. "')") end
+					tempTimer(1, [[ botman.messageQueueEmpty = false  ]])
+				end
+
 				if botman.dbConnected then
-					conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]ALERT!  It appears that the server has been reset.[-]") .. "')")
-					conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To reset me type " .. server.commandPrefix .. "reset bot.[-]") .. "')")
-					conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]To dismiss this alert type " .. server.commandPrefix .. "no reset.[-]") .. "')")
-				end
-			end
+					cursor,errorString = connSQL:execute("SELECT count(*) FROM mail WHERE recipient = '" .. lpdata.steam .. "' AND status = 0")
+					rowSQL = cursor:fetch({}, "a")
+					rowCount = rowSQL["count(*)"]
 
-			if (not players[steam].santa) and specialDay == "christmas" then
-				if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]HO HO HO! Merry Christmas!  Type " .. server.commandPrefix .. "santa to open your Christmas stocking![-]") .. "')") end
+					if tonumber(rowCount) > 0 then
+						if botman.dbConnected then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','" .. lpdata.steam .. "','" .. connMEM:escape("[" .. server.chatColour .. "]NEW MAIL HAS ARRIVED!  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')") end
+						tempTimer(1, [[ botman.messageQueueEmpty = false  ]])
+					end
+				end
+
+				if players[lpdata.steam].newPlayer == true and server.rules ~= "" then
+					if botman.dbConnected then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','" .. lpdata.steam .. "','" .. connMEM:escape("[" .. server.chatColour .. "]" .. server.rules .."[-]") .. "')") end
+					tempTimer(1, [[ botman.messageQueueEmpty = false  ]])
+				end
+
+				if server.warnBotReset == true and playerAccessLevel == 0 then
+					if botman.dbConnected then
+						connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','" .. lpdata.steam .. "','" .. connMEM:escape("[" .. server.chatColour .. "]ALERT!  It appears that the server has been reset.[-]") .. "')")
+						connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','" .. lpdata.steam .. "','" .. connMEM:escape("[" .. server.chatColour .. "]To reset me type " .. server.commandPrefix .. "reset bot.[-]") .. "')")
+						connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','" .. lpdata.steam .. "','" .. connMEM:escape("[" .. server.chatColour .. "]To dismiss this alert type " .. server.commandPrefix .. "no reset.[-]") .. "')")
+						tempTimer(1, [[ botman.messageQueueEmpty = false  ]])
+					end
+				end
+
+				if (not players[lpdata.steam].santa) and specialDay == "christmas" then
+					if botman.dbConnected then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','" .. lpdata.steam .. "','" .. connMEM:escape("[" .. server.chatColour .. "]HO HO HO! Merry Christmas!  Type " .. server.commandPrefix .. "santa to open your Christmas stocking![-]") .. "')") end
+					tempTimer(1, [[ botman.messageQueueEmpty = false  ]])
+				end
+			else
+				if (players[lpdata.steam].timeout == true) then
+					message("pm " .. lpdata.userID .. " [" .. server.warnColour .. "]You are in timeout, not glitched or lagged.  You will stay here until released by an admin.[-]")
+				end
+
+				if botman.dbConnected then
+					cursor,errorString = connSQL:execute("SELECT count(*) FROM mail WHERE recipient = '" .. lpdata.steam .. "' AND status = 0")
+					rowSQL = cursor:fetch({}, "a")
+					rowCount = rowSQL["count(*)"]
+
+					if tonumber(rowCount) > 0 then
+						if botman.dbConnected then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','" .. lpdata.steam .. "','" .. connMEM:escape("[" .. server.chatColour .. "]NEW MAIL HAS ARRIVED!  Type " .. server.commandPrefix .. "read mail to read it now or " .. server.commandPrefix .. "help mail for more options.[-]") .. "')") end
+						tempTimer(1, [[ botman.messageQueueEmpty = false  ]])
+					end
+				end
+
+				if (botman.scheduledRestart) then
+					message("pm " .. lpdata.userID .. " [" .. server.alertColour .. "]<!>[-][" .. server.warnColour .. "] SERVER WILL REBOOT SHORTLY [-][" .. server.alertColour .. "]<!>[-]")
+				end
 			end
 
 			-- run commands from the connectQueue now that the player has spawned and hopefully paying attention to chat
-			tempTimer( 3, [[processConnectQueue("]].. steam .. [[")]] )
+			tempTimer( 3, [[processConnectQueue("]].. lpdata.steam .. [[")]] )
 			-- also check for removed claims
-			tempTimer(10, [[CheckClaimsRemoved("]] .. steam .. [[")]] )
+			tempTimer(10, [[CheckClaimsRemoved("]] .. lpdata.steam .. [[")]] )
 		end
 	end
 
+	if botman.botDisabled then
+		igplayers[lpdata.steam].greet = false
+	end
 
-	if igplayers[steam].alertLocation == "" and currentLocation ~= false then
-		if botman.dbConnected then conn:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES (0," .. steam .. ",'" .. escape("[" .. server.chatColour .. "]Welcome to " .. currentLocation .. "[-]") .. "')") end
-		igplayers[steam].alertLocation = currentLocation
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+
+	if igplayers[lpdata.steam].alertLocation == "" and currentLocation ~= false and not botman.botDisabled then
+		if botman.dbConnected then connSQL:execute("INSERT INTO messageQueue (sender, recipient, message) VALUES ('0','" .. lpdata.steam .. "','" .. connMEM:escape("[" .. server.chatColour .. "]Welcome to " .. currentLocation .. "[-]") .. "')") end
+		tempTimer(1, [[ botman.messageQueueEmpty = false  ]])
+		igplayers[lpdata.steam].alertLocation = currentLocation
 	end
 
 
-	if (igplayers[steam].teleCooldown > 0) then
-		igplayers[steam].teleCooldown = tonumber(igplayers[steam].teleCooldown) - 1
+	if tonumber(igplayers[lpdata.steam].teleCooldown) > 0 then
+		igplayers[lpdata.steam].teleCooldown = tonumber(igplayers[lpdata.steam].teleCooldown) - 1
 	end
 
-	igplayers[steam].sessionPlaytime = os.time() - igplayers[steam].sessionStart
+	igplayers[lpdata.steam].sessionPlaytime = os.time() - igplayers[lpdata.steam].sessionStart
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	if players[lpdata.steam].newPlayer == true then
+		if (igplayers[lpdata.steam].sessionPlaytime + players[lpdata.steam].timeOnServer > (server.newPlayerTimer * 60) or tonumber(lpdata.level) > tonumber(server.newPlayerMaxLevel)) then
+			players[lpdata.steam].newPlayer = false
+			players[lpdata.steam].watchPlayer = false
+			players[lpdata.steam].watchPlayerTimer = 0
 
-	if players[steam].newPlayer == true then
-		if (igplayers[steam].sessionPlaytime + players[steam].timeOnServer > (server.newPlayerTimer * 60) or tonumber(level) > tonumber(server.newPlayerMaxLevel)) then
-			players[steam].newPlayer = false
-			players[steam].watchPlayer = false
-			players[steam].watchPlayerTimer = 0
+			if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = '" .. lpdata.steam .. "'") end
 
-			if botman.dbConnected then conn:execute("UPDATE players SET newPlayer = 0, watchPlayer = 0, watchPlayerTimer = 0 WHERE steam = " .. steam) end
-
-			if string.upper(players[steam].chatColour) == "FFFFFF" then
-				setChatColour(steam, players[steam].accessLevel)
+			if string.upper(players[lpdata.steam].chatColour) == "FFFFFF" then
+				setChatColour(lpdata.steam, players[lpdata.steam].accessLevel)
 			end
+
+			setGroupMembership(lpdata.steam, "New Players", false)
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- if we are following a player and they move more than 50 meters away, teleport us close to them.
-	if igplayers[steam].following ~= nil then
-		if igplayers[igplayers[steam].following] and players[igplayers[steam].following].timeout == false and players[igplayers[steam].following].botTimeout == false then
+	if igplayers[lpdata.steam].following ~= nil and not botman.botDisabled then
+		if igplayers[igplayers[lpdata.steam].following] and players[igplayers[lpdata.steam].following].timeout == false and players[igplayers[lpdata.steam].following].botTimeout == false then
 			followDistance = 50
-			if igplayers[steam].followDistance ~= nil then followDistance = tonumber(igplayers[steam].followDistance) end
+			if igplayers[lpdata.steam].followDistance ~= nil then followDistance = tonumber(igplayers[lpdata.steam].followDistance) end
 
-			dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, igplayers[igplayers[steam].following].xPos, igplayers[igplayers[steam].following].zPos)
-			if dist > followDistance and igplayers[igplayers[steam].following].yPos > 0 then
+			dist = distancexz(igplayers[lpdata.steam].xPos, igplayers[lpdata.steam].zPos, igplayers[igplayers[lpdata.steam].following].xPos, igplayers[igplayers[lpdata.steam].following].zPos)
+			if tonumber(dist) > followDistance and tonumber(igplayers[igplayers[lpdata.steam].following].yPos) > 0 then
 				-- teleport close to the player
-				igplayers[steam].tp = 1
-				igplayers[steam].hackerTPScore = 0
-				sendCommand("tele " .. steam .. " " .. igplayers[igplayers[steam].following].xPos .. " " .. igplayers[igplayers[steam].following].yPos - 30 .. " " .. igplayers[igplayers[steam].following].zPos)
+				igplayers[lpdata.steam].tp = 1
+				igplayers[lpdata.steam].hackerTPScore = 0
+				sendCommand("tele " .. lpdata.userID .. " " .. igplayers[igplayers[lpdata.steam].following].xPos .. " " .. igplayers[igplayers[lpdata.steam].following].yPos - 30 .. " " .. igplayers[igplayers[lpdata.steam].following].zPos)
 			end
 		end
 	end
 
+	if (igplayers[lpdata.steam].alertLocationExit ~= nil) and not botman.botDisabled then
+		dist = distancexz(igplayers[lpdata.steam].xPos, igplayers[lpdata.steam].zPos, locations[igplayers[lpdata.steam].alertLocationExit].x, locations[igplayers[lpdata.steam].alertLocationExit].z)
+		size = tonumber(locations[igplayers[lpdata.steam].alertLocationExit].size)
 
-	if (igplayers[steam].alertLocationExit ~= nil) then
-		dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, locations[igplayers[steam].alertLocationExit].x, locations[igplayers[steam].alertLocationExit].z)
-		size = tonumber(locations[igplayers[steam].alertLocationExit].size)
+		if (tonumber(dist) > tonumber(locations[igplayers[lpdata.steam].alertLocationExit].size) + 100) then
+			igplayers[lpdata.steam].alertLocationExit = nil
 
-		if (dist > tonumber(locations[igplayers[steam].alertLocationExit].size) + 100) then
-			igplayers[steam].alertLocationExit = nil
-
-			message("pm " .. steam .. " [" .. server.chatColour .. "]You have moved too far away from the location. If you still wish to do " .. server.commandPrefix .. "protect location, please start again.[-]")
-			faultyPlayerinfo = false
-			return
+			message("pm " .. lpdata.userID .. " [" .. server.chatColour .. "]You have moved too far away from the location. If you still wish to do " .. server.commandPrefix .. "protect location, please start again.[-]")
 		end
 
-		if (dist > tonumber(locations[igplayers[steam].alertLocationExit].size) + 10) and (dist <  tonumber(locations[igplayers[steam].alertLocationExit].size) + 30) then
-			locations[igplayers[steam].alertLocationExit].exitX = intX
-			locations[igplayers[steam].alertLocationExit].exitY = intY
-			locations[igplayers[steam].alertLocationExit].exitZ = intZ
-			locations[igplayers[steam].alertLocationExit].protected = true
+		if (tonumber(dist) > tonumber(locations[igplayers[lpdata.steam].alertLocationExit].size) + 10) and (tonumber(dist) <  tonumber(locations[igplayers[lpdata.steam].alertLocationExit].size) + 30) then
+			locations[igplayers[lpdata.steam].alertLocationExit].exitX = lpdata.x
+			locations[igplayers[lpdata.steam].alertLocationExit].exitY = lpdata.y
+			locations[igplayers[lpdata.steam].alertLocationExit].exitZ = lpdata.z
+			locations[igplayers[lpdata.steam].alertLocationExit].protected = true
 
-			if botman.dbConnected then conn:execute("UPDATE locations SET exitX = " .. intX .. ", exitY = " .. intY .. ", exitZ = " .. intZ .. ", protected = 1 WHERE name = '" .. escape(igplayers[steam].alertLocationExit) .. "'") end
-			message("pm " .. steam .. " [" .. server.chatColour .. "]You have enabled protection for " .. igplayers[steam].alertLocationExit .. ".[-]")
+			if botman.dbConnected then conn:execute("UPDATE locations SET exitX = " .. lpdata.x .. ", exitY = " .. lpdata.y .. ", exitZ = " .. lpdata.z .. ", protected = 1 WHERE name = '" .. escape(igplayers[lpdata.steam].alertLocationExit) .. "'") end
+			message("pm " .. lpdata.userID .. " [" .. server.chatColour .. "]You have enabled protection for " .. igplayers[lpdata.steam].alertLocationExit .. ".[-]")
 
-			igplayers[steam].alertLocationExit = nil
-
-			faultyPlayerinfo = false
-			return
+			igplayers[lpdata.steam].alertLocationExit = nil
 		end
 	end
 
+	if (igplayers[lpdata.steam].alertVillageExit ~= nil) and not botman.botDisabled then
+		dist = distancexz(igplayers[lpdata.steam].xPos, igplayers[lpdata.steam].zPos, locations[igplayers[lpdata.steam].alertVillageExit].x, locations[igplayers[lpdata.steam].alertVillageExit].z)
+		size = tonumber(locations[igplayers[lpdata.steam].alertVillageExit].size)
 
-	if (igplayers[steam].alertVillageExit ~= nil) then
-		dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, locations[igplayers[steam].alertVillageExit].x, locations[igplayers[steam].alertVillageExit].z)
-		size = tonumber(locations[igplayers[steam].alertVillageExit].size)
+		if (tonumber(dist) > tonumber(locations[igplayers[lpdata.steam].alertVillageExit].size) + 100) then
+			igplayers[lpdata.steam].alertVillageExit = nil
 
-		if (dist > tonumber(locations[igplayers[steam].alertVillageExit].size) + 100) then
-			igplayers[steam].alertVillageExit = nil
-
-			message("pm " .. steam .. " [" .. server.chatColour .. "]You have moved too far away from " .. igplayers[steam].alertVillageExit .. ". Return to " .. igplayers[steam].alertVillageExit .. " and type " .. server.commandPrefix .. "protect village " .. igplayers[steam].alertVillageExit .. " again.[-]")
-			faultyPlayerinfo = false
-			return
+			message("pm " .. lpdata.userID .. " [" .. server.chatColour .. "]You have moved too far away from " .. igplayers[lpdata.steam].alertVillageExit .. ". Return to " .. igplayers[lpdata.steam].alertVillageExit .. " and type " .. server.commandPrefix .. "protect village " .. igplayers[lpdata.steam].alertVillageExit .. " again.[-]")
 		end
 
-		if (dist >  tonumber(locations[igplayers[steam].alertVillageExit].size) + 20) and (dist <  tonumber(locations[igplayers[steam].alertVillageExit].size) + 100) then
-			locations[igplayers[steam].alertVillageExit].exitX = intX
-			locations[igplayers[steam].alertVillageExit].exitY = intY
-			locations[igplayers[steam].alertVillageExit].exitZ = intZ
-			locations[igplayers[steam].alertVillageExit].protected = true
+		if (tonumber(dist) >  tonumber(locations[igplayers[lpdata.steam].alertVillageExit].size) + 20) and (tonumber(dist) <  tonumber(locations[igplayers[lpdata.steam].alertVillageExit].size) + 100) then
+			locations[igplayers[lpdata.steam].alertVillageExit].exitX = lpdata.x
+			locations[igplayers[lpdata.steam].alertVillageExit].exitY = lpdata.y
+			locations[igplayers[lpdata.steam].alertVillageExit].exitZ = lpdata.z
+			locations[igplayers[lpdata.steam].alertVillageExit].protected = true
 
-			if botman.dbConnected then conn:execute("UPDATE locations SET exitX = " .. intX .. ", exitY = " .. intY .. ", exitZ = " .. intZ .. ", protected = 1 WHERE name = '" .. escape(igplayers[steam].alertVillageExit) .. "'") end
-			message("pm " .. steam .. " [" .. server.chatColour .. "]You have enabled protection for " .. igplayers[steam].alertVillageExit .. "[-]")
+			if botman.dbConnected then conn:execute("UPDATE locations SET exitX = " .. lpdata.x .. ", exitY = " .. lpdata.y .. ", exitZ = " .. lpdata.z .. ", protected = 1 WHERE name = '" .. escape(igplayers[lpdata.steam].alertVillageExit) .. "'") end
+			message("pm " .. lpdata.userID .. " [" .. server.chatColour .. "]You have enabled protection for " .. igplayers[lpdata.steam].alertVillageExit .. "[-]")
 
-			igplayers[steam].alertVillageExit = nil
-
-			faultyPlayerinfo = false
-			return
+			igplayers[lpdata.steam].alertVillageExit = nil
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if (igplayers[steam].alertBaseExit == true) then
-		if igplayers[steam].alertBase == 1 then
-			dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, players[igplayers[steam].alertBaseID].homeX, players[igplayers[steam].alertBaseID].homeZ)
-			size = tonumber(players[igplayers[steam].alertBaseID].protectSize)
-		else
-			dist = distancexz(igplayers[steam].xPos, igplayers[steam].zPos, players[igplayers[steam].alertBaseID].home2X, players[igplayers[steam].alertBaseID].home2Z)
-			size = tonumber(players[igplayers[steam].alertBaseID].protect2Size)
+	if (igplayers[lpdata.steam].alertBaseExit) and not botman.botDisabled then
+		tmp.key = igplayers[lpdata.steam].alertBaseKey
+		tmp.dist = distancexz(lpdata.x, lpdata.z, bases[tmp.key].x, bases[tmp.key].z)
+		tmp.size = tonumber(bases[tmp.key].size)
+
+		if (tonumber(tmp.dist) > 200) then
+			igplayers[lpdata.steam].alertBaseExit = nil
+			igplayers[lpdata.steam].alertBaseKey = nil
+
+			message("pm " .. lpdata.userID .. " [" .. server.chatColour .. "]You have moved too far away from the base. If you still wish to do " .. server.commandPrefix .. "protect, please start again.[-]")
 		end
 
-		if (dist > 200) then
-			igplayers[steam].alertBaseExit = nil
-			igplayers[steam].alertBaseID = nil
-			igplayers[steam].alertBase = nil
+		if (tonumber(tmp.dist) > tmp.size + 15) and (tonumber(tmp.dist) < tmp.size + 50) then
+			bases[tmp.key].exitX = lpdata.x
+			bases[tmp.key].exitY = lpdata.y + 1
+			bases[tmp.key].exitZ = lpdata.z
+			bases[tmp.key].protect = true
+			if botman.dbConnected then conn:execute("UPDATE bases SET protect = 1 WHERE steam = '" .. bases[tmp.key].steam .. "' and baseNumber = " .. bases[tmp.key].baseNumber) end
 
-			message("pm " .. steam .. " [" .. server.chatColour .. "]You have moved too far away from the base. If you still wish to do " .. server.commandPrefix .. "protect, please start again.[-]")
-			faultyPlayerinfo = false
-			return
-		end
 
-		if igplayers[steam].alertBase == 1 then
-			if (dist >  tonumber(players[igplayers[steam].alertBaseID].protectSize) + 15) and (dist <  tonumber(players[igplayers[steam].alertBaseID].protectSize) + 50) then
-				players[igplayers[steam].alertBaseID].exitX = intX
-				players[igplayers[steam].alertBaseID].exitY = intY
-				players[igplayers[steam].alertBaseID].exitZ = intZ
-
-				if (playerAccessLevel < 3) then
-					message("pm " .. steam .. " [" .. server.chatColour .. "]You have set an exit teleport for " .. players[igplayers[steam].alertBaseID].name .. "'s base.[-]")
-				else
-					message("pm " .. steam .. " [" .. server.chatColour .. "]You have set an exit teleport for your base.  You can test it with " .. server.commandPrefix .. "test base.[-]")
-				end
-
-				-- check for nearby bases
-				failProtect = false
-				for k, v in pairs(players) do
-					if (v.homeX ~= 0) and k ~= igplayers[steam].alertBaseID then
-							if (v.homeX ~= 0 and v.homeZ ~= 0) then
-							dist = distancexz(players[igplayers[steam].alertBaseID].homeX, players[igplayers[steam].alertBaseID].homeZ, v.homeX, v.homeZ)
-
-							if (tonumber(dist) < tonumber(players[igplayers[steam].alertBaseID].protectSize)) then
-								if friends[k] == nil or not string.find(friends[k].friends, igplayers[steam].alertBaseID) then
-									failProtect = true
-								end
-							end
-						end
-					end
-
-					if (v.home2X ~= 0) and k ~= igplayers[steam].alertBaseID then
-						if (v.home2X ~= 0 and v.home2Z ~= 0) then
-							dist = distancexz(players[igplayers[steam].alertBaseID].homeX, players[igplayers[steam].alertBaseID].homeZ, v.home2X, v.home2Z)
-
-							if (dist < players[igplayers[steam].alertBaseID].protectSize + 10) then
-								if not string.find(friends[k].friends, igplayers[steam].alertBaseID) then
-									failProtect = true
-								end
-							end
-						end
-					end
-				end
-
-				if failProtect == false then
-					players[igplayers[steam].alertBaseID].protect = true
-					message("pm " .. igplayers[steam].alertBaseID .. " [" .. server.chatColour .. "]Base protection for your base is active.[-]")
-				else
-					message("pm " .. igplayers[steam].alertBaseID .. " [" .. server.warnColour .. "]Your base is too close to another player base who is not on your friends list.  Protection cannot be enabled.[-]")
-				end
-
-				igplayers[steam].alertBaseExit = nil
-				igplayers[steam].alertBaseID = nil
-				igplayers[steam].alertBase = nil
-				if botman.dbConnected then conn:execute("UPDATE players SET protect = 1 WHERE steam = " .. steam) end
-
-				faultyPlayerinfo = false
-				return
+			if (admin and lpdata.steam ~= bases[tmp.key].steam) then
+				message("pm " .. lpdata.userID .. " [" .. server.chatColour .. "]You have set an exit teleport for " .. players[bases[tmp.key].steam].name .. "'s base.[-]")
+			else
+				message("pm " .. lpdata.userID .. " [" .. server.chatColour .. "]You have set an exit teleport for your base.  You can test it with " .. server.commandPrefix .. "test base.[-]")
 			end
-		else
-			if (dist >  tonumber(players[igplayers[steam].alertBaseID].protect2Size) + 15) and (dist <  tonumber(players[igplayers[steam].alertBaseID].protect2Size) + 50) then
-				players[igplayers[steam].alertBaseID].exit2X = intX
-				players[igplayers[steam].alertBaseID].exit2Y = intY
-				players[igplayers[steam].alertBaseID].exit2Z = intZ
 
-				if (playerAccessLevel < 3) then
-					message("pm " .. steam .. " [" .. server.chatColour .. "]You have set an exit teleport for " .. players[igplayers[steam].alertBaseID].name .. "'s 2nd base.[-]")
-				else
-					message("pm " .. steam .. " [" .. server.chatColour .. "]You have set an exit teleport for your 2nd base.  You can test it with " .. server.commandPrefix .. "test base.[-]")
-				end
-
-				-- check for nearby bases
-				failProtect = false
-				for k, v in pairs(players) do
-					if (v.homeX ~= 0) and k ~= igplayers[steam].alertBaseID then
-							if (v.homeX ~= 0 and v.homeZ ~= 0) then
-							dist = distancexz(players[igplayers[steam].alertBaseID].home2X, players[igplayers[steam].alertBaseID].home2Z, v.homeX, v.homeZ)
-
-							if (tonumber(dist) < tonumber(players[igplayers[steam].alertBaseID].protect2Size)) then
-								if friends[k] == nil or not string.find(friends[k].friends, igplayers[steam].alertBaseID) then
-									failProtect = true
-								end
-							end
-						end
-					end
-
-					if (v.home2X ~= 0) and k ~= igplayers[steam].alertBaseID then
-						if (v.home2X ~= 0 and v.home2Z ~= 0) then
-							dist = distancexz(players[igplayers[steam].alertBaseID].home2X, players[igplayers[steam].alertBaseID].home2Z, v.home2X, v.home2Z)
-
-							if (dist < players[igplayers[steam].alertBaseID].protect2Size + 10) then
-								if not string.find(friends[k].friends, igplayers[steam].alertBaseID) then
-									failProtect = true
-								end
-							end
-						end
-					end
-				end
-
-				if failProtect == false then
-					players[igplayers[steam].alertBaseID].protect2 = true
-					message("pm " .. igplayers[steam].alertBaseID .. " [" .. server.chatColour .. "]Base protection for your second base is active.[-]")
-				else
-					message("pm " .. igplayers[steam].alertBaseID .. " [" .. server.warnColour .. "]Your second base is too close to another player base who is not on your friends list.  Protection cannot be enabled.[-]")
-				end
-
-				igplayers[steam].alertBaseExit = nil
-				igplayers[steam].alertBaseID = nil
-				igplayers[steam].alertBase = nil
-				if botman.dbConnected then conn:execute("UPDATE players SET protect2 = 1 WHERE steam = " .. steam) end
-
-				faultyPlayerinfo = false
-				return
-			end
+			igplayers[lpdata.steam].alertBaseExit = nil
+			igplayers[lpdata.steam].alertBaseKey = nil
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	x = math.floor(igplayers[lpdata.steam].xPos / 512)
+	z = math.floor(igplayers[lpdata.steam].zPos / 512)
 
-	x = math.floor(igplayers[steam].xPos / 512)
-	z = math.floor(igplayers[steam].zPos / 512)
-
-	if (playerAccessLevel < 4) and server.enableRegionPM then
-		if (igplayers[steam].region ~= "r." .. x .. "." .. z .. ".7rg") then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]Region " .. x .. "." .. z .. "[-]")
+	if admin and server.enableRegionPM and not botman.botDisabled then
+		if (igplayers[lpdata.steam].region ~= "r." .. x .. "." .. z .. ".7rg") then
+			message("pm " .. lpdata.userID .. " [" .. server.chatColour .. "]Region " .. x .. "." .. z .. "[-]")
 		end
 	end
 
-	igplayers[steam].region = region
-	igplayers[steam].regionX = x
-	igplayers[steam].regionZ = z
+	igplayers[lpdata.steam].region = region
+	igplayers[lpdata.steam].regionX = x
+	igplayers[lpdata.steam].regionZ = z
 
 	-- timeout
-	if (players[steam].timeout == true or players[steam].botTimeout == true) and igplayers[steam].spawnedInWorld then
-		if (intY < 30000) then
-			igplayers[steam].tp = 1
-			igplayers[steam].hackerTPScore = 0
-			sendCommand("tele " .. steam .. " " .. intX .. " " .. 60000 .. " " .. intZ)
+	if (players[lpdata.steam].timeout == true or players[lpdata.steam].botTimeout == true) and igplayers[lpdata.steam].spawnedInWorld and not botman.botDisabled then
+		if (tonumber(lpdata.y) < 30000) then
+			igplayers[lpdata.steam].tp = 1
+			igplayers[lpdata.steam].hackerTPScore = 0
+			sendCommand("tele " .. lpdata.userID .. " " .. lpdata.x .. " " .. 60000 .. " " .. lpdata.z)
 		end
 
-		faultyPlayerinfo = false
-		return
+		return true, "player in timeout"
 	end
 
 	-- emergency return from timeout
-	if (not players[steam].timeout and not  players[steam].botTimeout) and intY > 1000 and playerAccessLevel > 2 then
-		igplayers[steam].tp = 1
-		igplayers[steam].hackerTPScore = 0
+	if (not players[lpdata.steam].timeout and not  players[lpdata.steam].botTimeout) and tonumber(lpdata.y) > 1000 and not admin then
+		igplayers[lpdata.steam].tp = 1
+		igplayers[lpdata.steam].hackerTPScore = 0
 
-		if players[steam].yPosTimeout == 0 then
-			sendCommand("tele " .. steam .. " " .. intX .. " -1 " .. intZ)
+		if players[lpdata.steam].yPosTimeout == 0 then
+			sendCommand("tele " .. lpdata.userID .. " " .. lpdata.x .. " -1 " .. lpdata.z)
 		else
-			sendCommand("tele " .. steam .. " " .. players[steam].xPosTimeout .. " " .. players[steam].yPosTimeout .. " " .. players[steam].zPosTimeout)
+			sendCommand("tele " .. lpdata.userID .. " " .. players[lpdata.steam].xPosTimeout .. " " .. players[lpdata.steam].yPosTimeout .. " " .. players[lpdata.steam].zPosTimeout)
 		end
 
-		players[steam].xPosTimeout = 0
-		players[steam].yPosTimeout = 0
-		players[steam].zPosTimeout = 0
-
-		faultyPlayerinfo = false
-		return
+		players[lpdata.steam].xPosTimeout = 0
+		players[lpdata.steam].yPosTimeout = 0
+		players[lpdata.steam].zPosTimeout = 0
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- add to tracker table
-	dist = distancexyz(intX, intY, intZ, igplayers[steam].xPosLast, igplayers[steam].yPosLast, igplayers[steam].zPosLast)
+	dist = distancexyz(lpdata.x, lpdata.y, lpdata.z, igplayers[lpdata.steam].xPosLast, igplayers[lpdata.steam].yPosLast, igplayers[lpdata.steam].zPosLast)
 
-	if (dist > 2) and tonumber(intY) < 10000 then
+	if tonumber(dist) > 2 and tonumber(lpdata.y) < 10000 then
 		-- record the players position
-		if igplayers[steam].raiding then
+		if igplayers[lpdata.steam].raiding then
 			flag = flag .. "R"
 		end
 
-		if igplayers[steam].illegalInventory then
+		if igplayers[lpdata.steam].illegalInventory then
 			flag = flag .. "B"
 		end
 
-		if igplayers[steam].flying or igplayers[steam].noclip then
+		if igplayers[lpdata.steam].flying or igplayers[lpdata.steam].noclip then
 			flag = flag .. "F"
 		end
 
-		if tonumber(botman.trackingTicker) == 3 then
-			if botman.dbConnected then conn:execute("INSERT INTO tracker (steam, x, y, z, session, flag) VALUES (" .. steam .. "," .. intX .. "," .. intY .. "," .. intZ .. "," .. players[steam].sessionCount .. ",'" .. flag .. "')") end
+		connTRAK:execute("INSERT INTO tracker (steam, timestamp, x, y, z, session, flag) VALUES ('" .. lpdata.steam .. "'," .. botman.serverTimeStamp .. "," .. lpdata.x .. "," .. lpdata.y .. "," .. lpdata.z .. "," .. players[lpdata.steam].sessionCount .. ",'" .. flag .. "')")
+
+		if server.botLoggingLevel ~= 2 and tonumber(server.botLoggingLevel) < 4 then
+			connTRAKSHADOW:execute("INSERT INTO tracker (steam, timestamp, x, y, z, session, flag) VALUES ('" .. lpdata.steam .. "'," .. botman.serverTimeStamp .. "," .. lpdata.x .. "," .. lpdata.y .. "," .. lpdata.z .. "," .. players[lpdata.steam].sessionCount .. ",'" .. flag .. "')")
 		end
 
-		if igplayers[steam].location ~= nil then
-			if botman.dbConnected then conn:execute("INSERT INTO locationSpawns (location, x, y, z) VALUES ('" .. igplayers[steam].location .. "'," .. intX .. "," .. intY .. "," .. intZ .. ")") end
+		if igplayers[lpdata.steam].location ~= nil then
+			connSQL:execute("INSERT INTO locationSpawns (location, x, y, z) VALUES ('" .. igplayers[lpdata.steam].location .. "'," .. lpdata.x .. "," .. lpdata.y .. "," .. lpdata.z .. ")")
 		end
 	end
-
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- prevent player exceeding the map limit unless they are an admin except when ignoreadmins is false
-	if not isDestinationAllowed(steam, intX, intZ) then
-		if isDonor(steam) then
-			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) + 5000 .. " km from the center.[-]")
+	if not isDestinationAllowed(lpdata.steam, lpdata.x, lpdata.z) and not botman.botDisabled then
+		message("pm " .. lpdata.userID .. " [" .. server.warnColour .. "]This map is restricted to " .. (settings.mapSize / 1000) .. " km from the center.[-]")
+
+		igplayers[lpdata.steam].tp = 1
+		igplayers[lpdata.steam].hackerTPScore = 0
+
+		if not isDestinationAllowed(lpdata.steam, igplayers[lpdata.steam].xPosLastOK, igplayers[lpdata.steam].zPosLastOK) then
+			sendCommand("tele " .. lpdata.userID .. " 1 -1 0") -- if we don't know where to send the player, send them to the middle of the map. This should only happen rarely.
+			message("pm " .. lpdata.userID .. " [" .. server.warnColour .. "]You have been moved to the center of the map.[-]")
 		else
-			message("pm " .. steam .. " [" .. server.warnColour .. "]This map is restricted to " .. (server.mapSize / 1000) .. " km from the center.[-]")
+			sendCommand("tele " .. lpdata.userID .. " " .. igplayers[lpdata.steam].xPosLastOK .. " " .. igplayers[lpdata.steam].yPosLastOK .. " " .. igplayers[lpdata.steam].zPosLastOK)
 		end
 
-		igplayers[steam].tp = 1
-		igplayers[steam].hackerTPScore = 0
-
-		if not isDestinationAllowed(steam, igplayers[steam].xPosLastOK, igplayers[steam].zPosLastOK) then
-			sendCommand("tele " .. steam .. " 1 -1 0") -- if we don't know where to send the player, send them to the middle of the map. This should only happen rarely.
-			message("pm " .. steam .. " [" .. server.warnColour .. "]You have been moved to the center of the map.[-]")
-		else
-			sendCommand("tele " .. steam .. " " .. igplayers[steam].xPosLastOK .. " " .. igplayers[steam].yPosLastOK .. " " .. igplayers[steam].zPosLastOK)
-		end
-
-		faultyPlayerinfo = false
-		return
+		return true, "player exceeded map limit"
 	end
 
-	if players[steam].exiled == true and locations[exile] and not players[steam].prisoner then
-		if (distancexz( intX, intZ, locations[exile].x, locations[exile].z ) > tonumber(locations[exile].size)) then
-			randomTP(steam, exile, true)
-			faultyPlayerinfo = false
-			return
+	if players[lpdata.steam].exiled == true and locations[exile] and not players[lpdata.steam].prisoner and not botman.botDisabled then
+		if (distancexz( lpdata.x, lpdata.z, locations[exile].x, locations[exile].z ) > tonumber(locations[exile].size)) then
+			randomTP(lpdata.steam, lpdata.userID, exile, true)
+			return true, "player returned to exile"
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- left prison zone warning
-	if (locations[prison]) then
-		if (distancexz( intX, intZ, locations[prison].x, locations[prison].z ) > tonumber(locations[prison].size)) then
-			if (players[steam].alertPrison == false) then
-				players[steam].alertPrison = true
+	if (locations[prison]) and not botman.botDisabled then
+		if (distancexz( lpdata.x, lpdata.z, locations[prison].x, locations[prison].z ) > tonumber(locations[prison].size)) then
+			if (players[lpdata.steam].alertPrison == false) then
+				players[lpdata.steam].alertPrison = true
 			end
 		end
 
-		if (players[steam].prisoner) then
+		if (players[lpdata.steam].prisoner) then
 			if (locations[prison]) then
-				if (squareDistanceXZXZ(locations[prison].x, locations[prison].z, intX, intZ, locations[prison].size)) then
-					players[steam].alertPrison = false
-					randomTP(steam, prison, true)
+				if (squareDistanceXZXZ(locations[prison].x, locations[prison].z, lpdata.x, lpdata.z, locations[prison].size)) then
+					players[lpdata.steam].alertPrison = false
+					randomTP(lpdata.steam, lpdata.userID, prison, true)
 				end
 			end
 
-			faultyPlayerinfo = false
-			return
+			return true, "prisoner tried to escape"
 		end
 
 		-- entered prison zone warning
-		if (distancexz( intX, intZ, locations[prison].x, locations[prison].z ) < tonumber(locations[prison].size)) then
-			if (players[steam].alertPrison == true) then
-				if (not players[steam].prisoner) and server.showLocationMessages then
-					message("pm " .. steam .. " [" .. server.warnColour .. "]You have entered the prison.  Continue at your own risk.[-]")
+		if (distancexz( lpdata.x, lpdata.z, locations[prison].x, locations[prison].z ) < tonumber(locations[prison].size)) then
+			if (players[lpdata.steam].alertPrison == true) then
+				if (not players[lpdata.steam].prisoner) and server.showLocationMessages then
+					message("pm " .. lpdata.userID .. " [" .. server.warnColour .. "]You have entered the prison.  Continue at your own risk.[-]")
 				end
-				players[steam].alertPrison = false
+				players[lpdata.steam].alertPrison = false
 			end
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
 	-- freeze!
-	if (players[steam].freeze == true) then
-		dist = distancexz(posX, posZ, players[steam].prisonxPosOld, players[steam].prisonzPosOld)
+	if (players[lpdata.steam].freeze == true) and not botman.botDisabled then
+		dist = distancexz(lpdata.x, lpdata.z, players[lpdata.steam].prisonxPosOld, players[lpdata.steam].prisonzPosOld)
 
-		if dist > 2 then
-			igplayers[steam].tp = 1
-			igplayers[steam].hackerTPScore = 0
-			sendCommand("tele " .. steam .. " " .. players[steam].prisonxPosOld .. " " .. players[steam].prisonyPosOld .. " " .. players[steam].prisonzPosOld)
+		if tonumber(dist) > 2 then
+			igplayers[lpdata.steam].tp = 1
+			igplayers[lpdata.steam].hackerTPScore = 0
+			sendCommand("tele " .. lpdata.userID .. " " .. players[lpdata.steam].prisonxPosOld .. " " .. players[lpdata.steam].prisonyPosOld .. " " .. players[lpdata.steam].prisonzPosOld)
 		end
 
-		faultyPlayerinfo = false
-		return
+		return true, "player not allowed to move"
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
 	-- remove player from location if the location is closed or their level is outside level restrictions
-	if currentLocation ~= false then
+	if currentLocation ~= false and not botman.botDisabled then
 		tmp = {}
 		tmp.bootPlayer = false
 
-		if not locations[currentLocation].open and playerAccessLevel > 2 then
+		if not locations[currentLocation].open and not admin then
 			tmp.bootPlayer = true
 		end
 
 		-- check player level restrictions on the location
-		if (tonumber(locations[currentLocation].minimumLevel) > 0 or tonumber(locations[currentLocation].maximumLevel) > 0) and playerAccessLevel > 2 then
-			if tonumber(locations[currentLocation].minimumLevel) > 0 and level < tonumber(locations[currentLocation].minimumLevel) then
+		if (tonumber(locations[currentLocation].minimumLevel) > 0 or tonumber(locations[currentLocation].maximumLevel) > 0) and not admin then
+			if tonumber(locations[currentLocation].minimumLevel) > 0 and tonumber(lpdata.level) < tonumber(locations[currentLocation].minimumLevel) then
 				tmp.bootPlayer = true
 			end
 
-			if tonumber(locations[currentLocation].minimumLevel) > 0 and tonumber(locations[currentLocation].maximumLevel) > 0 and (level < tonumber(locations[currentLocation].minimumLevel) or level > tonumber(locations[currentLocation].maximumLevel)) then
+			if tonumber(locations[currentLocation].minimumLevel) > 0 and tonumber(locations[currentLocation].maximumLevel) > 0 and (tonumber(lpdata.level) < tonumber(locations[currentLocation].minimumLevel) or tonumber(lpdata.level) > tonumber(locations[currentLocation].maximumLevel)) then
 				tmp.bootPlayer = true
 			end
 
-			if tonumber(locations[currentLocation].maximumLevel) > 0 and level > tonumber(locations[currentLocation].maximumLevel) then
+			if tonumber(locations[currentLocation].maximumLevel) > 0 and tonumber(lpdata.level) > tonumber(locations[currentLocation].maximumLevel) then
 				tmp.bootPlayer = true
 			end
+		end
+
+		-- check player access level restrictions on the location
+		if tonumber(playerAccessLevel) > tonumber(locations[currentLocation].accessLevel) and not admin then
+			tmp.bootPlayer = true
 		end
 
 		if tmp.bootPlayer then
@@ -1250,45 +1091,44 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 				tmp.z = locations[currentLocation].z + (locations[currentLocation].size + 20 + tmp.offset)
 			end
 
-			tmp.cmd = "tele " .. steam .. " " .. tmp.x .. " -1 " .. tmp.z
-			teleport(tmp.cmd, steam)
+			tmp.cmd = "tele " .. lpdata.userID .. " " .. tmp.x .. " -1 " .. tmp.z
+			teleport(tmp.cmd, lpdata.steam, lpdata.userID)
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- teleport lookup
-	if (igplayers[steam].teleCooldown < 1) and (players[steam].prisoner == false) then
+	if (tonumber(igplayers[lpdata.steam].teleCooldown) < 1) and (players[lpdata.steam].prisoner == false) and not botman.botDisabled then
 		tp = ""
-		tp, match = LookupTeleport(posX, posY, posZ)
+		tp, match = LookupTeleport(lpdata.x, lpdata.y, lpdata.z)
 		if (tp ~= nil and teleports[tp].active == true) then
 			ownerid = LookupOfflinePlayer(teleports[tp].owner)
-			if (players[steam].walkies ~= true) then
-				if ((playerAccessLevel < 3) or (teleports[tp].owner == igplayers[steam].steam or teleports[tp].public == true or isFriend(ownerid, steam))) and teleports[tp].active then
+			if (players[lpdata.steam].walkies ~= true) then
+				if (admin or (teleports[tp].owner == igplayers[lpdata.steam].steam or teleports[tp].public == true or isFriend(ownerid, lpdata.steam))) and teleports[tp].active then
 					if match == 1 then
 						-- check access level restrictions on the teleport
-						if (playerAccessLevel >= tonumber(teleports[tp].maximumAccess) and playerAccessLevel <= tonumber(teleports[tp].minimumAccess)) or playerAccessLevel < 3 then
-							if isDestinationAllowed(steam, teleports[tp].dx, teleports[tp].dz) then
-								igplayers[steam].teleCooldown = 4
-								cmd = "tele " .. steam .. " " .. teleports[tp].dx .. " " .. teleports[tp].dy .. " " .. teleports[tp].dz
-								teleport(cmd, steam)
+						if (tonumber(playerAccessLevel) >= tonumber(teleports[tp].maximumAccess) and tonumber(playerAccessLevel) <= tonumber(teleports[tp].minimumAccess)) or admin then
+							if isDestinationAllowed(lpdata.steam, teleports[tp].dx, teleports[tp].dz) then
+								igplayers[lpdata.steam].teleCooldown = 4
+								cmd = "tele " .. lpdata.userID .. " " .. teleports[tp].dx .. " " .. teleports[tp].dy .. " " .. teleports[tp].dz
+								teleport(cmd, lpdata.steam, lpdata.userID)
 
-								faultyPlayerinfo = false
-								return
+								return true, "player triggered teleport"
 							end
 						end
 					end
 
 					if match == 2 and teleports[tp].oneway == false then
 						-- check access level restrictions on the teleport
-						if (playerAccessLevel >= tonumber(teleports[tp].maximumAccess) and playerAccessLevel <= tonumber(teleports[tp].minimumAccess)) or playerAccessLevel < 3 then
-							if isDestinationAllowed(steam, teleports[tp].x, teleports[tp].z) then
-								igplayers[steam].teleCooldown = 4
-								cmd = "tele " .. steam .. " " .. teleports[tp].x .. " " .. teleports[tp].y .. " " .. teleports[tp].z
-								teleport(cmd, steam)
+						if (tonumber(playerAccessLevel) >= tonumber(teleports[tp].maximumAccess) and tonumber(playerAccessLevel) <= tonumber(teleports[tp].minimumAccess)) or admin then
+							if isDestinationAllowed(lpdata.steam, teleports[tp].x, teleports[tp].z) then
+								igplayers[lpdata.steam].teleCooldown = 4
+								cmd = "tele " .. lpdata.userID .. " " .. teleports[tp].x .. " " .. teleports[tp].y .. " " .. teleports[tp].z
+								teleport(cmd, lpdata.steam, lpdata.userID)
 
-								faultyPlayerinfo = false
-								return
+								return true, "player triggered teleport"
 							end
 						end
 					end
@@ -1297,270 +1137,333 @@ if  debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline,
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- linked waypoint lookup
-	if (igplayers[steam].teleCooldown < 1) and (players[steam].prisoner == false) then
-		tmp = {}
-		tmp.wpid = LookupWaypoint(posX, posY, posZ)
+	if tonumber(players[lpdata.steam].waypointCooldown) < os.time() then
+		if (players[lpdata.steam].prisoner == false) and not botman.botDisabled then
+			tmp = {}
+			tmp.wpid = LookupWaypoint(lpdata.x, lpdata.y, lpdata.z)
 
-		if tonumber(tmp.wpid) > 0 then
-			tmp.linkedID = waypoints[tmp.wpid].linked
+			if tonumber(tmp.wpid) > 0 then
+				tmp.linkedID = waypoints[tmp.wpid].linked
 
-			if (waypoints[tmp.wpid].shared and isFriend(waypoints[tmp.wpid].steam, steam) or waypoints[tmp.wpid].steam == steam) and tonumber(tmp.linkedID) > 0 then
-				-- reject if not an admin and player teleporting has been disabled
-				if server.allowTeleporting and not server.disableLinkedWaypoints then
-					if isDestinationAllowed(steam, waypoints[tmp.linkedID].x, waypoints[tmp.linkedID].z) then
-						if players[steam].waypointCooldown < os.time() then
-							if (playerAccessLevel > 2) then
-								if tonumber(server.waypointCost) > 0 then
-									if tonumber(players[steam].cash) >= tonumber(server.waypointCost) then
-										igplayers[steam].teleCooldown = 3
-										players[steam].waypointCooldown = os.time() + server.waypointCooldown
-										players[steam].cash = tonumber(players[steam].cash) - server.waypointCost
+				if (waypoints[tmp.wpid].shared and isFriend(waypoints[tmp.wpid].steam, lpdata.steam) or waypoints[tmp.wpid].steam == lpdata.steam) and tonumber(tmp.linkedID) > 0 then
+					-- reject if not an admin and player teleporting has been disabled
+					if settings.allowTeleporting and not server.disableLinkedWaypoints then
+						if isDestinationAllowed(lpdata.steam, waypoints[tmp.linkedID].x, waypoints[tmp.linkedID].z) then
+							players[lpdata.steam].waypointCooldown = os.time() + 6
+							cmd = "tele " .. lpdata.userID .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
+							teleport(cmd, lpdata.steam, lpdata.userID)
 
-										cmd = "tele " .. steam .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
-										teleport(cmd, steam)
-
-										faultyPlayerinfo = false
-										return
-									end
-								else
-									igplayers[steam].teleCooldown = 3
-									players[steam].waypointCooldown = os.time() + server.waypointCooldown
-									cmd = "tele " .. steam .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
-									teleport(cmd, steam)
-
-									faultyPlayerinfo = false
-									return
-								end
-							else
-								igplayers[steam].teleCooldown = 3
-								cmd = "tele " .. steam .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
-								teleport(cmd, steam)
-
-								faultyPlayerinfo = false
-								return
-							end
+							return true, "player triggered waypoint"
 						end
-					end
-				else
-					if playerAccessLevel < 3 then
-						igplayers[steam].teleCooldown = 3
-						cmd = "tele " .. steam .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
-						teleport(cmd, steam)
+					else
+						if admin then
+							players[lpdata.steam].waypointCooldown = os.time() + 6
+							cmd = "tele " .. lpdata.userID .. " " .. waypoints[tmp.linkedID].x .. " " .. waypoints[tmp.linkedID].y .. " " .. waypoints[tmp.linkedID].z
+							teleport(cmd, lpdata.steam, lpdata.userID)
 
-						faultyPlayerinfo = false
-						return
+							return true, "player triggered waypoint"
+						end
 					end
 				end
 			end
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- left reset zone warning
-	if (not resetZone) then
-		if (players[steam].alertReset == false) then
-			message("pm " .. steam .. " [" .. server.chatColour .. "]You are out of the reset zone.[-]")
-			players[steam].alertReset = true
-			faultyPlayerinfo = false
+	if (not resetZone) and not botman.botDisabled then
+		if (players[lpdata.steam].alertReset == false) then
+			message("pm " .. lpdata.userID .. " [" .. server.chatColour .. "]You are out of the reset zone.[-]")
+			players[lpdata.steam].alertReset = true
 		end
 	end
 
-
 	-- entered reset zone warning
-	if (resetZone) then
-		if (players[steam].alertReset == true) then
-			message("pm " .. steam .. " [" .. server.warnColour .. "]You are in a reset zone. Don't build here.[-]")
-			players[steam].alertReset = false
-			faultyPlayerinfo = false
+	if (resetZone) and not botman.botDisabled then
+		if (players[lpdata.steam].alertReset == true) then
+			message("pm " .. lpdata.userID .. " [" .. server.warnColour .. "]You are in a reset zone. Don't build here.[-]")
+			players[lpdata.steam].alertReset = false
 
 			-- check for claims in the reset zone not owned by staff and remove them
 			checkRegionClaims(x, z)
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
-	if	baseProtection(steam, posX, posY, posZ) and not resetZone then
-		faultyPlayerinfo = false
-		return
+	if not botman.botDisabled then
+		if baseProtection(lpdata.steam, lpdata.x, lpdata.y, lpdata.z) and not resetZone then
+			return true, "player triggered protection"
+		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if (igplayers[steam].deadX ~= nil) and igplayers[steam].spawnedInWorld and igplayers[steam].spawnedReason ~= "fake reason" then
-		dist = math.abs(distancexz(igplayers[steam].deadX, igplayers[steam].deadZ, posX, posZ))
-		if (dist > 2) then
-			igplayers[steam].deadX = nil
-			igplayers[steam].deadY = nil
-			igplayers[steam].deadZ = nil
+	if (igplayers[lpdata.steam].deadX ~= nil) and igplayers[lpdata.steam].spawnedInWorld and igplayers[lpdata.steam].spawnedReason ~= "fake reason" then
+		dist = math.abs(distancexz(igplayers[lpdata.steam].deadX, igplayers[lpdata.steam].deadZ, lpdata.x, lpdata.z))
+		if tonumber(dist) > 2 then
+			igplayers[lpdata.steam].deadX = nil
+			igplayers[lpdata.steam].deadY = nil
+			igplayers[lpdata.steam].deadZ = nil
 
-			if players[steam].bed ~= "" then
-				if players[steam].bed == "base1" then
-					cmd = "tele " .. steam .. " " .. players[steam].homeX .. " " .. players[steam].homeY .. " " .. players[steam].homeZ
-					teleport(cmd, steam)
-				end
-
-				if players[steam].bed == "base2" then
-					cmd = "tele " .. steam .. " " .. players[steam].home2X .. " " .. players[steam].home2Y .. " " .. players[steam].home2Z
-					teleport(cmd, steam)
+			if not botman.botDisabled then
+				if players[lpdata.steam].bed ~= "" then
+					if tonumber(players[lpdata.steam].bedX) ~= 0 and tonumber(players[lpdata.steam].bedY) ~= 0 and tonumber(players[lpdata.steam].bedZ) ~= 0 then
+						cmd = "tele " .. lpdata.userID .. " " .. players[lpdata.steam].bedX .. " " .. players[lpdata.steam].bedY .. " " .. players[lpdata.steam].bedZ
+						teleport(cmd, lpdata.steam, lpdata.userID)
+					end
 				end
 			end
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- hotspot lookup
-	hotspot = LookupHotspot(posX, posY, posZ)
+	hotspot = LookupHotspot(lpdata.x, lpdata.y, lpdata.z)
 
-	if (hotspot ~= nil) then
+	if (hotspot ~= nil) and not botman.botDisabled then
 		tmp.skipHotspot = false
 
-		if (igplayers[steam].lastHotspot ~= hotspot) then
-			for k, v in pairs(lastHotspots[steam]) do
+		if (igplayers[lpdata.steam].lastHotspot ~= hotspot) then
+			for k, v in pairs(lastHotspots[lpdata.steam]) do
 				if v == hotspot then -- don't add or display this hotspot yet.  we've seen it recently
 					tmp.skipHotspot = true
 				end
 			end
 
 			if not tmp.skipHotspot then
-				igplayers[steam].lastHotspot = hotspot
-				message("pm " .. steam .. " [" .. server.chatColour .. "]" .. hotspots[hotspot].hotspot .. "[-]")
+				igplayers[lpdata.steam].lastHotspot = hotspot
+				message("pm " .. lpdata.userID .. " [" .. server.chatColour .. "]" .. hotspots[hotspot].hotspot .. "[-]")
 
-				if (lastHotspots[steam] == nil) then lastHotspots[steam] = {} end
-				if (table.maxn(lastHotspots[steam]) > 4) then
-					table.remove(lastHotspots[steam], 1)
+				if (lastHotspots[lpdata.steam] == nil) then lastHotspots[lpdata.steam] = {} end
+				if (tablelength(lastHotspots[lpdata.steam]) > 4) then
+					table.remove(lastHotspots[lpdata.steam], 1)
 				end
 
-				table.insert(lastHotspots[steam],  hotspot)
+				table.insert(lastHotspots[lpdata.steam],  hotspot)
 			end
 		end
 	end
 
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
-	if igplayers[steam].rawPosition ~= rawPosition then
-		igplayers[steam].afk = os.time() + tonumber(server.idleKickTimer)
-		igplayers[steam].rawPosition = rawPosition
+	if igplayers[lpdata.steam].rawPosition ~= lpdata.rawPosition then
+		igplayers[lpdata.steam].afk = os.time() + tonumber(server.idleKickTimer)
+		igplayers[lpdata.steam].rawPosition = lpdata.rawPosition
 	end
 
-	if (igplayers[steam].rawRotation ~= rawRotation) and rawRotation ~= nil then
-		igplayers[steam].rawRotation = rawRotation
-	end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline -- delete me
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end	 -- delete me
 
-
-	if (tonumber(botman.playersOnline) >= tonumber(server.maxPlayers) or server.idleKickAnytime) and (playerAccessLevel > 3) and server.idleKick then
-		if (igplayers[steam].afk - os.time() < 0) then
-			kick(steam, "You were kicked because you idled too long, but you can rejoin at any time.")
+	if (tonumber(botman.playersOnline) >= tonumber(server.maxPlayers) or server.idleKickAnytime) and not admin and server.idleKick and not botman.botDisabled then
+		if (igplayers[lpdata.steam].afk - os.time() < 0) then
+			kick(lpdata.steam, "You were kicked because you idled too long, but you can rejoin at any time.")
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
-
-	if igplayers[steam].spawnedInWorld then
-		if igplayers[steam].greet then
-			if tonumber(igplayers[steam].greetdelay) > 0 then
+	if igplayers[lpdata.steam].spawnedInWorld then
+		if igplayers[lpdata.steam].greet then
+			if tonumber(igplayers[lpdata.steam].greetdelay) > 0 then
 				-- Player has spawned.  We can greet them now and do other stuff that waits for spawn
-				igplayers[steam].greetdelay = 0
+				igplayers[lpdata.steam].greetdelay = 0
 			end
 		end
 
-		if tonumber(igplayers[steam].teleCooldown) > 100 then
-			igplayers[steam].teleCooldown = 3
+		if tonumber(igplayers[lpdata.steam].teleCooldown) > 100 then
+			igplayers[lpdata.steam].teleCooldown = 3
 		end
 
-		if igplayers[steam].doFirstSpawnedTasks then
-			igplayers[steam].doFirstSpawnedTasks = nil
+		if igplayers[lpdata.steam].doFirstSpawnedTasks then
+			igplayers[lpdata.steam].doFirstSpawnedTasks = nil
 
-			if server.botman or server.stompy then
-				if players[steam].mute then
-					mutePlayerChat(steam , "true")
+			if server.botman then
+				if players[lpdata.steam].mute then
+					mutePlayerChat(lpdata.steam , "true")
 				end
 
-				if players[steam].chatColour ~= "" then
-					if string.upper(string.sub(players[steam].chatColour, 1, 6)) ~= "FFFFFF" then
-						setPlayerColour(steam, stripAllQuotes(players[steam].chatColour))
+				if players[lpdata.steam].chatColour ~= "" then
+					if string.upper(string.sub(players[lpdata.steam].chatColour, 1, 6)) ~= "FFFFFF" then
+						setPlayerColour(lpdata.steam, stripAllQuotes(players[lpdata.steam].chatColour))
 					else
-						setChatColour(steam, players[steam].accessLevel)
+						setChatColour(lpdata.steam, players[lpdata.steam].accessLevel)
 					end
 				else
-					setChatColour(steam, players[steam].accessLevel)
+					setChatColour(lpdata.steam, players[lpdata.steam].accessLevel)
 				end
 
 				-- limit ingame chat length to block chat bombs.
-				cmd = steam .. ", 300"
-				setPlayerChatLimit(cmd)
+				setPlayerChatLimit(lpdata.steam, 300)
 			end
 		end
 	end
 
-	if igplayers[steam].currentLocationPVP then
-		if players[steam].alertPVP == true then
-			message("pm " .. steam .. " [" .. server.alertColour .. "]You have entered a PVP zone!  Players are allowed to kill you![-]")
-			players[steam].alertPVP = false
-			faultyPlayerinfo = false
-		end
-	else
-		if players[steam].alertPVP == false then
-			message("pm " .. steam .. " [" .. server.warnColour .. "]You have entered a PVE zone.  Do not kill other players![-]")
-			players[steam].alertPVP = true
-			faultyPlayerinfo = false
+	if not botman.botDisabled then
+		if igplayers[lpdata.steam].currentLocationPVP then
+			if players[lpdata.steam].alertPVP == true then
+				message("pm " .. lpdata.userID .. " [" .. server.alertColour .. "]You have entered a PVP zone!  Players are allowed to kill you![-]")
+				players[lpdata.steam].alertPVP = false
+			end
+		else
+			if players[lpdata.steam].alertPVP == false then
+				message("pm " .. lpdata.userID .. " [" .. server.warnColour .. "]You have entered a PVE zone.  Do not kill other players![-]")
+				players[lpdata.steam].alertPVP = true
+			end
 		end
 	end
 
-	if (steam == debugPlayerInfo) and debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
+	playersOnlineList[lpdata.steam].debugLine = debugger.getinfo(1).currentline
+	if debug then dbug("debug playerinfo line " .. debugger.getinfo(1).currentline, true) end
 
 	-- stuff to do after everything else
-
 	-- record this coord as the last one that the player was allowed to be at.  if their next step is not allowed, they get returned to this one.
-	igplayers[steam].xPosLastOK = intX
-	igplayers[steam].yPosLastOK = intY
-	igplayers[steam].zPosLastOK = intZ
+	igplayers[lpdata.steam].xPosLastOK = lpdata.x
+	igplayers[lpdata.steam].yPosLastOK = lpdata.y
+	igplayers[lpdata.steam].zPosLastOK = lpdata.z
 
-	faultyPlayerinfo = false
+	if debug then dbug("end playerinfo", true) end
 
-	if (steam == debugPlayerInfo) then
-		if debug then dbug("end playerinfo", true) end
-	end
+	return true, "player info done"
 end
 
 
 function playerInfoTrigger(line)
-	if players[faultyPlayerinfoID] == nil then
-		faultyPlayerinfoID = 0
-	end
+	local debug, temp, data, lpdata
+	local result, statusMessage
+	local num, badData
 
-	if botman.botDisabled then
-		return
-	end
+	debug = false
+
+	if debug then dbug("debug playerInfoTrigger line " .. debugger.getinfo(1).currentline, true) end
+
+	lpdata = {}
+
+	-- if botman.botDisabled then
+		-- return
+	-- end
 
 	if server.useAllocsWebAPI then
 		return
 	end
 
-	if (faultyPlayerinfoID == debugPlayerInfo) or not igplayers[faultyPlayerinfoID] then
-		debugPlayerInfo = 0
-	end
+if debug then dbug("debug playerInfoTrigger line " .. debugger.getinfo(1).currentline, true) end
 
 	if string.find(line, ", health=") then
-		if faultyPlayerinfo == true and tonumber(faultyPlayerinfoID) > 0 then
-			fixMissingPlayer(faultyPlayerinfoID)
+		data = string.split(line, ", ")
 
-			if igplayers[faultyPlayerinfoID] then
-				fixMissingIGPlayer(faultyPlayerinfoID)
-			end
-
-			if debug then dbug("debug playerinfo faulty player " .. faultyPlayerinfoID, true) end
-
-			windowMessage(server.windowDebug, "!! Fault detected in playerinfo trigger\n")
-			windowMessage(server.windowDebug, faultyPlayerinfoLine .. "\n")
+		if string.find(data[3], "pos") then
+			lpdata.name = string.trim(data[2])
+		else
+			temp = data[1] .. ", name" .. string.sub(line, string.find(line, ", pos="), string.len(line))
+			data = string.split(temp, ", ")
+			lpdata.name = string.trim(string.sub(line, string.find(line, ",") + 2, string.find(line, ", pos=") - 1))
 		end
 
-		playerInfo(faultyPlayerinfoID)
+		-- stop processing this player if we don't have 18 parts to the line after splitting on comma
+		-- it is probably a read error
+		if (tablelength(data) < 19) then
+			return
+		end
+
+		temp = string.split(data[1], "=")
+		lpdata.entityid = temp[2]
+
+		num = tonumber(string.sub(data[3], 6))
+		if (num == nil) then badData = true end
+		lpdata.x = math.floor(num)
+
+		num = tonumber(data[4])
+		if (num == nil) then badData = true end
+		lpdata.y = math.floor(num)
+
+		temp = string.split(data[5], ")")
+		num = tonumber(temp[1])
+		if (num == nil) then badData = true end
+		lpdata.z = math.floor(num)
+
+		temp = string.split(data[11], "=")
+		num = tonumber(temp[2])
+		if (num == nil) then badData = true end
+		lpdata.playerdeaths = num
+
+		temp = string.split(data[12], "=")
+		num = tonumber(temp[2])
+		if (num == nil) then badData = true end
+		lpdata.zombiekills = num
+
+		temp = string.split(data[13], "=")
+		num = tonumber(temp[2])
+		if (num == nil) then badData = true end
+		lpdata.playerkills = num
+
+		temp = string.split(data[14], "=")
+		num = tonumber(temp[2])
+		if (num == nil) then badData = true end
+		lpdata.score = num
+
+		temp = string.split(data[15], "=")
+		num = tonumber(temp[2])
+		if (num == nil) then badData = true end
+		lpdata.level = num
+
+		temp = string.split(data[16], "=")
+		temp = string.split(temp[2], "_")
+		lpdata.platform = temp[1]
+		lpdata.steam = temp[2]
+		lpdata.steam = tostring(lpdata.steam)
+
+		temp = string.split(data[17], "=")
+		lpdata.userID = temp[2]
+
+		playersOnlineList[lpdata.steam] = {}
+		botStatus.playersOnlineList[lpdata.steam] = {}
+		botStatus.playersOnlineList[lpdata.steam].steam = lpdata.steam
+
+
+		temp = string.split(data[18], "=")
+		lpdata.ip = temp[2]
+		lpdata.ip = lpdata.ip:gsub("::ffff:","")
+
+		temp = string.split(data[19], "=")
+		lpdata.ping = tonumber(temp[2])
+
+
+		if not lpdata.userID then
+			lpdata.userID = LookupJoiningPlayer(lpdata.steam)
+		end
+
+		if badData then
+			if debug then
+				dbug("debug playerInfoTrigger line " .. debugger.getinfo(1).currentline, true)
+				dbug("Bad lp line: " .. line .. "\n", true)
+			end
+
+			return
+		end
+
+		lpdata.rawPosition = lpdata.x .. lpdata.y .. lpdata.z
+		playersOnlineList[lpdata.steam].faulty = false
+		result, statusMessage = pcall(playerInfo, lpdata)
+
+		if not result then
+			windowMessage(server.windowDebug, "!! Fault detected in playerinfo\n")
+			windowMessage(server.windowDebug, "Last debug line " .. playersOnlineList[lpdata.steam].debugLine .. "\n")
+			windowMessage(server.windowDebug, "Faulty player " .. lpdata.steam .. " " .. lpdata.name ..  "\n")
+			windowMessage(server.windowDebug, line .. "\n")
+			windowMessage(server.windowDebug, "----------\n")
+
+			playersOnlineList[lpdata.steam].faulty = true
+			fixMissingPlayer(lpdata.platform, lpdata.steam, lpdata.steam, lpdata.userID)
+			fixMissingIGPlayer(lpdata.platform, lpdata.steam, lpdata.steam, lpdata.userID)
+		end
 	end
+
+	if debug then dbug("end playerInfoTrigger", true) end
 end
