@@ -25,14 +25,18 @@ function loginSuccessful(line)
 	botman.getMetrics = false
 
 	if not botStatus.safeMode then
-		if botman.APIOffline then
-			toggleTriggers("api offline")
+		if server.useAllocsWebAPI then
+			if botman.APIOffline then
+				toggleTriggers("api offline")
 
-			if server.useAllocsWebAPI then
-				connectToAPI()
+				if server.useAllocsWebAPI then
+					connectToAPI()
+				end
+			else
+				toggleTriggers("api online")
 			end
 		else
-			toggleTriggers("api online")
+			toggleTriggers("api offline")
 		end
 	end
 end

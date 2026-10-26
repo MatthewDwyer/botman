@@ -16,6 +16,10 @@ function FiveSecondTimer()
 		telnetLogFile:flush()
 	end
 
+	if not botStatus.safeMode and (botStatus.telnetSpamCount < botStatus.telnetSpamThreshold) then
+		botStatus.telnetSpamCount = 0
+	end
+
 	if botStatus.safeMode then
 		if botStatus.readTelnet == nil then
 			botStatus.readTelnet = false

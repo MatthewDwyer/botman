@@ -8,6 +8,7 @@
 --]]
 
 function gmsg_botman()
+	-- these are bot chat commands that work directly with the Botman mod
 	local shortHelp = false
 	local tmp = {}
 	local debug, result, prefabID

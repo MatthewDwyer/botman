@@ -23,7 +23,6 @@ function lpTrigger(line)
 	botman.listPlayers = true
 	relogCount = 0
 	playersOnlineList = {}
-	botStatus.playersOnlineList = {}
 
 	if tonumber(botman.serverHour) == tonumber(server.botRestartHour) and server.allowBotRestarts then
 		uptime = math.floor((os.difftime(os.time(), botman.botStarted) / 3600))

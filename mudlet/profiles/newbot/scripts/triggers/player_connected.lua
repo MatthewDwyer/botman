@@ -156,15 +156,7 @@ function playerConnected(line)
 		return
 	end
 
-	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 
-	-- if tablelength(staffListSteam) > 0 then
-		-- if staffListSteam[tmp.steam] and tmp.userID then
-			-- kick(tmp.steam, "Fixing the admin list to use your EOS ID.  You can rejoin immediately.")
-			-- irc_chat(server.ircAlerts, server.gameDate .. " player kicked because in admin list with Steam ID. Admin list updated to use EOS ID.")
-			-- return
-		-- end
-	-- end
 
 	if (debug) then dbug("debug playerConnected line " .. debugger.getinfo(1).currentline) end
 

@@ -828,16 +828,18 @@ function gmsg(line, ircid)
 
 	if (debug) then dbug("debug chat line " .. debugger.getinfo(1).currentline) end
 
-	if not server.gameVersionNumber and server.gameVersion then
-		temp = string.split(server.gameVersion, " ")
-		server.gameVersionNumber = tonumber(temp[2])
-	end
+	-- if not server.gameVersionNumber and server.gameVersion then
+		-- temp = string.split(server.gameVersion, " ")
+		--server.gameVersionNumber = tonumber(temp[2])
+		server.gameVersionNumber = 3
+	--end
 
 	if not server.gameDate then
 		server.gameDate	= ""
 	end
 
-	if server.gameVersionNumber and not ircid then -- skip if the chat is from irc
+	-- if server.gameVersionNumber and not ircid then -- skip if the chat is from irc
+	if not ircid then -- skip if the chat is from irc
 		tmp.line = line
 
 		if string.find(line, "INF Chat ", nil, true) then
@@ -918,7 +920,18 @@ function gmsg(line, ircid)
 			chatvars.chatPublic = false
 			chatFlag = "(P) "
 
-			msg = string.sub(tmp.line, string.find(tmp.line, "'Party'): ", nil, true) + 10)
+			-- if not server.gameVersionNumber then
+				-- msg = string.sub(tmp.line, string.find(tmp.line, "'Party'): ", nil, true) + 10)
+			-- else
+				-- if tonumber(server.gameVersionNumber) >= 1.2 then
+					tmp.temp = string.sub(tmp.line, string.find(tmp.line, "'Party'): ") + 10, nil, true)
+					tmp.temp = string.sub(tmp.temp, string.find(tmp.temp, "': ") + 3, nil, true)
+					msg = tmp.temp
+				-- else
+					-- msg = string.sub(tmp.line, string.find(tmp.line, "'Party'): ", nil, true) + 10)
+				-- end
+			-- end
+
 			chatvars.command = msg
 		end
 
@@ -926,8 +939,36 @@ function gmsg(line, ircid)
 			chatvars.chatPublic = false
 			chatFlag = "(F) "
 
-			msg = string.sub(tmp.line, string.find(tmp.line, "'Friends'): ", nil, true) + 12)
+			-- if not server.gameVersionNumber then
+				-- msg = string.sub(tmp.line, string.find(tmp.line, "'Friends'): ", nil, true) + 12)
+			-- else
+				-- if tonumber(server.gameVersionNumber) >= 1.2 then
+					tmp.temp = string.sub(tmp.line, string.find(tmp.line, "'Friends'): ") + 12, nil, true)
+					tmp.temp = string.sub(tmp.temp, string.find(tmp.temp, "': ") + 3, nil, true)
+					msg = tmp.temp
+				-- else
+					-- msg = string.sub(tmp.line, string.find(tmp.line, "'Friends'): ", nil, true) + 12)
+				-- end
+			-- end
+
 			chatvars.command = msg
+		end
+
+		if string.find(line, "INF Botman Private Chat") then
+			botman.chatHandler = "Botman" -- Yay!
+
+			chatvars.chatPublic = false
+			chatFlag = "(P|F) "
+
+			tmp.chat = string.sub(line, string.find(line, "Chat=") + 5)
+			tmp.temp = string.split(tmp.chat, ", From=")
+			tmp.chat = tmp.temp[1]
+			tmp.playerID = tmp.temp[2]
+			tmp.command = tmp.chat
+
+			chatvars.playerid, chatvars.steamOwner, chatvars.userID, chatvars.platform = LookupPlayer(tmp.playerID, "all")
+			chatvars.playername = players[chatvars.playerid].name
+			chatvars.command = tmp.command
 		end
 	end
 

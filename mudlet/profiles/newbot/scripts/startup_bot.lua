@@ -205,6 +205,11 @@ function login()
 		botman.sysPostHttpDoneID = 0
 	end
 
+	if botman.sysPostHttpErrorID == nil then
+		botman.sysPostHttpErrorID = registerAnonymousEventHandler("sysPostHttpError", "onHttpPostError")
+		botman.sysPostHttpErrorID = 0
+	end
+
 	if (debug) then display("debug login line " .. debugger.getinfo(1).currentline .. "\n") end
 
 	if (botman.botStarted == nil) then
@@ -231,6 +236,7 @@ function login()
 			botStatus.ranCheckData = false
 			botStatus.playersOnline = 0
 			botStatus.players = {}
+			botStatus.APIWorking = true
 
 			--toggleTriggers("stop") -- disable almost all triggers and timers
 			-- just have the 5 second timer running first as we will use that to check telnet for evidence of a crashed server

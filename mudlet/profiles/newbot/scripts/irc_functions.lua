@@ -655,13 +655,11 @@ function irc_PlayerShortInfo()
 	irc_chat(irc_params.name, "UserID " .. players[irc_params.pid].userID)
 
 	if players[irc_params.pid].platform == "Steam" then
-		irc_chat(irc_params.name, "Steam Rep https://steamrep.com/search?q=" .. irc_params.pid)
 		irc_chat(irc_params.name, "Steam https://steamcommunity.com/profiles/" .. irc_params.pid)
 
 		if irc_params.pid ~= players[irc_params.pid].steamOwner then
 			irc_chat(irc_params.name, ".")
 			irc_chat(irc_params.name, "Family Key:")
-			irc_chat(irc_params.name, "Steam Rep https://steamrep.com/search?q=" .. players[irc_params.pid].steamOwner)
 			irc_chat(irc_params.name, "Steam https://steamcommunity.com/profiles/" .. players[irc_params.pid].steamOwner)
 			irc_chat(irc_params.name, ".")
 		end

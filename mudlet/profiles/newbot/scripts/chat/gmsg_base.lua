@@ -17,6 +17,7 @@ function gmsg_base()
 	result = false
 	tmp = {}
 	tmp.topic = "base"
+	tmp.commonKeywords = ",bases,homes"
 
 	if botman.debugAll then
 		debug = true -- this should be true
@@ -35,7 +36,7 @@ function gmsg_base()
 			help[2] = help[2] .. "If you have more than one base use the base number or name otherwise you will go to your first base."
 
 			tmp.command = help[1]
-			tmp.keywords = "base,teleport,home,tp"
+			tmp.keywords = "teleport,tp" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -213,7 +214,7 @@ function gmsg_base()
 			help[2] = help[2] .. "If admins specify a player but do not specify a base, the nearest base owned by that player is deleted."
 
 			tmp.command = help[1]
-			tmp.keywords = "base,home,delete,remove,clear"
+			tmp.keywords = "delete,remove,clear" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -429,7 +430,7 @@ function gmsg_base()
 			help[2] = help[2] .. "Admins can list any player's bases by including a game id, steam id, or name."
 
 			tmp.command = help[1]
-			tmp.keywords = "list,bases"
+			tmp.keywords = "list,bases" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -559,7 +560,7 @@ function gmsg_base()
 			help[2] = help[2] .. "To remove all base members use {#}clear base members {number or name of base}\n"
 
 			tmp.command = help[1]
-			tmp.keywords = "add,remove,base,home,members"
+			tmp.keywords = "add,remove,members" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -674,7 +675,7 @@ function gmsg_base()
 			help[2] = "Remove all members from the specified base."
 
 			tmp.command = help[1]
-			tmp.keywords = "clear,base,home,members"
+			tmp.keywords = "clear,members" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -764,7 +765,7 @@ function gmsg_base()
 			help[2] = "List all members of the specified base."
 
 			tmp.command = help[1]
-			tmp.keywords = "list,base,home,members"
+			tmp.keywords = "list,members" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -876,7 +877,7 @@ function gmsg_base()
 			help[2] = help[2] .. "This allows players who you haven't friended access to your base with you present."
 
 			tmp.command = help[1]
-			tmp.keywords = "pause,base,home,protection"
+			tmp.keywords = "pause,protection" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -996,7 +997,7 @@ function gmsg_base()
 			help[2] = help[2] .. "You should be inside or very close to the base when using this command."
 
 			tmp.command = help[1]
-			tmp.keywords = "base,home,protection"
+			tmp.keywords = "protection" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -1215,7 +1216,7 @@ function gmsg_base()
 			help[2] = "Give one of your bases a name or change its name."
 
 			tmp.command = help[1]
-			tmp.keywords = "base,home,name"
+			tmp.keywords = "name" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -1311,7 +1312,7 @@ function gmsg_base()
 			help[2] = "Tell the bot where your base is for base protection, raid alerting and the ability to teleport home."
 
 			tmp.command = help[1]
-			tmp.keywords = "base,home,set"
+			tmp.keywords = "set" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -1521,7 +1522,7 @@ function gmsg_base()
 			help[2] = "The {#}base and {#}home command can have a time delay between uses. If you set it to 0 there is no wait time."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,base,home,cooldown,timer,delay"
+			tmp.keywords = "set,cooldown,timer,delay" .. tmp.commonKeywords
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -1580,7 +1581,7 @@ function gmsg_base()
 			help[2] = help[2] .. "Note this cooldown is not the base cooldown timer."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,base,home,cooldown,timer,delay"
+			tmp.keywords = "set,cooldown,timer,delay" .. tmp.commonKeywords
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -1638,7 +1639,7 @@ function gmsg_base()
 			help[2] = "By default players can type {#}base to return to their base.  You can set a delay and/or a cost before the command is available."
 
 			tmp.command = help[1]
-			tmp.keywords = "base,set,cost"
+			tmp.keywords = "set,cost" .. tmp.commonKeywords
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -1707,7 +1708,7 @@ function gmsg_base()
 			help[2] = help[2] .. "The default is 0 which disables this feature.  It does not remove existing bases that are closer than the distance you set here, but they will not be able to redo {#}setbase unless they move further away."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,base,deadzone,distance,gap"
+			tmp.keywords = "set,deadzone,distance,gap" .. tmp.commonKeywords
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -1789,7 +1790,7 @@ function gmsg_base()
 			help[2] = "Set a player's first base for them where you are standing."
 
 			tmp.command = help[1]
-			tmp.keywords = "set,base,home,teleport,home,tp"
+			tmp.keywords = "set,teleport,home,tp" .. tmp.commonKeywords
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -1899,7 +1900,7 @@ function gmsg_base()
 			help[2] = "Set the base protection size for a player's base."
 
 			tmp.command = help[1]
-			tmp.keywords = "base,home,set,size"
+			tmp.keywords = "set,size" .. tmp.commonKeywords
 			tmp.accessLevel = 2
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -2008,7 +2009,7 @@ function gmsg_base()
 			help[2] = help[2] .. "Set within 50 metres of your base.  The closest base will become your new spawn point after death."
 
 			tmp.command = help[1]
-			tmp.keywords = "base,set,clear,bedroll"
+			tmp.keywords = "set,clear,bedroll" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -2079,7 +2080,7 @@ function gmsg_base()
 			help[2] = help[2] .. "Existing base sizes are not changed with this command."
 
 			tmp.command = help[1]
-			tmp.keywords = "base,set,clear,size,default"
+			tmp.keywords = "set,clear,size,default" .. tmp.commonKeywords
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -2145,7 +2146,7 @@ function gmsg_base()
 			help[2] = "By default players can set one base with the bot. This setting applies to every player that is not a member of a group."
 
 			tmp.command = help[1]
-			tmp.keywords = "bases,homes,set,max"
+			tmp.keywords = "set,max" .. tmp.commonKeywords
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -2205,7 +2206,7 @@ function gmsg_base()
 			help[2] = "By default players can protect one base. This setting applies to every player that is not a member of a group."
 
 			tmp.command = help[1]
-			tmp.keywords = "bases,homes,set,max,protection"
+			tmp.keywords = "set,max,protection" .. tmp.commonKeywords
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -2268,7 +2269,7 @@ function gmsg_base()
 			help[2] = "Turn your own base protection against you for 30 seconds to test that it works."
 
 			tmp.command = help[1]
-			tmp.keywords = "test,base,home,protection"
+			tmp.keywords = "test,protection" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -2336,7 +2337,7 @@ function gmsg_base()
 			help[2] = help[2] .. "To keep everyone out; protect the base, make it private and don't add any members."
 
 			tmp.command = help[1]
-			tmp.keywords = "base,home,friends,public,private"
+			tmp.keywords = "friends,public,private" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -2455,7 +2456,7 @@ function gmsg_base()
 			help[2] = help[2] .. "Not the same as {#}enable/disable pvp protect which is specifically for allowing the bot's base protection in PVP rules."
 
 			tmp.command = help[1]
-			tmp.keywords = "enable,disable,base,home,protection"
+			tmp.keywords = "enable,disable,protection" .. tmp.commonKeywords
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -2522,7 +2523,7 @@ function gmsg_base()
 			help[2] = "Enable or disable the home or base teleport command (except for staff)."
 
 			tmp.command = help[1]
-			tmp.keywords = "base,enable,disable,home,teleport"
+			tmp.keywords = "enable,disable,teleport" .. tmp.commonKeywords
 			tmp.accessLevel = 1
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -2589,7 +2590,7 @@ function gmsg_base()
 			help[2] = "By default base protection is disabled where pvp rules apply. You can change that by enabling it."
 
 			tmp.command = help[1]
-			tmp.keywords = "pvp,pve,base,home,protection,game,world,rules"
+			tmp.keywords = "pvp,pve,protection,game,world,rules" .. tmp.commonKeywords
 			tmp.accessLevel = 0
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -2659,7 +2660,7 @@ function gmsg_base()
 			help[2] = "Re-activate your base protection."
 
 			tmp.command = help[1]
-			tmp.keywords = "pause,base,home,protection"
+			tmp.keywords = "pause,protection" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -2732,21 +2733,21 @@ function gmsg_base()
 	end
 
 
-	local function cmd_UnprotectBase() -- converted 12/7/21
-		local baseFound, base, baseOwner, baseID, allBases, playerName
+	local function cmd_UnprotectBase()
 		local k, v
 
 		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}unprotectbase {number or base name} (optional)\n"
-			help[1] = "Or {#}unprotectbase player {player name} (admins only - unprotect nearest base owned by a specific player)\n"
-			help[1] = "Or {#}unprotectbase player {player name} bases (admins only - unprotect all bases owned by a specific player)\n"
-			help[1] = "Or {#}unprotectbase player {player name} base {number or name} (admins only - unprotect a specific player's base)"
+			help[1] = help[1] .. "Or {#}unprotect base {number or base name} (optional)\n"
+			help[1] = help[1] .. "Or {#}unprotectbase player {player name} (admins only - unprotect nearest base owned by a specific player)\n"
+			help[1] = help[1] .. "Or {#}unprotectbase player {player name} bases (admins only - unprotect all bases owned by a specific player)\n"
+			help[1] = help[1] .. "Or {#}unprotectbase player {player name} base {number or name} (admins only - unprotect a specific player's base)"
 			help[2] = "Disable base protection.\n"
 			help[2] = help[2] .. "The nearest owned base will be unprotected unless you specify a base number or name."
 
 			tmp.command = help[1]
-			tmp.keywords = "base,home,protection"
+			tmp.keywords = "protection" .. tmp.commonKeywords
 			tmp.accessLevel = 99
 			tmp.description = help[2]
 			tmp.notes = ""
@@ -2774,45 +2775,45 @@ function gmsg_base()
 			return false
 		end
 
-		if string.find(chatvars.command, "unprotectbase") then
+		if string.find(chatvars.command, "unprotectbase") or (chatvars.words[1] == "unprotect" and chatvars.words[2] == "base" or chatvars.words[2] == "home") then
 			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
 			end
 
-			if (chatvars.isAdminHidden) then
+			if (chatvars.isAdminHidden) and string.find(chatvars.command, " player ") then
 				if string.find(chatvars.command, " player ") then
 					if string.find(chatvars.command, " bases ") then
-						allBases = true
-						playerName = string.sub(chatvars.command, string.find(chatvars.command, " player ") + 9, string.find(chatvars.command, " bases ") - 1)
+						tmp.allBases = true
+						tmp.playerName = string.sub(chatvars.command, string.find(chatvars.command, " player ") + 9, string.find(chatvars.command, " bases ") - 1)
 					end
 
 					if string.find(chatvars.command, " base ") then
-						playerName = string.sub(chatvars.command, string.find(chatvars.command, " player ") + 9, string.find(chatvars.command, " base ") - 1)
-						baseID = string.sub(chatvars.command, string.find(chatvars.command, " base ") + 7)
+						tmp.playerName = string.sub(chatvars.command, string.find(chatvars.command, " player ") + 9, string.find(chatvars.command, " base ") - 1)
+						tmp.baseID = string.sub(chatvars.command, string.find(chatvars.command, " base ") + 7)
 					end
 				end
 
-				if not playerName then
-					baseOwner = chatvars.playerid
+				if not tmp.playerName then
+					tmp.baseOwner = chatvars.playerid
 				else
-					baseOwner = LookupPlayer(playerName)
+					tmp.baseOwner = LookupPlayer(tmp.playerName)
 				end
 
-				if baseOwner == "0" then
-					baseOwner = LookupArchivedPlayer(playerName)
+				if tmp.baseOwner == "0" then
+					tmp.baseOwner = LookupArchivedPlayer(tmp.playerName)
 
-					if baseOwner == "0" then
+					if tmp.baseOwner == "0" then
 						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No player found called " .. playerName .. "[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No player found called " .. tmp.playerName .. "[-]")
 						else
-							irc_chat(chatvars.ircAlias, "No player found called " .. playerName)
+							irc_chat(chatvars.ircAlias, "No player found called " .. tmp.playerName)
 						end
 					else
 						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Player " .. playersArchived[baseOwner].name .. " is archived.[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Player " .. playersArchived[tmp.baseOwner].name .. " is archived.[-]")
 						else
-							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[baseOwner].name .. " is archived.")
+							irc_chat(chatvars.ircAlias, "Player " .. playersArchived[tmp.baseOwner].name .. " is archived.")
 						end
 					end
 
@@ -2820,14 +2821,22 @@ function gmsg_base()
 					return true
 				end
 
-				if baseID then
-					baseFound, base = LookupBase(baseOwner, baseID)
+				if igplayers[tmp.baseOwner] then
+					tmp.xPos = igplayers[tmp.baseOwner].xPos
+					tmp.zPos = igplayers[tmp.baseOwner].zPos
+				else
+					tmp.xPos = players[tmp.baseOwner].xPos
+					tmp.zPos = players[tmp.baseOwner].zPos
+				end
 
-					if not baseFound then
+				if tmp.baseID then
+					tmp.baseFound, tmp.base = LookupBase(tmp.baseOwner, tmp.baseID)
+
+					if not tmp.baseFound then
 						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No base " .. baseID .. " found for player " .. players[baseOwner].name .. "[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No base " .. tmp.baseID .. " found for player " .. players[tmp.baseOwner].name .. "[-]")
 						else
-							irc_chat(chatvars.ircAlias, "No base " .. baseID .. " found for player " .. players[baseOwner].name)
+							irc_chat(chatvars.ircAlias, "No base " .. tmp.baseID .. " found for player " .. players[tmp.baseOwner].name)
 						end
 
 						botman.faultyChat = false
@@ -2835,15 +2844,15 @@ function gmsg_base()
 					end
 				end
 
-				if not allBases and not baseFound then
+				if not tmp.allBases and not tmp.baseFound and (tmp.baseOwner ~= chatvars.ircid) then
 					-- find nearest base owned by baseOwner
-					baseFound, base = getNearestBase(igplayers[baseOwner].xPos, igplayers[baseOwner].zPos, baseOwner)
+					tmp.baseFound, tmp.base = getNearestBase(tmp.xPos, tmp.zPos, tmp.baseOwner)
 
-					if not baseFound then
+					if not tmp.baseFound then
 						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No base found for player " .. players[baseOwner].name .. "[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No base found for player " .. players[tmp.baseOwner].name .. "[-]")
 						else
-							irc_chat(chatvars.ircAlias, "No base found for player " .. players[baseOwner].name)
+							irc_chat(chatvars.ircAlias, "No base found for player " .. players[tmp.baseOwner].name)
 						end
 
 						botman.faultyChat = false
@@ -2851,31 +2860,31 @@ function gmsg_base()
 					end
 				end
 
-				if allBases then
+				if tmp.allBases then
 					for k,v in pairs(bases) do
-						if v.steam == baseOwner then
+						if v.steam == tmp.baseOwner then
 							v.protect = false
 							conn:execute("UPDATE bases SET protect = 0 WHERE steam = '" .. v.steam .. "' AND baseNumber = " .. v.baseNumber)
 						end
 					end
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]All bases belonging to player " .. players[baseOwner].name .. " have been unprotected.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]All bases belonging to player " .. players[tmp.baseOwner].name .. " have been unprotected.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "All bases belonging to player " .. players[baseOwner].name .. " have been unprotected.")
+						irc_chat(chatvars.ircAlias, "All bases belonging to player " .. players[tmp.baseOwner].name .. " have been unprotected.")
 					end
 
 					botman.faultyChat = false
 					return true
 				else
-					if baseFound then
-						bases[base.steam .. "_" .. base.baseNumber].protect = false
-						conn:execute("UPDATE bases SET protect = 0 WHERE steam = '" .. base.steam .. "' AND baseNumber = " .. base.baseNumber)
+					if tmp.baseFound then
+						bases[tmp.base.steam .. "_" .. tmp.base.baseNumber].protect = false
+						conn:execute("UPDATE bases SET protect = 0 WHERE steam = '" .. tmp.base.steam .. "' AND baseNumber = " .. tmp.base.baseNumber)
 
 						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Base " .. string.trim(base.baseNumber .. " " .. base.title) .. " belonging to player " .. players[baseOwner].name .. " has been unprotected.[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Base " .. string.trim(tmp.base.baseNumber .. " " .. tmp.base.title) .. " belonging to player " .. players[tmp.baseOwner].name .. " has been unprotected.[-]")
 						else
-							irc_chat(chatvars.ircAlias, "Base " .. string.trim(base.baseNumber .. " " .. base.title) .. " belonging to player " .. players[baseOwner].name .. " has been unprotected.")
+							irc_chat(chatvars.ircAlias, "Base " .. string.trim(tmp.base.baseNumber .. " " .. tmp.base.title) .. " belonging to player " .. players[tmp.baseOwner].name .. " has been unprotected.")
 						end
 
 						botman.faultyChat = false
@@ -2883,33 +2892,52 @@ function gmsg_base()
 					end
 				end
 			else
-				baseOwner = chatvars.playerid
+				tmp.baseOwner = chatvars.playerid
 
-				if chatvars.words[2] then
-					baseID = string.sub(chatvars.command, 16)
+				if igplayers[tmp.baseOwner] then
+					tmp.xPos = igplayers[tmp.baseOwner].xPos
+					tmp.zPos = igplayers[tmp.baseOwner].zPos
 				else
-					-- find nearest base owned by baseOwner
-					baseFound, base = getNearestBase(igplayers[baseOwner].xPos, igplayers[baseOwner].zPos, baseOwner)
+					tmp.xPos = players[tmp.baseOwner].xPos
+					tmp.zPos = players[tmp.baseOwner].zPos
 				end
 
-				if baseFound then
-					bases[base.steam .. "_" .. base.baseNumber].protect = false
-					conn:execute("UPDATE bases SET protect = 0 WHERE steam = '" .. base.steam .. "' AND baseNumber = " .. base.baseNumber)
+				if chatvars.words[1] == "unprotect" then
+					if chatvars.words[3] then
+						tmp.baseID = chatvars.words[3]
+						tmp.baseFound, tmp.base = LookupBase(tmp.baseOwner, tmp.baseID)
+					else
+						-- find nearest base owned by baseOwner
+						tmp.baseFound, tmp.base = getNearestBase(tmp.xPos, tmp.zPos, tmp.baseOwner)
+					end
+				else
+					if chatvars.words[2] then
+						tmp.baseID = string.sub(chatvars.command, 16)
+						tmp.baseFound, tmp.base = LookupBase(tmp.baseOwner, tmp.baseID)
+					else
+						-- find nearest base owned by baseOwner
+						tmp.baseFound, tmp.base = getNearestBase(tmp.xPos, tmp.zPos, tmp.baseOwner)
+					end
+				end
+
+				if tmp.baseFound then
+					bases[tmp.base.steam .. "_" .. tmp.base.baseNumber].protect = false
+					conn:execute("UPDATE bases SET protect = 0 WHERE steam = '" .. tmp.base.steam .. "' AND baseNumber = " .. tmp.base.baseNumber)
 
 					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot protection for your base " .. string.trim(base.baseNumber .. " " .. base.title) .. " has been removed.[-]")
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The bot protection for your base " .. string.trim(tmp.base.baseNumber .. " " .. tmp.base.title) .. " has been removed.[-]")
 					else
-						irc_chat(chatvars.ircAlias, "The bot protection for your base " .. string.trim(base.baseNumber .. " " .. base.title) .. " has been removed.")
+						irc_chat(chatvars.ircAlias, "The bot protection for your base " .. string.trim(tmp.base.baseNumber .. " " .. tmp.base.title) .. " has been removed.")
 					end
 
 					botman.faultyChat = false
 					return true
 				else
-					if baseID then
+					if tmp.baseID then
 						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No base " .. baseID .. " found.[-]")
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No base " .. tmp.baseID .. " found.[-]")
 						else
-							irc_chat(chatvars.ircAlias, "No base " .. baseID .. " found.")
+							irc_chat(chatvars.ircAlias, "No base " .. tmp.baseID .. " found.")
 						end
 					else
 						if (chatvars.playername ~= "Server") then

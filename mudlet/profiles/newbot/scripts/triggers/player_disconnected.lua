@@ -96,7 +96,6 @@ function playerDisconnected(line)
 	end
 
 	-- set the player offline in bots db
-	--connBots:execute("UPDATE players set online = 0 where steam = '" .. tmp.steam .. "' AND botID = " .. server.botID)
 	saveDisconnectedPlayer(tmp.steam)
 
 	if tonumber(server.reservedSlots) > 0 then
@@ -105,15 +104,6 @@ function playerDisconnected(line)
 
 	-- check how many claims they have placed
 	sendCommand("llp " .. tmp.userID .. " parseable")
-
-	-- -- clean up admin list
-	-- if tablelength(staffListSteam) > 0 then
-		-- if staffListSteam[tmp.steam] and tmp.userID then
-			-- sendCommand("admin remove Steam_" .. tmp.steam)
-			-- sendCommand("admin add " .. tmp.userID .. " " .. staffListSteam[tmp.steam].accessLevel)
-			-- staffListSteam[tmp.steam] = nil
-		-- end
-	-- end
 
 	if (debug) then dbug("playerDisconnected finished") end
 end

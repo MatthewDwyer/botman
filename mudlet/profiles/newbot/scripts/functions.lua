@@ -2003,6 +2003,7 @@ end
 onCloseMudlet = function()
 	-- stuff to do before Mudlet stops running
 	telnetLogFile:close()
+	saveTempTables()
 end
 
 
@@ -2439,7 +2440,16 @@ end
 
 function restartBot()
 	savePlayers()
-	closeMudlet()
+	tempTimer( 3, [[closeMudlet()]] )
+end
+
+
+function saveTempTables()
+	table.save(homedir .. "/temp/igplayers.lua", igplayers)
+	table.save(homedir .. "/temp/botman.lua", botman)
+	table.save(homedir .. "/temp/server.lua", server)
+	table.save(homedir .. "/temp/botStatus.lua", botStatus)
+	table.save(homedir .. "/temp/staffList.lua", staffList)
 end
 
 
@@ -3513,6 +3523,22 @@ function read_Commands_JSON()
 end
 
 
+function onHttpPostError(_, errorMsg, url)
+-- Socket operation timed out
+-- Error transferring ... - server replied: Forbidden"
+
+	if string.find(errorMsg, "operation timed out", nil, true) then
+		botStatus.APIWorking = false
+
+		-- stop using the API and use telnet instead
+		server.useAllocsWebAPI = false
+		server.readLogUsingTelnet = true
+		conn:execute("UPDATE server set useAllocsWebAPI = 0, readLogUsingTelnet = 1")
+		irc_chat(server.ircAlerts, "Alloc's API is not responding. The bot is now using telnet until the next server restart.")
+	end
+end
+
+
 function onHttpPostDone(_, url, body)
 	local temp
 
@@ -4240,6 +4266,10 @@ function kick(id, reason)
 
 	if tmp.steam == "0" then
 		tmp.userID = tmp.id
+	end
+
+	if string.len(tmp.userID) == 17 then
+		tmp.userID = "Steam_" .. tmp.userID
 	end
 
 	if tmp.steam ~= "0" then

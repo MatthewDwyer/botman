@@ -467,6 +467,13 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 
 if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) end
 
+	-- probably tempory new private chat hook
+	if string.find(line, "INF Botman Private Chat") then
+		gmsg(line)
+
+		return
+	end
+
 	-- look for general stuff
 	died = false
 	if (string.find(line, "INF GMSG") and string.find(line, "eliminated")) then
@@ -1135,6 +1142,13 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 			return
 		end
 
+		if (string.find(line, "WebDashboardPort =")) then
+			server.webPanelPort = number
+			conn:execute("UPDATE server SET webPanelPort = " .. number)
+
+			return
+		end
+
 		if (string.find(line, "HideCommandExecutionLog =")) then
 			server.HideCommandExecutionLog = number
 
@@ -1469,8 +1483,9 @@ if (debug) then dbug("debug matchAll line " .. debugger.getinfo(1).currentline) 
 		server.gameVersion = string.trim(string.sub(line, string.find(line, "Game version:") + 14, string.find(line, "Compatibility") - 2))
 		if botman.dbConnected then conn:execute("UPDATE server SET gameVersion = '" .. escape(server.gameVersion) .. "'") end
 
-		temp = string.split(server.gameVersion, " ")
-		server.gameVersionNumber = tonumber(temp[2])
+		--temp = string.split(server.gameVersion, " ")
+		--server.gameVersionNumber = tonumber(temp[2])
+		server.gameVersionNumber = 3
 
 		return
 	end

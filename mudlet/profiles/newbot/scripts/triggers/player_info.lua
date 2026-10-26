@@ -1423,9 +1423,6 @@ if debug then dbug("debug playerInfoTrigger line " .. debugger.getinfo(1).curren
 		lpdata.userID = temp[2]
 
 		playersOnlineList[lpdata.steam] = {}
-		botStatus.playersOnlineList[lpdata.steam] = {}
-		botStatus.playersOnlineList[lpdata.steam].steam = lpdata.steam
-
 
 		temp = string.split(data[18], "=")
 		lpdata.ip = temp[2]

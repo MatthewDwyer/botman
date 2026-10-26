@@ -135,18 +135,18 @@ function reconnectTimer()
 		toggleTriggers("api online")
 	end
 
-	if server.useAllocsWebAPI and not server.readLogUsingTelnet then
-		-- the bot is in API mode and is not using telnet to read the server log so we don't need to try to reconnect to telnet.
-		return
-	end
+	-- if server.useAllocsWebAPI and not server.readLogUsingTelnet then
+		-- -- the bot is in API mode and is not using telnet to read the server log so we don't need to try to reconnect to telnet.
+		-- return
+	-- end
 
 	if (not botman.botOffline) and server.useAllocsWebAPI and (os.time() - botman.lastAPIResponseTimestamp > 60) and tonumber(server.webPanelPort) > 0 and server.allocs and tonumber(botman.playersOnline) > 0 then
 		connectToAPI()
 	end
 
-	if (not botman.botOffline) and server.useAllocsWebAPI and (os.time() - botman.lastAPIResponseTimestamp > 1800) and tonumber(server.webPanelPort) > 0 and server.allocs and tonumber(botman.playersOnline) > 0 then
+	if (not botman.botOffline) and server.useAllocsWebAPI and (os.time() - botman.lastAPIResponseTimestamp > 1800) and tonumber(server.webPanelPort) > 0 and server.allocs then
 		if server.allowBotRestarts then
-			irc_chat(server.ircAlerts, "Fault detected. Unable to communicate with Alloc's Web API. This is a bug in the bot's engine so the bot is restarting now which will fix it.")
+			irc_chat(server.ircAlerts, "Fault detected. Unable to communicate with Alloc's Web API. Automatically restarting the bot now as that should fix it.")
 			tempTimer(5, [[restartBot()]])
 		end
 	end
@@ -179,7 +179,7 @@ function reconnectTimer()
 		return
 	end
 
-	if (not botman.telnetOffline) and server.useAllocsWebAPI and tonumber(botman.APIOfflineCount) > 180 then
+	if (not botman.telnetOffline) and server.useAllocsWebAPI and tonumber(botman.APIOfflineCount) > 180 and not server.telnetDisabled then
 		-- switch to using telnet only after 1 hour has passed with telnet working and Alloc's web API not working
 		botman.APIOfflineCount = 0
 		server.useAllocsWebAPI = false

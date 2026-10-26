@@ -614,7 +614,7 @@ function gmsg_fun()
 			return false
 		end
 
-		if (chatvars.words[1] == "quit") then
+		if chatvars.words[1] == "quit" and tonumber(chatvars.wordCount) > 1 then
 			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
@@ -670,7 +670,7 @@ function gmsg_fun()
 			return false
 		end
 
-		if chatvars.words[1] == "quit" or chatvars.words[1] == "ragequit" then
+		if chatvars.words[1] == "quit" or chatvars.words[1] == "ragequit" and not chatvars.words[2] then
 			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
@@ -868,7 +868,7 @@ function gmsg_fun()
 					sendCommand("give " .. chatvars.userID .. " resourceCoal 1")
 					sendCommand("give " .. chatvars.userID .. " thrownAmmoPipeBomb 1")
 					sendCommand("give " .. chatvars.userID .. " medicalSplint 1")
-					sendCommand("give " .. chatvars.userID .. " armorSantaHat 1")
+					sendCommand("give " .. chatvars.userID .. " armorSantaHelmet 1")
 					sendCommand("give " .. chatvars.userID .. " woodChair1 1")
 				end
 
@@ -878,7 +878,7 @@ function gmsg_fun()
 					sendCommand("bm-give " .. chatvars.userID .. " resourceCoal 1")
 					sendCommand("bm-give " .. chatvars.userID .. " thrownAmmoPipeBomb 1")
 					sendCommand("bm-give " .. chatvars.userID .. " medicalSplint 1")
-					sendCommand("bm-give " .. chatvars.userID .. " armorSantaHat 1")
+					sendCommand("bm-give " .. chatvars.userID .. " armorSantaHelmet 1")
 					sendCommand("bm-give " .. chatvars.userID .. " woodChair1 1")
 				end
 
@@ -2076,20 +2076,20 @@ if debug then dbug("debug fun") end
 
 	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
 
-	result = cmd_RageQuit()
-
-	if result then
-		if debug then dbug("debug cmd_RageQuit triggered") end
-		return result, "cmd_RageQuit"
-	end
-
-	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
-
 	result = cmd_QuitWithMessage()
 
 	if result then
 		if debug then dbug("debug cmd_QuitWithMessage triggered") end
 		return result, "cmd_QuitWithMessage"
+	end
+
+	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end
+
+	result = cmd_RageQuit()
+
+	if result then
+		if debug then dbug("debug cmd_RageQuit triggered") end
+		return result, "cmd_RageQuit"
 	end
 
 	if (debug) then dbug("debug fun line " .. debugger.getinfo(1).currentline) end

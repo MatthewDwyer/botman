@@ -447,16 +447,16 @@ if debug then dbug("debug processPlayerInventory line " .. debugger.getinfo(1).c
 	if (tmp.ban) and (server.gameType ~= "cre") then
 		if not tmp.admin then
 			tmp.stopProcessing = true
-			banPlayer(player.platform, player.userID, steam, "1 year", tmp.banReason, "")
+			banPlayer(player.platform, player.userID, steam, "10 year", tmp.banReason, "")
 
-			message("say [" .. server.chatColour .. "]Banning player " .. player.name .. " 1 year for suspected inventory cheating.[-]")
+			message("say [" .. server.chatColour .. "]Banning player " .. player.name .. " 10 years for suspected inventory cheating.[-]")
 			irc_chat(server.ircMain, "[BANNED] Player " .. steam .. " " .. player.name .. " has has been banned for " .. tmp.banReason .. ".")
-			irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Player " .. steam .. " " .. player.name .. " has has been banned for 1 year for " .. tmp.banReason .. ".")
-			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. player.xPos .. "," .. player.yPos .. "," .. player.zPos .. ",'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(player.name) .. " has has been banned for 1 year for " .. escape(tmp.banReason) .. ".'," .. steam .. ")")
+			irc_chat(server.ircAlerts, botman.serverTime .. " " .. server.gameDate .. " [BANNED] Player " .. steam .. " " .. player.name .. " has has been banned for 10 years for " .. tmp.banReason .. ".")
+			conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. player.xPos .. "," .. player.yPos .. "," .. player.zPos .. ",'" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(player.name) .. " has has been banned for 10 years for " .. escape(tmp.banReason) .. ".'," .. steam .. ")")
 
 			if botman.botsConnected then
 				-- copy in bots db
-				connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(player.name) .. " has has been banned for 1 year for " .. escape(tmp.banReason) .. ".'," .. steam .. ")")
+				connBots:execute("INSERT INTO events (server, serverTime, type, event, steam) VALUES ('" .. escape(server.serverName) .. "','" .. botman.serverTime .. "','ban','Player " .. steam .. " " .. escape(player.name) .. " has has been banned for 10 years for " .. escape(tmp.banReason) .. ".'," .. steam .. ")")
 			end
 
 			irc_chat(server.ircAlerts, server.gameDate .. " Items detected: " .. tmp.itemsFound)

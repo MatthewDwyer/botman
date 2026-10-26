@@ -24,7 +24,7 @@ function gmsg_locations()
 
 -- ################## location command functions ##################
 
-	local function cmd_AddLocation()
+	local function cmd_AddLocation() --recoded tested
 		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}location add {name}"
@@ -65,8 +65,7 @@ function gmsg_locations()
 				return true
 			end
 
-			pos = string.find(chatvars.commandOld, chatvars.wordsOld[3])
-			locationName = string.sub(chatvars.commandOld, pos)
+			locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "add") + 4)
 			locationName = string.trim(locationName)
 			loc = LookupLocation(locationName)
 
@@ -360,10 +359,10 @@ function gmsg_locations()
 			end
 
 			if not lobby then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Make or set a lobby or spawn location first.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "Make or set a lobby or spawn location first.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Make or set a lobby or spawn location first.[-]")
 				end
 
 				botman.faultyChat = false
@@ -399,10 +398,10 @@ function gmsg_locations()
 					cmd = "tele " .. userID .. " " .. locations[lobby].x .. " " .. locations[lobby].y + 1 .. " " .. locations[lobby].z
 					teleport(cmd, steam, userID)
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Player " .. players[steam].name .. " has been sent to " .. lobby .. ".[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Player " .. players[steam].name .. " has been sent to " .. lobby .. ".")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Player " .. players[steam].name .. " has been sent to " .. lobby .. ".[-]")
 					end
 				else
 					if not isArchived then
@@ -413,17 +412,17 @@ function gmsg_locations()
 						conn:execute("UPDATE playersArchived set location = '" .. lobby .. "' WHERE steam = '" .. steam .. "'")
 					end
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. playerName .. " will spawn at " .. lobby .. " next time they connect to the server.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, playerName .. " will spawn at " .. lobby .. " next time they connect to the server.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. playerName .. " will spawn at " .. lobby .. " next time they connect to the server.[-]")
 					end
 				end
 			else
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No player matched that name.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "No player matched that name.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No player matched that name.[-]")
 				end
 			end
 
@@ -433,7 +432,7 @@ function gmsg_locations()
 	end
 
 
-	local function cmd_LocationClearReset()
+	local function cmd_LocationClearReset() --recoded
 		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}location clear reset {location name}"
@@ -477,7 +476,7 @@ function gmsg_locations()
 			locationName = ""
 
 			if chatvars.words[4] then
-				locationName = string.sub(chatvars.command, 23)
+				locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "reset") + 5)
 				locationName = string.trim(locationName)
 			end
 
@@ -488,10 +487,10 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				locations[loc].resetZone = false
@@ -499,7 +498,7 @@ function gmsg_locations()
 
 				message("say [" .. server.chatColour .. "]The location called " .. loc .. " is no longer a reset zone[-]")
 
-				if (chatvars.playername ~= "Server") then
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is no longer a reset zone.")
 				end
 			end
@@ -563,16 +562,16 @@ function gmsg_locations()
 			if loc ~= nil then
 				connSQL:execute("DELETE FROM locationSpawns WHERE location = '" .. connMEM:escape(loc) .. "'")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Location " .. loc .. "'s teleports have been deleted.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "Location " .. loc .. "'s teleports have been deleted.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Location " .. loc .. "'s teleports have been deleted.[-]")
 				end
 			else
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			end
 
@@ -883,10 +882,10 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				locations[loc].resetZone = true
@@ -894,7 +893,7 @@ function gmsg_locations()
 
 				message("say [" .. server.chatColour .. "]The location called " .. loc .. " is now a reset zone[-]")
 
-				if (chatvars.playername ~= "Server") then
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now a reset zone.")
 				end
 			end
@@ -1027,7 +1026,7 @@ function gmsg_locations()
 	end
 
 
-	local function cmd_RemoveLocation()
+	local function cmd_RemoveLocation() --recoded tested
 		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}location remove {name}"
@@ -1071,11 +1070,11 @@ function gmsg_locations()
 			locationName = ""
 
 			if chatvars.words[3] then
-				locationName = string.sub(chatvars.command, 18)
+				locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "remove") + 6)
 				locationName = string.trim(locationName)
 			end
 
-			if (chatvars.playername ~= "Server") then
+			if (chatvars.ircid ~= "0") then
 				if locationName == "" then
 					locationName = chatvars.inLocation
 				end
@@ -1084,28 +1083,28 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if locationName == string.lower("prison") and server.gameType ~= "pvp" then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The server needs a prison.  PVPs will be temp-banned instead.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "The server needs a prison.  PVPs will be temp-banned instead.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The server needs a prison.  PVPs will be temp-banned instead.[-]")
 				end
 			end
 
 			if (loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				locations[loc] = nil
 				connSQL:execute("DELETE FROM locationSpawns WHERE location = '" .. connMEM:escape(loc) .. "'")
 				conn:execute("DELETE FROM locations WHERE name = '" .. escape(loc) .. "'")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You removed a location called " .. loc .. ".[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "You removed a location called " .. loc)
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You removed a location called " .. loc .. ".[-]")
 				end
 			end
 
@@ -1162,10 +1161,10 @@ function gmsg_locations()
 			newLocation = string.trim(newLocation)
 
 			if locations[newLocation] then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. newLocation .. " already exists.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "The location " .. newLocation .. " already exists.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. newLocation .. " already exists.[-]")
 				end
 
 				botman.faultyChat = false
@@ -1177,10 +1176,10 @@ function gmsg_locations()
 			loc = LookupLocation(oldLocation)
 
 			if not locations[loc] then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. oldLocation .. " does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "The location " .. oldLocation .. " does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. oldLocation .. " does not exist.[-]")
 				end
 
 				botman.faultyChat = false
@@ -1188,10 +1187,10 @@ function gmsg_locations()
 			end
 
 			if newLocation == "" then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]New location name required.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "New location name required.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]New location name required.[-]")
 				end
 
 				botman.faultyChat = false
@@ -1206,10 +1205,10 @@ function gmsg_locations()
 				conn:execute("UPDATE locations SET name = '" .. escape(newLocation) .. "' WHERE name = '" .. escape(loc) .. "'")
 				conn:execute("INSERT INTO events (x, y, z, serverTime, type, event, steam) VALUES (" .. locations[newLocation].x .. "," .. locations[newLocation].y .. "," .. locations[newLocation].z .. ",'" .. botman.serverTime .. "','location change','Location " .. escape(loc) .. " renamed " .. escape(newLocation) .. "','" .. chatvars.playerid .. "')")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You have renamed " .. loc .. " to " .. newLocation .. ".[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "You have renamed " .. loc .. " to " .. newLocation)
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You have renamed " .. loc .. " to " .. newLocation .. ".[-]")
 				end
 			end
 
@@ -1272,10 +1271,10 @@ function gmsg_locations()
 				end
 
 				if tmp.location == "" then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Location name required.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Location name required.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Location name required.[-]")
 					end
 
 					botman.faultyChat = false
@@ -1283,10 +1282,10 @@ function gmsg_locations()
 				end
 
 				if tmp.category == "" then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Category required.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Category required.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Category required.[-]")
 					end
 
 					botman.faultyChat = false
@@ -1296,10 +1295,10 @@ function gmsg_locations()
 				tmp.loc = LookupLocation(tmp.location)
 
 				if tmp.loc == nil then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location doesn't exist.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "That location doesn't exist.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location doesn't exist.[-]")
 					end
 
 					botman.faultyChat = false
@@ -1314,10 +1313,10 @@ function gmsg_locations()
 				-- reload location categories from the database
 				loadLocationCategories()
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Location " .. tmp.loc .. " has been added to the location category " .. tmp.category .. ".[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "Location " .. tmp.loc .. " has been added to the location category " .. tmp.category)
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Location " .. tmp.loc .. " has been added to the location category " .. tmp.category .. ".[-]")
 				end
 			else
 				tmp.location = string.trim(string.sub(chatvars.commandOld, string.find(chatvars.command, "location ") + 9, string.find(chatvars.command, " clear") - 1))
@@ -1327,10 +1326,10 @@ function gmsg_locations()
 				end
 
 				if tmp.location == "" then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Location name required.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Location name required.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Location name required.[-]")
 					end
 
 					botman.faultyChat = false
@@ -1340,10 +1339,10 @@ function gmsg_locations()
 				tmp.loc = LookupLocation(tmp.location)
 
 				if tmp.loc == nil then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location doesn't exist.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "That location doesn't exist.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location doesn't exist.[-]")
 					end
 
 					botman.faultyChat = false
@@ -1353,10 +1352,10 @@ function gmsg_locations()
 				locations[tmp.loc].locationCategory = ""
 				conn:execute("UPDATE locations set locationCategory = '' WHERE name = '" .. escape(tmp.loc) .. "'")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Location " .. tmp.loc .. "'s category has been cleared.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "Location " .. tmp.loc .. "'s category has been cleared.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Location " .. tmp.loc .. "'s category has been cleared.[-]")
 				end
 			end
 
@@ -1421,18 +1420,18 @@ function gmsg_locations()
 				locations[loc].accessLevel = math.abs(chatvars.number)
 				conn:execute("UPDATE locations set accessLevel = " .. locations[loc].accessLevel .. " WHERE name = '" .. escape(locationName) .. "'")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " is restricted to players with access level " .. locations[loc].accessLevel .. " and above.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "The location " .. loc .. " is restricted to players with access level " .. locations[loc].accessLevel .. " and above.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " is restricted to players with access level " .. locations[loc].accessLevel .. " and above.[-]")
 				end
 			end
 
 			if loc == nil then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			end
 
@@ -1493,10 +1492,10 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if loc == nil then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 
 				botman.faultyChat = false
@@ -1504,10 +1503,10 @@ function gmsg_locations()
 			end
 
 			if chatvars.number == nil then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Missing close hour, a number from 0 to 23.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "Missing close hour, a number from 0 to 23.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Missing close hour, a number from 0 to 23.[-]")
 				end
 
 				botman.faultyChat = false
@@ -1515,10 +1514,10 @@ function gmsg_locations()
 			end
 
 			if tonumber(chatvars.number) < 0 or tonumber(chatvars.number) > 23 then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Close hour outside of range 0 to 23.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "Close hour outside of range 0 to 23.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Close hour outside of range 0 to 23.[-]")
 				end
 
 				botman.faultyChat = false
@@ -1528,10 +1527,10 @@ function gmsg_locations()
 			locations[loc].timeClosed = chatvars.number
 			conn:execute("UPDATE locations SET timeClosed = " .. chatvars.number .. " WHERE name = '" .. escape(loc) .. "'")
 
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. loc .. " will be closed at " .. locations[loc].timeClosed .. ":00[-]")
-			else
+			if (chatvars.ircid ~= "0") then
 				irc_chat(chatvars.ircAlias, loc .. " will be closed at " .. locations[loc].timeClosed .. ":00")
+			else
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. loc .. " will be closed at " .. locations[loc].timeClosed .. ":00[-]")
 			end
 
 			botman.faultyChat = false
@@ -1589,18 +1588,18 @@ function gmsg_locations()
 				locations[loc].coolDownTimer = math.floor(tonumber(chatvars.number))
 				conn:execute("UPDATE locations set coolDownTimer = " .. math.floor(tonumber(chatvars.number)) .. " WHERE name = '" .. escape(loc) .. "'")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " now has a cooldown timer of " .. locations[loc].coolDownTimer .. " seconds.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "The location " .. loc .. " now has a cooldown timer of " .. locations[loc].coolDownTimer .. " seconds.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " now has a cooldown timer of " .. locations[loc].coolDownTimer .. " seconds.[-]")
 				end
 			end
 
 			if loc == nil then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			end
 
@@ -1664,18 +1663,18 @@ function gmsg_locations()
 
 				conn:execute("UPDATE locations set cost = " .. math.floor(tonumber(chatvars.number)) .. ", currency = '" .. escape(locations[loc].currency) .. "' WHERE name = '" .. escape(locationName) .. "'")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " requires " .. locations[loc].cost .. " " .. locations[loc].currency .. " to teleport.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "The location " .. loc .. " requires " .. locations[loc].cost .. " " .. locations[loc].currency .. " to teleport.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " requires " .. locations[loc].cost .. " " .. locations[loc].currency .. " to teleport.[-]")
 				end
 			end
 
 			if loc == nil then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			end
 
@@ -1731,10 +1730,10 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if loc == nil then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 
 				botman.faultyChat = false
@@ -1742,10 +1741,10 @@ function gmsg_locations()
 			end
 
 			if chatvars.number == nil then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Missing day, a number from 0 to 7.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "Missing day, a number from 0 to 7.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Missing day, a number from 0 to 7.[-]")
 				end
 
 				botman.faultyChat = false
@@ -1757,10 +1756,10 @@ function gmsg_locations()
 			locations[loc].dayClosed = chatvars.number
 			conn:execute("UPDATE locations SET dayClosed = " .. chatvars.number .. " WHERE name = '" .. escape(loc) .. "'")
 
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. loc .. " will be closed on day " .. locations[loc].dayClosed .. "[-]")
-			else
+			if (chatvars.ircid ~= "0") then
 				irc_chat(chatvars.ircAlias, loc .. " will be closed on day " .. locations[loc].dayClosed)
+			else
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. loc .. " will be closed on day " .. locations[loc].dayClosed .. "[-]")
 			end
 
 			botman.faultyChat = false
@@ -1814,19 +1813,19 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				miniGame = string.sub(chatvars.command, string.find(chatvars.command, "minigame") + 9)
 
 				if (miniGame == nil) then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You didn't enter a minigame (eg. ctf, contest).[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "You didn't enter a minigame (eg. ctf, contest).")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You didn't enter a minigame (eg. ctf, contest).[-]")
 					end
 
 					botman.faultyChat = false
@@ -1836,10 +1835,10 @@ function gmsg_locations()
 				locations[loc].miniGame = miniGame
 				conn:execute("UPDATE locations set miniGame = '" .. escape(miniGame) .. "' WHERE name = '" .. escape(loc) .. "'")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " is the mini-game " .. miniGame .. ".[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "The location " .. loc .. " is the mini-game " .. miniGame)
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " is the mini-game " .. miniGame .. ".[-]")
 				end
 			end
 
@@ -1895,10 +1894,10 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if loc == nil then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 
 				botman.faultyChat = false
@@ -1906,10 +1905,10 @@ function gmsg_locations()
 			end
 
 			if chatvars.number == nil then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Missing open hour, a number from 0 to 23.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "Missing open hour, a number from 0 to 23.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Missing open hour, a number from 0 to 23.[-]")
 				end
 
 				botman.faultyChat = false
@@ -1917,10 +1916,10 @@ function gmsg_locations()
 			end
 
 			if tonumber(chatvars.number) < 0 or tonumber(chatvars.number) > 23 then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Open hour outside of range 0 to 23.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "Open hour outside of range 0 to 23.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Open hour outside of range 0 to 23.[-]")
 				end
 
 				botman.faultyChat = false
@@ -1930,10 +1929,10 @@ function gmsg_locations()
 			locations[loc].timeOpen = chatvars.number
 			conn:execute("UPDATE locations SET timeOpen = " .. chatvars.number .. " WHERE name = '" .. escape(loc) .. "'")
 
-			if (chatvars.playername ~= "Server") then
-				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. loc .. " will open at " .. locations[loc].timeOpen .. ":00[-]")
-			else
+			if (chatvars.ircid ~= "0") then
 				irc_chat(chatvars.ircAlias, loc .. " will open at " .. locations[loc].timeOpen .. ":00")
+			else
+				message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]" .. loc .. " will open at " .. locations[loc].timeOpen .. ":00[-]")
 			end
 
 			botman.faultyChat = false
@@ -1995,10 +1994,10 @@ function gmsg_locations()
 				if not (steam == "0") then
 					playerName = playersArchived[steam].name
 				else
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No player matched that name.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "No player matched that name.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]No player matched that name.[-]")
 					end
 
 					botman.faultyChat = false
@@ -2017,10 +2016,10 @@ function gmsg_locations()
 				conn:execute("UPDATE locations set owner = '" .. steam .. "' WHERE name = '" .. escape(loc) .. "'")
 				message("say [" .. server.chatColour .. "]" .. playerName .. " is the proud new owner of the location called " .. loc .. "[-]")
 			else
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			end
 
@@ -2116,10 +2115,10 @@ function gmsg_locations()
 				locations[tmp.loc].maximumLevel = tmp.maxLevel
 
 				if tmp.minLevel == 0 and tmp.maxLevel == 0 then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. tmp.loc .. " is not restricted by player level.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location " .. tmp.loc .. " is not restricted by player level.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. tmp.loc .. " is not restricted by player level.[-]")
 					end
 
 					botman.faultyChat = false
@@ -2128,16 +2127,16 @@ function gmsg_locations()
 
 				if tmp.minLevel > 0 then
 					if tmp.maxLevel > 0 then
-						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. tmp.loc .. " is restricted to players with player levels from " .. tmp.minLevel .. " to " .. tmp.maxLevel .. ".[-]")
-						else
+						if (chatvars.ircid ~= "0") then
 							irc_chat(chatvars.ircAlias, "The location " .. tmp.loc .. " is restricted to players with player levels from " .. tmp.minLevel .. " to " .. tmp.maxLevel .. ".")
+						else
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. tmp.loc .. " is restricted to players with player levels from " .. tmp.minLevel .. " to " .. tmp.maxLevel .. ".[-]")
 						end
 					else
-						if (chatvars.playername ~= "Server") then
-							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. tmp.loc .. " is restricted to players with minimum player level of " .. tmp.minLevel .. " and above.[-]")
-						else
+						if (chatvars.ircid ~= "0") then
 							irc_chat(chatvars.ircAlias, "The location " .. tmp.locationName .. " is restricted to players with minimum player level of " .. tmp.minLevel .. " and above.")
+						else
+							message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. tmp.loc .. " is restricted to players with minimum player level of " .. tmp.minLevel .. " and above.[-]")
 						end
 					end
 
@@ -2146,19 +2145,19 @@ function gmsg_locations()
 				end
 
 				if tmp.maxLevel > 0 then
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. tmp.loc .. " is restricted to players with a player level below " .. tmp.maxLevel + 1 .. ".[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location " .. tmp.loc .. " is restricted to players with a player level below " .. tmp.maxLevel + 1 .. ".")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. tmp.loc .. " is restricted to players with a player level below " .. tmp.maxLevel + 1 .. ".[-]")
 					end
 				end
 			end
 
 			if tmp.loc == nil then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			end
 
@@ -2218,10 +2217,10 @@ function gmsg_locations()
 				locations[loc].size = math.floor(tonumber(chatvars.number))
 				conn:execute("UPDATE locations set size = " .. math.floor(tonumber(chatvars.number)) .. ", protectSize = " .. math.floor(tonumber(chatvars.number)) .. " WHERE name = '" .. escape(loc) .. "'")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " now spans " .. tonumber(chatvars.number * 2) .. " metres.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "The location " .. loc .. " now spans " .. tonumber(chatvars.number * 2) .. " metres.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " now spans " .. tonumber(chatvars.number * 2) .. " metres.[-]")
 				end
 
 				if loc == string.lower("prison") then
@@ -2231,10 +2230,10 @@ function gmsg_locations()
 			end
 
 			if loc == nil then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			end
 
@@ -2373,29 +2372,29 @@ function gmsg_locations()
 			tmp.loc = LookupLocation(tmp.locationName)
 
 			if (tmp.loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				if chatvars.words[2] == "allow" then
 					locations[tmp.loc].allowBase = true
 					conn:execute("UPDATE locations SET allowBase = 1 WHERE name = '" .. escape(tmp.loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players may setbase in " .. tmp.loc .. ".[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Players may setbase in " .. tmp.loc .. ".")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players may setbase in " .. tmp.loc .. ".[-]")
 					end
 				else
 					locations[tmp.loc].allowBase = false
 					conn:execute("UPDATE locations SET allowBase = 0 WHERE name = '" .. escape(tmp.loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players cannot setbase in " .. tmp.loc .. ".[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Players cannot setbase in " .. tmp.loc .. ".")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players cannot setbase in " .. tmp.loc .. ".[-]")
 					end
 				end
 			end
@@ -2406,7 +2405,7 @@ function gmsg_locations()
 	end
 
 
-	local function cmd_ToggleLocationEnabled()
+	local function cmd_ToggleLocationEnabled() --tested
 		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}location enable (or disable) {name}"
@@ -2461,29 +2460,29 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				if string.find(chatvars.words[2], "enable") then
 					locations[loc].active = true
 					conn:execute("UPDATE locations set active = 1 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now enabled.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now enabled.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now enabled.[-]")
 					end
 				else
 					locations[loc].active = false
 					conn:execute("UPDATE locations set active = 0 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now disabled.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now disabled.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now disabled.[-]")
 					end
 				end
 			end
@@ -2554,29 +2553,29 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				if chatvars.words[2] == "hide" then
 					locations[loc].hidden = true
 					conn:execute("UPDATE locations set hidden = 1 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now hidden from players.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now hidden from players.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now hidden from players.[-]")
 					end
 				else
 					locations[loc].hidden = false
 					conn:execute("UPDATE locations set hidden = 0 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " can be seen by players.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " can be seen by players.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " can be seen by players.[-]")
 					end
 				end
 			end
@@ -2640,10 +2639,10 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				if chatvars.words[2] == "lobby" then
@@ -2654,19 +2653,19 @@ function gmsg_locations()
 					-- reload the locations table
 					loadLocations()
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now the lobby.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now the lobby.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now the lobby.[-]")
 					end
 				else
 					locations[loc].lobby = false
 					conn:execute("UPDATE locations set lobby = 0 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is no longer the lobby.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is no longer the lobby.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is no longer the lobby.[-]")
 					end
 				end
 			end
@@ -2677,7 +2676,7 @@ function gmsg_locations()
 	end
 
 
-	local function cmd_ToggleLocationIsRound()
+	local function cmd_ToggleLocationIsRound() --tested
 		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}location (round or circle or square) {name}"
@@ -2733,29 +2732,29 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				if chatvars.words[2] == "round" or chatvars.words[2] == "circle" then
 					locations[loc].isRound = true
 					conn:execute("UPDATE locations set isRound = 1 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now a circle with radius " .. locations[loc].size .. ".[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now a circle with radius " .. locations[loc].size .. ".")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now a circle with radius " .. locations[loc].size .. ".[-]")
 					end
 				else
 					locations[loc].isRound = false
 					conn:execute("UPDATE locations set isRound = 0 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now a square with radius " .. locations[loc].size .. ".[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now a square with radius " .. locations[loc].size .. ".")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location called " .. loc .. " is now a square with radius " .. locations[loc].size .. ".[-]")
 					end
 				end
 			end
@@ -2821,29 +2820,29 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				if chatvars.words[3] == "enable" then
 					locations[loc].allowP2P = true
 					conn:execute("UPDATE locations set allowP2P = 1 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " allows players to teleport to friends and fetch friends.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location " .. loc .. " allows players to teleport to friends and fetch friends.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " allows players to teleport to friends and fetch friends.[-]")
 					end
 				else
 					locations[loc].allowP2P = false
 					conn:execute("UPDATE locations set allowP2P = 0 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " will not let players teleport to friends or fetch friends.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location " .. loc .. " will not let players teleport to friends or fetch friends.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The location " .. loc .. " will not let players teleport to friends or fetch friends.[-]")
 					end
 				end
 			end
@@ -2889,7 +2888,7 @@ function gmsg_locations()
 			return false
 		end
 
-		if chatvars.words[1] == "location" and (chatvars.words[2] == "pack" or chatvars.words[2] == "revive") and string.find(chatvars.words[3], "able") then
+		if chatvars.words[1] == "location" and chatvars.words[2] == "pack" and string.find(chatvars.words[3], "able") then
 			if not verifyCommandAccess(tmp.topic, debugger.getinfo(1, "n").name) then
 				botman.faultyChat = false
 				return true
@@ -2909,29 +2908,29 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				if chatvars.words[3] == "enable" then
 					locations[loc].allowPack = true
 					conn:execute("UPDATE locations set allowPack = 1 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players that die in the location " .. loc .. " can use the {#}pack command.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Players that die in the location " .. loc .. " can use the {#}pack command.")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players that die in the location " .. loc .. " can use the {#}pack command.[-]")
 					end
 				else
 					locations[loc].allowPack = false
 					conn:execute("UPDATE locations set allowPack = 0 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The {#}pack command is not available to players that die in the location " .. loc .. "[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The {#}pack command is not available to players that die in the location " .. loc)
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]The {#}pack command is not available to players that die in the location " .. loc .. "[-]")
 					end
 				end
 			end
@@ -2942,7 +2941,7 @@ function gmsg_locations()
 	end
 
 
-	local function cmd_ToggleLocationPrivate()
+	local function cmd_ToggleLocationPrivate() --recoded
 		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}location private (or public) {name} (default is private)"
@@ -2997,10 +2996,11 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				if chatvars.words[2] == "private" then
@@ -3009,7 +3009,7 @@ function gmsg_locations()
 
 					message("say [" .. server.chatColour .. "]The location called " .. loc .. " is now private[-]")
 
-					if (chatvars.playername ~= "Server") then
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now private.")
 					end
 				else
@@ -3018,7 +3018,7 @@ function gmsg_locations()
 
 					message("say [" .. server.chatColour .. "]The location called " .. loc .. " is now public[-]")
 
-					if (chatvars.playername ~= "Server") then
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now public.")
 					end
 
@@ -3088,7 +3088,7 @@ function gmsg_locations()
 					conn:execute("UPDATE locations set pvp = 0 WHERE name = '" .. escape(loc) .. "'")
 					message("say [" .. server.chatColour .. "]The location " .. loc .. " is now a PVE zone.[-]")
 
-					if (chatvars.playername ~= "Server") then
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location " .. loc .. " is now a PVE zone.")
 					end
 				else
@@ -3096,15 +3096,15 @@ function gmsg_locations()
 					conn:execute("UPDATE locations set pvp = 1 WHERE name = '" .. escape(loc) .. "'")
 					message("say [" .. server.chatColour .. "]The location " .. loc .. " is now a PVP zone![-]")
 
-					if (chatvars.playername ~= "Server") then
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location " .. loc .. " is now a PVP zone.")
 					end
 				end
 			else
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			end
 
@@ -3168,19 +3168,20 @@ function gmsg_locations()
 					locations[loc].allowReturns = false
 					conn:execute("UPDATE locations set allowReturns = 0 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will not be able to use returns in " .. loc .. ".[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Players will not be able to use returns in " .. loc)
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will not be able to use returns in " .. loc .. ".[-]")
 					end
 				else
 					locations[loc].allowReturns = true
 					conn:execute("UPDATE locations set allowReturns = 1 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players can use returns in " .. loc .. ".[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Players can use returns in " .. loc)
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players can use returns in " .. loc .. ".[-]")
+
 					end
 				end
 			end
@@ -3191,7 +3192,7 @@ function gmsg_locations()
 	end
 
 
-	local function cmd_ToggleLocationSafe()
+	local function cmd_ToggleLocationSafe() --fixed
 		if chatvars.showHelp or botman.registerHelp then
 			help = {}
 			help[1] = " {#}location safe (or unsafe) {location name}"
@@ -3236,7 +3237,7 @@ function gmsg_locations()
 			locationName = ""
 
 			if chatvars.words[3] then
-				locationName = string.sub(chatvars.command, 16)
+				locationName = string.sub(chatvars.commandOld, string.find(chatvars.command, "safe ") + 5)
 				locationName = string.trim(locationName)
 			end
 
@@ -3247,10 +3248,10 @@ function gmsg_locations()
 			loc = LookupLocation(locationName)
 
 			if (loc == nil) then
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "That location does not exist.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]That location does not exist.[-]")
 				end
 			else
 				if chatvars.words[2] == "safe" then
@@ -3260,7 +3261,7 @@ function gmsg_locations()
 
 					message("say [" .. server.chatColour .. "]The location called " .. loc .. " is now a safezone.[-]")
 
-					if (chatvars.playername ~= "Server") then
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is now a safezone.")
 					end
 				else
@@ -3270,7 +3271,7 @@ function gmsg_locations()
 
 					message("say [" .. server.chatColour .. "]The location called " .. loc .. " is no longer a safezone![-]")
 
-					if (chatvars.playername ~= "Server") then
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "The location called " .. loc .. " is no longer a safezone.")
 					end
 
@@ -3339,19 +3340,19 @@ function gmsg_locations()
 					locations[loc].watch = false
 					conn:execute("UPDATE locations set watchPlayers = 0 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will not be watched in location " .. loc .. " unless individually watched.[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Players not will be watched in location " .. loc .. " unless individually watched")
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will not be watched in location " .. loc .. " unless individually watched.[-]")
 					end
 				else
 					locations[loc].watch = true
 					conn:execute("UPDATE locations set watchPlayers = 1 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will be watched in location " .. loc .. ".[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Players will be watched in location " .. loc)
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will be watched in location " .. loc .. ".[-]")
 					end
 				end
 			end
@@ -3418,19 +3419,19 @@ function gmsg_locations()
 					locations[loc].allowWaypoints = false
 					conn:execute("UPDATE locations set allowWaypoints = 0 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will not be able to set waypoints in " .. loc .. ".[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Players will not be able to set waypoints in " .. loc)
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will not be able to set waypoints in " .. loc .. ".[-]")
 					end
 				else
 					locations[loc].allowWaypoints = true
 					conn:execute("UPDATE locations set allowWaypoints = 1 WHERE name = '" .. escape(loc) .. "'")
 
-					if (chatvars.playername ~= "Server") then
-						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players can set waypoints in " .. loc .. ".[-]")
-					else
+					if (chatvars.ircid ~= "0") then
 						irc_chat(chatvars.ircAlias, "Players can set waypoints in " .. loc)
+					else
+						message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players can set waypoints in " .. loc .. ".[-]")
 					end
 				end
 			end
@@ -3486,19 +3487,19 @@ function gmsg_locations()
 				server.showLocationMessages = true
 				conn:execute("UPDATE server SET showLocationMessages = 1")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will be alerted when they enter or leave locations.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "Players will be alerted when they enter or leave locations.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will be alerted when they enter or leave locations.[-]")
 				end
 			else
 				server.showLocationMessages = false
 				conn:execute("UPDATE server SET showLocationMessages = 0")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will only see rule changes when they enter or leave locations.[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "Players will only see rule changes when they enter or leave locations.")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]Players will only see rule changes when they enter or leave locations.[-]")
 				end
 			end
 
@@ -3562,10 +3563,10 @@ function gmsg_locations()
 				locations[loc].protected = false
 				conn:execute("UPDATE locations SET protected = 0 WHERE name = '" .. escape(loc) .. "'")
 
-				if (chatvars.playername ~= "Server") then
-					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You have disabled protection for " .. loc .. ".[-]")
-				else
+				if (chatvars.ircid ~= "0") then
 					irc_chat(chatvars.ircAlias, "You have disabled protection for " .. loc .. ".")
+				else
+					message("pm " .. chatvars.userID .. " [" .. server.chatColour .. "]You have disabled protection for " .. loc .. ".[-]")
 				end
 
 				botman.faultyChat = false

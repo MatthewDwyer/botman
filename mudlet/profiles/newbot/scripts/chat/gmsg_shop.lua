@@ -1685,7 +1685,7 @@ if debug then dbug("debug gmsg_shop line " .. debugger.getinfo(1).currentline) e
 			return true, ""
 		end
 
-		botman.faultyChat = doShop(chatvars.command, chatvars.playerid, chatvars.gameid, chatvars.words)
+		botman.faultyChat = doShop(chatvars.command, chatvars.playerid, chatvars.userID, chatvars.words)
 		return true, ""
 	end
 
